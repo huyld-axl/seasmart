@@ -1,5 +1,8 @@
 const pool = require('../config/db')
 const XLSX = require('xlsx')
+const fs = require('fs')
+const path = require('path')
+const config = require('../config')
 
 // TASK-B5: training_center chỉ thấy các field này khi GET /seafarers hoặc GET /seafarers/:id
 const TRAINING_CENTER_ALLOWED_FIELDS = [
@@ -21,7 +24,10 @@ const TRAINING_CENTER_SELECT = TRAINING_CENTER_ALLOWED_FIELDS.join(', ')
 function filterCertificateFieldsForTC(rows) {
   return rows.map((c) => ({
     id: c.id,
-    certificate_type: c.certificate_type_name || c.certificate_type,
+    certificate_type:
+      (c.certificate_type_name_en && String(c.certificate_type_name_en).trim()) ||
+      c.certificate_type_name ||
+      c.certificate_type,
     certificate_number: c.certificate_number,
     issued_date: c.issued_date,
     expiry_date: c.expiry_date,
@@ -32,7 +38,6 @@ function filterCertificateFieldsForTC(rows) {
 // Whitelist các fields được phép INSERT/UPDATE từ client
 const ALLOWED_FIELDS = [
   'full_name',
-  'full_name_en',
   'date_of_birth',
   'gender',
   'nationality_id',
@@ -43,39 +48,49 @@ const ALLOWED_FIELDS = [
   'passport_number',
   'passport_issued_date',
   'seaman_book_number',
+  'shoe_size',
+  'protective_size',
   'current_rank_id',
-  'rank_name_vi',
   'phone_primary',
-  'phone_secondary',
+  'marital_status',
   'email',
   'permanent_address',
   'permanent_ward',
   'permanent_district',
   'permanent_province',
-  'temporary_address',
   'social_insurance_number',
   'social_insurance_joined',
   'bank_account_number',
   'bank_name',
   'bank_account_holder',
-  'marital_status',
-  'children_count',
-  'children_info',
-  'children_ages',
   'height_cm',
   'weight_kg',
-  'shirt_size',
-  'pants_size',
   'vessel_group',
   'vessel_name_raw',
-  'contract_flight_date',
-  'contract_start_date',
-  'contract_end_date',
-  'contract_return_date',
-  'contract_duration_raw',
-  'contract_salary_raw',
+  'avatar_url',
+  'personal_bank_account_holder',
+  'personal_bank_name',
+  'personal_bank_branch',
+  'personal_bank_account_number',
+  'salary_bank_account_holder',
+  'salary_bank_name',
+  'salary_bank_branch',
+  'salary_bank_account_number',
   'status',
   'notes',
+  'english_level',
+  'english_score',
+  'english_listening',
+  'english_spoken',
+  'english_reading',
+  'english_writing',
+  'education_school',
+  'education_major',
+  'full_name_cn',
+  'place_of_birth',
+  'blood_type',
+  'education_graduation_date',
+  'passport_expiry',
 ]
 
 function pickAllowed(data) {
@@ -86,8 +101,92 @@ function pickAllowed(data) {
   return result
 }
 
+function normalizeEducationFields(safeData) {
+  const limits = {
+    education_school: 200,
+    education_major: 150,
+  }
+  for (const key of Object.keys(limits)) {
+    if (!(key in safeData)) continue
+    const v = safeData[key]
+    if (v === null) continue
+    if (typeof v === 'string') {
+      const t = v.trim()
+      safeData[key] = t === '' ? null : t.slice(0, limits[key])
+    }
+  }
+}
+
+const ENGLISH_CV_LEVELS = new Set(['A', 'B', 'C'])
+
+const LATEST_DEPLOYMENT_SELECT = `
+  (
+    SELECT sd.vessel_name
+    FROM seafarer_deployment sd
+    WHERE sd.seafarer_id = s.id
+    ORDER BY
+      COALESCE(sd.join_date, '1000-01-01') DESC,
+      COALESCE(sd.sign_off_date, '1000-01-01') DESC,
+      sd.created_at DESC,
+      sd.id DESC
+    LIMIT 1
+  ) AS latest_vessel_name,
+  (
+    SELECT sd.join_date
+    FROM seafarer_deployment sd
+    WHERE sd.seafarer_id = s.id
+    ORDER BY
+      COALESCE(sd.join_date, '1000-01-01') DESC,
+      COALESCE(sd.sign_off_date, '1000-01-01') DESC,
+      sd.created_at DESC,
+      sd.id DESC
+    LIMIT 1
+  ) AS latest_join_date,
+  (
+    SELECT sd.sign_off_date
+    FROM seafarer_deployment sd
+    WHERE sd.seafarer_id = s.id
+    ORDER BY
+      COALESCE(sd.join_date, '1000-01-01') DESC,
+      COALESCE(sd.sign_off_date, '1000-01-01') DESC,
+      sd.created_at DESC,
+      sd.id DESC
+    LIMIT 1
+  ) AS latest_sign_off_date
+`
+
+function normalizeEnglishProfileFields(safeData) {
+  if (!('english_level' in safeData) || safeData.english_level === undefined) return
+  const v = safeData.english_level
+  if (v === null) return
+  if (typeof v !== 'string') return
+  const t = v.trim().slice(0, 50)
+  if (t === '') {
+    safeData.english_level = null
+    return
+  }
+  const u = t.toUpperCase()
+  safeData.english_level = ENGLISH_CV_LEVELS.has(u) ? u : t
+}
+
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training }, userRole) {
+  async list(
+    {
+      page = 1,
+      limit = 20,
+      search,
+      status,
+      vessel_name,
+      rank_id,
+      rank_ids = [],
+      sort_by = 'updated_at',
+      sort_order = 'desc',
+      // sort_by = 'rank',
+      // sort_order = 'asc',
+      available_for_training,
+    },
+    userRole
+  ) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
@@ -103,13 +202,33 @@ const seafarerService = {
       where.push('s.status = ?')
       params.push(status)
     }
-    if (rank_id) {
+    if (vessel_name && vessel_name.trim()) {
+      where.push(
+        `(
+          SELECT sd.vessel_name
+          FROM seafarer_deployment sd
+          WHERE sd.seafarer_id = s.id
+          ORDER BY
+            COALESCE(sd.join_date, '1000-01-01') DESC,
+            COALESCE(sd.sign_off_date, '1000-01-01') DESC,
+            sd.created_at DESC,
+            sd.id DESC
+          LIMIT 1
+        ) LIKE ?`
+      )
+      params.push(`%${vessel_name.trim()}%`)
+    }
+    if (Array.isArray(rank_ids) && rank_ids.length) {
+      const placeholders = rank_ids.map(() => '?').join(', ')
+      where.push(`s.current_rank_id IN (${placeholders})`)
+      params.push(...rank_ids)
+    } else if (rank_id) {
       where.push('s.current_rank_id = ?')
       params.push(rank_id)
     }
-    // TASK-B5: chỉ thuyền viên sẵn sàng cho đào tạo (AVAILABLE hoặc ON_LEAVE)
+    // TASK-B5: chỉ thuyền viên sẵn sàng cho đào tạo (STANDBY)
     if (available_for_training === 'true') {
-      where.push('s.status IN (\'AVAILABLE\', \'ON_LEAVE\')')
+      where.push('s.status = \'STANDBY\'')
     }
 
     const whereStr = 'WHERE ' + where.join(' AND ')
@@ -119,12 +238,23 @@ const seafarerService = {
       params
     )
 
-    const isTC = userRole === 'training_center'
+    const isTC = userRole === 'accountant'
     const selectFields = isTC
-      ? TRAINING_CENTER_SELECT
+      ? `${TRAINING_CENTER_SELECT}, s.updated_at, ${LATEST_DEPLOYMENT_SELECT}`
       : `s.id, s.seafarer_code, s.full_name, s.national_id, s.date_of_birth,
-         s.phone_primary, s.email, s.status, s.user_id,
-         r.name_vi as rank_name, r.code as rank_code`
+         s.phone_primary, s.email, s.status, s.user_id, s.permanent_province,
+         s.current_rank_id, s.updated_at,
+         r.name_vi as rank_name, r.code as rank_code,
+         ${LATEST_DEPLOYMENT_SELECT}`
+
+    const RANK_FIELD_ORDER =
+      '\'CAPT\',\'CO\',\'2O\',\'3O\',\'BSN\',\'CARP\',\'AB\',\'OSD\',\'DCADET\',\'COOK\',\'MESS\',\'CE\',\'2E\',\'3E\',\'4E\',\'ETO\',\'ELECT\',\'FTR\',\'ABE\',\'OSE\',\'ENGINE CADET\''
+    const normalizedSortBy = String(sort_by || 'updated_at').toLowerCase()
+    const normalizedSortOrder = String(sort_order || 'desc').toLowerCase() === 'asc' ? 'ASC' : 'DESC'
+    const orderBy =
+      normalizedSortBy === 'rank'
+        ? `ORDER BY FIELD(r.code,${RANK_FIELD_ORDER}) = 0, FIELD(r.code,${RANK_FIELD_ORDER}), s.full_name ASC`
+        : `ORDER BY s.updated_at ${normalizedSortOrder}, s.id DESC`
 
     const [rows] = await pool.query(
       `SELECT ${selectFields}
@@ -132,7 +262,7 @@ const seafarerService = {
        LEFT JOIN rank r ON r.id = s.current_rank_id
        ${isTC ? 'LEFT JOIN country c ON c.id = s.nationality_id' : ''}
        ${whereStr}
-       ORDER BY s.id DESC
+       ${orderBy}
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     )
@@ -141,10 +271,10 @@ const seafarerService = {
   },
 
   async getById(id, userRole) {
-    const isTC = userRole === 'training_center'
+    const isTC = userRole === 'accountant'
     const selectFields = isTC
       ? TRAINING_CENTER_SELECT
-      : 's.*, r.name_vi as rank_name, c.name_vi as nationality_name'
+      : 's.*, r.name_vi as rank_name, r.code as rank_code, c.name_vi as nationality_name'
 
     const [rows] = await pool.query(
       `SELECT ${selectFields}
@@ -160,7 +290,8 @@ const seafarerService = {
     if (isTC) {
       const [certs] = await pool.query(
         `SELECT sc.id, sc.certificate_number, sc.issued_date, sc.expiry_date, sc.status,
-                ct.name_vi as certificate_type_name
+                ct.name_vi as certificate_type_name,
+                ct.name_en as certificate_type_name_en
          FROM seafarer_certificate sc
          LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
          WHERE sc.seafarer_id = ? AND sc.deleted_at IS NULL ORDER BY sc.expiry_date ASC`,
@@ -173,6 +304,8 @@ const seafarerService = {
 
   async create(data, created_by) {
     const safeData = pickAllowed(data)
+    normalizeEducationFields(safeData)
+    normalizeEnglishProfileFields(safeData)
     const [result] = await pool.query(
       'INSERT INTO seafarer SET ?, created_by = ?, updated_by = ?',
       [safeData, created_by, created_by]
@@ -184,6 +317,8 @@ const seafarerService = {
     await this.getById(id)
     const { rank_name, nationality_name, ...rest } = data
     const safeData = pickAllowed(rest)
+    normalizeEducationFields(safeData)
+    normalizeEnglishProfileFields(safeData)
     if (Object.keys(safeData).length === 0) {
       throw { statusCode: 400, message: 'Không có trường hợp lệ để cập nhật' }
     }
@@ -192,6 +327,9 @@ const seafarerService = {
       updated_by,
       id,
     ])
+    if (safeData.status === 'ONBOARD') {
+      await pool.query('DELETE FROM seafarer_call_log WHERE seafarer_id = ?', [id])
+    }
     return this.getById(id)
   },
 
@@ -219,16 +357,8 @@ const seafarerService = {
       'is_guarantor',
       'full_name',
       'date_of_birth',
-      'national_id',
-      'phone_primary',
-      'phone_secondary',
-      'email',
       'address',
-      'occupation',
-      'workplace',
-      'guarantor_id_number',
-      'guarantor_id_issued_date',
-      'guarantor_id_issued_place',
+      'phone',
     ]
     const fields = {}
     for (const k of allowed) {
@@ -253,7 +383,140 @@ const seafarerService = {
     return { success: true }
   },
 
-  async exportExcel({ search, status, rank_id }) {
+  async updateContact(seafarerId, contactId, data) {
+    const allowed = [
+      'relationship',
+      'is_emergency_contact',
+      'is_guarantor',
+      'full_name',
+      'date_of_birth',
+      'address',
+      'phone',
+    ]
+
+    const fields = {}
+    for (const k of allowed) {
+      if (data[k] !== undefined) fields[k] = data[k]
+    }
+    if (Object.keys(fields).length === 0) {
+      throw { statusCode: 400, message: 'Không có trường hợp lệ để cập nhật' }
+    }
+
+    const [result] = await pool.query(
+      'UPDATE seafarer_contact SET ? WHERE id = ? AND seafarer_id = ?',
+      [fields, contactId, seafarerId]
+    )
+    if (result.affectedRows === 0) throw { statusCode: 404, message: 'Không tìm thấy liên hệ' }
+
+    const [rows] = await pool.query('SELECT * FROM seafarer_contact WHERE id = ?', [contactId])
+    return rows[0]
+  },
+
+  async getEducations(seafarerId) {
+    const [rows] = await pool.query(
+      `SELECT id, graduation_level, degree_rating, school_name, major, graduation_year, enrollment_year
+       FROM seafarer_education
+       WHERE seafarer_id = ? AND deleted_at IS NULL
+       ORDER BY graduation_year DESC, id ASC`,
+      [seafarerId]
+    )
+    return rows
+  },
+
+  _normalizeDegreeRating(v) {
+    const allowed = ['EXCELLENT', 'GOOD', 'FAIR', 'POOR']
+    if (v == null || v === '') return null
+    const u = String(v).trim().toUpperCase()
+    return allowed.includes(u) ? u : null
+  },
+
+  async replaceEducations(seafarerId, educations = [], updated_by) {
+    const items = Array.isArray(educations) ? educations : []
+    const normalized = items
+      .map((item) => ({
+        graduation_level: item?.graduation_level || null,
+        degree_rating: this._normalizeDegreeRating(item?.degree_rating),
+        school_name: (item?.school_name || '').trim(),
+        major: item?.major || null,
+        graduation_year: item?.graduation_year ? Number(item.graduation_year) : null,
+        enrollment_year: item?.enrollment_year ? Number(item.enrollment_year) : null,
+      }))
+      .filter((item) => item.school_name)
+
+    const conn = await pool.getConnection()
+    try {
+      await conn.beginTransaction()
+      await conn.query(
+        `UPDATE seafarer_education
+         SET deleted_at = NOW(), updated_at = NOW(), updated_by = ?
+         WHERE seafarer_id = ? AND deleted_at IS NULL`,
+        [updated_by || null, seafarerId]
+      )
+
+      for (const item of normalized) {
+        await conn.query(
+          `INSERT INTO seafarer_education
+          (seafarer_id, graduation_level, degree_rating, school_name, major, graduation_year, enrollment_year, created_by, updated_by)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            seafarerId,
+            item.graduation_level,
+            item.degree_rating,
+            item.school_name,
+            item.major,
+            item.graduation_year,
+            item.enrollment_year,
+            updated_by || null,
+            updated_by || null,
+          ]
+        )
+      }
+
+      await conn.commit()
+    } catch (err) {
+      await conn.rollback()
+      throw err
+    } finally {
+      conn.release()
+    }
+
+    return this.getEducations(seafarerId)
+  },
+
+  async uploadAvatar(id, file, updated_by) {
+    await this.getById(id)
+
+    const ext = path.extname(file.filename || '').toLowerCase()
+    const allowedExts = ['.jpg', '.jpeg', '.png']
+    if (!allowedExts.includes(ext)) {
+      throw { statusCode: 400, message: 'Chỉ chấp nhận ảnh JPG, JPEG, PNG' }
+    }
+
+    const fileBuffer = await file.toBuffer()
+    const magic = fileBuffer.slice(0, 4)
+    const isJpeg = magic[0] === 0xff && magic[1] === 0xd8 && magic[2] === 0xff
+    const isPng = magic[0] === 0x89 && magic[1] === 0x50 && magic[2] === 0x4e && magic[3] === 0x47
+    if (!isJpeg && !isPng) {
+      throw { statusCode: 400, message: 'Nội dung file ảnh không hợp lệ' }
+    }
+
+    const uploadDir = path.join(config.upload.dir, 'seafarers', String(id))
+    fs.mkdirSync(uploadDir, { recursive: true })
+
+    const filename = `avatar_${Date.now()}${ext}`
+    const filepath = path.join(uploadDir, filename)
+    fs.writeFileSync(filepath, fileBuffer)
+
+    const avatarUrl = `/uploads/seafarers/${id}/${filename}`
+    await pool.query(
+      'UPDATE seafarer SET avatar_url = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
+      [avatarUrl, updated_by, id]
+    )
+
+    return this.getById(id)
+  },
+
+  async exportExcel({ search, status, rank_id, rank_ids = [] }) {
     const where = ['s.deleted_at IS NULL']
     const params = []
 
@@ -266,7 +529,11 @@ const seafarerService = {
       where.push('s.status = ?')
       params.push(status)
     }
-    if (rank_id) {
+    if (Array.isArray(rank_ids) && rank_ids.length) {
+      const placeholders = rank_ids.map(() => '?').join(', ')
+      where.push(`s.current_rank_id IN (${placeholders})`)
+      params.push(...rank_ids)
+    } else if (rank_id) {
       where.push('s.current_rank_id = ?')
       params.push(parseInt(rank_id))
     }
@@ -279,13 +546,9 @@ const seafarerService = {
         r.code            AS rank_code,
         s.vessel_group,
         s.vessel_name_raw,
-        s.contract_flight_date,
-        s.contract_start_date,
-        s.contract_duration_raw,
         s.date_of_birth,
         s.passport_number,
         s.passport_issued_date,
-        s.contract_salary_raw,
         s.national_id,
         s.national_id_issued_date,
         s.national_id_issued_place,
@@ -299,21 +562,12 @@ const seafarerService = {
         s.bank_account_number,
         s.bank_name,
         s.bank_account_holder,
-        s.marital_status,
-        s.children_count,
-        s.children_info,
-        s.children_ages,
         s.height_cm,
-        s.weight_kg,
-        s.shirt_size,
-        s.pants_size,
-        s.contract_end_date,
-        s.contract_return_date,
-        s.rank_name_vi
+        s.weight_kg
        FROM seafarer s
        LEFT JOIN \`rank\` r ON r.id = s.current_rank_id
        WHERE ${where.join(' AND ')}
-       ORDER BY s.seafarer_code ASC
+       ORDER BY FIELD(r.code,'CAPT','CO','2O','3O','BSN','CARP','AB','OSD','DCADET','COOK','MESS','CE','2E','3E','4E','ETO','ELECT','FTR','ABE','OSE','ENGINE CADET') = 0, FIELD(r.code,'CAPT','CO','2O','3O','BSN','CARP','AB','OSD','DCADET','COOK','MESS','CE','2E','3E','4E','ETO','ELECT','FTR','ABE','OSE','ENGINE CADET'), s.full_name ASC
        LIMIT ${EXPORT_LIMIT}`,
       params
     )
@@ -333,13 +587,9 @@ const seafarerService = {
       'CHỨC DANH',
       'KHỐI ',
       'TÊN TÀU',
-      'NGÀY BAY',
-      'NGÀY NHẬP TÀU',
-      'THỜI GIAN HĐ',
       'NGÀY SINH',
       'HỘ CHIẾU',
       'Ngày cấp',
-      'Lương hợp đồng',
       'Số CMTND',
       'Ngày cấp',
       'Nơi cấp',
@@ -353,16 +603,8 @@ const seafarerService = {
       'SỐ TÀI KHOẢN',
       'NGÂN HÀNG',
       'CHỦ TK',
-      'TÌNH TRẠNG',
-      'SỐ CON',
-      'THÔNG TIN CON',
-      'TUỔI CON',
       'Chiều cao',
       'Cân nặng',
-      'Size áo',
-      'Size quần',
-      'NGÀY RỜI TÀU',
-      'NGÀY VỀ TỚI VIỆT NAM',
       'CHỨC DANH',
     ]
 
@@ -373,13 +615,9 @@ const seafarerService = {
       s.rank_code || '',
       s.vessel_group || '',
       s.vessel_name_raw || '',
-      fmt(s.contract_flight_date),
-      fmt(s.contract_start_date),
-      s.contract_duration_raw || '',
       fmt(s.date_of_birth),
       s.passport_number || '',
       fmt(s.passport_issued_date),
-      s.contract_salary_raw != null ? Number(s.contract_salary_raw) : '',
       s.national_id || '',
       fmt(s.national_id_issued_date),
       s.national_id_issued_place || '',
@@ -393,17 +631,9 @@ const seafarerService = {
       s.bank_account_number || '',
       s.bank_name || '',
       s.bank_account_holder || '',
-      s.marital_status || '',
-      s.children_count != null ? s.children_count : '',
-      s.children_info || '',
-      s.children_ages || '',
       s.height_cm != null ? s.height_cm : '',
       s.weight_kg != null ? s.weight_kg : '',
-      s.shirt_size || '',
-      s.pants_size || '',
-      fmt(s.contract_end_date),
-      fmt(s.contract_return_date),
-      s.rank_name_vi || '',
+      s.rank_code || '',
     ])
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...dataRows])
@@ -437,16 +667,9 @@ const seafarerService = {
       { wch: 16 },
       { wch: 20 },
       { wch: 12 },
-      { wch: 6 },
-      { wch: 24 },
-      { wch: 12 },
       { wch: 8 },
       { wch: 8 },
       { wch: 8 },
-      { wch: 8 },
-      { wch: 12 },
-      { wch: 18 },
-      { wch: 16 },
     ]
 
     const wb = XLSX.utils.book_new()

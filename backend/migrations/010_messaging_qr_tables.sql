@@ -36,20 +36,6 @@ CREATE TABLE IF NOT EXISTS `message` (
 
 CREATE INDEX IF NOT EXISTS idx_message_conv ON `message` (`conversation_id`, `created_at`);
 
--- QR enrollment link table
-CREATE TABLE IF NOT EXISTS `qr_enrollment_link` (
-  `id`                 INT          AUTO_INCREMENT PRIMARY KEY,
-  `token`              VARCHAR(500) NOT NULL UNIQUE,
-  `training_center_id` INT          NOT NULL,
-  `course_id`          INT          NULL,
-  `created_by`         INT          NOT NULL,
-  `expires_at`         DATETIME     NOT NULL,
-  `used_count`         INT          NOT NULL DEFAULT 0,
-  `is_active`          TINYINT(1)   NOT NULL DEFAULT 1,
-  `created_at`         DATETIME     NOT NULL DEFAULT NOW(),
-  FOREIGN KEY (`training_center_id`) REFERENCES `training_center`(`id`),
-  FOREIGN KEY (`course_id`)          REFERENCES `training_course`(`id`),
-  FOREIGN KEY (`created_by`)         REFERENCES `user`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- QR enrollment link table removed (training/course enrollment disabled)
 
 SET FOREIGN_KEY_CHECKS = 1;

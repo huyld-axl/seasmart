@@ -32,4 +32,10 @@ module.exports = {
     fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@marineport.vn',
     fromName: process.env.SENDGRID_FROM_NAME || 'MarinePort',
   },
+  llm: {
+    provider: process.env.LLM_PROVIDER || 'anthropic',
+    apiKey: process.env.LLM_API_KEY || process.env.ANTHROPIC_API_KEY || '',
+    model: process.env.LLM_MODEL || process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001',
+    baseURL: process.env.LLM_BASE_URL || process.env.ANTHROPIC_BASE_URL || '',
+  },
 }

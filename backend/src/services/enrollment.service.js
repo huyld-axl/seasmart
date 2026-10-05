@@ -148,7 +148,7 @@ const enrollmentService = {
       )
       if (!course) throw { statusCode: 404, message: 'Không tìm thấy khóa học' }
 
-      if (userRole === 'training_center') {
+      if (userRole === 'accountant') {
         if (Number(course.training_center_id) !== Number(linkedEntityId)) {
           throw { statusCode: 403, message: 'Chỉ được enroll vào khóa học của trung tâm mình' }
         }
@@ -323,7 +323,7 @@ const enrollmentService = {
     if (enrollment.status !== 'PENDING') {
       throw { statusCode: 400, message: 'Chỉ duyệt được đăng ký ở trạng thái PENDING' }
     }
-    if (userRole === 'training_center') {
+    if (userRole === 'accountant') {
       if (Number(enrollment.training_center_id) !== Number(linkedEntityId)) {
         throw {
           statusCode: 403,
@@ -349,7 +349,7 @@ const enrollmentService = {
   },
 
   async getTrainingHistory(seafarerId, userRole) {
-    const scoreFields = userRole !== 'training_center' ? ', e.total_score, e.grade' : ''
+    const scoreFields = userRole !== 'accountant' ? ', e.total_score, e.grade' : ''
     const [rows] = await pool.query(
       `SELECT e.id, e.enrollment_date, e.status, e.result, e.certificate_issued,
               tc.name as course_name, tc.start_date, tc.end_date,
@@ -372,7 +372,7 @@ const enrollmentService = {
     if (enrollment.status !== 'PENDING') {
       throw { statusCode: 400, message: 'Chỉ từ chối được đăng ký ở trạng thái PENDING' }
     }
-    if (userRole === 'training_center') {
+    if (userRole === 'accountant') {
       if (Number(enrollment.training_center_id) !== Number(linkedEntityId)) {
         throw {
           statusCode: 403,

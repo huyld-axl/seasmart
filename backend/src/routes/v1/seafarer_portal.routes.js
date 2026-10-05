@@ -38,56 +38,7 @@ async function seafarerPortalRoutes(fastify) {
     })
   })
 
-  // GET /api/v1/portal/seafarer/courses — khóa học đang mở đăng ký (TASK-B2)
-  fastify.get('/courses', { onRequest: [onlySeafarer] }, async (request) => {
-    const { page, limit } = request.query
-    return seafarerPortalService.listOpenCourses(request.user.id, {
-      page: parseInt(page) || 1,
-      limit: Math.min(parseInt(limit) || 50, 100),
-    })
-  })
-
-  // GET /api/v1/portal/seafarer/enrollments
-  fastify.get('/enrollments', { onRequest: [onlySeafarer] }, async (request) => {
-    const { page, limit } = request.query
-    return seafarerPortalService.getEnrollments(request.user.id, {
-      page: parseInt(page) || 1,
-      limit: Math.min(parseInt(limit) || 20, 100),
-    })
-  })
-
-  // POST /api/v1/portal/seafarer/enrollments
-  fastify.post(
-    '/enrollments',
-    {
-      onRequest: [onlySeafarer],
-      schema: {
-        body: {
-          type: 'object',
-          required: ['course_id'],
-          properties: {
-            course_id: { type: 'integer' },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      const result = await seafarerPortalService.enroll(request.user.id, request.body.course_id)
-      return reply.code(201).send(result)
-    }
-  )
-
-  // DELETE /api/v1/portal/seafarer/enrollments/:id
-  fastify.delete('/enrollments/:id', { onRequest: [onlySeafarer] }, async (request, reply) => {
-    try {
-      await seafarerPortalService.cancelEnrollment(request.user.id, parseInt(request.params.id))
-      return reply.code(204).send()
-    } catch (e) {
-      return reply.code(e.statusCode || 500).send({ error: e.message })
-    }
-  })
-
-  // POST /api/v1/portal/seafarer/certificates — multipart: fields + optional file, or JSON body
+  // POST /api/v1/portal/seafarer/certificates - multipart: fields + optional file, or JSON body
   fastify.post('/certificates', { onRequest: [onlySeafarer] }, async (request, reply) => {
     try {
       const profile = await seafarerPortalService.getProfile(request.user.id)
@@ -146,7 +97,26 @@ async function seafarerPortalRoutes(fastify) {
     }
   })
 
-  // DELETE /api/v1/portal/seafarer/certificates/:id — chỉ xóa chứng chỉ do mình tạo (created_by = user)
+  // DELETE /api/v1/portal/seafarer/certificates/:id/file - xóa file đính kèm (chỉ chứng chỉ do mình tạo)
+  fastify.delete(
+    '/certificates/:id/file',
+    { onRequest: [onlySeafarer] },
+    async (request, reply) => {
+      try {
+        const profile = await seafarerPortalService.getProfile(request.user.id)
+        const certId = parseInt(request.params.id)
+        const cert = await certificateService.getById(certId, profile.id)
+        if (Number(cert.created_by) !== Number(request.user.id)) {
+          return reply.code(403).send({ error: 'Chỉ được xóa file chứng chỉ do bạn tự thêm' })
+        }
+        return await certificateService.deleteFile(certId, profile.id, request.user.id)
+      } catch (e) {
+        return reply.code(e.statusCode || 500).send({ error: e.message })
+      }
+    }
+  )
+
+  // DELETE /api/v1/portal/seafarer/certificates/:id - chỉ xóa chứng chỉ do mình tạo (created_by = user)
   fastify.delete('/certificates/:id', { onRequest: [onlySeafarer] }, async (request, reply) => {
     try {
       const profile = await seafarerPortalService.getProfile(request.user.id)

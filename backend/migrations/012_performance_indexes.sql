@@ -12,9 +12,6 @@ ALTER TABLE seafarer ADD INDEX idx_seafarer_fullname (full_name);
 ALTER TABLE seafarer ADD INDEX idx_seafarer_national_id (national_id);
 ALTER TABLE seafarer ADD INDEX idx_seafarer_code (seafarer_code);
 
--- training_enrollment: index on deleted_at
-ALTER TABLE training_enrollment ADD INDEX idx_enrollment_deleted (deleted_at);
-
 -- seafarer_certificate: index on deleted_at
 ALTER TABLE seafarer_certificate ADD INDEX idx_cert_deleted (deleted_at);
 

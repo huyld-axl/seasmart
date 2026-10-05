@@ -1,4 +1,4 @@
-# Naming Conventions — Marineport
+# Naming Conventions - Marineport
 
 Tài liệu tham chiếu nhanh cho quy ước đặt tên trong dự án.
 
@@ -13,9 +13,9 @@ Tài liệu tham chiếu nhanh cho quy ước đặt tên trong dự án.
 | Utility file | snake_case | `{name}.js` | `date_helper.js` |
 | Plugin file | snake_case | `{name}.plugin.js` | `jwt.plugin.js` |
 | Constant file | snake_case | `{domain}.js` | `roles.js` |
-| Variables | camelCase | — | `seafarerList`, `totalCount` |
-| Functions | camelCase | — | `getSeafarerById`, `validateInput` |
-| Constants | SCREAMING_SNAKE_CASE | — | `MAX_RETRY`, `ROLE_ADMIN` |
+| Variables | camelCase | - | `seafarerList`, `totalCount` |
+| Functions | camelCase | - | `getSeafarerById`, `validateInput` |
+| Constants | SCREAMING_SNAKE_CASE | - | `MAX_RETRY`, `ROLE_ADMIN` |
 
 ## Frontend (React / ESM)
 
@@ -29,8 +29,8 @@ Tài liệu tham chiếu nhanh cho quy ước đặt tên trong dự án.
 | Context file | PascalCase | `{Name}Context.jsx` | `AuthContext.jsx` |
 | Utility file | camelCase | `{name}.js` | `formatDate.js` |
 | CSS file | PascalCase (match component) | `{Name}.css` | `App.css` |
-| Components | Functional + default export | — | `export default SeafarerList` |
-| Props | camelCase | — | `onSubmit`, `isLoading` |
+| Components | Functional + default export | - | `export default SeafarerList` |
+| Props | camelCase | - | `onSubmit`, `isLoading` |
 
 ## Database (MySQL)
 
@@ -42,7 +42,7 @@ Tài liệu tham chiếu nhanh cho quy ước đặt tên trong dự án.
 | Foreign key | `{table}_id` | `seafarer_id`, `course_id` |
 | Boolean column | `is_` prefix | `is_active`, `is_verified` |
 | Soft delete | `deleted_at` | `deleted_at DATETIME NULL` |
-| Timestamps | `created_at`, `updated_at` | — |
+| Timestamps | `created_at`, `updated_at` | - |
 | Enum values | snake_case | `pending_review`, `approved` |
 
 ## API Endpoints

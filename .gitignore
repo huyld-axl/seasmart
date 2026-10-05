@@ -39,6 +39,11 @@ __pycache__/
 # Test coverage
 coverage/
 
+# Claude Code internal
+.claude/
+
 # Temporary
 *.tmp
 *.bak
+.gstack/
+frontend/public/mockServiceWorker.js

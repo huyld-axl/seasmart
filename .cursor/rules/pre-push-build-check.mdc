@@ -1,0 +1,22 @@
+---
+description: Require successful build checks before any git push
+alwaysApply: true
+---
+
+# Pre-push Build Gate
+
+Before pushing code to any branch, always run and confirm required checks are successful first.
+
+## Mandatory sequence
+
+1. Pull latest changes for the current branch context if needed.
+2. Run project checks:
+   - `cd backend && npm run lint && npm test`
+   - `cd frontend && npm run lint && npm run build`
+3. If any command fails, do not push. Fix issues first.
+4. Push only after all required commands pass.
+
+## Output expectation
+
+- Clearly report pass/fail status for each command.
+- If checks were not run yet, state that push is blocked until they pass.

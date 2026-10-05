@@ -21,13 +21,13 @@ const HEADERS = [
   'NGÀY NHẬP TÀU', // 7  ← FIXED_IDX.CONTRACT_START_DATE
   'THỜI GIAN HĐ', // 8  ← FIXED_IDX.CONTRACT_DURATION
   'TÊN TÀU', // 9
-  'KHỐI ', // 10 (dấu cách cuối — giữ nguyên)
+  'KHỐI ', // 10 (dấu cách cuối - giữ nguyên)
   'ngày cấp', // 11 ← FIXED_IDX.PASSPORT_ISSUED_DATE (ngày cấp HC)
   'Lương hợp đồng', // 12 ← FIXED_IDX.CONTRACT_SALARY
   'NGÂN HÀNG', // 13
   'Ngày cấp', // 14 ← FIXED_IDX.NATIONAL_ID_ISSUED_DATE (ngày cấp CMTND)
   'Nơi cấp', // 15
-  'SỐ ĐIỆN THOẠI ', // 16 (dấu cách cuối — giữ nguyên)
+  'SỐ ĐIỆN THOẠI ', // 16 (dấu cách cuối - giữ nguyên)
   'SỐ SỔ BHXH', // 17
   'THAM GIA BH (Y/N)', // 18
   'SỐ TÀI KHOẢN', // 19

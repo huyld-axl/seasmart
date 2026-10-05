@@ -1,0 +1,1 @@
+-- Migration 070: (no-op — CoC fields stored via notes and certificate_type)

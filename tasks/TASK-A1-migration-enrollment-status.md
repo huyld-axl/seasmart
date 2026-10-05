@@ -1,4 +1,4 @@
-# TASK-A1: Migration — Thêm cột status vào training_enrollment
+# TASK-A1: Migration - Thêm cột status vào training_enrollment
 
 ## Why
 Hiện tại bảng `training_enrollment` không có trạng thái, mọi enrollment đều được coi là ACTIVE ngay khi tạo.
@@ -7,7 +7,7 @@ Hiện tại bảng `training_enrollment` không có trạng thái, mọi enroll
 ## Trạng thái: PENDING
 
 ## Files cần sửa
-- `D:/code/app hàng hải/migration.sql` — thêm ALTER TABLE và migration mới
+- `D:/code/app hàng hải/migration.sql` - thêm ALTER TABLE và migration mới
 
 ## Schema thay đổi
 
@@ -31,7 +31,7 @@ ALTER TABLE training_enrollment
     FOREIGN KEY (referred_by_center_id) REFERENCES training_center(id) ON DELETE SET NULL;
 ```
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Thêm migration vào migration.sql
 Append đoạn SQL ALTER TABLE ở cuối file migration.sql, có comment rõ version/date.

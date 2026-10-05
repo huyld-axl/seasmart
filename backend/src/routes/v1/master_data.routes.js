@@ -22,17 +22,23 @@ const listQuerySchema = {
   properties: {
     search: { type: 'string' },
     page: { type: 'integer', minimum: 1, default: 1 },
-    limit: { type: 'integer', minimum: 1, maximum: MAX_LIST_LIMIT, default: 50 },
+    limit: { type: 'integer', minimum: 1, default: 50 },
   },
 }
 
 // Whitelist columns cho từng table để tránh column injection
 const TABLE_COLUMNS = {
-  certificate_type: ['code', 'name_vi', 'name_en', 'validity_years', 'is_stcw', 'notes'],
-  vessel_type: ['code', 'name_vi', 'name_en'],
+  certificate_type: [
+    'code',
+    'name_vi',
+    'name_en',
+    'validity_years',
+    'is_stcw',
+    'notes',
+    'warning_before_months',
+  ],
   country: ['code', 'name_vi', 'name_en'],
-  contract_type: ['code', 'name_vi', 'name_en'],
-  course_type: ['code', 'name_vi', 'name_en', 'certificate_type_id'],
+  rank: ['code', 'name_vi', 'name_en', 'department', 'rank_level'],
 }
 
 function getAllowedCols(table, body) {
@@ -229,10 +235,8 @@ async function portRoutes(fastify) {
 
 async function masterDataRoutes(fastify) {
   fastify.register(makeCrud('certificate_type', 'name_vi'), { prefix: '/certificate-types' })
-  fastify.register(makeCrud('vessel_type', 'name_vi'), { prefix: '/vessel-types' })
   fastify.register(makeCrud('country', 'name_vi'), { prefix: '/countries' })
-  fastify.register(makeCrud('contract_type', 'name_vi'), { prefix: '/contract-types' })
-  fastify.register(makeCrud('course_type', 'name_vi'), { prefix: '/course-types' })
+  fastify.register(makeCrud('rank', 'name_vi'), { prefix: '/ranks' })
   fastify.register(portRoutes, { prefix: '/ports' })
 }
 

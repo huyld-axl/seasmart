@@ -1,36 +1,11 @@
 const pool = require('../../config/db')
-
-const cache = {}
-const TTL = 5 * 60 * 1000 // 5 phút
-
-// Map từ table name → cache key để invalidate khi master data thay đổi
-const TABLE_CACHE_KEY = {
-  certificate_type: 'certificate_types',
-  vessel_type: 'vessel_types',
-  country: 'countries',
-  contract_type: 'contract_types',
-  course_type: 'course_types',
-  port: 'ports',
-}
-
-function invalidateCache(table) {
-  const key = TABLE_CACHE_KEY[table]
-  if (key) delete cache[key]
-}
-
-async function getCached(key, queryFn) {
-  const now = Date.now()
-  if (cache[key] && now - cache[key].ts < TTL) return cache[key].data
-  const data = await queryFn()
-  cache[key] = { data, ts: now }
-  return data
-}
+const { invalidateCache, getCached } = require('../../utils/lookup-cache')
 
 async function lookupRoutes(fastify) {
   fastify.get('/ranks', async () => {
     return getCached('ranks', async () => {
       const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en, department FROM `rank` ORDER BY department, name_vi'
+        'SELECT id, code, name_vi, name_en, department, rank_level FROM `rank` ORDER BY FIELD(department,\'DECK\',\'ENGINE\',\'CATERING\'), rank_level, id'
       )
       return rows
     })
@@ -45,15 +20,6 @@ async function lookupRoutes(fastify) {
     })
   })
 
-  fastify.get('/course-types', async () => {
-    return getCached('course_types', async () => {
-      const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en FROM course_type ORDER BY name_vi'
-      )
-      return rows
-    })
-  })
-
   fastify.get('/countries', async () => {
     return getCached('countries', async () => {
       const [rows] = await pool.query(
@@ -63,45 +29,90 @@ async function lookupRoutes(fastify) {
     })
   })
 
-  fastify.get('/vessel-types', async () => {
-    return getCached('vessel_types', async () => {
-      const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en FROM vessel_type ORDER BY name_vi'
-      )
-      return rows
-    })
-  })
-
-  fastify.get('/contract-types', async () => {
-    return getCached('contract_types', async () => {
-      const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en FROM contract_type ORDER BY name_vi'
-      )
-      return rows
-    })
-  })
-
   fastify.get('/vessels', async (request) => {
     const { search } = request.query
     if (search) {
       const [rows] = await pool.query(
-        'SELECT id, vessel_name FROM vessel WHERE vessel_name LIKE ? ORDER BY vessel_name LIMIT 50',
-        [`%${search}%`]
+        `SELECT
+           v.id,
+           v.vessel_name,
+           v.imo_number,
+           v.ship_owner_name,
+           v.ship_owner_code,
+           v.flag_country AS flag_country_name,
+           v.vessel_type AS vessel_type_name,
+           v.gross_tonnage,
+           v.deadweight,
+           v.engine_type,
+           v.engine_power_kw,
+           COALESCE(
+             v.trade_area,
+             CASE
+               WHEN JSON_VALID(v.notes) THEN JSON_UNQUOTE(JSON_EXTRACT(v.notes, '$.trade_area'))
+               ELSE NULL
+             END
+           ) AS operating_area
+         FROM vessel v
+         WHERE v.vessel_name LIKE ? OR v.imo_number LIKE ?
+         ORDER BY v.vessel_name
+         LIMIT 50`,
+        [`%${search}%`, `%${search}%`]
       )
       return rows
     }
     return getCached('vessels', async () => {
       const [rows] = await pool.query(
-        'SELECT id, vessel_name FROM vessel ORDER BY vessel_name LIMIT 200'
+        `SELECT
+           v.id,
+           v.vessel_name,
+           v.imo_number,
+           v.ship_owner_name,
+           v.ship_owner_code,
+           v.flag_country AS flag_country_name,
+           v.vessel_type AS vessel_type_name,
+           v.gross_tonnage,
+           v.deadweight,
+           v.engine_type,
+           v.engine_power_kw,
+           COALESCE(
+             v.trade_area,
+             CASE
+               WHEN JSON_VALID(v.notes) THEN JSON_UNQUOTE(JSON_EXTRACT(v.notes, '$.trade_area'))
+               ELSE NULL
+             END
+           ) AS operating_area
+         FROM vessel v
+         ORDER BY v.vessel_name
+         LIMIT 200`
       )
       return rows
     })
   })
 
+  async function getPartners(request) {
+    const { search } = request.query
+    if (search) {
+      const [rows] = await pool.query(
+        'SELECT id, company_name, payment_cycle FROM partner WHERE deleted_at IS NULL AND company_name LIKE ? ORDER BY company_name LIMIT 100',
+        [`%${search}%`]
+      )
+      return rows
+    }
+    return getCached('partners', async () => {
+      const [rows] = await pool.query(
+        'SELECT id, company_name, payment_cycle FROM partner WHERE deleted_at IS NULL ORDER BY company_name LIMIT 500'
+      )
+      return rows
+    })
+  }
+
+  fastify.get('/partners', getPartners)
+  fastify.get('/ship-owners', getPartners)
+
   fastify.get('/ports', async (request) => {
     const { country_id, search } = request.query
-    if (search || country_id) {
-      // dynamic query — skip cache
+    if (country_id || search) {
+      // dynamic query - skip cache
       let sql =
         'SELECT p.id, p.un_locode, p.name, p.country_id, c.code AS country_code, c.name_vi AS country_name FROM port p JOIN country c ON c.id = p.country_id WHERE 1=1'
       const params = []

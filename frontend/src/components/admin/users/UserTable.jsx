@@ -1,25 +1,38 @@
-import { Table, List, Tag, Button, Popconfirm, Space, Switch, Typography } from 'antd'
+import { Table, List, Button, Popconfirm, Space, Switch, Typography } from 'antd'
 import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import RoleBadge from './RoleBadge'
+import useTranslation from '../../../hooks/useTranslation'
 
 export default function UserTable({ data, loading, onEdit, onDelete, onToggleActive }) {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const isMobile = window.innerWidth < 768
+  const isProtectedUser = (record) => String(record?.id) === '1'
 
   const columns = [
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Role', dataIndex: 'role', key: 'role', render: (role) => <RoleBadge role={role} /> },
+    { title: t('user.emailCol'), dataIndex: 'email', key: 'email' },
     {
-      title: 'Kích hoạt',
+      title: t('user.roleCol'),
+      dataIndex: 'role',
+      key: 'role',
+      render: (role) => <RoleBadge role={role} />,
+    },
+    {
+      title: t('user.activateCol'),
       dataIndex: 'is_active',
       key: 'is_active',
       render: (val, record) => (
-        <Switch checked={!!val} onChange={() => onToggleActive(record.id)} size="small" />
+        <Switch
+          checked={!!val}
+          onChange={() => onToggleActive(record.id)}
+          size="small"
+          disabled={isProtectedUser(record)}
+        />
       ),
     },
     {
-      title: 'Thao tác',
+      title: t('common.actions'),
       key: 'actions',
       render: (_, record) => (
         <Space>
@@ -29,15 +42,19 @@ export default function UserTable({ data, loading, onEdit, onDelete, onToggleAct
             onClick={() => navigate(`/admin/users/${record.id}`)}
           />
           <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(record)} />
-          <Popconfirm
-            title="Xóa user này?"
-            description="Hành động này không thể hoàn tác."
-            onConfirm={() => onDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
+          {isProtectedUser(record) ? (
+            <Button size="small" danger icon={<DeleteOutlined />} disabled />
+          ) : (
+            <Popconfirm
+              title={t('user.deleteConfirmTitle')}
+              description={t('common.deleteIrreversible')}
+              onConfirm={() => onDelete(record.id)}
+              okText={t('common.delete')}
+              cancelText={t('common.cancel')}
+            >
+              <Button size="small" danger icon={<DeleteOutlined />} />
+            </Popconfirm>
+          )}
         </Space>
       ),
     },
@@ -58,10 +75,10 @@ export default function UserTable({ data, loading, onEdit, onDelete, onToggleAct
               />,
               <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(item)} />,
               <Popconfirm
-                title="Xóa user này?"
+                title={t('user.deleteConfirmTitle')}
                 onConfirm={() => onDelete(item.id)}
-                okText="Xóa"
-                cancelText="Hủy"
+                okText={t('common.delete')}
+                cancelText={t('common.cancel')}
               >
                 <Button size="small" danger icon={<DeleteOutlined />} />
               </Popconfirm>,
@@ -76,6 +93,7 @@ export default function UserTable({ data, loading, onEdit, onDelete, onToggleAct
                     checked={!!item.is_active}
                     onChange={() => onToggleActive(item.id)}
                     size="small"
+                    disabled={isProtectedUser(item)}
                   />
                 </Space>
               }

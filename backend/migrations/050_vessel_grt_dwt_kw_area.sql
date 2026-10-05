@@ -1,0 +1,3 @@
+-- Migration 050: (no-op) vessel already has gross_tonnage, deadweight, engine_power_kw, trade_area
+-- These columns were previously misidentified; correct column names confirmed:
+--   gross_tonnage, deadweight, engine_power_kw, trade_area

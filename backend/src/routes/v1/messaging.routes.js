@@ -1,7 +1,7 @@
 const pool = require('../../config/db')
 
 async function messagingRoutes(fastify) {
-  // GET /api/v1/messages/threads — list conversations for current user
+  // GET /api/v1/messages/threads - list conversations for current user
   fastify.get('/threads', { onRequest: [fastify.authenticate] }, async (request) => {
     const userId = request.user.id
     // Dùng JOIN thay vì correlated subqueries để tránh N+1
@@ -34,7 +34,7 @@ async function messagingRoutes(fastify) {
     return rows
   })
 
-  // GET /api/v1/messages/threads/:id — messages in a thread
+  // GET /api/v1/messages/threads/:id - messages in a thread
   fastify.get('/threads/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const userId = request.user.id
     const convId = parseInt(request.params.id)
@@ -72,7 +72,7 @@ async function messagingRoutes(fastify) {
     return messages.reverse()
   })
 
-  // POST /api/v1/messages — send a message (creates thread if needed)
+  // POST /api/v1/messages - send a message (creates thread if needed)
   fastify.post(
     '/',
     {
@@ -149,7 +149,7 @@ async function messagingRoutes(fastify) {
     }
   )
 
-  // DELETE /api/v1/messages/:id — soft delete own message
+  // DELETE /api/v1/messages/:id - soft delete own message
   fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const userId = request.user.id
     const msgId = parseInt(request.params.id)

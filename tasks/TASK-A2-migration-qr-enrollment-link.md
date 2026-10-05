@@ -1,4 +1,4 @@
-# TASK-A2: Migration — Tạo bảng qr_enrollment_link
+# TASK-A2: Migration - Tạo bảng qr_enrollment_link
 
 ## Why
 Trung tâm đào tạo cần tạo QR code cho từng khóa học để thuyền viên quét và tự đăng ký mà không cần tài khoản.
@@ -7,7 +7,7 @@ Bảng này lưu token, giới hạn sử dụng, và thời hạn của từng 
 ## Trạng thái: PENDING
 
 ## Files cần sửa
-- `D:/code/app hàng hải/migration.sql` — thêm CREATE TABLE
+- `D:/code/app hàng hải/migration.sql` - thêm CREATE TABLE
 
 ## Schema bảng `qr_enrollment_link`
 ```sql
@@ -29,7 +29,7 @@ CREATE TABLE qr_enrollment_link (
 );
 ```
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Append vào migration.sql
 Thêm CREATE TABLE sau phần migration TASK-A1.
@@ -41,7 +41,7 @@ CREATE INDEX idx_qr_course ON qr_enrollment_link(course_id);
 ```
 
 ### Bước 3: Logic token generation (trong TASK-B3)
-- Token = `crypto.randomBytes(32).toString('hex')` — 64 ký tự hex
+- Token = `crypto.randomBytes(32).toString('hex')` - 64 ký tự hex
 - Unique constraint đảm bảo không trùng
 
 ## Điểm quan trọng

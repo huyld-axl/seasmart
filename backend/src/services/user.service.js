@@ -52,6 +52,19 @@ async function getUserById(id) {
   return rows[0] || null
 }
 
+async function verifyUserPassword(id, plainPassword) {
+  const [rows] = await pool.query(
+    `SELECT password_hash
+     FROM \`user\`
+     WHERE id = ? AND deleted_at IS NULL
+     LIMIT 1`,
+    [id]
+  )
+  const record = rows[0]
+  if (!record) return false
+  return bcrypt.compare(plainPassword, record.password_hash)
+}
+
 async function createUser(data) {
   const { email, password, role } = data
 
@@ -76,15 +89,21 @@ async function createUser(data) {
 }
 
 async function updateUser(id, data) {
-  const allowed = ['email', 'role', 'is_active']
+  const allowed = ['email', 'role', 'is_active', 'password']
   const fields = []
   const params = []
 
   for (const key of allowed) {
-    if (data[key] !== undefined) {
-      fields.push(`${key} = ?`)
-      params.push(data[key])
+    if (data[key] === undefined) continue
+    if (key === 'password') {
+      const hash = await bcrypt.hash(data.password, SALT_ROUNDS)
+      fields.push('password_hash = ?')
+      params.push(hash)
+      continue
     }
+
+    fields.push(`${key} = ?`)
+    params.push(data[key])
   }
 
   if (fields.length === 0) {
@@ -136,15 +155,14 @@ async function searchUsers(q) {
   const term = `%${q.trim()}%`
   const [rows] = await pool.query(
     `SELECT u.id, u.email, u.role,
-            COALESCE(s.full_name, tc.name, u.email) AS display_name
+            COALESCE(s.full_name, u.email) AS display_name
      FROM \`user\` u
      LEFT JOIN seafarer s ON u.linked_entity_type = 'seafarer' AND u.linked_entity_id = s.id AND s.deleted_at IS NULL
-     LEFT JOIN training_center tc ON u.linked_entity_type = 'training_center' AND u.linked_entity_id = tc.id AND tc.deleted_at IS NULL
      WHERE u.deleted_at IS NULL
-       AND (u.email LIKE ? OR s.full_name LIKE ? OR tc.name LIKE ?)
+       AND (u.email LIKE ? OR s.full_name LIKE ?)
      ORDER BY u.email
      LIMIT 20`,
-    [term, term, term]
+    [term, term]
   )
   return rows.map((r) => ({
     id: r.id,
@@ -157,6 +175,7 @@ async function searchUsers(q) {
 module.exports = {
   listUsers,
   getUserById,
+  verifyUserPassword,
   createUser,
   updateUser,
   softDeleteUser,

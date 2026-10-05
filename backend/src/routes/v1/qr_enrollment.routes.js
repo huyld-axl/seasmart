@@ -6,7 +6,7 @@ const enrollmentService = require('../../services/enrollment.service')
 const QR_TTL_DAYS = 30
 
 async function qrEnrollmentRoutes(fastify) {
-  // POST /api/v1/qr-enrollment/generate — TC staff generates a QR link (TASK-B3: label, max_uses, expires_at)
+  // POST /api/v1/qr-enrollment/generate - TC staff generates a QR link (TASK-B3: label, max_uses, expires_at)
   fastify.post(
     '/generate',
     {
@@ -25,13 +25,13 @@ async function qrEnrollmentRoutes(fastify) {
     },
     async (request, reply) => {
       const { role, id: userId } = request.user
-      if (!['admin', 'operator', 'training_center'].includes(role)) {
+      if (!['admin', 'operator', 'accountant'].includes(role)) {
         return reply.code(403).send({ error: 'Không có quyền tạo QR' })
       }
 
       let tcId = null
       const courseId = request.body.course_id || null
-      if (role === 'training_center') {
+      if (role === 'accountant') {
         const [[tc]] = await pool.query(
           'SELECT id FROM training_center WHERE id = ? AND is_active = 1',
           [request.user.linked_entity_id]
@@ -83,7 +83,7 @@ async function qrEnrollmentRoutes(fastify) {
     }
   )
 
-  // GET /api/v1/qr-enrollment/:token — validate token & return course info (public, TASK-B3: max_uses)
+  // GET /api/v1/qr-enrollment/:token - validate token & return course info (public, TASK-B3: max_uses)
   fastify.get('/:token', async (request, reply) => {
     const { token } = request.params
     const [[link]] = await pool.query(
@@ -131,7 +131,7 @@ async function qrEnrollmentRoutes(fastify) {
     }
   })
 
-  // POST /api/v1/qr-enrollment/:token/submit — seafarer submits enrollment form (public)
+  // POST /api/v1/qr-enrollment/:token/submit - seafarer submits enrollment form (public)
   fastify.post(
     '/:token/submit',
     {
@@ -142,7 +142,6 @@ async function qrEnrollmentRoutes(fastify) {
           required: ['full_name', 'date_of_birth', 'phone_primary'],
           properties: {
             full_name: { type: 'string' },
-            full_name_en: { type: 'string' },
             date_of_birth: { type: 'string', format: 'date' },
             phone_primary: { type: 'string' },
             email: { type: 'string' },
@@ -196,12 +195,11 @@ async function qrEnrollmentRoutes(fastify) {
           const nationalityId = vn ? vn.id : 1
 
           const [res] = await conn.query(
-            `INSERT INTO seafarer (full_name, full_name_en, date_of_birth, phone_primary, email,
+            `INSERT INTO seafarer (full_name, date_of_birth, phone_primary, email,
             national_id, current_rank_id, seaman_book_number, nationality_id, status)
-           VALUES (?,?,?,?,?,?,?,?,?,'TRAINING')`,
+           VALUES (?,?,?,?,?,?,?,?,'STANDBY')`,
             [
               body.full_name,
-              body.full_name_en || null,
               body.date_of_birth,
               body.phone_primary,
               body.email || null,
@@ -254,7 +252,7 @@ async function qrEnrollmentRoutes(fastify) {
     },
     async (request, reply) => {
       const { role } = request.user
-      if (!['admin', 'operator', 'training_center'].includes(role)) {
+      if (!['admin', 'operator', 'accountant'].includes(role)) {
         return reply.code(403).send({ error: 'Không có quyền' })
       }
       const id = parseInt(request.params.id)
@@ -264,7 +262,7 @@ async function qrEnrollmentRoutes(fastify) {
       )
       if (!link) return reply.code(404).send({ error: 'Không tìm thấy QR link' })
       if (
-        role === 'training_center' &&
+        role === 'accountant' &&
         Number(link.training_center_id) !== Number(request.user.linked_entity_id)
       ) {
         return reply.code(403).send({ error: 'Chỉ được vô hiệu hóa QR của trung tâm mình' })

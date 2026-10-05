@@ -4,7 +4,7 @@ const { importExcel } = require('../../services/import.service')
 const config = require('../../config')
 
 async function importRoutes(fastify) {
-  // POST /api/v1/import/excel — upload file
+  // POST /api/v1/import/excel - upload file
   fastify.post(
     '/excel',
     {
@@ -63,13 +63,18 @@ async function importRoutes(fastify) {
       try {
         const result = await importExcel(tmpPath, request.user.id)
         return { message: 'Import hoàn tất', ...result }
+      } catch (err) {
+        request.log?.error?.({ err }, 'importExcel failed')
+        return reply.code(500).send({ error: err.message || 'Lỗi xử lý file import' })
       } finally {
-        fs.unlinkSync(tmpPath)
+        try {
+          fs.unlinkSync(tmpPath)
+        } catch (_) {}
       }
     }
   )
 
-  // POST /api/v1/import/excel/sample — import file mẫu HD-Hong.xlsx
+  // POST /api/v1/import/excel/sample - import file mẫu HD-Hong.xlsx
   fastify.post(
     '/excel/sample',
     {
@@ -81,7 +86,7 @@ async function importRoutes(fastify) {
       return { message: 'Import file mẫu hoàn tất', ...result }
     }
   )
-  // GET /api/v1/import/excel/template — tải file template
+  // GET /api/v1/import/excel/template - tải file template
   fastify.get(
     '/excel/template',
     {

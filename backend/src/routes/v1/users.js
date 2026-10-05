@@ -6,11 +6,12 @@ const {
 } = require('../../schemas/userSchemas')
 
 function adminOnly(fastify) {
+  const CRUD_ROLES = ['admin', 'operator', 'accountant']
   return {
     onRequest: [fastify.authenticate],
     preHandler: async (request, reply) => {
-      if (request.user.role !== 'admin') {
-        return reply.code(403).send({ message: 'Chỉ admin mới có quyền truy cập' })
+      if (!CRUD_ROLES.includes(request.user.role)) {
+        return reply.code(403).send({ message: 'Không có quyền truy cập' })
       }
     },
   }
@@ -21,7 +22,8 @@ function authRequired(fastify) {
 }
 
 async function usersRoutes(fastify) {
-  // GET /api/v1/users/search?q=... — for messaging user picker (all roles)
+  const PROTECTED_USER_ID = '1' // Bootstrap / super admin account
+  // GET /api/v1/users/search?q=... - for messaging user picker (all roles)
   fastify.get('/search', authRequired(fastify), async (request) => {
     const q = request.query.q || ''
     const list = await userService.searchUsers(q)
@@ -83,6 +85,32 @@ async function usersRoutes(fastify) {
         }
         const target = await userService.getUserById(request.params.id)
         if (!target) return reply.code(404).send({ message: 'Không tìm thấy user' })
+
+        if (String(request.params.id) === PROTECTED_USER_ID) {
+          if (request.body.email !== undefined && request.body.email !== target.email) {
+            return reply.code(403).send({ message: 'Không thể sửa email tài khoản này' })
+          }
+          if (request.body.role !== undefined && request.body.role !== target.role) {
+            return reply.code(403).send({ message: 'Không thể thay đổi role tài khoản này' })
+          }
+          if (request.body.is_active === false && !!target.is_active) {
+            return reply.code(403).send({ message: 'Không thể khóa tài khoản này' })
+          }
+          // Allow password update for protected user.
+        }
+
+        const newPassword = request.body.password
+        if (newPassword !== undefined && String(newPassword).trim().length > 0) {
+          const oldPassword = request.body.password_old
+          if (!oldPassword || String(oldPassword).trim().length === 0) {
+            return reply.code(400).send({ message: 'Thiếu mật khẩu cũ' })
+          }
+          const ok = await userService.verifyUserPassword(request.params.id, oldPassword)
+          if (!ok) {
+            return reply.code(403).send({ message: 'Mật khẩu cũ không đúng' })
+          }
+        }
+
         if (target.role === 'admin' && request.body.is_active === false) {
           return reply.code(403).send({ message: 'Không thể khóa tài khoản admin' })
         }
@@ -96,6 +124,9 @@ async function usersRoutes(fastify) {
 
   // DELETE /api/v1/users/:id
   fastify.delete('/:id', adminOnly(fastify), async (request, reply) => {
+    if (String(request.params.id) === PROTECTED_USER_ID) {
+      return reply.code(403).send({ message: 'Không thể xóa tài khoản này' })
+    }
     if (String(request.user.id) === String(request.params.id)) {
       return reply.code(403).send({ message: 'Không thể xóa tài khoản của chính mình' })
     }
@@ -110,6 +141,9 @@ async function usersRoutes(fastify) {
 
   // PATCH /api/v1/users/:id/toggle-active
   fastify.patch('/:id/toggle-active', adminOnly(fastify), async (request, reply) => {
+    if (String(request.params.id) === PROTECTED_USER_ID) {
+      return reply.code(403).send({ message: 'Không thể thay đổi trạng thái tài khoản này' })
+    }
     if (String(request.user.id) === String(request.params.id)) {
       return reply.code(403).send({ message: 'Không thể tự khóa tài khoản của chính mình' })
     }

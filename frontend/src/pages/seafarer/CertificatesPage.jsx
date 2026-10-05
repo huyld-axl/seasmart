@@ -12,6 +12,7 @@ import {
   Select,
   DatePicker,
   message,
+  Popconfirm,
   Space,
 } from 'antd'
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons'
@@ -20,6 +21,12 @@ import useAuthStore from '../../stores/authStore'
 import dayjs from 'dayjs'
 
 const { useBreakpoint } = Grid
+
+function certificateTypeDisplayName(row) {
+  const en = row?.certificate_type_name_en?.trim?.()
+  const vi = row?.certificate_type_name?.trim?.()
+  return en || vi || '-'
+}
 
 export default function SeafarerCertificatesPage() {
   const { user } = useAuthStore()
@@ -69,23 +76,36 @@ export default function SeafarerCertificatesPage() {
     onError: (e) => message.error(e.response?.data?.error || 'Xóa thất bại'),
   })
 
-  function handleDelete(row) {
-    if (Number(row.created_by) !== Number(user?.id)) return
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc muốn xóa chứng chỉ "${row.certificate_type_name}"?`,
-      okText: 'Xóa',
-      okType: 'danger',
-      onOk: () => deleteMutation.mutate(row.id),
-    })
-  }
+  const deleteFileMutation = useMutation({
+    mutationFn: (id) => seafarerPortalApi.removeCertificateFile(id),
+    onSuccess: () => {
+      message.success('Đã xóa file đính kèm')
+      queryClient.invalidateQueries({ queryKey: ['portal-certificates'] })
+    },
+    onError: (e) => message.error(e.response?.data?.error || 'Xóa file thất bại'),
+  })
 
   const screens = useBreakpoint()
   const isMobile = !screens.md
 
   const columns = [
-    { title: 'Loại chứng chỉ', dataIndex: 'certificate_type_name' },
-    { title: 'Số chứng chỉ', dataIndex: 'certificate_number', width: 160 },
+    {
+      title: 'Tên chứng chỉ (English)',
+      key: 'certificate_type_display',
+      width: 260,
+      render: (_, row) => {
+        const v = certificateTypeDisplayName(row)
+        if (v === '-') return '-'
+        const text = v.length > 60 ? `${v.slice(0, 60)}…` : v
+        return <span title={v}>{text}</span>
+      },
+    },
+    {
+      title: 'Số chứng chỉ',
+      dataIndex: 'certificate_number',
+      width: 160,
+      render: (v) => (typeof v === 'string' ? v.trim() : v) || '-',
+    },
     {
       title: 'Ngày cấp',
       dataIndex: 'issued_date',
@@ -129,12 +149,32 @@ export default function SeafarerCertificatesPage() {
     {
       title: 'File',
       dataIndex: 'document_url',
-      width: 80,
-      render: (v) =>
+      width: 100,
+      render: (v, r) =>
         v ? (
-          <a href={v} target="_blank" rel="noreferrer">
-            Xem
-          </a>
+          <Space size={4}>
+            <a href={v} target="_blank" rel="noreferrer">
+              Xem
+            </a>
+            {Number(r.created_by) === Number(user?.id) && (
+              <Popconfirm
+                title="Xóa file đính kèm?"
+                description="File sẽ bị xóa vĩnh viễn."
+                onConfirm={() => deleteFileMutation.mutate(r.id)}
+                okText="Xóa"
+                cancelText="Hủy"
+                okButtonProps={{ danger: true }}
+              >
+                <Button
+                  type="text"
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  loading={deleteFileMutation.isPending && deleteFileMutation.variables === r.id}
+                />
+              </Popconfirm>
+            )}
+          </Space>
         ) : (
           '-'
         ),
@@ -144,7 +184,21 @@ export default function SeafarerCertificatesPage() {
       width: 80,
       render: (_, r) =>
         Number(r.created_by) === Number(user?.id) ? (
-          <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r)} />
+          <Popconfirm
+            title="Xóa chứng chỉ?"
+            description={`Bạn có chắc muốn xóa "${certificateTypeDisplayName(r)}"?`}
+            onConfirm={() => deleteMutation.mutate(r.id)}
+            okText="Xóa"
+            cancelText="Hủy"
+            okButtonProps={{ danger: true }}
+          >
+            <Button
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              loading={deleteMutation.isPending && deleteMutation.variables === r.id}
+            />
+          </Popconfirm>
         ) : null,
     },
   ]
@@ -176,6 +230,7 @@ export default function SeafarerCertificatesPage() {
           form.resetFields()
           setCertFile(null)
         }}
+        maskClosable={false}
         footer={null}
         width={440}
       >
@@ -202,7 +257,7 @@ export default function SeafarerCertificatesPage() {
           <Form.Item label="File đính kèm">
             <Input
               type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
+              accept=".pdf,.jpg,.jpeg,.png,.webp,.bmp,.tif,.tiff,.gif"
               onChange={(e) => setCertFile(e.target.files?.[0] || null)}
             />
           </Form.Item>
@@ -242,7 +297,9 @@ export default function SeafarerCertificatesPage() {
                 }}
               >
                 <div style={{ flex: 1, marginRight: 8 }}>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{r.certificate_type_name}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>
+                    {certificateTypeDisplayName(r)}
+                  </div>
                   {r.certificate_number && (
                     <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
                       Số: {r.certificate_number}
@@ -274,9 +331,31 @@ export default function SeafarerCertificatesPage() {
                   </span>
                 )}
                 {r.document_url && (
-                  <a href={r.document_url} target="_blank" rel="noreferrer">
-                    Xem file
-                  </a>
+                  <Space size={4}>
+                    <a href={r.document_url} target="_blank" rel="noreferrer">
+                      Xem file
+                    </a>
+                    {Number(r.created_by) === Number(user?.id) && (
+                      <Popconfirm
+                        title="Xóa file đính kèm?"
+                        description="File sẽ bị xóa vĩnh viễn."
+                        onConfirm={() => deleteFileMutation.mutate(r.id)}
+                        okText="Xóa"
+                        cancelText="Hủy"
+                        okButtonProps={{ danger: true }}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                          loading={
+                            deleteFileMutation.isPending && deleteFileMutation.variables === r.id
+                          }
+                        />
+                      </Popconfirm>
+                    )}
+                  </Space>
                 )}
               </div>
             </div>

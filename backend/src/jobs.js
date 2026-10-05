@@ -23,8 +23,8 @@ function startJobs(logger) {
     try {
       const [result] = await pool.query(
         `UPDATE seafarer s
-         SET s.status = 'AVAILABLE', s.updated_at = NOW()
-         WHERE s.status = 'ON_VESSEL'
+         SET s.status = 'STANDBY', s.updated_at = NOW()
+         WHERE s.status = 'ONBOARD'
            AND s.deleted_at IS NULL
            AND NOT EXISTS (
              SELECT 1 FROM employment_contract ec
@@ -49,44 +49,6 @@ function startJobs(logger) {
       logger.info({ affectedRows: result.affectedRows }, 'Job: expired OTPs cleaned up')
     } catch (err) {
       logger.error({ err }, 'Job: failed to cleanup expired OTPs')
-    }
-  })
-
-  // Job 4a (daily 8:00 AM): course reminder — 3 ngày trước khi khóa bắt đầu (TASK-C1)
-  cron.schedule('0 8 * * *', async () => {
-    try {
-      const threeDaysLater = new Date()
-      threeDaysLater.setDate(threeDaysLater.getDate() + 3)
-      const dateStr = threeDaysLater.toISOString().split('T')[0]
-      const [enrollments] = await pool.query(
-        `SELECT e.id, s.email as seafarer_email, s.full_name,
-                tc.name as course_name, tc.start_date, tc.location
-         FROM training_enrollment e
-         JOIN seafarer s ON e.seafarer_id = s.id
-         JOIN training_course tc ON e.course_id = tc.id
-         WHERE e.deleted_at IS NULL AND e.status IN ('APPROVED', 'ACTIVE')
-           AND DATE(tc.start_date) = ?
-           AND s.email IS NOT NULL AND s.email != ''`,
-        [dateStr]
-      )
-      for (const row of enrollments) {
-        const startDate = row.start_date
-          ? new Date(row.start_date).toLocaleDateString('vi-VN')
-          : dateStr
-        await emailService
-          .sendCourseReminder(row.seafarer_email, {
-            full_name: row.full_name,
-            course_name: row.course_name,
-            start_date: startDate,
-            location: row.location || 'Theo thông báo của trung tâm',
-          })
-          .catch((err) =>
-            logger.error({ err, enrollmentId: row.id }, 'Course reminder email failed')
-          )
-      }
-      logger.info({ count: enrollments.length }, 'Job: course reminders sent')
-    } catch (err) {
-      logger.error({ err }, 'Job: failed to send course reminders')
     }
   })
 
@@ -226,27 +188,7 @@ function startJobs(logger) {
     }
   })
 
-  // Job 5 (hourly): waitlist NOTIFIED đã quá confirm_by → EXPIRED, promote next (TASK-C2)
-  const waitlistService = require('./services/waitlist.service')
-  cron.schedule('0 * * * *', async () => {
-    try {
-      const [expired] = await pool.query(
-        'SELECT id, course_id FROM enrollment_waitlist WHERE status = \'NOTIFIED\' AND confirm_by < NOW()'
-      )
-      for (const entry of expired) {
-        await pool.query('UPDATE enrollment_waitlist SET status = \'EXPIRED\' WHERE id = ?', [
-          entry.id,
-        ])
-        await waitlistService
-          .promoteNext(entry.course_id)
-          .catch((err) => logger.error({ err }, 'promoteNext failed'))
-      }
-      if (expired.length)
-        logger.info({ count: expired.length }, 'Job: waitlist expired, promoted next')
-    } catch (err) {
-      logger.error({ err }, 'Job: failed to process waitlist expired')
-    }
-  })
+  // Job 5 (waitlist) removed together with training_center/course/enrollment features.
 
   logger.info('Background jobs started')
 }

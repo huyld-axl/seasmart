@@ -3,7 +3,21 @@ const path = require('path')
 const sgMail = require('@sendgrid/mail')
 const config = require('../config')
 
-sgMail.setApiKey(config.sendgrid.apiKey || 'dummy')
+function shouldSend() {
+  return (
+    !!config.sendgrid.apiKey &&
+    config.sendgrid.apiKey !== 'your_sendgrid_api_key_here' &&
+    String(config.sendgrid.apiKey).startsWith('SG.')
+  )
+}
+
+if (shouldSend()) {
+  sgMail.setApiKey(config.sendgrid.apiKey)
+} else {
+  console.log(
+    '[EMAIL] SendGrid disabled: missing/invalid SENDGRID_API_KEY, fallback to console log mode'
+  )
+}
 
 const TEMPLATES_DIR = path.join(__dirname, '../templates')
 
@@ -22,10 +36,6 @@ function renderTemplate(html, vars) {
     out = out.replace(new RegExp(`{{${k}}}`, 'g'), v != null ? String(v) : '')
   }
   return out
-}
-
-function shouldSend() {
-  return config.sendgrid.apiKey && config.sendgrid.apiKey !== 'your_sendgrid_api_key_here'
 }
 
 const emailService = {

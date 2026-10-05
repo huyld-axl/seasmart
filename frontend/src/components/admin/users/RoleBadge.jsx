@@ -2,10 +2,9 @@ import { Tag } from 'antd'
 
 const ROLE_CONFIG = {
   admin: { color: 'red', label: 'Admin' },
-  operator: { color: 'blue', label: 'Operator' },
-  training_center: { color: 'green', label: 'Training Center' },
-  manning_agent: { color: 'orange', label: 'Manning Agent' },
-  seafarer: { color: 'cyan', label: 'Seafarer' },
+  operator: { color: 'blue', label: 'Chuyên viên' },
+  accountant: { color: 'orange', label: 'Kế toán' },
+  seafarer: { color: 'default', label: 'Thuyền viên' },
 }
 
 export default function RoleBadge({ role }) {

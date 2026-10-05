@@ -1,0 +1,24 @@
+---
+description: Use ASCII hyphen (-) instead of em dash (Unicode U+2014) across the product
+alwaysApply: true
+---
+
+# Dấu gạch ngang: chỉ dùng ASCII `-`
+
+Trong toàn bộ hệ thống Marineport (Marineport Crew Manning), **không** dùng em dash (ký tự Unicode **U+2014**, thường nhập thành dấu gạch ngang dài trong Word). **Luôn** dùng dấu gạch ngang thường ASCII **hyphen-minus** (`-`, U+002D).
+
+## Phạm vi áp dụng
+
+- Chuỗi UI tiếng Việt (frontend): nhãn, thông báo, placeholder, Ant Design `message`/`Modal`, v.v.
+- Thông báo lỗi / validation trả về từ backend (thuộc tính `message` trong lỗi).
+- Tài liệu nội bộ của repo (`README`, `docs/`, task specs, v.v.).
+- Comment trong code nếu cần dấu ngăn cách kiểu dash: dùng `-`.
+
+## Nguyên tắc
+
+- Không chèn ký tự U+2014 trong nội dung mới; nếu gặp thì thay bằng `-`.
+- Copy dán từ Word/Google Docs: hay mang theo U+2014 - chuẩn hóa về `-`.
+
+## Lưu ý
+
+- Dấu `-` trong identifier code, tên biến, slug, URL giữ nguyên quy ước hiện có.

@@ -1,7 +1,7 @@
 # TASK-13: Deploy VPS
 
 ## Why
-Đưa hệ thống lên production — VPS Linux với Nginx + PM2 + MySQL.
+Đưa hệ thống lên production - VPS Linux với Nginx + PM2 + MySQL.
 
 ## Trạng thái: PENDING (làm cuối cùng)
 
@@ -13,7 +13,7 @@
 - Nginx
 - PM2
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Chuẩn bị server
 
@@ -156,9 +156,9 @@ echo "Deploy complete!"
 ```
 
 ## Files cần tạo
-- `backend/.env.example` — template env vars
-- `deploy.sh` — deploy script
-- `ecosystem.config.js` — PM2 config
+- `backend/.env.example` - template env vars
+- `deploy.sh` - deploy script
+- `ecosystem.config.js` - PM2 config
 
 ## PM2 ecosystem config
 

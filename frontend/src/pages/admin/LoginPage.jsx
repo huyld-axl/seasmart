@@ -3,21 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { Form, Input, Button, message } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import useAuthStore from '../../stores/authStore'
+import useTranslation from '../../hooks/useTranslation'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const { login } = useAuthStore()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const onFinish = async ({ email, password }) => {
     setLoading(true)
     try {
-      const user = await login(email, password)
-      if (user.role === 'seafarer') navigate('/seafarer/profile')
-      else if (user.role === 'training_center') navigate('/courses')
-      else navigate('/seafarers')
+      await login(email, password)
+      navigate('/dashboard')
     } catch (err) {
-      message.error(err.response?.data?.error || 'Đăng nhập thất bại')
+      message.error(err.response?.data?.error || t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -37,9 +37,9 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: 380 }}>
         <div style={{ marginBottom: 24, textAlign: 'center' }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
-            MarinePort
+            {t('brand.title')}
           </h2>
-          <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>Đăng nhập để tiếp tục</p>
+          <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>{t('auth.loginSubtitle')}</p>
         </div>
 
         <div
@@ -56,7 +56,7 @@ export default function LoginPage() {
               label="Email"
               name="email"
               style={{ marginBottom: 16 }}
-              rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ' }]}
+              rules={[{ required: true, type: 'email', message: t('auth.emailInvalid') }]}
             >
               <Input
                 prefix={<UserOutlined style={{ color: '#9CA3AF' }} />}
@@ -66,10 +66,10 @@ export default function LoginPage() {
             </Form.Item>
 
             <Form.Item
-              label="Mật khẩu"
+              label={t('auth.password')}
               name="password"
               style={{ marginBottom: 20 }}
-              rules={[{ required: true, message: 'Nhập mật khẩu' }]}
+              rules={[{ required: true, message: t('auth.passwordRequired') }]}
             >
               <Input.Password
                 prefix={<LockOutlined style={{ color: '#9CA3AF' }} />}
@@ -79,7 +79,7 @@ export default function LoginPage() {
             </Form.Item>
 
             <Button type="primary" htmlType="submit" block size="large" loading={loading}>
-              Đăng nhập
+              {t('auth.login')}
             </Button>
           </Form>
         </div>

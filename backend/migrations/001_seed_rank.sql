@@ -14,6 +14,8 @@ INSERT INTO `rank` (code, name_vi, name_en, department, rank_level) VALUES
 ('AB',           'Thủy thủ trực ca',    'Able Seaman',                'DECK',     2),
 ('OSD',          'Thủy thủ thực tập',   'Ordinary Seaman',            'DECK',     2),
 ('OS',           'Thủy thủ thực tập',   'Ordinary Seaman',            'DECK',     2),
+('DO',           'Sỹ quan boong',           'Deck Officer',            'DECK',     1),
+('SEAMAN',       'Thủy thủ',               'Seaman',                  'DECK',     2),
 ('DCADET',       'Thực tập sỹ quan boong', 'Deck Cadet',              'DECK',     3),
 -- ENGINE
 ('CE',           'Máy trưởng',          'Chief Engineer',             'ENGINE',   1),

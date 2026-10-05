@@ -19,6 +19,9 @@ const updateUserSchema = {
       email: { type: 'string', format: 'email' },
       role: { type: 'string', enum: ROLES },
       is_active: { type: 'boolean' },
+      // Optional: allow changing password in "edit user" screen.
+      password: { type: 'string', minLength: 6 },
+      password_old: { type: 'string', minLength: 6 },
     },
   },
 }
@@ -31,7 +34,7 @@ const listUsersQuerySchema = {
       is_active: { type: 'string', enum: ['true', 'false'] },
       email: { type: 'string' },
       page: { type: 'integer', minimum: 1, default: 1 },
-      limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
+      limit: { type: 'integer', minimum: 1, default: 20 },
     },
   },
 }

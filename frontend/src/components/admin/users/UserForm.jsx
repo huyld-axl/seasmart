@@ -1,19 +1,21 @@
 import { useEffect } from 'react'
-import { Drawer, Form, Input, Select, Button, Space, Switch } from 'antd'
+import { Drawer, Form, Input, Select, Button, Space, Switch, Grid } from 'antd'
 
-const ROLES = ['admin', 'operator', 'training_center', 'manning_agent', 'seafarer']
+const { useBreakpoint } = Grid
+
+const ROLES = ['admin', 'operator', 'accountant']
 const ROLE_LABELS = {
   admin: 'Admin',
-  operator: 'Operator',
-  training_center: 'Training Center',
-  manning_agent: 'Manning Agent',
-  seafarer: 'Seafarer',
+  operator: 'Chuyên viên',
+  accountant: 'Kế toán',
 }
 
 export default function UserForm({ open, onClose, onSubmit, initialValues, loading }) {
   const [form] = Form.useForm()
   const isEdit = !!initialValues?.id
-  const isMobile = window.innerWidth < 768
+  const isProtectedUser = isEdit && String(initialValues?.id) === '1'
+  const screens = useBreakpoint()
+  const isMobile = !screens.md
 
   useEffect(() => {
     if (open) {
@@ -24,8 +26,14 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
 
   const handleFinish = (values) => {
     if (isEdit) {
-      const { password: _password, ...rest } = values
-      onSubmit(rest)
+      const { password, password_old, ...rest } = values
+      const newPass = password && String(password).trim()
+      if (newPass && newPass.length > 0) {
+        const oldPass = password_old && String(password_old).trim()
+        onSubmit({ ...rest, password: newPass, password_old: oldPass })
+      } else {
+        onSubmit(rest)
+      }
     } else {
       onSubmit(values)
     }
@@ -55,10 +63,52 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
             { type: 'email', message: 'Email không hợp lệ' },
           ]}
         >
-          <Input placeholder="user@example.com" />
+          <Input placeholder="user@example.com" disabled={isProtectedUser} />
         </Form.Item>
 
-        {!isEdit && (
+        {isEdit ? (
+          <>
+            <Form.Item
+              name="password_old"
+              label="Mật khẩu cũ"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    const newPass = form.getFieldValue('password')
+                    if (!newPass || String(newPass).trim().length === 0) return Promise.resolve()
+                    if (!value || String(value).trim().length === 0) {
+                      return Promise.reject(new Error('Vui lòng nhập mật khẩu cũ'))
+                    }
+                    if (String(value).trim().length < 6) {
+                      return Promise.reject(new Error('Mật khẩu tối thiểu 6 ký tự'))
+                    }
+                    return Promise.resolve()
+                  },
+                },
+              ]}
+            >
+              <Input.Password placeholder="Nhập mật khẩu cũ" />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="Mật khẩu mới (tuỳ chọn)"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    if (!value || String(value).trim().length === 0) return Promise.resolve()
+                    if (String(value).trim().length < 6) {
+                      return Promise.reject(new Error('Mật khẩu tối thiểu 6 ký tự'))
+                    }
+                    return Promise.resolve()
+                  },
+                },
+              ]}
+            >
+              <Input.Password placeholder="Nhập mật khẩu mới nếu muốn đổi" />
+            </Form.Item>
+          </>
+        ) : (
           <Form.Item
             name="password"
             label="Mật khẩu"
@@ -76,7 +126,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
           label="Role"
           rules={[{ required: true, message: 'Vui lòng chọn role' }]}
         >
-          <Select placeholder="Chọn role">
+          <Select placeholder="Chọn role" disabled={isProtectedUser}>
             {ROLES.map((r) => (
               <Select.Option key={r} value={r}>
                 {ROLE_LABELS[r]}
@@ -87,7 +137,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
 
         {isEdit && (
           <Form.Item name="is_active" label="Kích hoạt" valuePropName="checked">
-            <Switch />
+            <Switch disabled={isProtectedUser} />
           </Form.Item>
         )}
       </Form>

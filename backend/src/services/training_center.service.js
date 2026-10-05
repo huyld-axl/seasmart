@@ -65,8 +65,8 @@ const trainingCenterService = {
   async update(id, data, updated_by, requestUser) {
     const center = await this.getById(id)
 
-    // training_center role chỉ được sửa record của chính mình
-    if (requestUser.role === 'training_center' && requestUser.linked_entity_id !== id) {
+    // accountant role chỉ được sửa record của chính mình (linked_entity_id)
+    if (requestUser.role === 'accountant' && requestUser.linked_entity_id !== id) {
       throw { statusCode: 403, message: 'Không có quyền chỉnh sửa trung tâm này' }
     }
 

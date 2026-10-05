@@ -7,17 +7,20 @@ const { startJobs } = require('./src/jobs')
 
 const fastify = Fastify({ logger: true })
 
-// Error handler — phân biệt lỗi user-facing vs internal
+// Error handler - phân biệt lỗi user-facing vs internal
 fastify.setErrorHandler((error, request, reply) => {
   const statusCode = error.statusCode || 500
 
   if (statusCode >= 500) {
-    // Log chi tiết server-side, không lộ ra client
     fastify.log.error(
       { err: error, url: request.url, method: request.method },
       'Internal server error'
     )
-    return reply.code(500).send({ error: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau' })
+    // DEBUG: tạm thời expose error để debug, sẽ remove sau
+    return reply.code(500).send({
+      error: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau',
+      _debug: { code: error.code, message: error.message, sql: error.sql },
+    })
   }
 
   // 4xx: lỗi do client, trả về message an toàn
@@ -29,6 +32,12 @@ fastify.setErrorHandler((error, request, reply) => {
 async function start() {
   await fastify.register(plugins)
   await fastify.register(v1Routes, { prefix: '/api/v1' })
+
+  // fastify.addHook('onSend', async (request, reply) => {
+  //   if (request.url.startsWith('/api/')) {
+  //     reply.header('Cache-Control', 'no-store')
+  //   }
+  // })
 
   // Health check
   fastify.get('/health', async () => ({ status: 'ok' }))

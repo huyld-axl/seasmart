@@ -1,4 +1,4 @@
-# TASK-B1: API — Approve/Reject Enrollment
+# TASK-B1: API - Approve/Reject Enrollment
 
 ## Why
 Sau khi thuyền viên tự đăng ký (TASK-B2) hoặc được import (TASK-B4), enrollment ở trạng thái `PENDING`.
@@ -18,27 +18,27 @@ PUT /api/v1/enrollments/:id/reject
 ```
 
 ### PUT /:id/approve
-- **Role**: admin, operator, training_center
+- **Role**: admin, operator, accountant
 - **Body**: `{ notes?: string }`
 - **Logic**:
   1. Lấy enrollment, kiểm tra tồn tại
   2. Kiểm tra status = 'PENDING' (chỉ duyệt được PENDING)
-  3. Kiểm tra role training_center: chỉ duyệt enrollment thuộc course của mình (`linked_entity_id`)
-  4. Kiểm tra lại `max_students` — nếu đầy thì trả 409
+  3. Kiểm tra role accountant: chỉ duyệt enrollment thuộc course của mình (`linked_entity_id`)
+  4. Kiểm tra lại `max_students` - nếu đầy thì trả 409
   5. UPDATE: `status = 'APPROVED'`, `approved_by = req.user.id`, `approved_at = NOW()`
   6. Trigger notification (TASK-C1): gửi email cho seafarer
 
 ### PUT /:id/reject
-- **Role**: admin, operator, training_center
-- **Body**: `{ reason: string }` — bắt buộc có lý do
+- **Role**: admin, operator, accountant
+- **Body**: `{ reason: string }` - bắt buộc có lý do
 - **Logic**:
   1. Lấy enrollment, kiểm tra tồn tại
   2. Kiểm tra status = 'PENDING'
-  3. Kiểm tra quyền training_center (chỉ reject course của mình)
+  3. Kiểm tra quyền accountant (chỉ reject course của mình)
   4. UPDATE: `status = 'REJECTED'`, `reject_reason = body.reason`, `approved_by = req.user.id`, `approved_at = NOW()`
   5. Trigger notification (TASK-C1): gửi email cho seafarer kèm lý do
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Thêm hàm vào enrollment.service.js
 
@@ -72,13 +72,13 @@ async reject(id, userId, reason) {
 ### Bước 2: Thêm routes vào enrollment.routes.js
 
 ```js
-fastify.put('/:id/approve', { preHandler: [authenticate, authorize(['admin','operator','training_center'])] }, approveHandler);
-fastify.put('/:id/reject',  { preHandler: [authenticate, authorize(['admin','operator','training_center'])] }, rejectHandler);
+fastify.put('/:id/approve', { preHandler: [authenticate, authorize(['admin','operator','accountant'])] }, approveHandler);
+fastify.put('/:id/reject',  { preHandler: [authenticate, authorize(['admin','operator','accountant'])] }, rejectHandler);
 ```
 
-### Bước 3: Kiểm tra quyền training_center
+### Bước 3: Kiểm tra quyền accountant
 ```js
-if (req.user.role === 'training_center') {
+if (req.user.role === 'accountant') {
   const course = await getCourse(enrollment.course_id);
   if (course.training_center_id !== req.user.linked_entity_id) {
     throw new ForbiddenError();
@@ -90,6 +90,6 @@ if (req.user.role === 'training_center') {
 - [ ] Approve enrollment PENDING → status = APPROVED
 - [ ] Reject enrollment PENDING → status = REJECTED, reject_reason được lưu
 - [ ] Không approve/reject enrollment không ở trạng thái PENDING → 400
-- [ ] training_center chỉ approve/reject course của mình → 403 nếu sai
+- [ ] accountant chỉ approve/reject course của mình → 403 nếu sai
 - [ ] Approve khi course đầy → 409
 - [ ] reject thiếu reason → 400

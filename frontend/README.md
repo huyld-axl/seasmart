@@ -1,16 +1,38 @@
-# React + Vite
+# Frontend - Marineport
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ứng dụng React cho các vai trò vận hành trong hệ thống Marineport.
 
-Currently, two official plugins are available:
+## Tech stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19
+- Vite 8
+- Ant Design 6
+- React Query 5
+- Zustand 5
+- React Router 7
+- Vitest + Testing Library
 
-## React Compiler
+## Cấu trúc thư mục
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `src/api`: lớp gọi API theo module
+- `src/components`: component tái sử dụng
+- `src/layouts`: layout theo khu vực màn hình
+- `src/pages`: màn hình theo route
+- `src/stores`: Zustand stores
+- `src/hooks`, `src/utils`, `src/contexts`: shared logic
 
-## Expanding the ESLint configuration
+## Scripts
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run dev        # chạy local dev server
+npm run build      # build production
+npm run preview    # preview bản build
+npm run lint       # lint source
+npm run test       # chạy test 1 lần
+npm run test:watch # chạy test watch mode
+```
+
+## Môi trường
+
+- Frontend đọc URL backend từ biến môi trường Vite (prefix `VITE_`).
+- Đảm bảo backend đang chạy trước khi test luồng chức năng có gọi API.

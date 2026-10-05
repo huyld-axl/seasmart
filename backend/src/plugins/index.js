@@ -8,7 +8,7 @@ const rateLimit = require('@fastify/rate-limit')
 const config = require('../config')
 
 module.exports = fp(async function (fastify) {
-  // Rate limiting (global default — routes can override)
+  // Rate limiting (global default - routes can override)
   await fastify.register(rateLimit, {
     global: true,
     max: 300,
@@ -28,6 +28,7 @@ module.exports = fp(async function (fastify) {
     },
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
+    exposedHeaders: ['Content-Disposition'],
   })
 
   // JWT
@@ -46,6 +47,13 @@ module.exports = fp(async function (fastify) {
   await fastify.register(staticFiles, {
     root: path.join(__dirname, '../../public'),
     prefix: '/public/',
+  })
+
+  // Uploaded files (certificates, avatars, ...)
+  await fastify.register(staticFiles, {
+    root: path.resolve(process.cwd(), config.upload.dir),
+    prefix: '/uploads/',
+    decorateReply: false,
   })
 
   // Auth decorator

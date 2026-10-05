@@ -1,4 +1,4 @@
-# TASK-D1: Export Dữ Liệu Từ Sheet Data Ra Các Form — HD - Hong.xlsx
+# TASK-D1: Export Dữ Liệu Từ Sheet Data Ra Các Form - HD - Hong.xlsx
 
 ## Why
 File HD - Hong.xlsx chứa sheet Data với thông tin thuyền viên/hợp đồng, và nhiều sheet form (hợp đồng, cam kết, biểu mẫu...).
@@ -38,7 +38,7 @@ Trước khi code, cần đọc file để xác định:
 
 **→ Cần xem cấu trúc file thực tế để chọn phương án phù hợp**
 
-## How — Các bước thực hiện (sau khi khảo sát)
+## How - Các bước thực hiện (sau khi khảo sát)
 
 ### Bước 1: Đọc và phân tích file
 ```python

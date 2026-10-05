@@ -7,23 +7,31 @@ const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const ALLOWED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png']
 
 const certificateService = {
-  async list(seafarerId, { page = 1, limit = 50 } = {}) {
+  async list(seafarerId, { page = 1, limit = 9999, certificate_type_id } = {}) {
     const offset = (page - 1) * limit
+    const filters = [seafarerId]
+    let whereExtra = ''
+    if (certificate_type_id) {
+      whereExtra = ' AND sc.certificate_type_id = ?'
+      filters.push(certificate_type_id)
+    }
     const [rows] = await pool.query(
       `SELECT sc.*,
               ct.name_vi as certificate_type_name,
+              ct.name_en as certificate_type_name_en,
+              ct.warning_before_months,
               c.name_vi  as issued_at_country_name
        FROM seafarer_certificate sc
        LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
        LEFT JOIN country c ON c.id = sc.issued_at_country_id
-       WHERE sc.seafarer_id = ? AND sc.deleted_at IS NULL
+       WHERE sc.seafarer_id = ? AND sc.deleted_at IS NULL${whereExtra}
        ORDER BY sc.expiry_date ASC
        LIMIT ? OFFSET ?`,
-      [seafarerId, limit, offset]
+      [...filters, limit, offset]
     )
     const [[{ total }]] = await pool.query(
-      'SELECT COUNT(*) as total FROM seafarer_certificate WHERE seafarer_id = ? AND deleted_at IS NULL',
-      [seafarerId]
+      `SELECT COUNT(*) as total FROM seafarer_certificate WHERE seafarer_id = ? AND deleted_at IS NULL${whereExtra}`,
+      filters
     )
     return { data: rows, total, page, limit }
   },
@@ -32,6 +40,8 @@ const certificateService = {
     const [rows] = await pool.query(
       `SELECT sc.*,
               ct.name_vi as certificate_type_name,
+              ct.name_en as certificate_type_name_en,
+              ct.warning_before_months,
               c.name_vi  as issued_at_country_name
        FROM seafarer_certificate sc
        LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
@@ -44,6 +54,20 @@ const certificateService = {
   },
 
   async create(seafarerId, data, created_by) {
+    if (data.certificate_type_id && data.issued_date) {
+      const [[dup]] = await pool.query(
+        `SELECT id FROM seafarer_certificate
+         WHERE seafarer_id = ? AND certificate_type_id = ? AND issued_date = ? AND deleted_at IS NULL
+         LIMIT 1`,
+        [seafarerId, data.certificate_type_id, data.issued_date]
+      )
+      if (dup) {
+        throw {
+          statusCode: 409,
+          message: 'Chứng chỉ cùng loại và cùng ngày cấp đã tồn tại cho thuyền viên này.',
+        }
+      }
+    }
     const [result] = await pool.query(
       'INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?',
       [data, seafarerId, created_by, created_by]
@@ -52,10 +76,9 @@ const certificateService = {
   },
 
   async update(id, seafarerId, data, updated_by) {
-    await this.getById(id, seafarerId)
     await pool.query(
-      'UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
-      [data, updated_by, id]
+      'UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ? AND seafarer_id = ? AND deleted_at IS NULL',
+      [data, updated_by, id, seafarerId]
     )
     return this.getById(id, seafarerId)
   },
@@ -67,6 +90,25 @@ const certificateService = {
       [updated_by, id]
     )
     return { success: true }
+  },
+
+  async deleteFile(id, seafarerId, updated_by) {
+    const cert = await this.getById(id, seafarerId)
+    if (!cert.document_url) {
+      throw { statusCode: 400, message: 'Chứng chỉ này không có file đính kèm' }
+    }
+    const filename = cert.document_url.split('/').pop()
+    const filePath = path.join(config.upload.dir, 'certificates', String(seafarerId), filename)
+    try {
+      await fs.promises.unlink(filePath)
+    } catch {
+      // File không tồn tại trên disk — tiếp tục xóa DB
+    }
+    await pool.query(
+      'UPDATE seafarer_certificate SET document_url = NULL, updated_by = ?, updated_at = NOW() WHERE id = ?',
+      [updated_by, id]
+    )
+    return this.getById(id, seafarerId)
   },
 
   async uploadFile(id, seafarerId, file, updated_by) {
@@ -95,7 +137,7 @@ const certificateService = {
 
     const filename = `${id}_${Date.now()}${ext}`
     const filepath = path.join(uploadDir, filename)
-    fs.writeFileSync(filepath, fileBuffer)
+    await fs.promises.writeFile(filepath, fileBuffer)
 
     const document_url = `/uploads/certificates/${seafarerId}/${filename}`
     await pool.query(

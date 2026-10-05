@@ -15,6 +15,8 @@ export default function UserDetailPage() {
   const deleteUser = useDeleteUser()
   const [drawerOpen, setDrawerOpen] = useState(false)
 
+  const isProtectedUser = user && String(user.id) === '1'
+
   function handleDeleteClick() {
     Modal.confirm({
       title: 'Xác nhận xóa',
@@ -43,6 +45,7 @@ export default function UserDetailPage() {
           icon={<DeleteOutlined />}
           onClick={handleDeleteClick}
           loading={deleteUser.isPending}
+          disabled={isProtectedUser}
         >
           Xóa user
         </Button>
@@ -73,6 +76,7 @@ export default function UserDetailPage() {
         style={{ marginTop: 16 }}
         onClick={() => toggleActive.mutate(id)}
         loading={toggleActive.isPending}
+        disabled={isProtectedUser}
       >
         {user.is_active ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'}
       </Button>

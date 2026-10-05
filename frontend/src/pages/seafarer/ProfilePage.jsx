@@ -145,9 +145,6 @@ export default function SeafarerProfilePage() {
           <Form.Item label="SĐT chính" name="phone_primary">
             <Input placeholder="0901234567" />
           </Form.Item>
-          <Form.Item label="SĐT phụ" name="phone_secondary">
-            <Input />
-          </Form.Item>
           <Form.Item label="Email liên hệ" name="email">
             <Input />
           </Form.Item>

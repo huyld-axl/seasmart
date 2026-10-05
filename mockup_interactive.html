@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crew Manning - Interactive Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Roboto', -apple-system, 'Segoe UI', sans-serif; font-size: 14px; color: #121212; background: #fff; }
+:root {
+  --primary: #003366; --primary-hover: #00264d; --link: #1677ff;
+  --border: #f0f0f0; --border-std: #D9D9D9; --text: #121212;
+  --text-sec: #595959; --text-muted: #8c8c8c; --bg-content: #f5f5f5;
+  --sidebar-bg: #001529; --sidebar-w: 240px; --header-h: 56px;
+  --radius: 2px; --radius-card: 8px;
+}
+
+/* ═══ Layout (matches AdminLayout.css exactly) ═══ */
+.admin-layout { display: flex; min-height: 100vh; }
+.admin-layout__sider {
+  width: var(--sidebar-w); background: var(--sidebar-bg);
+  position: fixed; top: 0; left: 0; bottom: 0;
+  display: flex; flex-direction: column; z-index: 200; overflow: hidden;
+  transition: width .2s;
+}
+.admin-layout__sider.collapsed { width: 80px; }
+.admin-layout__logo {
+  height: var(--header-h); display: flex; align-items: center;
+  padding: 0 20px; border-bottom: 1px solid rgba(255,255,255,.1);
+  color: #fff; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden;
+}
+.admin-layout__sider.collapsed .admin-layout__logo { justify-content: center; padding: 0; }
+
+/* ═══ Sidebar Menu (Ant Design dark theme replica) ═══ */
+.ant-menu-dark { list-style: none; padding: 4px; margin-top: 8px; flex: 1; overflow-y: auto; }
+.ant-menu-dark li { margin-bottom: 4px; }
+.ant-menu-dark li a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px 10px 24px; border-radius: 8px;
+  color: rgba(255,255,255,.65); text-decoration: none; font-size: 14px;
+  transition: all .2s; cursor: pointer;
+}
+.ant-menu-dark li a:hover { color: #fff; background: rgba(255,255,255,.06); }
+.ant-menu-dark li a.ant-menu-item-selected { background: var(--primary); color: #fff; }
+.ant-menu-dark li a .anticon { width: 16px; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; }
+.admin-layout__sider.collapsed .ant-menu-dark li a { padding: 10px 0; justify-content: center; }
+.admin-layout__sider.collapsed .ant-menu-dark li a span:not(.anticon) { display: none; }
+.menu-bottom { border-top: 1px solid rgba(255,255,255,.1); padding: 4px; }
+.menu-bottom ul { list-style: none; }
+.menu-bottom li a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px 10px 24px; border-radius: 8px;
+  color: rgba(255,255,255,.65); text-decoration: none; font-size: 14px; transition: all .2s; cursor: pointer;
+}
+.menu-bottom li a:hover { color: #fff; background: rgba(255,255,255,.06); }
+.menu-bottom li a.ant-menu-item-selected { background: var(--primary); color: #fff; }
+/* ═══ Header (matches AdminLayout.css) ═══ */
+.admin-layout__header {
+  position: fixed; top: 0; left: var(--sidebar-w); right: 0;
+  height: var(--header-h); background: #fff;
+  border-bottom: 1px solid #f0f0f0; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; z-index: 100; transition: left .2s;
+}
+.admin-layout__sider.collapsed ~ .admin-layout__main .admin-layout__header,
+.sider-collapsed .admin-layout__header { left: 80px; }
+.admin-layout__header-trigger { cursor: pointer; font-size: 18px; color: #262626; background: none; border: none; padding: 4px; }
+.admin-layout__user { cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.admin-layout__user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.admin-layout__user-email { font-size: 14px; color: #262626; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ═══ Content ═══ */
+.admin-layout__content {
+  margin-left: var(--sidebar-w); margin-top: var(--header-h);
+  padding: 24px; min-height: calc(100vh - var(--header-h)); background: var(--bg-content);
+  transition: margin-left .2s;
+}
+.admin-layout__sider.collapsed ~ .admin-layout__content { margin-left: 80px; }
+
+/* ═══ Page elements ═══ */
+.page { display: none; }
+.page.active { display: block; }
+.page-title { font-size: 20px; font-weight: 600; color: #262626; margin-bottom: 16px; }
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+
+/* ═══ Stat cards (matches SeafarerListPage) ═══ */
+.stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
+.stat-card { border-radius: 8px; padding: 12px 16px; border: 1px solid; cursor: pointer; transition: opacity .2s; }
+.stat-card.dimmed { opacity: .6; }
+.stat-val { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.stat-lbl { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+
+/* ═══ Filter panel (matches frontend) ═══ */
+.filter-panel { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.filter-title { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+.filter-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.filter-section { margin-top: 14px; }
+.filter-section-label { font-size: 12px; color: var(--text-sec); font-weight: 500; margin-bottom: 4px; }
+
+/* ═══ Ant Design replica components ═══ */
+.ant-input { height: 32px; border: 1px solid var(--border-std); border-radius: 6px; padding: 0 11px; font-size: 14px; font-family: inherit; color: var(--text); outline: none; background: #fff; }
+.ant-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,51,102,.06); }
+.ant-input-search { padding-left: 30px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%238c8c8c' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85zm-5.242.656a5 5 0 1 1 0-10 5 5 0 0 1 0 10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: 10px center; }
+.ant-select { height: 32px; border: 1px solid var(--border-std); border-radius: 6px; padding: 0 28px 0 11px; font-size: 14px; font-family: inherit; color: var(--text); outline: none; background: #fff; appearance: none; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+.ant-select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,51,102,.06); }
+
+/* ═══ Buttons (Ant Design style) ═══ */
+.ant-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 15px; font-size: 14px; border-radius: 6px; border: 1px solid; cursor: pointer; font-family: inherit; font-weight: 400; white-space: nowrap; transition: all .15s; background: #fff; color: var(--text); border-color: var(--border-std); }
+.ant-btn:hover { color: var(--primary); border-color: var(--primary); }
+.ant-btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.ant-btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+.ant-btn-sm { height: 24px; padding: 0 7px; font-size: 12px; }
+.ant-btn-danger { color: #ff4d4f; border-color: #ff4d4f; }
+.ant-btn-danger:hover { color: #ff7875; border-color: #ff7875; }
+.ant-btn-text { border: none; background: none; box-shadow: none; }
+.ant-btn-text:hover { background: #f5f5f5; }
+.ant-btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-toggle { height: 24px; padding: 0 8px; font-size: 12px; border-radius: 6px; border: 1px solid var(--border-std); background: #fff; color: var(--text); cursor: pointer; font-family: inherit; transition: all .15s; }
+.btn-toggle:hover { color: var(--primary); border-color: var(--primary); }
+.btn-toggle.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ═══ Tags (Ant Design) ═══ */
+.ant-tag { display: inline-block; font-size: 12px; padding: 0 7px; border-radius: 4px; border: 1px solid; line-height: 20px; white-space: nowrap; }
+.ant-tag-green { background: #f6ffed; border-color: #b7eb8f; color: #389e0d; }
+.ant-tag-gold { background: #fffbe6; border-color: #ffe58f; color: #d48806; }
+.ant-tag-red { background: #fff1f0; border-color: #ffa39e; color: #cf1322; }
+.ant-tag-blue { background: #e6f4ff; border-color: #91caff; color: #1677ff; }
+.ant-tag-orange { background: #fff7e6; border-color: #ffd591; color: #d46b08; }
+.ant-tag-default { background: #fafafa; border-color: #d9d9d9; color: #595959; }
+
+/* ═══ Table (Ant Design) ═══ */
+.ant-table-wrapper { background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+table.ant-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.ant-table thead tr th { background: #fafafa; color: var(--text-sec); font-weight: 500; font-size: 13px; padding: 12px 16px; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: left; }
+table.ant-table tbody tr td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.ant-table tbody tr:last-child td { border-bottom: none; }
+table.ant-table tbody tr:hover td { background: #fafafa; }
+table.ant-table tbody tr { cursor: pointer; transition: background .15s; }
+
+/* ═══ Pagination ═══ */
+.ant-pagination { display: flex; align-items: center; gap: 8px; padding: 12px 16px; justify-content: flex-end; border-top: 1px solid var(--border); font-size: 14px; }
+.pg-total { color: var(--text-sec); margin-right: auto; font-size: 13px; }
+.pg-btn { min-width: 32px; height: 32px; border: 1px solid var(--border-std); border-radius: 6px; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--text); padding: 0 8px; }
+.pg-btn:hover { color: var(--primary); border-color: var(--primary); }
+.pg-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+/* ═══ Modal (Ant Design) ═══ */
+.ant-modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity .2s; }
+.ant-modal-mask.show { opacity: 1; pointer-events: auto; }
+.ant-modal { background: #fff; border-radius: 8px; width: 680px; max-width: 90vw; max-height: 85vh; overflow-y: auto; box-shadow: 0 6px 16px rgba(0,0,0,.08); transform: translateY(20px); transition: transform .2s; }
+.ant-modal-mask.show .ant-modal { transform: translateY(0); }
+.ant-modal-header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.ant-modal-header h3 { font-size: 16px; font-weight: 600; margin: 0; }
+.ant-modal-close { width: 28px; height: 28px; border: none; background: none; cursor: pointer; font-size: 18px; color: var(--text-muted); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.ant-modal-close:hover { background: #f5f5f5; }
+.ant-modal-body { padding: 24px; }
+.ant-modal-footer { padding: 12px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ═══ Form ═══ */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 14px; color: var(--text); margin-bottom: 6px; }
+.form-group .req { color: #ff4d4f; }
+.form-control { width: 100%; height: 32px; border: 1px solid var(--border-std); border-radius: 6px; padding: 0 11px; font-size: 14px; font-family: inherit; outline: none; color: var(--text); }
+.form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,51,102,.06); }
+select.form-control { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; padding-right: 28px; cursor: pointer; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* ═══ Toast / Message ═══ */
+.ant-message { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ant-message-notice { background: #fff; border-radius: 8px; padding: 9px 12px; box-shadow: 0 6px 16px rgba(0,0,0,.08); display: flex; align-items: center; gap: 8px; font-size: 14px; animation: msgIn .3s ease; }
+.ant-message-success i { color: #52c41a; }
+.ant-message-error i { color: #ff4d4f; }
+@keyframes msgIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ═══ Login ═══ */
+.login-page { min-height: 100vh; background: #F5F5F5; display: flex; align-items: center; justify-content: center; padding: 24px; position: fixed; inset: 0; z-index: 9999; transition: opacity .3s; }
+.login-page.hidden { opacity: 0; pointer-events: none; }
+.login-wrap { width: 100%; max-width: 380px; }
+.login-brand { text-align: center; margin-bottom: 24px; }
+.login-brand h2 { font-size: 20px; font-weight: 700; color: #111827; margin: 0 0 4px; }
+.login-brand p { font-size: 14px; color: #6B7280; margin: 0; }
+.login-card { background: #fff; border-radius: 8px; padding: 24px; border: 1px solid var(--border-std); }
+.login-field { margin-bottom: 16px; }
+.login-field label { display: block; font-size: 14px; color: var(--text); margin-bottom: 6px; }
+.login-field .input-wrap { position: relative; }
+.login-field .input-wrap .prefix { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 14px; }
+.login-field .input-wrap input { width: 100%; height: 40px; border: 1px solid var(--border-std); border-radius: 6px; padding: 0 11px 0 34px; font-size: 14px; font-family: inherit; outline: none; }
+.login-field .input-wrap input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,51,102,.1); }
+
+/* ═══ Section / Card ═══ */
+.section { background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; }
+.section-header { padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 600; font-size: 14px; color: var(--text); background: #fafafa; border-radius: 8px 8px 0 0; }
+.section-body { padding: 16px; }
+.desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+.desc-item { display: flex; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.desc-item:last-child { border-bottom: none; }
+.desc-label { color: var(--text-sec); min-width: 130px; flex-shrink: 0; }
+.desc-value { color: var(--text); }
+
+/* ═══ Dashboard ═══ */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.activity-list { list-style: none; }
+.activity-item { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.activity-item:last-child { border-bottom: none; }
+.activity-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.activity-text { font-size: 13px; line-height: 1.5; }
+.activity-time { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* ═══ Dropdown ═══ */
+.dropdown { position: relative; display: inline-block; }
+.dropdown-menu { position: absolute; top: 100%; right: 0; background: #fff; border-radius: 8px; box-shadow: 0 6px 16px rgba(0,0,0,.12); padding: 4px; min-width: 140px; z-index: 300; display: none; }
+.dropdown-menu.show { display: block; }
+.dropdown-menu a { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 14px; color: var(--text); cursor: pointer; }
+.dropdown-menu a:hover { background: #f5f5f5; }
+.dropdown-menu a.danger { color: #ff4d4f; }
+
+/* ═══ Responsive ═══ */
+@media (max-width: 768px) {
+  .stat-grid { grid-template-columns: repeat(2,1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<!-- ═══ LOGIN ═══ -->
+<div class="login-page" id="login-overlay">
+  <div class="login-wrap">
+    <div class="login-brand"><h2>Crew Manning</h2><p>Đăng nhập để tiếp tục</p></div>
+    <div class="login-card">
+      <div class="login-field"><label>Email</label><div class="input-wrap"><i class="fa-regular fa-user prefix"></i><input type="email" id="login-email" value="admin@marineport.vn"></div></div>
+      <div class="login-field" style="margin-bottom:20px"><label>Mật khẩu</label><div class="input-wrap"><i class="fa-solid fa-lock prefix" style="font-size:13px"></i><input type="password" id="login-pass" value="demo123"></div></div>
+      <button class="ant-btn ant-btn-primary" style="width:100%;height:40px;font-size:16px;justify-content:center;border-radius:6px" onclick="doLogin()">Đăng nhập</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="admin-layout">
+<aside class="admin-layout__sider" id="sider">
+  <div class="admin-layout__logo" id="logo-text">Crew Manning</div>
+  <ul class="ant-menu-dark" id="main-menu">
+    <li><a onclick="nav('dashboard')" id="nav-dashboard" class="ant-menu-item-selected"><span class="anticon"><i class="fa-solid fa-th-large"></i></span> <span>Tổng quan</span></a></li>
+    <li><a onclick="nav('seafarers')" id="nav-seafarers"><span class="anticon"><i class="fa-solid fa-users"></i></span> <span>Thuyền viên</span></a></li>
+    <li><a onclick="nav('partners')" id="nav-partners"><span class="anticon"><i class="fa-solid fa-building-columns"></i></span> <span>Đối tác</span></a></li>
+    <li><a onclick="nav('deployments')" id="nav-deployments"><span class="anticon"><i class="fa-solid fa-right-left"></i></span> <span>Văn bản-HĐ-QĐ</span></a></li>
+    <li><a onclick="nav('vessels')" id="nav-vessels"><span class="anticon"><i class="fa-solid fa-sitemap"></i></span> <span>Danh mục tàu</span></a></li>
+    <li><a onclick="nav('jobs')" id="nav-jobs"><span class="anticon"><i class="fa-solid fa-file-lines"></i></span> <span>Công việc</span></a></li>
+  </ul>
+  <div class="menu-bottom">
+    <ul>
+      <li><a onclick="nav('users')" id="nav-users"><span class="anticon"><i class="fa-solid fa-user-gear"></i></span> <span>Quản lý User</span></a></li>
+    </ul>
+  </div>
+</aside>
+
+<!-- ═══ HEADER ═══ -->
+<header class="admin-layout__header" id="header">
+  <button class="admin-layout__header-trigger" onclick="toggleSider()"><i class="fa-solid fa-bars" id="trigger-icon"></i></button>
+  <div class="dropdown">
+    <div class="admin-layout__user" onclick="toggleDropdown()">
+      <div class="admin-layout__user-avatar"><i class="fa-solid fa-user" style="font-size:14px"></i></div>
+      <span class="admin-layout__user-email">admin@marineport.vn</span>
+    </div>
+    <div class="dropdown-menu" id="user-dropdown">
+      <a class="danger" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ CONTENT ═══ -->
+<main class="admin-layout__content" id="content">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-title">Tổng quan</div>
+    <div class="stat-grid">
+      <div class="stat-card" style="background:#f0f5ff;border-color:#adc6ff" onclick="nav('seafarers')">
+        <div class="stat-val" style="color:#003366">247</div>
+        <div class="stat-lbl">Tổng thuyền viên</div>
+      </div>
+      <div class="stat-card" style="background:#fffbe6;border-color:#ffe58f" onclick="nav('deployments')">
+        <div class="stat-val" style="color:#d48806">38</div>
+        <div class="stat-lbl">Đang đi biển</div>
+      </div>
+      <div class="stat-card" style="background:#f6ffed;border-color:#b7eb8f">
+        <div class="stat-val" style="color:#52c41a">156</div>
+        <div class="stat-lbl">Sẵn sàng</div>
+      </div>
+      <div class="stat-card" style="background:#fff1f0;border-color:#ffa39e">
+        <div class="stat-val" style="color:#cf1322">53</div>
+        <div class="stat-lbl">Đã rời tàu</div>
+      </div>
+    </div>
+    <div class="dash-grid">
+      <div class="section">
+        <div class="section-header">Hoạt động gần đây</div>
+        <div class="section-body"><ul class="activity-list" id="activity-list"></ul></div>
+      </div>
+      <div class="section">
+        <div class="section-header">Sắp hết hạn hợp đồng</div>
+        <div class="section-body"><ul class="activity-list" id="expiring-list"></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEAFARERS -->
+  <div class="page" id="page-seafarers">
+    <div class="page-title">Thuyền viên</div>
+    <div class="stat-grid" id="sf-stats"></div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;gap:8px;flex-wrap:wrap">
+      <button class="ant-btn"><i class="fa-solid fa-download"></i> Xuất Excel</button>
+      <button class="ant-btn"><i class="fa-solid fa-upload"></i> Import</button>
+      <button class="ant-btn ant-btn-primary" onclick="openModal('seafarer-modal')"><i class="fa-solid fa-plus"></i> Thêm mới</button>
+    </div>
+    <div class="filter-panel">
+      <div class="filter-title">Bộ lọc</div>
+      <div class="filter-row">
+        <input class="ant-input ant-input-search" style="width:300px" placeholder="Tìm tên, mã, SĐT..." id="sf-search" oninput="filterSeafarers()">
+        <select class="ant-select" style="min-width:160px" id="sf-status" onchange="filterSeafarers()"><option value="">Trạng thái</option><option value="STANDBY">Sẵn sàng</option><option value="ONBOARD">Đang đi biển</option><option value="SIGNOFF">Đã rời tàu</option></select>
+      </div>
+      <div class="filter-section">
+        <div class="filter-section-label">Lọc theo chức danh</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px" id="rank-filters"></div>
+      </div>
+    </div>
+    <div class="ant-table-wrapper">
+      <table class="ant-table"><thead><tr><th>Mã TV</th><th>Chức danh</th><th>Họ tên</th><th>Trạng thái</th><th>Ngày sinh</th><th>Tỉnh</th><th>SĐT</th><th>Liên hệ</th><th></th></tr></thead><tbody id="sf-tbody"></tbody></table>
+      <div class="ant-pagination" id="sf-pagination"></div>
+    </div>
+  </div>
+
+  <!-- SEAFARER DETAIL -->
+  <div class="page" id="page-seafarer-detail"></div>
+
+  <!-- PARTNERS -->
+  <div class="page" id="page-partners">
+    <div class="page-header"><div class="page-title" style="margin-bottom:0">Đối tác</div><button class="ant-btn ant-btn-primary" onclick="openModal('partner-modal')"><i class="fa-solid fa-plus"></i> Thêm đối tác</button></div>
+    <div class="ant-table-wrapper">
+      <table class="ant-table"><thead><tr><th>Tên công ty</th><th>Quốc gia</th><th>Số tàu</th><th>TV đang cung cấp</th><th>Email liên hệ</th><th>Trạng thái</th></tr></thead><tbody id="partner-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- JOBS -->
+  <div class="page" id="page-jobs">
+    <div class="page-header"><div class="page-title" style="margin-bottom:0">Công việc</div><button class="ant-btn ant-btn-primary" onclick="openModal('job-modal')"><i class="fa-solid fa-plus"></i> Tạo công việc</button></div>
+    <div class="filter-panel">
+      <div class="filter-row">
+        <select class="ant-select" id="job-status" onchange="renderJobs()"><option value="">Tất cả trạng thái</option><option value="open">Đang tuyển</option><option value="filled">Đã tuyển</option><option value="closed">Đã đóng</option></select>
+        <select class="ant-select" id="job-partner" onchange="renderJobs()"><option value="">Tất cả đối tác</option></select>
+      </div>
+    </div>
+    <div class="ant-table-wrapper">
+      <table class="ant-table"><thead><tr><th>Vị trí</th><th>Tàu</th><th>Đối tác</th><th>Lương (USD)</th><th>Ngày lên tàu</th><th>Trạng thái</th></tr></thead><tbody id="job-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- DEPLOYMENTS -->
+  <div class="page" id="page-deployments">
+    <div class="page-title">Văn bản-HĐ-QĐ</div>
+    <div class="ant-table-wrapper">
+      <table class="ant-table"><thead><tr><th>Thuyền viên</th><th>Chức danh</th><th>Tàu</th><th>Ngày lên tàu</th><th>Ngày rời tàu</th><th>Trạng thái</th></tr></thead><tbody id="deploy-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- VESSELS -->
+  <div class="page" id="page-vessels">
+    <div class="page-title">Danh mục tàu</div>
+    <div class="filter-panel">
+      <div class="filter-title">Tra cứu tàu theo IMO</div>
+      <div class="filter-row">
+        <input class="ant-input" style="width:200px;font-family:monospace" id="imo-input" placeholder="7 chữ số (vd: 9876543)" maxlength="7" oninput="this.value=this.value.replace(/\D/g,'')">
+        <button class="ant-btn ant-btn-primary" onclick="searchByImo()" id="imo-btn"><i class="fa-solid fa-magnifying-glass"></i> Tra cứu IMO</button>
+        <button class="ant-btn" onclick="searchByImo(true)" id="imo-refresh-btn" title="Buộc lấy lại từ nguồn ngoài"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+      </div>
+      <div id="imo-result" style="margin-top:14px"></div>
+    </div>
+    <div class="ant-table-wrapper">
+      <table class="ant-table"><thead><tr><th>Tên tàu</th><th>IMO</th><th>Loại tàu</th><th>Đối tác</th><th>DWT</th><th>Năm đóng</th><th>Cờ</th></tr></thead><tbody id="vessel-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="page" id="page-users">
+    <div class="page-header"><div class="page-title" style="margin-bottom:0">Quản lý User</div><button class="ant-btn ant-btn-primary" onclick="showMsg('Tính năng demo','success')"><i class="fa-solid fa-plus"></i> Thêm user</button></div>
+    <div class="ant-table-wrapper">
+      <table class="ant-table"><thead><tr><th>Email</th><th>Họ tên</th><th>Vai trò</th><th>Trạng thái</th><th>Đăng nhập cuối</th></tr></thead><tbody id="user-tbody"></tbody></table>
+    </div>
+  </div>
+
+</main>
+</div><!-- /admin-layout -->
+
+<!-- ═══ MESSAGE CONTAINER ═══ -->
+<div class="ant-message" id="msg-container"></div>
+
+<!-- ═══ MODALS ═══ -->
+<div class="ant-modal-mask" id="seafarer-modal">
+  <div class="ant-modal">
+    <div class="ant-modal-header"><h3>Thêm thuyền viên</h3><button class="ant-modal-close" onclick="closeModal('seafarer-modal')">&times;</button></div>
+    <div class="ant-modal-body">
+      <div class="form-row">
+        <div class="form-group"><label>Họ tên <span class="req">*</span></label><input class="form-control" id="sf-form-name" placeholder="Nguyễn Văn A"></div>
+        <div class="form-group"><label>Chức danh <span class="req">*</span></label><select class="form-control" id="sf-form-rank"><option>CAPT</option><option>C/E</option><option>C/O</option><option>2/E</option><option>BSN</option><option>AB</option><option>2/O</option><option>3/O</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Số điện thoại</label><input class="form-control" id="sf-form-phone" placeholder="0901234567"></div>
+        <div class="form-group"><label>Ngày sinh</label><input class="form-control" type="date" id="sf-form-dob"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Tỉnh/TP</label><input class="form-control" id="sf-form-province" placeholder="Hải Phòng"></div>
+        <div class="form-group"><label>Mã thuyền viên</label><input class="form-control" id="sf-form-code" placeholder="TV-XXX"></div>
+      </div>
+    </div>
+    <div class="ant-modal-footer"><button class="ant-btn" onclick="closeModal('seafarer-modal')">Hủy</button><button class="ant-btn ant-btn-primary" onclick="addSeafarer()">Lưu</button></div>
+  </div>
+</div>
+
+<div class="ant-modal-mask" id="partner-modal">
+  <div class="ant-modal" style="width:520px">
+    <div class="ant-modal-header"><h3>Thêm đối tác</h3><button class="ant-modal-close" onclick="closeModal('partner-modal')">&times;</button></div>
+    <div class="ant-modal-body">
+      <div class="form-row"><div class="form-group"><label>Tên công ty <span class="req">*</span></label><input class="form-control" id="pt-form-name"></div><div class="form-group"><label>Quốc gia</label><input class="form-control" id="pt-form-country" placeholder="Singapore"></div></div>
+      <div class="form-group"><label>Email liên hệ</label><input class="form-control" id="pt-form-email" placeholder="contact@company.com"></div>
+    </div>
+    <div class="ant-modal-footer"><button class="ant-btn" onclick="closeModal('partner-modal')">Hủy</button><button class="ant-btn ant-btn-primary" onclick="addPartner()">Lưu</button></div>
+  </div>
+</div>
+
+<div class="ant-modal-mask" id="job-modal">
+  <div class="ant-modal" style="width:520px">
+    <div class="ant-modal-header"><h3>Tạo công việc mới</h3><button class="ant-modal-close" onclick="closeModal('job-modal')">&times;</button></div>
+    <div class="ant-modal-body">
+      <div class="form-row"><div class="form-group"><label>Vị trí <span class="req">*</span></label><select class="form-control" id="job-form-rank"><option>CAPT</option><option>C/E</option><option>C/O</option><option>2/E</option><option>AB</option></select></div><div class="form-group"><label>Tàu</label><select class="form-control" id="job-form-vessel"></select></div></div>
+      <div class="form-row"><div class="form-group"><label>Lương (USD)</label><input class="form-control" type="number" id="job-form-salary" placeholder="3000"></div><div class="form-group"><label>Ngày lên tàu</label><input class="form-control" type="date" id="job-form-date"></div></div>
+    </div>
+    <div class="ant-modal-footer"><button class="ant-btn" onclick="closeModal('job-modal')">Hủy</button><button class="ant-btn ant-btn-primary" onclick="addJob()">Lưu</button></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════ CONFIG ═══════════════
+const API = 'http://localhost:3000/api/v1'
+let authToken = null
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(authToken ? { Authorization: 'Bearer ' + authToken } : {}), ...(opts.headers || {}) },
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error || data.message || res.statusText)
+  return data
+}
+
+// ═══════════════ MOCK DATA ═══════════════
+const RANKS = ['CAPT','C/E','C/O','2/E','BSN','AB','2/O','3/O','OS','WPR','CK','ELC'];
+const SEAFARERS = [
+  { id:1, code:'TV-001', name:'Nguyễn Văn Hùng', rank:'CAPT', status:'ONBOARD', vessel:'MV Pacific Star', phone:'0901234567', dob:'15/03/1975', province:'Hải Phòng', passport:'B12345678', coc:'III/2', exp:22 },
+  { id:2, code:'TV-002', name:'Trần Minh Đức', rank:'C/E', status:'ONBOARD', vessel:'MV Ocean Glory', phone:'0912345678', dob:'20/06/1978', province:'Quảng Ninh', passport:'B23456789', coc:'III/2', exp:18 },
+  { id:3, code:'TV-003', name:'Lê Hoàng Nam', rank:'C/O', status:'STANDBY', vessel:'-', phone:'0923456789', dob:'05/11/1982', province:'Hà Nội', passport:'B34567890', coc:'II/2', exp:14 },
+  { id:4, code:'TV-004', name:'Phạm Quốc Bảo', rank:'2/E', status:'STANDBY', vessel:'-', phone:'0934567890', dob:'22/01/1985', province:'Đà Nẵng', passport:'B45678901', coc:'III/3', exp:11 },
+  { id:5, code:'TV-005', name:'Hoàng Văn Tùng', rank:'BSN', status:'ONBOARD', vessel:'MV Blue Horizon', phone:'0945678901', dob:'10/07/1980', province:'Thanh Hóa', passport:'B56789012', coc:'II/4', exp:16 },
+  { id:6, code:'TV-006', name:'Vũ Đình Khoa', rank:'AB', status:'SIGNOFF', vessel:'-', phone:'0956789012', dob:'18/04/1990', province:'Nam Định', passport:'B67890123', coc:'II/4', exp:7 },
+  { id:7, code:'TV-007', name:'Đỗ Thanh Sơn', rank:'2/O', status:'STANDBY', vessel:'-', phone:'0967890123', dob:'30/09/1988', province:'Hải Phòng', passport:'B78901234', coc:'II/2', exp:9 },
+  { id:8, code:'TV-008', name:'Ngô Quang Hải', rank:'3/O', status:'ONBOARD', vessel:'MV Pacific Star', phone:'0978901234', dob:'25/12/1992', province:'Nghệ An', passport:'B89012345', coc:'II/3', exp:5 },
+  { id:9, code:'TV-009', name:'Bùi Văn Thắng', rank:'CAPT', status:'STANDBY', vessel:'-', phone:'0989012345', dob:'08/05/1973', province:'Hải Phòng', passport:'B90123456', coc:'III/2', exp:25 },
+  { id:10, code:'TV-010', name:'Đinh Công Minh', rank:'C/E', status:'SIGNOFF', vessel:'-', phone:'0990123456', dob:'14/08/1976', province:'Quảng Ninh', passport:'B01234567', coc:'III/2', exp:20 },
+  { id:11, code:'TV-011', name:'Lý Văn Phong', rank:'C/O', status:'ONBOARD', vessel:'MV Ocean Glory', phone:'0901111222', dob:'28/02/1984', province:'Hà Nội', passport:'C12345678', coc:'II/2', exp:13 },
+  { id:12, code:'TV-012', name:'Trương Quốc Việt', rank:'AB', status:'STANDBY', vessel:'-', phone:'0912222333', dob:'12/10/1993', province:'Bình Định', passport:'C23456789', coc:'II/4', exp:4 },
+  { id:13, code:'TV-013', name:'Phan Đức Long', rank:'2/E', status:'ONBOARD', vessel:'MV Blue Horizon', phone:'0923333444', dob:'05/06/1986', province:'Khánh Hòa', passport:'C34567890', coc:'III/3', exp:12 },
+  { id:14, code:'TV-014', name:'Cao Văn Đạt', rank:'BSN', status:'SIGNOFF', vessel:'-', phone:'0934444555', dob:'20/03/1979', province:'Thái Bình', passport:'C45678901', coc:'II/4', exp:17 },
+  { id:15, code:'TV-015', name:'Mai Xuân Trường', rank:'2/O', status:'ONBOARD', vessel:'MV Saigon Express', phone:'0945555666', dob:'15/07/1989', province:'Hải Dương', passport:'C56789012', coc:'II/2', exp:8 },
+  { id:16, code:'TV-016', name:'Nguyễn Thanh Tùng', rank:'OS', status:'STANDBY', vessel:'-', phone:'0956666777', dob:'03/11/1995', province:'Hải Phòng', passport:'C67890123', coc:'II/5', exp:2 },
+  { id:17, code:'TV-017', name:'Trần Đại Nghĩa', rank:'AB', status:'STANDBY', vessel:'-', phone:'0967777888', dob:'22/09/1991', province:'Quảng Ninh', passport:'C78901234', coc:'II/4', exp:6 },
+  { id:18, code:'TV-018', name:'Lê Minh Tuấn', rank:'WPR', status:'ONBOARD', vessel:'MV Maersk Hanoi', phone:'0978888999', dob:'17/04/1987', province:'Nghệ An', passport:'C89012345', coc:'II/5', exp:10 },
+  { id:19, code:'TV-019', name:'Phạm Văn Hòa', rank:'CK', status:'STANDBY', vessel:'-', phone:'0989999000', dob:'08/12/1988', province:'Thanh Hóa', passport:'C90123456', coc:'IV/2', exp:9 },
+  { id:20, code:'TV-020', name:'Hoàng Đức Anh', rank:'ELC', status:'ONBOARD', vessel:'MV NYK Cosmos', phone:'0901010101', dob:'25/06/1983', province:'Hà Nội', passport:'D12345678', coc:'III/6', exp:15 },
+];
+
+const PARTNERS = [
+  { id:1, name:'Pacific Maritime Corp', country:'Singapore', vessels:5, crew:18, contact:'ops@pacificmaritime.sg', status:'active' },
+  { id:2, name:'Ocean Star Shipping', country:'Nhật Bản', vessels:3, crew:12, contact:'crew@oceanstar.jp', status:'active' },
+  { id:3, name:'Blue Horizon Ltd', country:'Hàn Quốc', vessels:4, crew:8, contact:'hr@bluehorizon.kr', status:'active' },
+  { id:4, name:'Global Tankers Inc', country:'Hy Lạp', vessels:6, crew:0, contact:'manning@globaltankers.gr', status:'active' },
+  { id:5, name:'Vinalines', country:'Việt Nam', vessels:8, crew:22, contact:'crew@vinalines.com.vn', status:'active' },
+  { id:6, name:'Evergreen Marine', country:'Đài Loan', vessels:2, crew:5, contact:'ops@evergreen.tw', status:'inactive' },
+  { id:7, name:'Maersk Vietnam', country:'Đan Mạch', vessels:3, crew:9, contact:'crew@maersk.com', status:'active' },
+  { id:8, name:'NYK Line', country:'Nhật Bản', vessels:2, crew:6, contact:'manning@nyk.co.jp', status:'active' },
+];
+
+const VESSELS = [
+  { name:'MV Pacific Star', imo:'9876543', type:'Bulk Carrier', partner:'Pacific Maritime Corp', dwt:'58,000', year:2018, flag:'Panama' },
+  { name:'MV Ocean Glory', imo:'9765432', type:'Container', partner:'Ocean Star Shipping', dwt:'42,000', year:2020, flag:'Liberia' },
+  { name:'MV Blue Horizon', imo:'9654321', type:'Tanker', partner:'Blue Horizon Ltd', dwt:'75,000', year:2016, flag:'Marshall Islands' },
+  { name:'MV Saigon Express', imo:'9543210', type:'Container', partner:'Vinalines', dwt:'35,000', year:2019, flag:'Việt Nam' },
+  { name:'MV Global Fortune', imo:'9432109', type:'Bulk Carrier', partner:'Global Tankers Inc', dwt:'82,000', year:2015, flag:'Hy Lạp' },
+  { name:'MV Maersk Hanoi', imo:'9321098', type:'Container', partner:'Maersk Vietnam', dwt:'65,000', year:2021, flag:'Đan Mạch' },
+  { name:'MV Evergreen Bay', imo:'9210987', type:'Container', partner:'Evergreen Marine', dwt:'48,000', year:2017, flag:'Panama' },
+  { name:'MV NYK Cosmos', imo:'9109876', type:'Car Carrier', partner:'NYK Line', dwt:'22,000', year:2022, flag:'Nhật Bản' },
+];
+
+const JOBS = [
+  { id:1, rank:'CAPT', vessel:'MV Global Fortune', partner:'Global Tankers Inc', salary:8500, date:'15/06/2025', status:'open' },
+  { id:2, rank:'C/E', vessel:'MV Maersk Hanoi', partner:'Maersk Vietnam', salary:7800, date:'01/06/2025', status:'open' },
+  { id:3, rank:'C/O', vessel:'MV Pacific Star', partner:'Pacific Maritime Corp', salary:5500, date:'20/05/2025', status:'filled' },
+  { id:4, rank:'AB', vessel:'MV Ocean Glory', partner:'Ocean Star Shipping', salary:1800, date:'10/06/2025', status:'open' },
+  { id:5, rank:'2/E', vessel:'MV NYK Cosmos', partner:'NYK Line', salary:4200, date:'01/07/2025', status:'open' },
+  { id:6, rank:'2/O', vessel:'MV Saigon Express', partner:'Vinalines', salary:3800, date:'15/05/2025', status:'filled' },
+  { id:7, rank:'BSN', vessel:'MV Blue Horizon', partner:'Blue Horizon Ltd', salary:2500, date:'20/06/2025', status:'open' },
+  { id:8, rank:'CAPT', vessel:'MV Evergreen Bay', partner:'Evergreen Marine', salary:7500, date:'01/04/2025', status:'closed' },
+];
+
+const DEPLOYMENTS = [
+  { seafarer:'Nguyễn Văn Hùng', rank:'CAPT', vessel:'MV Pacific Star', join:'01/12/2024', leave:null, status:'active' },
+  { seafarer:'Trần Minh Đức', rank:'C/E', vessel:'MV Ocean Glory', join:'15/01/2025', leave:null, status:'active' },
+  { seafarer:'Hoàng Văn Tùng', rank:'BSN', vessel:'MV Blue Horizon', join:'20/11/2024', leave:null, status:'active' },
+  { seafarer:'Ngô Quang Hải', rank:'3/O', vessel:'MV Pacific Star', join:'01/02/2025', leave:null, status:'active' },
+  { seafarer:'Lý Văn Phong', rank:'C/O', vessel:'MV Ocean Glory', join:'15/01/2025', leave:null, status:'active' },
+  { seafarer:'Phan Đức Long', rank:'2/E', vessel:'MV Blue Horizon', join:'05/10/2024', leave:null, status:'active' },
+  { seafarer:'Mai Xuân Trường', rank:'2/O', vessel:'MV Saigon Express', join:'01/03/2025', leave:null, status:'active' },
+  { seafarer:'Lê Minh Tuấn', rank:'WPR', vessel:'MV Maersk Hanoi', join:'10/02/2025', leave:null, status:'active' },
+  { seafarer:'Hoàng Đức Anh', rank:'ELC', vessel:'MV NYK Cosmos', join:'01/01/2025', leave:null, status:'active' },
+  { seafarer:'Bùi Văn Thắng', rank:'CAPT', vessel:'MV Global Fortune', join:'01/06/2024', leave:'15/12/2024', status:'completed' },
+  { seafarer:'Đinh Công Minh', rank:'C/E', vessel:'MV Saigon Express', join:'10/03/2024', leave:'30/09/2024', status:'completed' },
+];
+
+const USERS = [
+  { email:'admin@marineport.vn', name:'Admin', role:'admin', status:'active', last:'12/05/2025 08:30' },
+  { email:'operator1@marineport.vn', name:'Nguyễn Thị Lan', role:'operator', status:'active', last:'12/05/2025 09:15' },
+  { email:'operator2@marineport.vn', name:'Trần Văn Bình', role:'operator', status:'active', last:'11/05/2025 16:45' },
+  { email:'accountant@marineport.vn', name:'Lê Thị Hoa', role:'accountant', status:'active', last:'10/05/2025 14:20' },
+];
+// ═══════════════ CORE FUNCTIONS ═══════════════
+let activeRanks = [];
+
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ant-menu-dark a, .menu-bottom a').forEach(a => a.classList.remove('ant-menu-item-selected'));
+  document.getElementById('page-' + page).classList.add('active');
+  const el = document.getElementById('nav-' + page);
+  if (el) el.classList.add('ant-menu-item-selected');
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim()
+  const pass = document.getElementById('login-pass').value
+  if (!email || !pass) { showMsg('Vui lòng nhập email và mật khẩu', 'error'); return; }
+  const btn = document.querySelector('#login-overlay button')
+  btn.disabled = true; btn.textContent = 'Đang đăng nhập...'
+  try {
+    const res = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password: pass }) })
+    authToken = res.token
+    document.querySelector('.admin-layout__user-email').textContent = res.user?.email || email
+    document.getElementById('login-overlay').classList.add('hidden')
+    showMsg('Đăng nhập thành công')
+  } catch (e) {
+    showMsg(e.message || 'Đăng nhập thất bại', 'error')
+  } finally {
+    btn.disabled = false; btn.textContent = 'Đăng nhập'
+  }
+}
+function doLogout() {
+  authToken = null
+  document.getElementById('login-overlay').classList.remove('hidden')
+  document.getElementById('user-dropdown').classList.remove('show')
+}
+
+function toggleSider() {
+  const sider = document.getElementById('sider');
+  const content = document.getElementById('content');
+  const header = document.getElementById('header');
+  sider.classList.toggle('collapsed');
+  if (sider.classList.contains('collapsed')) {
+    content.style.marginLeft = '80px';
+    header.style.left = '80px';
+    document.getElementById('logo-text').textContent = 'CM';
+  } else {
+    content.style.marginLeft = '';
+    header.style.left = '';
+    document.getElementById('logo-text').textContent = 'Crew Manning';
+  }
+}
+
+function toggleDropdown() {
+  document.getElementById('user-dropdown').classList.toggle('show');
+}
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.dropdown')) document.getElementById('user-dropdown').classList.remove('show');
+});
+
+function showMsg(text, type) {
+  const c = document.getElementById('msg-container');
+  const icon = type === 'error' ? 'fa-circle-xmark' : 'fa-circle-check';
+  const cls = type === 'error' ? 'ant-message-error' : 'ant-message-success';
+  const el = document.createElement('div');
+  el.className = 'ant-message-notice ' + cls;
+  el.innerHTML = '<i class="fa-solid ' + icon + '"></i> ' + text;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+// ═══════════════ SEAFARERS ═══════════════
+const STATUS_MAP = { STANDBY:{label:'Sẵn sàng',cls:'ant-tag-green'}, ONBOARD:{label:'Đang đi biển',cls:'ant-tag-gold'}, SIGNOFF:{label:'Đã rời tàu',cls:'ant-tag-red'} };
+
+function getStats() {
+  const s = { ONBOARD:0, STANDBY:0, SIGNOFF:0 };
+  SEAFARERS.forEach(sf => s[sf.status]++);
+  return s;
+}
+
+function renderSfStats() {
+  const s = getStats();
+  const total = SEAFARERS.length;
+  document.getElementById('sf-stats').innerHTML =
+    '<div class="stat-card" style="background:#f0f5ff;border-color:#adc6ff" onclick="setSfFilter(\'\')"><div class="stat-val" style="color:#003366">' + total + '</div><div class="stat-lbl">Tổng thuyền viên</div></div>' +
+    '<div class="stat-card" style="background:#fffbe6;border-color:#ffe58f" onclick="setSfFilter(\'ONBOARD\')"><div class="stat-val" style="color:#d48806">' + s.ONBOARD + '</div><div class="stat-lbl">Đang đi biển</div></div>' +
+    '<div class="stat-card" style="background:#f6ffed;border-color:#b7eb8f" onclick="setSfFilter(\'STANDBY\')"><div class="stat-val" style="color:#52c41a">' + s.STANDBY + '</div><div class="stat-lbl">Sẵn sàng</div></div>' +
+    '<div class="stat-card" style="background:#fff1f0;border-color:#ffa39e" onclick="setSfFilter(\'SIGNOFF\')"><div class="stat-val" style="color:#cf1322">' + s.SIGNOFF + '</div><div class="stat-lbl">Đã rời tàu</div></div>';
+}
+
+function setSfFilter(status) {
+  document.getElementById('sf-status').value = status;
+  filterSeafarers();
+}
+
+function filterSeafarers() {
+  const search = document.getElementById('sf-search').value.toLowerCase();
+  const status = document.getElementById('sf-status').value;
+  let data = SEAFARERS.filter(s => {
+    if (search && !s.name.toLowerCase().includes(search) && !s.code.toLowerCase().includes(search) && !s.phone.includes(search)) return false;
+    if (status && s.status !== status) return false;
+    if (activeRanks.length && !activeRanks.includes(s.rank)) return false;
+    return true;
+  });
+  renderSfTable(data);
+  // dim stat cards
+  document.querySelectorAll('#sf-stats .stat-card').forEach((card, i) => {
+    if (i === 0) card.style.opacity = status ? '.6' : '1';
+    else {
+      const keys = ['','ONBOARD','STANDBY','SIGNOFF'];
+      card.style.opacity = (status && status !== keys[i]) ? '.6' : '1';
+    }
+  });
+}
+
+function renderSfTable(data) {
+  if (!data) data = SEAFARERS;
+  document.getElementById('sf-tbody').innerHTML = data.map(s => {
+    const st = STATUS_MAP[s.status];
+    return '<tr onclick="showSfDetail('+s.id+')"><td>'+s.code+'</td><td>'+s.rank+'</td><td><a style="color:#1677ff;text-decoration:none" onclick="event.stopPropagation();showSfDetail('+s.id+')">'+s.name+'</a></td><td><span class="ant-tag '+st.cls+'">'+st.label+'</span></td><td>'+s.dob+'</td><td>'+(s.province||'-')+'</td><td>'+s.phone+'</td><td><span class="ant-tag ant-tag-blue" style="cursor:pointer;font-size:11px">Chưa gọi</span></td><td><button class="ant-btn ant-btn-sm" onclick="event.stopPropagation();showSfDetail('+s.id+')">Chi tiết</button></td></tr>';
+  }).join('');
+  document.getElementById('sf-pagination').innerHTML = '<span class="pg-total">Tổng ' + data.length + ' thuyền viên</span><button class="pg-btn active">1</button>';
+}
+
+function renderRankFilters() {
+  document.getElementById('rank-filters').innerHTML = RANKS.map(r =>
+    '<button class="btn-toggle" onclick="toggleRank(this,\''+r+'\')">'+r+'</button>'
+  ).join('');
+}
+
+function toggleRank(el, rank) {
+  el.classList.toggle('active');
+  if (activeRanks.includes(rank)) activeRanks = activeRanks.filter(r => r !== rank);
+  else activeRanks.push(rank);
+  filterSeafarers();
+}
+
+function showSfDetail(id) {
+  const s = SEAFARERS.find(x => x.id === id);
+  if (!s) return;
+  const st = STATUS_MAP[s.status];
+  const deps = DEPLOYMENTS.filter(d => d.seafarer === s.name);
+  const depHtml = deps.length ?
+    '<table class="ant-table"><thead><tr><th>Tàu</th><th>Chức danh</th><th>Ngày lên</th><th>Ngày rời</th><th>Trạng thái</th></tr></thead><tbody>' +
+    deps.map(d => '<tr><td>'+d.vessel+'</td><td>'+d.rank+'</td><td>'+d.join+'</td><td>'+(d.leave||'-')+'</td><td><span class="ant-tag '+(d.status==='active'?'ant-tag-green':'ant-tag-default')+'">'+(d.status==='active'?'Đang hoạt động':'Hoàn thành')+'</span></td></tr>').join('') +
+    '</tbody></table>' :
+    '<div style="text-align:center;padding:24px;color:#8c8c8c"><i class="fa-solid fa-ship" style="font-size:32px;opacity:.3;display:block;margin-bottom:8px"></i>Chưa có lịch sử điều động</div>';
+
+  document.getElementById('page-seafarer-detail').innerHTML =
+    '<div style="margin-bottom:16px"><a style="color:#1677ff;cursor:pointer;text-decoration:none" onclick="nav(\'seafarers\')"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a></div>' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><span style="font-size:20px;font-weight:600">'+s.name+'</span><span class="ant-tag '+st.cls+'">'+st.label+'</span></div>' +
+    '<div class="section"><div class="section-header">Thông tin cá nhân</div><div class="section-body"><div class="desc-grid">' +
+    '<div class="desc-item"><span class="desc-label">Mã TV:</span><span class="desc-value">'+s.code+'</span></div>' +
+    '<div class="desc-item"><span class="desc-label">Chức danh:</span><span class="desc-value">'+s.rank+'</span></div>' +
+    '<div class="desc-item"><span class="desc-label">Ngày sinh:</span><span class="desc-value">'+s.dob+'</span></div>' +
+    '<div class="desc-item"><span class="desc-label">SĐT:</span><span class="desc-value">'+s.phone+'</span></div>' +
+    '<div class="desc-item"><span class="desc-label">Tỉnh/TP:</span><span class="desc-value">'+s.province+'</span></div>' +
+    '<div class="desc-item"><span class="desc-label">Hộ chiếu:</span><span class="desc-value">'+s.passport+'</span></div>' +
+    '<div class="desc-item"><span class="desc-label">COC:</span><span class="desc-value">'+s.coc+'</span></div>' +
+    '<div class="desc-item"><span class="desc-label">Kinh nghiệm:</span><span class="desc-value">'+s.exp+' năm</span></div>' +
+    '</div></div></div>' +
+    '<div class="section"><div class="section-header">Lịch sử điều động</div><div class="section-body" style="padding:0">'+depHtml+'</div></div>';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-seafarer-detail').classList.add('active');
+}
+
+function addSeafarer() {
+  const name = document.getElementById('sf-form-name').value;
+  if (!name) { showMsg('Vui lòng nhập họ tên','error'); return; }
+  const rank = document.getElementById('sf-form-rank').value;
+  const phone = document.getElementById('sf-form-phone').value || '0900000000';
+  const code = document.getElementById('sf-form-code').value || 'TV-' + String(SEAFARERS.length+1).padStart(3,'0');
+  const province = document.getElementById('sf-form-province').value || '-';
+  SEAFARERS.push({ id:SEAFARERS.length+1, code, name, rank, status:'STANDBY', vessel:'-', phone, dob:'-', province, passport:'NEW', coc:'-', exp:0 });
+  closeModal('seafarer-modal');
+  renderSfStats(); filterSeafarers();
+  showMsg('Đã thêm thuyền viên: ' + name);
+  document.getElementById('sf-form-name').value = '';
+}
+
+// ═══════════════ PARTNERS ═══════════════
+function renderPartners() {
+  document.getElementById('partner-tbody').innerHTML = PARTNERS.map(p =>
+    '<tr><td style="font-weight:500">'+p.name+'</td><td>'+p.country+'</td><td>'+p.vessels+'</td><td>'+p.crew+'</td><td>'+p.contact+'</td><td><span class="ant-tag '+(p.status==='active'?'ant-tag-green':'ant-tag-default')+'">'+(p.status==='active'?'Hoạt động':'Ngừng')+'</span></td></tr>'
+  ).join('');
+}
+function addPartner() {
+  const name = document.getElementById('pt-form-name').value;
+  if (!name) { showMsg('Vui lòng nhập tên công ty','error'); return; }
+  PARTNERS.push({ id:PARTNERS.length+1, name, country:document.getElementById('pt-form-country').value||'N/A', vessels:0, crew:0, contact:document.getElementById('pt-form-email').value||'', status:'active' });
+  closeModal('partner-modal'); renderPartners();
+  showMsg('Đã thêm đối tác: ' + name);
+}
+
+// ═══════════════ JOBS ═══════════════
+const JOB_ST = { open:{l:'Đang tuyển',c:'ant-tag-blue'}, filled:{l:'Đã tuyển',c:'ant-tag-green'}, closed:{l:'Đã đóng',c:'ant-tag-default'} };
+function renderJobs() {
+  const sf = document.getElementById('job-status').value;
+  const pf = document.getElementById('job-partner').value;
+  const data = JOBS.filter(j => (!sf || j.status===sf) && (!pf || j.partner===pf));
+  document.getElementById('job-tbody').innerHTML = data.map(j => {
+    const st = JOB_ST[j.status];
+    return '<tr><td style="font-weight:500">'+j.rank+'</td><td>'+j.vessel+'</td><td>'+j.partner+'</td><td>'+j.salary.toLocaleString()+'</td><td>'+j.date+'</td><td><span class="ant-tag '+st.c+'">'+st.l+'</span></td></tr>';
+  }).join('');
+}
+function addJob() {
+  const rank = document.getElementById('job-form-rank').value;
+  JOBS.push({ id:JOBS.length+1, rank, vessel:'MV Pacific Star', partner:'Pacific Maritime Corp', salary:parseInt(document.getElementById('job-form-salary').value)||3000, date:'01/07/2025', status:'open' });
+  closeModal('job-modal'); renderJobs();
+  showMsg('Đã tạo công việc: ' + rank);
+}
+
+// ═══════════════ DEPLOYMENTS ═══════════════
+function renderDeploys() {
+  document.getElementById('deploy-tbody').innerHTML = DEPLOYMENTS.map(d =>
+    '<tr><td style="font-weight:500">'+d.seafarer+'</td><td>'+d.rank+'</td><td>'+d.vessel+'</td><td>'+d.join+'</td><td>'+(d.leave||'-')+'</td><td><span class="ant-tag '+(d.status==='active'?'ant-tag-green':'ant-tag-default')+'">'+(d.status==='active'?'Đang hoạt động':'Hoàn thành')+'</span></td></tr>'
+  ).join('');
+}
+
+// ═══════════════ VESSELS ═══════════════
+function renderVessels() {
+  document.getElementById('vessel-tbody').innerHTML = VESSELS.map(v =>
+    '<tr><td style="font-weight:500">'+v.name+'</td><td>'+v.imo+'</td><td>'+v.type+'</td><td>'+v.partner+'</td><td>'+v.dwt+'</td><td>'+v.year+'</td><td>'+v.flag+'</td></tr>'
+  ).join('');
+}
+
+async function searchByImo(forceRefresh) {
+  if (!authToken) { showMsg('Vui lòng đăng nhập trước', 'error'); return; }
+  const imo = document.getElementById('imo-input').value.trim()
+  if (!/^\d{7}$/.test(imo)) { showMsg('IMO phải gồm đúng 7 chữ số', 'error'); return; }
+  const resultEl = document.getElementById('imo-result')
+  const btn = document.getElementById('imo-btn')
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang tra cứu...'
+  resultEl.innerHTML = ''
+  try {
+    const path = '/vessels/external/' + imo + (forceRefresh ? '?refresh=1' : '')
+    const res = await apiFetch(path)
+    const v = res.vessel || {}
+    const ext = res.external?.data || {}
+    const rows = [
+      ['Tên tàu', v.vessel_name],
+      ['IMO', v.imo_number],
+      ['MMSI', v.mmsi || '-'],
+      ['Hô hiệu (Call sign)', v.call_sign || '-'],
+      ['Loại tàu', v.vessel_type || '-'],
+      ['Cờ quốc gia', v.flag_country || '-'],
+      ['DWT', v.deadweight ? Number(v.deadweight).toLocaleString() + ' tấn' : '-'],
+      ['GRT', v.gross_tonnage ? Number(v.gross_tonnage).toLocaleString() : '-'],
+      ['Năm đóng', v.year_built || '-'],
+      ['Hội đăng kiểm', v.classification_society || '-'],
+      ['Trạng thái đăng kiểm', v.class_status || '-'],
+      ['Trạng thái khai thác', v.lifecycle_status || '-'],
+      ['Công suất máy (kW)', v.engine_power_kw || '-'],
+      ['Loại máy', v.engine_type || '-'],
+      ['Quản lý kỹ thuật', v.technical_manager || '-'],
+      ['Vùng hoạt động', v.trade_area || (ext.trade_area) || '-'],
+      ['Cập nhật lúc', v.updated_at ? new Date(v.updated_at).toLocaleString('vi-VN') : '-'],
+    ]
+    resultEl.innerHTML =
+      '<div style="background:#f6ffed;border:1px solid #b7eb8f;border-radius:8px;padding:14px;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><i class="fa-solid fa-ship" style="color:#389e0d"></i><span style="font-weight:600;font-size:15px">' + (v.vessel_name||'') + '</span></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 24px">' +
+      rows.map(([label, val]) =>
+        '<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid #d9f7be;font-size:13px">' +
+        '<span style="color:#595959;min-width:160px;flex-shrink:0">' + label + ':</span>' +
+        '<span style="font-weight:500">' + (val ?? '-') + '</span></div>'
+      ).join('') +
+      '</div></div>'
+  } catch (e) {
+    resultEl.innerHTML = '<div style="background:#fff1f0;border:1px solid #ffa39e;border-radius:8px;padding:12px;color:#cf1322"><i class="fa-solid fa-circle-xmark"></i> ' + (e.message || 'Lỗi không xác định') + '</div>'
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Tra cứu IMO'
+  }
+}
+
+// ═══════════════ USERS ═══════════════
+const ROLE_MAP = { admin:'Quản trị viên', operator:'Điều hành', accountant:'Kế toán' };
+function renderUsers() {
+  document.getElementById('user-tbody').innerHTML = USERS.map(u =>
+    '<tr><td>'+u.email+'</td><td>'+u.name+'</td><td><span class="ant-tag ant-tag-blue">'+ROLE_MAP[u.role]+'</span></td><td><span class="ant-tag ant-tag-green">Hoạt động</span></td><td>'+u.last+'</td></tr>'
+  ).join('');
+}
+
+// ═══════════════ DASHBOARD ═══════════════
+function renderDashboard() {
+  const acts = [
+    { icon:'fa-user-plus', color:'#1677ff', bg:'#e6f4ff', text:'Thêm thuyền viên mới: <b>Mai Xuân Trường</b>', time:'2 giờ trước' },
+    { icon:'fa-ship', color:'#389e0d', bg:'#f6ffed', text:'Điều động <b>Ngô Quang Hải</b> lên MV Pacific Star', time:'5 giờ trước' },
+    { icon:'fa-briefcase', color:'#d46b08', bg:'#fff7e6', text:'Tạo công việc: C/E - MV Maersk Hanoi', time:'1 ngày trước' },
+    { icon:'fa-check-circle', color:'#389e0d', bg:'#f6ffed', text:'Hoàn thành HĐ: <b>Bùi Văn Thắng</b> - MV Global Fortune', time:'2 ngày trước' },
+    { icon:'fa-building', color:'#595959', bg:'#fafafa', text:'Thêm đối tác: <b>NYK Line</b>', time:'3 ngày trước' },
+  ];
+  document.getElementById('activity-list').innerHTML = acts.map(a =>
+    '<li class="activity-item"><div class="activity-icon" style="background:'+a.bg+';color:'+a.color+'"><i class="fa-solid '+a.icon+'"></i></div><div><div class="activity-text">'+a.text+'</div><div class="activity-time">'+a.time+'</div></div></li>'
+  ).join('');
+  const exp = [
+    { name:'Nguyễn Văn Hùng', vessel:'MV Pacific Star', days:15 },
+    { name:'Trần Minh Đức', vessel:'MV Ocean Glory', days:28 },
+    { name:'Hoàng Văn Tùng', vessel:'MV Blue Horizon', days:35 },
+    { name:'Lê Minh Tuấn', vessel:'MV Maersk Hanoi', days:42 },
+  ];
+  document.getElementById('expiring-list').innerHTML = exp.map(e =>
+    '<li class="activity-item"><div class="activity-icon" style="background:#fff7e6;color:#d46b08"><i class="fa-solid fa-clock"></i></div><div><div class="activity-text"><b>'+e.name+'</b> - '+e.vessel+'</div><div class="activity-time" style="color:#d46b08">Còn '+e.days+' ngày</div></div></li>'
+  ).join('');
+}
+
+// ═══════════════ INIT ═══════════════
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.activeElement?.id === 'imo-input') searchByImo()
+  if (e.key === 'Enter' && (document.activeElement?.id === 'login-email' || document.activeElement?.id === 'login-pass')) doLogin()
+})
+
+(function init() {
+  renderDashboard();
+  renderSfStats();
+  renderSfTable(SEAFARERS);
+  renderRankFilters();
+  renderPartners();
+  renderJobs();
+  renderDeploys();
+  renderVessels();
+  renderUsers();
+  // populate selects
+  const jp = document.getElementById('job-partner');
+  PARTNERS.forEach(p => { const o = document.createElement('option'); o.value=p.name; o.textContent=p.name; jp.appendChild(o); });
+  const jv = document.getElementById('job-form-vessel');
+  VESSELS.forEach(v => { const o = document.createElement('option'); o.value=v.name; o.textContent=v.name; jv.appendChild(o); });
+})();
+</script>
+</body>
+</html>

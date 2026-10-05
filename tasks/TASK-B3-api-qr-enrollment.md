@@ -1,4 +1,4 @@
-# TASK-B3: API — QR Enrollment
+# TASK-B3: API - QR Enrollment
 
 ## Why
 Trung tâm đào tạo muốn tạo QR code dán ở cửa lớp hoặc gửi qua Zalo/email để thuyền viên quét và đăng ký nhanh mà không cần tài khoản portal.
@@ -10,20 +10,20 @@ Trung tâm đào tạo muốn tạo QR code dán ở cửa lớp hoặc gửi qu
 - `D:/code/app hàng hải/backend/src/routes/v1/qr_enrollment.routes.js`
 
 ## Files cần sửa
-- `D:/code/app hàng hải/backend/src/routes/v1/index.js` — đăng ký qrEnrollmentRoutes
+- `D:/code/app hàng hải/backend/src/routes/v1/index.js` - đăng ký qrEnrollmentRoutes
 
 ## API Endpoints
 
 ```
-POST /api/v1/qr-enrollment/generate        — tạo QR link (admin/operator/training_center)
-GET  /api/v1/qr-enrollment/:token          — public, lấy thông tin course từ token
-POST /api/v1/qr-enrollment/:token/register — public, thuyền viên điền form đăng ký
-GET  /api/v1/qr-enrollment/               — list QR links của course (admin/training_center)
-DELETE /api/v1/qr-enrollment/:id/deactivate — vô hiệu hóa QR link
+POST /api/v1/qr-enrollment/generate        - tạo QR link (admin/operator/accountant)
+GET  /api/v1/qr-enrollment/:token          - public, lấy thông tin course từ token
+POST /api/v1/qr-enrollment/:token/register - public, thuyền viên điền form đăng ký
+GET  /api/v1/qr-enrollment/               - list QR links của course (admin/accountant)
+DELETE /api/v1/qr-enrollment/:id/deactivate - vô hiệu hóa QR link
 ```
 
 ### POST /generate
-- **Role**: admin, operator, training_center
+- **Role**: admin, operator, accountant
 - **Body**: `{ course_id, label?, max_uses?, expires_at? }`
 - **Response**: `{ id, token, qr_url, qr_image_base64 }`
 - **Logic**: Tạo token = `crypto.randomBytes(32).toString('hex')`, INSERT vào `qr_enrollment_link`
@@ -43,7 +43,7 @@ DELETE /api/v1/qr-enrollment/:id/deactivate — vô hiệu hóa QR link
   5. Tăng `used_count` trong `qr_enrollment_link`
   6. Trả về confirmation message
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: qr_enrollment.service.js
 
@@ -74,10 +74,10 @@ async function validateToken(token) {
 
 ### Bước 2: qr_enrollment.routes.js
 ```js
-fastify.post('/generate', { preHandler: [authenticate, authorize(['admin','operator','training_center'])] }, generateHandler);
+fastify.post('/generate', { preHandler: [authenticate, authorize(['admin','operator','accountant'])] }, generateHandler);
 fastify.get('/:token', registerInfoHandler);           // public
 fastify.post('/:token/register', registerHandler);     // public
-fastify.delete('/:id/deactivate', { preHandler: [authenticate, authorize(['admin','operator','training_center'])] }, deactivateHandler);
+fastify.delete('/:id/deactivate', { preHandler: [authenticate, authorize(['admin','operator','accountant'])] }, deactivateHandler);
 ```
 
 ### Bước 3: Đăng ký trong index.js

@@ -17,7 +17,7 @@ const COL_MAP = {
   'NƠI THƯỜNG TRÚ': 'permanent_address',
   'Chiều cao': 'height_cm',
   'Cân nặng': 'weight_kg',
-  // Cột mới — map trực tiếp
+  // Cột mới - map trực tiếp
   'KHỐI ': 'vessel_group',
   'TÊN TÀU': 'vessel_name_raw',
   'Nơi cấp': 'national_id_issued_place',
@@ -59,7 +59,7 @@ const EXPECTED_COLS = [
 ]
 
 // Index cứng cho các cột trùng tên hoặc có ký tự đặc biệt trong header
-// (0-based, tính từ đầu mỗi row — khớp với cấu trúc HD-Hong.xlsx sheet data)
+// (0-based, tính từ đầu mỗi row - khớp với cấu trúc HD-Hong.xlsx sheet data)
 const FIXED_IDX = {
   PASSPORT_ISSUED_DATE: 11, // cột 12: "ngày cấp" (hộ chiếu)
   NATIONAL_ID_ISSUED_DATE: 14, // cột 15: "Ngày cấp" (CMTND)
@@ -82,6 +82,10 @@ function parseDate(val) {
     const d = new Date(Math.round((val - 25569) * 86400 * 1000))
     return d.toISOString().split('T')[0]
   }
+  if (typeof val === 'string') {
+    const m = val.match(/^(\d{4}-\d{2}-\d{2})/)
+    if (m) return m[1]
+  }
   return null
 }
 
@@ -96,12 +100,19 @@ function parseBH(val) {
 }
 
 async function getRankMap() {
-  const [rows] = await pool.query('SELECT id, code FROM `rank`')
+  const [rows] = await pool.query('SELECT id, code, name_vi FROM `rank`')
   const map = {}
   rows.forEach((r) => {
     map[r.code.toUpperCase()] = r.id
+    if (r.name_vi) map[norm(r.name_vi).toUpperCase()] = r.id
   })
   return map
+}
+
+function detectFormat(headers) {
+  if (headers.includes('HOTEN')) return 'simple'
+  if (headers.some((h) => h === norm('HỌ VÀ TÊN'))) return 'full'
+  return null
 }
 
 async function getVietnamCountryId() {
@@ -118,7 +129,7 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
   try {
     wb = XLSX.readFile(filePath)
   } catch (e) {
-    throw new Error('Không thể đọc file — file bị hỏng hoặc không phải định dạng Excel hợp lệ')
+    throw new Error('Không thể đọc file - file bị hỏng hoặc không phải định dạng Excel hợp lệ')
   }
 
   const targetSheet = sheetName || wb.SheetNames[0]
@@ -132,34 +143,127 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
   const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null })
 
   const headerIdx = raw.findIndex(
-    (row) => row && row.some((cell) => norm(cell) === norm('HỌ VÀ TÊN'))
+    (row) =>
+      row &&
+      row.some((cell) => {
+        const n = norm(cell)
+        return n === norm('HỌ VÀ TÊN') || n === 'HOTEN'
+      })
   )
   if (headerIdx === -1) {
     throw new Error(
-      `Sheet "${targetSheet}" không có cột "HỌ VÀ TÊN". ` +
-        'File upload phải có sheet đầu tiên chứa dữ liệu thuyền viên với các cột: HỌ VÀ TÊN, NGÀY SINH.'
+      `Sheet "${targetSheet}" không có cột bắt buộc. ` +
+        'File phải có cột "HỌ VÀ TÊN" + "NGÀY SINH" (format đầy đủ) hoặc "HOTEN" + "NGAYSINH" (format đơn giản).'
     )
   }
 
   const headers = raw[headerIdx].map((h) => norm(h))
+  const format = detectFormat(headers)
+  if (!format) {
+    throw new Error('Không nhận ra định dạng file. Cần cột "HỌ VÀ TÊN" hoặc "HOTEN".')
+  }
 
+  const dataRows = raw.slice(headerIdx + 1)
+  const vietnamId = await getVietnamCountryId()
+  const rankMap = await getRankMap()
+  const results = { success: 0, skipped: 0, skipped_detail: [], errors: [], warnings: [] }
+
+  // Pre-load toàn bộ seafarers hiện có để dedup trong memory (tránh N+1 queries)
+  const [existingRows] = await pool.query(
+    'SELECT national_id, full_name, date_of_birth FROM seafarer WHERE deleted_at IS NULL'
+  )
+  const existingNationalIds = new Set(
+    existingRows.filter((r) => r.national_id).map((r) => String(r.national_id))
+  )
+  const existingNameDob = new Set(
+    existingRows.map((r) => {
+      const dob =
+        r.date_of_birth instanceof Date
+          ? r.date_of_birth.toISOString().split('T')[0]
+          : String(r.date_of_birth || '').split('T')[0]
+      return `${r.full_name}|${dob}`
+    })
+  )
+
+  // ── Format đơn giản: HOTEN / NGAYSINH / CHUCDANH ─────────────────────────
+  if (format === 'simple') {
+    const nameIdx = headers.indexOf('HOTEN')
+    const dobIdx = headers.indexOf('NGAYSINH')
+    const rankIdx = headers.indexOf('CHUCDANH')
+
+    for (let i = 0; i < dataRows.length; i++) {
+      const row = dataRows[i]
+      if (!row || !row[nameIdx]) continue
+      const rowNum = i + headerIdx + 2
+
+      try {
+        const fullName = norm(row[nameIdx])
+        if (!fullName) {
+          results.skipped++
+          results.skipped_detail.push({ row: rowNum, reason: 'Thiếu họ tên' })
+          continue
+        }
+
+        const dobRaw = dobIdx >= 0 ? row[dobIdx] : null
+        const dob = parseDate(dobRaw)
+        if (!dob) {
+          results.skipped++
+          results.skipped_detail.push({
+            row: rowNum,
+            name: fullName,
+            reason: `Ngày sinh không hợp lệ: "${dobRaw}"`,
+          })
+          continue
+        }
+
+        // Dedup in-memory
+        if (existingNameDob.has(`${fullName}|${dob}`)) {
+          results.skipped++
+          results.skipped_detail.push({
+            row: rowNum,
+            name: fullName,
+            reason: `"${fullName}" ${dob} đã tồn tại trong hệ thống`,
+          })
+          continue
+        }
+
+        const rankName = rankIdx >= 0 && row[rankIdx] ? norm(row[rankIdx]) : null
+        const rankId = rankName ? rankMap[rankName.toUpperCase()] || null : null
+        if (rankName && !rankId) {
+          results.warnings.push(
+            `Row ${rowNum} (${fullName}): Chức danh "${rankName}" không tìm thấy`
+          )
+        }
+
+        await pool.query(
+          'INSERT INTO seafarer (full_name, date_of_birth, nationality_id, current_rank_id, status, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+          [fullName, dob, vietnamId, rankId, 'STANDBY', createdBy]
+        )
+        existingNameDob.add(`${fullName}|${dob}`)
+        results.success++
+      } catch (err) {
+        let safeMsg = 'Lỗi khi lưu dữ liệu'
+        if (err.code === 'ER_DUP_ENTRY') safeMsg = 'Dữ liệu bị trùng lặp'
+        else if (err.code === 'ER_DATA_TOO_LONG') safeMsg = 'Dữ liệu quá dài cho một trường'
+        results.errors.push({ row: rowNum, error: safeMsg })
+      }
+    }
+
+    return results
+  }
+
+  // ── Format đầy đủ (HD-Hong.xlsx) ─────────────────────────────────────────
   const missingRequired = REQUIRED_COLS.filter((col) => !headers.includes(norm(col)))
   if (missingRequired.length > 0) {
     throw new Error(`File thiếu cột bắt buộc: ${missingRequired.join(', ')}`)
   }
 
   const missingExpected = EXPECTED_COLS.filter((col) => !headers.includes(norm(col)))
-  const warnings =
-    missingExpected.length > 0
-      ? [
-          `Các cột sau không có trong file, dữ liệu tương ứng sẽ bị bỏ qua: ${missingExpected.join(', ')}`,
-        ]
-      : []
-
-  const dataRows = raw.slice(headerIdx + 1)
-  const vietnamId = await getVietnamCountryId()
-  const rankMap = await getRankMap()
-  const results = { success: 0, skipped: 0, skipped_detail: [], errors: [], warnings }
+  if (missingExpected.length > 0) {
+    results.warnings.push(
+      `Các cột sau không có trong file, dữ liệu tương ứng sẽ bị bỏ qua: ${missingExpected.join(', ')}`
+    )
+  }
 
   for (const row of dataRows) {
     const nameIdx = headers.indexOf(norm('HỌ VÀ TÊN'))
@@ -195,25 +299,34 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
       const nationalId = get('Số CMTND') ? String(get('Số CMTND')) : null
       const seafarerCode = get('MÃ TV') ? String(get('MÃ TV')) : null
 
-      if (nationalId) {
-        const [dup] = await pool.query(
-          'SELECT id FROM seafarer WHERE national_id = ? AND deleted_at IS NULL LIMIT 1',
-          [nationalId]
-        )
-        if (dup.length > 0) {
-          results.skipped++
-          results.skipped_detail.push({
-            row: rowNum,
-            name: String(fullName),
-            reason: `CCCD "${nationalId}" đã tồn tại trong hệ thống`,
-          })
-          continue
-        }
+      // Dedup in-memory: ưu tiên CCCD, fallback tên + ngày sinh
+      if (nationalId && existingNationalIds.has(nationalId)) {
+        results.skipped++
+        results.skipped_detail.push({
+          row: rowNum,
+          name: String(fullName),
+          reason: `CCCD "${nationalId}" đã tồn tại trong hệ thống`,
+        })
+        continue
+      }
+      if (!nationalId && existingNameDob.has(`${String(fullName).trim()}|${dob}`)) {
+        results.skipped++
+        results.skipped_detail.push({
+          row: rowNum,
+          name: String(fullName),
+          reason: `"${String(fullName).trim()}" ${dob} đã tồn tại trong hệ thống`,
+        })
+        continue
       }
 
-      // Rank lookup
+      // Rank lookup - theo name_vi (FIXED_IDX) hoặc CHỨC DANH
       const rankCode = get('CHỨC DANH')
-      const rankId = rankCode ? rankMap[String(rankCode).trim().toUpperCase()] || null : null
+      const rankNameVi = row[FIXED_IDX.RANK_NAME_VI]
+        ? norm(String(row[FIXED_IDX.RANK_NAME_VI]))
+        : null
+      const rankId =
+        (rankNameVi && rankMap[rankNameVi.toUpperCase()]) ||
+        (rankCode ? rankMap[norm(String(rankCode)).toUpperCase()] || null : null)
       if (rankCode && !rankId) {
         results.warnings.push(
           `Row ${rowNum} (${String(fullName)}): Chức danh "${rankCode}" không tìm thấy trong hệ thống`
@@ -241,14 +354,8 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
         permanent_district: get('QUÊ QUÁN-huyện') ? String(get('QUÊ QUÁN-huyện')) : null,
         permanent_province: get('QUÊ QUÁN-tỉnh') ? String(get('QUÊ QUÁN-tỉnh')) : null,
         permanent_address: get('NƠI THƯỜNG TRÚ') ? String(get('NƠI THƯỜNG TRÚ')) : null,
-        marital_status: get('TÌNH TRẠNG') ? String(get('TÌNH TRẠNG')).slice(0, 30) : null,
-        children_count: get('SỐ CON') ? parseInt(get('SỐ CON')) || null : null,
-        children_info: get('THÔNG TIN CON') ? String(get('THÔNG TIN CON')) : null,
-        children_ages: get('TUỔI CON') ? String(get('TUỔI CON')).slice(0, 100) : null,
         height_cm: get('Chiều cao') ? parseInt(get('Chiều cao')) || null : null,
         weight_kg: get('Cân nặng') ? parseInt(get('Cân nặng')) || null : null,
-        shirt_size: get('Size áo') ? String(get('Size áo')).slice(0, 10) : null,
-        pants_size: get('Size quần') ? String(get('Size quần')).slice(0, 10) : null,
         vessel_group: get('KHỐI ') ? String(get('KHỐI ')).slice(0, 20) : null,
         vessel_name_raw: get('TÊN TÀU') ? String(get('TÊN TÀU')).slice(0, 150) : null,
         contract_flight_date: parseDate(row[FIXED_IDX.CONTRACT_FLIGHT_DATE]),
@@ -261,10 +368,7 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
           : null,
         contract_end_date: parseDate(row[FIXED_IDX.CONTRACT_END_DATE]),
         contract_return_date: parseDate(row[FIXED_IDX.CONTRACT_RETURN_DATE]),
-        rank_name_vi: row[FIXED_IDX.RANK_NAME_VI]
-          ? String(row[FIXED_IDX.RANK_NAME_VI]).slice(0, 100)
-          : null,
-        status: 'AVAILABLE',
+        status: 'STANDBY',
         created_by: createdBy,
         updated_by: createdBy,
       }
@@ -300,16 +404,16 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
               relationship: 'Người bảo lãnh',
               is_emergency_contact: 0,
               is_guarantor: 1,
-              national_id: get('CCCD/CMT') ? String(get('CCCD/CMT')) : null,
-              phone_primary: cleanPhone(get('SỐ ĐIỆN THOẠI NGƯỜI BẢO LÃNH')),
-              guarantor_id_number: get('CCCD/CMT') ? String(get('CCCD/CMT')) : null,
-              guarantor_id_issued_date: parseDate(get('NGÀY CẤP')),
+              address: get('NƠI THƯỜNG TRÚ') ? String(get('NƠI THƯỜNG TRÚ')) : null,
               date_of_birth: parseDate(row[FIXED_IDX.GUARANTOR_DOB]),
             },
           ])
         }
 
         await conn.commit()
+        // Cập nhật Set dedup để tránh trùng trong cùng batch import
+        if (seafarerData.national_id) existingNationalIds.add(seafarerData.national_id)
+        existingNameDob.add(`${seafarerData.full_name}|${seafarerData.date_of_birth}`)
         results.success++
       } catch (txErr) {
         await conn.rollback()
@@ -318,7 +422,7 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
         conn.release()
       }
     } catch (err) {
-      // Sanitize error message — không lộ DB schema ra client
+      // Sanitize error message - không lộ DB schema ra client
       let safeMsg = 'Lỗi khi lưu dữ liệu'
       if (err.code === 'ER_DUP_ENTRY') safeMsg = 'Dữ liệu bị trùng lặp'
       else if (err.code === 'ER_DATA_TOO_LONG') safeMsg = 'Dữ liệu quá dài cho một trường'
@@ -335,7 +439,7 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
   return results
 }
 
-// TASK-B4: Import enrollment hàng loạt — Excel có cột seafarer_code hoặc full_name, rank?, notes?
+// TASK-B4: Import enrollment hàng loạt - Excel có cột seafarer_code hoặc full_name, rank?, notes?
 async function importEnrollments(courseId, fileBuffer, userId, userRole, linkedEntityId) {
   const pool = require('../config/db')
   const [[course]] = await pool.query(
@@ -343,10 +447,7 @@ async function importEnrollments(courseId, fileBuffer, userId, userRole, linkedE
     [courseId]
   )
   if (!course) throw { statusCode: 404, message: 'Khóa học không tồn tại' }
-  if (
-    userRole === 'training_center' &&
-    Number(course.training_center_id) !== Number(linkedEntityId)
-  ) {
+  if (userRole === 'accountant' && Number(course.training_center_id) !== Number(linkedEntityId)) {
     throw { statusCode: 403, message: 'Chỉ được import vào khóa học của trung tâm mình' }
   }
 

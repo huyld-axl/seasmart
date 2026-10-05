@@ -1,71 +1,91 @@
-# MarinePort — Task Files
+# Crew Manning - Task Files
 
 Mỗi file là 1 task độc lập với đầy đủ context để implement.
 
-## Trạng thái tổng quan (cập nhật 2026-03-15)
+> Dự án đã được đổi tên từ **MarinePort** → **Crew Manning** (2026-04-10).
 
-| Task | Tên | Trạng thái |
-|------|-----|------------|
-| TASK-00 | DB Migration (23 bảng) | ✅ DONE |
-| TASK-00b | Nâng cấp Import Excel (44 cột) | ✅ DONE |
-| TASK-01 | Training Center API | ✅ DONE |
-| TASK-02 | Training Course API | ✅ DONE |
-| TASK-03 | Enrollment API | ✅ DONE |
-| TASK-04 | Certificate Upload API | ✅ DONE |
-| TASK-05 | Lookup API | ✅ DONE |
-| TASK-06 | Seafarer Self-Registration + OTP | ✅ DONE |
-| TASK-07 | Seafarer Portal API | ✅ DONE |
-| TASK-08 | Messaging API (backend) | ✅ DONE |
-| TASK-09 | Frontend Setup | ✅ DONE |
-| TASK-10 | Admin Portal UI | ✅ DONE |
-| TASK-11 | Training Center Portal UI | 🚫 CANCELLED (TC portal bị xóa, merge vào admin) |
-| TASK-12 | Seafarer Portal UI | ✅ DONE |
-| TASK-13 | Deploy VPS | ⏳ TODO |
-| TASK-14 | User Management Module | ✅ DONE |
-| TASK-15 | TC Import Page | 🚫 CANCELLED (TCImportPage không còn cần — TC portal bị xóa) |
-| TASK-16 | Admin Dashboard Page | ⏸ SKIPPED (dashboard bỏ qua) |
-| TASK-17 | Merge TC Portal vào Admin Portal | ⏳ TODO |
-| TASK-18 | Notification Bell | ⏳ TODO |
-| TASK-19 | Admin CRUD Fixes (TrainingCenter + Seafarer + User delete) | ⏳ TODO |
-| TASK-20 | SeafarerDetailPage — Certificate Management + Contract Section | ⏳ TODO |
-| TASK-21 | Seafarer Portal — Cancel Enrollment + Certificate Write | ⏳ TODO |
+## Trạng thái tổng quan (cập nhật 2026-04-28)
+
+Các file task đã **DONE** và **REMOVED** đã được dọn khỏi thư mục `tasks/` để backlog gọn hơn.
+
+### Task còn trong thư mục (backlog thực thi)
+
+| Task | Trạng thái hiện tại |
+|------|----------------------|
+| **TASK-DOMAIN-SPEC-CREW-2026** | ⏳ BACKLOG (menu, 20 rank, trạng thái 3 màu, hồ sơ, CV, **+ task tài liệu D**) - xem `tasks/TASK-DOMAIN-SPEC-CREW-2026.md` |
+| TASK-13 | ⏳ TODO |
+| TASK-16 | ⏸ SKIPPED |
+| TASK-D1 | ⏳ PENDING |
+| TASK-A1/A2/A3 | ⏳ PENDING |
+| TASK-B1/B2/B3/B4/B5/B6 | ⏳ PENDING |
+| TASK-C1/C2 | ⏳ PENDING |
+
+---
+
+## Đã hoàn thành trong đợt Crew Manning Redesign (2026-04-10)
+
+### Thay đổi lớn
+- **Đổi tên**: MarinePort → Crew Manning (brand, logo, tất cả UI)
+- **Xóa Training Center**: routes backend, pages frontend, API layer, EnrollmentsSection
+- **Thêm module Đối tác**: PartnerListPage (danh sách tàu + chủ tàu) + JobOpeningsPage
+- **Xóa tab Điều Động** khỏi SeafarerDetailPage
+- **Đổi tên**: "Công tác" → "Lịch sử công tác"
+- **Đổi nhãn**: "Chức danh" → "Vị trí" (toàn bộ frontend, không đổi DB)
+- **Thêm thống kê**: SeafarerListPage hiển thị số sẵn sàng / trên tàu
+- **Thêm RankTab** vào Danh mục (CRUD vị trí), xóa CourseTypeTab
+- **Role labels**: admin → Chủ doanh nghiệp, operator → Chuyên viên, accountant → Kế toán
+- **Phân quyền Kế toán**: view-only Danh mục, ẩn nút Thêm/Import/Xóa thuyền viên
+
+### Files thêm mới
+- `migration_partners.sql` - tạo bảng `job_posting`
+- `backend/src/routes/v1/ship_owner.routes.js`
+- `backend/src/routes/v1/job_posting.routes.js`
+- `frontend/src/pages/admin/partners/PartnerListPage.jsx`
+- `frontend/src/pages/admin/partners/JobOpeningsPage.jsx`
+
+### Files bị xóa
+- `backend/src/routes/v1/training_center.routes.js`
+- `backend/src/routes/v1/training_course.routes.js`
+- `backend/src/routes/v1/enrollment.routes.js`
+- `frontend/src/pages/admin/TrainingCenterListPage.jsx`
+- `frontend/src/pages/admin/TrainingCenterDetailPage.jsx`
+- `frontend/src/pages/admin/CourseListPage.jsx`
+- `frontend/src/pages/admin/CourseDetailPage.jsx`
 
 ---
 
 ## Pending tasks
 
 ### TASK-13: Deploy VPS
-Xem [TASK-13-deploy-vps.md](./TASK-13-deploy-vps.md)
+Chưa deploy lên server sau đợt redesign lớn.
+Cần chạy `migration_partners.sql` trên DB production trước khi deploy.
 
-### TASK-17: Merge TC Portal vào Admin Portal ← tiếp theo
-Gộp TC portal vào Admin portal với phân quyền menu. Xóa TC portal cũ.
-Xem [TASK-17-merge-tc-portal.md](./TASK-17-merge-tc-portal.md)
+### Nhóm migration/enrollment đang pending
+- `TASK-A1`, `TASK-A2`, `TASK-A3`
+- `TASK-B1` → `TASK-B6`
+- `TASK-C1`, `TASK-C2`
 
-### TASK-19: Admin CRUD Fixes
-TrainingCenter create/edit/delete + delete buttons cho Seafarer và User.
-Xem [TASK-19-admin-crud-fixes.md](./TASK-19-admin-crud-fixes.md)
-
-### TASK-20: SeafarerDetailPage — Certificate + Contract
-Thêm UI quản lý chứng chỉ và section hợp đồng vào SeafarerDetailPage.
-Xem [TASK-20-seafarer-detail-cert-contract.md](./TASK-20-seafarer-detail-cert-contract.md)
-
-### TASK-21: Seafarer Portal Write Operations
-Hủy đăng ký khóa học + upload/xóa chứng chỉ từ seafarer portal.
-Xem [TASK-21-seafarer-portal-write.md](./TASK-21-seafarer-portal-write.md)
+### Task pending độc lập
+- `TASK-D1`: Export HĐ Hồng XLSX
 
 ---
 
 ## Features để sau (chưa có task file)
 
-- **Job Board** — thuyền viên đăng CV, manning agent đăng tin tuyển dụng. Cần bảng `job_posting`, `job_application`.
-- **Ticket / buổi học lẻ** — 50k/ticket. Cần bảng `class_session`, `session_ticket`.
-- **Seaman Club membership** — 600k/tháng.
-- **Gia hạn giấy tờ workflow** — tracking trạng thái giấy tờ.
-- **Manning Agent portal** — UI/API riêng cho role `manning_agent`.
-- **Import hợp đồng từ Excel** — TÊN TÀU, NGÀY NHẬP TÀU, NGÀY RỜI TÀU, Lương → tạo `employment_contract`.
+- **Báo cáo / Dashboard** - thống kê thuyền viên theo trạng thái, vị trí, tàu
+- **Import hợp đồng từ Excel** - TÊN TÀU, NGÀY NHẬP TÀU, NGÀY RỜI TÀU, Lương → tạo contract row
+- **Seafarer Portal** - cập nhật sau khi training/enrollment bị xóa
+- **Job Matching** - ghép thuyền viên sẵn sàng với job openings
+- **Thông báo gia hạn chứng chỉ** - cảnh báo khi chứng chỉ sắp hết hạn
 
 ---
 
 ## Quy ước
 Mỗi file task gồm: Why, Schema, How (từng bước), Các kịch bản + trade-off, Điểm quan trọng, Acceptance Criteria.
 Đọc `CLAUDE.md` trước khi bắt đầu bất kỳ task nào.
+
+## Stack hiện tại
+- **Backend**: Fastify + MySQL, `backend/src/routes/v1/`
+- **Frontend**: React + Ant Design + React Query + Vite, `frontend/src/`
+- **Roles**: admin (Chủ doanh nghiệp) / operator (Chuyên viên) / accountant (Kế toán) / seafarer
+- **training_center**: role legacy còn trong dữ liệu cũ (không dùng cho RBAC hiện tại)

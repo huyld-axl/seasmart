@@ -1,4 +1,4 @@
-# TASK-A3: Migration — Tạo bảng enrollment_waitlist
+# TASK-A3: Migration - Tạo bảng enrollment_waitlist
 
 ## Why
 Khi khóa học đã đầy (`max_students`), thuyền viên cần được xếp vào danh sách chờ thay vì bị từ chối hoàn toàn.
@@ -7,7 +7,7 @@ Khi có chỗ trống, hệ thống tự động notify thuyền viên đầu h�
 ## Trạng thái: PENDING
 
 ## Files cần sửa
-- `D:/code/app hàng hải/migration.sql` — thêm CREATE TABLE
+- `D:/code/app hàng hải/migration.sql` - thêm CREATE TABLE
 
 ## Schema bảng `enrollment_waitlist`
 ```sql
@@ -33,7 +33,7 @@ CREATE TABLE enrollment_waitlist (
 );
 ```
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Append vào migration.sql
 
@@ -43,7 +43,7 @@ CREATE INDEX idx_waitlist_course_status ON enrollment_waitlist(course_id, status
 CREATE INDEX idx_waitlist_seafarer ON enrollment_waitlist(seafarer_id);
 ```
 
-### Bước 3: Logic position (trong waitlist.service.js — TASK-C2)
+### Bước 3: Logic position (trong waitlist.service.js - TASK-C2)
 ```sql
 -- Lấy position tiếp theo
 SELECT COALESCE(MAX(position), 0) + 1 FROM enrollment_waitlist
@@ -60,7 +60,7 @@ WAITING → NOTIFIED → ENROLLED (khi xác nhận trong 24h)
 ## Điểm quan trọng
 - UNIQUE (course_id, seafarer_id): 1 thuyền viên chỉ vào waitlist 1 lần / 1 course
 - `position` cần recalculate khi có người EXPIRED/CANCELLED
-- `confirm_by = notified_at + 24 giờ` — cron job kiểm tra mỗi giờ
+- `confirm_by = notified_at + 24 giờ` - cron job kiểm tra mỗi giờ
 
 ## Acceptance Criteria
 - [ ] Migration tạo bảng thành công

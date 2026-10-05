@@ -2,33 +2,6 @@ const authService = require('../../services/auth.service')
 const config = require('../../config')
 
 async function authRoutes(fastify) {
-  // POST /api/v1/auth/register
-  fastify.post(
-    '/register',
-    {
-      config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
-      schema: {
-        body: {
-          type: 'object',
-          required: ['email', 'password'],
-          properties: {
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string', minLength: 6 },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      // Public register: only allow seafarer role (avoid self-register privileged roles)
-      const user = await authService.registerSeafarer(request.body)
-      const token = fastify.jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        { expiresIn: config.jwt.expiresIn || '7d' }
-      )
-      return reply.code(201).send({ user, token })
-    }
-  )
-
   // POST /api/v1/auth/login
   fastify.post(
     '/login',
@@ -69,32 +42,6 @@ async function authRoutes(fastify) {
     },
     async (request) => {
       return { user: request.user }
-    }
-  )
-
-  // POST /api/v1/auth/register/seafarer
-  fastify.post(
-    '/register/seafarer',
-    {
-      config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
-      schema: {
-        body: {
-          type: 'object',
-          required: ['email', 'password'],
-          properties: {
-            email: { type: 'string', format: 'email' },
-            password: { type: 'string', minLength: 6 },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      const user = await authService.registerSeafarer(request.body)
-      const token = fastify.jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        { expiresIn: config.jwt.expiresIn || '7d' }
-      )
-      return reply.code(201).send({ user, token })
     }
   )
 

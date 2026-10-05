@@ -2,3 +2,5 @@ node_modules/
 .env
 uploads/
 *.log
+db/ships_plain.db
+forms/template_meta.json

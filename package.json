@@ -11,15 +11,19 @@
   "lint-staged": {
     "backend/**/*.js": [
       "npx prettier --write --config backend/.prettierrc",
-      "npx eslint --fix"
+      "npm --prefix backend run lint -- --fix"
     ],
     "frontend/**/*.{js,jsx}": [
       "npx prettier --write --config frontend/.prettierrc",
-      "npx eslint --fix"
+      "npm --prefix frontend run lint -- --fix"
     ]
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2"
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.8.3"
+  },
+  "dependencies": {
+    "docx": "^9.6.1"
   }
 }

@@ -8,7 +8,7 @@ async function waitlistRoutes(fastify) {
     }
   }
 
-  // POST /api/v1/waitlist/:id/confirm — seafarer xác nhận từ email link (TASK-C2)
+  // POST /api/v1/waitlist/:id/confirm - seafarer xác nhận từ email link (TASK-C2)
   fastify.post('/:id/confirm', { onRequest: [onlySeafarer] }, async (request, reply) => {
     const waitlistId = parseInt(request.params.id)
     const seafarerId = request.user.linked_entity_id
@@ -21,7 +21,7 @@ async function waitlistRoutes(fastify) {
     }
   })
 
-  // DELETE /api/v1/waitlist/:id — seafarer tự hủy khỏi waitlist (TASK-C2)
+  // DELETE /api/v1/waitlist/:id - seafarer tự hủy khỏi waitlist (TASK-C2)
   fastify.delete('/:id', { onRequest: [onlySeafarer] }, async (request, reply) => {
     const waitlistId = parseInt(request.params.id)
     const seafarerId = request.user.linked_entity_id

@@ -11,8 +11,10 @@ import {
   useDeleteUser,
   useToggleActive,
 } from '../../../hooks/useUsers'
+import useTranslation from '../../../hooks/useTranslation'
 
 export default function UserListPage() {
+  const { t } = useTranslation()
   const [filters, setFilters] = useState({ page: 1, limit: 20 })
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
@@ -55,10 +57,10 @@ export default function UserListPage() {
         style={{ justifyContent: 'space-between', width: '100%', flexWrap: 'wrap' }}
       >
         <Typography.Title level={4} className="page-title">
-          Quản lý User
+          {t('user.pageTitle')}
         </Typography.Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Tạo user
+          {t('user.createUser')}
         </Button>
       </Space>
 
@@ -80,7 +82,7 @@ export default function UserListPage() {
           total={total}
           pageSize={20}
           onChange={(page) => setFilters((f) => ({ ...f, page }))}
-          showTotal={(t) => `Tổng ${t} user`}
+          showTotal={(total) => t('user.paginationTotal', { count: total })}
           showSizeChanger={false}
         />
       </div>

@@ -1,4 +1,4 @@
-# TASK-B4: API — Import Excel Enrollment Hàng Loạt
+# TASK-B4: API - Import Excel Enrollment Hàng Loạt
 
 ## Why
 Trung tâm đào tạo thường có danh sách học viên sẵn trong Excel. Thay vì nhập từng người, cần cho phép upload file Excel để enroll hàng loạt vào một khóa học.
@@ -6,8 +6,8 @@ Trung tâm đào tạo thường có danh sách học viên sẵn trong Excel. T
 ## Trạng thái: PENDING (blocked by TASK-A1)
 
 ## Files cần sửa
-- `D:/code/app hàng hải/backend/src/services/import.service.js` — thêm hàm importEnrollments
-- `D:/code/app hàng hải/backend/src/routes/v1/enrollment.routes.js` — thêm endpoint import
+- `D:/code/app hàng hải/backend/src/services/import.service.js` - thêm hàm importEnrollments
+- `D:/code/app hàng hải/backend/src/routes/v1/enrollment.routes.js` - thêm endpoint import
 
 ## API Endpoint
 
@@ -16,7 +16,7 @@ POST /api/v1/enrollments/import
 Content-Type: multipart/form-data
 ```
 
-- **Role**: admin, operator, training_center
+- **Role**: admin, operator, accountant
 - **Body**: `course_id` (form field) + `file` (Excel file)
 - **Response**:
 ```json
@@ -41,7 +41,7 @@ Content-Type: multipart/form-data
 - Cột bắt buộc: `seafarer_code` HOẶC `full_name`
 - Cột tùy chọn: `rank`, `notes`
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Thêm hàm importEnrollments vào import.service.js
 
@@ -88,25 +88,25 @@ async function importEnrollments(courseId, fileBuffer, userId) {
 ### Bước 2: Thêm route vào enrollment.routes.js
 ```js
 fastify.post('/import', {
-  preHandler: [authenticate, authorize(['admin','operator','training_center'])],
+  preHandler: [authenticate, authorize(['admin','operator','accountant'])],
   config: { multipart: true }
 }, importEnrollmentsHandler);
 ```
 
 ### Bước 3: Download template
 ```
-GET /api/v1/enrollments/import/template — trả về file Excel mẫu
+GET /api/v1/enrollments/import/template - trả về file Excel mẫu
 ```
 
 ## Điểm quan trọng
 - Dùng thư viện `xlsx` (đã có trong import.service.js hiện tại)
-- Xử lý từng dòng độc lập — lỗi 1 dòng không ảnh hưởng dòng khác
+- Xử lý từng dòng độc lập - lỗi 1 dòng không ảnh hưởng dòng khác
 - Trả về kết quả chi tiết từng dòng lỗi để user biết cần sửa gì
-- training_center chỉ import vào course của mình
+- accountant chỉ import vào course của mình
 
 ## Acceptance Criteria
 - [ ] Upload Excel 20 dòng, 17 hợp lệ → success=17, errors có 3 entries
 - [ ] Dòng lỗi có row number và message rõ ràng
 - [ ] Không tạo duplicate enrollment
-- [ ] training_center không import được vào course của trung tâm khác → 403
+- [ ] accountant không import được vào course của trung tâm khác → 403
 - [ ] GET /import/template trả về file Excel mẫu

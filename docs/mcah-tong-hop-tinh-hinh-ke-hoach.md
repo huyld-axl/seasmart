@@ -11,7 +11,7 @@
 
 ## 0. Tóm tắt nhanh
 
-1. **Repo `seasmart` đang chứa nhầm bản cũ.** Code hiện tại giống hệt nhánh `master` (31/3). Bản đang chạy trên server dev là nhánh **`dev`** (144 commit, đến 8/7/2026). Cần đồng bộ `dev` vào `seasmart` trước khi làm tiếp (mục 4, tuần 0).
+1. **Đã đồng bộ (2026-10-05):** `seasmart` giờ chứa code nhánh `dev` của repo cũ (commit `cbdf00e`, 8/7/2026, chỉ lấy ảnh chụp code, không lấy lịch sử vì lịch sử có khóa bí mật). Đã bỏ `decrypt.js`, `run_migration.js`, `quick_migration.js`. Lint, test, build chạy được; còn 2 test cũ của `deployment.service` đang fail sẵn trên `dev`.
 2. **Nhánh `dev` đã có khoảng 40–45% MVP Demo của MCAH:**
    - AI quét **sổ thuyền viên PDF ra lịch sử đi tàu** (tên tàu, loại tàu, cờ, GRT/DWT, chức danh, ngày lên/xuống tàu) theo từng trang, có màn hình xem và sửa kết quả trước khi lưu.
    - AI quét chứng chỉ (Claude Vision) và giấy tờ tùy thân; quét QR CCCD.
@@ -158,7 +158,7 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 |---|---|
 | **Trên server dev:** gỡ hoặc chặn route `/api/v1/migration/*` (S1) | HuyLD |
 | Đổi `ENC_KEY` của API tàu (S2); xác nhận `fallback.viber.vn` là gì, chuyển sang API key Anthropic trực tiếp (S4) | HuyLD |
-| **Đồng bộ nhánh `dev` vào `seasmart`**, bỏ `decrypt.js`, `run_migration.js`, `quick_migration.js`; giữ 3 tài liệu MCAH, báo cáo này và skill `.claude/skills/ui-ux` | HuyLD hoặc Claude Code (cần cấp quyền, xem B1) |
+| ~~Đồng bộ nhánh `dev` vào `seasmart`~~ **Xong 2026-10-05** | Claude Code |
 | Dựng môi trường local MariaDB + seed admin; chạy lint, test, build | Claude Code |
 
 ### Tuần 1: nền và tiếp nhận tài liệu
@@ -253,7 +253,7 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 
 | # | Blocker | Ảnh hưởng | Ai gỡ | Hạn |
 |---|---|---|---|---|
-| **B1** | **`seasmart` chưa có code `dev`.** Phiên Claude Code này bị chặn quyền khi thay toàn bộ cây thư mục và khi chạy code từ repo cũ | Chưa bắt đầu code được | HuyLD: tự đồng bộ, hoặc cấp quyền cho Claude Code | Tuần 0 |
+| ~~B1~~ | ~~`seasmart` chưa có code `dev`~~ **Đã xong 2026-10-05** | — | — | — |
 | **B2** | **Route migration không xác thực trên server dev** (S1) | Ai biết URL đều chạy được lệnh SQL trên DB có dữ liệu thật | HuyLD | **Ngay** |
 | **B3** | **`ENC_KEY` lộ trong lịch sử git** (S2) | Khóa API tàu không còn bí mật | HuyLD + chủ API tàu | Tuần 0 |
 | **B4** | **AI đi qua `fallback.viber.vn`** (S4) | Dữ liệu cá nhân qua bên thứ ba chưa rõ thỏa thuận | HuyLD | Tuần 0 |

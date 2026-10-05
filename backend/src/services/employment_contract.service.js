@@ -34,17 +34,43 @@ const employmentContractService = {
   },
 
   async create(data, createdBy) {
-    const { seafarer_id, vessel_id, start_date, end_date, salary, notes } = data
+    const {
+      seafarer_id,
+      vessel_id,
+      partner_id,
+      ship_owner_id,
+      rank_id,
+      contract_number,
+      sign_date,
+      start_date,
+      end_date,
+      salary,
+      notes,
+      duration_months,
+      sign_on_port_id,
+      sign_off_port_id,
+    } = data
     const [result] = await pool.query(
-      `INSERT INTO employment_contract (seafarer_id, vessel_id, start_date, end_date, basic_wage_usd, notes, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+      `INSERT INTO employment_contract
+        (seafarer_id, vessel_id, partner_id, rank_id, contract_number,
+         sign_date, start_date, end_date, basic_wage_usd, notes,
+         duration_months, sign_on_port_id, sign_off_port_id,
+         created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         seafarer_id,
         vessel_id || null,
+        partner_id || ship_owner_id || null,
+        rank_id || null,
+        contract_number || null,
+        sign_date || null,
         start_date || null,
         end_date || null,
         salary || null,
         notes || null,
+        duration_months || null,
+        sign_on_port_id || null,
+        sign_off_port_id || null,
       ]
     )
     return this.getById(result.insertId)

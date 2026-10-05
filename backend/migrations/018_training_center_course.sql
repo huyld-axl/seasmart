@@ -1,0 +1,6 @@
+-- ============================================================
+-- Migration 018: training_center_course
+-- Mỗi training center tự set danh sách khoá học và học phí riêng
+-- Created: 2026-04-01
+-- ============================================================
+-- training_center_course removed (training_center/course/enrollment disabled)

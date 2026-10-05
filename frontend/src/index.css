@@ -17,8 +17,17 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
 body {
   margin: 0;
+  padding: 0;
   font-family: 'Roboto', -apple-system, 'Segoe UI', sans-serif;
   font-size: 14px;
   color: #121212;
@@ -26,10 +35,23 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html {
+  margin: 0;
+  padding: 0;
+}
+
 @media (max-width: 768px) {
   .ant-descriptions-item-label,
   .ant-descriptions-item-content {
     font-size: 13px;
   }
+}
+
+/* Confirm popup: square corners, no warning icon */
+.ant-modal-confirm .ant-modal-content {
+  border-radius: 0 !important;
+}
+.ant-modal-confirm .ant-modal-confirm-body > .anticon {
+  display: none !important;
 }
 

@@ -22,13 +22,13 @@
 
 ## Việc cần làm
 
-**Option A — Bật dashboard:**
+**Option A - Bật dashboard:**
 1. Sửa `App.jsx`: thêm `<Route path="/dashboard" element={<DashboardPage />} />`
 2. Sửa `App.jsx`: đổi redirect `/` → `/dashboard`
 3. Sửa `AdminLayout.jsx`: thêm menu item "Tổng quan" → `/dashboard`
-4. Kiểm tra nội dung `DashboardPage.jsx` — bổ sung stats cards nếu cần
+4. Kiểm tra nội dung `DashboardPage.jsx` - bổ sung stats cards nếu cần
 
-**Option B — Bỏ hẳn:**
+**Option B - Bỏ hẳn:**
 1. Xóa `DashboardPage.jsx`
 2. Giữ nguyên redirect `/` → `/seafarers`
 

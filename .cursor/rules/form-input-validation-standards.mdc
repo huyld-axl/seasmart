@@ -1,0 +1,106 @@
+---
+description: Standardized validation rules for form inputs (frontend + backend)
+alwaysApply: true
+---
+
+# Form Input Validation Standards
+
+Apply these standards for all new forms and API payload validations.
+
+## 1) Core principles
+
+1. Validate on both layers:
+   - Frontend: immediate UX feedback.
+   - Backend: source of truth, strict enforcement.
+2. Normalize before validation:
+   - Trim leading/trailing spaces for all text-like inputs.
+   - For nullable text fields, convert empty string (`''`) to `null`.
+3. Reject whitespace-only values for required text fields.
+4. Keep FE and BE constraints aligned (same min/max and format rules).
+
+## 2) Standard constraints
+
+- `input text` (name, title, short code):
+  - Required: `minLength: 1`, `maxLength: 100`
+  - Nullable: `type: ['string', 'null']`, and if not `null`, enforce `1..100` after trim
+
+- `textarea` (description, note):
+  - Required: `minLength: 1`, `maxLength: 3000`
+  - Nullable: `type: ['string', 'null']`, and if not `null`, enforce `1..3000` after trim
+
+- `email`:
+  - `maxLength: 254`
+  - Must match valid email format (`format: 'email'` on backend)
+  - Normalize to lowercase before persistence
+
+- `phone`:
+  - Allow only digits and optional leading `+`
+  - Length `8..15`
+  - Suggested pattern: `^\+?[0-9]{8,15}$`
+
+- `number` fields:
+  - Define `minimum`, `maximum`, and `multipleOf` (if decimal precision is required)
+  - Do not accept numeric strings where number type is expected
+
+## 3) Nullable rule (important)
+
+For fields defined as nullable:
+
+- Accept `null`
+- Accept omitted field in update payloads (partial updates)
+- If client sends string:
+  - Trim first
+  - If result is empty, convert to `null`
+  - Otherwise validate by normal min/max rules
+
+## 4) Security and data quality guards
+
+- Never trust frontend-only validation.
+- Prevent script injection and unsafe HTML in plain-text fields.
+- Enforce uniqueness where business requires (email, internal code, etc.).
+- Use parameterized SQL only.
+
+## 5) Validation test checklist
+
+For each validated field, test at least:
+
+1. Valid minimum boundary
+2. Valid maximum boundary
+3. Exceed max by 1 character/value
+4. Null case (if nullable)
+5. Empty string and whitespace-only input
+6. Invalid format case (email/phone/url)
+
+## 6) Fastify schema examples
+
+### Required short text
+
+```js
+{
+  type: 'string',
+  minLength: 1,
+  maxLength: 100
+}
+```
+
+### Nullable short text
+
+```js
+{
+  type: ['string', 'null'],
+  minLength: 1,
+  maxLength: 100
+}
+```
+
+### Email
+
+```js
+{
+  type: 'string',
+  format: 'email',
+  maxLength: 254
+}
+```
+
+Note: when using nullable text schemas, handler/service should normalize `''` to `null` after trim.

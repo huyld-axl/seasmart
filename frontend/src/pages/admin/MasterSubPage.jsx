@@ -12,10 +12,12 @@ import {
   Popconfirm,
   message,
   Tag,
+  Tooltip,
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/client'
+import VesselMasterDataPage from './master-data/VesselMasterDataPage'
 
 // ── Generic CRUD hook ──────────────────────────────────────────────────────────
 function useMasterData(resource) {
@@ -53,7 +55,13 @@ function useMasterData(resource) {
 }
 
 // ── Generic table + modal ──────────────────────────────────────────────────────
-function MasterTable({ resource, columns, formFields, title }) {
+function MasterTable({
+  resource,
+  columns,
+  formFields,
+  title,
+  pagination = { pageSize: 20, showSizeChanger: false },
+}) {
   const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form] = Form.useForm()
@@ -135,7 +143,7 @@ function MasterTable({ resource, columns, formFields, title }) {
         loading={isLoading}
         dataSource={data}
         columns={[...columns, actionCol]}
-        pagination={{ pageSize: 20, showSizeChanger: false }}
+        pagination={pagination}
         scroll={{ x: 'max-content' }}
       />
       <Modal
@@ -161,6 +169,7 @@ function CertificateTypeTab() {
     <MasterTable
       resource="certificate-types"
       title="chứng chỉ"
+      pagination={false}
       columns={[
         { title: 'Mã', dataIndex: 'code', width: 160 },
         { title: 'Tên tiếng Việt', dataIndex: 'name_vi' },
@@ -176,6 +185,16 @@ function CertificateTypeTab() {
           dataIndex: 'is_stcw',
           width: 70,
           render: (v) => (v ? <Tag color="blue">STCW</Tag> : null),
+        },
+        {
+          title: (
+            <Tooltip title="Số tháng còn lại trước khi hết hạn cần bắt đầu theo dõi/cảnh báo">
+              Theo dõi (tháng)
+            </Tooltip>
+          ),
+          dataIndex: 'warning_before_months',
+          width: 130,
+          render: (v) => (v != null ? `${v} tháng` : <span style={{ color: '#bbb' }}>—</span>),
         },
       ]}
       formFields={
@@ -195,6 +214,21 @@ function CertificateTypeTab() {
           <Form.Item name="validity_years" label="Hiệu lực (năm, để trống = vĩnh viễn)">
             <InputNumber min={1} max={99} style={{ width: '100%' }} />
           </Form.Item>
+          <Form.Item
+            name="warning_before_months"
+            label={
+              <Tooltip title="Số tháng trước hạn cần cảnh báo. VD: 12 = cảnh báo khi còn dưới 12 tháng (phù hợp giấy sức khỏe, chứng chỉ STCW yêu cầu còn hiệu lực khi lên tàu).">
+                Theo dõi trước hạn (tháng)
+              </Tooltip>
+            }
+          >
+            <InputNumber
+              min={1}
+              max={120}
+              style={{ width: '100%' }}
+              placeholder="Để trống = không cảnh báo sớm"
+            />
+          </Form.Item>
           <Form.Item name="is_stcw" label="Loại STCW" initialValue={1}>
             <Select
               options={[
@@ -202,33 +236,6 @@ function CertificateTypeTab() {
                 { value: 0, label: 'Không phải STCW' },
               ]}
             />
-          </Form.Item>
-        </>
-      }
-    />
-  )
-}
-
-function VesselTypeTab() {
-  return (
-    <MasterTable
-      resource="vessel-types"
-      title="loại tàu"
-      columns={[
-        { title: 'Mã', dataIndex: 'code', width: 160 },
-        { title: 'Tên tiếng Việt', dataIndex: 'name_vi' },
-        { title: 'Tên tiếng Anh', dataIndex: 'name_en' },
-      ]}
-      formFields={
-        <>
-          <Form.Item name="code" label="Mã" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="name_en" label="Tên tiếng Anh">
-            <Input />
           </Form.Item>
         </>
       }
@@ -263,15 +270,17 @@ function CountryTab() {
   )
 }
 
-function ContractTypeTab() {
+function RankTab() {
   return (
     <MasterTable
-      resource="contract-types"
-      title="loại hợp đồng"
+      resource="ranks"
+      title="Rank"
+      pagination={false}
       columns={[
-        { title: 'Mã', dataIndex: 'code', width: 140 },
+        { title: 'Mã', dataIndex: 'code', width: 120 },
         { title: 'Tên tiếng Việt', dataIndex: 'name_vi' },
         { title: 'Tên tiếng Anh', dataIndex: 'name_en' },
+        { title: 'Bộ phận', dataIndex: 'department', width: 100 },
       ]}
       formFields={
         <>
@@ -284,53 +293,15 @@ function ContractTypeTab() {
           <Form.Item name="name_en" label="Tên tiếng Anh">
             <Input />
           </Form.Item>
-        </>
-      }
-    />
-  )
-}
-
-function CourseTypeTab() {
-  const { data: certTypes } = useQuery({
-    queryKey: ['lookup', 'certificate-types'],
-    queryFn: () => api.get('/lookup/certificate-types').then((r) => r.data),
-  })
-  const certOptions = (certTypes || []).map((c) => ({
-    value: c.id,
-    label: `${c.code} - ${c.name_vi}`,
-  }))
-
-  return (
-    <MasterTable
-      resource="course-types"
-      title="loại khóa học"
-      columns={[
-        { title: 'Mã', dataIndex: 'code', width: 180 },
-        { title: 'Tên tiếng Việt', dataIndex: 'name_vi' },
-        { title: 'Số ngày', dataIndex: 'duration_days', width: 90 },
-      ]}
-      formFields={
-        <>
-          <Form.Item name="code" label="Mã" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="name_en" label="Tên tiếng Anh">
-            <Input />
-          </Form.Item>
-          <Form.Item name="certificate_type_id" label="Chứng chỉ liên kết">
+          <Form.Item name="department" label="Bộ phận">
             <Select
               allowClear
-              showSearch
-              optionFilterProp="label"
-              options={certOptions}
-              placeholder="Chọn chứng chỉ"
+              options={[
+                { value: 'DECK', label: 'DECK' },
+                { value: 'ENGINE', label: 'ENGINE' },
+                { value: 'CATERING', label: 'CATERING' },
+              ]}
             />
-          </Form.Item>
-          <Form.Item name="duration_days" label="Số ngày học">
-            <InputNumber min={1} style={{ width: '100%' }} />
           </Form.Item>
         </>
       }
@@ -383,11 +354,10 @@ function PortTab() {
 
 const TAB_MAP = {
   cert: { component: CertificateTypeTab, title: 'Chứng chỉ' },
-  vessel: { component: VesselTypeTab, title: 'Loại tàu' },
+  vessels: { component: VesselMasterDataPage, title: 'Danh sách tàu' },
   country: { component: CountryTab, title: 'Quốc gia' },
-  contract: { component: ContractTypeTab, title: 'Loại hợp đồng' },
-  course: { component: CourseTypeTab, title: 'Loại khóa học' },
   port: { component: PortTab, title: 'Cảng biển' },
+  rank: { component: RankTab, title: 'Rank' },
 }
 
 export default function MasterSubPage() {

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { message } from 'antd'
+import { notifyError } from '../utils/notify'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
@@ -23,7 +23,7 @@ api.interceptors.response.use(
     } else {
       const msg =
         err.response?.data?.error || err.response?.data?.message || err.message || 'Có lỗi xảy ra'
-      message.error(msg)
+      notifyError(msg)
     }
     return Promise.reject(err)
   }

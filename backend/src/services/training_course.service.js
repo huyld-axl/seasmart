@@ -14,8 +14,8 @@ const trainingCourseService = {
     const where = ['tc.deleted_at IS NULL']
     const params = []
 
-    // training_center chỉ thấy course của mình
-    if (requestUser.role === 'training_center') {
+    // accountant chỉ thấy course của mình
+    if (requestUser.role === 'accountant') {
       where.push('tc.training_center_id = ?')
       params.push(requestUser.linked_entity_id)
     } else if (training_center_id) {

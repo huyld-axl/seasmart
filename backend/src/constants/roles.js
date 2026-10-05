@@ -1,3 +1,3 @@
-const ROLES = ['admin', 'operator', 'training_center', 'manning_agent', 'seafarer']
+const ROLES = ['admin', 'operator', 'accountant', 'seafarer']
 
 module.exports = { ROLES }

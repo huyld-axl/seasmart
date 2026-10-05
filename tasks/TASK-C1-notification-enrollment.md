@@ -1,14 +1,14 @@
-# TASK-C1: Notification — Cảnh Báo Enrollment
+# TASK-C1: Notification - Cảnh Báo Enrollment
 
 ## Why
 Khi có thay đổi trạng thái enrollment (tạo mới, duyệt, từ chối), các bên liên quan cần được thông báo qua email để không bỏ lỡ.
-Cron job đã có sẵn trong `jobs.js` — cần thêm các job mới và email templates.
+Cron job đã có sẵn trong `jobs.js` - cần thêm các job mới và email templates.
 
 ## Trạng thái: PENDING (blocked by TASK-A1, TASK-B1, TASK-B2)
 
 ## Files cần sửa
-- `D:/code/app hàng hải/backend/src/jobs.js` — thêm cron job reminder
-- `D:/code/app hàng hải/backend/src/services/enrollment.service.js` — trigger email khi approve/reject
+- `D:/code/app hàng hải/backend/src/jobs.js` - thêm cron job reminder
+- `D:/code/app hàng hải/backend/src/services/enrollment.service.js` - trigger email khi approve/reject
 
 ## Files cần tạo
 - `D:/code/app hàng hải/backend/src/templates/email-enrollment-pending.html`
@@ -18,9 +18,9 @@ Cron job đã có sẵn trong `jobs.js` — cần thêm các job mới và email
 
 ## Các loại notification
 
-### 1. Enrollment PENDING → Email cho training_center
+### 1. Enrollment PENDING → Email cho accountant
 - **Trigger**: Khi tạo enrollment với status = PENDING (self-enroll hoặc QR)
-- **Gửi đến**: Email của training_center phụ trách course
+- **Gửi đến**: Email của accountant phụ trách course
 - **Nội dung**: Tên thuyền viên, tên khóa học, link duyệt
 
 ### 2. Enrollment APPROVED → Email cho seafarer
@@ -39,7 +39,7 @@ Cron job đã có sẵn trong `jobs.js` — cần thêm các job mới và email
 - **Gửi đến**: Email seafarer
 - **Nội dung**: Nhắc nhở ngày giờ, địa điểm, tài liệu cần mang
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Hàm sendEnrollmentNotification trong notification.service.js (hoặc trực tiếp trong enrollment.service.js)
 
@@ -97,7 +97,7 @@ cron.schedule('0 8 * * *', async () => {
 ```
 
 ## Acceptance Criteria
-- [ ] Tạo enrollment PENDING → training_center nhận email trong vòng 1 phút
+- [ ] Tạo enrollment PENDING → accountant nhận email trong vòng 1 phút
 - [ ] Approve enrollment → seafarer nhận email xác nhận
 - [ ] Reject enrollment → seafarer nhận email kèm lý do
 - [ ] Cron job 8:00 sáng gửi reminder cho khóa học bắt đầu sau 3 ngày

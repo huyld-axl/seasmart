@@ -1,7 +1,7 @@
-# TASK-B2: API — Seafarer Self-Enroll (Portal)
+# TASK-B2: API - Seafarer Self-Enroll (Portal)
 
 ## Why
-Hiện tại thuyền viên không thể tự đăng ký khóa học — phải nhờ admin/operator tạo enrollment thủ công.
+Hiện tại thuyền viên không thể tự đăng ký khóa học - phải nhờ admin/operator tạo enrollment thủ công.
 Tính năng này cho phép thuyền viên đăng nhập portal, xem danh sách khóa học đang mở, và tự đăng ký.
 
 ## Trạng thái: PENDING (blocked by TASK-A1, TASK-A3)
@@ -13,10 +13,10 @@ Tính năng này cho phép thuyền viên đăng nhập portal, xem danh sách k
 ## API Endpoints
 
 ```
-GET  /api/v1/portal/seafarer/courses          — xem danh sách khóa học đang mở
-POST /api/v1/portal/seafarer/enrollments      — tự đăng ký khóa học
-GET  /api/v1/portal/seafarer/enrollments      — xem lịch sử đăng ký của mình
-DELETE /api/v1/portal/seafarer/enrollments/:id — hủy đăng ký (chỉ khi PENDING)
+GET  /api/v1/portal/seafarer/courses          - xem danh sách khóa học đang mở
+POST /api/v1/portal/seafarer/enrollments      - tự đăng ký khóa học
+GET  /api/v1/portal/seafarer/enrollments      - xem lịch sử đăng ký của mình
+DELETE /api/v1/portal/seafarer/enrollments/:id - hủy đăng ký (chỉ khi PENDING)
 ```
 
 ### POST /api/v1/portal/seafarer/enrollments
@@ -32,7 +32,7 @@ DELETE /api/v1/portal/seafarer/enrollments/:id — hủy đăng ký (chỉ khi P
      - Nếu đầy: tạo record trong `enrollment_waitlist`
   6. Trả về enrollment hoặc waitlist record
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: Thêm hàm selfEnroll vào seafarer_portal.service.js
 

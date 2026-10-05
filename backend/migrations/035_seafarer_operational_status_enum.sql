@@ -1,0 +1,14 @@
+-- TASK C1/C2: Chuẩn hóa trạng thái thuyền viên về 3 mức vận hành
+-- STANDBY (xanh), ONBOARD (vàng), SIGNOFF (đỏ)
+
+UPDATE seafarer
+SET status = CASE
+  WHEN status IN ('AVAILABLE', 'ON_LEAVE', 'TRAINING', 'STANDBY') THEN 'STANDBY'
+  WHEN status IN ('ON_VESSEL', 'ON_BOARD', 'ONBOARD') THEN 'ONBOARD'
+  WHEN status IN ('BLACKLISTED', 'RETIRED', 'INACTIVE', 'SIGNOFF') THEN 'SIGNOFF'
+  ELSE 'STANDBY'
+END
+WHERE deleted_at IS NULL;
+
+ALTER TABLE seafarer
+  MODIFY COLUMN status ENUM('STANDBY', 'ONBOARD', 'OFFSHIFT', 'RESERVE', 'SIGNOFF') NOT NULL DEFAULT 'STANDBY';

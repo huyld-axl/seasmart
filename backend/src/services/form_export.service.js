@@ -1,10 +1,12 @@
 // form_export.service.js
 // Fills HD-Hong form templates with seafarer data per QUY UOC mapping
 const ExcelJS = require('exceljs')
+const JSZip = require('jszip')
+const fs = require('fs')
 const path = require('path')
 const pool = require('../config/db')
 
-const FORMS_DIR = path.resolve(__dirname, '../../../../forms')
+const FORMS_DIR = path.resolve(__dirname, '../../forms')
 
 // DATA column index (1-based, matching Excel columns A=1, B=2, ...)
 // We map field names from DB to QUY UOC column letters
@@ -51,7 +53,7 @@ function buildSeafarerRow(s, owner) {
     HD10: s.national_id || '',
     HD11: fmt(s.national_id_issued_date),
     HD12: s.national_id_issued_place || '',
-    HD13: '', // emergency_contact_name — not in current schema
+    HD13: '', // emergency_contact_name - not in current schema
     HD14: s.permanent_address || '',
     HD15: '', // emergency_contact_relation
     HD16: '', // emergency_contact_phone
@@ -209,7 +211,7 @@ async function getOwnerByVessel(vesselName) {
   if (!vesselName) return null
   // Try DB first, fall back to static data from the Excel file
   try {
-    const [rows] = await pool.query('SELECT * FROM ship_owner WHERE vessel_name LIKE ? LIMIT 1', [
+    const [rows] = await pool.query('SELECT * FROM partner WHERE vessel_name LIKE ? LIMIT 1', [
       `%${vesselName}%`,
     ])
     if (rows[0]) return rows[0]
@@ -228,12 +230,119 @@ async function getOwnerByVessel(vesselName) {
   }
 }
 
+// XML-escape helper for the JSZip fallback
+function escapeXml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+// Replace placeholder keys within <t>...</t> XML elements only.
+// Sorts by key length descending to prevent partial-key conflicts (HD1 vs HD10).
+function replaceInXmlText(xml, data) {
+  const entries = Object.entries(data)
+    .filter(([, v]) => v !== undefined && v !== null)
+    .sort((a, b) => b[0].length - a[0].length)
+
+  return xml.replace(/<t([^>]*)>([\s\S]*?)<\/t>/g, (match, attrs, content) => {
+    let replaced = content
+    for (const [key, val] of entries) {
+      if (replaced.includes(key)) {
+        replaced = replaced.split(key).join(escapeXml(val))
+      }
+    }
+    return `<t${attrs}>${replaced}</t>`
+  })
+}
+
+// Fallback for xlsx files that ExcelJS cannot parse (e.g. broken externalLinks,
+// unsupported newer Excel features). Uses JSZip to do surgical text replacement
+// in sharedStrings.xml and sheet*.xml while preserving all styles/formatting.
+async function fillFormXmlFallback(templatePath, data) {
+  const buf = fs.readFileSync(templatePath)
+  const zip = await JSZip.loadAsync(buf)
+  const normalize = (k) => k.replace(/\\/g, '/')
+
+  // --- Clean up broken externalLinks (cause "problem with content" warning in Excel) ---
+
+  // 1. Remove xl/externalLinks/* entries from ZIP
+  Object.keys(zip.files)
+    .filter((k) => normalize(k).startsWith('xl/externalLinks'))
+    .forEach((k) => zip.remove(k))
+
+  // 2. Strip <externalReferences>...</externalReferences> from workbook.xml
+  const wbKey = Object.keys(zip.files).find((k) => normalize(k) === 'xl/workbook.xml')
+  if (wbKey) {
+    const wbXml = await zip.file(wbKey).async('string')
+    zip.file(wbKey, wbXml.replace(/<externalReferences>[\s\S]*?<\/externalReferences>/g, ''))
+  }
+
+  // 3. Remove externalLink Override entries from [Content_Types].xml
+  const ctKey = Object.keys(zip.files).find((k) => normalize(k) === '[Content_Types].xml')
+  if (ctKey) {
+    const ct = await zip.file(ctKey).async('string')
+    zip.file(ctKey, ct.replace(/<Override[^>]*externalLink[^>]*\/>/g, ''))
+  }
+
+  // 4. Remove calcChain.xml — Excel rebuilds it; stale entries cause "Formula" repair warnings
+  Object.keys(zip.files)
+    .filter((k) => normalize(k) === 'xl/calcChain.xml')
+    .forEach((k) => zip.remove(k))
+
+  // 5. Strip formula elements that reference removed external links (e.g. <f>[1]Sheet!A1</f>)
+  //    Keep the cached value <v> so the cell still shows a value.
+  const allSheetKeys = Object.keys(zip.files).filter((k) =>
+    normalize(k).match(/^xl\/worksheets\/sheet\d+\.xml$/)
+  )
+  for (const sheetKey of allSheetKeys) {
+    let sheet = await zip.file(sheetKey).async('string')
+    // Remove any <f> element that contains [N] anywhere (external link reference)
+    sheet = sheet.replace(/<f[^>]*>[\s\S]*?<\/f>/g, (match) => (/\[\d+\]/.test(match) ? '' : match))
+    zip.file(sheetKey, sheet)
+  }
+
+  // 6. Remove calcChain from workbook.xml.rels so Excel doesn't look for it
+  const wbRelsKey = Object.keys(zip.files).find(
+    (k) => normalize(k) === 'xl/_rels/workbook.xml.rels'
+  )
+  if (wbRelsKey) {
+    const rels = await zip.file(wbRelsKey).async('string')
+    zip.file(wbRelsKey, rels.replace(/<Relationship[^>]*calcChain[^>]*\/>/g, ''))
+  }
+
+  // --- Replace placeholder text ---
+
+  // Replace in sharedStrings.xml (most string cells use shared strings)
+  const ssKey = Object.keys(zip.files).find((k) => normalize(k) === 'xl/sharedStrings.xml')
+  if (ssKey) {
+    const ss = await zip.file(ssKey).async('string')
+    zip.file(ssKey, replaceInXmlText(ss, data))
+  }
+
+  // Replace inline strings in each worksheet
+  const sheetKeys = Object.keys(zip.files).filter((k) =>
+    normalize(k).match(/^xl\/worksheets\/sheet\d+\.xml$/)
+  )
+  for (const sheetKey of sheetKeys) {
+    const sheet = await zip.file(sheetKey).async('string')
+    zip.file(sheetKey, replaceInXmlText(sheet, data))
+  }
+
+  return zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' })
+}
+
 async function fillForm(formFileName, data) {
   const templatePath = path.join(FORMS_DIR, formFileName)
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(templatePath)
 
-  const ws = wb.worksheets[0]
+  const ws = wb.worksheets.find((s) => s && s.actualRowCount > 0) || wb.worksheets[0]
+
+  // Fallback: ExcelJS cannot parse this file (broken externalLinks, newer xlsx features).
+  // Use direct XML manipulation via JSZip which preserves all styles.
+  if (!ws) return fillFormXmlFallback(templatePath, data)
 
   ws.eachRow((row) => {
     row.eachCell({ includeEmpty: false }, (cell) => {
@@ -281,6 +390,9 @@ const FORM_META = [
 
 module.exports = {
   FORM_META,
+  buildSeafarerRow,
+  getSeafarerData,
+  getOwnerByVessel,
   async exportForm(seafarerId, formKey) {
     const meta = FORM_META.find((f) => f.key === formKey)
     if (!meta) throw { statusCode: 400, message: `Form không hợp lệ: ${formKey}` }

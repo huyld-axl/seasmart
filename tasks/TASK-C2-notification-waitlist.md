@@ -1,4 +1,4 @@
-# TASK-C2: Notification — Waitlist Tự Động
+# TASK-C2: Notification - Waitlist Tự Động
 
 ## Why
 Khi khóa học đầy, thuyền viên vào waitlist. Khi có người rút khỏi khóa học (WITHDRAWN/REJECTED), cần tự động notify người đầu hàng đợi và cho họ 24h để xác nhận.
@@ -9,8 +9,8 @@ Khi khóa học đầy, thuyền viên vào waitlist. Khi có người rút kh�
 - `D:/code/app hàng hải/backend/src/services/waitlist.service.js`
 
 ## Files cần sửa
-- `D:/code/app hàng hải/backend/src/jobs.js` — thêm cron job kiểm tra waitlist
-- `D:/code/app hàng hải/backend/src/services/enrollment.service.js` — trigger waitlist khi có chỗ trống
+- `D:/code/app hàng hải/backend/src/jobs.js` - thêm cron job kiểm tra waitlist
+- `D:/code/app hàng hải/backend/src/services/enrollment.service.js` - trigger waitlist khi có chỗ trống
 
 ## Luồng tự động
 
@@ -31,7 +31,7 @@ Nếu quá 24h và chưa xác nhận → EXPIRED → promote người tiếp the
 Nếu xác nhận → tạo enrollment PENDING → EXPIRED các người còn lại
 ```
 
-## How — Các bước thực hiện
+## How - Các bước thực hiện
 
 ### Bước 1: waitlist.service.js
 
@@ -111,8 +111,8 @@ cron.schedule('0 * * * *', async () => {
 
 ### Bước 4: API xác nhận waitlist
 ```
-POST /api/v1/waitlist/:id/confirm — seafarer xác nhận từ email link
-DELETE /api/v1/waitlist/:id       — seafarer tự hủy khỏi waitlist
+POST /api/v1/waitlist/:id/confirm - seafarer xác nhận từ email link
+DELETE /api/v1/waitlist/:id       - seafarer tự hủy khỏi waitlist
 ```
 
 ## Acceptance Criteria

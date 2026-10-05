@@ -1,31 +1,39 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ConfigProvider, App as AntApp } from 'antd'
-import viVN from 'antd/locale/vi_VN'
+import { App as AntApp } from 'antd'
+import { useEffect } from 'react'
 
+import AppLocaleProvider from './components/common/AppLocaleProvider'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import AdminLayout from './layouts/AdminLayout'
-import SeafarerLayout from './layouts/SeafarerLayout'
 import LoginPage from './pages/admin/LoginPage'
 import SeafarerListPage from './pages/admin/SeafarerListPage'
 import SeafarerDetailPage from './pages/admin/SeafarerDetailPage'
 import SeafarerImportPage from './pages/admin/SeafarerImportPage'
 import SeafarerFormPage from './pages/admin/SeafarerFormPage'
-import TrainingCenterListPage from './pages/admin/TrainingCenterListPage'
-import TrainingCenterDetailPage from './pages/admin/TrainingCenterDetailPage'
-import CourseListPage from './pages/admin/CourseListPage'
-import CourseDetailPage from './pages/admin/CourseDetailPage'
 import MasterSubPage from './pages/admin/MasterSubPage'
+import MasterDataHubPage from './pages/admin/MasterDataHubPage'
 import MessagingPage from './pages/admin/MessagingPage'
-import SeafarerRegisterPage from './pages/seafarer/RegisterPage'
-import SeafarerVerifyPage from './pages/seafarer/VerifyPage'
-import SeafarerProfilePage from './pages/seafarer/ProfilePage'
-import SeafarerCertificatesPage from './pages/seafarer/CertificatesPage'
-import SeafarerCoursesPage from './pages/seafarer/CoursesPage'
-import SeafarerHistoryPage from './pages/seafarer/HistoryPage'
 import QREnrollPage from './pages/QREnrollPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
+import FormTemplatePage from './pages/admin/FormTemplatePage'
+import PartnerListPage from './pages/admin/partners/PartnerListPage'
+import PartnerDetailPage from './pages/admin/partners/PartnerDetailPage'
+import JobListPage from './pages/admin/partners/JobListPage'
+import JobDetailPage from './pages/admin/partners/JobDetailPage'
+import DeploymentListPage from './pages/admin/DeploymentListPage'
+import DeploymentDetailPage from './pages/admin/DeploymentDetailPage'
+import PartnerDashboardPage from './pages/admin/partners/PartnerDashboardPage'
+import VesselDetailPage from './pages/admin/partners/VesselDetailPage'
+import VesselEditPage from './pages/admin/partners/VesselEditPage'
+import VesselCatalogPage from './pages/admin/VesselCatalogPage'
+import FinancePage from './pages/admin/finance/FinancePage'
+
+import SeafarerProfilePage from './pages/seafarer/ProfilePage'
+import SeafarerHistoryPage from './pages/seafarer/HistoryPage'
+import SeafarerCertificatesPage from './pages/seafarer/CertificatesPage'
+import { setErrorNotifier } from './utils/notify'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -47,19 +55,31 @@ const antTheme = {
   },
 }
 
+function AppMessageBridge() {
+  const { message } = AntApp.useApp()
+
+  useEffect(() => {
+    setErrorNotifier((text) => message.error(text))
+    return () => setErrorNotifier(null)
+  }, [message])
+
+  return null
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider locale={viVN} theme={antTheme}>
+      <AppLocaleProvider theme={antTheme}>
         <AntApp>
+          <AppMessageBridge />
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/" element={<Navigate to="/seafarers" replace />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
               <Route
                 element={
-                  <ProtectedRoute roles={['admin', 'operator', 'training_center', 'manning_agent']}>
+                  <ProtectedRoute roles={['admin', 'operator', 'accountant']}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -69,47 +89,66 @@ export default function App() {
                 <Route path="/seafarers/import" element={<SeafarerImportPage />} />
                 <Route path="/seafarers/:id" element={<SeafarerDetailPage />} />
                 <Route path="/seafarers/:id/edit" element={<SeafarerFormPage />} />
-                <Route path="/training-centers" element={<TrainingCenterListPage />} />
-                <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
-                <Route path="/courses" element={<CourseListPage />} />
-                <Route path="/courses/:id" element={<CourseDetailPage />} />
-                <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
+                <Route path="/dashboard" element={<PartnerDashboardPage />} />
+                <Route path="/partners" element={<PartnerListPage />} />
+                <Route path="/partners/:id" element={<PartnerDetailPage />} />
+                <Route path="/partners/vessels/:id" element={<VesselDetailPage />} />
+                <Route path="/partners/vessels/:id/edit" element={<VesselEditPage />} />
+                <Route path="/jobs" element={<JobListPage />} />
+                <Route path="/jobs/:id" element={<JobDetailPage />} />
+                <Route path="/deployments" element={<DeploymentListPage />} />
+                <Route path="/deployments/:id" element={<DeploymentDetailPage />} />
+                <Route path="/finance" element={<FinancePage />} />
+                <Route path="/vessels" element={<VesselCatalogPage />} />
+                <Route path="/master-data/vessels" element={<Navigate to="/vessels" replace />} />
+                <Route path="/master-data" element={<MasterDataHubPage />} />
                 <Route path="/master-data/:tab" element={<MasterSubPage />} />
                 <Route path="/messages" element={<MessagingPage />} />
                 <Route path="/admin/users" element={<UserListPage />} />
                 <Route path="/admin/users/:id" element={<UserDetailPage />} />
+                <Route path="/master-data/admin/form-templates" element={<FormTemplatePage />} />
               </Route>
 
               <Route
                 path="/403"
                 element={<div style={{ padding: 40 }}>Không có quyền truy cập</div>}
               />
-              <Route path="/tc/*" element={<Navigate to="/courses" replace />} />
 
-              {/* Seafarer public routes */}
-              <Route path="/seafarer/register" element={<SeafarerRegisterPage />} />
+              {/* Public QR enroll */}
               <Route path="/enroll/:token" element={<QREnrollPage />} />
 
-              {/* Seafarer protected routes */}
+              {/* Seafarer portal (read/write only for seafarer) */}
+              <Route path="/portal" element={<Navigate to="/portal/profile" replace />} />
               <Route
+                path="/portal/profile"
                 element={
                   <ProtectedRoute roles={['seafarer']}>
-                    <SeafarerLayout />
+                    <SeafarerProfilePage />
                   </ProtectedRoute>
                 }
-              >
-                <Route path="/seafarer/verify" element={<SeafarerVerifyPage />} />
-                <Route path="/seafarer/profile" element={<SeafarerProfilePage />} />
-                <Route path="/seafarer/certificates" element={<SeafarerCertificatesPage />} />
-                <Route path="/seafarer/courses" element={<SeafarerCoursesPage />} />
-                <Route path="/seafarer/history" element={<SeafarerHistoryPage />} />
-              </Route>
+              />
+              <Route
+                path="/portal/history"
+                element={
+                  <ProtectedRoute roles={['seafarer']}>
+                    <SeafarerHistoryPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/portal/certificates"
+                element={
+                  <ProtectedRoute roles={['seafarer']}>
+                    <SeafarerCertificatesPage />
+                  </ProtectedRoute>
+                }
+              />
 
-              <Route path="*" element={<Navigate to="/seafarers" replace />} />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </BrowserRouter>
         </AntApp>
-      </ConfigProvider>
+      </AppLocaleProvider>
     </QueryClientProvider>
   )
 }

@@ -1,4 +1,4 @@
-# MCAH — Tổng hợp tình hình, kế hoạch triển khai MVP và blockers
+# MCAH - Tổng hợp tình hình, kế hoạch triển khai MVP và blockers
 
 - **Phiên bản:** 2 (2026-10-05). Bản 1 đánh giá nhầm trên code nhánh `master` cũ; bản này đánh giá lại trên nhánh `dev`.
 - **Nguồn:**
@@ -23,7 +23,7 @@
    - `POST /api/v1/migration/run-019` và `/run-020` **không cần đăng nhập** mà vẫn chạy lệnh SQL thay đổi cấu trúc DB (`run-020` là lệnh `DROP TABLE`).
    - Khóa mã hóa `ENC_KEY` của API tra cứu tàu được commit trong `decrypt.js`, mật khẩu DB viết cứng trong `run_migration.js`, `quick_migration.js`.
    - Gọi AI qua `ANTHROPIC_BASE_URL=https://fallback.viber.vn` (file `.env.example`), tức là dữ liệu thuyền viên có thể đang đi qua một máy chủ trung gian của bên thứ ba.
-5. **Kế hoạch 1 tháng (1 người + Claude Code) khả thi** nếu xây tiếp trên `dev`: tuần 2 có demo nội bộ, tuần 4 có MVP Demo cho Sales. Không còn thời gian dự phòng; nếu trễ có thứ tự cắt giảm ở mục 4.
+5. **Kế hoạch (1 người + Claude Code): thiết kế trước, code sau.** Tuần 1 chỉ làm flow và design (5 cổng duyệt, cổng cuối là "Duyệt design"); tuần 2–4 code, cuối tuần 2 có demo nội bộ, cuối tuần 4 có MVP Demo cho Sales nếu cắt màn hàng chờ và bằng chứng thủ công cho tàu, hoặc cuối tuần 5 nếu giữ đủ phạm vi (mục 4).
 
 ---
 
@@ -127,7 +127,7 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 | S5 | Tài khoản role `seafarer` đọc và xuất được mọi hồ sơ, CV, biểu mẫu (route chỉ kiểm tra đăng nhập). Trên `dev` đã bỏ đăng ký công khai nên rủi ro thấp hơn `master` | `backend/src/routes/v1/seafarer.routes.js` | Cao |
 | S6 | API tàu ngoài gọi qua HTTP thường tới IP `157.180.60.155:8888`; chưa rõ chủ sở hữu và quyền dùng dữ liệu | `vessel_external.service.js` | Trung bình |
 | S7 | Migrations chỉ chạy trên MariaDB | `backend/migrations/` | Thấp nếu chốt MariaDB |
-| S8 | Ít test (3 file) | — | Trung bình |
+| S8 | Ít test (3 file) | - | Trung bình |
 
 ---
 
@@ -150,43 +150,56 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 
 ---
 
-## 4. Kế hoạch 4 tuần (1 người + Claude Code)
+## 4. Kế hoạch (1 người + Claude Code): thiết kế trước, code sau
 
-### Tuần 0 (1–2 ngày): đồng bộ code và xử lý bảo mật gấp
+**Nguyên tắc (Q10):** **duyệt xong design và flow mới bắt đầu code.** Tuần 1 chỉ làm thiết kế; không sửa code ứng dụng (backend, frontend, DB) cho đến khi HuyLD duyệt ở cổng cuối của giai đoạn thiết kế.
+
+Ngoại lệ duy nhất là các việc vận hành bảo mật trên **server dev** (chặn route migration, đổi khóa), vì không phải code mới và đang để lộ dữ liệu thật.
+
+### Giai đoạn 0 (ngay): bảo mật trên server dev
 
 | Việc | Ai |
 |---|---|
 | **Trên server dev:** gỡ hoặc chặn route `/api/v1/migration/*` (S1) | HuyLD |
 | Đổi `ENC_KEY` của API tàu (S2); xác nhận `fallback.viber.vn` là gì, chuyển sang API key Anthropic trực tiếp (S4) | HuyLD |
 | ~~Đồng bộ nhánh `dev` vào `seasmart`~~ **Xong 2026-10-05** | Claude Code |
-| Dựng môi trường local MariaDB + seed admin; chạy lint, test, build | Claude Code |
 
-### Tuần 1: nền và tiếp nhận tài liệu
+### Giai đoạn 1 (tuần 1): thiết kế hệ thống và flow → **cổng "Duyệt design"**
 
-- Sửa phân quyền route đọc/xuất hồ sơ (S5); xóa route migration trong code (S1).
-- Ẩn các module ngoài phạm vi demo (lương, doanh thu, tài chính, nhật ký gọi, tin nhắn, cổng thuyền viên) bằng feature flag; đổi tên hiển thị sang MCAH.
-- Bảng mới `source_document`, `extraction_run`; lưu bản gốc + hash; quét sổ nhận JPG/PNG và PDF không có ảnh JPEG nhúng (render trang thành ảnh).
-- Validate JSON schema, `missing_reason`, ghi model/chi phí; `FakeProvider` để test không tốn phí.
-- Thêm `source_document_id`, `page_no`, `review_state` cho `seafarer_deployment`.
+Mọi sản phẩm thiết kế lưu trong `docs/design/` của repo và được gửi file đính kèm cho HuyLD xem (kể cả trên điện thoại).
 
-### Tuần 2: duyệt và hồ sơ có lịch sử → **M1 demo nội bộ**
+| Ngày | Sản phẩm | Nội dung | Cổng HuyLD |
+|---|---|---|---|
+| 1 | **Flow nghiệp vụ** (`docs/design/01-flows.md`) | Luồng end-to-end từ upload sổ đến phát hành bản xuất, theo vai trò (Crewing Officer, Reviewer, Admin); sơ đồ trạng thái: tài liệu (RECEIVED → PROCESSING → REVIEW_REQUIRED → COMPLETED/FAILED), dòng sea service (đề xuất → đã duyệt/đã sửa/từ chối, UNKNOWN), hồ sơ (DRAFT → REVIEWED, revision), kết quả kiểm tra (BLOCKED/NEEDS_REVIEW/READY_IN_SCOPE), bản xuất (DRAFT → chờ duyệt → đã phát hành → STALE); các nhánh lỗi (AI lỗi, trang mờ, tàu không tìm thấy, quá sức chứa mẫu) | **A: duyệt flow** |
+| 1 | **Sơ đồ màn hình và điều hướng** (`02-sitemap.md`) | Danh sách màn, menu, màn nào dẫn tới màn nào, quyền xem theo vai trò | Gộp cổng A |
+| 2 | **Brief + việc chính từng màn** (`03-screen-briefs.md`, bước `U1`/`U2` của skill) | Với mỗi màn: người dùng đến để làm gì, so sánh bằng gì, hành động cuối | **B: duyệt brief** (cổng 1 của skill) |
+| 2–3 | **Design system** (`04-design-system.html`, lối `D9` của skill) | Token màu/chữ/khoảng cách cho MCAH, logo đơn giản, các component cơ bản (nút, ô nhập, select, bảng, badge trạng thái, modal, panel, toast, upload, trạng thái rỗng/đang tải/lỗi), khung app | **C: duyệt design system** |
+| 3–4 | **Wireframe** (`05-wireframes/`, bước `U3`) | 2–3 phương án cho mỗi màn 1–4; 1 phương án cho màn 0 (đăng nhập, khung) và màn 5 | **D: chọn phương án** từng màn (cổng 2 của skill) |
+| 5 | **Prototype hi-fi tĩnh** (`06-prototype/`) | Các phương án đã chọn, dựng bằng design system, dữ liệu synthetic, bấm qua được theo kịch bản demo mục 3 (upload → duyệt → hồ sơ BLOCKED → sửa → xuất 2 mẫu → STALE → audit). HTML tĩnh, không nối backend, không nằm trong code app | **E: "Duyệt design"** |
 
-- Màn hình duyệt: ảnh trang cạnh bảng, click dòng mở đúng trang, tô màu UNKNOWN/ngày mơ hồ, bắt buộc duyệt trường trọng yếu, sửa phải có lý do.
-- Bảng `crew_profile_revision` (snapshot), `audit_event`; optimistic lock khi lưu.
-- **M1:** upload sổ → AI → duyệt cạnh trang nguồn → hồ sơ revision → xuất CV hiện có.
+**Cổng E là điểm bắt đầu code.** Nếu cổng E cần sửa nhiều, giai đoạn thiết kế kéo dài và toàn bộ lịch code lùi theo.
 
-### Tuần 3: kiểm tra
+### Giai đoạn 2 (tuần 2–4): code theo design đã duyệt
 
-- Checksum IMO (pure function + unit test); bảng `verification` (nguồn: API tàu / bằng chứng thủ công, thời điểm, người xác minh, trạng thái).
-- Sea time và overlap (pure function, unit test theo ví dụ SRS: D0..D0 = 1 ngày; D0..D0+9 = 10; union D0..D0+9 và D0+5..D0+14 = 15).
-- 4 rule + trạng thái hồ sơ + panel "Kết quả kiểm tra", ghi rõ lĩnh vực chưa đánh giá (chứng chỉ, visa).
+**Tuần 2: nền + tiếp nhận + duyệt → M1 demo nội bộ**
+- Bảo mật trong code: sửa phân quyền route đọc/xuất hồ sơ (S5), xóa route migration (S1). Ẩn module ngoài phạm vi demo bằng feature flag.
+- DB local MariaDB + seed admin; bảng `source_document`, `extraction_run`; thêm `source_document_id`, `page_no`, `review_state` cho `seafarer_deployment`.
+- Lưu bản gốc + hash; render trang thành ảnh; quét nhận JPG/PNG; validate JSON schema, `missing_reason`, ghi model/chi phí; `FakeProvider`.
+- `frontend-mcah/`: design system đã duyệt, màn 0, màn 1, màn 2 (chuyển từ prototype sang code thật, nối API).
+- `crew_profile_revision`, `audit_event`; bắt buộc duyệt trường trọng yếu.
+- **M1:** upload sổ → AI → duyệt cạnh trang nguồn → hồ sơ revision.
 
-### Tuần 4: xuất mẫu và hoàn thiện demo → **M2 MVP Demo**
+**Tuần 3: kiểm tra + hồ sơ**
+- Checksum IMO, bảng `verification`; sea time và overlap (unit test theo ví dụ SRS); 4 rule + trạng thái hồ sơ.
+- Màn 3 (danh sách và hồ sơ thuyền viên, lịch sử sửa, kết quả kiểm tra).
 
-- Tách mapping 2 CV ra cấu hình có version; chính sách liên lạc; chống formula injection; preview → duyệt (người duyệt khác người tạo) → phát hành; lưu hash; STALE.
-- Dữ liệu synthetic + script reset; deploy instance demo riêng (HTTPS); tập dượt kịch bản với Sales.
+**Tuần 4: xuất mẫu + demo → M2 MVP Demo**
+- Mapping 2 CV có version, chính sách liên lạc, chống formula injection, preview → duyệt → phát hành, STALE. Màn 4.
+- Dữ liệu synthetic + script reset; deploy instance demo riêng; tập dượt với Sales.
 
-**Nếu trễ, cắt theo thứ tự ở mục 4.1** (đã tính thêm phần giao diện không dùng antd).
+**Ảnh hưởng tiến độ:** dồn thiết kế lên trước làm thời gian code còn 3 tuần (trước đây code từ tuần 1), cộng thêm phần không dùng antd. Có 2 lựa chọn (**cần HuyLD chọn, Q11**):
+- **Giữ 4 tuần:** cắt sẵn màn 5 hàng chờ (dùng danh sách ở màn 1) và bằng chứng thủ công cho tàu (giữ checksum + API tàu). Nếu vẫn trễ thì cắt tiếp bước duyệt trước phát hành (giữ STALE).
+- **Kéo thành 5 tuần:** giữ đủ phạm vi mục 3; M2 vào cuối tuần 5.
 
 ### 4.1 Giao diện: không dùng Ant Design, chỉ dùng skill `ui-ux`
 
@@ -213,26 +226,23 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 | **Xem trang tài liệu (zoom, lật trang)** | Không có | Backend render mỗi trang thành ảnh (việc này đã cần cho AI), frontend chỉ hiện `<img>` có phóng to; **không cần thư viện PDF** |
 | Truy cập bàn phím, bẫy focus trong modal | Có luật trong skill, phải tự viết | Kiểm bằng checklist của skill; nếu tốn thời gian thì đề xuất Radix primitives (quyết riêng) |
 
-**Quy trình (giữ nguyên luật của skill):**
-- **Màn 0 theo lối design system trước (`D9`):** token, các component cơ bản ở bảng trên, khung app (sidebar, header), đăng nhập, một trang xem design system, logo MCAH đơn giản. **Cổng:** HuyLD duyệt trang design system.
-- **Màn 1–4 theo nhánh `U`:** brief + việc chính từng màn (cổng 1) → 2–3 wireframe (cổng 2, gửi file đính kèm vì skill để wireframe ở thư mục tạm) → dựng. Màn 5 `dựng luôn`.
-- Skill chỉ dựng giao diện, để handler rỗng; Claude Code nối API và logic sau.
+**Quy trình với skill (trong giai đoạn thiết kế):**
+- Màn 0 theo lối design system trước (`D9`) → cổng C.
+- Màn 1–5 theo nhánh `U`: brief (cổng B) → wireframe (cổng D). Bước `U4` "dựng thật" của skill được làm ở dạng prototype tĩnh trong `docs/design/06-prototype/` để duyệt ở cổng E, rồi mới chuyển vào `frontend-mcah/` ở giai đoạn code.
+- Skill để wireframe ở thư mục tạm; Claude Code chép sang `docs/design/` và gửi file đính kèm.
+- Skill chỉ dựng giao diện, để handler rỗng; Claude Code nối API và logic ở giai đoạn code.
 - Không dùng các skill thiết kế của gstack cho màn MCAH.
 
-**Các màn và lịch:**
+**Các màn:**
 
-| # | Màn | Lối | Thiết kế (cổng HuyLD) | Dựng |
-|---|---|---|---|---|
-| 0 | Design system, khung app, đăng nhập, logo | `D9` | Đầu tuần 1 | Tuần 1 |
-| 1 | Tiếp nhận tài liệu + danh sách tài liệu/trạng thái | `U` | Tuần 1 | Tuần 2 (đầu) |
-| 2 | **Duyệt kết quả AI cạnh ảnh trang nguồn** | `U` | Tuần 1 | Tuần 2 |
-| 3 | Hồ sơ thuyền viên + danh sách thuyền viên: lịch sử đi tàu, lịch sử sửa, kết quả kiểm tra | `U` | Tuần 2 | Tuần 3 |
-| 4 | Xuất mẫu: chính sách liên lạc → preview → duyệt → phát hành, bản xuất STALE | `U` | Tuần 3 | Tuần 4 |
-| 5 | Hàng chờ công việc | `dựng luôn` | — | Tuần 4 (nếu kịp) |
-
-**Ảnh hưởng tiến độ:** bỏ antd làm tăng khoảng **5–7 ngày công** cho frontend (dựng bộ component cơ bản, bảng, form, modal/panel, xem ảnh trang). Để giữ mốc 4 tuần:
-- M1 (cuối tuần 2) chỉ còn màn 0, 1, 2 trên app mới; xuất CV tạm gọi từ API có sẵn.
-- **Thứ tự cắt khi trễ thay bằng:** (1) màn 5 hàng chờ (dùng danh sách ở màn 1); (2) bằng chứng thủ công cho tàu; (3) bước duyệt trước phát hành (giữ STALE); (4) màn 3, 4 chuyển sang `dựng luôn`.
+| # | Màn | Thiết kế (tuần 1) | Code |
+|---|---|---|---|
+| 0 | Design system, khung app, đăng nhập, logo | `D9` → cổng C | Tuần 2 |
+| 1 | Tiếp nhận tài liệu + danh sách tài liệu/trạng thái | `U` → cổng B, D | Tuần 2 |
+| 2 | **Duyệt kết quả AI cạnh ảnh trang nguồn** | `U` → cổng B, D | Tuần 2 |
+| 3 | Danh sách + hồ sơ thuyền viên: lịch sử đi tàu, lịch sử sửa, kết quả kiểm tra | `U` → cổng B, D | Tuần 3 |
+| 4 | Xuất mẫu: chính sách liên lạc → preview → duyệt → phát hành, bản xuất STALE | `U` → cổng B, D | Tuần 4 |
+| 5 | Hàng chờ công việc | 1 phương án | Tuần 4 (bị cắt nếu giữ 4 tuần) |
 
 **Đánh giá skill (để trả lời "skill làm được đến đâu"):**
 
@@ -243,7 +253,7 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 | Chất lượng | Chạy `checklist.md` và `scripts/probe.mjs` của skill; lỗi giao diện phát hiện khi tập dượt; so ảnh chụp với màn antd cũ cùng chức năng |
 | Kỹ thuật | Kích thước bundle so với app antd (hiện 1,58 MB), lỗi truy cập bàn phím |
 
-**Điểm kiểm tra cuối tuần 2 (M1):** nếu màn 2 dựng bằng skill chưa dùng được cho demo (thiếu chức năng, lỗi nhiều, chậm hơn kế hoạch > 3 ngày), HuyLD quyết: tiếp tục, hoặc quay về antd cho màn 3–5. Kết quả đánh giá ghi vào `docs/` sau M2.
+**Điểm kiểm tra cuối tuần 2 (M1):** nếu màn 2 code bằng skill chưa dùng được cho demo (thiếu chức năng, lỗi nhiều, chậm hơn kế hoạch > 3 ngày), HuyLD quyết: tiếp tục, hoặc quay về antd cho màn 3–5. Kết quả đánh giá ghi vào `docs/` sau M2.
 
 ---
 
@@ -253,7 +263,7 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 
 | # | Blocker | Ảnh hưởng | Ai gỡ | Hạn |
 |---|---|---|---|---|
-| ~~B1~~ | ~~`seasmart` chưa có code `dev`~~ **Đã xong 2026-10-05** | — | — | — |
+| ~~B1~~ | ~~`seasmart` chưa có code `dev`~~ **Đã xong 2026-10-05** | - | - | - |
 | **B2** | **Route migration không xác thực trên server dev** (S1) | Ai biết URL đều chạy được lệnh SQL trên DB có dữ liệu thật | HuyLD | **Ngay** |
 | **B3** | **`ENC_KEY` lộ trong lịch sử git** (S2) | Khóa API tàu không còn bí mật | HuyLD + chủ API tàu | Tuần 0 |
 | **B4** | **AI đi qua `fallback.viber.vn`** (S4) | Dữ liệu cá nhân qua bên thứ ba chưa rõ thỏa thuận | HuyLD | Tuần 0 |
@@ -288,8 +298,9 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 | Q7 | Tên hiển thị: **MCAH** |
 | Q8 | File mẫu có trên nhánh `dev` (`backend/forms/`); lỗi xuất biểu mẫu ở bản 1 là do copy nhầm nhánh `master` |
 | Q9 | Màn MCAH **không dùng Ant Design**, chỉ dùng skill `ui-ux` (Tailwind v4) trong app mới `frontend-mcah/`; app antd cũ đóng băng (mục 4.1) |
+| Q10 | **Thiết kế trước, code sau:** tuần 1 làm flow + design (6 sản phẩm, 5 cổng duyệt), chỉ code sau cổng "Duyệt design" (mục 4) |
 
-**Còn cần trả lời:** danh sách module ẩn ở Q3; repo nào là nguồn chính sau khi đồng bộ (R4); `fallback.viber.vn` là gì (B4); chủ của API tàu (B6).
+**Còn cần trả lời:** Q11 giữ 4 tuần (cắt màn 5 và bằng chứng thủ công cho tàu) hay kéo thành 5 tuần (mục 4); danh sách module ẩn ở Q3; repo nào là nguồn chính sau khi đồng bộ (R4); `fallback.viber.vn` là gì (B4); chủ của API tàu (B6).
 
 ---
 

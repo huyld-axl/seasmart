@@ -4,6 +4,8 @@
 - **Nguồn:** 3 tài liệu MCAH trong repo (Ý tưởng sản phẩm, Nền tảng cho Sales & Marketing, Đặc tả SRS & MVP) + rà soát code nhánh `main` (commit `40a369e`) + chạy thử thực tế (cài DB, chạy migrations, khởi động backend, gọi API).
 - **Phạm vi:** đánh giá hiện trạng, so với mục tiêu MVP của MCAH, đề xuất kế hoạch và các điểm đang chặn.
 
+> ⚠️ **Cập nhật 2026-10-05 (sau khi lập báo cáo):** code trong repo này là bản copy nhánh `master` của repo cũ `axlthanhptp/Crew-Manning` (commit 31/3/2026). Nhánh `dev` của repo cũ mới hơn nhiều (144 commit, đến 8/7/2026) và đã có: thư mục `backend/forms/` (gồm `CV china.xlsx`, `CV eng.xlsx`), lớp LLM (Anthropic/OpenAI) và quét chứng chỉ, giấy tờ tùy thân bằng AI, lịch sử điều động (`seafarer_deployment`) dùng để xuất CV có service record, danh mục tàu (`ship_catalog`) và tra cứu tàu qua API ngoài, `deploy.sh`. Vì vậy **mục 2 (hiện trạng, gap) và mục 7.3 (lịch 4 tuần) đánh giá thấp mức có sẵn** và cần làm lại dựa trên nhánh `dev`. Nguyên nhân lỗi xuất biểu mẫu (B4) là do copy nhầm nhánh, không phải do đường dẫn.
+
 ---
 
 ## 0. Tóm tắt nhanh (đọc 1 phút)

@@ -186,41 +186,64 @@ Pilot là bước sau, chỉ làm khi có đối tác. So với Demo, Pilot thê
 - Tách mapping 2 CV ra cấu hình có version; chính sách liên lạc; chống formula injection; preview → duyệt (người duyệt khác người tạo) → phát hành; lưu hash; STALE.
 - Dữ liệu synthetic + script reset; deploy instance demo riêng (HTTPS); tập dượt kịch bản với Sales.
 
-**Nếu trễ, cắt theo thứ tự:** (1) bằng chứng thủ công cho tàu (giữ checksum + API tàu); (2) bước duyệt trước phát hành (giữ STALE); (3) optimistic lock.
+**Nếu trễ, cắt theo thứ tự ở mục 4.1** (đã tính thêm phần giao diện không dùng antd).
 
-### 4.1 Làm giao diện bằng skill `ui-ux`
+### 4.1 Giao diện: không dùng Ant Design, chỉ dùng skill `ui-ux`
 
-Repo đã có skill `.claude/skills/ui-ux` (nguồn evondevKit, xem `SOURCE.md`). Mọi màn mới hoặc làm lại của MCAH đi qua skill này. Các điểm của skill ảnh hưởng đến kế hoạch:
+**Quyết định (Q9):** các màn MCAH dựng **không dùng Ant Design**, chỉ dựa trên skill `.claude/skills/ui-ux` (nguồn evondevKit), một phần để đánh giá skill làm được đến đâu.
 
-- **Cách làm mặc định như designer (nhánh `U`):** brief và việc chính của từng màn → 2–3 wireframe → HuyLD chọn → mới dựng code. Có **2 cổng chờ HuyLD**: duyệt brief, chọn wireframe. Muốn bỏ wireframe cho màn đơn giản thì trả lời `dựng luôn`.
-- **Bám theo codebase:** dự án dùng Ant Design 6 nên skill **dùng component của antd**, chỉ chi phối token (màu, chữ, khoảng cách), bố cục và trạng thái (rỗng, đang tải, lỗi, khóa). Token của skill (`references/tokens.css`) được dịch sang `theme.token` của `ConfigProvider` thay vì CSS Tailwind.
-- **Skill chỉ lo giao diện**, để handler rỗng. Phần gọi API, logic duyệt, rule do Claude Code viết tiếp sau khi màn đã dựng.
-- **Wireframe được gửi qua file đính kèm** (skill mặc định để ở thư mục tạm, HuyLD không mở được từ app).
-- Dùng `ui-ux` thay cho các skill thiết kế của gstack (`/design-consultation`, `/design-review`) cho màn MCAH, để không có hai bộ luật thiết kế chồng nhau.
+**Cách tổ chức code:**
+- Tạo **app frontend mới `frontend-mcah/`**: Vite + React 19 + **Tailwind v4** (mặc định của skill) + React Query + React Router. Dùng chung backend Fastify hiện có.
+- Chép `references/tokens.css` của skill làm token gốc, đặt màu nhấn và font cho MCAH theo `references/brand-tokens.md`. Đọc `references/tailwind-v4-traps.md` trước khi cấu hình.
+- **App `frontend/` cũ (antd) đóng băng**, vẫn chạy cho vận hành nội bộ trên server dev. Bản demo cho Sales chỉ dùng `frontend-mcah/`. Không trộn antd và Tailwind trong cùng một app.
+- Logic phía client tái dùng được từ app cũ (client axios, lưu token đăng nhập, gọi API quét sổ) được chép sang, phần giao diện viết lại.
 
-**Các màn cần làm (6 màn):**
+**Skill có sẵn gì, thiếu gì:**
 
-| # | Màn | Lối của skill | Tuần dựng |
-|---|---|---|---|
-| 0 | Nền: token màu/chữ cho MCAH, khung app (sidebar, header), đăng nhập | Design system trước (`D9`) + logo đơn giản | 1 |
-| 1 | Tiếp nhận tài liệu: upload, danh sách tài liệu và trạng thái | `U` (wireframe) | 1 |
-| 2 | **Duyệt kết quả AI cạnh trang nguồn** | `U` (wireframe), màn quan trọng nhất của demo | 2 |
-| 3 | Hồ sơ thuyền viên: lịch sử đi tàu, revision/audit, panel kết quả kiểm tra | `U` (wireframe) | 3 |
-| 4 | Xuất mẫu: chọn mẫu + chính sách liên lạc → preview → duyệt → phát hành, danh sách bản xuất (STALE) | `U` (wireframe) | 4 |
-| 5 | Hàng chờ công việc (trang chủ): tài liệu chờ duyệt, hồ sơ bị chặn, bản xuất chờ duyệt | `dựng luôn` | 4 |
-
-Các màn cũ giữ lại (danh sách thuyền viên, tàu, đối tác) **không làm lại** trong 1 tháng; chỉ nhận token mới qua `ConfigProvider`. Nếu còn thời gian thì soi bằng lối review của skill.
-
-**Lịch thiết kế đi trước code một nhịp:**
-
-| Tuần | Thiết kế (cổng HuyLD) | Code |
+| Cần cho MCAH | Skill có mẫu | Cách xử lý |
 |---|---|---|
-| 1 (đầu tuần) | Design system + logo → duyệt. Brief + việc chính của 6 màn → duyệt (cổng 1). Wireframe màn 1, 2 → chọn (cổng 2) | Màn 0, 1 |
-| 2 | Wireframe màn 3 → chọn | Màn 2 + logic duyệt |
-| 3 | Wireframe màn 4 → chọn | Màn 3 + rule/kiểm tra |
-| 4 | — | Màn 4, 5 + tập dượt demo |
+| Nút, ô nhập, select, checkbox, tab, badge, tag | Có (`components/button`, `input`, `choice-controls`, `small-controls`, `tag-input`) | Dựng theo mẫu |
+| Upload file kèm danh sách tệp, toast | Có (`components/file-upload`) | Dựng theo mẫu |
+| Bảng dữ liệu, sắp xếp, bảng theo trạng thái, trạng thái rỗng/đang tải | Có (`layouts/app` "Bảng dữ liệu", `components/sortable-header`, `empty-state`, `loading`) | Dựng theo mẫu |
+| Sửa trực tiếp trong bảng (màn duyệt) | Có (`components/inline-edit`) | Dựng theo mẫu |
+| Modal, panel trượt, dropdown, toast, chuyển động mở/đóng | Có (`layouts/overlay`) | Dựng theo mẫu |
+| Danh sách thông tin hồ sơ, lịch sử sửa | Có (`components/description-list`, `timeline`) | Dựng theo mẫu |
+| Form đăng nhập, form nhiều trường, báo lỗi | Có (`layouts/form`, `rules-form`) | Dựng theo mẫu |
+| **Chọn ngày** | Không có mẫu; skill gợi ý thư viện (`react-day-picker`…) và để người dùng quyết | Bản demo dùng ô nhập ngày `dd/mm/yyyy` có kiểm tra, **không cài thư viện**. Nếu thấy thiếu thì quyết thêm `react-day-picker` |
+| **Xem trang tài liệu (zoom, lật trang)** | Không có | Backend render mỗi trang thành ảnh (việc này đã cần cho AI), frontend chỉ hiện `<img>` có phóng to; **không cần thư viện PDF** |
+| Truy cập bàn phím, bẫy focus trong modal | Có luật trong skill, phải tự viết | Kiểm bằng checklist của skill; nếu tốn thời gian thì đề xuất Radix primitives (quyết riêng) |
 
-**Ảnh hưởng tiến độ:** mỗi cổng cần HuyLD phản hồi trong ngày; tổng thời gian thiết kế ước khoảng 2–3 ngày công trên 4 tuần. Nếu trễ, màn 3 và 4 chuyển sang `dựng luôn` (bỏ wireframe).
+**Quy trình (giữ nguyên luật của skill):**
+- **Màn 0 theo lối design system trước (`D9`):** token, các component cơ bản ở bảng trên, khung app (sidebar, header), đăng nhập, một trang xem design system, logo MCAH đơn giản. **Cổng:** HuyLD duyệt trang design system.
+- **Màn 1–4 theo nhánh `U`:** brief + việc chính từng màn (cổng 1) → 2–3 wireframe (cổng 2, gửi file đính kèm vì skill để wireframe ở thư mục tạm) → dựng. Màn 5 `dựng luôn`.
+- Skill chỉ dựng giao diện, để handler rỗng; Claude Code nối API và logic sau.
+- Không dùng các skill thiết kế của gstack cho màn MCAH.
+
+**Các màn và lịch:**
+
+| # | Màn | Lối | Thiết kế (cổng HuyLD) | Dựng |
+|---|---|---|---|---|
+| 0 | Design system, khung app, đăng nhập, logo | `D9` | Đầu tuần 1 | Tuần 1 |
+| 1 | Tiếp nhận tài liệu + danh sách tài liệu/trạng thái | `U` | Tuần 1 | Tuần 2 (đầu) |
+| 2 | **Duyệt kết quả AI cạnh ảnh trang nguồn** | `U` | Tuần 1 | Tuần 2 |
+| 3 | Hồ sơ thuyền viên + danh sách thuyền viên: lịch sử đi tàu, lịch sử sửa, kết quả kiểm tra | `U` | Tuần 2 | Tuần 3 |
+| 4 | Xuất mẫu: chính sách liên lạc → preview → duyệt → phát hành, bản xuất STALE | `U` | Tuần 3 | Tuần 4 |
+| 5 | Hàng chờ công việc | `dựng luôn` | — | Tuần 4 (nếu kịp) |
+
+**Ảnh hưởng tiến độ:** bỏ antd làm tăng khoảng **5–7 ngày công** cho frontend (dựng bộ component cơ bản, bảng, form, modal/panel, xem ảnh trang). Để giữ mốc 4 tuần:
+- M1 (cuối tuần 2) chỉ còn màn 0, 1, 2 trên app mới; xuất CV tạm gọi từ API có sẵn.
+- **Thứ tự cắt khi trễ thay bằng:** (1) màn 5 hàng chờ (dùng danh sách ở màn 1); (2) bằng chứng thủ công cho tàu; (3) bước duyệt trước phát hành (giữ STALE); (4) màn 3, 4 chuyển sang `dựng luôn`.
+
+**Đánh giá skill (để trả lời "skill làm được đến đâu"):**
+
+| Tiêu chí | Cách ghi nhận |
+|---|---|
+| Thời gian | Số giờ thiết kế + dựng cho mỗi màn; số vòng sửa sau khi duyệt |
+| Độ phủ | Component phải tự viết ngoài mẫu của skill, thư viện phải thêm |
+| Chất lượng | Chạy `checklist.md` và `scripts/probe.mjs` của skill; lỗi giao diện phát hiện khi tập dượt; so ảnh chụp với màn antd cũ cùng chức năng |
+| Kỹ thuật | Kích thước bundle so với app antd (hiện 1,58 MB), lỗi truy cập bàn phím |
+
+**Điểm kiểm tra cuối tuần 2 (M1):** nếu màn 2 dựng bằng skill chưa dùng được cho demo (thiếu chức năng, lỗi nhiều, chậm hơn kế hoạch > 3 ngày), HuyLD quyết: tiếp tục, hoặc quay về antd cho màn 3–5. Kết quả đánh giá ghi vào `docs/` sau M2.
 
 ---
 
@@ -248,7 +271,7 @@ Các màn cũ giữ lại (danh sách thuyền viên, tàu, đối tác) **khôn
 | R3 | Sales hứa tính năng phase sau hoặc "đã xác minh IMO" | Bám bảng claim mục 12 tài liệu Sales |
 | R4 | Sửa trên `seasmart` làm lệch với server dev đang chạy `dev` của repo cũ | Chốt repo nào là nguồn chính; deploy demo từ `seasmart` |
 | R5 | Chi phí AI chưa biết | Ghi chi phí từng lần chạy từ tuần 1 |
-| R6 | Cổng duyệt của skill `ui-ux` chờ lâu, hoặc token của skill lệch với Ant Design | Phản hồi cổng trong ngày; màn phụ dùng `dựng luôn`; chốt bảng ánh xạ token → `ConfigProvider` ngay ở màn 0 |
+| R6 | Dựng giao diện không có antd tốn hơn dự kiến (bảng, form, modal, chọn ngày, truy cập bàn phím); cổng duyệt của skill chờ lâu | Điểm kiểm tra cuối tuần 2 (mục 4.1); phản hồi cổng trong ngày; màn phụ dùng `dựng luôn` |
 
 ---
 
@@ -264,6 +287,7 @@ Các màn cũ giữ lại (danh sách thuyền viên, tàu, đối tác) **khôn
 | Q6 | Domain lead: HuyLD |
 | Q7 | Tên hiển thị: **MCAH** |
 | Q8 | File mẫu có trên nhánh `dev` (`backend/forms/`); lỗi xuất biểu mẫu ở bản 1 là do copy nhầm nhánh `master` |
+| Q9 | Màn MCAH **không dùng Ant Design**, chỉ dùng skill `ui-ux` (Tailwind v4) trong app mới `frontend-mcah/`; app antd cũ đóng băng (mục 4.1) |
 
 **Còn cần trả lời:** danh sách module ẩn ở Q3; repo nào là nguồn chính sau khi đồng bộ (R4); `fallback.viber.vn` là gì (B4); chủ của API tàu (B6).
 

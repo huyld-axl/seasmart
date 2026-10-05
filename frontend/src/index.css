@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+  --color-bg:       #ffffff;
+  --color-bg-dark:  #121212;
+  --color-info:     #3498db;
+  --color-success:  #07bc0c;
+  --color-warning:  #f1c40f;
+  --color-error:    #e74c3c;
+  --color-text:     #757575;
+  --color-text-dark:#ffffff;
+  --color-border:   #e0e0e0;
+  --color-spinner:  #616161;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Roboto', -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  color: #121212;
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (max-width: 768px) {
+  .ant-descriptions-item-label,
+  .ant-descriptions-item-content {
+    font-size: 13px;
+  }
+}
+

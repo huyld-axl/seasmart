@@ -1,0 +1,25 @@
+{
+  "name": "marineport",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Marineport - Maritime recruitment and seafarer management portal",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
+    "test": "npm test --prefix backend && npm test --prefix frontend"
+  },
+  "lint-staged": {
+    "backend/**/*.js": [
+      "npx prettier --write --config backend/.prettierrc",
+      "npx eslint --fix"
+    ],
+    "frontend/**/*.{js,jsx}": [
+      "npx prettier --write --config frontend/.prettierrc",
+      "npx eslint --fix"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
+  }
+}

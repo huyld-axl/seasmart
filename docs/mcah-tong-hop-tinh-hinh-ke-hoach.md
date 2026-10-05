@@ -352,11 +352,11 @@ Multi-tenant đầy đủ; SSO/MFA; GISIS/Equasis; bbox; chứng chỉ, medical,
 | **B1** | **Chưa có nhân sự dev** (lý do dự án từng dừng) | Không có tiến độ | Sếp | Tuần 0 | Tối thiểu 1 fullstack lead full-time. 2 dev thì đạt M2 ở tuần 8 |
 | **B2** | **Chưa có domain lead / chuyên gia crewing** | Không chốt được trường trọng yếu, quy ước sea time, taxonomy chức danh/loại tàu; không ai làm dữ liệu demo cho sát thực tế | Sếp | Tuần 0 | Chỉ định 1 người trong mạng lưới, khoảng 1 ngày/tuần |
 | **B3** | **Chưa có 2 mẫu Excel chủ tàu** và **bộ sổ thuyền viên mẫu** | Sprint 1 (đo AI) và Sprint 4 (xuất mẫu) không làm được cho sát | Sales + domain lead | Sổ mẫu: tuần 2. Mẫu chủ tàu: tuần 6 | Nếu chưa có đối tác: **tự thiết kế 2 mẫu generic** (CV + sea service matrix) theo định dạng phổ biến, và **tự tạo sổ synthetic**. Không dùng tên chủ tàu thật trong demo |
-| **B4** | **Tài sản bị thiếu trong repo**, đang nằm trên máy team cũ: thư mục `forms/` (12 mẫu HĐ1.xlsx…), `sample data/HD - Hong.xlsx`, các ghi chú `refactoring/*.md`, file `D:\code\app hàng hải\Document\…` | Chức năng xuất biểu mẫu hiện có bị lỗi 500. Mất ngữ cảnh của team cũ | Sếp / team cũ | Tuần 1 | Không chặn MCAH Demo, nhưng chặn việc tái dùng tính năng cũ. Nếu xin lại được thì commit vào repo (sau khi khử dữ liệu cá nhân) |
+| **B4** | **File mẫu nằm ngoài repo.** Code đọc `forms/` tại `path.resolve(__dirname, '../../../../forms')` trong `form_export.service.js`, tức là **thư mục cha của repo**, không phải bên trong repo. `sample data/HD - Hong.xlsx` cũng không được commit. Trên server dev, file nằm cạnh thư mục code nên chức năng vẫn chạy; clone repo mới thì lỗi 500 | Ai clone repo hoặc deploy server mới sẽ không xuất được biểu mẫu | Anh Huy | Tuần 1 | **Đã xác định nguyên nhân (2026-10-05).** Chép `forms/` vào repo (kiểm tra không chứa dữ liệu cá nhân) và cho đường dẫn đọc từ biến môi trường |
 | **B5** | **Lỗ hổng phân quyền lộ dữ liệu cá nhân:** tài khoản thuyền viên tự đăng ký đọc và xuất được mọi hồ sơ; ai đăng nhập cũng upload được chứng chỉ cho bất kỳ thuyền viên nào; lỗi DB trả nguyên văn. Seed `011` ghi nguồn là file thật của V-ISEA (CCCD/SĐT trông đã bị thay, nhưng tên có thể là thật) | **Không được đưa bất kỳ bản nào lên internet** trước khi sửa. Rủi ro uy tín nếu khách phát hiện khi demo | Dev | Sprint 0 | Sửa trong tuần 1. Xác nhận seed là synthetic hoặc thay bằng dữ liệu giả |
-| **B6** | **DB không nhất quán:** migrations chỉ chạy trên MariaDB, kế hoạch deploy ghi MySQL 8; không có script migrate, không có seed admin; 6 file thiếu `SET NAMES utf8mb4` | Deploy lên MySQL 8 sẽ hỏng; dữ liệu tiếng Việt có thể lỗi font | Tech lead | Sprint 0 | Pin MariaDB 10.11 + script migrate/seed, hoặc viết lại cho MySQL 8 |
+| **B6** | **DB không nhất quán:** migrations chỉ chạy trên MariaDB, kế hoạch deploy ghi MySQL 8; không có script migrate, không có seed admin; 6 file thiếu `SET NAMES utf8mb4` | Deploy lên MySQL 8 sẽ hỏng; dữ liệu tiếng Việt có thể lỗi font | Tech lead | Sprint 0 | Giữ MySQL/MariaDB (Q2). Kiểm tra server dev đang chạy MariaDB hay MySQL rồi chuẩn hóa migrations theo đúng loại đó, thêm script migrate/seed |
 | **B7** | **Chưa chọn nhà cung cấp AI**, chưa có API key, ngân sách, chính sách gửi dữ liệu cá nhân ra dịch vụ ngoài | Sprint 1 không nối được AI thật | Sếp + tech lead | Tuần 1 | Làm trước với `FakeProvider`. Dữ liệu demo synthetic nên chưa vướng pháp lý; dữ liệu thật thì phải chốt trước pilot |
-| **B8** | **Chưa chốt hướng sản phẩm:** MCAH mới hay tiếp tục Marineport (đào tạo/enrollment)? Stack hiện tại hay FastAPI/PostgreSQL theo SRS? | Dễ làm lan man, hoặc viết lại không cần thiết | Sếp + tech lead | Tuần 0 | Khuyến nghị: tập trung MCAH, giữ stack hiện tại, đóng băng các module Marineport |
+| **B8** | **Chưa chốt hướng sản phẩm:** MCAH mới hay tiếp tục Marineport (đào tạo/enrollment)? Stack hiện tại hay FastAPI/PostgreSQL theo SRS? | Dễ làm lan man, hoặc viết lại không cần thiết | Sếp + tech lead | Tuần 0 | **Đã chốt (2026-10-05):** tập trung MCAH, giữ stack hiện tại, đóng băng các module Marineport |
 | **B9** | **Chưa có môi trường demo** (VPS, domain, HTTPS) | Sales không có link để demo | Sếp / IT | Tuần 7 | Một VPS nhỏ là đủ cho demo; cấu hình theo TASK-13 (sửa lại cho MariaDB) |
 
 ### 5.2 Rủi ro cần theo dõi
@@ -374,6 +374,8 @@ Multi-tenant đầy đủ; SSO/MFA; GISIS/Equasis; bbox; chứng chỉ, medical,
 
 ## 6. Câu hỏi cần sếp / Product trả lời (tuần 0)
 
+> Đã có câu trả lời ngày 2026-10-05, xem mục 7.
+
 1. **Q1. Mục tiêu:** đồng ý làm **MVP Demo cho Sales** (synthetic, 1 agency, mốc M2) trước, còn **MVP Pilot theo SRS** làm sau khi có đối tác?
 2. **Q2. Stack:** giữ Fastify + React + MariaDB như hiện tại (khuyến nghị), hay viết lại theo FastAPI + PostgreSQL như SRS đề xuất?
 3. **Q3. Marineport:** các module đào tạo, khóa học, QR, waitlist, cổng thuyền viên, tin nhắn có khách nào đang dùng hoặc cần không (ví dụ V-ISEA)? Đóng băng hay tiếp tục song song?
@@ -382,6 +384,51 @@ Multi-tenant đầy đủ; SSO/MFA; GISIS/Equasis; bbox; chứng chỉ, medical,
 6. **Q6. Domain lead:** ai? Có xin được 2 mẫu Excel chủ tàu và vài sổ thuyền viên (để thiết kế nội bộ) từ quan hệ trong ngành không?
 7. **Q7. Tên hiển thị:** demo dùng tên **MCAH**, **Marineport** hay **SeaSmart**?
 8. **Q8. Tài sản cũ:** còn liên lạc được với team cũ để lấy `forms/`, `sample data/`, các ghi chú `refactoring/` không?
+
+---
+
+## 7. Quyết định đã chốt (2026-10-05) và kế hoạch 4 tuần
+
+### 7.1 Quyết định
+
+| # | Quyết định |
+|---|---|
+| Q1 | Làm **MVP Demo cho Sales** (dữ liệu synthetic, 1 agency). Pilot làm sau khi có đối tác |
+| Q2 | **Giữ stack hiện tại:** Fastify + React + MySQL/MariaDB. PostgreSQL chỉ xuất hiện trong SRS (mục 14 kiến trúc, NFR-SEC-01 và NFR-OPS-02), không áp dụng |
+| Q3 | **Đóng băng** các module Marineport (đào tạo, khóa học, QR, waitlist, cổng thuyền viên, tin nhắn): ẩn khỏi menu, không xóa code |
+| Q4 | **1 tháng, 1 người (HuyLD) làm cùng Claude Code** |
+| Q5 | Gói Claude dùng cho Claude Code **không dùng làm API key cho app được**. Cần API key riêng từ Anthropic Console (tính phí theo lượng dùng). Trong lúc phát triển dùng `FakeProvider`, chỉ gọi API thật với dữ liệu synthetic |
+| Q6 | Domain lead: **HuyLD** |
+| Q7 | Tên hiển thị: **MCAH** |
+| Q8 | Code đầy đủ; file mẫu `forms/` nằm ngoài repo (xem B4) |
+
+### 7.2 Phạm vi rút gọn cho 1 tháng
+
+Kế hoạch 8 tuần ở mục 4 giả định 2 dev. Với 1 người + Claude Code trong 4 tuần, vẫn giữ đủ câu chuyện demo ở mục 3.4 nhưng **cắt các phần sau**:
+
+- Không làm màn hình upload/onboarding template: 2 mẫu và mapping cấu hình sẵn bằng file trong repo.
+- Không làm dashboard riêng: dùng danh sách tài liệu và hồ sơ có lọc theo trạng thái.
+- Không làm gợi ý trùng người, bulk accept, so sánh revision bằng UI, assignment draft, rule `OWNER_EXPERIENCE`.
+- Hàng đợi job: xử lý bất đồng bộ trong tiến trình, frontend hỏi trạng thái định kỳ.
+- Bằng chứng mức trang; không bbox.
+
+### 7.3 Lịch 4 tuần
+
+| Tuần | Việc | Kết quả cuối tuần |
+|---|---|---|
+| 1 | Sửa phân quyền (B5), chuẩn hóa migrations + script migrate/seed admin (B6), chép `forms/` vào repo (B4), CRUD tàu và chủ tàu, ẩn module Marineport, đổi tên hiển thị sang MCAH, CI. Bảng `source_document`/`extraction_run`/`field_proposal`, upload có hash, `VisionProvider` + `FakeProvider` | Upload tài liệu → có đề xuất dữ liệu (fake) |
+| 2 | Provider AI thật + schema JSON chặt; bảng `sea_service`, `crew_profile_revision`, `audit_event`; màn hình duyệt (tài liệu cạnh form, UNKNOWN, sửa có lý do); công bố hồ sơ có revision + optimistic lock | **M1:** upload → AI → duyệt → hồ sơ revision |
+| 3 | Checksum IMO + đối chiếu danh mục tàu + bằng chứng thủ công; tính sea time (unit test theo ví dụ SRS); 4 rule (`DQ_REQUIRED_CRITICAL`, `DQ_DATE_ORDER`, `DQ_OVERLAP`, `VES_EVIDENCE`); panel kết quả kiểm tra | Hồ sơ có trạng thái BLOCKED / NEEDS_REVIEW / READY_IN_SCOPE |
+| 4 | 2 mẫu (CV + sea service matrix) + mapping JSON; export policy liên lạc; chống formula injection; preview → duyệt → phát hành; STALE khi hồ sơ đổi; 2–3 sổ synthetic + script reset demo; deploy; tập dượt kịch bản | **M2:** MVP Demo cho Sales |
+
+**Nếu trễ**, cắt theo thứ tự: (1) bằng chứng thủ công cho tàu (giữ checksum), (2) bước duyệt trước khi phát hành (giữ STALE), (3) mẫu thứ hai.
+
+### 7.4 Việc PO (HuyLD) cần chuẩn bị
+
+- **Tuần 1:** kiểm tra server dev đang chạy MariaDB hay MySQL; chép thư mục `forms/` từ server dev vào repo; tạo API key Anthropic Console cho app.
+- **Tuần 1–2:** danh sách trường trọng yếu và quy ước tính sea time; 1–2 mẫu sổ thuyền viên thật (chỉ dùng nội bộ để thiết kế schema và prompt).
+- **Tuần 3:** thiết kế 2 mẫu Excel generic (CV + sea service matrix), không dùng tên chủ tàu thật.
+- **Tuần 4:** VPS/domain demo.
 
 ---
 

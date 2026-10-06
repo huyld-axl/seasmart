@@ -13,8 +13,8 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: #003366; /* màu nhấn, cùng colorPrimary ở App.jsx */
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--primary-foreground);
 }
 
 .product-brand__mark svg {
@@ -26,7 +26,7 @@
   overflow: hidden;
   font-size: 14px;
   font-weight: 600;
-  color: #2c2c2c;
+  color: var(--foreground);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -41,5 +41,5 @@
 }
 
 .product-brand--inverted .product-brand__name {
-  color: #ffffff;
+  color: var(--primary-foreground);
 }

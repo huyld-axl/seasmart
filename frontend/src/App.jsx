@@ -1,7 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, App as AntApp } from 'antd'
-import viVN from 'antd/locale/vi_VN'
+// Bản ESM: bản CommonJS 'antd/locale/vi_VN' qua Vite thành { default: … }, ConfigProvider rơi về tiếng Anh.
+import viVN from 'antd/es/locale/vi_VN'
+import { antTheme } from './theme/tokens'
 
 import ProtectedRoute from './components/common/ProtectedRoute'
 import AdminLayout from './layouts/AdminLayout'
@@ -26,26 +28,12 @@ import SeafarerHistoryPage from './pages/seafarer/HistoryPage'
 import QREnrollPage from './pages/QREnrollPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
+import DesignSystemPage from './pages/DesignSystemPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
 })
 
-const antTheme = {
-  token: {
-    colorPrimary: '#003366',
-    colorSuccess: '#07bc0c',
-    colorWarning: '#f1c40f',
-    colorError: '#e74c3c',
-    colorInfo: '#3498db',
-    colorTextBase: '#121212',
-    colorBgBase: '#ffffff',
-    colorBorder: '#D9D9D9',
-    borderRadius: 2,
-    fontFamily: "'Roboto', -apple-system, 'Segoe UI', sans-serif",
-    fontSize: 14,
-  },
-}
 
 export default function App() {
   return (
@@ -55,6 +43,7 @@ export default function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/design-system" element={<DesignSystemPage />} />
               <Route path="/" element={<Navigate to="/seafarers" replace />} />
 
               <Route

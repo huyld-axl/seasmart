@@ -1,35 +1,74 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+/* Nền của cả app. Biến --* sinh từ src/theme/tokens.js (nguồn token duy nhất), gắn vào :root lúc khởi động. */
 
-:root {
-  --color-bg:       #ffffff;
-  --color-bg-dark:  #121212;
-  --color-info:     #3498db;
-  --color-success:  #07bc0c;
-  --color-warning:  #f1c40f;
-  --color-error:    #e74c3c;
-  --color-text:     #757575;
-  --color-text-dark:#ffffff;
-  --color-border:   #e0e0e0;
-  --color-spinner:  #616161;
-}
-
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: 'Roboto', -apple-system, 'Segoe UI', sans-serif;
+  font-family: var(--app-font);
   font-size: 14px;
-  color: #121212;
-  background: #fff;
+  color: var(--foreground);
+  background: var(--background);
   -webkit-font-smoothing: antialiased;
 }
 
-@media (max-width: 768px) {
-  .ant-descriptions-item-label,
-  .ant-descriptions-item-content {
-    font-size: 13px;
-  }
+/* Thanh cuộn tự ẩn (I18, luật chốt #13): giữ bề rộng 4px, trong suốt tới khi rê hoặc cuộn. */
+* { --scrollbar-thumb: transparent; }
+*:hover { --scrollbar-thumb: color-mix(in srgb, var(--foreground) 16%, transparent); }
+.is-scrolling { --scrollbar-thumb: color-mix(in srgb, var(--foreground) 28%, transparent); }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--foreground) 40%, transparent); }
+@supports not selector(::-webkit-scrollbar) {
+  * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  *:hover { scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent; }
 }
 
+/* Không vẽ vòng focus ở nút, link, tab, chip (I13, luật chốt #16). Ô nhập dùng viền + ring của token. */
+.ant-btn:focus-visible,
+.ant-tabs-tab-btn:focus-visible,
+.ant-pagination-item:focus-visible,
+.ant-menu-item:focus-visible {
+  outline: none !important;
+}
+
+/* Dấu … của phân trang: AntD tô màu chữ khoá (#a1a1aa, 2.6:1), đưa về chữ phụ. */
+.ant-pagination .ant-pagination-item-ellipsis {
+  color: var(--muted) !important;
+}
+
+/* Nút tự dựng của MCAH và nút đóng hộp thoại: không vòng focus (I13), như nút AntD ở trên. */
+.ds-link:focus-visible,
+.ds-chip:focus-visible,
+.ds-chip-page:focus-visible,
+.ds-tabs-boxed__tab:focus-visible,
+.ant-modal-close:focus-visible,
+.ant-pagination-jump-next:focus-visible,
+.ant-pagination-jump-prev:focus-visible,
+.ant-menu:focus-visible {
+  outline: none !important;
+}
+
+/* Cột giờ trong ô chọn ngày giờ: thanh cuộn theo khối chung (4px), không 8px của AntD. */
+.ant-picker-dropdown .ant-picker-time-panel-column::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* Trang đang chọn của phân trang: nền --secondary, không viền (small-controls.md, "Phân trang"). */
+.ant-pagination .ant-pagination-item-active {
+  border-color: transparent;
+  background: var(--secondary);
+}
+.ant-pagination .ant-pagination-item-active a,
+.ant-pagination .ant-pagination-item-active:hover a {
+  color: var(--foreground);
+}
+
+/* Mục sidebar đang chọn: nền --secondary + chữ đậm vừa, không màu nhấn (luật chốt #8). */
+.ant-menu-light .ant-menu-item-selected {
+  font-weight: 500;
+}

@@ -359,6 +359,13 @@ Biến thể **D** (gọn chữ) và **E** (bỏ lặp) làm trên phương án 
 | **B2. Hồ sơ thuyền viên** (`/seafarers/:id`) | Xem hồ sơ chuẩn, lý do bị chặn, lịch sử sửa | Panel Kết quả kiểm tra; bảng sea service | Sửa (tạo revision mới, bắt buộc lý do); Tạo bản xuất | READY_IN_SCOPE / NEEDS_REVIEW / BLOCKED. ONGOING. Số revision ở đầu trang. Tab **Lịch sử** (dòng thời gian audit). **Không có tab so sánh revision** (7.2) |
 | **B3. Đối chiếu tàu** (panel trượt trong A2 và B2) | Xác nhận tàu theo IMO, hoặc đính bằng chứng thủ công | Danh sách tàu ứng viên (IMO trước, tên chỉ để gợi ý), trạng thái verification | Chọn ứng viên / đính bằng chứng | NOT_FOUND, CONFLICT, nhiều ứng viên, IMO sai checksum. **Khối bằng chứng thủ công tách được** (thứ cắt đầu tiên của 7.3) |
 
+> **Cổng 2 nhóm B và C đã chốt (2026-10-06): Đối chiếu tàu A, Sẵn sàng xuất A, Tạo bộ giấy A, Duyệt và ký A.** Bản xuất và Ký online mỗi màn một phương án. Wireframe: `docs/design/wireframes/nhom-bc.html`.
+> - Đối chiếu tàu A: panel trượt từ màn Duyệt, thẻ ứng viên ghi Khớp / Khác từng trường, khối bằng chứng thủ công gập được.
+> - Sẵn sàng xuất A: badge cạnh tên trong Hồ sơ, banner liệt kê lý do kèm nút sửa ngay.
+> - Tạo bộ giấy A: tick tự do 12 giấy (nhóm theo giai đoạn, nút chọn nhanh, "Như lần trước"), các bộ đã xuất dùng lại được, xem trước bên phải.
+> - Duyệt và ký A: danh sách giấy, xem giấy, cột chữ ký (ký trong app, link SMS, ô điền tay).
+> - Cần thêm vào design system khi dựng: panel trượt, thanh bước, badge `pack` (Nháp, Chờ duyệt, Đang ký, Đã xong, Cần làm lại, Bị trả lại), trạng thái chữ ký (Đã ký, Chờ ký, Ký tay khi in).
+
 ### Nhóm C: Xuất bộ hồ sơ
 
 > **Đổi phạm vi (2026-10-06), theo 12 mẫu thật HuyLD gửi:**

@@ -1,6 +1,7 @@
 # MCAH — Kế hoạch thiết kế giao diện bằng skill `ui-ux` (evondevKit), đầu ra Figma
 
 - **Ngày lập:** 2026-10-06
+- **Trạng thái:** HuyLD duyệt ngày 2026-10-06, nhận các câu trả lời đoán sẵn ở mục 11.
 - **Nguồn:**
   - **Tài liệu gốc nằm ngay trong repo này:** `docs/mcah-tong-hop-tinh-hinh-ke-hoach.md`. Kế hoạch này lấy từ đó phạm vi MVP Demo cho Sales (mục 3), kịch bản demo 10 phút (mục 3.4), các quyết định đã chốt và lịch 4 tuần (mục 7).
   - **Audit frontend của repo này** (chạy lại ngày 2026-10-06): `frontend/package.json`, `src/App.jsx`, `src/layouts/AdminLayout.jsx`, `src/index.css`, cùng `AdminLayout.css`, `App.css`, `MasterSubPage.jsx`, `LoginPage.jsx`. Kết quả ở mục 1.1.
@@ -52,7 +53,7 @@
 
    Lối dựng lại theo gu skill có thêm một lượt trả lời bảng (`ok` / `bỏ 7`). Ngoài các chỗ đó, skill không hỏi gì thêm: chỗ nào chưa rõ thì lấy mặc định và báo lúc giao.
 6. **Hai việc phải gỡ ở ngày 1, nếu không thì kế hoạch kẹt:**
-   - **Giới hạn Figma MCP của gói Starter** (mục 1.4, câu hỏi 5).
+   - **Xác nhận cách làm Figma trên gói Starter:** mọi thao tác đọc, sửa, chụp kiểm đi qua `use_figma` (mục 1.4, câu hỏi 5).
    - **Probe không tự đăng nhập được** vào các route có `ProtectedRoute` (mục 1.4, câu hỏi 6).
 
 ---
@@ -125,7 +126,7 @@ Khi bị cắt, bỏ khối đó đi mà không phải vẽ lại khung.
 | Thứ | Hiện trạng | Hệ quả cho kế hoạch |
 | --- | --- | --- |
 | Figma MCP | Đã nối. Có `use_figma`, `create_new_file`, `generate_diagram`, `get_screenshot`, `get_metadata`, `upload_assets`, `search_design_system`, `whoami`. **Không có** `generate_figma_design` trong phiên này | Đủ để dựng variables, components, frames và FigJam bằng code. Không chụp trang web thẳng vào Figma được |
-| Gói Figma | **Starter**, ghế Full (đã kiểm) | Starter giới hạn **3 trang mỗi file** và số file. Kế hoạch gói file vào đúng 3 trang (mục 7, giai đoạn 5). **Giới hạn số lần gọi MCP:** theo trí nhớ (trang tài liệu của Figma bị proxy chặn, cần kiểm), gói Starter chỉ được khoảng **6 lần gọi tool mỗi tháng**. Kế hoạch cần khoảng 25–40 lần gọi. Ngày 1 thử một lần `use_figma` trên file nháp. Bị chặn thì **nâng Professional 1 tháng** trước giai đoạn 5 (câu hỏi 5) |
+| Gói Figma | **Starter**, ghế Full (đã kiểm) | Starter cho **3 file cộng tác, mỗi file 3 trang**; Drafts cá nhân không giới hạn. Kế hoạch gói file vào đúng 3 trang (mục 7, giai đoạn 5). **Lượt gọi MCP:** lệnh đọc riêng (`get_screenshot`, `get_metadata`, `get_design_context`, `search_design_system`) chỉ **6 lần mỗi tháng**; lệnh ghi (`use_figma`, `create_new_file`) **không bị đếm**. Hướng dẫn `figma-use` cho phép `use_figma` chạy script chỉ đọc và chụp ảnh bằng `node.screenshot()`, nên **đọc, sửa và kiểm đều đi qua `use_figma`**, không dùng lệnh đọc riêng. Figma đổi chính sách thì nâng Professional (khoảng 20 USD/tháng, 200 lượt/ngày) (câu hỏi 5) |
 | Code Connect | Cần gói Organization trở lên | Bỏ. Ghi đường dẫn file React vào mô tả của từng component Figma |
 | Playwright / Chromium | Chromium có sẵn (`/opt/pw-browsers`). Gói `playwright` chưa có trong dự án | `probe.mjs` chạy được. Cài `playwright` vào thư mục tạm, không cài vào dự án (mục 2.3) |
 | **Đăng nhập khi probe** | Token nằm ở `localStorage` (`authStore.js`). Mọi route trừ `/login` có `ProtectedRoute`. `probe.mjs` không có tuỳ chọn đăng nhập hay nạp sẵn storage | Không gỡ thì probe các route app chỉ chụp được màn đăng nhập. Đề xuất (câu hỏi 6): một module **chỉ chạy ở dev** (`if (import.meta.env.DEV)`), import **đầu tiên** trong `main.jsx`, trước `authStore`. Module đọc `?devToken=` vào `localStorage` rồi xoá tham số khỏi URL. Token là JWT thật của admin synthetic, backend vẫn kiểm như thường. Code này không vào bản build production |
@@ -392,7 +393,7 @@ Tên lệnh tuỳ cách cài: cài plugin Claude Code thì gọi `/evon:ui-ux`. 
 2. **Chạy app local theo Phụ lục A của tài liệu gốc:** MariaDB 10.11, seed admin. Skill cần **link localhost đang chạy** để probe (Mẹo trong README).
 3. **Gỡ hai chặn của mục 1.4:**
    - Thêm module `devToken` chỉ chạy ở dev (nếu HuyLD đồng ý ở câu hỏi 6).
-   - Thử một lần `use_figma` trên file nháp để biết giới hạn MCP (câu hỏi 5).
+   - Chạy thử một vòng đọc → sửa → chụp bằng `use_figma` trên file nháp, xác nhận không bị đếm lượt (câu hỏi 5).
 4. **Seed dữ liệu synthetic** cho wireframe và ảnh (`S6`, `S8`, `S16`). **Xoá hoặc thay dữ liệu seed `011`** trước khi chụp ảnh "trước". Bộ tối thiểu:
 
    | Mẫu | Nội dung | Ca biên phủ |
@@ -574,7 +575,7 @@ Nguyên tắc: **Figma chép wireframe nấc Màu (và bản dựng nếu đã c
    - `/figma-generate-diagram`: bắt buộc trước `generate_diagram`.
 
    Không có plugin thì đọc resource `skill://figma/...` tương ứng.
-2. `search_design_system` một lần, để xác nhận team chưa có thư viện nào dùng lại được. Có thì dùng, không dựng trùng.
+2. Kiểm team đã có thư viện chưa bằng một script chỉ đọc qua `use_figma` (biến, component trong file). Chỉ dùng `search_design_system` (tốn 1 trong 6 lượt đọc) khi team có thư viện đã publish. Có thì dùng, không dựng trùng.
 3. `create_new_file` với `planKey: team::1303965334335449875`, tên file "MCAH — MVP Demo UI".
 4. **Trang 01:**
    - Đọc file token đã duyệt ở giai đoạn 3, tạo variables bằng `use_figma`, rồi text styles, rồi components.
@@ -587,10 +588,11 @@ Nguyên tắc: **Figma chép wireframe nấc Màu (và bản dựng nếu đã c
    - `upload_assets` ảnh probe làm lớp tham chiếu ẩn để soi lệch, xong thì xoá.
    - Mỗi lần gọi `use_figma` chỉ dựng một màn, để lỗi khoanh được và không vượt giới hạn ký tự mỗi lần gọi.
 6. **Kiểm từng màn:**
-   - `get_screenshot` frame Figma, đặt cạnh ảnh probe cùng khổ.
+   - Chụp frame bằng `await frame.screenshot()` ngay trong lần `use_figma` vừa dựng, đặt cạnh ảnh probe cùng khổ.
    - Đi từng khối (số mục, thứ tự, chữ, nút đặc hay viền), giống bảng "Đối chiếu wireframe" của `U4`.
    - Lệch thì sửa Figma, không sửa wireframe.
-   - Nếu còn ở gói Starter, chỉ dùng `get_screenshot` cho A2, B2, C1. Các màn khác thì HuyLD so bằng mắt trong Figma.
+   - Không dùng `get_screenshot`, `get_metadata` (lượt đọc có giới hạn). Cấu trúc frame (tên lớp, số mục, biến đã gắn) đọc bằng script chỉ đọc trong `use_figma`.
+   - HuyLD muốn sửa thì nhắn Claude: Claude sửa wireframe hoặc code trước, rồi đồng bộ frame. HuyLD sửa tay trong Figma thì Claude đọc lại bằng `use_figma` và chép ngược về HTML, code.
 7. **Trang 03:** nối prototype 6 bước, đặt cặp ảnh trước/sau. Rồi `generate_diagram` cho FigJam.
 8. Gửi link file Figma cho **cổng 5**.
 
@@ -599,7 +601,7 @@ Nguyên tắc: **Figma chép wireframe nấc Màu (và bản dựng nếu đã c
 | Tình huống | Cách xử lý |
 | --- | --- |
 | Gói Starter chặn số trang hoặc số file | Gộp trang 03 vào trang 02 dưới dạng Section. FigJam để ở file riêng |
-| MCP giới hạn số lần gọi | Nâng Professional 1 tháng (câu hỏi 5). Tạm thời gom nhiều màn đã ổn định vào một lần `use_figma` |
+| Figma bắt đầu đếm hay tính phí lệnh ghi | Nâng Professional 1 tháng (câu hỏi 5). Tạm thời gom nhiều màn đã ổn định vào một lần `use_figma` |
 | Cần ảnh chụp y hệt trang web | Không có `generate_figma_design` trong phiên này. Dùng plugin html.to.design trong Figma, nhập URL wireframe. Kết quả chỉ làm lớp tham chiếu, frame chính vẫn dựng bằng component |
 
 ### Giai đoạn 6: dựng thật và giữ đồng bộ (theo sprint, ngoài 6 ngày)
@@ -690,7 +692,7 @@ Nếu trễ, cắt theo thứ tự:
 | # | Rủi ro | Giảm thiểu |
 | --- | --- | --- |
 | R1 | Figma lệch dần khỏi code (hai nguồn sự thật) | HTML và code là nguồn. Figma chỉ sửa theo code, không ngược lại. Ghi điều này lên trang 01 |
-| R2 | Gói Starter hoặc giới hạn MCP chặn giữa chừng | Thử ở ngày 1. Quyết nâng gói trước giai đoạn 5 (câu hỏi 5). Có bảng dự phòng |
+| R2 | Figma đổi chính sách lượt gọi MCP, hoặc gói Starter chặn số trang, số file | Mọi thao tác qua `use_figma`, không dùng lệnh đọc riêng. Thử ở ngày 1. Nâng Professional khi cần (câu hỏi 5). Có bảng dự phòng |
 | R3 | A2 (duyệt cạnh bằng chứng) chưa có mẫu đã duyệt trong skill, dễ ra bố cục yếu | 3 phương án khác chiến lược duyệt + D/E. Mười hai phép thử `principles.md`. Diễn tập bằng dữ liệu sổ B trước khi chọn |
 | R4 | AntD 6 có mặc định trái gu skill (bóng, ô nhập, nhiều variant nút, menu tối) | `D9` chỉnh token, một file token chung. Tự giới hạn 4 dạng nút. Probe bắt lệch dáng |
 | R5 | Đổi Roboto sang Inter, radius 2 sang 8/12 làm các màn Marineport còn lại trông khác | Các màn đó ẩn theo Q3. Màn còn dùng thì đi lối dựng lại theo gu (D4) |
@@ -707,7 +709,7 @@ Nếu trễ, cắt theo thứ tự:
 2. **Font:** chuyển Roboto sang Inter? Nạp bằng `@fontsource/inter` (gói mới, đúng khuyến nghị skill) hay tạm từ Google Fonts như Roboto đang làm? *(Đoán: chuyển sang Inter, cài `@fontsource/inter`.)*
 3. **Ngôn ngữ giao diện demo:** tiếng Việt, thuật ngữ ngành tiếng Anh? Hay cần cả bản tiếng Anh cho agency nước ngoài? *(Đoán: tiếng Việt. Bản tiếng Anh làm sau.)*
 4. **Mobile:** cần 375 cho mọi màn, hay chỉ A2, B2, C1? *(Đoán: mọi màn có wireframe, vì nút Khổ của skill vẽ sẵn. Figma chỉ chuyển A2, B2, C1 nếu thiếu giờ.)*
-5. **Gói Figma:** nếu thử ngày 1 thấy Figma MCP bị chặn số lần gọi, có nâng Professional 1 tháng không? *(Đoán: nâng, vì đầu ra cuối là file Figma.)*
+5. **Gói Figma:** giữ Starter, mọi thao tác qua `use_figma`; chỉ nâng Professional nếu Figma bắt đầu đếm hay tính phí lệnh ghi? *(Đoán: đồng ý.)*
 6. **Đăng nhập cho probe:** cho thêm module `devToken` chỉ chạy ở dev (mục 1.4)? *(Đoán: cho. Không cho thì probe chỉ đo được `/login` và wireframe.)*
 
 ---
@@ -735,3 +737,4 @@ Nếu trễ, cắt theo thứ tự:
 | Chủ tàu giả "Blue Anchor Shipping", "Northwind Maritime" | "Chủ tàu Demo A/B". IMO giả phải tra registry trước khi dùng | Tránh trùng công ty và tàu thật (7.4) |
 | Chỉ liệt kê một phần `layouts/`, `components/` | Mục 3 phủ mọi file, kèm lý do không dùng | Yêu cầu tận dụng hết skill |
 | Canva chỉ ở bảng dự phòng | Giai đoạn 7 riêng, kèm luật claim của tài liệu Sales | Canva là kênh tài liệu Sales |
+| "6 lần gọi/tháng, kế hoạch cần 25–40 lần"; kiểm từng màn bằng `get_screenshot` | Chỉ lệnh đọc riêng bị giới hạn 6 lần/tháng. Đọc, sửa, chụp kiểm đều qua `use_figma` (không bị đếm) | Kiểm lại tài liệu Figma và hướng dẫn `figma-use` sau khi đẩy bản đầu |

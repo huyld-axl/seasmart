@@ -282,6 +282,14 @@ Lối `D9` kèm câu *"bỏ style cũ của Marineport, chỉ giữ màu nhấn"
 ### 4.2 Kiến trúc điều hướng (sidebar MCAH, 4 mục)
 
 > **Đổi ở cổng 2 (2026-10-06):** HuyLD chốt tài liệu phải đi theo từng thuyền viên. Bỏ mục Tài liệu riêng; A1 thành màn Thuyền viên, mỗi dòng một người, tài liệu nằm trong người đó. Thêm thuyền viên = nhập họ tên + tải sổ.
+>
+> **Đổi lần 2 ở cổng 2 (2026-10-06):**
+> - Màn Thuyền viên xoay quanh con người: tình trạng, tàu, ngày sẵn sàng, giấy tờ hết hạn, độ đầy đủ hồ sơ.
+> - Thả giấy tờ vào hồ sơ là điểm wow, không phải trọng tâm: AI tự nhận loại giấy tờ, đọc và điền vào đúng mục.
+> - Thêm màn **Hồ sơ thuyền viên** (`/seafarers/:id`): thông tin cá nhân, giấy tờ có hạn, lịch sử đi tàu, lịch sử chỉnh sửa.
+> - Màn Duyệt thành dạng **so sánh**: bản gốc bên trái, bản số hoá dựng theo khuôn của từng loại giấy tờ bên phải.
+> - Giấy tờ không chỉ có sổ thuyền viên: có cả chứng chỉ huấn luyện, giấy tiêm chủng, hộ chiếu.
+> - Khuôn giấy tờ dựng theo ảnh mẫu HuyLD gửi. Chỉ lấy bố cục và nhãn trường, mọi giá trị là dữ liệu giả, ảnh không vào repo.
 
 **Giữ route đang có khi được.** Đổi route là việc của logic, không phải của skill.
 

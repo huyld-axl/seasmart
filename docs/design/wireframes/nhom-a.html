@@ -920,6 +920,114 @@
   .md-list button[aria-current="true"] { background: var(--secondary); }
   .md-list button[aria-current="true"] .cell2__sub { color: var(--neutral); }
   .md-detail .ds-files__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  /* ===== v3: Thuyền viên, Hồ sơ, Duyệt so sánh ===== */
+  .err-text { color: var(--error-text); }
+  .person { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .avatar--md { width: 40px; height: 40px; font-size: 14px; }
+  .avatar--lg { width: 48px; height: 48px; font-size: 16px; }
+  .avatar--xl { width: 64px; height: 64px; font-size: 20px; }
+  .pending-chip { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .complete-cell { display: inline-flex; align-items: center; gap: 8px; }
+  .mini-progress { display: inline-block; width: 56px; height: 4px; border-radius: 999px; background: var(--secondary); overflow: hidden; }
+  .mini-progress span { display: block; height: 100%; background: var(--foreground); }
+  .tbl--link tbody tr { cursor: pointer; }
+  .tbl--link tbody tr:hover { background: var(--surface-hover); }
+  .crew-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+  .crew-card { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: inherit; text-decoration: none; cursor: pointer; }
+  .crew-card:hover { border-color: var(--border-strong); }
+  .crew-card__top { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .crew-card__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .crew-card__where { font-size: 12px; }
+  .crew-card__foot { display: flex; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; }
+  .facts { display: grid; gap: 12px; margin: 0; }
+  .facts div { display: grid; gap: 2px; }
+  .facts dt { color: var(--muted); font-size: 12px; }
+  .facts dd { margin: 0; overflow-wrap: anywhere; }
+  .facts--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+  @container app (max-width: 639px) { .facts--2 { grid-template-columns: minmax(0, 1fr); } }
+  .head-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @container app (min-width: 1024px) { .two-col { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+  .attention { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+  .attention li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .profile-b, .profile-c { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @container app (min-width: 1024px) { .profile-b { grid-template-columns: minmax(0, 1fr) 320px; } .profile-b .side-col { position: sticky; top: 88px; } .profile-c { grid-template-columns: 280px minmax(0, 1fr); } }
+  .main-col, .side-col { display: grid; gap: 16px; min-width: 0; }
+  .tbl-wrap--always { display: block !important; }
+  .wow { display: grid; gap: 8px; }
+  .wow__drop { border-color: var(--border-strong); background: var(--primary-light); }
+  .wow__spark { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--surface); color: var(--primary); font-size: 20px; }
+  .wow--big .wow__drop { padding-block: 32px; }
+  .wow__files { margin: 0; padding: 4px 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+  .ds-files__meta b { color: var(--foreground); font-weight: 500; }
+  /* Duyệt: chọn giấy tờ, hai bản */
+  .doc-switch { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .doc-switch button { display: grid; flex-shrink: 0; gap: 2px; min-width: 200px; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); text-align: left; cursor: pointer; }
+  .doc-switch button:hover { background: var(--button-hover); }
+  .doc-switch button[aria-selected="true"] { border-color: var(--foreground); }
+  .doc-switch__name { font-weight: 500; }
+  .doc-switch__meta { color: var(--muted); font-size: 12px; }
+  .cmp { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @container app (min-width: 1024px) { .cmp { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  @container app (max-width: 1023px) { .cmp[data-view="fields"] .cmp__pane--goc, .cmp[data-view="doc"] .cmp__pane--so { display: none; } }
+  .cmp__pane, .flip { min-width: 0; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); overflow: hidden; }
+  .cmp__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 52px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+  .cmp__title { font-weight: 600; }
+  .cmp__head > :last-child { margin-left: auto; }
+  .cmp__tools { display: inline-flex; align-items: center; gap: 4px; }
+  .cmp__stage, .flip__stage { padding: 16px; background: var(--background); }
+  .flip__stage { display: grid; justify-items: center; }
+  .flip__stage .paper { width: 100%; max-width: 720px; }
+  .paper { position: relative; display: grid; gap: 14px; padding: 24px; border-radius: 4px; }
+  .paper--goc { background: #f7f1dc; color: #2b2b2b; font-family: Georgia, 'Times New Roman', serif; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .06); }
+  .paper--so { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); }
+  .paper__title { margin: 0; padding-right: 72px; font-weight: 700; letter-spacing: .02em; }
+  .paper__title i { display: block; font-weight: 400; font-size: 12px; letter-spacing: 0; }
+  .paper__photo { position: absolute; top: 20px; right: 20px; display: grid; place-items: center; width: 56px; height: 72px; border: 1px solid rgb(0 0 0 / .12); background: rgb(0 0 0 / .04); color: var(--muted); font-size: 11px; }
+  .paper--so .paper__photo { font-size: 20px; border-color: var(--border-strong); background: var(--background); }
+  .paper__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+  .pf { grid-column: span 2; display: grid; gap: 2px; min-width: 0; padding: 4px 6px; margin: -4px -6px; border-radius: 6px; cursor: pointer; }
+  .pf--half { grid-column: span 1; }
+  .pf:hover { background: rgb(0 0 0 / .035); }
+  .pf--focus, .pf--focus:hover { background: rgb(0 51 102 / .08); box-shadow: 0 0 0 2px var(--primary); }
+  :root[data-mau="xam"] .pf--focus { background: rgb(44 44 44 / .06); }
+  .pf--dim { opacity: .4; }
+  .pf__label { font-size: 12px; }
+  .pf__label i { margin-left: 6px; color: rgb(0 0 0 / .45); font-size: 11px; }
+  .paper--so .pf__label { color: var(--muted); }
+  .paper--so .pf__label i { color: var(--muted); }
+  .pf__value { min-width: 0; }
+  .ink { display: block; min-height: 24px; border-bottom: 1px dotted rgb(0 0 0 / .35); color: #1d3f91; font: italic 17px/24px 'Segoe Script', 'Bradley Hand', cursive; overflow-wrap: anywhere; }
+  .dv { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding: 4px 10px; border: 1px solid var(--border-strong); border-radius: 8px; font-weight: 500; overflow-wrap: anywhere; }
+  .dv__mark { flex-shrink: 0; font-size: 14px; }
+  .dv[data-st="ACCEPTED"] .dv__mark, .dv[data-st="EDITED"] .dv__mark { color: var(--success); }
+  .dv[data-st="PROPOSED"] { border-style: dashed; }
+  .dv[data-st="UNKNOWN"], .dv[data-st="DATE_AMBIGUOUS"] { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning); }
+  .dv[data-st="UNKNOWN"] { font-style: italic; font-weight: 400; }
+  .paper__stamps { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 24px; margin-top: 8px; font-size: 11px; color: var(--muted); }
+  .paper--goc .paper__stamps { color: #9b1c1c; }
+  .paper__stamp { display: inline-flex; align-items: center; gap: 8px; }
+  .seal { width: 40px; height: 40px; border: 2px solid rgb(185 28 28 / .55); border-radius: 999px; }
+  .field-bar { position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 14px 16px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); box-shadow: var(--elevation-popover); }
+  .field-bar__text { flex: 1 1 320px; min-width: 0; }
+  .field-bar__label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-weight: 600; }
+  .field-bar__note { margin: 4px 0 0; color: var(--muted); }
+  .ink-inline { color: var(--foreground); font-weight: 500; }
+  .field-bar__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .page-head .btn:not(.btn--primary):hover { background: var(--secondary); }
+  .wow__drop { background: var(--surface); border-color: var(--primary); }
+  .main-col > *, .side-col > *, .profile-b > *, .profile-c > *, .wow { min-width: 0; }
+  .ds-drop__hint { overflow-wrap: anywhere; }
+  .tbl-wrap--always { overflow-x: auto; }
+  .paper--goc .pf__label i { color: rgb(0 0 0 / .62); }
+  .paper--goc .paper__title i { color: rgb(0 0 0 / .62); }
+  .pf--focus, .pf--focus:hover { background: rgb(0 51 102 / .04); }
+  :root[data-mau="xam"] .pf--focus { background: rgb(44 44 44 / .03); }
+  .pf--focus .pf__label, .pf--focus .pf__label i { color: var(--foreground); }
+  .pf--dim { opacity: 1; }
+  .pf--dim .dv { border-color: var(--border); color: var(--muted); font-weight: 400; }
+  .pf--dim .dv__mark { color: var(--muted) !important; }
+  @container app (max-width: 639px) { .cmp__note { display: none; } }
   .stack { display: grid; gap: 12px; }
   .focus-card > .ds-badge { justify-self: start; }
   .okrow { display: grid; grid-template-columns: 8rem minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-top: 1px solid var(--border); font-size: 14px; }
@@ -1023,6 +1131,8 @@ const STATUS = {
     UNKNOWN: ['Không đọc được', 'warning', 'question-circle'], UNKNOWN_KEPT: ['Giữ UNKNOWN', 'neutral', 'lock'], DATE_AMBIGUOUS: ['Ngày mơ hồ', 'warning', 'calendar'], REJECTED: ['Từ chối', 'error', 'close-circle'],
   },
   vessel: { NOT_CHECKED: ['Chưa đối chiếu', 'neutral', 'ring'], VERIFIED: ['Đã đối chiếu', 'success', 'check-circle'], CONFLICT: ['Không khớp', 'error', 'close-circle'] },
+  crew: { ONBOARD: ['Đang trên tàu', 'success', 'ring-dot'], STANDBY: ['Chờ tàu', 'neutral', 'ring'], LEAVE: ['Nghỉ phép', 'neutral', 'ring'] },
+  cert: { VALID: ['Còn hạn', 'success', 'check-circle'], EXPIRING: ['Sắp hết hạn', 'warning', 'clock-circle'], EXPIRED: ['Hết hạn', 'error', 'close-circle'] },
   seaService: { ONGOING: ['Đang trên tàu', 'success', 'ring-dot'], OVERLAP: ['Trùng thời gian', 'warning', 'swap'] },
 };
 function badge(group, value) {
@@ -1034,34 +1144,34 @@ const btn = (label, { variant = '', size = '', iconName = '', attrs = '' } = {})
   `<button type="button" class="btn ${variant ? `btn--${variant}` : ''} ${size ? `btn--${size}` : ''}" ${attrs}>${iconName ? icon(iconName) : ''}${label}</button>`;
 
 // ---------- Dữ liệu giả ----------
-const doc = (name, pages, status, extra = {}) => ({ name, pages, status, ...extra });
 const CREW = [
-  { id: 'mt', name: 'Hoàng Thị Mai Trang', rank: '', docs: [doc('so-thuyen-vien-trang-1.jpg', '1 trang', 'FAILED', { wait: '35 phút' })] },
-  { id: 'pa', name: 'Nguyễn Thị Hồng Nhung Phương Anh', rank: 'Able Seaman (AB)', docs: [doc('so-thuyen-vien-phan-1.pdf', '12 trang', 'REVIEW_REQUIRED', { need: 4, wait: '2 giờ' }), doc('so-thuyen-vien-trang-bo-sung.jpg', '1 trang', 'COMPLETED')] },
-  { id: 'mk', name: 'Trần Minh Khôi', rank: 'Chief Officer (CO)', docs: [doc('so-thuyen-vien.pdf', '10 trang', 'REVIEW_REQUIRED', { need: 0, wait: '40 phút' })] },
-  { id: 'vd', name: 'Lê Văn Đức', rank: 'Chief Engineer (CE)', docs: [doc('so-thuyen-vien.pdf', '9 trang', 'SLOW', { wait: '12 phút', slow: true })] },
-  { id: 'qb', name: 'Phạm Quốc Bảo', rank: '', docs: [doc('so-thuyen-vien.pdf', '8 trang', 'PROCESSING', { wait: '2 phút' })] },
-  { id: 'ts', name: 'Võ Thanh Sơn', rank: 'Bosun', revision: 1, updated: '09:12 · 05/10', docs: [doc('so-thuyen-vien.pdf', '11 trang', 'COMPLETED')] },
-  { id: 'vh', name: 'Đào Văn Hùng', rank: 'Second Engineer (2/E)', revision: 2, updated: '16:40 · 04/10', docs: [doc('so-thuyen-vien.pdf', '14 trang', 'COMPLETED'), doc('so-thuyen-vien-phan-2.pdf', '6 trang', 'COMPLETED')] },
-  { id: 'qv', name: 'Ngô Quang Vinh', rank: 'Ordinary Seaman (OS)', revision: 1, updated: '11:05 · 04/10', docs: [doc('so-thuyen-vien.pdf', '8 trang', 'COMPLETED')] },
+  { id: 'mk', name: 'Trần Minh Khôi', rank: 'Thợ máy chính (Oiler)', nat: 'Việt Nam', status: 'ONBOARD', vessel: 'MV Lotus Pearl', until: '05/01/2027', expired: 2, review: 1, complete: 86 },
+  { id: 'pa', name: 'Nguyễn Thị Hồng Nhung Phương Anh', rank: 'Able Seaman (AB)', nat: 'Việt Nam', status: 'STANDBY', ready: '20/10/2026', expiring: 1, review: 2, complete: 64 },
+  { id: 'vd', name: 'Lê Văn Đức', rank: 'Chief Engineer (CE)', nat: 'Việt Nam', status: 'STANDBY', ready: '01/11/2026', complete: 42 },
+  { id: 'qb', name: 'Phạm Quốc Bảo', rank: 'Bosun', nat: 'Việt Nam', status: 'ONBOARD', vessel: 'MV Halong Spirit', until: '14/12/2026', expiring: 1, complete: 91 },
+  { id: 'ts', name: 'Võ Thanh Sơn', rank: 'Chief Officer (CO)', nat: 'Việt Nam', status: 'LEAVE', ready: '15/11/2026', complete: 100 },
+  { id: 'vh', name: 'Đào Văn Hùng', rank: 'Second Engineer (2/E)', nat: 'Việt Nam', status: 'ONBOARD', vessel: 'MV Lotus Pearl', until: '30/03/2027', complete: 97 },
+  { id: 'mt', name: 'Hoàng Thị Mai Trang', rank: 'Cook', nat: 'Việt Nam', status: 'STANDBY', ready: 'ngay', expired: 1, complete: 58 },
+  { id: 'qv', name: 'Ngô Quang Vinh', rank: 'Ordinary Seaman (OS)', nat: 'Việt Nam', status: 'STANDBY', ready: '28/10/2026', complete: 75 },
 ];
-const TABS = [['all', 'Tất cả', 8], ['review', 'Chờ duyệt', 2], ['processing', 'Đang trích xuất', 2], ['failed', 'Lỗi', 1], ['done', 'Đã công bố', 3]];
+const TABS = [['all', 'Tất cả', 8], ['onboard', 'Đang trên tàu', 3], ['standby', 'Chờ tàu', 5], ['review', 'Chờ duyệt', 2], ['expiring', 'Sắp hết hạn', 4]];
 const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
 const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
 
 // ---------- Trạng thái wireframe ----------
 const SCREENS = {
-  'thuyen-vien': { label: 'Thuyền viên', options: ['a', 'b', 'c', 'd', 'e'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
-  duyet: { label: 'Duyệt', options: ['a', 'b', 'c', 'd', 'e'], recommended: 'b', states: ['du-lieu', 'dang-tai', 'rong', 'loi', 'xung-dot'] },
+  'thuyen-vien': { label: 'Thuyền viên', options: ['a', 'b', 'c'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
+  'ho-so': { label: 'Hồ sơ', options: ['a', 'b', 'c'], recommended: 'b', states: ['du-lieu', 'dang-tai', 'loi'] },
+  duyet: { label: 'Duyệt', options: ['a', 'b', 'c'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi', 'xung-dot'] },
   'dang-nhap': { label: 'Đăng nhập', options: ['a'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
   loi: { label: 'Lỗi', options: ['a', 'b', 'c'], recommended: null, states: ['du-lieu'] },
 };
 const STATE_LABELS = { 'du-lieu': 'Có dữ liệu', 'dang-tai': 'Đang tải', rong: 'Rỗng', loi: 'Lỗi', 'xung-dot': 'Xung đột 409' };
-const STATE_LABELS_BY_SCREEN = { duyet: { rong: 'Rỗng: nhập tay' }, 'dang-nhap': { rong: 'Ô trống', loi: 'Sai mật khẩu' } };
+const STATE_LABELS_BY_SCREEN = { duyet: { rong: 'AI không đọc được' }, 'dang-nhap': { rong: 'Ô trống', loi: 'Sai mật khẩu' } };
 const OPTION_LABELS = { loi: { a: '403', b: '404', c: '500' } };
 const KEYS = ['man', 'v', 'mau', 'kho', 'nav', 'tt'];
-const state = { man: 'duyet', v: '', mau: 'xam', kho: 'desktop', nav: 'menu', tt: 'du-lieu', menuOpen: false, userOpen: false, sider: null, view: 'fields', tab: null, expand: 'pa', pick: 'pa' };
+const state = { man: 'duyet', v: '', mau: 'xam', kho: 'desktop', nav: 'menu', tt: 'du-lieu', menuOpen: false, userOpen: false, sider: null, view: 'fields', tab: null, pick: 'mk', doc: null, focus: null, flip: 'so', ptab: null };
 (function readState() {
   const params = new URLSearchParams(location.search);
   const hash = location.hash.replace(/^#/, '').split('.');
@@ -1078,12 +1188,12 @@ function syncHash() {
 }
 
 // ---------- Khung app ----------
-function shell({ title, crumb, content, collapsedDefault = false }) {
+function shell({ title, crumb, crumb2, content, collapsedDefault = false }) {
   const collapsed = state.sider === null ? collapsedDefault : state.sider === 'collapsed';
   const nav = (withLabels = true) => NAV.map(([key, label, iconName]) =>
     `<a class="nav-item" ${key === 'seafarers' && state.man !== 'loi' ? 'aria-current="page"' : ''} ${key === 'admin' && state.man === 'loi' && state.v === 'a' ? 'aria-current="page"' : ''} title="${label}">${icon(iconName)}${withLabels ? `<span>${label}</span>` : ''}</a>`).join('');
   const heading = crumb
-    ? `<nav class="topbar__crumb" aria-label="Đường dẫn"><a href="#">${crumb}</a>${icon('right')}</nav>`
+    ? `<nav class="topbar__crumb" aria-label="Đường dẫn"><a href="#">${crumb}</a>${icon('right')}${crumb2 ? `<a href="#">${crumb2}</a>${icon('right')}` : ''}</nav>`
     : `<h1 class="topbar__title">${title}</h1>`;
   return `<div class="app" data-nav="${state.nav}">
     <aside class="sider ${collapsed ? 'sider--collapsed' : ''}" data-wf-block="2">
@@ -1110,208 +1220,276 @@ function shell({ title, crumb, content, collapsedDefault = false }) {
   </div>`;
 }
 
-// ---------- Màn Thuyền viên: tài liệu nằm trong từng thuyền viên ----------
-const URGENCY = ['FAILED', 'REVIEW_REQUIRED', 'SLOW', 'PROCESSING', 'COMPLETED'];
-const lead = (crew) => [...crew.docs].sort((a, b) => URGENCY.indexOf(a.status) - URGENCY.indexOf(b.status))[0];
-const crewAction = (crew) => ({ FAILED: 'Nhập tay', REVIEW_REQUIRED: 'Duyệt', COMPLETED: 'Mở' }[lead(crew).status] || '');
-const needOf = (crew) => crew.docs.reduce((sum, doc) => sum + (doc.need || 0), 0);
-const docCount = (crew) => `${crew.docs.length} tài liệu`;
-const waitText = (doc) => (doc.status === 'COMPLETED' ? '' : doc.slow ? `<span class="warn-text">Chờ ${doc.wait}</span>` : `Chờ ${doc.wait}`);
-const crewBadge = (crew) => badge('document', lead(crew).status);
-const profileText = (crew) => (crew.revision ? `Revision ${crew.revision}` : 'Chưa công bố');
-const actionBtn = (crew) => { const label = crewAction(crew); return label ? btn(label, { size: 'sm', variant: label === 'Mở' ? 'ghost' : '' }) : ''; };
-const nameCell = (crew) => `<span class="cell2" style="max-width:300px"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank || 'Chưa có chức danh'} · ${docCount(crew)}</span></span>`;
-
 function statusTabs(selected) {
   const current = TABS.find(([value]) => value === selected);
   return `<div class="ds-tabs-boxed" role="tablist">${TABS.map(([value, label, count]) =>
     `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-tab="${value}" aria-selected="${value === selected}">${label}<span class="ds-tabs-boxed__count">${state.tt === 'dang-tai' ? '' : state.tt === 'rong' ? 0 : count}</span></button>`).join('')}</div>
-    <button type="button" class="btn ds-tabs-mobile"><span class="muted">Trạng thái:</span> ${current[1]} · ${state.tt === 'rong' ? 0 : current[2]} ${icon('down')}</button>`;
+    <button type="button" class="btn ds-tabs-mobile"><span class="muted">Hiển thị:</span> ${current[1]} · ${state.tt === 'rong' ? 0 : current[2]} ${icon('down')}</button>`;
 }
 
-function stateBlock(columns) {
+// ---------- Màn Thuyền viên: tập trung vào con người ----------
+const initials = (name) => name.split(' ').slice(-2).map((part) => part[0]).join('');
+const avatar = (name, size = '') => `<span class="avatar ${size}">${initials(name)}</span>`;
+const crewStatus = (crew) => badge('crew', crew.status);
+const availability = (crew) => (crew.status === 'ONBOARD' ? `${crew.vessel} · đến ${crew.until}` : crew.status === 'STANDBY' ? `Sẵn sàng từ ${crew.ready}` : `Nghỉ đến ${crew.ready}`);
+const docsAlert = (crew) => (crew.expired ? `<span class="err-text">${crew.expired} giấy tờ hết hạn</span>` : crew.expiring ? `<span class="warn-text">${crew.expiring} sắp hết hạn</span>` : '<span class="muted">Còn hạn</span>');
+const reviewChip = (crew) => (crew.review ? `<span class="pending-chip">${icon('ellipsis')}${crew.review} giấy tờ chờ duyệt</span>` : '');
+const completeness = (crew) => `<span class="mini-progress" title="Hồ sơ đầy đủ ${crew.complete}%"><span style="width:${crew.complete}%"></span></span><span class="num muted">${crew.complete}%</span>`;
+
+function listState(columns) {
   const head = columns.map((column) => `<th class="${column.cls || ''}">${column.title}</th>`).join('');
   if (state.tt === 'dang-tai') {
-    const skeletonRows = Array.from({ length: 5 }, () => `<tr>${columns.map((column, index) => `<td class="${column.cls || ''}">${index === 0 ? '<span class="sk" style="width:70%"></span><span class="sk" style="width:40%;margin-top:8px"></span>' : '<span class="sk" style="width:60%"></span>'}</td>`).join('')}</tr>`).join('');
+    const skeletonRows = Array.from({ length: 6 }, () => `<tr>${columns.map((column, index) => `<td class="${column.cls || ''}">${index === 0 ? '<span style="display:flex;gap:12px;align-items:center"><span class="sk" style="width:36px;height:36px;border-radius:999px"></span><span style="flex:1"><span class="sk" style="width:70%"></span><span class="sk" style="width:40%;margin-top:8px"></span></span></span>' : '<span class="sk" style="width:60%"></span>'}</td>`).join('')}</tr>`).join('');
     return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${skeletonRows}</tbody></table></div>
       <ul class="doc-list">${Array.from({ length: 4 }, () => '<li><span class="sk" style="width:80%"></span><span class="sk" style="width:60px"></span><span class="sk" style="width:50%"></span></li>').join('')}</ul>`;
   }
-  if (state.tt === 'rong') return `<div class="ds-empty"><p class="ds-empty__title">Chưa có thuyền viên nào</p><p class="ds-empty__text">Thêm thuyền viên bằng cách nhập họ tên và tải sổ thuyền viên lên. AI đọc sổ và đề xuất dữ liệu để bạn duyệt.</p><div class="ds-empty__action">${btn('Thêm thuyền viên', { iconName: 'plus' })}</div></div>`;
+  if (state.tt === 'rong') return `<div class="ds-empty"><p class="ds-empty__title">Chưa có thuyền viên nào</p><p class="ds-empty__text">Thêm thuyền viên rồi thả sổ thuyền viên, chứng chỉ vào hồ sơ. AI đọc giấy tờ và điền sẵn để bạn duyệt.</p><div class="ds-empty__action">${btn('Thêm thuyền viên', { iconName: 'plus' })}</div></div>`;
   if (state.tt === 'loi') return `<div class="ds-empty" role="alert"><p class="ds-empty__title ds-empty__title--error">Không tải được danh sách thuyền viên</p><p class="ds-empty__text">Mất kết nối tới máy chủ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>`;
   return null;
 }
 
-function crewTable({ columns, rows, expanded = null }) {
-  const pending = stateBlock(columns);
-  if (pending) return pending;
-  const head = columns.map((column) => `<th class="${column.cls || ''}">${column.title}</th>`).join('');
-  const body = rows.map((crew) => {
-    const row = `<tr>${columns.map((column) => `<td class="${column.cls || ''}">${column.render(crew)}</td>`).join('')}</tr>`;
-    if (expanded !== crew.id) return row;
-    return `${row}<tr class="tbl-sub"><td colspan="${columns.length}"><ul class="ds-files subdocs">${crew.docs.map((doc) => `<li class="ds-files__row">${icon(doc.status === 'FAILED' ? 'close-circle' : 'file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.name)}</span></p><p class="ds-files__meta">${doc.pages}${doc.status === 'COMPLETED' ? '' : ` · ${waitText(doc)}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</p></div>${badge('document', doc.status)}</li>`).join('')}</ul>
-      <div class="subdocs__foot">${btn('Tải thêm tài liệu', { size: 'sm', variant: 'ghost', iconName: 'upload' })}</div></td></tr>`;
-  }).join('');
-  const list = rows.map((crew) => { const doc = lead(crew); return `<li>
-      <span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank || 'Chưa có chức danh'} · ${docCount(crew)}</span></span>
-      <span>${crewBadge(crew)}</span>
-      <span class="cell2__sub">${[waitText(doc), needOf(crew) ? `${needOf(crew)} trường cần xem` : '', doc.status === 'COMPLETED' ? profileText(crew) : ''].filter(Boolean).join(' · ')}</span>
-      <span>${actionBtn(crew)}</span></li>`; }).join('');
-  return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div><ul class="doc-list">${list}</ul>
-    <div class="tbl-foot"><span>${rows.length} thuyền viên</span></div>`;
-}
-
-const COL = {
-  crew: { title: 'Thuyền viên', render: nameCell },
-  crewB: { title: 'Thuyền viên', render: (crew) => `<span style="display:flex;align-items:center;gap:8px"><button type="button" class="btn btn--ghost btn--sm btn--icon" data-expand="${crew.id}" aria-expanded="${state.expand === crew.id}" aria-label="Xem tài liệu của ${esc(crew.name)}">${icon(state.expand === crew.id ? 'down' : 'right')}</button>${nameCell(crew)}</span>` },
-  docs: { title: 'Tài liệu', render: crewBadge },
-  docsD: { title: 'Tài liệu', render: (crew) => { const doc = lead(crew); return `<span class="cell2">${crewBadge(crew)}<span class="cell2__sub" style="margin-top:4px">${[waitText(doc), needOf(crew) ? `${needOf(crew)} trường cần xem` : '', doc.status === 'COMPLETED' ? profileText(crew) : ''].filter(Boolean).join(' · ')}</span></span>`; } },
-  docsE: { title: 'Tài liệu', render: (crew) => `<span class="muted" style="white-space:nowrap">${docCount(crew)}</span>` },
-  need: { title: 'Cần xem', cls: 'right', render: (crew) => (lead(crew).status === 'REVIEW_REQUIRED' ? `<span class="num" style="white-space:nowrap">${needOf(crew)} trường</span>` : '<span class="muted">—</span>') },
-  wait: { title: 'Chờ', cls: 'right', render: (crew) => { const doc = lead(crew); return doc.status === 'COMPLETED' ? '<span class="muted">—</span>' : `<span class="num ${doc.slow ? 'warn-text' : 'muted'}" style="white-space:nowrap">${doc.wait}</span>`; } },
-  profile: { title: 'Hồ sơ', cls: 'col-lg', render: (crew) => `<span class="cell2"><span class="${crew.revision ? '' : 'muted'}" style="white-space:nowrap">${profileText(crew)}</span>${crew.updated ? `<span class="cell2__sub">${crew.updated}</span>` : ''}</span>` },
-  action: { title: '<span class="ds-sr-only">Thao tác</span>', cls: 'right', render: actionBtn },
+const CREW_COL = {
+  person: { title: 'Thuyền viên', render: (crew) => `<span class="person">${avatar(crew.name)}<span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank}</span>${crew.review ? `<span style="margin-top:4px">${reviewChip(crew)}</span>` : ''}</span></span>` },
+  status: { title: 'Tình trạng', render: crewStatus },
+  where: { title: 'Tàu / sẵn sàng', render: (crew) => `<span style="white-space:nowrap">${availability(crew)}</span>` },
+  docs: { title: 'Giấy tờ', cls: 'col-lg', render: (crew) => `<span style="white-space:nowrap">${docsAlert(crew)}</span>` },
+  complete: { title: 'Hồ sơ', cls: 'col-lg', render: (crew) => `<span class="complete-cell">${completeness(crew)}</span>` },
+  open: { title: '<span class="ds-sr-only">Mở</span>', cls: 'right', render: () => `<span class="muted">${icon('right')}</span>` },
 };
 
 function crewScreen() {
   const v = state.v;
   const selectedTab = state.tab || 'all';
-  const filter = { review: ['REVIEW_REQUIRED'], processing: ['PROCESSING', 'SLOW'], failed: ['FAILED'], done: ['COMPLETED'] }[selectedTab];
-  const rows = filter ? CREW.filter((crew) => filter.includes(lead(crew).status)) : CREW;
-  const addButton = btn('Thêm thuyền viên', { variant: 'primary', iconName: 'plus' });
-  const search = `<label class="search toolbar__search">${icon('search')}<input class="input" placeholder="Tìm theo tên thuyền viên, tên tệp" aria-label="Tìm thuyền viên" /></label>`;
-  const duplicateBanner = state.tt === 'du-lieu' ? `<div data-wf-block="3"><div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">1 tệp của Trần Minh Khôi không được tải lên vì trùng</p><p class="ds-banner__text">so-thuyen-vien-ban-chup-lai.pdf giống hệt tài liệu đã tải lúc 09:12 · 03/10/2026.</p></div><div class="ds-banner__action">${btn('Mở tài liệu đó')}</div></div></div>` : '';
-  const toolbar = `<div class="toolbar" data-wf-block="4">${statusTabs(selectedTab)}${search}${addButton}</div>`;
+  const filter = { onboard: (crew) => crew.status === 'ONBOARD', standby: (crew) => crew.status !== 'ONBOARD', review: (crew) => crew.review, expiring: (crew) => crew.expired || crew.expiring }[selectedTab];
+  const rows = filter ? CREW.filter(filter) : CREW;
+  const toolbar = `<div class="toolbar" data-wf-block="3">${statusTabs(selectedTab)}<label class="search toolbar__search">${icon('search')}<input class="input" placeholder="Tìm tên, chức danh, số sổ" aria-label="Tìm thuyền viên" /></label>${btn('Thêm thuyền viên', { variant: 'primary', iconName: 'plus' })}</div>`;
+  const pending = listState([CREW_COL.person, CREW_COL.status, CREW_COL.where]);
 
-  if (v === 'c') {
-    const selected = CREW.find((crew) => crew.id === (state.pick || 'pa'));
-    const pending = stateBlock([COL.crew, COL.docs]);
-    const listPane = pending ? `<div class="panel">${pending}</div>` : `<div class="panel md-list" data-wf-block="5"><ul>${rows.map((crew) => `<li><button type="button" data-pick="${crew.id}" aria-current="${crew.id === selected.id}"><span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank || 'Chưa có chức danh'} · ${docCount(crew)}</span></span>${crewBadge(crew)}</button></li>`).join('')}</ul></div>`;
-    const detail = pending ? '' : `<section class="panel md-detail" data-wf-block="6"><div class="panel__head" style="align-items:flex-start"><div><h2 class="panel__title">${esc(selected.name)}</h2><p class="muted" style="margin:2px 0 0">${selected.rank || 'Chưa có chức danh'} · Hồ sơ: ${profileText(selected)}</p></div>${btn('Mở hồ sơ', { size: 'sm', variant: 'ghost' })}</div>
-      <div class="panel__body" style="display:grid;gap:16px"><ul class="ds-files" style="margin:0">${selected.docs.map((doc) => `<li class="ds-files__row">${icon(doc.status === 'FAILED' ? 'close-circle' : 'file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.name)}</span></p><p class="ds-files__meta">${badge('document', doc.status)} <span style="margin-left:6px">${doc.pages}${doc.status === 'COMPLETED' ? '' : ` · ${waitText(doc)}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</span></p></div>${doc.status === 'REVIEW_REQUIRED' ? btn('Duyệt', { size: 'sm', variant: 'primary' }) : doc.status === 'FAILED' ? btn('Nhập tay', { size: 'sm' }) : ''}</li>`).join('')}</ul>
-      <label class="ds-drop"><span class="ds-drop__title">Kéo thả thêm tài liệu của ${esc(selected.name.split(' ').slice(-2).join(' '))}</span><span class="ds-drop__hint">PDF, JPG hoặc PNG. Tối đa 25 MB và 50 trang mỗi tệp</span><span class="ds-drop__button">${icon('upload')}Chọn tệp</span></label></div></section>`;
-    return shell({ title: 'Thuyền viên', content: `${duplicateBanner}${toolbar}<div class="md">${listPane}${detail}</div>` });
+  if (v === 'b') {
+    const cards = pending ? `<div class="panel">${pending}</div>` : `<div class="crew-grid" data-wf-block="4">${rows.map((crew) => `<a class="crew-card">
+      <span class="crew-card__top">${avatar(crew.name, 'avatar--md')}<span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank}</span></span></span>
+      <span class="crew-card__row">${crewStatus(crew)}<span class="muted crew-card__where">${availability(crew)}</span></span>
+      <span class="crew-card__foot"><span>${docsAlert(crew)}</span><span class="complete-cell">${completeness(crew)}</span></span>
+      ${crew.review ? `<span class="crew-card__review">${reviewChip(crew)}</span>` : ''}</a>`).join('')}</div>`;
+    return shell({ title: 'Thuyền viên', current: 'seafarers', content: `${toolbar}${cards}` });
   }
-
-  let columns = [COL.crew, COL.docs, COL.need, COL.wait, COL.profile, COL.action];
-  if (v === 'b') columns = [COL.crewB, COL.docs, COL.need, COL.wait, COL.profile, COL.action];
-  if (v === 'd') columns = [COL.crew, COL.docsD, COL.action];
-  if (v === 'e' && selectedTab !== 'all') columns = [COL.crew, COL.docsE, COL.need, COL.wait, COL.profile, COL.action];
-  return shell({ title: 'Thuyền viên', content: `${duplicateBanner}${toolbar}<div class="panel" data-wf-block="5">${crewTable({ columns, rows, expanded: v === 'b' ? state.expand : null })}</div>` });
+  if (v === 'c') {
+    const picked = CREW.find((crew) => crew.id === (state.pick || 'mk'));
+    const list = pending ? `<div class="panel">${pending}</div>` : `<div class="panel md-list" data-wf-block="4"><ul>${rows.map((crew) => `<li><button type="button" data-pick="${crew.id}" aria-current="${crew.id === picked.id}"><span class="person">${avatar(crew.name)}<span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank} · ${availability(crew)}</span></span></span>${crewStatus(crew)}</button></li>`).join('')}</ul></div>`;
+    const preview = pending ? '' : `<section class="panel md-detail" data-wf-block="5"><div class="panel__body" style="display:grid;gap:16px">
+      <div class="person">${avatar(picked.name, 'avatar--lg')}<span class="cell2"><span class="cell2__main" style="font-size:16px">${esc(picked.name)}</span><span class="cell2__sub">${picked.rank} · ${picked.nat}</span></span><span style="margin-left:auto">${btn('Mở hồ sơ', { size: 'sm' })}</span></div>
+      <dl class="facts"><div><dt>Tình trạng</dt><dd>${crewStatus(picked)}</dd></div><div><dt>Tàu / sẵn sàng</dt><dd>${availability(picked)}</dd></div><div><dt>Giấy tờ</dt><dd>${docsAlert(picked)}</dd></div><div><dt>Hồ sơ đầy đủ</dt><dd class="complete-cell">${completeness(picked)}</dd></div></dl>
+      ${picked.review ? `<div role="status" class="ds-banner ds-banner--warning">${icon('ellipsis', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">${picked.review} giấy tờ AI vừa đọc, chờ bạn duyệt</p></div><div class="ds-banner__action">${btn('Duyệt')}</div></div>` : ''}
+      ${dropzone(picked)}</div></section>`;
+    return shell({ title: 'Thuyền viên', current: 'seafarers', content: `${toolbar}<div class="md">${list}${preview}</div>` });
+  }
+  const columns = [CREW_COL.person, CREW_COL.status, CREW_COL.where, CREW_COL.docs, CREW_COL.complete, CREW_COL.open];
+  const body = pending || `<div class="tbl-wrap"><table class="tbl tbl--link"><thead><tr>${columns.map((column) => `<th class="${column.cls || ''}">${column.title}</th>`).join('')}</tr></thead><tbody>${rows.map((crew) => `<tr>${columns.map((column) => `<td class="${column.cls || ''}">${column.render(crew)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <ul class="doc-list">${rows.map((crew) => `<li><span class="person">${avatar(crew.name)}<span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank}</span></span></span><span>${crewStatus(crew)}</span><span class="cell2__sub">${availability(crew)} · ${docsAlert(crew)}</span>${reviewChip(crew)}</li>`).join('')}</ul>
+    <div class="tbl-foot"><span>${rows.length} thuyền viên</span></div>`;
+  return shell({ title: 'Thuyền viên', current: 'seafarers', content: `${toolbar}<div class="panel" data-wf-block="4">${body}</div>` });
 }
 
-// ---------- Màn Duyệt ----------
-function reviewField({ label, value, fieldState, page, critical, reason, vessel, active, actions, extra }) {
-  const unknown = fieldState === 'UNKNOWN' || fieldState === 'UNKNOWN_KEPT';
-  const defaultActions = [['check', fieldState === 'UNKNOWN' ? 'Giữ UNKNOWN' : 'Chấp nhận'], ['edit', 'Sửa'], ['close', 'Từ chối']];
-  const decided = !['PROPOSED', 'UNKNOWN', 'DATE_AMBIGUOUS'].includes(fieldState);
-  return `<div class="ds-field ${active ? 'ds-field--active' : ''}">
-    <div class="ds-field__head"><span class="ds-field__label">${label}${critical ? '<span class="ds-field__required">*</span>' : ''}</span>
-      ${page ? `<button type="button" class="ds-chip-page">${icon('file-text')}Trang ${page}</button>` : ''}</div>
-    <p class="ds-field__value ${unknown ? 'ds-field__value--unknown' : ''}">${unknown ? 'Không đọc được trên tài liệu' : value}</p>
-    ${extra || ''}
-    <div class="ds-field__foot"><span class="ds-field__badges">${fieldState ? badge('field', fieldState) : ''}${vessel ? badge(vessel[0], vessel[1]) : ''}</span>
-      ${decided ? '' : `<span class="ds-field__actions">${(actions || defaultActions).map(([iconName, text]) => btn(text, { variant: 'ghost', size: 'sm', iconName })).join('')}</span>`}</div>
-    ${reason ? `<p class="ds-field__reason">Lý do: ${reason}</p>` : ''}
+// ---------- Hồ sơ thuyền viên: điểm wow là thả giấy tờ vào ----------
+function dropzone(crew, big = false) {
+  const first = crew.name.split(' ').slice(-1)[0];
+  return `<div class="wow ${big ? 'wow--big' : ''}" data-wf-block="7">
+    <label class="ds-drop wow__drop"><span class="wow__spark">${icon('file-add')}</span><span class="ds-drop__title">Thả giấy tờ của ${first} vào đây</span><span class="ds-drop__hint">Sổ thuyền viên, hộ chiếu, chứng chỉ, giấy tiêm chủng. AI tự nhận ra loại giấy tờ, đọc và điền vào đúng mục để bạn duyệt.</span><span class="ds-drop__button">${icon('upload')}Chọn tệp</span></label>
+    ${state.tt === 'du-lieu' && crew.id === 'mk' ? `<ul class="ds-files wow__files">
+      <li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><div class="ds-files__line"><p class="ds-files__name"><span class="ds-files__head">anh-chung-chi-pccc.jpg</span></p><p class="ds-files__percent">Đang đọc</p></div><div class="ds-progress ds-progress--thin"><div class="ds-progress__bar" style="width:60%"></div></div><p class="ds-files__meta">Nhận ra: <b>Chứng chỉ huấn luyện</b> · Advanced Fire Fighting</p></div></li>
+      <li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">so-thuyen-vien-trang-4-5.jpg</span></p><p class="ds-files__meta">Nhận ra: <b>Sổ thuyền viên · Bố trí chức danh</b> · 1 chuyến đi tàu mới, 2 trường AI chưa chắc</p></div>${btn('Duyệt', { size: 'sm', variant: 'primary' })}</li>
+    </ul>` : ''}</div>`;
+}
+
+const PROFILE = {
+  personal: [['Ngày sinh', '13/03/1990'], ['Giới tính', 'Nam'], ['Nơi sinh', 'Hải Dương'], ['Quốc tịch', 'Việt Nam'], ['Số sổ thuyền viên', 'VN000123-01'], ['Hộ chiếu', 'C0000123 · đến 20/05/2031'], ['Điện thoại', '0900 000 123'], ['Email', 'tranminhkhoi@mcah.demo']],
+  docs: [
+    ['Sổ thuyền viên', 'VN000123-01', '02/02/2016', '—', 'VALID'],
+    ['Hộ chiếu', 'C0000123', '20/05/2021', '20/05/2031', 'VALID'],
+    ['GCN khả năng chuyên môn (COC)', 'A00123.OSE', '10/01/2022', '10/01/2027', 'EXPIRING'],
+    ['Huấn luyện · Advanced Fire Fighting', 'A0001.AF/DEMO', '02/07/2020', '02/07/2025', 'EXPIRED'],
+    ['Huấn luyện · Basic Safety Training', 'B0002.BST/DEMO', '15/03/2023', '15/03/2028', 'VALID'],
+    ['Tiêm chủng · Sốt vàng', 'L 0000', '01/08/2016', '01/08/2026', 'EXPIRED'],
+    ['Huấn luyện · Advanced Fire Fighting (bản mới)', '—', '—', '—', 'PENDING'],
+  ],
+  service: [['MV Halong Spirit', 'Hàng rời · 300 GT', 'Thợ máy', '04/01/2016', '14/07/2016', '6 tháng 10 ngày'], ['MV Lotus Pearl', 'Container · 9.800 GT', 'Thợ máy', '02/03/2017', '14/11/2017', '8 tháng 12 ngày'], ['MV Lotus Pearl', 'Container · 9.800 GT', 'Thợ máy chính', '05/07/2022', '—', 'Đang trên tàu']],
+  history: [['10:42 hôm nay', 'AI đọc so-thuyen-vien-trang-4-5.jpg', 'Thêm 1 chuyến đi tàu, chờ duyệt'], ['16:05 · 03/10', 'Lê Thu Hà công bố revision 2', 'Sửa ngày xuống tàu, dựa trên trang 5'], ['09:12 · 03/10', 'Phạm Văn Tùng tải hộ chiếu', 'AI đọc 6 trường, đã duyệt']],
+};
+
+function profileHead(crew) {
+  return `<div class="page-head" data-wf-block="3"><div class="person">${avatar(crew.name, 'avatar--xl')}<div class="page-head__text"><h1 class="page-head__title">${esc(crew.name)}</h1><p class="page-head__desc">${crew.rank} · ${crew.nat} · ${availability(crew)}</p><div class="head-badges">${crewStatus(crew)}${docsAlert(crew)}</div></div></div>
+    <div class="page-head__actions">${btn('Xuất hồ sơ', { iconName: 'send' })}${btn('Thả giấy tờ', { variant: 'primary', iconName: 'upload' })}</div></div>`;
+}
+const section = (title, body, extra = '', block = '') => `<section class="panel" ${block ? `data-wf-block="${block}"` : ''}><div class="panel__head"><h2 class="panel__title">${title}</h2>${extra}</div><div class="panel__body">${body}</div></section>`;
+const personalBlock = () => `<dl class="facts facts--2">${PROFILE.personal.map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join('')}</dl>`;
+const docsBlock = (compact = false) => `<div class="tbl-wrap tbl-wrap--always"><table class="tbl"><thead><tr><th>Giấy tờ</th>${compact ? '' : '<th class="col-lg">Số</th><th class="col-lg">Cấp ngày</th>'}<th>Hết hạn</th><th>Trạng thái</th></tr></thead><tbody>${PROFILE.docs.map(([name, number, issued, until, status]) => `<tr><td><span style="display:block;min-width:140px;max-width:280px">${name}</span></td>${compact ? '' : `<td class="col-lg"><span class="num">${number}</span></td><td class="col-lg"><span class="num">${issued}</span></td>`}<td><span class="num" style="white-space:nowrap">${until}</span></td><td>${status === 'PENDING' ? btn('Duyệt', { size: 'sm' }) : badge('cert', status)}</td></tr>`).join('')}</tbody></table></div>`;
+const serviceBlock = () => `<div class="tbl-wrap tbl-wrap--always"><table class="tbl"><thead><tr><th>Tàu</th><th>Chức danh</th><th>Xuống tàu</th><th>Rời tàu</th><th class="col-lg">Thời gian</th></tr></thead><tbody>${PROFILE.service.map(([ship, type, rank, on, off, length]) => `<tr><td style="white-space:nowrap" title="${type}">${ship}</td><td style="white-space:nowrap">${rank}</td><td class="num">${on}</td><td class="num">${off}</td><td class="col-lg"><span class="muted" style="white-space:nowrap">${length}</span></td></tr>`).join('')}</tbody></table></div>`;
+const historyBlock = () => `<ol class="ds-timeline">${PROFILE.history.map(([time, title, detail], index) => `<li class="ds-timeline__item"><span class="ds-timeline__line" aria-hidden="true"></span><span class="ds-timeline__icon ds-timeline__icon--${index === 0 ? 'warning' : 'neutral'}">${icon(index === 0 ? 'file-search' : index === 1 ? 'check' : 'upload')}</span><div class="ds-timeline__body"><div class="ds-timeline__head"><p class="ds-timeline__title">${title}</p><time class="ds-timeline__time">${time}</time></div><p class="ds-timeline__meta">${detail}</p></div></li>`).join('')}</ol>`;
+
+function profileScreen() {
+  const crew = CREW.find((item) => item.id === 'mk');
+  if (state.tt === 'loi') return shell({ crumb: 'Thuyền viên', current: 'seafarers', content: `<div class="ds-empty" role="alert" style="padding-top:96px"><p class="ds-empty__title ds-empty__title--error">Không tải được hồ sơ</p><p class="ds-empty__text">Mất kết nối tới máy chủ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>` });
+  if (state.tt === 'dang-tai') return shell({ crumb: 'Thuyền viên', current: 'seafarers', content: `<div class="page-head"><div class="person"><span class="sk" style="width:64px;height:64px;border-radius:999px"></span><div><span class="sk" style="width:240px;height:20px"></span><span class="sk" style="width:180px;margin-top:10px"></span></div></div></div><div class="panel panel__body">${Array.from({ length: 4 }, () => '<span class="sk" style="width:60%;margin:10px 0"></span>').join('')}</div>` });
+  const head = profileHead(crew);
+  const v = state.v;
+  if (v === 'a') {
+    const tabs = [['tong-quan', 'Tổng quan'], ['giay-to', 'Giấy tờ', 7], ['di-tau', 'Đi tàu', 3], ['lich-su', 'Lịch sử']];
+    const current = state.ptab || 'tong-quan';
+    const tabBar = `<div class="ds-tabs-boxed" role="tablist" data-wf-block="4">${tabs.map(([key, label, count]) => `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-ptab="${key}" aria-selected="${key === current}">${label}${count ? `<span class="ds-tabs-boxed__count">${count}</span>` : ''}</button>`).join('')}</div>
+      <button type="button" class="btn ds-tabs-mobile">${tabs.find(([key]) => key === current)[1]} ${icon('down')}</button>`;
+    const bodies = {
+      'tong-quan': `${dropzone(crew)}<div class="two-col">${section('Thông tin cá nhân', personalBlock(), btn('Sửa', { size: 'sm', variant: 'ghost', iconName: 'edit' }), '5')}${section('Cần chú ý', `<ul class="attention"><li>${badge('cert', 'EXPIRED')}<span>Advanced Fire Fighting hết hạn 02/07/2025</span></li><li>${badge('cert', 'EXPIRED')}<span>Tiêm chủng sốt vàng hết hạn 01/08/2026</span></li><li>${badge('cert', 'EXPIRING')}<span>COC hết hạn 10/01/2027</span></li><li>${badge('document', 'REVIEW_REQUIRED')}<span>1 chuyến đi tàu AI vừa đọc</span></li></ul>`, '', '6')}</div>`,
+      'giay-to': `${dropzone(crew)}${section('Giấy tờ', docsBlock(), '', '5')}`,
+      'di-tau': section('Lịch sử đi tàu', serviceBlock(), '<span class="muted">Tổng 7 năm 2 tháng</span>', '5'),
+      'lich-su': section('Lịch sử chỉnh sửa', historyBlock(), '', '5'),
+    };
+    return shell({ crumb: 'Thuyền viên', current: 'seafarers', content: `${head}${tabBar}${bodies[current]}` });
+  }
+  if (v === 'b') {
+    const side = `<aside class="side-col">${dropzone(crew, true)}${section('Hồ sơ đầy đủ', `<div class="ds-progress-block"><div class="ds-progress-block__head"><p class="ds-progress-block__label">Đã có</p><p class="ds-progress-block__value">${crew.complete}%</p></div><div class="ds-progress"><div class="ds-progress__bar" style="width:${crew.complete}%"></div></div></div><p class="muted" style="margin:12px 0 0">Còn thiếu: điện thoại khẩn cấp, chứng chỉ GMDSS.</p>`)}</aside>`;
+    const main = `<div class="main-col">${section('Thông tin cá nhân', personalBlock(), btn('Sửa', { size: 'sm', variant: 'ghost', iconName: 'edit' }), '4')}${section('Giấy tờ', docsBlock(true), '<span class="muted">2 hết hạn · 1 chờ duyệt</span>', '5')}${section('Lịch sử đi tàu', serviceBlock(), '', '6')}${section('Lịch sử chỉnh sửa', historyBlock())}</div>`;
+    return shell({ crumb: 'Thuyền viên', current: 'seafarers', content: `${head}<div class="profile-b">${main}${side}</div>` });
+  }
+  const card = `<aside class="panel profile-card" data-wf-block="4"><div class="panel__body" style="display:grid;gap:16px;justify-items:start">${avatar(crew.name, 'avatar--xl')}<div><p class="page-head__title" style="margin:0">${esc(crew.name)}</p><p class="muted" style="margin:2px 0 0">${crew.rank} · ${crew.nat}</p></div>${crewStatus(crew)}<dl class="facts">${PROFILE.personal.slice(0, 5).map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`).join('')}</dl>${btn('Xuất hồ sơ', { iconName: 'send', size: 'sm' })}</div></aside>`;
+  const right = `<div class="main-col">${dropzone(crew)}${section('Giấy tờ', docsBlock(true), '<span class="muted">2 hết hạn · 1 chờ duyệt</span>', '5')}${section('Lịch sử đi tàu', serviceBlock(), '', '6')}</div>`;
+  return shell({ crumb: 'Thuyền viên', current: 'seafarers', content: `<div class="profile-c">${card}${right}</div>` });
+}
+
+// ---------- Màn Duyệt: bản gốc bên trái, bản số hoá bên phải ----------
+// Mỗi loại giấy tờ một khuôn; khuôn dựng lại đúng thứ tự ô trên giấy để mắt dò ngang được.
+const DOC_TYPES = {
+  'so-45': {
+    label: 'Sổ thuyền viên · Bố trí chức danh', file: 'so-thuyen-vien-trang-4-5.jpg', page: 'Trang 4–5',
+    title: ['BỐ TRÍ CHỨC DANH', 'Duties Arrangement'],
+    fields: [
+      ['ship', 'Tên tàu', "Ship's name", 'HALONG SPIRIT', 'MV Halong Spirit', 'ACCEPTED'],
+      ['type', 'Loại tàu', 'Type of ship', '', '', 'UNKNOWN', 'half'],
+      ['flag', 'Quốc tịch', 'Nationality', 'VN', 'Việt Nam', 'ACCEPTED', 'half'],
+      ['gt', 'Tổng dung tích', 'Gross tonnage', '300', '300 GT', 'PROPOSED'],
+      ['kw', 'Tổng công suất máy chính', "Main engine's power", '700', '700 kW', 'PROPOSED'],
+      ['owner', 'Chủ tàu', 'Shipowner', 'CHỦ TÀU DEMO A', 'Chủ tàu Demo A', 'PROPOSED'],
+      ['rank', 'Chức danh', 'Capacity', 'Thợ máy', 'Thợ máy (Motorman)', 'EDITED', 'half'],
+      ['coc', 'Số GCNKNCM', 'No. of COC', 'A00123.OSE', 'A00123.OSE', 'ACCEPTED', 'half'],
+      ['assign', 'Ngày chủ tàu bố trí chức danh', 'Date of embarkation', '04 . 1 . 2016', '04/01/2016', 'ACCEPTED'],
+      ['on', 'Tên cảng, ngày xuống tàu', 'Port, date of embarkation', 'HP  04 . 1 . 2016', 'Hải Phòng · 04/01/2016', 'ACCEPTED'],
+      ['off', 'Tên cảng, ngày rời tàu', 'Port, date of disembarkation', '14 . 7 . 2016', '14/07/2016 · cảng trống', 'DATE_AMBIGUOUS'],
+    ],
+    stamps: ['CHỦ TÀU · Shipowner', 'THUYỀN TRƯỞNG · Master'],
+  },
+  'so-23': {
+    label: 'Sổ thuyền viên · Trang thông tin', file: 'so-thuyen-vien-trang-2-3.jpg', page: 'Trang 2–3',
+    title: ['SỔ THUYỀN VIÊN', "Seaman's book"], photo: true,
+    fields: [
+      ['no', 'Số', 'No.', 'VN000123-01', 'VN000123-01', 'ACCEPTED'],
+      ['name', 'Họ và tên thuyền viên', 'Full name', 'TRẦN MINH KHÔI', 'Trần Minh Khôi', 'ACCEPTED'],
+      ['sex', 'Giới tính', 'Sex', 'Nam / Male', 'Nam', 'ACCEPTED', 'half'],
+      ['dob', 'Ngày sinh', 'Date of birth', '13.03.1990', '13/03/1990', 'ACCEPTED', 'half'],
+      ['pob', 'Nơi sinh', 'Place of birth', 'Hải Dương', 'Hải Dương', 'ACCEPTED'],
+      ['nat', 'Quốc tịch', 'Nationality', 'VIỆT NAM', 'Việt Nam', 'ACCEPTED'],
+      ['id', 'Số GCMND hoặc hộ chiếu', 'ID card No or passport', '000000123', '000000123', 'PROPOSED'],
+      ['issued', 'Nơi cấp, ngày cấp', 'Place, date', 'Hải Phòng, 02 . 02 . 2016', 'Hải Phòng · 02/02/2016', 'ACCEPTED'],
+    ],
+    stamps: ['CHI CỤC TRƯỞNG'],
+  },
+  coc: {
+    label: 'Chứng chỉ huấn luyện', file: 'anh-chung-chi-pccc.jpg', page: '1 trang',
+    title: ['GIẤY CHỨNG NHẬN HUẤN LUYỆN NGHIỆP VỤ CHUYÊN MÔN', 'Certificate of proficiency'], photo: true,
+    fields: [
+      ['school', 'Nơi cấp', 'Issued by', 'TRƯỜNG HUẤN LUYỆN DEMO', 'Trường Huấn luyện Demo', 'PROPOSED'],
+      ['name', 'Chứng nhận', 'Certifies that', 'TRẦN MINH KHÔI', 'Trần Minh Khôi', 'ACCEPTED'],
+      ['dob', 'Sinh ngày', 'Date of birth', '13-03-1990', '13/03/1990', 'ACCEPTED', 'half'],
+      ['nat', 'Quốc tịch', 'Nationality', 'VIỆT NAM', 'Việt Nam', 'ACCEPTED', 'half'],
+      ['course', 'Khoá huấn luyện', 'Training course', 'ADVANCED FIRE FIGHTING', 'Advanced Fire Fighting', 'PROPOSED'],
+      ['reg', 'Theo quy tắc', 'Under Reg.', 'VI/3', 'STCW VI/3', 'ACCEPTED'],
+      ['no', 'Giấy chứng nhận số', 'Certificate No', 'A0003.AF/DEMO', 'A0003.AF/DEMO', 'PROPOSED', 'half'],
+      ['issuedOn', 'Cấp ngày', 'Issued on', '02-07-2025', '02/07/2025', 'PROPOSED', 'half'],
+      ['valid', 'Có giá trị đến', 'Valid until', '02-07-2030', '02/07/2030', 'PROPOSED'],
+    ],
+    stamps: ['HIỆU TRƯỞNG · The Rector'],
+  },
+  vac: {
+    label: 'Giấy tiêm chủng quốc tế', file: 'giay-tiem-chung.jpg', page: '1 trang',
+    title: ['GIẤY CHỨNG NHẬN TIÊM CHỦNG QUỐC TẾ', 'International certificate of vaccination'],
+    fields: [
+      ['name', 'Chứng nhận (tên)', 'This is to certify that', 'TRAN MINH KHOI', 'Trần Minh Khôi', 'ACCEPTED'],
+      ['yob', 'Năm sinh', 'Date of birth', '1990', '1990', 'ACCEPTED', 'half'],
+      ['sex', 'Giới tính', 'Sex', 'M', 'Nam', 'ACCEPTED', 'half'],
+      ['disease', 'Bệnh', 'Against', 'YELLOW FEVER', 'Sốt vàng', 'ACCEPTED'],
+      ['vaccine', 'Nhà sản xuất, số lô', 'Manufacturer, batch no.', 'DEMO PHARMA · L 0000', 'Demo Pharma · L 0000', 'PROPOSED'],
+      ['from', 'Hiệu lực từ', 'Valid from', '01/8/2016', '01/08/2016', 'ACCEPTED', 'half'],
+      ['to', 'Đến', 'Until', '01/8/2026', '01/08/2026', 'PROPOSED', 'half'],
+    ],
+    stamps: ['DẤU KIỂM DỊCH Y TẾ'],
+  },
+};
+const DOC_ORDER = ['so-23', 'so-45', 'coc', 'vac'];
+const DOC_STATUS = { 'so-23': 'COMPLETED', 'so-45': 'REVIEW_REQUIRED', coc: 'PROCESSING', vac: 'COMPLETED' };
+const FIELD_NOTES = {
+  off: ['Ngày rời tàu viết tay, AI đọc "14 . 7 . 2016" nhưng chưa chắc tháng 7 hay tháng 1. Tên cảng để trống trên sổ.', [['check', 'Chấp nhận 14/07/2016'], ['edit', 'Sửa'], ['question-circle', 'Giữ UNKNOWN cho cảng']]],
+  type: ['Ô Loại tàu trên sổ để trống.', [['check', 'Giữ UNKNOWN'], ['edit', 'Nhập tay']]],
+  rank: ['Bạn đã sửa: ghép "Thợ máy" vào chức danh chuẩn Motorman.', [['reload', 'Hoàn tác']]],
+};
+
+function paper(type, mode, { focus, onlyIssues = false } = {}) {
+  const doc = DOC_TYPES[type];
+  const original = mode === 'goc';
+  const rows = doc.fields.map(([key, label, english, raw, value, fieldState, width]) => {
+    const unknown = fieldState === 'UNKNOWN';
+    const shown = original ? (raw ? `<span class="ink">${esc(raw)}</span>` : '<span class="ink ink--blank">&nbsp;</span>')
+      : `<span class="dv" data-st="${fieldState}">${unknown ? 'Không có trên giấy' : esc(value)}${fieldState === 'ACCEPTED' || fieldState === 'EDITED' ? icon(fieldState === 'EDITED' ? 'edit' : 'check', 'dv__mark') : fieldState === 'PROPOSED' ? '' : icon(STATUS.field[fieldState][2], 'dv__mark')}</span>`;
+    const dim = onlyIssues && ['ACCEPTED'].includes(fieldState);
+    return `<div class="pf ${width === 'half' ? 'pf--half' : ''} ${focus === key ? 'pf--focus' : ''} ${dim ? 'pf--dim' : ''}" data-field="${key}"><span class="pf__label">${label}<i>${english}</i></span><span class="pf__value">${shown}</span></div>`;
+  }).join('');
+  return `<div class="paper ${original ? 'paper--goc' : 'paper--so'}">
+    <p class="paper__title">${doc.title[0]}<i>${doc.title[1]}</i></p>
+    ${doc.photo ? `<span class="paper__photo">${original ? 'Ảnh' : icon('user')}</span>` : ''}
+    <div class="paper__fields">${rows}</div>
+    <div class="paper__stamps">${doc.stamps.map((stamp) => `<span class="paper__stamp">${original ? '<span class="seal" aria-hidden="true"></span>' : ''}${stamp}</span>`).join('')}</div>
   </div>`;
 }
 
-const PERSONAL = [
-  { label: 'Họ tên', value: 'Nguyễn Thị Hồng Nhung Phương Anh', fieldState: 'PROPOSED', page: 1, critical: true },
-  { label: 'Ngày sinh', value: '02/11/1995', fieldState: 'ACCEPTED', page: 1, critical: true },
-  { label: 'Chức danh', value: 'Able Seaman (AB)', fieldState: 'PROPOSED', page: 1, critical: true },
-];
-const CONTRACTS = [
-  { no: 1, vessel: 'MV Lotus Pearl', fields: [['Tàu', 'MV Lotus Pearl', 'ACCEPTED', true], ['IMO', '9163283', 'ACCEPTED', false, ['vessel', 'VERIFIED']], ['Rank raw', 'AB', 'ACCEPTED'], ['Sign on', '02/03/2021', 'ACCEPTED', true], ['Sign off', '14/11/2021', 'ACCEPTED', true]] },
-  { no: 2, vessel: 'MV Halong Spirit', fields: [['Tàu', 'MV Halong Spirit', 'ACCEPTED', true], ['IMO', '9194945', 'ACCEPTED', false, ['vessel', 'VERIFIED']], ['Rank raw', 'AB', 'ACCEPTED'], ['Sign on', '05/01/2022', 'EDITED', true], ['Sign off', '30/09/2022', 'PROPOSED', true]] },
-  { no: 3, vessel: 'MV Lotus Pearl', fields: [['Tàu', 'MV Lotus Pearl', 'PROPOSED', true], ['IMO', '9524454', 'PROPOSED', false, ['vessel', 'NOT_CHECKED']], ['Rank raw', 'AB', 'ACCEPTED'], ['Sign on', '25/09/2022', 'DATE_AMBIGUOUS', true], ['Sign off', '', 'UNKNOWN', true]] },
-];
-const IMO_ERROR = '<p class="ds-field__reason" style="color:var(--error-text)">Sai số kiểm tra: chữ số cuối phải là 3</p>';
-const PROBLEMS = [
-  { label: 'Sign off · dòng 3', fieldState: 'UNKNOWN', page: 3, critical: true, active: true, actions: [['check', 'Giữ UNKNOWN'], ['edit', 'Sửa'], ['sync', 'Đang trên tàu']] },
-  { label: 'Sign on · dòng 3', value: '25/09/2022', fieldState: 'DATE_AMBIGUOUS', page: 3, critical: true, extra: '<p class="ds-field__reason">Ngày bị dấu đè, có thể là 23/09/2022</p>' },
-  { label: 'IMO · dòng 3', value: '9524454', fieldState: null, page: 3, vessel: ['vessel', 'NOT_CHECKED'], extra: IMO_ERROR, actions: [['edit', 'Sửa'], ['search', 'Đối chiếu tàu']] },
-];
-const OVERLAP = `<div class="ds-field"><div class="ds-field__head"><span class="ds-field__label">Trùng thời gian · dòng 2 và 3</span><button type="button" class="ds-chip-page">${icon('file-text')}Trang 3</button></div>
-  <p class="ds-field__value">25/09/2022 – 30/09/2022 · 6 ngày</p>
-  <div class="ds-field__foot"><span class="ds-field__badges">${badge('seaService', 'OVERLAP')}</span><span class="ds-field__actions">${btn('Xác nhận là bàn giao', { variant: 'ghost', size: 'sm', iconName: 'check' })}${btn('Sửa ngày', { variant: 'ghost', size: 'sm', iconName: 'edit' })}</span></div></div>`;
-const PENDING = [
-  { label: 'Họ tên', value: 'Nguyễn Thị Hồng Nhung Phương Anh', fieldState: 'PROPOSED', page: 1, critical: true },
-  { label: 'Chức danh', value: 'Able Seaman (AB)', fieldState: 'PROPOSED', page: 1, critical: true },
-  { label: 'Sign off · dòng 2', value: '30/09/2022', fieldState: 'PROPOSED', page: 3, critical: true },
-  { label: 'Tàu · dòng 3', value: 'MV Lotus Pearl', fieldState: 'PROPOSED', page: 3, critical: true },
-];
-
-function viewer() {
-  if (state.tt === 'dang-tai') return `<section class="ds-viewer" data-wf-block="5"><header class="ds-viewer__bar"><span class="sk" style="width:240px"></span></header><div class="ds-viewer__stage"><span class="sk" style="width:100%;max-width:520px;height:420px;border-radius:4px"></span></div></section>`;
-  const rows = [['MV Lotus Pearl', '9163283', 'AB', '02/03/2021', '14/11/2021'], ['MV Halong Spirit', '9194945', 'AB', '05/07/2022', '30/09/2022'], ['MV Lotus Pearl', '9524454', 'AB', '2▒/09/2022', '░░/░░/2023']];
-  return `<section class="ds-viewer" data-wf-block="5">
-    <header class="ds-viewer__bar"><p class="ds-viewer__name">so-thuyen-vien-nguyen-thi-hong-nhung-phuong-anh.pdf</p>
-      <div class="ds-viewer__tools">${btn('', { variant: 'ghost', iconName: 'left', attrs: 'aria-label="Trang trước"' }).replace('btn--ghost', 'btn--ghost btn--icon')}<span class="ds-viewer__count">3 / 12</span>${btn('', { variant: 'ghost', iconName: 'right', attrs: 'aria-label="Trang sau"' }).replace('btn--ghost', 'btn--ghost btn--icon')}<span class="ds-viewer__divider"></span>${btn('', { variant: 'ghost', iconName: 'minus', attrs: 'aria-label="Thu nhỏ"' }).replace('btn--ghost', 'btn--ghost btn--icon')}<span class="ds-viewer__count">100%</span>${btn('', { variant: 'ghost', iconName: 'plus', attrs: 'aria-label="Phóng to"' }).replace('btn--ghost', 'btn--ghost btn--icon')}</div></header>
-    <p class="ds-viewer__evidence">Bằng chứng cho <strong>Sign off · dòng 3</strong> nằm ở trang này</p>
-    <div class="ds-viewer__stage"><div class="ds-sample-page" role="img" aria-label="Trang sổ thuyền viên mẫu, dữ liệu giả"><p class="ds-sample-page__title">SEAMAN'S DISCHARGE BOOK · Record of sea service</p>
-      <table><thead><tr><th>Vessel</th><th>IMO</th><th>Rank</th><th>Sign on</th><th>Sign off</th></tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table>
-      <p class="ds-sample-page__stamp">Master's signature &amp; stamp</p></div></div></section>`;
+function fieldActionBar(type, focus) {
+  const field = DOC_TYPES[type].fields.find(([key]) => key === focus);
+  if (!field) return '';
+  const [, label, , raw, value, fieldState] = field;
+  const [note, actions] = FIELD_NOTES[focus] || ['AI đọc rõ. Kiểm lại với bản gốc rồi chấp nhận.', [['check', 'Chấp nhận'], ['edit', 'Sửa'], ['close', 'Từ chối']]];
+  return `<div class="field-bar" data-wf-block="7"><div class="field-bar__text"><p class="field-bar__label">${label} ${badge('field', fieldState)}</p><p class="field-bar__note">Trên giấy: <b class="ink-inline">${esc(raw) || 'để trống'}</b> → ${esc(value) || 'không có'}. ${note}</p></div><div class="field-bar__actions">${actions.map(([iconName, text], index) => btn(text, { size: 'sm', variant: index === 0 ? 'primary' : '', iconName })).join('')}</div></div>`;
 }
 
-function okRow([label, value, fieldState, critical, vessel], rowNo, withActions) {
-  const decided = !['PROPOSED', 'UNKNOWN', 'DATE_AMBIGUOUS'].includes(fieldState);
-  const unknown = fieldState === 'UNKNOWN';
-  return `<div class="okrow"><span class="okrow__label">${label}${critical ? '<span class="ds-field__required">*</span>' : ''}</span>
-    <span class="okrow__value ${unknown ? 'ds-field__value--unknown' : ''}">${unknown ? 'Không đọc được' : value}</span>
-    <span class="ds-field__extra">${withActions && !decided ? [['check', 'Chấp nhận'], ['edit', 'Sửa'], ['close', 'Từ chối']].map(([iconName, text]) => btn('', { variant: 'ghost', size: 'sm', iconName, attrs: `aria-label="${text} ${label} dòng ${rowNo}" title="${text}"` }).replace('btn--sm', 'btn--sm btn--icon')).join('') : badge('field', fieldState)}${vessel && !withActions ? badge(vessel[0], vessel[1]) : ''}</span></div>`;
-}
-
-function fieldsColumn() {
-  const v = state.v;
-  if (state.tt === 'dang-tai') return `<div class="fields-col" data-wf-block="6">${Array.from({ length: 4 }, () => '<div class="ds-field"><span class="sk" style="width:30%"></span><span class="sk" style="width:70%;height:16px"></span><span class="sk" style="width:40%"></span></div>').join('')}</div>`;
-  if (state.tt === 'rong') {
-    return `<div class="fields-col" data-wf-block="6"><div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">AI không đọc được tài liệu này</p><p class="ds-banner__text">Nhập tay từ trang gốc bên trái. Mỗi trường vẫn ghi trang bạn đang xem làm bằng chứng.</p></div></div>
-      <section class="group"><h2 class="group__title">Thông tin cá nhân</h2><div class="grid-2">${['Họ tên', 'Ngày sinh', 'Chức danh'].map((label) => `<div><label class="field-label">${label} <span class="ds-field__required">*</span></label><input class="input" placeholder="${label === 'Ngày sinh' ? 'dd/mm/yyyy' : ''}" /></div>`).join('')}</div></section>
-      <section class="group"><h2 class="group__title">Sea service</h2><div class="ds-empty" style="padding:24px 16px;border:1px dashed var(--border-strong);border-radius:16px"><p class="ds-empty__title">Chưa có dòng sea service nào</p><div class="ds-empty__action">${btn('Thêm dòng sea service', { iconName: 'plus' })}</div></div></section></div>`;
-  }
-  if (v === 'c') {
-    const dots = [...Array(11).fill('success'), 'neutral', 'neutral', 'neutral', 'neutral', 'warning', 'error', 'warning'];
-    return `<div class="fields-col" data-wf-block="6"><div class="focus-nav"><span class="muted">Trường <b class="num" style="color:var(--foreground)">16 / 18</b> · cần xem 1 / 4</span><span class="ds-field__extra">${btn('Trường trước', { variant: 'ghost', size: 'sm', iconName: 'left' })}${btn('Trường sau', { variant: 'ghost', size: 'sm', iconName: 'right' })}</span></div>
-      <div class="focus-card"><div class="ds-field__head"><span class="ds-field__label">Sign off · dòng 3 <span class="ds-field__required">*</span></span><button type="button" class="ds-chip-page">${icon('file-text')}Trang 3</button></div>
-        <p class="focus-card__value ds-field__value--unknown" style="font-size:16px">Không đọc được trên tài liệu</p>${badge('field', 'UNKNOWN')}
-        <div><label class="field-label">Sửa thành</label><input class="input" placeholder="dd/mm/yyyy, để trống nếu giữ UNKNOWN" /></div>
-        <div class="focus-actions">${btn('Giữ UNKNOWN <span class="kbd">↵</span>', { variant: 'primary' })}${btn('Sửa <span class="kbd">E</span>')}${btn('Đang trên tàu <span class="kbd">O</span>')}${btn('Từ chối <span class="kbd">X</span>', { variant: 'ghost' })}</div></div>
-      <div class="panel panel__body"><p class="ds-field__label" style="margin:0 0 10px">18 trường theo thứ tự trên sổ</p><div class="field-dots">${dots.map((tone, index) => `<span data-tone="${tone}" ${index === 15 ? 'aria-current="true"' : ''} title="Trường ${index + 1}"></span>`).join('')}</div></div></div>`;
-  }
-  if (v === 'a') {
-    return `<div class="fields-col" data-wf-block="6"><section class="group"><h2 class="group__title">Thông tin cá nhân</h2><div class="grid-2">${PERSONAL.map(reviewField).join('')}</div></section>
-      <section class="group"><h2 class="group__title">Sea service · 3 dòng</h2>
-      ${CONTRACTS.map((contract) => `<div class="contract"><div class="contract__head"><h3 class="contract__title">Dòng ${contract.no} · ${contract.vessel}</h3><button type="button" class="ds-chip-page">${icon('file-text')}Trang 3</button></div><div>${contract.fields.map((field) => okRow(field, contract.no, true)).join('')}</div>
-        ${contract.no === 3 ? IMO_ERROR : ''}</div>${contract.no === 2 ? `<div role="status" class="ds-banner ds-banner--warning">${icon('swap', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Dòng 2 và 3 trùng 6 ngày</p><p class="ds-banner__text">25/09/2022 – 30/09/2022</p></div><div class="ds-banner__action">${btn('Xác nhận là bàn giao')}</div></div>` : ''}`).join('')}</section></div>`;
-  }
-  // B, D, E: việc cần xem lên đầu
-  const compact = v === 'd';
-  const hideProposedBadge = v === 'e';
-  const problems = compact
-    ? PROBLEMS.map((item) => reviewField({ ...item, extra: item.label.startsWith('IMO') ? IMO_ERROR : '' })).join('') + OVERLAP
-    : PROBLEMS.map(reviewField).join('') + OVERLAP;
-  const pending = compact
-    ? `<div class="panel" style="padding:4px 8px">${PENDING.map((field) => okRow([field.label, field.value, field.fieldState, field.critical], '', true)).join('')}</div>`
-    : `<div class="stack">${PENDING.map((field) => reviewField(hideProposedBadge ? { ...field, fieldState: 'PROPOSED' } : field)).join('').replace(hideProposedBadge ? /<span class="ds-badge ds-badge--neutral"><span class="ds-badge__dot ds-badge__dot--ring-dot" aria-hidden="true"><\/span>Đề xuất AI<\/span>/g : /$^/, '')}</div>`;
-  return `<div class="fields-col" data-wf-block="6">
-    <section class="group"><div class="group__head"><h2 class="group__title">Cần bạn xem</h2><span class="group__count num">4</span></div>${problems}</section>
-    <section class="group"><div class="group__head"><h2 class="group__title">Chưa duyệt</h2><span class="group__count num">4</span></div>${pending}</section>
-    <details class="collapse"><summary><span><b>Đã duyệt</b> <span class="muted num">· 11 trường</span></span>${icon('down')}</summary><div class="collapse__body">${CONTRACTS[0].fields.map((field) => okRow(field, 1, false)).join('')}</div></details></div>`;
+function docSwitcher(current) {
+  return `<div class="doc-switch" role="tablist" aria-label="Giấy tờ trong lần tải này" data-wf-block="4">${DOC_ORDER.map((key) => `<button type="button" role="tab" data-doc="${key}" aria-selected="${key === current}"><span class="doc-switch__name">${DOC_TYPES[key].label}</span><span class="doc-switch__meta">${DOC_TYPES[key].page} · ${STATUS.document[DOC_STATUS[key]][0]}</span></button>`).join('')}</div>`;
 }
 
 function reviewScreen() {
-  if (state.tt === 'loi') {
-    return shell({ crumb: 'Thuyền viên', collapsedDefault: true, content: `<div class="ds-empty" role="alert" data-wf-block="3" style="padding-top:96px"><p class="ds-empty__title ds-empty__title--error">Không tải được tài liệu</p><p class="ds-empty__text">Mất kết nối tới máy chủ. Bản nháp duyệt vẫn được giữ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>` });
-  }
-  const conflict = state.tt === 'xung-dot' ? `<div role="alert" class="ds-banner ds-banner--error">${icon('close-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Hồ sơ vừa được Lê Thu Hà công bố revision 2</p><p class="ds-banner__text">Thay đổi của bạn chưa lưu. Tải lại để xem bản mới rồi duyệt tiếp.</p></div><div class="ds-banner__action">${btn('Tải lại')}</div></div>` : '';
+  const type = state.doc || 'so-45';
+  const doc = DOC_TYPES[type];
+  const focus = state.focus || 'off';
+  if (state.tt === 'loi') return shell({ crumb: 'Thuyền viên', crumb2: 'Trần Minh Khôi', current: 'seafarers', collapsedDefault: true, content: `<div class="ds-empty" role="alert" style="padding-top:96px"><p class="ds-empty__title ds-empty__title--error">Không tải được giấy tờ</p><p class="ds-empty__text">Mất kết nối tới máy chủ. Phần đã duyệt vẫn được giữ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>` });
   const loading = state.tt === 'dang-tai';
-  const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">${loading ? '<span class="sk" style="width:280px;height:20px"></span>' : 'Nguyễn Thị Hồng Nhung Phương Anh'}</h1>
-      <p class="page-head__desc">${loading ? '' : state.v === 'e' ? 'so-thuyen-vien-phan-1.pdf · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà' : 'so-thuyen-vien-phan-1.pdf · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà'}</p></div>
-    <div><div class="page-head__actions">${loading ? '' : '<span role="status" class="ds-save">' + icon('check') + ' Đã lưu</span>'}${btn('Công bố hồ sơ', { variant: 'primary', attrs: 'aria-disabled="true"' })}</div>
-      ${loading || state.tt === 'rong' ? '' : '<p class="publish-note">Còn 6 trường trọng yếu chưa duyệt</p>'}</div></div>`;
-  const progress = loading || state.tt === 'rong' || state.v === 'e' ? '' : `<div data-wf-block="4"><div class="ds-progress-block"><div class="ds-progress-block__head"><p class="ds-progress-block__label">Đã duyệt</p><p class="ds-progress-block__value">11 / 18 trường</p></div><div class="ds-progress"><div class="ds-progress__bar" style="width:61%"></div></div></div></div>`;
-  const switcher = `<div class="switch-view"><div class="seg" role="group" aria-label="Xem"><button type="button" data-view="fields" aria-pressed="${state.view === 'fields'}">Trường</button><button type="button" data-view="doc" aria-pressed="${state.view === 'doc'}">Tài liệu</button></div></div>`;
-  return shell({ crumb: 'Thuyền viên', collapsedDefault: true, content: `${conflict}${head}${progress}${switcher}<div class="review" data-view="${state.view}">${viewer()}${fieldsColumn()}</div>` });
+  const counts = doc.fields.reduce((acc, [, , , , , fieldState]) => { acc[['ACCEPTED', 'EDITED'].includes(fieldState) ? 'done' : 'todo'] += 1; return acc; }, { done: 0, todo: 0 });
+  const conflict = state.tt === 'xung-dot' ? `<div role="alert" class="ds-banner ds-banner--error">${icon('close-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Hồ sơ vừa được Lê Thu Hà cập nhật</p><p class="ds-banner__text">Thay đổi của bạn chưa lưu. Tải lại để xem bản mới rồi duyệt tiếp.</p></div><div class="ds-banner__action">${btn('Tải lại')}</div></div>` : '';
+  const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">${loading ? '<span class="sk" style="width:280px;height:20px"></span>' : `Duyệt giấy tờ của Trần Minh Khôi`}</h1><p class="page-head__desc">${loading ? '' : `4 giấy tờ tải lên 10:40 hôm nay bởi Phạm Văn Tùng`}</p></div>
+    <div><div class="page-head__actions">${loading ? '' : `<span role="status" class="ds-save">${icon('check')} Đã lưu</span>`}${btn('Đưa vào hồ sơ', { variant: 'primary', attrs: 'aria-disabled="true"' })}</div>${loading ? '' : `<p class="publish-note">Còn ${counts.todo} ô chưa duyệt ở giấy tờ này</p>`}</div></div>`;
+  if (loading) return shell({ crumb: 'Thuyền viên', crumb2: 'Trần Minh Khôi', current: 'seafarers', collapsedDefault: true, content: `${head}<div class="cmp"><div class="cmp__pane"><span class="sk" style="width:100%;height:480px;border-radius:12px"></span></div><div class="cmp__pane"><span class="sk" style="width:100%;height:480px;border-radius:12px"></span></div></div>` });
+  const empty = state.tt === 'rong';
+  const paneHead = (title, extra = '') => `<header class="cmp__head"><span class="cmp__title">${title}</span>${extra}</header>`;
+  const tools = `<span class="cmp__tools">${btn('', { variant: 'ghost', size: 'sm', iconName: 'minus', attrs: 'aria-label="Thu nhỏ"' }).replace('btn--sm', 'btn--sm btn--icon')}<span class="num muted">100%</span>${btn('', { variant: 'ghost', size: 'sm', iconName: 'plus', attrs: 'aria-label="Phóng to"' }).replace('btn--sm', 'btn--sm btn--icon')}</span>`;
+  const progress = `<span class="muted num">${counts.done} / ${doc.fields.length} ô đã duyệt</span>`;
+  const right = empty
+    ? `<div class="ds-banner ds-banner--warning" role="status">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">AI không đọc được giấy tờ này</p><p class="ds-banner__text">Chọn loại giấy tờ rồi nhập tay theo khuôn bên dưới.</p></div><div class="ds-banner__action">${btn('Chọn loại giấy tờ')}</div></div>`
+    : paper(type, 'so', { focus, onlyIssues: state.v === 'c' });
+  const switcher = `<div class="switch-view"><div class="seg" role="group" aria-label="Xem"><button type="button" data-view="doc" aria-pressed="${state.view === 'doc'}">Bản gốc</button><button type="button" data-view="fields" aria-pressed="${state.view !== 'doc'}">Bản số hoá</button></div></div>`;
+  let body;
+  if (state.v === 'b') {
+    const showing = state.flip === 'goc' ? 'goc' : 'so';
+    body = `<div class="flip" data-wf-block="5"><header class="cmp__head"><div class="seg" role="group" aria-label="Lật"><button type="button" data-flip="goc" aria-pressed="${showing === 'goc'}">Bản gốc</button><button type="button" data-flip="so" aria-pressed="${showing === 'so'}">Bản số hoá</button></div><span class="muted">Giữ phím Space để lật nhanh</span>${progress}</header>
+      <div class="flip__stage">${showing === 'goc' ? paper(type, 'goc', { focus }) : right}</div></div>${empty ? '' : fieldActionBar(type, focus)}`;
+  } else {
+    body = `${switcher}<div class="cmp" data-view="${state.view === 'doc' ? 'doc' : 'fields'}">
+      <section class="cmp__pane cmp__pane--goc" data-wf-block="5">${paneHead('Bản gốc', `<span class="muted">${doc.file}</span>${tools}`)}<div class="cmp__stage">${paper(type, 'goc', { focus })}</div></section>
+      <section class="cmp__pane cmp__pane--so" data-wf-block="6">${paneHead('Bản số hoá', `${state.v === 'c' ? '<span class="muted cmp__note">Chỉ sáng các ô cần xem</span>' : ''}${progress}`)}<div class="cmp__stage">${right}</div></section></div>${empty ? '' : fieldActionBar(type, focus)}`;
+  }
+  return shell({ crumb: 'Thuyền viên', crumb2: 'Trần Minh Khôi', current: 'seafarers', collapsedDefault: true, content: `${conflict}${head}${docSwitcher(type)}${body}` });
 }
 
 // ---------- Màn Đăng nhập ----------
@@ -1347,34 +1525,28 @@ function errorScreen() {
 // ---------- Khung lý do ----------
 const REASONS = {
   'thuyen-vien': {
-    a: ['A · Bảng thuyền viên, tài liệu gộp vào dòng', 'Mỗi dòng một thuyền viên; cột Tài liệu nói việc gấp nhất trong các tài liệu của người đó (lỗi, chờ duyệt, đang trích xuất), cột Chờ tô hổ phách khi quá 5 phút.',
-      ['Đúng gốc dữ liệu: tài liệu luôn thuộc một thuyền viên', 'Một màn thay cho hai (Tài liệu và Thuyền viên), sidebar còn 4 mục', 'Tab đếm thay dashboard (mục 7.2)'],
-      ['Người có nhiều tài liệu chỉ thấy tài liệu gấp nhất, muốn xem hết phải mở hồ sơ', 'Thêm thuyền viên cần nhập họ tên trước khi tải sổ'], 'Mỗi thuyền viên thường chỉ có một sổ, đôi khi thêm vài trang bổ sung.', ['Bỏ cột Hồ sơ', 'Tab Chờ duyệt mở mặc định', 'Cho tải sổ không cần nhập tên, AI đọc tên rồi ghép']],
-    b: ['B · A, mở dòng ra xem tài liệu', 'Như A, thêm nút mở dòng: danh sách tài liệu của người đó hiện ngay dưới dòng, kèm nút tải thêm tài liệu cho đúng người.',
-      ['Thấy hết tài liệu mà không rời danh sách', 'Tải thêm tài liệu gắn sẵn vào người đang mở'], ['Thêm một cột nút mở', 'Mở nhiều dòng thì bảng dài'],
-      'Thuyền viên hay có nhiều tệp (sổ chụp thành nhiều ảnh).', ['Chỉ cho mở một dòng mỗi lần', 'Mở sẵn dòng đang chờ duyệt']],
-    c: ['C · Danh sách trái, tài liệu phải', 'Chọn thuyền viên bên trái, bên phải là tài liệu của người đó và khung kéo thả tải thêm.',
-      ['Tải tài liệu ngay cạnh người nhận, khó gán nhầm', 'Đổi người không mất chỗ'], ['Bảng mất các cột Cần xem, Chờ để so nhiều người', 'Dưới 1024px phải thành hai bước'],
-      'Người dùng làm hồ sơ từng người một, ít khi so cả danh sách.', ['Thêm cột Chờ vào danh sách trái', 'Bỏ khung kéo thả, dùng nút Tải lên']],
-    d: ['D · A gọn chữ', 'Mỗi dòng còn ba thứ: thuyền viên, trạng thái tài liệu kèm thời gian chờ và số trường cần xem, nút việc tiếp theo.',
-      ['Bảng 3 cột, không ẩn cột ở 768px'], ['Revision hồ sơ chỉ thấy ở dòng đã công bố'], 'Hay mở trên laptop 13 inch.', ['Thêm lại cột Hồ sơ']],
-    e: ['E · A bỏ lặp', 'Đang lọc một trạng thái thì cột Tài liệu bỏ badge (dòng nào cũng giống nhau), chỉ còn số tài liệu.',
-      ['Tab đã nói trạng thái, không nói hai lần'], ['Cột đổi nội dung khi đổi tab'], 'Người dùng ở hẳn tab Chờ duyệt cả buổi.', ['Giữ badge ở mọi tab']],
+    a: ['A · Bảng thuyền viên', 'Người dùng đến để tìm người: ai đang trên tàu, ai sẵn sàng từ khi nào, ai thiếu hay hết hạn giấy tờ. Giấy tờ chờ duyệt chỉ là một dấu nhỏ cạnh tên.',
+      ['So nhiều người cùng lúc theo tình trạng và ngày sẵn sàng', 'Tab lọc thay dashboard (mục 7.2)', 'Giấy tờ hết hạn thấy ngay'], ['Không thấy ảnh, khó nhận mặt người quen'], 'Agency quản lý vài chục đến vài trăm thuyền viên, hay tìm người cho một vị trí trống.', ['Thêm cột Quốc tịch', 'Thêm lọc theo chức danh', 'Bỏ cột Hồ sơ %']],
+    b: ['B · Lưới thẻ', 'Mỗi người một thẻ: tên, chức danh, tình trạng, giấy tờ, độ đầy đủ hồ sơ.',
+      ['Dễ nhìn, hợp demo cho Sales', 'Thẻ có chỗ cho ảnh khi có ảnh thật'], ['Khó so ngày sẵn sàng giữa nhiều người', 'Ít người trên một màn hơn bảng'], 'Danh sách ngắn, người dùng nhớ mặt thuyền viên.', ['Thẻ nhỏ hơn, 4 cột', 'Đưa ngày sẵn sàng lên dòng đầu']],
+    c: ['C · Danh sách trái, xem nhanh phải', 'Chọn người bên trái, bên phải là thẻ tóm tắt và khung thả giấy tờ, không cần mở hồ sơ.',
+      ['Thả giấy tờ ngay cạnh người nhận', 'Lướt nhiều người nhanh'], ['Danh sách trái hẹp, ít cột để so', 'Dưới 1024px thành hai bước'], 'Người dùng xử lý từng người một trong ngày.', ['Thêm ngày sẵn sàng vào danh sách trái']],
+  },
+  'ho-so': {
+    a: ['A · Tab', 'Đầu trang là người; dưới chia tab Tổng quan, Giấy tờ, Đi tàu, Lịch sử. Khung thả giấy tờ nằm đầu tab Tổng quan và Giấy tờ.',
+      ['Mỗi tab gọn, ít cuộn', 'Quen với người dùng app quản trị'], ['Phải bấm tab mới thấy giấy tờ hay lịch sử đi tàu', 'Điểm wow chỉ thấy ở hai tab'], 'Hồ sơ dày, nhiều giấy tờ và nhiều chuyến.', ['Đưa Giấy tờ thành tab đầu', 'Bỏ khối Cần chú ý']],
+    b: ['B · Một trang, cột phải cố định', 'Tất cả phần hồ sơ trên một trang cuộn; cột phải đứng yên với khung thả giấy tờ và độ đầy đủ hồ sơ, nên điểm wow luôn trong tầm tay.',
+      ['Điểm wow lúc nào cũng thấy', 'Đọc hết hồ sơ không cần bấm', 'Hợp kịch bản demo: thả giấy tờ, thấy mục bên trái cập nhật'], ['Trang dài', 'Dưới 1024px cột phải xuống cuối trang'], 'Demo cho Sales; người dùng hay thêm giấy tờ.', ['Gập Lịch sử chỉnh sửa', 'Đưa Giấy tờ lên đầu']],
+    c: ['C · Thẻ người bên trái', 'Thẻ người đứng bên trái như hồ sơ giấy; bên phải là khung thả giấy tờ, giấy tờ và lịch sử đi tàu.',
+      ['Giống tờ hồ sơ in, dễ hiểu', 'Thông tin cá nhân luôn thấy'], ['Thẻ trái chiếm chỗ của bảng giấy tờ', 'Khung thả nằm giữa, không nổi bằng B'], 'Người xem hồ sơ là bộ phận tuyển, đọc nhiều hơn sửa.', ['Thu thẻ trái hẹp lại']],
   },
   duyet: {
-    a: ['A · Theo nhóm trường', 'Đi lần lượt như sổ: thông tin cá nhân rồi từng dòng sea service, trường có vấn đề tô tại chỗ.',
-      ['Thứ tự trùng thứ tự trên sổ, dễ dò trang', 'Thấy đủ 18 trường cùng lúc'], ['Trường có vấn đề lẫn giữa các trường ổn, dễ sót khi sổ dài', 'Cột phải cuộn dài khi sổ có nhiều dòng sea service'],
-      'Sổ ngắn, ít vấn đề, người duyệt muốn đối chiếu từng dòng.', ['Đưa trường có vấn đề lên đầu mỗi dòng', 'Gập các dòng đã duyệt xong']],
-    b: ['B · Việc cần xem lên đầu', 'Việc chính là không bỏ sót: trường UNKNOWN, ngày mơ hồ, IMO sai, trùng thời gian đứng đầu; trường ổn gập lại.',
-      ['Đúng thứ người duyệt phải làm trước', 'Hợp kịch bản demo với sổ B', 'Đếm rõ còn bao nhiêu việc'], ['Thứ tự khác thứ tự trên sổ, nhảy trang qua lại nhiều hơn'],
-      'Sổ dài, nhiều dòng sea service; demo cho Sales.', ['Gọn hơn: mỗi trường một dòng', 'Bỏ thanh tiến độ', 'Cho chọn sắp theo thứ tự trên sổ']],
-    c: ['C · Từng trường một', 'Mỗi lần một trường, có phím tắt để quyết nhanh mà không rời bàn phím.',
-      ['Nhanh nhất khi đã quen phím tắt', 'Không thể lướt qua trường nào mà không quyết'], ['Không thấy tổng thể hồ sơ', 'Trường ổn cũng phải bấm từng cái (MVP không có chấp nhận hàng loạt)'],
-      'Người duyệt chuyên, cả ngày chỉ làm việc này.', ['Hiện thêm hai trường trước và sau', 'Bỏ phím tắt']],
-    d: ['D · B gọn chữ', 'Như B, nhưng trường chưa duyệt chỉ còn một dòng nhãn, giá trị và nút icon.',
-      ['Cột phải ngắn hơn khoảng một nửa', 'Việc cần xem vẫn đầy đủ ở trên'], ['Nút icon không chữ, người mới phải rê để biết'], 'Sổ có nhiều trường chưa duyệt nhưng ít vấn đề.', ['Nút có chữ ở dòng chưa duyệt']],
-    e: ['E · B bỏ lặp', 'Bỏ thanh tiến độ (số đếm đã có ở đầu từng nhóm và dưới nút Công bố), bỏ badge Đề xuất AI ở nhóm Chưa duyệt (tên nhóm đã nói).',
-      ['Mỗi con số chỉ ở một chỗ', 'Thẻ trường gọn hơn một dòng'], ['Không còn một thanh nhìn là biết tổng tiến độ'], 'Người dùng đã quen màn, không cần nhắc tiến độ.', ['Giữ thanh tiến độ, bỏ câu dưới nút']],
+    a: ['A · Hai bản cạnh nhau', 'Trái là ảnh gốc, phải là bản số hoá dựng lại đúng khuôn giấy tờ đó. Bấm một ô thì ô cùng chỗ bên kia sáng lên; ô AI chưa chắc tô màu, thanh dưới cùng để quyết.',
+      ['Mắt dò ngang từng ô, không phải đoán ô nào ứng với chữ nào', 'Mỗi loại giấy tờ một khuôn: sổ, chứng chỉ, tiêm chủng, hộ chiếu', 'Đúng ý: so sánh trái phải'], ['Mỗi loại giấy tờ mới phải vẽ thêm một khuôn', 'Màn hẹp phải chuyển qua lại hai bản'], 'Giấy tờ có khuôn cố định (sổ, chứng chỉ theo mẫu nhà nước).', ['Đồng bộ cuộn hai bên', 'Chỉ hiện thanh quyết khi ô chưa duyệt']],
+    b: ['B · Lật qua lại', 'Một khung lớn, lật giữa bản gốc và bản số hoá (nút hoặc phím Space). Ô đang chọn đứng yên chỗ cũ khi lật.',
+      ['Ảnh to gấp đôi, đọc chữ viết tay dễ', 'Hợp màn 13 inch và mobile'], ['Không thấy hai bản cùng lúc, phải nhớ', 'Lật nhiều lần mỏi mắt'], 'Ảnh chụp mờ, chữ viết tay nhiều.', ['Thêm chế độ trượt nửa này nửa kia']],
+    c: ['C · A, chỉ sáng ô cần xem', 'Như A, nhưng bản số hoá làm mờ các ô AI đã chắc; ô cần quyết nổi lên.',
+      ['Nhìn là biết còn mấy ô phải xem', 'Nhanh khi giấy tờ phần lớn đã rõ'], ['Ô đã mờ dễ bị bỏ qua nếu AI sai mà vẫn chắc'], 'AI đọc tốt, người duyệt chỉ cần kiểm chỗ khó.', ['Thêm nút hiện lại toàn bộ']],
   },
   'dang-nhap': {
     a: ['A · Một cột giữa màn', 'Đề đã liệt kê đủ: logo, email, mật khẩu, nút. Ô và nút cao 48px vì cả màn chỉ có form này.',
@@ -1424,7 +1596,7 @@ function renderToolbar() {
 }
 
 function renderDesign() {
-  const screens = { 'thuyen-vien': crewScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
+  const screens = { 'thuyen-vien': crewScreen, 'ho-so': profileScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
   const html = screens[state.man]();
   document.getElementById('wf-design').innerHTML = state.kho === 'mobile' ? `<div class="wf-phone-wrap"><div class="wf-phone">${html}</div></div>` : html;
   requestAnimationFrame(() => requestAnimationFrame(placeBlockNumbers));
@@ -1462,7 +1634,7 @@ document.querySelector('.wf-bar').addEventListener('click', (event) => {
   const param = button.closest('[data-wf-param]')?.dataset.wfParam;
   if (param) {
     state[param] = button.dataset.value;
-    if (param === 'man' || param === 'v') { state.tab = null; state.sider = null; state.menuOpen = false; state.userOpen = false; }
+    if (param === 'man' || param === 'v') { state.tab = null; state.doc = null; state.focus = null; state.ptab = null; state.sider = null; state.menuOpen = false; state.userOpen = false; }
     render();
     return;
   }
@@ -1487,8 +1659,11 @@ document.addEventListener('click', (event) => {
   if (!event.target.closest('#tt-menu') && !event.target.closest('.wf-popover')) { document.querySelector('.wf-popover')?.remove(); document.getElementById('tt-menu').removeAttribute('data-open'); }
 });
 document.getElementById('wf-design').addEventListener('click', (event) => {
-  const target = event.target.closest('[data-action], [data-tab], [data-view], [data-expand], [data-pick]');
-  if (target?.dataset.expand) { state.expand = state.expand === target.dataset.expand ? null : target.dataset.expand; renderDesign(); return; }
+  const target = event.target.closest('[data-action], [data-tab], [data-view], [data-pick], [data-doc], [data-field], [data-flip], [data-ptab]');
+  if (target?.dataset.doc) { state.doc = target.dataset.doc; state.focus = DOC_TYPES[state.doc].fields.find((field) => !['ACCEPTED'].includes(field[5]))?.[0] || null; renderDesign(); return; }
+  if (target?.dataset.field) { state.focus = target.dataset.field; renderDesign(); return; }
+  if (target?.dataset.flip) { state.flip = target.dataset.flip; renderDesign(); return; }
+  if (target?.dataset.ptab) { state.ptab = target.dataset.ptab; renderDesign(); return; }
   if (target?.dataset.pick) { state.pick = target.dataset.pick; renderDesign(); return; }
   if (!target) return;
   if (target.dataset.tab) { state.tab = target.dataset.tab; renderDesign(); return; }

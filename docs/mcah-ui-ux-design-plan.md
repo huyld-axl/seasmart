@@ -9,7 +9,7 @@
   - Trang hướng dẫn của skill (evondev-uiux.vercel.app) bị proxy chặn (403). Kế hoạch dựa vào `README.md` và mã nguồn skill.
   - **Tài khoản Figma** (đã kiểm bằng `whoami` ngày 2026-10-06): gói **Starter**, ghế **Full**, team `Huy Le Duc's team`, `planKey` `team::1303965334335449875`.
   - Bản nháp: `docs/mcah-ui-ux-design-plan.md` ở commit `09a5544` (repo evondevKit, nhánh `claude/stoic-darwin-8yei4x`). Chỗ đã sửa so với bản nháp ghi ở Phụ lục A.
-- **Đầu ra cuối:** một file Figma **"MCAH — MVP Demo UI"**. File gồm token, component, toàn bộ màn trong phạm vi demo (desktop 1440, mobile 375, đủ trạng thái) và prototype bấm được theo kịch bản demo. Kèm một bảng FigJam vẽ luồng nghiệp vụ và sơ đồ trạng thái. **Canva chỉ dùng làm tài liệu cho Sales** (giai đoạn 7). Canva không chứa thiết kế gốc.
+- **Đầu ra cuối:** một file Figma **"MCAH — MVP Demo UI"** (đã tạo ở Drafts ngày 2026-10-06: https://www.figma.com/design/YuVCpyxaQQpgkWBsu0QAZO). File gồm token, component, toàn bộ màn trong phạm vi demo (desktop 1440, mobile 375, đủ trạng thái) và prototype bấm được theo kịch bản demo. Kèm một bảng FigJam vẽ luồng nghiệp vụ và sơ đồ trạng thái. **Canva chỉ dùng làm tài liệu cho Sales** (giai đoạn 7). Canva không chứa thiết kế gốc.
 
 ---
 

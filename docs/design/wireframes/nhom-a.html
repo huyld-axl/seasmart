@@ -820,7 +820,7 @@
   @container app (min-width: 640px) { .ds-tabs-boxed { display: flex; } }
   .drawer-scrim { position: absolute; inset: 0; z-index: 40; background: rgb(0 0 0 / .3); }
   .drawer { position: absolute; inset: 0 auto 0 0; z-index: 41; width: 280px; max-width: 85%; background: var(--surface); box-shadow: var(--elevation-modal); }
-  .bottombar { position: sticky; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(5, 1fr); height: 64px; border-top: 1px solid var(--border); background: var(--surface); }
+  .bottombar { position: sticky; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(4, 1fr); height: 64px; border-top: 1px solid var(--border); background: var(--surface); }
   .bottombar a { display: grid; place-content: center; justify-items: center; gap: 2px; color: rgb(44 44 44 / .7); font-size: 11px; text-decoration: none; }
   .bottombar a svg { font-size: 18px; }
   .bottombar a[aria-current="page"] { color: var(--foreground); font-weight: 600; }
@@ -907,6 +907,19 @@
   .contract { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
   .contract__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
   .contract__title { margin: 0; font-size: 14px; font-weight: 600; }
+  /* Bảng thuyền viên: dòng mở ra (B), danh sách trái + chi tiết phải (C) */
+  .tbl-sub > td { padding: 0 16px 12px 56px !important; background: var(--surface-hover); }
+  .subdocs { margin: 0; }
+  .subdocs .ds-files__row { gap: 12px; }
+  .subdocs__foot { padding-top: 4px; }
+  .md { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @container app (min-width: 1024px) { .md { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); } }
+  .md-list ul { margin: 0; padding: 4px; list-style: none; }
+  .md-list button { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 56px; padding: 8px 12px; border: 0; border-radius: 12px; background: none; text-align: left; cursor: pointer; }
+  .md-list button:hover { background: var(--item-hover); }
+  .md-list button[aria-current="true"] { background: var(--secondary); }
+  .md-list button[aria-current="true"] .cell2__sub { color: var(--neutral); }
+  .md-detail .ds-files__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
   .stack { display: grid; gap: 12px; }
   .focus-card > .ds-badge { justify-self: start; }
   .okrow { display: grid; grid-template-columns: 8rem minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-top: 1px solid var(--border); font-size: 14px; }
@@ -1021,24 +1034,25 @@ const btn = (label, { variant = '', size = '', iconName = '', attrs = '' } = {})
   `<button type="button" class="btn ${variant ? `btn--${variant}` : ''} ${size ? `btn--${size}` : ''}" ${attrs}>${iconName ? icon(iconName) : ''}${label}</button>`;
 
 // ---------- Dữ liệu giả ----------
-const DOCS = [
-  { name: 'so-thuyen-vien-hoang-thi-mai-trang-1.jpg', crew: 'Chưa đọc được', pages: '1 trang', size: '3,1 MB', status: 'FAILED', need: null, wait: '35 phút', by: 'Phạm Văn Tùng', action: 'Nhập tay', note: 'Ảnh mờ, không nhận ra trang sổ' },
-  { name: 'so-thuyen-vien-nguyen-thi-hong-nhung-phuong-anh.pdf', crew: 'Nguyễn Thị Hồng Nhung Phương Anh', pages: '12 trang', size: '4,2 MB', status: 'REVIEW_REQUIRED', need: 4, wait: '2 giờ', by: 'Lê Thu Hà', action: 'Duyệt' },
-  { name: 'so-thuyen-vien-tran-minh-khoi.pdf', crew: 'Trần Minh Khôi', pages: '10 trang', size: '3,6 MB', status: 'REVIEW_REQUIRED', need: 0, wait: '40 phút', by: 'Phạm Văn Tùng', action: 'Duyệt' },
-  { name: 'so-thuyen-vien-le-van-duc.pdf', crew: 'Đang đọc…', pages: '9 trang', size: '2,9 MB', status: 'SLOW', need: null, wait: '12 phút', slow: true, by: 'Phạm Văn Tùng', progress: [7, 9] },
-  { name: 'so-thuyen-vien-pham-quoc-bao.pdf', crew: 'Đang đọc…', pages: '8 trang', size: '2,4 MB', status: 'PROCESSING', need: null, wait: '2 phút', by: 'Lê Thu Hà', progress: [2, 8] },
-  { name: 'so-thuyen-vien-vo-thanh-son.pdf', crew: 'Võ Thanh Sơn', pages: '11 trang', size: '3,8 MB', status: 'COMPLETED', need: null, wait: 'Xong 09:12 · 05/10', by: 'Lê Thu Hà', action: 'Mở' },
-  { name: 'so-thuyen-vien-dao-van-hung.pdf', crew: 'Đào Văn Hùng', pages: '14 trang', size: '5,0 MB', status: 'COMPLETED', need: null, wait: 'Xong 16:40 · 04/10', by: 'Phạm Văn Tùng', action: 'Mở' },
-  { name: 'so-thuyen-vien-ngo-quang-vinh.pdf', crew: 'Ngô Quang Vinh', pages: '8 trang', size: '2,2 MB', status: 'COMPLETED', need: null, wait: 'Xong 11:05 · 04/10', by: 'Lê Thu Hà', action: 'Mở' },
+const doc = (name, pages, status, extra = {}) => ({ name, pages, status, ...extra });
+const CREW = [
+  { id: 'mt', name: 'Hoàng Thị Mai Trang', rank: '', docs: [doc('so-thuyen-vien-trang-1.jpg', '1 trang', 'FAILED', { wait: '35 phút' })] },
+  { id: 'pa', name: 'Nguyễn Thị Hồng Nhung Phương Anh', rank: 'Able Seaman (AB)', docs: [doc('so-thuyen-vien-phan-1.pdf', '12 trang', 'REVIEW_REQUIRED', { need: 4, wait: '2 giờ' }), doc('so-thuyen-vien-trang-bo-sung.jpg', '1 trang', 'COMPLETED')] },
+  { id: 'mk', name: 'Trần Minh Khôi', rank: 'Chief Officer (CO)', docs: [doc('so-thuyen-vien.pdf', '10 trang', 'REVIEW_REQUIRED', { need: 0, wait: '40 phút' })] },
+  { id: 'vd', name: 'Lê Văn Đức', rank: 'Chief Engineer (CE)', docs: [doc('so-thuyen-vien.pdf', '9 trang', 'SLOW', { wait: '12 phút', slow: true })] },
+  { id: 'qb', name: 'Phạm Quốc Bảo', rank: '', docs: [doc('so-thuyen-vien.pdf', '8 trang', 'PROCESSING', { wait: '2 phút' })] },
+  { id: 'ts', name: 'Võ Thanh Sơn', rank: 'Bosun', revision: 1, updated: '09:12 · 05/10', docs: [doc('so-thuyen-vien.pdf', '11 trang', 'COMPLETED')] },
+  { id: 'vh', name: 'Đào Văn Hùng', rank: 'Second Engineer (2/E)', revision: 2, updated: '16:40 · 04/10', docs: [doc('so-thuyen-vien.pdf', '14 trang', 'COMPLETED'), doc('so-thuyen-vien-phan-2.pdf', '6 trang', 'COMPLETED')] },
+  { id: 'qv', name: 'Ngô Quang Vinh', rank: 'Ordinary Seaman (OS)', revision: 1, updated: '11:05 · 04/10', docs: [doc('so-thuyen-vien.pdf', '8 trang', 'COMPLETED')] },
 ];
-const TABS = [['all', 'Tất cả', 8], ['processing', 'Đang trích xuất', 2], ['review', 'Chờ duyệt', 2], ['failed', 'Lỗi', 1], ['done', 'Đã xong', 3]];
-const NAV = [['documents', 'Tài liệu', 'file-text'], ['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
+const TABS = [['all', 'Tất cả', 8], ['review', 'Chờ duyệt', 2], ['processing', 'Đang trích xuất', 2], ['failed', 'Lỗi', 1], ['done', 'Đã công bố', 3]];
+const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
 const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
 
 // ---------- Trạng thái wireframe ----------
 const SCREENS = {
-  'tai-lieu': { label: 'Tài liệu', options: ['a', 'b', 'c', 'd', 'e'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
+  'thuyen-vien': { label: 'Thuyền viên', options: ['a', 'b', 'c', 'd', 'e'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
   duyet: { label: 'Duyệt', options: ['a', 'b', 'c', 'd', 'e'], recommended: 'b', states: ['du-lieu', 'dang-tai', 'rong', 'loi', 'xung-dot'] },
   'dang-nhap': { label: 'Đăng nhập', options: ['a'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
   loi: { label: 'Lỗi', options: ['a', 'b', 'c'], recommended: null, states: ['du-lieu'] },
@@ -1047,7 +1061,7 @@ const STATE_LABELS = { 'du-lieu': 'Có dữ liệu', 'dang-tai': 'Đang tải', 
 const STATE_LABELS_BY_SCREEN = { duyet: { rong: 'Rỗng: nhập tay' }, 'dang-nhap': { rong: 'Ô trống', loi: 'Sai mật khẩu' } };
 const OPTION_LABELS = { loi: { a: '403', b: '404', c: '500' } };
 const KEYS = ['man', 'v', 'mau', 'kho', 'nav', 'tt'];
-const state = { man: 'duyet', v: '', mau: 'xam', kho: 'desktop', nav: 'menu', tt: 'du-lieu', menuOpen: false, userOpen: false, sider: null, view: 'fields', tab: null };
+const state = { man: 'duyet', v: '', mau: 'xam', kho: 'desktop', nav: 'menu', tt: 'du-lieu', menuOpen: false, userOpen: false, sider: null, view: 'fields', tab: null, expand: 'pa', pick: 'pa' };
 (function readState() {
   const params = new URLSearchParams(location.search);
   const hash = location.hash.replace(/^#/, '').split('.');
@@ -1067,7 +1081,7 @@ function syncHash() {
 function shell({ title, crumb, content, collapsedDefault = false }) {
   const collapsed = state.sider === null ? collapsedDefault : state.sider === 'collapsed';
   const nav = (withLabels = true) => NAV.map(([key, label, iconName]) =>
-    `<a class="nav-item" ${key === 'documents' && state.man !== 'loi' ? 'aria-current="page"' : ''} ${key === 'admin' && state.man === 'loi' && state.v === 'a' ? 'aria-current="page"' : ''} title="${label}">${icon(iconName)}${withLabels ? `<span>${label}</span>` : ''}</a>`).join('');
+    `<a class="nav-item" ${key === 'seafarers' && state.man !== 'loi' ? 'aria-current="page"' : ''} ${key === 'admin' && state.man === 'loi' && state.v === 'a' ? 'aria-current="page"' : ''} title="${label}">${icon(iconName)}${withLabels ? `<span>${label}</span>` : ''}</a>`).join('');
   const heading = crumb
     ? `<nav class="topbar__crumb" aria-label="Đường dẫn"><a href="#">${crumb}</a>${icon('right')}</nav>`
     : `<h1 class="topbar__title">${title}</h1>`;
@@ -1090,17 +1104,23 @@ function shell({ title, crumb, content, collapsedDefault = false }) {
         </div>
       </header>
       <div class="content">${content}</div>
-      <nav class="bottombar" aria-label="Điều hướng">${NAV.map(([key, label, iconName]) => `<a ${key === 'documents' ? 'aria-current="page"' : ''}>${icon(iconName)}${label}</a>`).join('')}</nav>
+      <nav class="bottombar" aria-label="Điều hướng">${NAV.map(([key, label, iconName]) => `<a ${key === 'seafarers' ? 'aria-current="page"' : ''}>${icon(iconName)}${label}</a>`).join('')}</nav>
     </div>
     ${state.menuOpen ? `<div class="drawer-scrim" data-action="menu"></div><aside class="drawer"><div class="sider__head">${brand()}</div><nav class="sider__nav">${nav()}</nav></aside>` : ''}
   </div>`;
 }
 
-// ---------- Màn Tài liệu ----------
-const docBadge = (doc) => badge('document', doc.status);
-const waitCell = (doc) => doc.status === 'COMPLETED' ? '<span class="muted">—</span>' : `<span class="num ${doc.slow ? 'warn-text' : 'muted'}" style="white-space:nowrap">${doc.wait}</span>`;
-const needCell = (doc) => (doc.need == null ? '<span class="muted">—</span>' : doc.need === 0 ? '<span class="muted">0</span>' : `<span class="num" style="white-space:nowrap">${doc.need} trường</span>`);
-const actionCell = (doc) => (doc.action ? btn(doc.action, { size: 'sm', variant: doc.action === 'Mở' ? 'ghost' : '' }) : '');
+// ---------- Màn Thuyền viên: tài liệu nằm trong từng thuyền viên ----------
+const URGENCY = ['FAILED', 'REVIEW_REQUIRED', 'SLOW', 'PROCESSING', 'COMPLETED'];
+const lead = (crew) => [...crew.docs].sort((a, b) => URGENCY.indexOf(a.status) - URGENCY.indexOf(b.status))[0];
+const crewAction = (crew) => ({ FAILED: 'Nhập tay', REVIEW_REQUIRED: 'Duyệt', COMPLETED: 'Mở' }[lead(crew).status] || '');
+const needOf = (crew) => crew.docs.reduce((sum, doc) => sum + (doc.need || 0), 0);
+const docCount = (crew) => `${crew.docs.length} tài liệu`;
+const waitText = (doc) => (doc.status === 'COMPLETED' ? '' : doc.slow ? `<span class="warn-text">Chờ ${doc.wait}</span>` : `Chờ ${doc.wait}`);
+const crewBadge = (crew) => badge('document', lead(crew).status);
+const profileText = (crew) => (crew.revision ? `Revision ${crew.revision}` : 'Chưa công bố');
+const actionBtn = (crew) => { const label = crewAction(crew); return label ? btn(label, { size: 'sm', variant: label === 'Mở' ? 'ghost' : '' }) : ''; };
+const nameCell = (crew) => `<span class="cell2" style="max-width:300px"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank || 'Chưa có chức danh'} · ${docCount(crew)}</span></span>`;
 
 function statusTabs(selected) {
   const current = TABS.find(([value]) => value === selected);
@@ -1109,73 +1129,74 @@ function statusTabs(selected) {
     <button type="button" class="btn ds-tabs-mobile"><span class="muted">Trạng thái:</span> ${current[1]} · ${state.tt === 'rong' ? 0 : current[2]} ${icon('down')}</button>`;
 }
 
-function docTable({ columns, rows }) {
+function stateBlock(columns) {
   const head = columns.map((column) => `<th class="${column.cls || ''}">${column.title}</th>`).join('');
   if (state.tt === 'dang-tai') {
     const skeletonRows = Array.from({ length: 5 }, () => `<tr>${columns.map((column, index) => `<td class="${column.cls || ''}">${index === 0 ? '<span class="sk" style="width:70%"></span><span class="sk" style="width:40%;margin-top:8px"></span>' : '<span class="sk" style="width:60%"></span>'}</td>`).join('')}</tr>`).join('');
     return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${skeletonRows}</tbody></table></div>
       <ul class="doc-list">${Array.from({ length: 4 }, () => '<li><span class="sk" style="width:80%"></span><span class="sk" style="width:60px"></span><span class="sk" style="width:50%"></span></li>').join('')}</ul>`;
   }
-  if (state.tt === 'rong') {
-    return `<div class="ds-empty"><p class="ds-empty__title">Chưa có tài liệu nào</p><p class="ds-empty__text">Tải sổ thuyền viên lên, AI sẽ đọc và đề xuất dữ liệu để bạn duyệt.</p><div class="ds-empty__action">${btn('Tải tài liệu lên', { iconName: 'upload' })}</div></div>`;
-  }
-  if (state.tt === 'loi') {
-    return `<div class="ds-empty" role="alert"><p class="ds-empty__title ds-empty__title--error">Không tải được danh sách tài liệu</p><p class="ds-empty__text">Mất kết nối tới máy chủ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>`;
-  }
-  const body = rows.map((doc) => `<tr>${columns.map((column) => `<td class="${column.cls || ''}">${column.render(doc)}</td>`).join('')}</tr>`).join('');
-  const list = rows.map((doc) => `<li>
-      <span class="cell2"><span class="cell2__main">${esc(doc.crew)}</span><span class="cell2__sub">${esc(doc.name)}</span></span>
-      <span>${docBadge(doc)}</span>
-      <span class="cell2__sub">${doc.slow ? `<span class="warn-text">Chờ ${doc.wait}</span>` : doc.status === 'COMPLETED' ? doc.wait : `Chờ ${doc.wait}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</span>
-      <span>${actionCell(doc)}</span></li>`).join('');
+  if (state.tt === 'rong') return `<div class="ds-empty"><p class="ds-empty__title">Chưa có thuyền viên nào</p><p class="ds-empty__text">Thêm thuyền viên bằng cách nhập họ tên và tải sổ thuyền viên lên. AI đọc sổ và đề xuất dữ liệu để bạn duyệt.</p><div class="ds-empty__action">${btn('Thêm thuyền viên', { iconName: 'plus' })}</div></div>`;
+  if (state.tt === 'loi') return `<div class="ds-empty" role="alert"><p class="ds-empty__title ds-empty__title--error">Không tải được danh sách thuyền viên</p><p class="ds-empty__text">Mất kết nối tới máy chủ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>`;
+  return null;
+}
+
+function crewTable({ columns, rows, expanded = null }) {
+  const pending = stateBlock(columns);
+  if (pending) return pending;
+  const head = columns.map((column) => `<th class="${column.cls || ''}">${column.title}</th>`).join('');
+  const body = rows.map((crew) => {
+    const row = `<tr>${columns.map((column) => `<td class="${column.cls || ''}">${column.render(crew)}</td>`).join('')}</tr>`;
+    if (expanded !== crew.id) return row;
+    return `${row}<tr class="tbl-sub"><td colspan="${columns.length}"><ul class="ds-files subdocs">${crew.docs.map((doc) => `<li class="ds-files__row">${icon(doc.status === 'FAILED' ? 'close-circle' : 'file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.name)}</span></p><p class="ds-files__meta">${doc.pages}${doc.status === 'COMPLETED' ? '' : ` · ${waitText(doc)}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</p></div>${badge('document', doc.status)}</li>`).join('')}</ul>
+      <div class="subdocs__foot">${btn('Tải thêm tài liệu', { size: 'sm', variant: 'ghost', iconName: 'upload' })}</div></td></tr>`;
+  }).join('');
+  const list = rows.map((crew) => { const doc = lead(crew); return `<li>
+      <span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank || 'Chưa có chức danh'} · ${docCount(crew)}</span></span>
+      <span>${crewBadge(crew)}</span>
+      <span class="cell2__sub">${[waitText(doc), needOf(crew) ? `${needOf(crew)} trường cần xem` : '', doc.status === 'COMPLETED' ? profileText(crew) : ''].filter(Boolean).join(' · ')}</span>
+      <span>${actionBtn(crew)}</span></li>`; }).join('');
   return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div><ul class="doc-list">${list}</ul>
-    <div class="tbl-foot"><span>${rows.length} tài liệu</span></div>`;
+    <div class="tbl-foot"><span>${rows.length} thuyền viên</span></div>`;
 }
 
 const COL = {
-  doc: { title: 'Tài liệu', render: (doc) => `<span class="cell2" style="max-width:340px"><span class="cell2__main" title="${doc.name}">${esc(doc.name)}</span><span class="cell2__sub">${esc(doc.crew)} · ${doc.pages}</span></span>` },
-  docD: { title: 'Tài liệu', render: (doc) => `<span class="cell2" style="max-width:360px"><span class="cell2__main">${esc(doc.crew)}</span><span class="cell2__sub" title="${doc.name}">${esc(doc.name)}</span></span>` },
-  crew: { title: 'Thuyền viên', cls: 'col-lg', render: (doc) => `<span class="cell2" style="max-width:220px"><span class="cell2__main" style="font-weight:400">${esc(doc.crew)}</span></span>` },
-  status: { title: 'Trạng thái', render: docBadge },
-  statusD: { title: 'Trạng thái', render: (doc) => `<span class="cell2">${docBadge(doc)}<span class="cell2__sub" style="margin-top:4px">${doc.slow ? `<span class="warn-text">Chờ ${doc.wait}</span>` : doc.status === 'COMPLETED' ? doc.wait : `Chờ ${doc.wait}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</span></span>` },
-  need: { title: 'Cần xem', cls: 'right', render: needCell },
-  wait: { title: 'Chờ', cls: 'right', render: waitCell },
-  by: { title: 'Tải lên bởi', cls: 'col-lg', render: (doc) => `<span class="muted" style="white-space:nowrap">${doc.by}</span>` },
-  action: { title: '<span class="ds-sr-only">Thao tác</span>', cls: 'right', render: actionCell },
+  crew: { title: 'Thuyền viên', render: nameCell },
+  crewB: { title: 'Thuyền viên', render: (crew) => `<span style="display:flex;align-items:center;gap:8px"><button type="button" class="btn btn--ghost btn--sm btn--icon" data-expand="${crew.id}" aria-expanded="${state.expand === crew.id}" aria-label="Xem tài liệu của ${esc(crew.name)}">${icon(state.expand === crew.id ? 'down' : 'right')}</button>${nameCell(crew)}</span>` },
+  docs: { title: 'Tài liệu', render: crewBadge },
+  docsD: { title: 'Tài liệu', render: (crew) => { const doc = lead(crew); return `<span class="cell2">${crewBadge(crew)}<span class="cell2__sub" style="margin-top:4px">${[waitText(doc), needOf(crew) ? `${needOf(crew)} trường cần xem` : '', doc.status === 'COMPLETED' ? profileText(crew) : ''].filter(Boolean).join(' · ')}</span></span>`; } },
+  docsE: { title: 'Tài liệu', render: (crew) => `<span class="muted" style="white-space:nowrap">${docCount(crew)}</span>` },
+  need: { title: 'Cần xem', cls: 'right', render: (crew) => (lead(crew).status === 'REVIEW_REQUIRED' ? `<span class="num" style="white-space:nowrap">${needOf(crew)} trường</span>` : '<span class="muted">—</span>') },
+  wait: { title: 'Chờ', cls: 'right', render: (crew) => { const doc = lead(crew); return doc.status === 'COMPLETED' ? '<span class="muted">—</span>' : `<span class="num ${doc.slow ? 'warn-text' : 'muted'}" style="white-space:nowrap">${doc.wait}</span>`; } },
+  profile: { title: 'Hồ sơ', cls: 'col-lg', render: (crew) => `<span class="cell2"><span class="${crew.revision ? '' : 'muted'}" style="white-space:nowrap">${profileText(crew)}</span>${crew.updated ? `<span class="cell2__sub">${crew.updated}</span>` : ''}</span>` },
+  action: { title: '<span class="ds-sr-only">Thao tác</span>', cls: 'right', render: actionBtn },
 };
 
-function documentsScreen() {
+function crewScreen() {
   const v = state.v;
-  const selectedTab = state.tab || (v === 'e' ? 'review' : 'all');
-  const rows = selectedTab === 'all' ? DOCS : DOCS.filter((doc) => ({ processing: ['PROCESSING', 'SLOW'], review: ['REVIEW_REQUIRED'], failed: ['FAILED'], done: ['COMPLETED'] }[selectedTab]).includes(doc.status));
-  const uploadButton = btn('Tải tài liệu lên', { variant: 'primary', iconName: 'upload' });
-  const search = `<label class="search toolbar__search">${icon('search')}<input class="input" placeholder="Tìm theo tên tệp, thuyền viên" aria-label="Tìm tài liệu" /></label>`;
-  const duplicateBanner = state.tt === 'du-lieu' ? `<div data-wf-block="3"><div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">1 tệp không được tải lên vì trùng</p><p class="ds-banner__text">so-thuyen-vien-tran-minh-khoi-ban-chup-lai.pdf giống hệt tài liệu đã tải lúc 09:12 · 03/10/2026.</p></div><div class="ds-banner__action">${btn('Mở tài liệu đó')}</div></div></div>` : '';
+  const selectedTab = state.tab || 'all';
+  const filter = { review: ['REVIEW_REQUIRED'], processing: ['PROCESSING', 'SLOW'], failed: ['FAILED'], done: ['COMPLETED'] }[selectedTab];
+  const rows = filter ? CREW.filter((crew) => filter.includes(lead(crew).status)) : CREW;
+  const addButton = btn('Thêm thuyền viên', { variant: 'primary', iconName: 'plus' });
+  const search = `<label class="search toolbar__search">${icon('search')}<input class="input" placeholder="Tìm theo tên thuyền viên, tên tệp" aria-label="Tìm thuyền viên" /></label>`;
+  const duplicateBanner = state.tt === 'du-lieu' ? `<div data-wf-block="3"><div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">1 tệp của Trần Minh Khôi không được tải lên vì trùng</p><p class="ds-banner__text">so-thuyen-vien-ban-chup-lai.pdf giống hệt tài liệu đã tải lúc 09:12 · 03/10/2026.</p></div><div class="ds-banner__action">${btn('Mở tài liệu đó')}</div></div></div>` : '';
+  const toolbar = `<div class="toolbar" data-wf-block="4">${statusTabs(selectedTab)}${search}${addButton}</div>`;
 
   if (v === 'c') {
-    const todo = DOCS.filter((doc) => ['FAILED', 'REVIEW_REQUIRED'].includes(doc.status));
-    const running = DOCS.filter((doc) => ['PROCESSING', 'SLOW'].includes(doc.status));
-    const done = DOCS.filter((doc) => doc.status === 'COMPLETED');
-    const body = state.tt !== 'du-lieu' ? `<div class="panel">${docTable({ columns: [COL.doc, COL.status], rows: [] })}</div>` : `
-      <section class="panel" data-wf-block="5"><div class="panel__head"><h2 class="panel__title">Cần bạn xử lý · ${todo.length}</h2></div>
-        <ul class="ds-files" style="margin:4px 0 0;padding:0 20px 8px">${todo.map((doc) => `<li class="ds-files__row">${icon(doc.status === 'FAILED' ? 'close-circle' : 'file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.crew === 'Chưa đọc được' ? doc.name : doc.crew)}</span></p><p class="ds-files__meta ${doc.status === 'FAILED' ? 'ds-files__meta--error' : ''}">${doc.status === 'FAILED' ? doc.note : `Chờ ${doc.wait} · ${doc.need ? `${doc.need} trường cần xem` : 'không có trường nào cần xem'}`}</p></div>${btn(doc.action, { size: 'sm', variant: doc.status === 'REVIEW_REQUIRED' ? 'primary' : '' })}</li>`).join('')}</ul></section>
-      <section class="panel" data-wf-block="7"><div class="panel__head"><h2 class="panel__title">Đang trích xuất · ${running.length}</h2></div>
-        <ul class="ds-files" style="margin:4px 0 0;padding:0 20px 8px">${running.map((doc) => `<li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><div class="ds-files__line"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.name)}</span></p><p class="ds-files__percent ${doc.slow ? 'warn-text' : ''}">${doc.slow ? 'Chậm · ' : ''}${doc.wait}</p></div><div class="ds-progress ds-progress--thin"><div class="ds-progress__bar" style="width:${Math.round(doc.progress[0] / doc.progress[1] * 100)}%"></div></div><p class="ds-files__meta">Đã đọc ${doc.progress[0]} / ${doc.progress[1]} trang</p></div></li>`).join('')}</ul></section>
-      <details class="collapse" data-wf-block="8"><summary><span><b>Đã xong · ${done.length}</b> <span class="muted">· mới nhất 09:12 · 05/10</span></span>${icon('down')}</summary></details>`;
-    return shell({ title: 'Tài liệu', content: `${duplicateBanner}<div class="toolbar" data-wf-block="4"><span class="muted">${state.tt === 'du-lieu' ? '4 việc cần làm' : ''}</span><span style="margin-left:auto">${uploadButton}</span></div>${body}` });
+    const selected = CREW.find((crew) => crew.id === (state.pick || 'pa'));
+    const pending = stateBlock([COL.crew, COL.docs]);
+    const listPane = pending ? `<div class="panel">${pending}</div>` : `<div class="panel md-list" data-wf-block="5"><ul>${rows.map((crew) => `<li><button type="button" data-pick="${crew.id}" aria-current="${crew.id === selected.id}"><span class="cell2"><span class="cell2__main">${esc(crew.name)}</span><span class="cell2__sub">${crew.rank || 'Chưa có chức danh'} · ${docCount(crew)}</span></span>${crewBadge(crew)}</button></li>`).join('')}</ul></div>`;
+    const detail = pending ? '' : `<section class="panel md-detail" data-wf-block="6"><div class="panel__head" style="align-items:flex-start"><div><h2 class="panel__title">${esc(selected.name)}</h2><p class="muted" style="margin:2px 0 0">${selected.rank || 'Chưa có chức danh'} · Hồ sơ: ${profileText(selected)}</p></div>${btn('Mở hồ sơ', { size: 'sm', variant: 'ghost' })}</div>
+      <div class="panel__body" style="display:grid;gap:16px"><ul class="ds-files" style="margin:0">${selected.docs.map((doc) => `<li class="ds-files__row">${icon(doc.status === 'FAILED' ? 'close-circle' : 'file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.name)}</span></p><p class="ds-files__meta">${badge('document', doc.status)} <span style="margin-left:6px">${doc.pages}${doc.status === 'COMPLETED' ? '' : ` · ${waitText(doc)}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</span></p></div>${doc.status === 'REVIEW_REQUIRED' ? btn('Duyệt', { size: 'sm', variant: 'primary' }) : doc.status === 'FAILED' ? btn('Nhập tay', { size: 'sm' }) : ''}</li>`).join('')}</ul>
+      <label class="ds-drop"><span class="ds-drop__title">Kéo thả thêm tài liệu của ${esc(selected.name.split(' ').slice(-2).join(' '))}</span><span class="ds-drop__hint">PDF, JPG hoặc PNG. Tối đa 25 MB và 50 trang mỗi tệp</span><span class="ds-drop__button">${icon('upload')}Chọn tệp</span></label></div></section>`;
+    return shell({ title: 'Thuyền viên', content: `${duplicateBanner}${toolbar}<div class="md">${listPane}${detail}</div>` });
   }
 
-  let columns = [COL.doc, COL.status, COL.need, COL.wait, COL.by, COL.action];
-  if (v === 'd') columns = [COL.docD, COL.statusD, COL.action];
-  if (v === 'e') columns = selectedTab === 'all' ? columns : [COL.doc, COL.need, COL.wait, COL.by, COL.action];
-  const toolbar = `<div class="toolbar" data-wf-block="4">${statusTabs(selectedTab)}${search}${v === 'b' ? '' : uploadButton}</div>`;
-  const dropzone = v === 'b' ? `<div class="panel panel__body" data-wf-block="6">
-      <label class="ds-drop"><span class="ds-drop__title">Kéo thả sổ thuyền viên vào đây</span><span class="ds-drop__hint">PDF, JPG hoặc PNG. Tối đa 25 MB và 50 trang mỗi tệp</span><span class="ds-drop__button">${icon('upload')}Chọn tệp</span></label>
-      ${state.tt === 'du-lieu' ? `<ul class="ds-files">
-        <li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><div class="ds-files__line"><p class="ds-files__name"><span class="ds-files__head">so-thuyen-vien-nguyen-van-</span><span class="ds-files__tail">an-ban-2.pdf</span></p><p class="ds-files__percent">71%</p></div><div class="ds-progress ds-progress--thin"><div class="ds-progress__bar" style="width:71%"></div></div></div>${btn('', { variant: 'ghost', size: 'sm', iconName: 'close', attrs: 'aria-label="Huỷ tải"' }).replace('btn--sm', 'btn--sm btn--icon')}</li>
-        <li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">so-thuyen-vien-tran-minh-khoi-ban-</span><span class="ds-files__tail">chup-lai.pdf</span></p><p class="ds-files__meta ds-files__meta--warning">Trùng với tài liệu đã tải lúc 09:12 · 03/10/2026 · <button type="button" class="ds-link">Mở tài liệu đó</button></p></div></li>
-      </ul>` : ''}</div>` : '';
-  return shell({ title: 'Tài liệu', content: `${v === 'b' ? '' : duplicateBanner}${dropzone}${toolbar}<div class="panel" data-wf-block="5">${docTable({ columns, rows })}</div>` });
+  let columns = [COL.crew, COL.docs, COL.need, COL.wait, COL.profile, COL.action];
+  if (v === 'b') columns = [COL.crewB, COL.docs, COL.need, COL.wait, COL.profile, COL.action];
+  if (v === 'd') columns = [COL.crew, COL.docsD, COL.action];
+  if (v === 'e' && selectedTab !== 'all') columns = [COL.crew, COL.docsE, COL.need, COL.wait, COL.profile, COL.action];
+  return shell({ title: 'Thuyền viên', content: `${duplicateBanner}${toolbar}<div class="panel" data-wf-block="5">${crewTable({ columns, rows, expanded: v === 'b' ? state.expand : null })}</div>` });
 }
 
 // ---------- Màn Duyệt ----------
@@ -1280,17 +1301,17 @@ function fieldsColumn() {
 
 function reviewScreen() {
   if (state.tt === 'loi') {
-    return shell({ crumb: 'Tài liệu', collapsedDefault: true, content: `<div class="ds-empty" role="alert" data-wf-block="3" style="padding-top:96px"><p class="ds-empty__title ds-empty__title--error">Không tải được tài liệu</p><p class="ds-empty__text">Mất kết nối tới máy chủ. Bản nháp duyệt vẫn được giữ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>` });
+    return shell({ crumb: 'Thuyền viên', collapsedDefault: true, content: `<div class="ds-empty" role="alert" data-wf-block="3" style="padding-top:96px"><p class="ds-empty__title ds-empty__title--error">Không tải được tài liệu</p><p class="ds-empty__text">Mất kết nối tới máy chủ. Bản nháp duyệt vẫn được giữ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>` });
   }
   const conflict = state.tt === 'xung-dot' ? `<div role="alert" class="ds-banner ds-banner--error">${icon('close-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Hồ sơ vừa được Lê Thu Hà công bố revision 2</p><p class="ds-banner__text">Thay đổi của bạn chưa lưu. Tải lại để xem bản mới rồi duyệt tiếp.</p></div><div class="ds-banner__action">${btn('Tải lại')}</div></div>` : '';
   const loading = state.tt === 'dang-tai';
   const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">${loading ? '<span class="sk" style="width:280px;height:20px"></span>' : 'Nguyễn Thị Hồng Nhung Phương Anh'}</h1>
-      <p class="page-head__desc">${loading ? '' : state.v === 'e' ? 'Sổ thuyền viên · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà' : 'Sổ thuyền viên · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà'}</p></div>
+      <p class="page-head__desc">${loading ? '' : state.v === 'e' ? 'so-thuyen-vien-phan-1.pdf · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà' : 'so-thuyen-vien-phan-1.pdf · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà'}</p></div>
     <div><div class="page-head__actions">${loading ? '' : '<span role="status" class="ds-save">' + icon('check') + ' Đã lưu</span>'}${btn('Công bố hồ sơ', { variant: 'primary', attrs: 'aria-disabled="true"' })}</div>
       ${loading || state.tt === 'rong' ? '' : '<p class="publish-note">Còn 6 trường trọng yếu chưa duyệt</p>'}</div></div>`;
   const progress = loading || state.tt === 'rong' || state.v === 'e' ? '' : `<div data-wf-block="4"><div class="ds-progress-block"><div class="ds-progress-block__head"><p class="ds-progress-block__label">Đã duyệt</p><p class="ds-progress-block__value">11 / 18 trường</p></div><div class="ds-progress"><div class="ds-progress__bar" style="width:61%"></div></div></div></div>`;
   const switcher = `<div class="switch-view"><div class="seg" role="group" aria-label="Xem"><button type="button" data-view="fields" aria-pressed="${state.view === 'fields'}">Trường</button><button type="button" data-view="doc" aria-pressed="${state.view === 'doc'}">Tài liệu</button></div></div>`;
-  return shell({ crumb: 'Tài liệu', collapsedDefault: true, content: `${conflict}${head}${progress}${switcher}<div class="review" data-view="${state.view}">${viewer()}${fieldsColumn()}</div>` });
+  return shell({ crumb: 'Thuyền viên', collapsedDefault: true, content: `${conflict}${head}${progress}${switcher}<div class="review" data-view="${state.view}">${viewer()}${fieldsColumn()}</div>` });
 }
 
 // ---------- Màn Đăng nhập ----------
@@ -1311,12 +1332,12 @@ function loginScreen() {
 function errorScreen() {
   const pages = {
     a: { header: 'Không có quyền truy cập', body: `<h1 class="err-block__title">Bạn chưa có quyền xem trang này</h1><p class="err-block__desc">Trang <b>Quản trị</b> chỉ dành cho tài khoản có vai trò Quản trị.</p>
-      <div class="err-block__actions">${btn('Gửi yêu cầu cấp quyền', { variant: 'primary' })}${btn('Về trang Tài liệu')}</div>
+      <div class="err-block__actions">${btn('Gửi yêu cầu cấp quyền', { variant: 'primary' })}${btn('Về trang Thuyền viên')}</div>
       <p class="err-block__foot">Bạn đang đăng nhập bằng phamvantung@mcah.demo.</p><p style="margin:4px 0 0">${btn('Đổi tài khoản', { variant: 'ghost', size: 'sm' })}</p>` },
     b: { header: 'Không tìm thấy trang', body: `<p class="err-block__code num">404</p><h1 class="err-block__title">Không tìm thấy trang</h1><p class="err-block__desc">Đường dẫn có thể bị gõ sai, hoặc trang đã được chuyển sang chỗ khác.</p>
-      <div class="err-block__actions">${btn('Về trang Tài liệu', { variant: 'primary' })}${btn('Quay lại trang trước')}</div>` },
+      <div class="err-block__actions">${btn('Về trang Thuyền viên', { variant: 'primary' })}${btn('Quay lại trang trước')}</div>` },
     c: { header: 'Lỗi hệ thống', body: `<h1 class="err-block__title">Trang này đang gặp lỗi</h1><p class="err-block__desc">Lỗi nằm ở phía hệ thống, không phải do bạn. Thử tải lại; nếu vẫn lỗi, gửi mã bên dưới cho quản trị.</p>
-      <div class="err-block__actions">${btn('Tải lại trang', { variant: 'primary' })}${btn('Về trang Tài liệu')}</div>
+      <div class="err-block__actions">${btn('Tải lại trang', { variant: 'primary' })}${btn('Về trang Thuyền viên')}</div>
       <p class="err-block__foot"><span class="err-block__code-line">Mã lỗi: 7f3a-2c91 ${btn('', { variant: 'ghost', size: 'sm', iconName: 'copy', attrs: 'aria-label="Sao chép mã lỗi" title="Sao chép mã lỗi"' }).replace('btn--sm', 'btn--sm btn--icon')}</span></p>` },
   };
   const page = pages[state.v];
@@ -1325,20 +1346,20 @@ function errorScreen() {
 
 // ---------- Khung lý do ----------
 const REASONS = {
-  'tai-lieu': {
-    a: ['A · Bảng có tab trạng thái', 'Người dùng đến để thấy sổ nào chờ duyệt hay kẹt: tab đếm theo trạng thái, cột Chờ tô hổ phách khi quá 5 phút, sổ cần xử lý xếp đầu.',
-      ['Đúng quy ước danh sách có lọc theo trạng thái (thay dashboard, mục 7.2)', 'Số sổ chờ duyệt và lỗi thấy ngay trên tab', 'Cùng khuôn với các màn Thuyền viên, Bản xuất sau này'],
-      ['Khung tải lên nằm trong hộp thoại, thêm một bước bấm', 'Bảng 6 cột, dưới 1024px ẩn cột Tải lên bởi'], 'Agency tải sổ theo đợt, phần lớn thời gian là theo dõi và duyệt.', ['Bỏ cột Tải lên bởi', 'Đưa cột Chờ lên trước Trạng thái', 'Tab Chờ duyệt mở mặc định']],
-    b: ['B · Khung tải lên ở đầu trang', 'Tải sổ là bước mở đầu luồng: khung kéo thả luôn ở trên, tệp vừa tải và tệp trùng hiện ngay dưới khung.',
-      ['Kéo thả thẳng vào trang, không mở hộp thoại', 'Thấy tiến độ tải và tệp trùng tại chỗ'], ['Khung chiếm khoảng 200px đầu trang kể cả khi chỉ vào để duyệt', 'Ở 768px bảng bị đẩy xuống dưới màn đầu'],
-      'Người dùng tải sổ liên tục cả ngày.', ['Thu khung tải lên còn một dòng', 'Ẩn khung khi không kéo tệp']],
-    c: ['C · Hàng việc cần làm', 'Chỉ bày việc phải làm ngay: sổ lỗi, sổ chờ duyệt, sổ đang trích xuất; sổ đã xong gập lại.',
-      ['Màn gọn, việc cần làm đứng đầu', 'Mỗi dòng đúng một nút cho việc tiếp theo'], ['Không có bảng đầy đủ để tìm sổ cũ', 'Khác khuôn danh sách của các màn khác trong app'],
-      'Agency ít sổ mỗi ngày, một người lo hết.', ['Thêm ô tìm cho sổ đã xong', 'Gộp Đang trích xuất vào Cần xử lý']],
-    d: ['D · A gọn chữ', 'Mỗi dòng chỉ giữ thứ dùng để chọn sổ: thuyền viên và tên tệp, trạng thái kèm thời gian chờ, nút Duyệt.',
-      ['Bảng 3 cột, không ẩn cột nào ở 768px', 'Mắt dừng ở trạng thái và thời gian chờ'], ['Người tải, số trang chỉ thấy khi mở sổ'], 'Màn hình nhỏ, hay mở trên laptop 13 inch.', ['Thêm lại cột Tải lên bởi']],
-    e: ['E · A bỏ lặp', 'Đang lọc một trạng thái thì ẩn cột Trạng thái vì dòng nào cũng giống nhau; tab Tất cả vẫn có cột đó.',
-      ['Bớt một cột lặp, bảng thoáng hơn', 'Tab đã nói trạng thái, không nói hai lần'], ['Cột nhảy khi đổi tab Tất cả ↔ tab khác'], 'Người dùng hay ở hẳn một tab (Chờ duyệt) cả buổi.', ['Giữ cột Trạng thái ở mọi tab']],
+  'thuyen-vien': {
+    a: ['A · Bảng thuyền viên, tài liệu gộp vào dòng', 'Mỗi dòng một thuyền viên; cột Tài liệu nói việc gấp nhất trong các tài liệu của người đó (lỗi, chờ duyệt, đang trích xuất), cột Chờ tô hổ phách khi quá 5 phút.',
+      ['Đúng gốc dữ liệu: tài liệu luôn thuộc một thuyền viên', 'Một màn thay cho hai (Tài liệu và Thuyền viên), sidebar còn 4 mục', 'Tab đếm thay dashboard (mục 7.2)'],
+      ['Người có nhiều tài liệu chỉ thấy tài liệu gấp nhất, muốn xem hết phải mở hồ sơ', 'Thêm thuyền viên cần nhập họ tên trước khi tải sổ'], 'Mỗi thuyền viên thường chỉ có một sổ, đôi khi thêm vài trang bổ sung.', ['Bỏ cột Hồ sơ', 'Tab Chờ duyệt mở mặc định', 'Cho tải sổ không cần nhập tên, AI đọc tên rồi ghép']],
+    b: ['B · A, mở dòng ra xem tài liệu', 'Như A, thêm nút mở dòng: danh sách tài liệu của người đó hiện ngay dưới dòng, kèm nút tải thêm tài liệu cho đúng người.',
+      ['Thấy hết tài liệu mà không rời danh sách', 'Tải thêm tài liệu gắn sẵn vào người đang mở'], ['Thêm một cột nút mở', 'Mở nhiều dòng thì bảng dài'],
+      'Thuyền viên hay có nhiều tệp (sổ chụp thành nhiều ảnh).', ['Chỉ cho mở một dòng mỗi lần', 'Mở sẵn dòng đang chờ duyệt']],
+    c: ['C · Danh sách trái, tài liệu phải', 'Chọn thuyền viên bên trái, bên phải là tài liệu của người đó và khung kéo thả tải thêm.',
+      ['Tải tài liệu ngay cạnh người nhận, khó gán nhầm', 'Đổi người không mất chỗ'], ['Bảng mất các cột Cần xem, Chờ để so nhiều người', 'Dưới 1024px phải thành hai bước'],
+      'Người dùng làm hồ sơ từng người một, ít khi so cả danh sách.', ['Thêm cột Chờ vào danh sách trái', 'Bỏ khung kéo thả, dùng nút Tải lên']],
+    d: ['D · A gọn chữ', 'Mỗi dòng còn ba thứ: thuyền viên, trạng thái tài liệu kèm thời gian chờ và số trường cần xem, nút việc tiếp theo.',
+      ['Bảng 3 cột, không ẩn cột ở 768px'], ['Revision hồ sơ chỉ thấy ở dòng đã công bố'], 'Hay mở trên laptop 13 inch.', ['Thêm lại cột Hồ sơ']],
+    e: ['E · A bỏ lặp', 'Đang lọc một trạng thái thì cột Tài liệu bỏ badge (dòng nào cũng giống nhau), chỉ còn số tài liệu.',
+      ['Tab đã nói trạng thái, không nói hai lần'], ['Cột đổi nội dung khi đổi tab'], 'Người dùng ở hẳn tab Chờ duyệt cả buổi.', ['Giữ badge ở mọi tab']],
   },
   duyet: {
     a: ['A · Theo nhóm trường', 'Đi lần lượt như sổ: thông tin cá nhân rồi từng dòng sea service, trường có vấn đề tô tại chỗ.',
@@ -1403,7 +1424,7 @@ function renderToolbar() {
 }
 
 function renderDesign() {
-  const screens = { 'tai-lieu': documentsScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
+  const screens = { 'thuyen-vien': crewScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
   const html = screens[state.man]();
   document.getElementById('wf-design').innerHTML = state.kho === 'mobile' ? `<div class="wf-phone-wrap"><div class="wf-phone">${html}</div></div>` : html;
   requestAnimationFrame(() => requestAnimationFrame(placeBlockNumbers));
@@ -1466,7 +1487,9 @@ document.addEventListener('click', (event) => {
   if (!event.target.closest('#tt-menu') && !event.target.closest('.wf-popover')) { document.querySelector('.wf-popover')?.remove(); document.getElementById('tt-menu').removeAttribute('data-open'); }
 });
 document.getElementById('wf-design').addEventListener('click', (event) => {
-  const target = event.target.closest('[data-action], [data-tab], [data-view]');
+  const target = event.target.closest('[data-action], [data-tab], [data-view], [data-expand], [data-pick]');
+  if (target?.dataset.expand) { state.expand = state.expand === target.dataset.expand ? null : target.dataset.expand; renderDesign(); return; }
+  if (target?.dataset.pick) { state.pick = target.dataset.pick; renderDesign(); return; }
   if (!target) return;
   if (target.dataset.tab) { state.tab = target.dataset.tab; renderDesign(); return; }
   if (target.dataset.view) { state.view = target.dataset.view; renderDesign(); return; }

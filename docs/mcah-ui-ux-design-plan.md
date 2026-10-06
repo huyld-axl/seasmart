@@ -279,19 +279,20 @@ Lối `D9` kèm câu *"bỏ style cũ của Marineport, chỉ giữ màu nhấn"
 | Ngôn ngữ copy | Tiếng Việt | Tiếng Việt. **Thuật ngữ ngành giữ tiếng Anh** khi tài liệu gốc dùng tiếng Anh: IMO, Sign on, Sign off, Rank, Discharge book | `T24` |
 | Dark mode | Không | Không | `M20` |
 
-### 4.2 Kiến trúc điều hướng (sidebar MCAH, 5 mục)
+### 4.2 Kiến trúc điều hướng (sidebar MCAH, 4 mục)
+
+> **Đổi ở cổng 2 (2026-10-06):** HuyLD chốt tài liệu phải đi theo từng thuyền viên. Bỏ mục Tài liệu riêng; A1 thành màn Thuyền viên, mỗi dòng một người, tài liệu nằm trong người đó. Thêm thuyền viên = nhập họ tên + tải sổ.
 
 **Giữ route đang có khi được.** Đổi route là việc của logic, không phải của skill.
 
 | Mục sidebar | Route | Ghi chú |
 | --- | --- | --- |
-| Tài liệu | `/documents` (mới) | Upload, trạng thái xử lý. **Hàng đợi duyệt là chip lọc "Chờ duyệt"** ở đây, không thành màn hay mục riêng (7.2). Badge số đếm chờ duyệt (không tô màu nhấn) |
-| Thuyền viên | `/seafarers` (giữ) | Hồ sơ canonical, lọc theo readiness. Trang chi tiết `/seafarers/:id` |
+| Thuyền viên | `/seafarers` (giữ) | Mỗi dòng một thuyền viên, tài liệu nằm trong người đó (A1). **Hàng đợi duyệt là tab "Chờ duyệt"** ở đây (7.2). Upload luôn gắn với một thuyền viên. Trang chi tiết `/seafarers/:id` |
 | Bản xuất | `/exports` (mới) | Danh sách có lọc trạng thái (chờ duyệt, STALE). Người duyệt cần một chỗ để tìm bản chờ mình. Đây là danh sách, không phải dashboard |
 | Danh mục | `/master-data/:tab` (giữ) | Thêm tab **Tàu** và **Chủ tàu** (tên tab cuối cùng do dev chốt, không trùng `vessel` đang là "Loại tàu"). Giữ Loại tàu, Quốc gia, Cảng biển. Chứng chỉ, Loại hợp đồng, Loại khóa học ẩn khỏi menu bản MCAH (Phase 3 hoặc Marineport) |
 | Quản trị | `/admin/users` (giữ) | Chỉ `admin` thấy |
 
-- Có 5 mục, nên ở khổ Mobile thanh wireframe có nhóm **Nav: ☰ · Thanh dưới** (`U3`, từ 5 mục trở xuống). **Đoán:** chọn ☰, vì app quản trị ít mở trên điện thoại. Skill ghi lý do trong khung lý do.
+- Có 4 mục, nên ở khổ Mobile thanh wireframe có nhóm **Nav: ☰ · Thanh dưới** (`U3`, từ 5 mục trở xuống). **Đoán:** chọn ☰, vì app quản trị ít mở trên điện thoại. Skill ghi lý do trong khung lý do.
 - Màn đã có, không thiết kế lại đợt này: `SeafarerFormPage` (`/seafarers/new`, `/:id/edit`) và `SeafarerImportPage`. Hồ sơ MCAH tạo từ màn duyệt. Hai màn này giữ route, ra khỏi menu.
 - `DashboardPage` hiện chưa gắn route, và vẫn không gắn.
 
@@ -322,9 +323,9 @@ Gom thành nhóm để mỗi lượt wireframe có nhóm **Màn** trên thanh c�
 
 | Màn | Đến để làm gì | So sánh, quyết định bằng gì | Hành động cuối | Trạng thái phải vẽ |
 | --- | --- | --- | --- | --- |
-| **A1. Tài liệu** (`/documents`) | Đưa sổ thuyền viên vào; thấy tài liệu nào chờ duyệt hay đang kẹt | Trạng thái xử lý, số trường UNKNOWN, thời gian chờ | Upload; mở màn duyệt | Rỗng, đang tải, lỗi. Tệp trùng hash. Tệp quá 25 MB / 50 trang. FAILED có "Nhập tay". **PROCESSING quá 5 phút tô hổ phách "Chậm"**: trạng thái suy từ giờ, đặt "bây giờ" của wireframe sao cho có một tài liệu như vậy (`U3`). Chip lọc "Chờ duyệt" có số đếm |
-| **A2. Duyệt cạnh bằng chứng** (`/documents/:id/review`) | Kiểm từng trường AI đề xuất so với trang gốc, rồi công bố hồ sơ | Giá trị đề xuất ↔ ảnh trang nguồn; trường trọng yếu còn thiếu | "Công bố hồ sơ" (chặn 422 khi chưa duyệt đủ 6 trường trọng yếu) | UNKNOWN, ngày mơ hồ, IMO sai checksum, overlap. Đang lưu nháp. 409 xung đột. Tài liệu 1 trang và 50 trang. Nhập tay (tài liệu FAILED, form trống). **Không có nút chấp nhận hàng loạt** (7.2) |
-| **D1. Khung app** | Sidebar 5 mục, header, menu user | Mục đang chọn | | Sidebar thu gọn; ☰ ở mobile; "Đăng xuất" đỏ (luật chốt #1); không chuông |
+| **A1. Thuyền viên** (`/seafarers`, thay màn Tài liệu riêng) | Thêm thuyền viên kèm sổ, tải thêm tài liệu cho đúng người; thấy ai có tài liệu chờ duyệt hay đang kẹt | Trạng thái xử lý, số trường UNKNOWN, thời gian chờ | Upload; mở màn duyệt | Rỗng, đang tải, lỗi. Tệp trùng hash. Tệp quá 25 MB / 50 trang. FAILED có "Nhập tay". **PROCESSING quá 5 phút tô hổ phách "Chậm"**: trạng thái suy từ giờ, đặt "bây giờ" của wireframe sao cho có một tài liệu như vậy (`U3`). Chip lọc "Chờ duyệt" có số đếm |
+| **A2. Duyệt cạnh bằng chứng** (`/seafarers/:id/documents/:docId/review`) | Kiểm từng trường AI đề xuất so với trang gốc, rồi công bố hồ sơ | Giá trị đề xuất ↔ ảnh trang nguồn; trường trọng yếu còn thiếu | "Công bố hồ sơ" (chặn 422 khi chưa duyệt đủ 6 trường trọng yếu) | UNKNOWN, ngày mơ hồ, IMO sai checksum, overlap. Đang lưu nháp. 409 xung đột. Tài liệu 1 trang và 50 trang. Nhập tay (tài liệu FAILED, form trống). **Không có nút chấp nhận hàng loạt** (7.2) |
+| **D1. Khung app** | Sidebar 4 mục, header, menu user | Mục đang chọn | | Sidebar thu gọn; ☰ ở mobile; "Đăng xuất" đỏ (luật chốt #1); không chuông |
 | **D2. Đăng nhập**, **D5. Lỗi 403/404/500** | Theo bố cục mặc định `layouts/form.md` và `layouts/app.md` | | | D2 chỉ email, mật khẩu, nút. 403 quan trọng sau khi sửa B5 |
 
 **A2 là màn quyết định thắng thua của demo.** Mục 3.2.3 đã chốt **trái là tài liệu, phải là form, bấm trường thì nhảy trang**. Vì vậy cả ba phương án giữ khung hai cột, và khác nhau thật ở **chiến lược duyệt bên phải** (`U3`):
@@ -514,7 +515,7 @@ và trang lỗi 403/404/500. Vai màu theo trang /design-system đã duyệt.
    trường: chấp nhận, sửa (bắt buộc ghi lý do), từ chối, đánh dấu ONGOING; giữ UNKNOWN. Lưu nháp, công
    bố hồ sơ (chặn khi chưa duyệt đủ 6 trường trọng yếu). Không có chấp nhận hàng loạt.
 3) Đăng nhập: chỉ ô email, ô mật khẩu, nút Đăng nhập, logo MCAH.
-Sidebar 5 mục: Tài liệu, Thuyền viên, Bản xuất, Danh mục, Quản trị. Header không có chuông thông báo.
+Sidebar 4 mục: Thuyền viên, Bản xuất, Danh mục, Quản trị (mục Tài liệu bỏ ở cổng 2). Header không có chuông thông báo.
 Dữ liệu mẫu: sổ A rõ nét; sổ B có Sign off mờ (UNKNOWN), hai hợp đồng overlap 6 ngày, IMO 9524454 sai
 checksum; một tài liệu PROCESSING đã 12 phút; một FAILED.
 <dán bảng mục 6>

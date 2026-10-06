@@ -361,6 +361,18 @@ Biến thể **D** (gọn chữ) và **E** (bỏ lặp) làm trên phương án 
 
 ### Nhóm C: Xuất bộ hồ sơ
 
+> **Đổi phạm vi (2026-10-06), theo 12 mẫu thật HuyLD gửi:**
+> - **Đơn vị xuất là bộ giấy tờ**, chia theo giai đoạn:
+>   - Tuyển dụng: KQ thi tuyển, TB trúng tuyển, CV chủ tàu Trung Quốc, Phiếu thu.
+>   - Lên tàu: QĐ điều động, Đơn tham gia BHXH hoặc Đơn không tham gia BHXH (chọn một), Thư bảo lãnh, Ủy quyền cá nhân, Ủy quyền nhận lương.
+>   - Rời tàu: QĐ rời tàu, Thanh lý hợp đồng.
+> - Mẫu sẽ còn thêm, nên **màn Quản lý mẫu vào MVP**: tải Excel lên, AI đề xuất gắn ô. Mỗi ô lấy từ một trong bốn nguồn: hồ sơ, điền lúc xuất, điền tay khi in, ký online. Sidebar thêm mục "Mẫu giấy tờ".
+> - **Ký online:** người trong agency ký trong app; thuyền viên ký qua link SMS trên điện thoại. Ô ngày tháng, điểm giám khảo vẫn để trống cho điền tay.
+> - Bộ giấy làm cho một người hoặc cả đợt; HuyLD chưa rõ nên thiết kế hỗ trợ cả hai.
+> - Hồ sơ cần thêm trường mà mẫu dùng: chiều cao, cân nặng, cỡ giày, cỡ đồng phục, nhóm máu, hôn nhân, người thân liên hệ, trường tốt nghiệp. Đi tàu cần thêm DWT, năm đóng, vùng hoạt động. Giấy tờ cần danh mục khoảng 25 loại chứng chỉ.
+> - Ký online và quản lý mẫu là việc backend mới, chưa có trong ước lượng ở tài liệu gốc mục 7, cần ước lượng lại.
+> - Wireframe: `docs/design/wireframes/nhom-bc.html`. File mẫu thật không đưa vào repo.
+
 | Màn | Đến để làm gì | So sánh bằng gì | Hành động cuối | Trạng thái phải vẽ |
 | --- | --- | --- | --- | --- |
 | **C1. Tạo bản xuất** (form nhiều bước, từ B2) | Chọn mẫu + chính sách liên lạc, xem trước file | Mẫu CV và mẫu sea service matrix; hiện / ẩn / thay SĐT | Gửi duyệt | `TEMPLATE_CAPACITY_EXCEEDED` (báo, không cắt). Hồ sơ BLOCKED không cho xuất, có giải thích. **Mẫu thứ hai là một card bỏ được** (cắt thứ ba của 7.3) |

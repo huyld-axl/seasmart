@@ -820,7 +820,7 @@
   @container app (min-width: 640px) { .ds-tabs-boxed { display: flex; } }
   .drawer-scrim { position: absolute; inset: 0; z-index: 40; background: rgb(0 0 0 / .3); }
   .drawer { position: absolute; inset: 0 auto 0 0; z-index: 41; width: 280px; max-width: 85%; background: var(--surface); box-shadow: var(--elevation-modal); }
-  .bottombar { position: sticky; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(4, 1fr); height: 64px; border-top: 1px solid var(--border); background: var(--surface); }
+  .bottombar { position: sticky; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(5, 1fr); height: 64px; border-top: 1px solid var(--border); background: var(--surface); }
   .bottombar a { display: grid; place-content: center; justify-items: center; gap: 2px; color: rgb(44 44 44 / .7); font-size: 11px; text-decoration: none; }
   .bottombar a svg { font-size: 18px; }
   .bottombar a[aria-current="page"] { color: var(--foreground); font-weight: 600; }
@@ -1018,7 +1018,7 @@
   .wow__drop { background: var(--surface); border-color: var(--primary); }
   .main-col > *, .side-col > *, .profile-b > *, .profile-c > *, .wow { min-width: 0; }
   .ds-drop__hint { overflow-wrap: anywhere; }
-  .tbl-wrap--always { overflow-x: auto; }
+  .tbl-wrap--always { position: relative; overflow-x: auto; }
   .paper--goc .pf__label i { color: rgb(0 0 0 / .62); }
   .paper--goc .paper__title i { color: rgb(0 0 0 / .62); }
   .pf--focus, .pf--focus:hover { background: rgb(0 51 102 / .04); }
@@ -1111,6 +1111,91 @@
   .seg button { white-space: nowrap; }
   .steps__dot { color: var(--foreground); }
   .form-foot .btn:not(.btn--primary):hover { background: var(--secondary); }
+  /* ===== Nhóm C v2: bộ giấy tờ, ký, mẫu ===== */
+  .who { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .who__chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); }
+  .chip button { display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer; }
+  .pack-a { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
+  @container app (min-width: 1024px) { .pack-a { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } .pack-a__preview { position: sticky; top: 88px; } }
+  .pack-a__left { display: grid; gap: 16px; min-width: 0; }
+  .doc-picks { display: grid; gap: 0; margin: 0; padding: 4px; list-style: none; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+  .doc-pick { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 12px; border-radius: 12px; cursor: pointer; }
+  .doc-pick:hover { background: var(--item-hover); }
+  .doc-pick--on { background: var(--secondary); }
+  .doc-pick--on .cell2__sub { color: var(--neutral); }
+  .doc-pick input { width: 20px; height: 20px; flex-shrink: 0; margin: 0; accent-color: var(--primary); }
+  .doc-pick .cell2 { flex: 1; }
+  .doc-pick__miss { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; white-space: nowrap; }
+  .a4 { display: grid; gap: 12px; width: 100%; max-width: 560px; margin: 0 auto; padding: 32px 36px; background: #fff; box-shadow: inset 0 0 0 1px var(--border-strong); font-family: 'Times New Roman', Georgia, serif; font-size: 14px; color: #1f1f1f; }
+  .a4--small { padding: 16px 18px; gap: 8px; font-size: 11px; }
+  .a4__org { margin: 0; font-size: 12px; font-weight: 700; }
+  .a4__title { margin: 8px 0 4px; text-align: center; font-size: 16px; font-weight: 700; letter-spacing: .02em; }
+  .a4--small .a4__title { font-size: 12px; }
+  .a4__lines { display: grid; gap: 6px; }
+  .a4__line { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+  .a4__line b { font-weight: 700; }
+  .a4__miss { padding: 0 6px; border-radius: 4px; background: var(--warning-bg); color: var(--warning); font: 500 12px var(--app-font); }
+  .a4__blank { color: #52525c; }
+  .a4__date { margin: 8px 0 0; text-align: right; font-style: italic; }
+  .a4__signs { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 16px; margin-top: 8px; text-align: center; }
+  .a4__sign { display: grid; gap: 6px; min-width: 110px; }
+  .a4__who { font-weight: 700; }
+  .a4__ink { color: #1d3f91; font: italic 22px 'Segoe Script', 'Bradley Hand', cursive; }
+  .a4__pending { padding: 10px 0; border: 1px dashed var(--warning-border); border-radius: 6px; background: var(--warning-bg); color: var(--warning); font: 500 12px var(--app-font); }
+  .a4__hand { color: #52525c; font-style: italic; padding: 10px 0; }
+  .matrix th, .matrix td { white-space: nowrap; }
+  .matrix__th { display: inline-block; max-width: 120px; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+  .center { text-align: center; }
+  .ok-mark { color: var(--success); }
+  .pack-progress { max-width: 480px; }
+  .pack-sign { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @container app (min-width: 1024px) { .pack-sign { grid-template-columns: 220px minmax(0, 1fr) 300px; } }
+  .pack-docs { display: grid; gap: 2px; margin: 0; padding: 4px; list-style: none; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+  .pack-docs button { display: block; width: 100%; padding: 10px 12px; border: 0; border-radius: 12px; background: none; text-align: left; cursor: pointer; }
+  .pack-docs button:hover { background: var(--item-hover); }
+  .pack-docs button[aria-current="true"] { background: var(--secondary); }
+  .pack-docs button[aria-current="true"] .cell2__sub { color: var(--neutral); }
+  .pack-preview { min-width: 0; }
+  .signers { display: grid; margin: 0; padding: 0; list-style: none; }
+  .signers li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .signers li:first-child { border-top: 0; }
+  .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .tpl-card { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); color: inherit; text-decoration: none; cursor: pointer; }
+  .tpl-card:hover { border-color: var(--border-strong); }
+  .tpl-card__thumb { display: block; height: 160px; overflow: hidden; border-radius: 8px; background: var(--background); }
+  .tpl-card__thumb .a4 { transform: scale(.8); transform-origin: top center; }
+  .tpl-edit { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @container app (min-width: 1024px) { .tpl-edit { grid-template-columns: minmax(0, 1fr) 340px; } }
+  .xgrid { display: grid; min-width: 640px; border-left: 1px solid #d4d4d8; border-top: 1px solid #d4d4d8; font-size: 12px; }
+  .xgrid__row { display: grid; grid-template-columns: 36px repeat(8, minmax(0, 1fr)); }
+  .xgrid__row > * { min-height: 36px; padding: 4px 6px; border-right: 1px solid #d4d4d8; border-bottom: 1px solid #d4d4d8; }
+  .xgrid__row--head > *, .xgrid__rh { display: grid; place-items: center; background: #f4f4f5; color: #52525c; }
+  .xgrid__cell { border-top: 0; border-left: 0; background: #fff; color: #52525c; font: inherit; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: default; }
+  .xgrid__cell[data-cell] { cursor: pointer; font-weight: 500; }
+  .xgrid__cell--profile { background: var(--success-bg); color: var(--success); }
+  .xgrid__cell--export, .xgrid__cell--hand { background: var(--neutral-bg); color: var(--neutral); }
+  .xgrid__cell--none { background: var(--error-bg); color: var(--error-strong); }
+  .xgrid__cell--on { box-shadow: inset 0 0 0 2px var(--primary); }
+  .select-like { justify-content: space-between; width: 100%; }
+  .map-row { display: inline-flex; gap: 10px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; }
+  .rs { min-height: 100%; background: var(--background); }
+  .rs-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); font-size: 12px; }
+  .rs-main { display: grid; gap: 16px; max-width: 440px; margin: 0 auto; padding: 20px 16px 32px; }
+  .rs-step { margin: 0; color: var(--muted); font-size: 12px; }
+  .rs-title { margin: -8px 0 0; font-size: 20px; font-weight: 600; }
+  .rs-doc { max-height: 320px; overflow: auto; border-radius: 12px; }
+  .rs-pad { position: relative; display: grid; place-items: center; height: 160px; border: 1px dashed var(--border-strong); border-radius: 16px; background: var(--surface); }
+  .rs-pad__hint { color: var(--muted); }
+  .rs-pad__line { position: absolute; left: 24px; right: 24px; bottom: 40px; border-bottom: 1px solid var(--border-strong); }
+  .rs-pad .btn { position: absolute; top: 8px; right: 8px; }
+  .a4__signs { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  .map-row { min-height: 32px; align-items: center; }
+  .thumb { display: grid; align-content: start; gap: 8px; height: 100%; margin: 0 auto; max-width: 140px; padding: 14px 16px; background: #fff; box-shadow: inset 0 0 0 1px var(--border-strong); }
+  .thumb__title { justify-self: center; width: 60%; height: 8px; border-radius: 2px; background: #a1a1aa; }
+  .thumb__line { height: 4px; border-radius: 2px; background: #e4e4e7; }
+  .thumb__signs { display: flex; justify-content: space-around; gap: 6px; margin-top: 6px; }
+  .thumb__signs span { width: 28px; height: 12px; border-radius: 2px; background: #f4f4f5; }
   .stack { display: grid; gap: 12px; }
   .focus-card > .ds-badge { justify-self: start; }
   .okrow { display: grid; grid-template-columns: 8rem minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-top: 1px solid var(--border); font-size: 14px; }
@@ -1205,15 +1290,19 @@ const WF_GROUP = 'a';
 const SCREENS_BC = {
   'doi-chieu': { label: 'Đối chiếu tàu', options: ['a', 'b', 'c'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'imo-sai'] },
   'san-sang': { label: 'Sẵn sàng xuất', options: ['a', 'b', 'c'], recommended: 'a', states: ['bi-chan', 'can-xem', 'san-sang'] },
-  'tao-ban-xuat': { label: 'Tạo bản xuất', options: ['a', 'b', 'c'], recommended: 'c', states: ['du-lieu', 'dang-tai', 'bi-chan', 'qua-cho'] },
-  'phat-hanh': { label: 'Duyệt phát hành', options: ['a', 'b', 'c'], recommended: 'a', states: ['du-lieu', 'cung-nguoi', 'da-phat-hanh', 'stale'] },
-  'ban-xuat': { label: 'Bản xuất', options: ['a', 'b'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
+  'tao-bo': { label: 'Tạo bộ giấy', options: ['a', 'b', 'c'], recommended: 'a', states: ['du-lieu', 'nhieu', 'dang-tai'] },
+  'ky-duyet': { label: 'Duyệt và ký', options: ['a', 'b'], recommended: 'a', states: ['cho-duyet', 'cung-nguoi', 'dang-ky', 'da-ky'] },
+  'ban-xuat': { label: 'Bản xuất', options: ['a'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
+  mau: { label: 'Mẫu', options: ['a', 'b'], recommended: 'a', states: ['du-lieu', 'dang-tai'] },
+  'mau-sua': { label: 'Sửa mẫu', options: ['a'], recommended: 'a', states: ['du-lieu'] },
+  'ky-online': { label: 'Ký online', options: ['a'], recommended: 'a', states: ['du-lieu', 'da-ky', 'het-han'] },
 };
 const STATE_LABELS_BC = {
   'doi-chieu': { rong: 'Không tìm thấy tàu', 'imo-sai': 'IMO sai số kiểm tra' },
   'san-sang': { 'bi-chan': 'Bị chặn', 'can-xem': 'Cần xem lại', 'san-sang': 'Sẵn sàng' },
-  'tao-ban-xuat': { 'bi-chan': 'Hồ sơ bị chặn', 'qua-cho': 'Mẫu không đủ chỗ' },
-  'phat-hanh': { 'du-lieu': 'Chờ duyệt', 'cung-nguoi': 'Người tạo tự duyệt', 'da-phat-hanh': 'Đã phát hành', stale: 'Hồ sơ đã đổi (STALE)' },
+  'tao-bo': { 'du-lieu': 'Một người', nhieu: 'Nhiều người (đợt)' },
+  'ky-duyet': { 'cho-duyet': 'Chờ duyệt', 'cung-nguoi': 'Người tạo tự duyệt', 'dang-ky': 'Đang ký', 'da-ky': 'Đã ký đủ' },
+  'ky-online': { 'du-lieu': 'Đang ký', 'da-ky': 'Đã ký xong', 'het-han': 'Link hết hạn' },
 };
 const STATUS_BC = {
   readiness: { READY_IN_SCOPE: ['Sẵn sàng (phạm vi MVP)', 'success', 'check-circle'], NEEDS_REVIEW: ['Cần xem lại', 'warning', 'ellipsis'], BLOCKED: ['Bị chặn', 'error', 'close-circle'] },
@@ -1321,108 +1410,175 @@ function readinessScreen() {
 }
 const overviewBody = (crew) => `${dropzone(crew)}<div class="two-col">${section('Thông tin cá nhân', personalBlock(), btn('Sửa', { size: 'sm', variant: 'ghost', iconName: 'edit' }))}${section('Giấy tờ sắp hết hạn', `<ul class="attention"><li>${badge('cert', 'EXPIRED')}<span>Advanced Fire Fighting · 02/07/2025</span></li><li>${badge('cert', 'EXPIRING')}<span>COC · 10/01/2027</span></li></ul>`)}</div>`;
 
-// ---------- C1. Tạo bản xuất ----------
-const TEMPLATES = [
-  ['cv', 'CV thuyền viên · Chủ tàu Demo A', 'Mẫu Excel 1 trang, version 3. Có ảnh, thông tin cá nhân, 10 dòng sea service.'],
-  ['matrix', 'Sea service matrix · Chủ tàu Demo B', 'Mẫu Excel, version 1. Bảng chuyến đi tàu theo loại tàu và chức danh.'],
+// ---------- Nhóm C: bộ giấy tờ theo giai đoạn, ký online, quản lý mẫu ----------
+const STAGES = [['tuyen', 'Tuyển dụng'], ['di-tau', 'Lên tàu'], ['roi-tau', 'Rời tàu']];
+// [key, tên, giai đoạn, người ký, trường còn thiếu, ô điền lúc xuất, nhóm chọn một]
+const DOCS12 = [
+  ['kq', 'Kết quả thi tuyển', 'tuyen', ['Giám khảo 1', 'Giám khảo 2', 'Giám đốc'], [], ['Điểm từng tiêu chuẩn'], null],
+  ['tb', 'Thông báo trúng tuyển', 'tuyen', ['Giám đốc'], [], ['Ngày có mặt'], null],
+  ['cv', 'CV chủ tàu Trung Quốc', 'tuyen', [], ['Cỡ giày', 'Nhóm máu', 'Người thân liên hệ'], [], null],
+  ['pt', 'Phiếu thu', 'tuyen', ['Người nộp tiền', 'Thủ quỹ', 'Kế toán trưởng'], [], ['Số tiền', 'Lý do thu'], null],
+  ['qddd', 'Quyết định điều động', 'di-tau', ['Giám đốc'], [], ['Tên tàu', 'Ngày xuống tàu'], null],
+  ['bhxh', 'Đơn tham gia BHXH', 'di-tau', ['Thuyền viên'], [], ['Mức đóng'], 'bhxh'],
+  ['kbhxh', 'Đơn không tham gia BHXH', 'di-tau', ['Thuyền viên'], [], [], 'bhxh'],
+  ['bl', 'Thư bảo lãnh', 'di-tau', ['Giám đốc'], ['Người bảo lãnh'], [], null],
+  ['uqcn', 'Ủy quyền cá nhân', 'di-tau', ['Thuyền viên'], [], ['Người được ủy quyền'], null],
+  ['uql', 'Ủy quyền nhận lương', 'di-tau', ['Thuyền viên'], ['Số tài khoản'], ['Người nhận lương'], null],
+  ['qdrt', 'Quyết định rời tàu', 'roi-tau', ['Giám đốc'], [], ['Ngày rời tàu', 'Cảng rời tàu'], null],
+  ['tl', 'Thanh lý hợp đồng', 'roi-tau', ['Thuyền viên', 'Giám đốc'], [], ['Ngày thanh lý'], null],
 ];
-const CONTACT = [['hien', 'Hiện số điện thoại', 'Chủ tàu gọi thẳng thuyền viên.'], ['an', 'Ẩn số điện thoại', 'Ô số điện thoại để trống.'], ['thay', 'Thay bằng số agency', 'Ghi 0900 000 999 · Agency Demo.']];
-const STEPS = ['Chọn mẫu', 'Liên lạc', 'Xem trước', 'Gửi duyệt'];
+const doc12 = (key) => DOCS12.find((d) => d[0] === key);
+const SIGN_STATE = { done: ['Đã ký', 'success', 'check-circle'], wait: ['Chờ ký', 'warning', 'clock-circle'], hand: ['Ký tay khi in', 'neutral', 'edit'] };
+const PACK_STATUS = { DRAFT: ['Nháp', 'neutral', 'ring'], PENDING_APPROVAL: ['Chờ duyệt', 'warning', 'ellipsis'], SIGNING: ['Đang ký', 'warning', 'edit'], DONE: ['Đã xong', 'success', 'check-circle'], STALE: ['Cần làm lại', 'warning', 'sync'], REJECTED: ['Bị trả lại', 'error', 'close-circle'] };
 
-function exportPreview({ contact = 'thay', overflow = false, stale = false } = {}) {
-  const rows = [['MV Halong Spirit', 'Hàng rời', 'Thợ máy', '04/01/2016', '14/07/2016'], ['MV Lotus Pearl', 'Container', 'Thợ máy', '02/03/2017', '14/11/2017'], ['MV Lotus Pearl', 'Container', 'Thợ máy chính', '05/07/2022', 'Đang trên tàu']];
-  const phone = { hien: '0900 000 123', an: '', thay: '0900 000 999 (Agency Demo)' }[contact];
-  return `<div class="xls ${stale ? 'xls--stale' : ''}" role="img" aria-label="Xem trước file xuất, dữ liệu giả">
-    <div class="xls__bar"><span>cv-tran-minh-khoi-rev2.xlsx</span><span class="muted">Mẫu CV · Demo A · v3</span></div>
-    <div class="xls__sheet"><div class="xls__head"><span class="xls__photo">Ảnh</span><div><p class="xls__name">TRAN MINH KHOI</p><p class="xls__rank">Oiler · Viet Nam</p></div></div>
-      <table class="xls__grid"><tbody><tr><th>Date of birth</th><td>13/03/1990</td><th>Seaman's book</th><td>VN000123-01</td></tr><tr><th>Passport</th><td>C0000123</td><th>Phone</th><td class="${contact === 'an' ? 'xls__blank' : ''}">${phone || '&nbsp;'}</td></tr></tbody></table>
-      <p class="xls__section">SEA SERVICE</p>
-      <table class="xls__grid xls__grid--rows"><thead><tr><th>Vessel</th><th>Type</th><th>Rank</th><th>Sign on</th><th>Sign off</th></tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join('')}</tr>`).join('')}${overflow ? '<tr class="xls__over"><td colspan="5">+ 4 dòng không vừa mẫu (mẫu chỉ có 10 dòng)</td></tr>' : ''}</tbody></table></div>
-    ${stale ? '<span class="xls__stamp">STALE</span>' : ''}</div>`;
+function a4(key, { signs = {}, fill = true, small = false } = {}) {
+  const [, name, , signers, missing, inputs] = doc12(key);
+  const lines = [['Họ và tên', 'TRẦN MINH KHÔI'], ['Ngày sinh', '13/03/1990'], ['Chức danh', 'Thợ máy chính (Oiler)'], ...inputs.map((label) => [label, fill ? { 'Tên tàu': 'MV Lotus Pearl', 'Ngày xuống tàu': '20/10/2026', 'Số tiền': '100.000 đ', 'Lý do thu': 'Quỹ hỗ trợ việc làm ngoài nước', 'Ngày có mặt': '15/10/2026' }[label] || '' : '']), ...missing.map((label) => [label, null])];
+  return `<div class="a4 ${small ? 'a4--small' : ''}" role="img" aria-label="Xem trước ${name}, dữ liệu giả">
+    <p class="a4__org">AGENCY DEMO · Hải Phòng</p><p class="a4__title">${name.toUpperCase()}</p>
+    <div class="a4__lines">${lines.map(([label, value]) => `<p class="a4__line"><span>${label}:</span>${value === null ? '<b class="a4__miss">thiếu trong hồ sơ</b>' : value ? `<b>${value}</b>` : '<i class="a4__blank">…………………… (điền tay)</i>'}</p>`).join('')}</div>
+    <p class="a4__date">Hải Phòng, ngày … tháng … năm 2026</p>
+    <div class="a4__signs">${(signers.length ? signers : ['—']).map((who) => { const st = signs[who] || 'wait'; return `<div class="a4__sign" data-st="${who === '—' ? 'none' : st}"><span class="a4__who">${who === '—' ? 'Không cần ký' : who}</span>${who === '—' ? '' : st === 'done' ? '<span class="a4__ink">Khôi</span>' : st === 'hand' ? '<span class="a4__hand">(ký tay)</span>' : '<span class="a4__pending">chờ ký</span>'}</div>`; }).join('')}</div></div>`;
 }
+const signBadge = (st) => { const [label, tone, mark] = SIGN_STATE[st]; return `<span class="ds-badge ds-badge--${tone}">${icon(mark, 'ds-badge__icon')}${label}</span>`; };
+const packBadge = (st) => { const [label, tone, mark] = PACK_STATUS[st]; const head = mark === 'ring' ? '<span class="ds-badge__dot ds-badge__dot--ring" aria-hidden="true"></span>' : icon(mark, 'ds-badge__icon'); return `<span class="ds-badge ds-badge--${tone}">${head}${label}</span>`; };
 
-function exportCreateScreen() {
+// ---------- C1. Tạo bộ giấy tờ ----------
+function packCreateScreen() {
   const v = state.v;
-  const step = Number(state.step || 3);
-  if (state.tt === 'bi-chan') {
-    const content = `<div class="err-block" data-wf-block="3" style="max-width:520px"><h1 class="err-block__title">Hồ sơ này chưa xuất được</h1><p class="err-block__desc">Trần Minh Khôi đang <b>Bị chặn</b> vì 2 điều kiện không đạt:</p>
-      <ul class="rules" style="text-align:left;margin-top:16px">${RULES.filter(([, r]) => r === 'FAIL').map(([title, r, reason, action]) => `<li class="rule"><span class="rule__mark">${badge('rule', r)}</span><span class="rule__text"><span>${title}</span><span class="muted">${reason}</span></span>${btn(action, { size: 'sm' })}</li>`).join('')}</ul>
-      <div class="err-block__actions">${btn('Về hồ sơ', { variant: 'primary' })}</div></div>`;
-    return shell({ crumb: 'Thuyền viên', crumb2: 'Trần Minh Khôi', current: 'seafarers', content });
-  }
-  const loading = state.tt === 'dang-tai';
-  const overflow = state.tt === 'qua-cho';
-  const templateChoice = `<fieldset class="ds-choice" data-wf-block="4"><legend class="ds-choice__legend">Mẫu <span class="ds-field__required">*</span></legend><div class="ds-choice__grid" style="--ds-choice-columns:1">${TEMPLATES.map(([key, title, desc], index) => `<label class="ds-choice__card"><input type="radio" class="ds-choice__radio" name="tpl" ${index === 0 ? 'checked' : ''} /><span class="ds-choice__text"><span class="ds-choice__title">${title}</span><span class="ds-choice__desc">${desc}</span></span></label>`).join('')}</div></fieldset>`;
-  const contactChoice = `<fieldset class="ds-choice" data-wf-block="5"><legend class="ds-choice__legend">Số điện thoại trong file <span class="ds-field__required">*</span></legend><div class="ds-choice__grid" style="--ds-choice-columns:1">${CONTACT.map(([key, title, desc]) => `<label class="ds-choice__card"><input type="radio" class="ds-choice__radio" name="contact" ${key === 'thay' ? 'checked' : ''} /><span class="ds-choice__text"><span class="ds-choice__title">${title}</span><span class="ds-choice__desc">${desc}</span></span></label>`).join('')}</div></fieldset>`;
-  const overflowBanner = overflow ? `<div role="alert" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Mẫu không đủ chỗ: 14 chuyến đi tàu, mẫu có 10 dòng</p><p class="ds-banner__text">Hệ thống không tự cắt bớt. Chọn mẫu Sea service matrix, hoặc báo quản trị mở rộng mẫu.</p></div></div>` : '';
-  const preview = loading ? '<div class="xls"><span class="sk" style="width:100%;height:420px"></span></div>' : exportPreview({ overflow });
-  const submit = btn('Gửi duyệt', { variant: 'primary', iconName: 'send', attrs: overflow ? 'aria-disabled="true"' : '' });
-  const note = '<p class="muted" style="margin:0;font-size:12px">Một người khác sẽ duyệt trước khi phát hành.</p>';
-  const head = (title) => `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">${title}</h1><p class="page-head__desc">Trần Minh Khôi · Revision 2 · ${badge('readiness', 'NEEDS_REVIEW')}</p></div></div>`;
-  if (v === 'a') {
-    const stepper = `<ol class="steps" data-wf-block="6">${STEPS.map((label, index) => `<li class="steps__item" data-state="${index + 1 < step ? 'done' : index + 1 === step ? 'current' : 'todo'}"><button type="button" data-step="${index + 1}"><span class="steps__dot">${index + 1 < step ? icon('check') : index + 1}</span>${label}</button></li>`).join('')}</ol>`;
-    const bodies = { 1: templateChoice, 2: contactChoice, 3: `${overflowBanner}${preview}`, 4: `<div class="panel panel__body"><dl class="facts facts--2"><div><dt>Mẫu</dt><dd>CV thuyền viên · Chủ tàu Demo A · v3</dd></div><div><dt>Số điện thoại</dt><dd>Thay bằng số agency</dd></div><div><dt>Hồ sơ</dt><dd>Revision 2</dd></div><div><dt>Người duyệt</dt><dd>Bất kỳ ai có quyền duyệt, trừ bạn</dd></div></dl></div>` };
-    const nav = `<div class="form-foot">${step > 1 ? btn('Quay lại', { iconName: 'left', attrs: `data-step="${step - 1}"` }) : '<span></span>'}${step < 4 ? btn('Tiếp', { variant: 'primary', attrs: `data-step="${step + 1}"` }) : submit}</div>`;
-    return shell({ crumb: 'Thuyền viên', crumb2: 'Trần Minh Khôi', current: 'seafarers', content: `<div class="narrow">${head('Tạo bản xuất')}${stepper}<div class="step-body">${bodies[step]}</div>${nav}</div>` });
-  }
+  const stage = state.stage || 'di-tau';
+  const people = state.tt === 'nhieu' ? ['Trần Minh Khôi', 'Phạm Quốc Bảo', 'Đào Văn Hùng'] : ['Trần Minh Khôi'];
+  const docs = DOCS12.filter((d) => d[2] === stage);
+  const picked = state.pickDoc || docs[0][0];
+  const missingTotal = docs.reduce((n, d) => n + d[4].length, 0);
+  const stageTabs = `<div class="ds-tabs-boxed" role="tablist" data-wf-block="4">${STAGES.map(([key, label]) => `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-stage="${key}" aria-selected="${key === stage}">${label}<span class="ds-tabs-boxed__count">${DOCS12.filter((d) => d[2] === key).length}</span></button>`).join('')}</div>
+    <button type="button" class="btn ds-tabs-mobile"><span class="muted">Giai đoạn:</span> ${STAGES.find(([key]) => key === stage)[1]} ${icon('down')}</button>`;
+  const who = `<div class="who" data-wf-block="3"><span class="field-label" style="margin:0">Thuyền viên</span><span class="who__chips">${people.map((name) => `<span class="chip">${avatar(name)}${name}${people.length > 1 ? `<button type="button" aria-label="Bỏ ${name}">${icon('close')}</button>` : ''}</span>`).join('')}${btn('Thêm người', { size: 'sm', variant: 'ghost', iconName: 'plus' })}</span></div>`;
+  const docRow = (d) => { const [key, name, , signers, missing, , group] = d; const off = group === 'bhxh' && key === 'kbhxh'; return `<li><label class="doc-pick ${picked === key ? 'doc-pick--on' : ''}" data-pickdoc="${key}"><input type="${group ? 'radio' : 'checkbox'}" name="${group || key}" ${off ? '' : 'checked'} /><span class="cell2"><span class="cell2__main" style="font-weight:400">${name}</span><span class="cell2__sub">${signers.length ? `Ký: ${signers.join(', ')}` : 'Không cần ký'}${group ? ' · chọn một trong hai' : ''}</span></span>${missing.length ? `<span class="warn-text doc-pick__miss">${icon('exclamation-circle')}Thiếu ${missing.length}</span>` : ''}</label></li>`; };
+  const list = `<ul class="doc-picks" data-wf-block="5">${docs.map(docRow).join('')}</ul>`;
+  const allInputs = [...new Set(docs.flatMap((d) => d[5]))];
+  const allMissing = docs.flatMap((d) => d[4].map((m) => [m, d[1]]));
+  const inputsBlock = section('Điền lúc xuất', `<div class="grid-2">${allInputs.map((label) => `<div><label class="field-label">${label}</label><input class="input" placeholder="Để trống thì in ra điền tay" ${label === 'Tên tàu' ? 'value="MV Lotus Pearl"' : ''} /></div>`).join('')}</div>`, '<span class="muted">Dùng chung cho mọi giấy trong bộ</span>', '6');
+  const missingBlock = allMissing.length ? `<div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Hồ sơ còn thiếu ${allMissing.length} trường mà mẫu cần</p><p class="ds-banner__text">${allMissing.map(([m, d]) => `${m} (${d})`).join(' · ')}</p></div><div class="ds-banner__action">${btn('Điền vào hồ sơ')}</div></div>` : '';
+  const submit = btn(`Gửi duyệt ${docs.length - 1} giấy`, { variant: 'primary', iconName: 'send' });
+  const head = `<div class="page-head"><div class="page-head__text"><h1 class="page-head__title">Tạo bộ giấy tờ</h1><p class="page-head__desc">Chọn giai đoạn, bỏ giấy không cần, điền phần chỉ có lúc xuất.</p></div></div>`;
+  if (state.tt === 'dang-tai') return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}<div class="panel panel__body">${Array.from({ length: 6 }, () => '<span class="sk" style="width:70%;margin:12px 0"></span>').join('')}</div>` });
   if (v === 'b') {
-    const behind = `${head('Trần Minh Khôi')}<div class="panel panel__body" style="min-height:420px"><span class="sk" style="width:60%"></span></div>`;
-    const sheet = `<div class="sheet-scrim"></div><aside class="sheet" role="dialog" aria-label="Tạo bản xuất"><header class="sheet__head"><div><h2 class="sheet__title">Tạo bản xuất</h2><p class="muted" style="margin:2px 0 0">Trần Minh Khôi · Revision 2</p></div>${btn('', { variant: 'ghost', iconName: 'close', attrs: 'aria-label="Đóng"' }).replace('btn--ghost', 'btn--ghost btn--icon')}</header>
-      <div class="sheet__body">${templateChoice}${contactChoice}${overflowBanner}${btn('Xem trước file', { iconName: 'eye' })}</div><footer class="sheet__foot">${note}${submit}</footer></aside>`;
-    return shell({ crumb: 'Thuyền viên', current: 'seafarers', content: `${behind}${sheet}` });
+    // Ma trận: người × giấy, hợp làm theo đợt
+    const matrix = `<div class="tbl-wrap tbl-wrap--always" data-wf-block="5"><table class="tbl matrix"><thead><tr><th>Thuyền viên</th>${docs.map((d) => `<th title="${d[1]}"><span class="matrix__th">${d[1]}</span></th>`).join('')}</tr></thead><tbody>${people.concat(state.tt === 'nhieu' ? [] : []).map((name, i) => `<tr><td><span class="person">${avatar(name)}<span style="white-space:nowrap">${name}</span></span></td>${docs.map((d, j) => `<td class="center">${d[0] === 'kbhxh' ? '<span class="muted">—</span>' : d[4].length && (i + j) % 2 === 0 ? `<span class="warn-text" title="Thiếu ${d[4].join(', ')}">${icon('exclamation-circle')}</span>` : `<span class="ok-mark">${icon('check')}</span>`}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}${stageTabs}${missingBlock}${matrix}${inputsBlock}<div class="form-foot"><span class="muted">${people.length} người × ${docs.length - 1} giấy = ${people.length * (docs.length - 1)} file</span>${submit}</div>` });
   }
-  return shell({ crumb: 'Thuyền viên', crumb2: 'Trần Minh Khôi', current: 'seafarers', content: `${head('Tạo bản xuất')}<div class="export-c"><div class="export-c__form">${templateChoice}${contactChoice}<div class="form-foot form-foot--stack">${note}${submit}</div></div><section class="export-c__preview" data-wf-block="7"><p class="ds-field__label" style="margin:0 0 8px">Xem trước · cập nhật theo lựa chọn bên trái</p>${overflowBanner}${preview}</section></div>` });
+  if (v === 'c') {
+    const steps = ['Người', 'Giấy tờ', 'Điền thêm', 'Xem trước', 'Gửi duyệt'];
+    const step = Number(state.step || 2);
+    const stepper = `<ol class="steps" data-wf-block="6">${steps.map((label, index) => `<li class="steps__item" data-state="${index + 1 < step ? 'done' : index + 1 === step ? 'current' : 'todo'}"><button type="button" data-step="${index + 1}"><span class="steps__dot">${index + 1 < step ? icon('check') : index + 1}</span>${label}</button></li>`).join('')}</ol>`;
+    const bodies = { 1: who, 2: `${stageTabs}${list}`, 3: `${missingBlock}${inputsBlock}`, 4: a4(picked), 5: `<p class="muted">${docs.length - 1} giấy gửi cho người duyệt; duyệt xong mới gửi ký.</p>` };
+    return shell({ crumb: 'Bản xuất', current: 'exports', content: `<div class="narrow">${head}${stepper}<div class="step-body">${bodies[step]}</div><div class="form-foot">${step > 1 ? btn('Quay lại', { iconName: 'left', attrs: `data-step="${step - 1}"` }) : '<span></span>'}${step < 5 ? btn('Tiếp', { variant: 'primary', attrs: `data-step="${step + 1}"` }) : submit}</div></div>` });
+  }
+  return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}${stageTabs}<div class="pack-a"><div class="pack-a__left">${list}${missingBlock}${inputsBlock}<div class="form-foot form-foot--stack"><p class="muted" style="margin:0;font-size:12px">Một người khác duyệt bộ giấy trước khi gửi ký.</p>${submit}</div></div><section class="pack-a__preview" data-wf-block="7"><p class="ds-field__label" style="margin:0 0 8px">Xem trước · ${doc12(picked)[1]}</p>${a4(picked)}</section></div>` });
 }
 
-// ---------- C2. Duyệt phát hành ----------
-function publishScreen() {
+// ---------- C2. Duyệt và ký bộ giấy tờ ----------
+function packSignScreen() {
   const v = state.v;
-  const same = state.tt === 'cung-nguoi';
-  const published = state.tt === 'da-phat-hanh';
-  const stale = state.tt === 'stale';
-  const status = published ? 'PUBLISHED' : stale ? 'STALE' : 'PENDING_APPROVAL';
-  const facts = `<dl class="facts"><div><dt>Hồ sơ</dt><dd>Trần Minh Khôi · Revision 2 ${badge('readiness', 'NEEDS_REVIEW')}</dd></div><div><dt>Mẫu</dt><dd>CV thuyền viên · Chủ tàu Demo A · v3</dd></div><div><dt>Số điện thoại</dt><dd>Thay bằng số agency</dd></div><div><dt>Người tạo</dt><dd>${same ? 'Bạn (Phạm Văn Tùng)' : 'Lê Thu Hà'} · 10:58 hôm nay</dd></div><div><dt>Mã file (SHA-256)</dt><dd class="mono">7f3a…2c91</dd></div></dl>`;
-  let actions;
-  if (published) actions = `<div role="status" class="ds-banner ds-banner--neutral">${icon('check-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Đã phát hành 11:20 hôm nay</p><p class="ds-banner__text">Link tải hết hạn sau 24 giờ.</p></div></div><div class="copy-link"><input class="input" value="https://mcah.demo/t/9QZ…" readonly aria-label="Link tải" />${btn('Sao chép', { iconName: 'copy' })}</div>`;
-  else if (stale) actions = `<div role="alert" class="ds-banner ds-banner--warning">${icon('sync', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Hồ sơ đã sang revision 3</p><p class="ds-banner__text">File này dựng từ revision 2 nên không phát hành được nữa. Tạo lại từ hồ sơ mới.</p></div></div>${btn('Tạo lại bản xuất', { variant: 'primary', iconName: 'reload' })}`;
-  else actions = `${same ? `<p class="lock-note">${icon('lock')}Bạn tạo bản xuất này nên không tự duyệt được. Nhờ một người có quyền duyệt khác.</p>` : ''}
-    <div><label class="field-label">Lý do trả lại <span class="muted">(bắt buộc khi trả lại)</span></label><input class="input" placeholder="Ví dụ: sai mẫu, cần ẩn số điện thoại" ${same ? 'disabled' : ''} /></div>
-    <div class="action-row">${btn('Trả lại', { attrs: same ? 'aria-disabled="true"' : '' })}${btn('Phát hành', { variant: 'primary', iconName: 'send', attrs: same ? 'aria-disabled="true"' : '' })}</div>`;
-  const checklist = `<ul class="checks">${['File mở được, đúng mẫu Demo A', 'Số điện thoại đã thay bằng số agency', 'Sea service khớp hồ sơ revision 2', 'Đã xem cảnh báo Cần xem lại của hồ sơ'].map((text, i) => `<li><label><input type="checkbox" ${i < 2 ? 'checked' : ''} ${same || published || stale ? 'disabled' : ''} />${text}</label></li>`).join('')}</ul>`;
-  const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">CV · Trần Minh Khôi</h1><p class="page-head__desc">${badge('export', status)} Bản xuất #0042</p></div>${v === 'b' && !published && !stale ? `<div class="page-head__actions">${btn('Trả lại', { attrs: same ? 'aria-disabled="true"' : '' })}${btn('Phát hành', { variant: 'primary', iconName: 'send', attrs: same ? 'aria-disabled="true"' : '' })}</div>` : ''}</div>`;
-  const preview = `<section class="panel" data-wf-block="4"><div class="panel__head"><h2 class="panel__title">File sẽ phát hành</h2>${btn('Tải về xem', { size: 'sm', variant: 'ghost', iconName: 'down' })}</div><div class="panel__body" style="background:var(--background)">${exportPreview({ stale })}</div></section>`;
-  if (v === 'b') return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${same && !published && !stale ? `<p class="lock-note">${icon('lock')}Bạn tạo bản xuất này nên không tự duyệt được.</p>` : ''}${published || stale ? actions : ''}<div class="panel panel__body fact-strip" data-wf-block="5">${facts}</div>${preview}` });
-  const side = `<aside class="side-col" data-wf-block="5">${section('Thông tin', facts)}${v === 'c' && !published && !stale ? section('Kiểm trước khi phát hành', `${checklist}<p class="muted" style="margin:8px 0 0;font-size:12px">Tick đủ 4 mục mới bấm được Phát hành.</p>`) : ''}${section(published ? 'Đã phát hành' : stale ? 'Không phát hành được' : 'Quyết định', `<div style="display:grid;gap:12px">${actions}</div>`)}</aside>`;
-  return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}<div class="profile-b">${preview}${side}</div>` });
+  const docs = DOCS12.filter((d) => d[2] === 'di-tau' && d[0] !== 'kbhxh');
+  const picked = state.pickDoc || 'qddd';
+  const phase = state.tt;
+  const signsFor = (d) => Object.fromEntries(d[3].map((who) => [who, phase === 'da-ky' ? 'done' : phase === 'dang-ky' ? (who === 'Giám đốc' ? 'done' : 'wait') : 'wait']));
+  const progress = phase === 'da-ky' ? 5 : phase === 'dang-ky' ? 2 : 0;
+  const status = phase === 'da-ky' ? 'DONE' : phase === 'dang-ky' ? 'SIGNING' : 'PENDING_APPROVAL';
+  const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">Bộ giấy lên tàu · Trần Minh Khôi</h1><p class="page-head__desc">${packBadge(status)} #B0042 · 5 giấy · tạo bởi Lê Thu Hà 10:58</p></div>
+    <div class="page-head__actions">${phase === 'cho-duyet' ? `${btn('Trả lại')}${btn('Duyệt và gửi ký', { variant: 'primary', iconName: 'send' })}` : phase === 'cung-nguoi' ? `<span class="lock-note">${icon('lock')}Bạn tạo bộ này nên không tự duyệt được.</span>` : phase === 'da-ky' ? btn('Tải bộ (.zip)', { variant: 'primary', iconName: 'down' }) : btn('Nhắc ký', { iconName: 'reload' })}</div></div>`;
+  const list = `<ul class="pack-docs" data-wf-block="4">${docs.map((d) => { const signs = signsFor(d); const done = Object.values(signs).filter((s) => s === 'done').length; return `<li><button type="button" data-pickdoc="${d[0]}" aria-current="${d[0] === picked}"><span class="cell2"><span class="cell2__main" style="font-weight:400">${d[1]}</span><span class="cell2__sub">${d[3].length ? `Đã ký ${done}/${d[3].length}` : 'Không cần ký'}</span></span></button></li>`; }).join('')}</ul>`;
+  const d = doc12(picked);
+  const signers = section('Chữ ký', `<ul class="signers">${d[3].map((who) => { const st = signsFor(d)[who]; return `<li><span class="cell2"><span class="cell2__main" style="font-weight:400">${who}</span><span class="cell2__sub">${who === 'Thuyền viên' ? 'Ký online qua link gửi SMS 0900 000 123' : 'Ký trong app'}</span></span>${signBadge(st)}${phase === 'dang-ky' && st === 'wait' && who === 'Thuyền viên' ? btn('Gửi lại link', { size: 'sm', variant: 'ghost' }) : ''}</li>`; }).join('')}<li><span class="cell2"><span class="cell2__main" style="font-weight:400">Ô ngày tháng, điểm</span><span class="cell2__sub">Để trống, điền tay khi in</span></span>${signBadge('hand')}</li></ul>${phase === 'dang-ky' ? `<div style="margin-top:12px">${btn('Ký với tư cách Giám đốc', { variant: 'primary', iconName: 'edit' })}</div>` : ''}`, '', '6');
+  const preview = `<section class="panel pack-preview" data-wf-block="5"><div class="panel__head"><h2 class="panel__title">${d[1]}</h2>${btn('Tải', { size: 'sm', variant: 'ghost', iconName: 'down' })}</div><div class="panel__body" style="background:var(--background)">${a4(picked, { signs: signsFor(d) })}</div></section>`;
+  const bar = `<div class="pack-progress"><div class="ds-progress-block"><div class="ds-progress-block__head"><p class="ds-progress-block__label">Chữ ký đã có</p><p class="ds-progress-block__value">${progress} / 5</p></div><div class="ds-progress"><div class="ds-progress__bar" style="width:${progress * 20}%"></div></div></div></div>`;
+  if (v === 'b') {
+    // Theo người ký: mỗi người một hàng, các giấy họ cần ký
+    const people = ['Giám đốc', 'Thuyền viên'];
+    const rows = people.map((who) => { const mine = docs.filter((doc) => doc[3].includes(who)); return section(who, `<ul class="signers">${mine.map((doc) => `<li><span>${doc[1]}</span>${signBadge(signsFor(doc)[who])}</li>`).join('')}</ul>`, who === 'Thuyền viên' ? '<span class="muted">Link ký gửi qua SMS</span>' : btn('Ký tất cả 3 giấy', { size: 'sm', variant: 'primary', iconName: 'edit' })); }).join('');
+    return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${bar}<div class="two-col">${rows}</div>${preview}` });
+  }
+  return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${bar}<div class="pack-sign">${list}${preview}<aside class="side-col">${signers}</aside></div>` });
 }
 
-// ---------- C3. Bản xuất ----------
-const EXPORTS = [
-  ['0042', 'Trần Minh Khôi', 'CV · Demo A', 2, 'PENDING_APPROVAL', 'Lê Thu Hà', '10:58 hôm nay'],
-  ['0041', 'Nguyễn Thị Hồng Nhung Phương Anh', 'Sea service matrix · Demo B', 1, 'PENDING_APPROVAL', 'Phạm Văn Tùng', '09:30 hôm nay'],
-  ['0039', 'Võ Thanh Sơn', 'CV · Demo A', 1, 'STALE', 'Lê Thu Hà', '04/10'],
-  ['0038', 'Đào Văn Hùng', 'CV · Demo A', 2, 'PUBLISHED', 'Phạm Văn Tùng', '04/10'],
-  ['0036', 'Phạm Quốc Bảo', 'Sea service matrix · Demo B', 1, 'REJECTED', 'Lê Thu Hà', '03/10'],
-  ['0035', 'Ngô Quang Vinh', 'CV · Demo A', 1, 'PUBLISHED', 'Phạm Văn Tùng', '02/10'],
+// ---------- C3. Bản xuất (bộ giấy tờ) ----------
+const PACKS = [
+  ['B0042', 'Trần Minh Khôi', 'Lên tàu', 5, 'PENDING_APPROVAL', 0, 'Lê Thu Hà', '10:58 hôm nay'],
+  ['B0041', '3 thuyền viên · MV Lotus Pearl', 'Lên tàu', 15, 'SIGNING', 9, 'Phạm Văn Tùng', '09:30 hôm nay'],
+  ['B0039', 'Võ Thanh Sơn', 'Tuyển dụng', 4, 'STALE', 0, 'Lê Thu Hà', '04/10'],
+  ['B0038', 'Đào Văn Hùng', 'Rời tàu', 2, 'DONE', 3, 'Phạm Văn Tùng', '04/10'],
+  ['B0036', 'Phạm Quốc Bảo', 'Tuyển dụng', 4, 'REJECTED', 0, 'Lê Thu Hà', '03/10'],
 ];
-const EXPORT_TABS = [['all', 'Tất cả', 6], ['pending', 'Chờ duyệt', 2], ['stale', 'Cần làm lại', 1], ['published', 'Đã phát hành', 2], ['rejected', 'Bị trả lại', 1]];
-function exportsScreen() {
+const PACK_TABS = [['all', 'Tất cả', 5], ['pending', 'Chờ duyệt', 1], ['signing', 'Đang ký', 1], ['stale', 'Cần làm lại', 1], ['done', 'Đã xong', 1]];
+function packsScreen() {
   const selected = state.tab || 'all';
-  const filter = { pending: 'PENDING_APPROVAL', stale: 'STALE', published: 'PUBLISHED', rejected: 'REJECTED' }[selected];
-  const rows = filter ? EXPORTS.filter((row) => row[4] === filter) : EXPORTS;
-  const tabs = `<div class="ds-tabs-boxed" role="tablist">${EXPORT_TABS.map(([value, label, count]) => `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-tab="${value}" aria-selected="${value === selected}">${label}<span class="ds-tabs-boxed__count">${state.tt === 'rong' ? 0 : count}</span></button>`).join('')}</div><button type="button" class="btn ds-tabs-mobile"><span class="muted">Trạng thái:</span> ${EXPORT_TABS.find(([value]) => value === selected)[1]} ${icon('down')}</button>`;
-  const toolbar = `<div class="toolbar" data-wf-block="3">${tabs}<label class="search toolbar__search">${icon('search')}<input class="input" placeholder="Tìm thuyền viên, mẫu" aria-label="Tìm bản xuất" /></label></div>`;
-  const action = (status, by) => ({ PENDING_APPROVAL: by === 'Phạm Văn Tùng' ? '<span class="muted" style="font-size:12px;white-space:nowrap">Chờ người khác</span>' : btn('Duyệt', { size: 'sm' }), STALE: btn('Tạo lại', { size: 'sm' }), PUBLISHED: btn('Tải', { size: 'sm', variant: 'ghost', iconName: 'down' }), REJECTED: btn('Xem lý do', { size: 'sm', variant: 'ghost' }) }[status]);
-  const columns = `<th>Thuyền viên</th><th>Mẫu</th><th>Trạng thái</th><th class="col-lg">Người tạo</th><th class="col-lg">Ngày</th><th class="right"><span class="ds-sr-only">Thao tác</span></th>`;
-  const pending = listState([{ title: 'Thuyền viên' }, { title: 'Mẫu' }, { title: 'Trạng thái' }]);
-  const empty = state.tt === 'rong' ? '<div class="ds-empty"><p class="ds-empty__title">Chưa có bản xuất nào</p><p class="ds-empty__text">Mở hồ sơ thuyền viên rồi bấm Tạo bản xuất.</p><div class="ds-empty__action">' + btn('Đến danh sách thuyền viên') + '</div></div>' : null;
-  const table = empty || pending || `<div class="tbl-wrap"><table class="tbl"><thead><tr>${columns}</tr></thead><tbody>${rows.map(([id, name, tpl, rev, status, by, date]) => `<tr><td><span class="cell2" style="max-width:280px"><span class="cell2__main">${name}</span><span class="cell2__sub">#${id} · Revision ${rev}</span></span></td><td style="white-space:nowrap">${tpl}</td><td>${badge('export', status)}</td><td class="col-lg"><span class="muted" style="white-space:nowrap">${by}</span></td><td class="col-lg"><span class="muted num" style="white-space:nowrap">${date}</span></td><td class="right">${action(status, by)}</td></tr>`).join('')}</tbody></table></div>
-    <ul class="doc-list">${rows.map(([id, name, tpl, rev, status, by, date]) => `<li><span class="cell2"><span class="cell2__main">${name}</span><span class="cell2__sub">${tpl} · Revision ${rev}</span></span><span>${badge('export', status)}</span><span class="cell2__sub">#${id} · ${by} · ${date}</span><span>${action(status, by)}</span></li>`).join('')}</ul><div class="tbl-foot"><span>${rows.length} bản xuất</span></div>`;
-  if (state.v === 'b') {
-    const mine = state.tt === 'du-lieu' ? `<div class="two-col" data-wf-block="4">${section('Chờ bạn duyệt · 1', `<ul class="attention"><li>${badge('export', 'PENDING_APPROVAL')}<span>CV · Trần Minh Khôi · Lê Thu Hà tạo 10:58</span>${btn('Duyệt', { size: 'sm', variant: 'primary' })}</li></ul>`)}${section('Cần làm lại · 1', `<ul class="attention"><li>${badge('export', 'STALE')}<span>CV · Võ Thanh Sơn · hồ sơ sang revision 2</span>${btn('Tạo lại', { size: 'sm' })}</li></ul>`)}</div>` : '';
-    return shell({ title: 'Bản xuất', current: 'exports', content: `${mine}${toolbar}<div class="panel" data-wf-block="5">${table}</div>` });
-  }
+  const filter = { pending: 'PENDING_APPROVAL', signing: 'SIGNING', stale: 'STALE', done: 'DONE' }[selected];
+  const rows = filter ? PACKS.filter((row) => row[4] === filter) : PACKS;
+  const tabs = `<div class="ds-tabs-boxed" role="tablist">${PACK_TABS.map(([value, label, count]) => `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-tab="${value}" aria-selected="${value === selected}">${label}<span class="ds-tabs-boxed__count">${state.tt === 'rong' ? 0 : count}</span></button>`).join('')}</div><button type="button" class="btn ds-tabs-mobile"><span class="muted">Trạng thái:</span> ${PACK_TABS.find(([value]) => value === selected)[1]} ${icon('down')}</button>`;
+  const toolbar = `<div class="toolbar" data-wf-block="3">${tabs}<label class="search toolbar__search">${icon('search')}<input class="input" placeholder="Tìm thuyền viên, tàu" aria-label="Tìm bộ giấy tờ" /></label>${btn('Tạo bộ giấy tờ', { variant: 'primary', iconName: 'plus' })}</div>`;
+  const action = (st, by) => ({ PENDING_APPROVAL: by === 'Phạm Văn Tùng' ? '<span class="muted" style="font-size:12px;white-space:nowrap">Chờ người khác</span>' : btn('Duyệt', { size: 'sm' }), SIGNING: btn('Xem chữ ký', { size: 'sm', variant: 'ghost' }), STALE: btn('Tạo lại', { size: 'sm' }), DONE: btn('Tải .zip', { size: 'sm', variant: 'ghost', iconName: 'down' }), REJECTED: btn('Xem lý do', { size: 'sm', variant: 'ghost' }) }[st]);
+  const signs = (n, total, st) => (st === 'SIGNING' || st === 'DONE' ? `<span class="complete-cell"><span class="mini-progress"><span style="width:${Math.round((n / total) * 100)}%"></span></span><span class="num muted">${n}/${total}</span></span>` : '<span class="muted">—</span>');
+  const totals = { B0041: 15, B0038: 3 };
+  const pending = listState([{ title: 'Bộ giấy tờ' }, { title: 'Trạng thái' }, { title: 'Chữ ký' }]);
+  const empty = state.tt === 'rong' ? `<div class="ds-empty"><p class="ds-empty__title">Chưa có bộ giấy tờ nào</p><p class="ds-empty__text">Tạo bộ giấy theo giai đoạn: tuyển dụng, lên tàu, rời tàu.</p><div class="ds-empty__action">${btn('Tạo bộ giấy tờ', { iconName: 'plus' })}</div></div>` : null;
+  const table = empty || pending || `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Bộ giấy tờ</th><th>Trạng thái</th><th>Chữ ký</th><th class="col-lg">Người tạo</th><th class="col-lg">Ngày</th><th class="right"><span class="ds-sr-only">Thao tác</span></th></tr></thead><tbody>${rows.map(([id, name, stage, count, st, signed, by, date]) => `<tr><td><span class="cell2" style="max-width:300px"><span class="cell2__main">${name}</span><span class="cell2__sub">${stage} · ${count} giấy · #${id}</span></span></td><td>${packBadge(st)}</td><td>${signs(signed, totals[id] || 5, st)}</td><td class="col-lg"><span class="muted" style="white-space:nowrap">${by}</span></td><td class="col-lg"><span class="muted num" style="white-space:nowrap">${date}</span></td><td class="right">${action(st, by)}</td></tr>`).join('')}</tbody></table></div>
+    <ul class="doc-list">${rows.map(([id, name, stage, count, st, , by, date]) => `<li><span class="cell2"><span class="cell2__main">${name}</span><span class="cell2__sub">${stage} · ${count} giấy</span></span><span>${packBadge(st)}</span><span class="cell2__sub">#${id} · ${by} · ${date}</span><span>${action(st, by)}</span></li>`).join('')}</ul><div class="tbl-foot"><span>${rows.length} bộ</span></div>`;
   return shell({ title: 'Bản xuất', current: 'exports', content: `${toolbar}<div class="panel" data-wf-block="4">${table}</div>` });
+}
+
+// ---------- C4. Mẫu giấy tờ ----------
+function templatesScreen() {
+  const loading = state.tt === 'dang-tai';
+  const head = `<div class="toolbar" data-wf-block="3"><label class="search toolbar__search" style="margin-left:0">${icon('search')}<input class="input" placeholder="Tìm mẫu" aria-label="Tìm mẫu" /></label><span style="margin-left:auto">${btn('Tải mẫu mới', { variant: 'primary', iconName: 'upload' })}</span></div>`;
+  if (loading) return shell({ title: 'Mẫu giấy tờ', current: 'templates', content: `${head}<div class="panel panel__body">${Array.from({ length: 6 }, () => '<span class="sk" style="width:60%;margin:12px 0"></span>').join('')}</div>` });
+  const rowsFor = (key) => DOCS12.filter((d) => d[2] === key);
+  const fieldsCount = (d) => 8 + d[4].length * 2 + d[5].length;
+  const warn = (d) => (d[0] === 'cv' ? `<span class="warn-text" style="white-space:nowrap">${icon('exclamation-circle')} 2 ô chưa gắn</span>` : '<span class="muted">Đủ</span>');
+  if (state.v === 'b') {
+    const cards = DOCS12.map((d) => `<a class="tpl-card"><span class="tpl-card__thumb" aria-hidden="true"><span class="thumb"><span class="thumb__title"></span>${'<span class="thumb__line"></span>'.repeat(6)}<span class="thumb__signs">${'<span></span>'.repeat(Math.max(1, d[3].length))}</span></span></span><span class="cell2"><span class="cell2__main">${d[1]}</span><span class="cell2__sub">${STAGES.find(([k]) => k === d[2])[1]} · v${d[0] === 'cv' ? 3 : 1} · ${d[3].length ? `${d[3].length} người ký` : 'không ký'}</span></span>${warn(d)}</a>`).join('');
+    return shell({ title: 'Mẫu giấy tờ', current: 'templates', content: `${head}<div class="tpl-grid" data-wf-block="4">${cards}</div>` });
+  }
+  const groups = STAGES.map(([key, label]) => section(`${label} · ${rowsFor(key).length}`, `<div class="tbl-wrap tbl-wrap--always"><table class="tbl"><thead><tr><th>Mẫu</th><th>Trường gắn</th><th class="col-lg">Người ký</th><th class="col-lg">Phiên bản</th><th class="right"><span class="ds-sr-only">Thao tác</span></th></tr></thead><tbody>${rowsFor(key).map((d) => `<tr><td><span style="display:block;min-width:140px">${d[1]}</span></td><td><span style="display:inline-flex;gap:8px;white-space:nowrap"><span class="num">${fieldsCount(d)} ô</span>${warn(d)}</span></td><td class="col-lg"><span class="muted">${d[3].join(', ') || '—'}</span></td><td class="col-lg"><span class="num muted">v${d[0] === 'cv' ? 3 : 1} · 01/10</span></td><td class="right">${btn('Sửa', { size: 'sm', variant: 'ghost' })}</td></tr>`).join('')}</tbody></table></div>`, '', key === 'tuyen' ? '4' : '')).join('');
+  return shell({ title: 'Mẫu giấy tờ', current: 'templates', content: `${head}${groups}` });
+}
+
+// ---------- C5. Sửa mẫu: gắn ô Excel với trường ----------
+const MAP = [
+  ['B7', 'Họ và tên', 'profile', 'Hồ sơ · Họ tên (in hoa)'], ['F7', 'Quốc tịch', 'profile', 'Hồ sơ · Quốc tịch'], ['D8', 'Ngày sinh', 'profile', 'Hồ sơ · Ngày sinh'],
+  ['D9', 'Cỡ giày', 'none', 'Chưa gắn'], ['H10', 'Nhóm máu', 'none', 'Chưa gắn'], ['B5', 'Chức danh ứng tuyển', 'export', 'Điền lúc xuất'],
+  ['B17:E41', 'Bảng chứng chỉ', 'profile', 'Hồ sơ · Giấy tờ (theo tên chứng chỉ)'], ['B43:K51', 'Bảng đi tàu', 'profile', 'Hồ sơ · Đi tàu (10 chuyến gần nhất)'], ['F5', 'Ngày', 'hand', 'Điền tay khi in'],
+];
+const MAP_KIND = { profile: ['Hồ sơ', 'success'], export: ['Lúc xuất', 'neutral'], hand: ['Điền tay', 'neutral'], sign: ['Ký online', 'warning'], none: ['Chưa gắn', 'error'] };
+function templateEditScreen() {
+  const cell = state.cell || 'D9';
+  const grid = `<div class="xgrid" data-wf-block="4"><div class="xgrid__row xgrid__row--head"><span></span>${'ABCDEFGH'.split('').map((c) => `<span>${c}</span>`).join('')}</div>${[5, 6, 7, 8, 9, 10, 11].map((r) => `<div class="xgrid__row"><span class="xgrid__rh">${r}</span>${'ABCDEFGH'.split('').map((c) => { const ref = `${c}${r}`; const m = MAP.find(([k]) => k === ref); const label = { A7: 'Tên Trung', C7: 'Tên Anh', E7: 'Quốc tịch', A8: 'Nơi sinh', C8: 'Ngày sinh', A9: 'Chiều cao', C9: 'Cỡ giày', G10: 'Nhóm máu', A5: 'Chức danh', E5: 'Ngày', A10: 'Cân nặng', A11: 'Địa chỉ' }[ref]; return `<button type="button" class="xgrid__cell ${m ? `xgrid__cell--${m[2]}` : ''} ${ref === cell ? 'xgrid__cell--on' : ''}" ${m ? `data-cell="${ref}"` : ''}>${m ? `{${m[1]}}` : label || ''}</button>`; }).join('')}</div>`).join('')}</div>`;
+  const current = MAP.find(([k]) => k === cell);
+  const panel = section(`Ô ${cell}`, `<div style="display:grid;gap:12px"><div><label class="field-label">Lấy giá trị từ</label><fieldset class="ds-choice"><div class="ds-choice__grid" style="--ds-choice-columns:1">${Object.entries(MAP_KIND).filter(([k]) => k !== 'none').map(([k, [label]]) => `<label class="ds-choice__card"><input type="radio" class="ds-choice__radio" name="kind" ${k === (current[2] === 'none' ? 'profile' : current[2]) ? 'checked' : ''} /><span class="ds-choice__text"><span class="ds-choice__title">${label}</span><span class="ds-choice__desc">${{ profile: 'Một trường trong hồ sơ thuyền viên', export: 'Người tạo bộ điền khi xuất', hand: 'Để trống, in ra rồi điền tay', sign: 'Ô chữ ký, ký online trong app hoặc qua link' }[k]}</span></span></label>`).join('')}</div></fieldset></div>
+    <div><label class="field-label">Trường hồ sơ</label><button type="button" class="btn select-like">${current[2] === 'none' ? '<span class="muted">Chọn trường…</span>' : current[3]} ${icon('down')}</button></div>
+    ${current[2] === 'none' ? `<p class="muted" style="margin:0;font-size:12px">Hồ sơ chưa có trường "${current[1]}". ${btn('Thêm trường vào hồ sơ', { size: 'sm', variant: 'ghost', iconName: 'plus' })}</p>` : ''}</div>`, '', '5');
+  const fields = section('Ô đã nhận ra · 9', `<ul class="signers">${MAP.map(([ref, label, kind]) => `<li><button type="button" class="map-row" data-cell="${ref}"><span class="mono muted">${ref}</span><span>${label}</span></button><span class="ds-badge ds-badge--${MAP_KIND[kind][1]}">${MAP_KIND[kind][0]}</span></li>`).join('')}</ul>`, '', '6');
+  const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">CV chủ tàu Trung Quốc</h1><p class="page-head__desc">cv-tq.xlsx · v3 · giai đoạn Tuyển dụng · <span class="warn-text">2 ô chưa gắn</span></p></div><div class="page-head__actions">${btn('Thử với một thuyền viên', { iconName: 'eye' })}${btn('Lưu phiên bản 4', { variant: 'primary' })}</div></div>`;
+  return shell({ crumb: 'Mẫu giấy tờ', current: 'templates', collapsedDefault: true, content: `${head}<div class="tpl-edit"><section class="panel tpl-edit__sheet"><div class="panel__head"><h2 class="panel__title">Sheet CV</h2><span class="muted">AI đã đọc nhãn và đề xuất gắn 7/9 ô</span></div><div class="panel__body" style="overflow-x:auto">${grid}</div></section><aside class="side-col">${panel}${fields}</aside></div>` });
+}
+
+// ---------- C6. Thuyền viên ký online (trang ngoài app, mở từ SMS) ----------
+function remoteSignScreen() {
+  const done = state.tt === 'da-ky';
+  const expired = state.tt === 'het-han';
+  const docs = DOCS12.filter((d) => d[3].includes('Thuyền viên') && d[2] === 'di-tau' && d[0] !== 'kbhxh');
+  const step = Number(state.signStep || 1);
+  const d = docs[step - 1];
+  let body;
+  if (expired) body = `<div class="ds-empty" style="padding:48px 0"><p class="ds-empty__title">Link ký đã hết hạn</p><p class="ds-empty__text">Link chỉ dùng được 72 giờ. Gọi Agency Demo để nhận link mới.</p><div class="ds-empty__action"><a class="btn" href="tel:0900000999">${icon('user')}Gọi 0900 000 999</a></div></div>`;
+  else if (done) body = `<div class="ds-empty" style="padding:48px 0"><p class="ds-empty__title">Đã ký xong 3 giấy</p><p class="ds-empty__text">Agency Demo đã nhận chữ ký của bạn lúc 14:05. Bạn có thể đóng trang này.</p></div>`;
+  else body = `<p class="rs-step">Giấy ${step} / ${docs.length}</p><h1 class="rs-title">${d[1]}</h1>
+    <div class="rs-doc">${a4(d[0], { small: true })}</div>
+    <label class="checks" style="display:flex"><input type="checkbox" /><span>Tôi đã đọc và đồng ý nội dung giấy này</span></label>
+    <div class="rs-pad" data-wf-block="2"><span class="rs-pad__hint">Ký bằng ngón tay vào đây</span><span class="rs-pad__line"></span>${btn('Ký lại', { size: 'sm', variant: 'ghost', iconName: 'reload' })}</div>
+    ${btn(step < docs.length ? 'Ký và sang giấy tiếp' : 'Ký và gửi', { variant: 'primary', size: 'lg', attrs: `data-signstep="${step < docs.length ? step + 1 : 1}"` }).replace('btn--lg', 'btn--lg btn--block')}`;
+  return `<div class="rs"><header class="rs-head" data-wf-block="1">${brand()}<span class="muted">Agency Demo gửi Trần Minh Khôi</span></header><main class="rs-main">${body}</main></div>`;
 }
 
 const REASONS_BC = {
@@ -1442,27 +1598,37 @@ const REASONS_BC = {
     c: ['C · Thẻ Sẵn sàng xuất', 'Một thẻ ở Tổng quan, cạnh khung thả giấy tờ: số điều kiện đạt và danh sách chưa đạt.',
       ['Gọn, đặt cạnh việc sửa (thả giấy tờ mới)'], ['Ở tab khác thì không thấy'], 'Phần lớn hồ sơ đã sẵn sàng.', ['Ghim badge lên đầu trang']],
   },
-  'tao-ban-xuat': {
-    a: ['A · Các bước', 'Bốn bước: Chọn mẫu, Liên lạc, Xem trước, Gửi duyệt. Mỗi bước một màn.',
-      ['Đúng quy ước form nhiều bước', 'Không bỏ sót chính sách liên lạc'], ['Đổi mẫu phải lùi lại hai bước rồi mới xem lại file', 'Bốn lần bấm cho việc chỉ có hai lựa chọn'], 'Người mới dùng, cần dắt tay.', ['Gộp Liên lạc vào bước Chọn mẫu']],
-    b: ['B · Panel trượt', 'Mở từ Hồ sơ, không rời trang: chọn mẫu, chọn liên lạc, nút Xem trước file.',
-      ['Nhanh, giữ ngữ cảnh hồ sơ'], ['Panel hẹp, xem trước file phải mở cửa sổ khác'], 'Xuất thường xuyên, mẫu quen.', ['Thêm ảnh thu nhỏ của file']],
-    c: ['C · Chọn trái, xem trước phải', 'Hai lựa chọn bên trái; bên phải là file thật sẽ phát hành, đổi lựa chọn là file đổi theo.',
-      ['Thấy ngay số điện thoại bị ẩn hay thay', 'Ít bấm nhất, xem trước là chính file sẽ phát hành (7.2)', 'Báo mẫu không đủ chỗ ngay trên file'], ['Cần màn rộng; dưới 1024px xem trước xuống dưới'], 'Demo cho Sales: đổi chính sách liên lạc, file đổi theo.', ['Cho phóng to bản xem trước']],
+  'tao-bo': {
+    a: ['A · Danh sách giấy trái, xem trước phải', 'Chọn người, chọn giai đoạn (Tuyển dụng, Lên tàu, Rời tàu); danh sách giấy đã tick sẵn, bỏ giấy không cần. Trường thiếu báo theo từng giấy; ô chỉ có lúc xuất điền một lần cho cả bộ. Bấm một giấy để xem trước bên phải.',
+      ['Theo đúng nhịp công việc: mỗi giai đoạn một bộ', 'Thấy ngay giấy nào thiếu gì', 'Một người hay cả đợt đều dùng được (thêm người ở đầu trang)'], ['Đợt đông người thì phần thiếu khó theo dõi từng người'], 'Phần lớn làm cho từng người.', ['Nhớ lựa chọn bỏ giấy lần trước', 'Cho tạo bộ mẫu riêng (ví dụ chủ tàu Trung Quốc)']],
+    b: ['B · Ma trận người × giấy', 'Hàng là thuyền viên, cột là giấy trong giai đoạn; ô báo đủ hay thiếu. Hợp khi làm cả đợt lên một tàu.',
+      ['Làm cả đợt trong một màn', 'Thấy ngay ai thiếu giấy gì'], ['Không có xem trước', 'Một người thì ma trận thừa'], 'Agency đưa nhiều người lên một tàu cùng lúc.', ['Bấm ô để xem trước giấy đó']],
+    c: ['C · Năm bước', 'Người, Giấy tờ, Điền thêm, Xem trước, Gửi duyệt; mỗi bước một màn.',
+      ['Dắt tay người mới'], ['Nhiều lần bấm', 'Đổi giấy phải lùi bước'], 'Nhân viên mới, ít khi làm.', ['Gộp Điền thêm vào Giấy tờ']],
   },
-  'phat-hanh': {
-    a: ['A · File trái, quyết định phải', 'File sẽ phát hành chiếm phần lớn; cột phải là thông tin (revision, mẫu, mã file) và nút Phát hành / Trả lại.',
-      ['Người duyệt nhìn file trước rồi mới quyết', 'Người tạo tự duyệt thì khoá nút, kèm lý do'], ['Cột phải dài khi có nhiều thông tin'], 'Người duyệt kiểm từng file.', ['Ghim nút xuống đáy cột phải']],
-    b: ['B · Nút trên đầu', 'Nút Phát hành / Trả lại ở đầu trang; thông tin thành một dải; file bên dưới rộng hết.',
-      ['File rộng nhất', 'Quen với trang chi tiết'], ['Bấm Phát hành được khi chưa cuộn xem file', 'Lý do trả lại phải mở hộp thoại'], 'Người duyệt tin người tạo, chỉ liếc qua.', ['Khoá nút đến khi cuộn hết file']],
-    c: ['C · A có danh sách kiểm', 'Như A, thêm 4 mục phải tick trước khi phát hành.',
-      ['Buộc người duyệt kiểm đúng chỗ hay sai', 'Có dấu vết đã kiểm gì'], ['Thêm thao tác', 'Dễ tick cho xong'], 'Khách khó tính, sai một file là mất hợp đồng.', ['Bớt còn 2 mục']],
+  'ky-duyet': {
+    a: ['A · Giấy trái, xem giữa, chữ ký phải', 'Danh sách giấy trong bộ bên trái; giữa là giấy đang xem; phải là ai phải ký, đã ký chưa, ký trong app hay qua link SMS, ô nào để điền tay.',
+      ['Một chỗ duyệt, ký và theo dõi ký', 'Thuyền viên ký online qua link, không phải đến văn phòng', 'Người tạo không tự duyệt được'], ['Ba cột, dưới 1024px phải xếp chồng'], 'Bộ 4–5 giấy, 1–3 người ký mỗi giấy.', ['Nút ký hàng loạt cho Giám đốc']],
+    b: ['B · Theo người ký', 'Mỗi người ký một thẻ liệt kê giấy họ cần ký; Giám đốc ký tất cả một lần.',
+      ['Giám đốc ký nhanh nhiều giấy', 'Thấy rõ đang chờ ai'], ['Khó xem từng giấy trước khi ký'], 'Giám đốc ký nhiều bộ mỗi ngày.', ['Thêm xem trước khi rê vào tên giấy']],
   },
   'ban-xuat': {
-    a: ['A · Bảng có tab', 'Danh sách mọi bản xuất, tab theo trạng thái; bản chờ duyệt do chính mình tạo ghi "Chờ người khác" thay cho nút Duyệt.',
-      ['Cùng khuôn với Thuyền viên', 'Tìm bản STALE cần làm lại bằng một tab'], ['Việc của riêng mình lẫn trong danh sách chung'], 'Một hai người duyệt cho cả agency.', ['Tab Chờ duyệt mở mặc định']],
-    b: ['B · Việc của tôi ở trên', 'Hai thẻ Chờ bạn duyệt và Cần làm lại đứng đầu; bảng đầy đủ bên dưới.',
-      ['Việc phải làm thấy trước', 'Thay được dashboard cho người duyệt'], ['Trùng thông tin với bảng', 'Trang dài hơn'], 'Nhiều người tạo, ít người duyệt.', ['Ẩn hai thẻ khi trống']],
+    a: ['A · Bảng bộ giấy tờ', 'Mỗi dòng một bộ (một người hoặc một đợt); cột Chữ ký cho biết đã ký bao nhiêu; tab theo trạng thái.',
+      ['Thấy bộ nào kẹt ở bước ký', 'Bộ STALE (hồ sơ đổi) tìm bằng một tab'], ['Không thấy từng giấy trong bộ'], 'Mọi agency.', ['Thêm lọc theo giai đoạn']],
+  },
+  mau: {
+    a: ['A · Bảng theo giai đoạn', 'Mẫu chia ba nhóm Tuyển dụng, Lên tàu, Rời tàu; mỗi mẫu cho biết số ô đã gắn, ô chưa gắn, người ký, phiên bản.',
+      ['Thấy ngay mẫu nào chưa dùng được', 'Thêm mẫu thứ 13, 14 không đổi khuôn'], ['Không thấy hình mẫu'], 'Mẫu tăng dần theo thời gian.', ['Thêm cột Dùng lần cuối']],
+    b: ['B · Lưới hình mẫu', 'Mỗi mẫu một thẻ có ảnh thu nhỏ của giấy.',
+      ['Nhận ra mẫu bằng hình'], ['Ít thông tin, khó thấy mẫu thiếu gắn'], 'Người dùng nhớ mẫu bằng hình.', ['Nhóm thẻ theo giai đoạn']],
+  },
+  'mau-sua': {
+    a: ['A · Sheet trái, gắn ô phải', 'Tải file Excel, AI đọc nhãn và đề xuất gắn từng ô với trường hồ sơ. Bấm một ô trên sheet để chọn: lấy từ hồ sơ, điền lúc xuất, điền tay khi in, hoặc ô ký online.',
+      ['Không cần sửa file Excel', 'Ô chưa gắn tô đỏ, thấy ngay', 'Trường mẫu cần mà hồ sơ chưa có thì thêm ngay'], ['Mẫu phức tạp (bảng chứng chỉ, bảng đi tàu) phải gắn theo vùng'], 'Admin agency tự thêm mẫu.', ['Cho sao chép gắn ô từ mẫu cũ']],
+  },
+  'ky-online': {
+    a: ['A · Trang ký trên điện thoại', 'Thuyền viên mở link SMS, không cần tài khoản: đọc từng giấy, tick đồng ý, ký bằng ngón tay.',
+      ['Thuyền viên ở xa vẫn ký được', 'Từng giấy một, không ký nhầm'], ['Cần xác thực (OTP) để chữ ký có giá trị'], 'Thuyền viên đang ở quê hay trên tàu.', ['Thêm bước OTP', 'Cho ký một lần cho cả bộ']],
   },
 };
 
@@ -1505,7 +1671,7 @@ const CREW = [
   { id: 'qv', name: 'Ngô Quang Vinh', rank: 'Ordinary Seaman (OS)', nat: 'Việt Nam', status: 'STANDBY', ready: '28/10/2026', complete: 75 },
 ];
 const TABS = [['all', 'Tất cả', 8], ['onboard', 'Đang trên tàu', 3], ['standby', 'Chờ tàu', 5], ['review', 'Chờ duyệt', 2], ['expiring', 'Sắp hết hạn', 4]];
-const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
+const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['templates', 'Mẫu giấy tờ', 'file-add'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
 const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
 
@@ -1950,7 +2116,7 @@ function renderToolbar() {
 }
 
 function renderDesign() {
-  const screens = { 'thuyen-vien': crewScreen, 'ho-so': profileScreen, 'doi-chieu': vesselScreen, 'san-sang': readinessScreen, 'tao-ban-xuat': exportCreateScreen, 'phat-hanh': publishScreen, 'ban-xuat': exportsScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
+  const screens = { 'thuyen-vien': crewScreen, 'ho-so': profileScreen, 'doi-chieu': vesselScreen, 'san-sang': readinessScreen, 'tao-bo': packCreateScreen, 'ky-duyet': packSignScreen, 'ban-xuat': packsScreen, mau: templatesScreen, 'mau-sua': templateEditScreen, 'ky-online': remoteSignScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
   const html = screens[state.man]();
   document.getElementById('wf-design').innerHTML = state.kho === 'mobile' ? `<div class="wf-phone-wrap"><div class="wf-phone">${html}</div></div>` : html;
   requestAnimationFrame(() => requestAnimationFrame(placeBlockNumbers));
@@ -1988,7 +2154,7 @@ document.querySelector('.wf-bar').addEventListener('click', (event) => {
   const param = button.closest('[data-wf-param]')?.dataset.wfParam;
   if (param) {
     state[param] = button.dataset.value;
-    if (param === 'man' || param === 'v') { state.tab = null; state.doc = null; state.focus = null; state.ptab = null; state.step = null; state.vtab = null; state.sider = null; state.menuOpen = false; state.userOpen = false; }
+    if (param === 'man' || param === 'v') { state.tab = null; state.doc = null; state.focus = null; state.ptab = null; state.step = null; state.vtab = null; state.stage = null; state.pickDoc = null; state.cell = null; state.signStep = null; state.sider = null; state.menuOpen = false; state.userOpen = false; }
     render();
     return;
   }
@@ -2013,7 +2179,11 @@ document.addEventListener('click', (event) => {
   if (!event.target.closest('#tt-menu') && !event.target.closest('.wf-popover')) { document.querySelector('.wf-popover')?.remove(); document.getElementById('tt-menu').removeAttribute('data-open'); }
 });
 document.getElementById('wf-design').addEventListener('click', (event) => {
-  const target = event.target.closest('[data-action], [data-tab], [data-view], [data-pick], [data-doc], [data-field], [data-flip], [data-ptab], [data-step], [data-vtab]');
+  const target = event.target.closest('[data-action], [data-tab], [data-view], [data-pick], [data-doc], [data-field], [data-flip], [data-ptab], [data-step], [data-vtab], [data-stage], [data-pickdoc], [data-cell], [data-signstep]');
+  if (target?.dataset.stage) { state.stage = target.dataset.stage; state.pickDoc = null; renderDesign(); return; }
+  if (target?.dataset.pickdoc) { state.pickDoc = target.dataset.pickdoc; renderDesign(); return; }
+  if (target?.dataset.cell) { state.cell = target.dataset.cell; renderDesign(); return; }
+  if (target?.dataset.signstep) { state.signStep = target.dataset.signstep; renderDesign(); return; }
   if (target?.dataset.step) { state.step = target.dataset.step; renderDesign(); return; }
   if (target?.dataset.vtab) { state.vtab = target.dataset.vtab; renderDesign(); return; }
   if (target?.dataset.doc) { state.doc = target.dataset.doc; state.focus = DOC_TYPES[state.doc].fields.find((field) => !['ACCEPTED'].includes(field[5]))?.[0] || null; renderDesign(); return; }

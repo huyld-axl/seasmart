@@ -820,7 +820,7 @@
   @container app (min-width: 640px) { .ds-tabs-boxed { display: flex; } }
   .drawer-scrim { position: absolute; inset: 0; z-index: 40; background: rgb(0 0 0 / .3); }
   .drawer { position: absolute; inset: 0 auto 0 0; z-index: 41; width: 280px; max-width: 85%; background: var(--surface); box-shadow: var(--elevation-modal); }
-  .bottombar { position: sticky; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(5, 1fr); height: 64px; border-top: 1px solid var(--border); background: var(--surface); }
+  .bottombar { position: sticky; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(4, 1fr); height: 64px; border-top: 1px solid var(--border); background: var(--surface); }
   .bottombar a { display: grid; place-content: center; justify-items: center; gap: 2px; color: rgb(44 44 44 / .7); font-size: 11px; text-decoration: none; }
   .bottombar a svg { font-size: 18px; }
   .bottombar a[aria-current="page"] { color: var(--foreground); font-weight: 600; }
@@ -1196,6 +1196,12 @@
   .thumb__line { height: 4px; border-radius: 2px; background: #e4e4e7; }
   .thumb__signs { display: flex; justify-content: space-around; gap: 6px; margin-top: 6px; }
   .thumb__signs span { width: 28px; height: 12px; border-radius: 2px; background: #f4f4f5; }
+  .quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .doc-picks-wrap { display: grid; gap: 8px; }
+  .doc-picks__count { margin: 0; color: var(--muted); }
+  .doc-picks__count b { color: var(--foreground); }
+  .doc-picks__group { margin: 8px 0 0; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .quick .btn:not(.btn--primary):hover { background: var(--secondary); }
   .stack { display: grid; gap: 12px; }
   .focus-card > .ds-badge { justify-self: start; }
   .okrow { display: grid; grid-template-columns: 8rem minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-top: 1px solid var(--border); font-size: 14px; }
@@ -1293,8 +1299,6 @@ const SCREENS_BC = {
   'tao-bo': { label: 'Tạo bộ giấy', options: ['a', 'b', 'c'], recommended: 'a', states: ['du-lieu', 'nhieu', 'dang-tai'] },
   'ky-duyet': { label: 'Duyệt và ký', options: ['a', 'b'], recommended: 'a', states: ['cho-duyet', 'cung-nguoi', 'dang-ky', 'da-ky'] },
   'ban-xuat': { label: 'Bản xuất', options: ['a'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
-  mau: { label: 'Mẫu', options: ['a', 'b'], recommended: 'a', states: ['du-lieu', 'dang-tai'] },
-  'mau-sua': { label: 'Sửa mẫu', options: ['a'], recommended: 'a', states: ['du-lieu'] },
   'ky-online': { label: 'Ký online', options: ['a'], recommended: 'a', states: ['du-lieu', 'da-ky', 'het-han'] },
 };
 const STATE_LABELS_BC = {
@@ -1446,36 +1450,36 @@ const packBadge = (st) => { const [label, tone, mark] = PACK_STATUS[st]; const h
 // ---------- C1. Tạo bộ giấy tờ ----------
 function packCreateScreen() {
   const v = state.v;
-  const stage = state.stage || 'di-tau';
+  const sel = state.sel || ['qddd', 'bhxh', 'bl', 'uqcn', 'uql'];
   const people = state.tt === 'nhieu' ? ['Trần Minh Khôi', 'Phạm Quốc Bảo', 'Đào Văn Hùng'] : ['Trần Minh Khôi'];
-  const docs = DOCS12.filter((d) => d[2] === stage);
-  const picked = state.pickDoc || docs[0][0];
-  const missingTotal = docs.reduce((n, d) => n + d[4].length, 0);
-  const stageTabs = `<div class="ds-tabs-boxed" role="tablist" data-wf-block="4">${STAGES.map(([key, label]) => `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-stage="${key}" aria-selected="${key === stage}">${label}<span class="ds-tabs-boxed__count">${DOCS12.filter((d) => d[2] === key).length}</span></button>`).join('')}</div>
-    <button type="button" class="btn ds-tabs-mobile"><span class="muted">Giai đoạn:</span> ${STAGES.find(([key]) => key === stage)[1]} ${icon('down')}</button>`;
+  const docs = DOCS12.filter((d) => sel.includes(d[0]));
+  const picked = state.pickDoc || docs[0]?.[0] || 'qddd';
+  const quick = `<div class="quick" data-wf-block="4"><span class="muted">Chọn nhanh:</span>${STAGES.map(([key, label]) => btn(label, { size: 'sm', attrs: `data-stage="${key}"` })).join('')}${btn('Như lần trước', { size: 'sm', variant: 'ghost', iconName: 'reload', attrs: 'data-stage="last"' })}${btn('Bỏ hết', { size: 'sm', variant: 'ghost', attrs: 'data-stage="none"' })}</div>`;
+  const stageTabs = quick;
   const who = `<div class="who" data-wf-block="3"><span class="field-label" style="margin:0">Thuyền viên</span><span class="who__chips">${people.map((name) => `<span class="chip">${avatar(name)}${name}${people.length > 1 ? `<button type="button" aria-label="Bỏ ${name}">${icon('close')}</button>` : ''}</span>`).join('')}${btn('Thêm người', { size: 'sm', variant: 'ghost', iconName: 'plus' })}</span></div>`;
-  const docRow = (d) => { const [key, name, , signers, missing, , group] = d; const off = group === 'bhxh' && key === 'kbhxh'; return `<li><label class="doc-pick ${picked === key ? 'doc-pick--on' : ''}" data-pickdoc="${key}"><input type="${group ? 'radio' : 'checkbox'}" name="${group || key}" ${off ? '' : 'checked'} /><span class="cell2"><span class="cell2__main" style="font-weight:400">${name}</span><span class="cell2__sub">${signers.length ? `Ký: ${signers.join(', ')}` : 'Không cần ký'}${group ? ' · chọn một trong hai' : ''}</span></span>${missing.length ? `<span class="warn-text doc-pick__miss">${icon('exclamation-circle')}Thiếu ${missing.length}</span>` : ''}</label></li>`; };
-  const list = `<ul class="doc-picks" data-wf-block="5">${docs.map(docRow).join('')}</ul>`;
+  const docRow = (d) => { const [key, name, , signers, missing, , group] = d; const on = sel.includes(key); return `<li><label class="doc-pick ${picked === key ? 'doc-pick--on' : ''}" data-pickdoc="${key}"><input type="checkbox" data-toggle="${key}" ${on ? 'checked' : ''} /><span class="cell2"><span class="cell2__main" style="font-weight:400">${name}</span><span class="cell2__sub">${signers.length ? `Ký: ${signers.join(', ')}` : 'Không cần ký'}${group ? ' · thường chỉ chọn một trong hai đơn BHXH' : ''}</span></span>${missing.length ? `<span class="warn-text doc-pick__miss">${icon('exclamation-circle')}Thiếu ${missing.length}</span>` : ''}</label></li>`; };
+  const list = `<div class="doc-picks-wrap" data-wf-block="5"><p class="doc-picks__count">Đã chọn <b>${docs.length}</b> / ${DOCS12.length} giấy</p>${STAGES.map(([key, label]) => `<p class="doc-picks__group">${label}</p><ul class="doc-picks">${DOCS12.filter((d) => d[2] === key).map(docRow).join('')}</ul>`).join('')}</div>`;
+  const history = section('Đã xuất cho Trần Minh Khôi · 3 bộ', `<ul class="signers">${[['B0031', '12/03/2026', 'KQ thi tuyển, TB trúng tuyển, CV chủ tàu Trung Quốc, Phiếu thu', 'DONE'], ['B0035', '01/07/2022', 'QĐ điều động, Đơn tham gia BHXH, Ủy quyền nhận lương', 'DONE'], ['B0040', '28/09/2026', 'CV chủ tàu Trung Quốc', 'STALE']].map(([id, date, names, st]) => `<li><span class="cell2" style="flex:1 1 240px"><span class="cell2__main" style="font-weight:400">${names}</span><span class="cell2__sub">#${id} · ${date}</span></span>${packBadge(st)}${btn('Dùng lại', { size: 'sm', variant: 'ghost', iconName: 'copy' })}</li>`).join('')}</ul>`, '', '8');
   const allInputs = [...new Set(docs.flatMap((d) => d[5]))];
   const allMissing = docs.flatMap((d) => d[4].map((m) => [m, d[1]]));
   const inputsBlock = section('Điền lúc xuất', `<div class="grid-2">${allInputs.map((label) => `<div><label class="field-label">${label}</label><input class="input" placeholder="Để trống thì in ra điền tay" ${label === 'Tên tàu' ? 'value="MV Lotus Pearl"' : ''} /></div>`).join('')}</div>`, '<span class="muted">Dùng chung cho mọi giấy trong bộ</span>', '6');
   const missingBlock = allMissing.length ? `<div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Hồ sơ còn thiếu ${allMissing.length} trường mà mẫu cần</p><p class="ds-banner__text">${allMissing.map(([m, d]) => `${m} (${d})`).join(' · ')}</p></div><div class="ds-banner__action">${btn('Điền vào hồ sơ')}</div></div>` : '';
-  const submit = btn(`Gửi duyệt ${docs.length - 1} giấy`, { variant: 'primary', iconName: 'send' });
-  const head = `<div class="page-head"><div class="page-head__text"><h1 class="page-head__title">Tạo bộ giấy tờ</h1><p class="page-head__desc">Chọn giai đoạn, bỏ giấy không cần, điền phần chỉ có lúc xuất.</p></div></div>`;
+  const submit = btn(`Gửi duyệt ${docs.length} giấy`, { variant: 'primary', iconName: 'send' });
+  const head = `<div class="page-head"><div class="page-head__text"><h1 class="page-head__title">Tạo bộ giấy tờ</h1><p class="page-head__desc">Tick giấy cần cho lần xuất này. Mỗi lần một bộ khác nhau cũng được.</p></div></div>`;
   if (state.tt === 'dang-tai') return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}<div class="panel panel__body">${Array.from({ length: 6 }, () => '<span class="sk" style="width:70%;margin:12px 0"></span>').join('')}</div>` });
   if (v === 'b') {
     // Ma trận: người × giấy, hợp làm theo đợt
-    const matrix = `<div class="tbl-wrap tbl-wrap--always" data-wf-block="5"><table class="tbl matrix"><thead><tr><th>Thuyền viên</th>${docs.map((d) => `<th title="${d[1]}"><span class="matrix__th">${d[1]}</span></th>`).join('')}</tr></thead><tbody>${people.concat(state.tt === 'nhieu' ? [] : []).map((name, i) => `<tr><td><span class="person">${avatar(name)}<span style="white-space:nowrap">${name}</span></span></td>${docs.map((d, j) => `<td class="center">${d[0] === 'kbhxh' ? '<span class="muted">—</span>' : d[4].length && (i + j) % 2 === 0 ? `<span class="warn-text" title="Thiếu ${d[4].join(', ')}">${icon('exclamation-circle')}</span>` : `<span class="ok-mark">${icon('check')}</span>`}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-    return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}${stageTabs}${missingBlock}${matrix}${inputsBlock}<div class="form-foot"><span class="muted">${people.length} người × ${docs.length - 1} giấy = ${people.length * (docs.length - 1)} file</span>${submit}</div>` });
+    const matrix = `<div class="tbl-wrap tbl-wrap--always" data-wf-block="5"><table class="tbl matrix"><thead><tr><th>Thuyền viên</th>${docs.map((d) => `<th title="${d[1]}"><span class="matrix__th">${d[1]}</span></th>`).join('')}</tr></thead><tbody>${people.concat(state.tt === 'nhieu' ? [] : []).map((name, i) => `<tr><td><span class="person">${avatar(name)}<span style="white-space:nowrap">${name}</span></span></td>${docs.map((d, j) => `<td class="center">${d[4].length && (i + j) % 2 === 0 ? `<span class="warn-text" title="Thiếu ${d[4].join(', ')}">${icon('exclamation-circle')}</span>` : `<span class="ok-mark">${icon('check')}</span>`}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}${stageTabs}${missingBlock}${matrix}${inputsBlock}<div class="form-foot"><span class="muted">${people.length} người × ${docs.length} giấy = ${people.length * docs.length} file</span>${submit}</div>` });
   }
   if (v === 'c') {
     const steps = ['Người', 'Giấy tờ', 'Điền thêm', 'Xem trước', 'Gửi duyệt'];
     const step = Number(state.step || 2);
     const stepper = `<ol class="steps" data-wf-block="6">${steps.map((label, index) => `<li class="steps__item" data-state="${index + 1 < step ? 'done' : index + 1 === step ? 'current' : 'todo'}"><button type="button" data-step="${index + 1}"><span class="steps__dot">${index + 1 < step ? icon('check') : index + 1}</span>${label}</button></li>`).join('')}</ol>`;
-    const bodies = { 1: who, 2: `${stageTabs}${list}`, 3: `${missingBlock}${inputsBlock}`, 4: a4(picked), 5: `<p class="muted">${docs.length - 1} giấy gửi cho người duyệt; duyệt xong mới gửi ký.</p>` };
+    const bodies = { 1: `${who}${history}`, 2: `${stageTabs}${list}`, 3: `${missingBlock}${inputsBlock}`, 4: a4(picked), 5: `<p class="muted">${docs.length} giấy gửi cho người duyệt; duyệt xong mới gửi ký.</p>` };
     return shell({ crumb: 'Bản xuất', current: 'exports', content: `<div class="narrow">${head}${stepper}<div class="step-body">${bodies[step]}</div><div class="form-foot">${step > 1 ? btn('Quay lại', { iconName: 'left', attrs: `data-step="${step - 1}"` }) : '<span></span>'}${step < 5 ? btn('Tiếp', { variant: 'primary', attrs: `data-step="${step + 1}"` }) : submit}</div></div>` });
   }
-  return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}${stageTabs}<div class="pack-a"><div class="pack-a__left">${list}${missingBlock}${inputsBlock}<div class="form-foot form-foot--stack"><p class="muted" style="margin:0;font-size:12px">Một người khác duyệt bộ giấy trước khi gửi ký.</p>${submit}</div></div><section class="pack-a__preview" data-wf-block="7"><p class="ds-field__label" style="margin:0 0 8px">Xem trước · ${doc12(picked)[1]}</p>${a4(picked)}</section></div>` });
+  return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}<div class="pack-a"><div class="pack-a__left">${stageTabs}${list}${missingBlock}${inputsBlock}<div class="form-foot form-foot--stack"><p class="muted" style="margin:0;font-size:12px">Một người khác duyệt bộ giấy trước khi gửi ký.</p>${submit}</div>${history}</div><section class="pack-a__preview" data-wf-block="7"><p class="ds-field__label" style="margin:0 0 8px">Xem trước · ${doc12(picked)[1]}</p>${a4(picked)}</section></div>` });
 }
 
 // ---------- C2. Duyệt và ký bộ giấy tờ ----------
@@ -1528,41 +1532,6 @@ function packsScreen() {
   return shell({ title: 'Bản xuất', current: 'exports', content: `${toolbar}<div class="panel" data-wf-block="4">${table}</div>` });
 }
 
-// ---------- C4. Mẫu giấy tờ ----------
-function templatesScreen() {
-  const loading = state.tt === 'dang-tai';
-  const head = `<div class="toolbar" data-wf-block="3"><label class="search toolbar__search" style="margin-left:0">${icon('search')}<input class="input" placeholder="Tìm mẫu" aria-label="Tìm mẫu" /></label><span style="margin-left:auto">${btn('Tải mẫu mới', { variant: 'primary', iconName: 'upload' })}</span></div>`;
-  if (loading) return shell({ title: 'Mẫu giấy tờ', current: 'templates', content: `${head}<div class="panel panel__body">${Array.from({ length: 6 }, () => '<span class="sk" style="width:60%;margin:12px 0"></span>').join('')}</div>` });
-  const rowsFor = (key) => DOCS12.filter((d) => d[2] === key);
-  const fieldsCount = (d) => 8 + d[4].length * 2 + d[5].length;
-  const warn = (d) => (d[0] === 'cv' ? `<span class="warn-text" style="white-space:nowrap">${icon('exclamation-circle')} 2 ô chưa gắn</span>` : '<span class="muted">Đủ</span>');
-  if (state.v === 'b') {
-    const cards = DOCS12.map((d) => `<a class="tpl-card"><span class="tpl-card__thumb" aria-hidden="true"><span class="thumb"><span class="thumb__title"></span>${'<span class="thumb__line"></span>'.repeat(6)}<span class="thumb__signs">${'<span></span>'.repeat(Math.max(1, d[3].length))}</span></span></span><span class="cell2"><span class="cell2__main">${d[1]}</span><span class="cell2__sub">${STAGES.find(([k]) => k === d[2])[1]} · v${d[0] === 'cv' ? 3 : 1} · ${d[3].length ? `${d[3].length} người ký` : 'không ký'}</span></span>${warn(d)}</a>`).join('');
-    return shell({ title: 'Mẫu giấy tờ', current: 'templates', content: `${head}<div class="tpl-grid" data-wf-block="4">${cards}</div>` });
-  }
-  const groups = STAGES.map(([key, label]) => section(`${label} · ${rowsFor(key).length}`, `<div class="tbl-wrap tbl-wrap--always"><table class="tbl"><thead><tr><th>Mẫu</th><th>Trường gắn</th><th class="col-lg">Người ký</th><th class="col-lg">Phiên bản</th><th class="right"><span class="ds-sr-only">Thao tác</span></th></tr></thead><tbody>${rowsFor(key).map((d) => `<tr><td><span style="display:block;min-width:140px">${d[1]}</span></td><td><span style="display:inline-flex;gap:8px;white-space:nowrap"><span class="num">${fieldsCount(d)} ô</span>${warn(d)}</span></td><td class="col-lg"><span class="muted">${d[3].join(', ') || '—'}</span></td><td class="col-lg"><span class="num muted">v${d[0] === 'cv' ? 3 : 1} · 01/10</span></td><td class="right">${btn('Sửa', { size: 'sm', variant: 'ghost' })}</td></tr>`).join('')}</tbody></table></div>`, '', key === 'tuyen' ? '4' : '')).join('');
-  return shell({ title: 'Mẫu giấy tờ', current: 'templates', content: `${head}${groups}` });
-}
-
-// ---------- C5. Sửa mẫu: gắn ô Excel với trường ----------
-const MAP = [
-  ['B7', 'Họ và tên', 'profile', 'Hồ sơ · Họ tên (in hoa)'], ['F7', 'Quốc tịch', 'profile', 'Hồ sơ · Quốc tịch'], ['D8', 'Ngày sinh', 'profile', 'Hồ sơ · Ngày sinh'],
-  ['D9', 'Cỡ giày', 'none', 'Chưa gắn'], ['H10', 'Nhóm máu', 'none', 'Chưa gắn'], ['B5', 'Chức danh ứng tuyển', 'export', 'Điền lúc xuất'],
-  ['B17:E41', 'Bảng chứng chỉ', 'profile', 'Hồ sơ · Giấy tờ (theo tên chứng chỉ)'], ['B43:K51', 'Bảng đi tàu', 'profile', 'Hồ sơ · Đi tàu (10 chuyến gần nhất)'], ['F5', 'Ngày', 'hand', 'Điền tay khi in'],
-];
-const MAP_KIND = { profile: ['Hồ sơ', 'success'], export: ['Lúc xuất', 'neutral'], hand: ['Điền tay', 'neutral'], sign: ['Ký online', 'warning'], none: ['Chưa gắn', 'error'] };
-function templateEditScreen() {
-  const cell = state.cell || 'D9';
-  const grid = `<div class="xgrid" data-wf-block="4"><div class="xgrid__row xgrid__row--head"><span></span>${'ABCDEFGH'.split('').map((c) => `<span>${c}</span>`).join('')}</div>${[5, 6, 7, 8, 9, 10, 11].map((r) => `<div class="xgrid__row"><span class="xgrid__rh">${r}</span>${'ABCDEFGH'.split('').map((c) => { const ref = `${c}${r}`; const m = MAP.find(([k]) => k === ref); const label = { A7: 'Tên Trung', C7: 'Tên Anh', E7: 'Quốc tịch', A8: 'Nơi sinh', C8: 'Ngày sinh', A9: 'Chiều cao', C9: 'Cỡ giày', G10: 'Nhóm máu', A5: 'Chức danh', E5: 'Ngày', A10: 'Cân nặng', A11: 'Địa chỉ' }[ref]; return `<button type="button" class="xgrid__cell ${m ? `xgrid__cell--${m[2]}` : ''} ${ref === cell ? 'xgrid__cell--on' : ''}" ${m ? `data-cell="${ref}"` : ''}>${m ? `{${m[1]}}` : label || ''}</button>`; }).join('')}</div>`).join('')}</div>`;
-  const current = MAP.find(([k]) => k === cell);
-  const panel = section(`Ô ${cell}`, `<div style="display:grid;gap:12px"><div><label class="field-label">Lấy giá trị từ</label><fieldset class="ds-choice"><div class="ds-choice__grid" style="--ds-choice-columns:1">${Object.entries(MAP_KIND).filter(([k]) => k !== 'none').map(([k, [label]]) => `<label class="ds-choice__card"><input type="radio" class="ds-choice__radio" name="kind" ${k === (current[2] === 'none' ? 'profile' : current[2]) ? 'checked' : ''} /><span class="ds-choice__text"><span class="ds-choice__title">${label}</span><span class="ds-choice__desc">${{ profile: 'Một trường trong hồ sơ thuyền viên', export: 'Người tạo bộ điền khi xuất', hand: 'Để trống, in ra rồi điền tay', sign: 'Ô chữ ký, ký online trong app hoặc qua link' }[k]}</span></span></label>`).join('')}</div></fieldset></div>
-    <div><label class="field-label">Trường hồ sơ</label><button type="button" class="btn select-like">${current[2] === 'none' ? '<span class="muted">Chọn trường…</span>' : current[3]} ${icon('down')}</button></div>
-    ${current[2] === 'none' ? `<p class="muted" style="margin:0;font-size:12px">Hồ sơ chưa có trường "${current[1]}". ${btn('Thêm trường vào hồ sơ', { size: 'sm', variant: 'ghost', iconName: 'plus' })}</p>` : ''}</div>`, '', '5');
-  const fields = section('Ô đã nhận ra · 9', `<ul class="signers">${MAP.map(([ref, label, kind]) => `<li><button type="button" class="map-row" data-cell="${ref}"><span class="mono muted">${ref}</span><span>${label}</span></button><span class="ds-badge ds-badge--${MAP_KIND[kind][1]}">${MAP_KIND[kind][0]}</span></li>`).join('')}</ul>`, '', '6');
-  const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">CV chủ tàu Trung Quốc</h1><p class="page-head__desc">cv-tq.xlsx · v3 · giai đoạn Tuyển dụng · <span class="warn-text">2 ô chưa gắn</span></p></div><div class="page-head__actions">${btn('Thử với một thuyền viên', { iconName: 'eye' })}${btn('Lưu phiên bản 4', { variant: 'primary' })}</div></div>`;
-  return shell({ crumb: 'Mẫu giấy tờ', current: 'templates', collapsedDefault: true, content: `${head}<div class="tpl-edit"><section class="panel tpl-edit__sheet"><div class="panel__head"><h2 class="panel__title">Sheet CV</h2><span class="muted">AI đã đọc nhãn và đề xuất gắn 7/9 ô</span></div><div class="panel__body" style="overflow-x:auto">${grid}</div></section><aside class="side-col">${panel}${fields}</aside></div>` });
-}
-
 // ---------- C6. Thuyền viên ký online (trang ngoài app, mở từ SMS) ----------
 function remoteSignScreen() {
   const done = state.tt === 'da-ky';
@@ -1599,8 +1568,8 @@ const REASONS_BC = {
       ['Gọn, đặt cạnh việc sửa (thả giấy tờ mới)'], ['Ở tab khác thì không thấy'], 'Phần lớn hồ sơ đã sẵn sàng.', ['Ghim badge lên đầu trang']],
   },
   'tao-bo': {
-    a: ['A · Danh sách giấy trái, xem trước phải', 'Chọn người, chọn giai đoạn (Tuyển dụng, Lên tàu, Rời tàu); danh sách giấy đã tick sẵn, bỏ giấy không cần. Trường thiếu báo theo từng giấy; ô chỉ có lúc xuất điền một lần cho cả bộ. Bấm một giấy để xem trước bên phải.',
-      ['Theo đúng nhịp công việc: mỗi giai đoạn một bộ', 'Thấy ngay giấy nào thiếu gì', 'Một người hay cả đợt đều dùng được (thêm người ở đầu trang)'], ['Đợt đông người thì phần thiếu khó theo dõi từng người'], 'Phần lớn làm cho từng người.', ['Nhớ lựa chọn bỏ giấy lần trước', 'Cho tạo bộ mẫu riêng (ví dụ chủ tàu Trung Quốc)']],
+    a: ['A · Danh sách giấy trái, xem trước phải', 'Chọn người, tick giấy cần cho lần này trong 12 giấy (chia nhóm Tuyển dụng, Lên tàu, Rời tàu); có nút chọn nhanh theo giai đoạn và "Như lần trước". Bên dưới là các bộ đã xuất cho người này, dùng lại được. Trường thiếu báo theo từng giấy; ô chỉ có lúc xuất điền một lần cho cả bộ. Bấm một giấy để xem trước bên phải.',
+      ['Mỗi lần xuất một bộ khác nhau, không bó theo giai đoạn', 'Thấy các lần đã xuất trước', 'Thấy ngay giấy nào thiếu gì', 'Một người hay cả đợt đều dùng được (thêm người ở đầu trang)'], ['Đợt đông người thì phần thiếu khó theo dõi từng người'], 'Phần lớn làm cho từng người.', ['Nhớ lựa chọn bỏ giấy lần trước', 'Cho tạo bộ mẫu riêng (ví dụ chủ tàu Trung Quốc)']],
     b: ['B · Ma trận người × giấy', 'Hàng là thuyền viên, cột là giấy trong giai đoạn; ô báo đủ hay thiếu. Hợp khi làm cả đợt lên một tàu.',
       ['Làm cả đợt trong một màn', 'Thấy ngay ai thiếu giấy gì'], ['Không có xem trước', 'Một người thì ma trận thừa'], 'Agency đưa nhiều người lên một tàu cùng lúc.', ['Bấm ô để xem trước giấy đó']],
     c: ['C · Năm bước', 'Người, Giấy tờ, Điền thêm, Xem trước, Gửi duyệt; mỗi bước một màn.',
@@ -1615,16 +1584,6 @@ const REASONS_BC = {
   'ban-xuat': {
     a: ['A · Bảng bộ giấy tờ', 'Mỗi dòng một bộ (một người hoặc một đợt); cột Chữ ký cho biết đã ký bao nhiêu; tab theo trạng thái.',
       ['Thấy bộ nào kẹt ở bước ký', 'Bộ STALE (hồ sơ đổi) tìm bằng một tab'], ['Không thấy từng giấy trong bộ'], 'Mọi agency.', ['Thêm lọc theo giai đoạn']],
-  },
-  mau: {
-    a: ['A · Bảng theo giai đoạn', 'Mẫu chia ba nhóm Tuyển dụng, Lên tàu, Rời tàu; mỗi mẫu cho biết số ô đã gắn, ô chưa gắn, người ký, phiên bản.',
-      ['Thấy ngay mẫu nào chưa dùng được', 'Thêm mẫu thứ 13, 14 không đổi khuôn'], ['Không thấy hình mẫu'], 'Mẫu tăng dần theo thời gian.', ['Thêm cột Dùng lần cuối']],
-    b: ['B · Lưới hình mẫu', 'Mỗi mẫu một thẻ có ảnh thu nhỏ của giấy.',
-      ['Nhận ra mẫu bằng hình'], ['Ít thông tin, khó thấy mẫu thiếu gắn'], 'Người dùng nhớ mẫu bằng hình.', ['Nhóm thẻ theo giai đoạn']],
-  },
-  'mau-sua': {
-    a: ['A · Sheet trái, gắn ô phải', 'Tải file Excel, AI đọc nhãn và đề xuất gắn từng ô với trường hồ sơ. Bấm một ô trên sheet để chọn: lấy từ hồ sơ, điền lúc xuất, điền tay khi in, hoặc ô ký online.',
-      ['Không cần sửa file Excel', 'Ô chưa gắn tô đỏ, thấy ngay', 'Trường mẫu cần mà hồ sơ chưa có thì thêm ngay'], ['Mẫu phức tạp (bảng chứng chỉ, bảng đi tàu) phải gắn theo vùng'], 'Admin agency tự thêm mẫu.', ['Cho sao chép gắn ô từ mẫu cũ']],
   },
   'ky-online': {
     a: ['A · Trang ký trên điện thoại', 'Thuyền viên mở link SMS, không cần tài khoản: đọc từng giấy, tick đồng ý, ký bằng ngón tay.',
@@ -1671,7 +1630,7 @@ const CREW = [
   { id: 'qv', name: 'Ngô Quang Vinh', rank: 'Ordinary Seaman (OS)', nat: 'Việt Nam', status: 'STANDBY', ready: '28/10/2026', complete: 75 },
 ];
 const TABS = [['all', 'Tất cả', 8], ['onboard', 'Đang trên tàu', 3], ['standby', 'Chờ tàu', 5], ['review', 'Chờ duyệt', 2], ['expiring', 'Sắp hết hạn', 4]];
-const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['templates', 'Mẫu giấy tờ', 'file-add'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
+const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
 const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
 
@@ -1851,7 +1810,7 @@ function profileScreen() {
   const head = profileHead(crew);
   const v = state.v;
   if (v === 'a') {
-    const tabs = [['tong-quan', 'Tổng quan'], ['giay-to', 'Giấy tờ', 7], ['di-tau', 'Đi tàu', 3], ['lich-su', 'Lịch sử']];
+    const tabs = [['tong-quan', 'Tổng quan'], ['giay-to', 'Giấy tờ', 7], ['di-tau', 'Đi tàu', 3], ['da-xuat', 'Đã xuất', 3], ['lich-su', 'Lịch sử']];
     const current = state.ptab || 'tong-quan';
     const tabBar = `<div class="ds-tabs-boxed" role="tablist" data-wf-block="4">${tabs.map(([key, label, count]) => `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-ptab="${key}" aria-selected="${key === current}">${label}${count ? `<span class="ds-tabs-boxed__count">${count}</span>` : ''}</button>`).join('')}</div>
       <button type="button" class="btn ds-tabs-mobile">${tabs.find(([key]) => key === current)[1]} ${icon('down')}</button>`;
@@ -1860,6 +1819,7 @@ function profileScreen() {
       'giay-to': `${dropzone(crew)}${section('Giấy tờ', docsBlock(), '', '5')}`,
       'di-tau': section('Lịch sử đi tàu', serviceBlock(), '<span class="muted">Tổng 7 năm 2 tháng</span>', '5'),
       'lich-su': section('Lịch sử chỉnh sửa', historyBlock(), '', '5'),
+      'da-xuat': section('Bộ giấy đã xuất', `<ul class="signers">${[['B0040', '28/09/2026', 'CV chủ tàu Trung Quốc', 'Cần làm lại'], ['B0035', '01/07/2022', 'QĐ điều động, Đơn tham gia BHXH, Ủy quyền nhận lương', 'Đã xong'], ['B0031', '12/03/2022', 'KQ thi tuyển, TB trúng tuyển, CV chủ tàu Trung Quốc, Phiếu thu', 'Đã xong']].map(([id, date, names, st]) => `<li><span class="cell2" style="flex:1 1 240px"><span class="cell2__main" style="font-weight:400">${names}</span><span class="cell2__sub">#${id} · ${date} · ${st}</span></span>${btn('Dùng lại', { size: 'sm', variant: 'ghost', iconName: 'copy' })}</li>`).join('')}</ul>`, btn('Tạo bộ giấy', { size: 'sm', variant: 'primary', iconName: 'plus' }), '5'),
     };
     return shell({ crumb: 'Thuyền viên', current: 'seafarers', content: `${head}${tabBar}${bodies[current]}` });
   }
@@ -2116,7 +2076,7 @@ function renderToolbar() {
 }
 
 function renderDesign() {
-  const screens = { 'thuyen-vien': crewScreen, 'ho-so': profileScreen, 'doi-chieu': vesselScreen, 'san-sang': readinessScreen, 'tao-bo': packCreateScreen, 'ky-duyet': packSignScreen, 'ban-xuat': packsScreen, mau: templatesScreen, 'mau-sua': templateEditScreen, 'ky-online': remoteSignScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
+  const screens = { 'thuyen-vien': crewScreen, 'ho-so': profileScreen, 'doi-chieu': vesselScreen, 'san-sang': readinessScreen, 'tao-bo': packCreateScreen, 'ky-duyet': packSignScreen, 'ban-xuat': packsScreen, 'ky-online': remoteSignScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
   const html = screens[state.man]();
   document.getElementById('wf-design').innerHTML = state.kho === 'mobile' ? `<div class="wf-phone-wrap"><div class="wf-phone">${html}</div></div>` : html;
   requestAnimationFrame(() => requestAnimationFrame(placeBlockNumbers));
@@ -2154,7 +2114,7 @@ document.querySelector('.wf-bar').addEventListener('click', (event) => {
   const param = button.closest('[data-wf-param]')?.dataset.wfParam;
   if (param) {
     state[param] = button.dataset.value;
-    if (param === 'man' || param === 'v') { state.tab = null; state.doc = null; state.focus = null; state.ptab = null; state.step = null; state.vtab = null; state.stage = null; state.pickDoc = null; state.cell = null; state.signStep = null; state.sider = null; state.menuOpen = false; state.userOpen = false; }
+    if (param === 'man' || param === 'v') { state.tab = null; state.doc = null; state.focus = null; state.ptab = null; state.step = null; state.vtab = null; state.stage = null; state.sel = null; state.pickDoc = null; state.cell = null; state.signStep = null; state.sider = null; state.menuOpen = false; state.userOpen = false; }
     render();
     return;
   }
@@ -2179,8 +2139,9 @@ document.addEventListener('click', (event) => {
   if (!event.target.closest('#tt-menu') && !event.target.closest('.wf-popover')) { document.querySelector('.wf-popover')?.remove(); document.getElementById('tt-menu').removeAttribute('data-open'); }
 });
 document.getElementById('wf-design').addEventListener('click', (event) => {
-  const target = event.target.closest('[data-action], [data-tab], [data-view], [data-pick], [data-doc], [data-field], [data-flip], [data-ptab], [data-step], [data-vtab], [data-stage], [data-pickdoc], [data-cell], [data-signstep]');
-  if (target?.dataset.stage) { state.stage = target.dataset.stage; state.pickDoc = null; renderDesign(); return; }
+  const target = event.target.closest('[data-action], [data-tab], [data-view], [data-pick], [data-doc], [data-field], [data-flip], [data-ptab], [data-step], [data-vtab], [data-stage], [data-pickdoc], [data-cell], [data-signstep], [data-toggle]');
+  if (target?.dataset.toggle) { const key = target.dataset.toggle; const sel = state.sel || ['qddd', 'bhxh', 'bl', 'uqcn', 'uql']; state.sel = sel.includes(key) ? sel.filter((k) => k !== key) : [...sel, key]; state.pickDoc = key; renderDesign(); return; }
+  if (target?.dataset.stage) { const key = target.dataset.stage; state.sel = key === 'none' ? [] : key === 'last' ? ['qddd', 'bhxh', 'uql'] : DOCS12.filter((d) => d[2] === key && d[0] !== 'kbhxh').map((d) => d[0]); state.pickDoc = null; renderDesign(); return; }
   if (target?.dataset.pickdoc) { state.pickDoc = target.dataset.pickdoc; renderDesign(); return; }
   if (target?.dataset.cell) { state.cell = target.dataset.cell; renderDesign(); return; }
   if (target?.dataset.signstep) { state.signStep = target.dataset.signstep; renderDesign(); return; }

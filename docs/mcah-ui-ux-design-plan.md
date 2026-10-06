@@ -329,6 +329,13 @@ Gom thành nhóm để mỗi lượt wireframe có nhóm **Màn** trên thanh c�
 
 ### Nhóm A: Tiếp nhận và duyệt, kèm khung app (rủi ro cao nhất, làm đầu tiên)
 
+> **Cổng 2 đã chốt (2026-10-06): Thuyền viên A, Hồ sơ A, Duyệt A.** Wireframe: `docs/design/wireframes/nhom-a.html`.
+> - Thuyền viên A: bảng, mỗi dòng một người (tình trạng, tàu hoặc ngày sẵn sàng, giấy tờ hết hạn, độ đầy đủ hồ sơ). Dấu nhỏ "giấy tờ chờ duyệt" dưới tên.
+> - Hồ sơ A: đầu trang là người, tab Tổng quan · Giấy tờ · Đi tàu · Lịch sử. Khung thả giấy tờ (điểm wow) ở đầu tab Tổng quan và Giấy tờ.
+> - Duyệt A: bản gốc trái, bản số hoá theo khuôn từng loại giấy tờ phải; bấm ô thì ô bên kia sáng; thanh quyết định dưới cùng.
+> - Hệ quả: màn Thuyền viên và Hồ sơ của nhóm A đã thay **B1** và **B2**. Nhóm B còn B3 (đối chiếu tàu) và phần readiness (READY / NEEDS_REVIEW / BLOCKED) gắn vào Hồ sơ A.
+> - Cần thêm vào design system khi dựng: nhóm trạng thái `crew` (Đang trên tàu, Chờ tàu, Nghỉ phép) và `cert` (Còn hạn, Sắp hết hạn, Hết hạn) trong `statusMap.js`; nút viền trên nền trang rê vào lấy nền `--secondary`.
+
 | Màn | Đến để làm gì | So sánh, quyết định bằng gì | Hành động cuối | Trạng thái phải vẽ |
 | --- | --- | --- | --- | --- |
 | **A1. Thuyền viên** (`/seafarers`, thay màn Tài liệu riêng) | Thêm thuyền viên kèm sổ, tải thêm tài liệu cho đúng người; thấy ai có tài liệu chờ duyệt hay đang kẹt | Trạng thái xử lý, số trường UNKNOWN, thời gian chờ | Upload; mở màn duyệt | Rỗng, đang tải, lỗi. Tệp trùng hash. Tệp quá 25 MB / 50 trang. FAILED có "Nhập tay". **PROCESSING quá 5 phút tô hổ phách "Chậm"**: trạng thái suy từ giờ, đặt "bây giờ" của wireframe sao cho có một tài liệu như vậy (`U3`). Chip lọc "Chờ duyệt" có số đếm |

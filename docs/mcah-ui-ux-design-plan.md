@@ -472,6 +472,30 @@ phân trang; chip lọc; thanh tiến độ; mục sidebar.
   - Vai màu mới (sidebar sáng, mục chọn nền xám, trạng thái 4 tông) là vai màu mà `U4` giữ.
   - Mọi wireframe sau dán file token của dự án, không dán `tokens.css` của skill.
 
+**Kết quả (HuyLD duyệt ngày 2026-10-06):**
+- **Token:** `frontend/src/theme/tokens.js` là nguồn duy nhất cho theme Ant Design và biến CSS.
+- **Component riêng của MCAH:** `frontend/src/components/ds/`. Bảng ánh xạ trạng thái nằm ở `statusMap.js`.
+- **Trang xem:** route `/design-system`, bản chia sẻ ở https://claude.ai/artifact/QfQ3kwDrMyLxW85R1Ln3k6.
+- **Phần còn thiếu cho MVP**, bổ sung ở giai đoạn 4 khi chốt wireframe của màn cần nó, không dựng trước:
+  - panel trượt;
+  - form nhiều bước có thanh các bước;
+  - toast;
+  - breadcrumb;
+  - bảng dữ liệu có tiêu đề cột sắp xếp;
+  - menu thao tác dạng dropdown;
+  - công tắc.
+
+**Mở rộng design system về sau** (Phase 3–5, màn mới, người mới vào dự án):
+
+1. **Tìm trước, dựng sau.** Màn mới cần thứ gì thì tìm trong `components/ds/`, theme Ant Design và trang `/design-system`. Đã có thì dùng, chỉ đổi qua prop. Không dựng bản thứ hai cho cùng một việc (`S9`, `D1`).
+2. **Chưa có thì dựng theo file mẫu của skill** (`references/components/*.md`, `layouts/*.md`). Tô bằng token, không mã màu viết cứng. Thứ chưa có mẫu thì đi luồng "Dựng một thứ chưa có mẫu" ở `principles.md`.
+3. **Dựng xong thì đưa vào cả ba chỗ:**
+   - trang `/design-system`, đủ các trạng thái;
+   - trang "01 · Foundations & Components" của file Figma;
+   - chạy probe `--sweep` trang đó tới khi danh sách `P` trống.
+4. **Trạng thái mới chỉ thêm vào `statusMap.js`**, vẫn trong bốn tông của `M7`. Ví dụ Phase 3 thêm nhóm "Chứng chỉ": Còn hạn, Sắp hết hạn, Hết hạn. Không đặt màu trạng thái riêng trong từng màn.
+5. **Đổi token** (màu nhấn, font, bo góc) **chỉ sửa trong `tokens.js`**. Sau đó chụp lại `/design-system` và cập nhật variables trong Figma. Không đè token trong từng màn.
+
 ### Giai đoạn 4: wireframe nhóm A, B, C (nhánh `U`), D3 dựng luôn, D4 dựng lại (2 ngày)
 
 Mỗi nhóm một lượt. Đề viết rõ **dữ liệu thật** (README: "Dựng mới thì nói dữ liệu thật") và **không liệt kê lỗi**. Đề không chứa các cụm đổi lối (mục 2.1).

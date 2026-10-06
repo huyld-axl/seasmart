@@ -1,0 +1,1494 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MCAH Wireframe Nhóm A</title>
+<style>/* inter-cyrillic-ext-400-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-400-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-400-normal.woff) format('woff');
+  unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;
+}
+
+/* inter-cyrillic-400-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-400-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-400-normal.woff) format('woff');
+  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+
+/* inter-greek-ext-400-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-400-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-400-normal.woff) format('woff');
+  unicode-range: U+1F00-1FFF;
+}
+
+/* inter-greek-400-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-400-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-400-normal.woff) format('woff');
+  unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;
+}
+
+/* inter-vietnamese-400-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-400-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-400-normal.woff) format('woff');
+  unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;
+}
+
+/* inter-latin-ext-400-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-400-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-400-normal.woff) format('woff');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/* inter-latin-400-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-400-normal.woff) format('woff');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}/* inter-cyrillic-ext-500-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-500-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-500-normal.woff) format('woff');
+  unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;
+}
+
+/* inter-cyrillic-500-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-500-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-500-normal.woff) format('woff');
+  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+
+/* inter-greek-ext-500-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-500-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-500-normal.woff) format('woff');
+  unicode-range: U+1F00-1FFF;
+}
+
+/* inter-greek-500-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-500-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-500-normal.woff) format('woff');
+  unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;
+}
+
+/* inter-vietnamese-500-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-500-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-500-normal.woff) format('woff');
+  unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;
+}
+
+/* inter-latin-ext-500-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-500-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-500-normal.woff) format('woff');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/* inter-latin-500-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-500-normal.woff) format('woff');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}/* inter-cyrillic-ext-600-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-600-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-600-normal.woff) format('woff');
+  unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;
+}
+
+/* inter-cyrillic-600-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-600-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-600-normal.woff) format('woff');
+  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+
+/* inter-greek-ext-600-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-600-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-600-normal.woff) format('woff');
+  unicode-range: U+1F00-1FFF;
+}
+
+/* inter-greek-600-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-600-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-600-normal.woff) format('woff');
+  unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;
+}
+
+/* inter-vietnamese-600-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-600-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-600-normal.woff) format('woff');
+  unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;
+}
+
+/* inter-latin-ext-600-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-600-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-600-normal.woff) format('woff');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/* inter-latin-600-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 600;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-600-normal.woff) format('woff');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}/* inter-cyrillic-ext-700-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-700-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-ext-700-normal.woff) format('woff');
+  unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;
+}
+
+/* inter-cyrillic-700-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-700-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-cyrillic-700-normal.woff) format('woff');
+  unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;
+}
+
+/* inter-greek-ext-700-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-700-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-ext-700-normal.woff) format('woff');
+  unicode-range: U+1F00-1FFF;
+}
+
+/* inter-greek-700-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-700-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-greek-700-normal.woff) format('woff');
+  unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;
+}
+
+/* inter-vietnamese-700-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-700-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-vietnamese-700-normal.woff) format('woff');
+  unicode-range: U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;
+}
+
+/* inter-latin-ext-700-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-700-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-ext-700-normal.woff) format('woff');
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+/* inter-latin-700-normal */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2) format('woff2'), url(../../../frontend/node_modules/@fontsource/inter/files/inter-latin-700-normal.woff) format('woff');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}</style>
+<style>
+  /* Wireframe nhóm A của MCAH (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
+     Token chép từ frontend/src/theme/tokens.js; component dùng chung class với frontend/src/components/ds/ds.css. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-hover: #1a4775;
+    --primary-foreground: #ffffff;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #f7f7f8;
+    --border-strong: #eaeaea;
+    --secondary: #e7e8ec;
+    --secondary-hover: #dbdce2;
+    --item-hover: #f4f4f6;
+    --surface-hover: #f8f8fa;
+    --button-hover: #f1f1f3;
+    --ring-focus: rgba(0, 51, 102, 0.1);
+    --border-focus: #003366;
+    --neutral: #52525c;
+    --neutral-bg: #f4f4f5;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --error-border: #ffc9c9;
+    --error: #fb2c36;
+    --error-text: #e7000b;
+    --danger: #c70036;
+    --danger-bg: rgba(255, 32, 86, 0.1);
+    --danger-bg-hover: rgba(255, 32, 86, 0.15);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-full: 9999px;
+    --elevation-popover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --legacy-none: 0;
+  }
+  /* Nấc Xám: tắt màu nhấn và màu trạng thái, còn lại giữ nguyên token (U3). */
+  :root[data-mau="xam"] {
+    --primary: #2c2c2c; --primary-hover: #474747; --primary-light: rgba(44, 44, 44, 0.05);
+    --ring-focus: rgba(44, 44, 44, 0.1); --border-focus: #2c2c2c;
+    --success: #52525c; --success-bg: #f4f4f5; --warning: #52525c; --warning-bg: #f4f4f5; --warning-border: #e4e4e7;
+    --error-strong: #52525c; --error-bg: #f4f4f5; --error-border: #e4e4e7; --error-text: #52525c; --danger: #52525c; --danger-bg: #f4f4f5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: none; }
+
+  /* Component riêng của MCAH. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
+   token (src/theme/tokens.js). Không mã màu nào ngoài biến, trừ lớp phủ theo màu chữ. */
+
+.ds-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ds-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---------- Badge trạng thái (M7) ---------- */
+.ds-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.05);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+.ds-badge--neutral { background: var(--neutral-bg); color: var(--neutral); }
+.ds-badge--success { background: var(--success-bg); color: var(--success); }
+.ds-badge--warning { background: var(--warning-bg); color: var(--warning); }
+.ds-badge--error { background: var(--error-bg); color: var(--error-strong); }
+.ds-badge__icon { font-size: 13px; }
+.ds-badge__dot { flex-shrink: 0; width: 10px; height: 10px; border-radius: 9999px; }
+.ds-badge__dot--ring { border: 1.5px solid currentColor; }
+.ds-badge__dot--ring-dot { border: 1.5px solid currentColor; background: radial-gradient(currentColor 0 2px, transparent 2.5px); }
+
+/* ---------- Ô trường duyệt ---------- */
+.ds-field {
+  display: grid;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.ds-field--active { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+.ds-field__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 28px; }
+.ds-field__label { color: var(--muted); font-size: 12px; font-weight: 500; }
+.ds-field__required { margin-left: 2px; color: var(--error-text); }
+.ds-field__value { margin: 0; overflow-wrap: anywhere; color: var(--foreground); font-size: 14px; font-weight: 500; }
+.ds-field__value--unknown { color: var(--muted); font-style: italic; font-weight: 400; }
+.ds-field__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.ds-field__badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.ds-field__actions { display: flex; flex-wrap: wrap; gap: 2px; }
+.ds-field__reason { margin: 0; color: var(--muted); font-size: 12px; }
+
+.ds-chip-page {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9999px;
+  background: rgb(44 44 44 / 0.05);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ds-chip-page:hover { background: rgb(44 44 44 / 0.1); }
+
+/* ---------- Khung xem tài liệu ---------- */
+.ds-viewer {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.ds-viewer__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 56px;
+  padding: 8px 12px 8px 20px;
+  border-bottom: 1px solid var(--border-strong);
+}
+.ds-viewer__name { flex: 1 1 200px; min-width: 0; margin: 0; overflow: hidden; font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ds-viewer__tools { display: flex; flex-shrink: 0; align-items: center; gap: 2px; }
+.ds-viewer__count { min-width: 44px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
+.ds-viewer__divider { width: 1px; height: 20px; margin: 0 6px; background: var(--border-strong); }
+.ds-viewer__evidence { margin: 0; padding: 8px 20px; border-bottom: 1px solid var(--border); background: var(--primary-light); color: var(--foreground); font-size: 12px; }
+.ds-viewer__stage { display: grid; place-items: start center; min-height: 320px; padding: 24px; overflow: auto; background: var(--background); }
+
+.ds-sample-page {
+  width: 100%;
+  min-width: 480px; /* trang tài liệu không co chữ theo màn: hẹp thì cuộn như ảnh */
+  max-width: 520px;
+  padding: 24px;
+  border-radius: 4px;
+  background: #fbfaf6; /* giấy sổ, chỉ trong trang mẫu */
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  color: #3b3b3b;
+  font-family: 'Courier New', ui-monospace, monospace;
+  font-size: 12px;
+}
+.ds-sample-page__title { margin: 0 0 12px; font-weight: 700; letter-spacing: 0.04em; }
+.ds-sample-page table { width: 100%; border-collapse: collapse; }
+.ds-sample-page th, .ds-sample-page td { padding: 6px; border: 1px solid #c9c4b5; text-align: left; }
+.ds-sample-page td { font-family: 'Segoe Script', 'Brush Script MT', cursive; font-size: 13px; }
+.ds-sample-page__stamp { margin: 16px 0 0; color: #5f5a4e; text-align: right; }
+
+/* ---------- Khung kéo thả tệp ---------- */
+.ds-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 24px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--background) 60%, transparent);
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.ds-drop:hover { background: var(--item-hover); }
+.ds-drop__title { color: var(--foreground); font-size: 14px; font-weight: 500; }
+.ds-drop__hint { margin-top: 4px; color: var(--muted); font-size: 14px; text-wrap: pretty; }
+.ds-drop__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  margin-top: 16px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: 14px;
+  font-weight: 500;
+}
+@media (hover: none) { .ds-drop__title { display: none; } }
+
+.ds-files { margin: 16px 0 0; padding: 0; list-style: none; }
+.ds-files__row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+.ds-files__row:first-child { border-top: 0; }
+.ds-files__icon { flex-shrink: 0; color: var(--muted); font-size: 18px; }
+.ds-files__body { display: grid; grid-template-columns: minmax(0, 1fr); flex: 1; gap: 6px; min-width: 0; }
+.ds-files__line { display: flex; align-items: baseline; gap: 12px; }
+.ds-files__name { display: flex; flex: 1; min-width: 0; margin: 0; font-size: 14px; font-weight: 500; }
+.ds-files__head { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-files__tail { flex-shrink: 0; white-space: nowrap; }
+.ds-files__percent { flex-shrink: 0; margin: 0; color: var(--muted); font-size: 14px; font-variant-numeric: tabular-nums; }
+.ds-files__meta { margin: 0; color: var(--muted); font-size: 12px; }
+.ds-files__meta--error { color: var(--error-text); }
+.ds-files__meta--warning { color: var(--warning); }
+
+/* ---------- Thanh tiến độ ---------- */
+.ds-progress { height: 8px; border-radius: 9999px; background: rgb(44 44 44 / 0.05); overflow: hidden; }
+.ds-progress--thin { height: 4px; }
+.ds-progress__bar { height: 100%; border-radius: 9999px; background: var(--primary); }
+.ds-progress-block { display: grid; gap: 8px; }
+.ds-progress-block__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ds-progress-block__label { min-width: 0; margin: 0; font-size: 14px; font-weight: 500; }
+.ds-progress-block__value { flex-shrink: 0; margin: 0; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+
+/* ---------- Dòng thời gian audit ---------- */
+.ds-timeline { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.ds-timeline__item { position: relative; display: flex; gap: 12px; padding-bottom: 24px; }
+.ds-timeline__item:last-child { padding-bottom: 0; }
+.ds-timeline__line { position: absolute; top: 40px; bottom: 4px; left: 15px; width: 2px; background: var(--border-strong); }
+.ds-timeline__item:last-child .ds-timeline__line { display: none; }
+.ds-timeline__icon { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; border-radius: 9999px; font-size: 14px; }
+.ds-timeline__icon--neutral { background: var(--neutral-bg); color: var(--neutral); }
+.ds-timeline__icon--success { background: var(--success-bg); color: var(--success); }
+.ds-timeline__icon--warning { background: var(--warning-bg); color: var(--warning); }
+.ds-timeline__icon--error { background: var(--error-bg); color: var(--error-strong); }
+.ds-timeline__body { min-width: 0; flex: 1; padding-top: 6px; }
+.ds-timeline__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 16px; }
+.ds-timeline__title { margin: 0; color: var(--foreground); font-weight: 500; }
+.ds-timeline__time { flex-shrink: 0; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ds-timeline__change { margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+.ds-timeline__before { color: var(--muted); text-decoration: line-through; }
+.ds-timeline__after { color: var(--foreground); font-weight: 500; }
+.ds-timeline__detail { max-width: 55ch; margin: 4px 0 0; color: var(--muted); text-wrap: pretty; }
+.ds-timeline__meta { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+
+/* ---------- Banner ---------- */
+.ds-banner { display: flex; gap: 12px; padding: 16px; border: 1px solid; border-radius: var(--radius-lg); }
+.ds-banner--warning { border-color: var(--warning-border); background: var(--warning-bg); }
+.ds-banner--error { border-color: var(--error-border); background: var(--error-bg); }
+.ds-banner--neutral { border-color: var(--border-strong); background: var(--surface); }
+.ds-banner__icon { flex-shrink: 0; margin-top: 2px; font-size: 18px; }
+.ds-banner--warning .ds-banner__icon, .ds-banner--warning .ds-banner__title { color: var(--warning); }
+.ds-banner--error .ds-banner__icon, .ds-banner--error .ds-banner__title { color: var(--error-strong); }
+.ds-banner--neutral .ds-banner__icon { color: var(--muted); }
+.ds-banner__body { flex: 1; min-width: 0; }
+.ds-banner__title { margin: 0; font-size: 14px; font-weight: 500; }
+.ds-banner__text { margin: 2px 0 0; color: rgb(44 44 44 / 0.8); font-size: 14px; text-wrap: pretty; }
+.ds-banner__body ul { margin: 6px 0 0; padding-left: 18px; color: rgb(44 44 44 / 0.8); font-size: 14px; }
+.ds-banner__action { display: flex; flex-shrink: 0; align-items: center; align-self: center; gap: 4px; }
+
+/* ---------- Card chọn ---------- */
+.ds-choice { min-width: 0; margin: 0; padding: 0; border: 0; }
+.ds-choice__legend { margin-bottom: 12px; padding: 0; font-size: 14px; font-weight: 500; }
+.ds-choice__grid { display: grid; grid-template-columns: repeat(var(--ds-choice-columns, 1), minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 639px) { .ds-choice__grid { grid-template-columns: minmax(0, 1fr); } }
+.ds-choice__card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.ds-choice__card:hover { background: var(--surface-hover); }
+.ds-choice__card:has(:checked) { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+.ds-choice__card.is-disabled { cursor: not-allowed; opacity: 0.5; }
+.ds-choice__radio {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 9999px;
+  background: var(--surface);
+  appearance: none;
+  outline: none;
+  cursor: inherit;
+}
+.ds-choice__radio:checked { border: 6px solid var(--primary); }
+.ds-choice__text { min-width: 0; }
+.ds-choice__title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; font-size: 14px; font-weight: 500; }
+.ds-choice__aside { color: var(--muted); font-size: 12px; font-weight: 400; }
+.ds-choice__desc { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; }
+
+/* ---------- Danh sách mô tả ---------- */
+.ds-dl { display: grid; gap: 12px; margin: 0; container-type: inline-size; font-size: 14px; }
+.ds-dl__row { display: grid; gap: 4px; }
+.ds-dl__label { color: var(--muted); }
+.ds-dl__value { min-width: 0; margin: 0; overflow-wrap: anywhere; color: var(--foreground); font-weight: 500; }
+.ds-dl__value--empty { color: var(--muted); font-weight: 400; }
+@container (min-width: 384px) { .ds-dl__row { grid-template-columns: 7rem minmax(0, 1fr); align-items: baseline; gap: 24px; } }
+@container (min-width: 576px) { .ds-dl__row { grid-template-columns: 10rem minmax(0, 1fr); } }
+
+/* ---------- Tab boxed, chip lọc ---------- */
+.ds-tabs-boxed { display: flex; gap: 4px; }
+.ds-tabs-select { display: none !important; width: max-content; min-width: 200px; }
+.ds-tabs-select__prefix { color: var(--muted); }
+@media (max-width: 639px) {
+  .ds-tabs-boxed { display: none; }
+  .ds-tabs-select { display: inline-flex !important; }
+}
+.ds-tabs-boxed__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: rgb(44 44 44 / 0.7);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ds-tabs-boxed__tab:hover { background: rgb(44 44 44 / 0.05); color: var(--foreground); }
+.ds-tabs-boxed__tab[aria-selected='true'] { background: var(--secondary); color: var(--foreground); font-weight: 500; }
+.ds-tabs-boxed__count { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ds-tabs-boxed__tab[aria-selected='true'] .ds-tabs-boxed__count { color: var(--foreground); }
+
+.ds-chips { overflow-x: auto; padding-block: 2px; }
+.ds-chips__row { display: flex; gap: 8px; padding-inline: 4px; }
+.ds-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  max-width: 192px;
+  height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: rgb(44 44 44 / 0.05);
+  color: rgb(44 44 44 / 0.7);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.ds-chip:hover { background: rgb(44 44 44 / 0.1); color: var(--foreground); }
+.ds-chip[aria-pressed='true'] { background: var(--primary); color: var(--primary-foreground); }
+.ds-chip__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------- Tự lưu, rỗng, dòng danh sách ---------- */
+.ds-save { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 12px; }
+.ds-save--failed { color: var(--error-text); }
+
+.ds-empty { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 40px 16px; text-align: center; }
+.ds-empty__title { margin: 0; color: var(--foreground); font-size: 14px; font-weight: 500; }
+.ds-empty__title--error { color: var(--error-text); }
+.ds-empty__text { max-width: 48ch; margin: 0; color: var(--muted); font-size: 14px; text-wrap: pretty; }
+.ds-empty__action { margin-top: 12px; }
+
+.ds-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radius-md); }
+.ds-row:hover { background: var(--item-hover); }
+.ds-row__leading { flex-shrink: 0; }
+.ds-row__body { flex: 1; min-width: 0; }
+.ds-row__title { margin: 0; overflow: hidden; color: var(--foreground); font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ds-row__meta { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+.ds-row__trailing { flex-shrink: 0; }
+
+.product-brand {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-brand__mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.product-brand__mark svg {
+  width: 20px;
+  height: 20px;
+}
+
+.product-brand__name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-brand--collapsed .product-brand__name {
+  display: none;
+}
+
+.product-brand--inverted .product-brand__mark {
+  background: #ffffff;
+  color: #001529; /* nền sidebar tối hiện tại */
+}
+
+.product-brand--inverted .product-brand__name {
+  color: var(--primary-foreground);
+}
+
+
+  /* ===== Thanh công cụ của wireframe (nằm ngoài bản thiết kế, design-process.md U3) ===== */
+  .wf-bar { position: relative; z-index: 50; display: flex; align-items: center; gap: 24px; height: 56px; padding: 0 16px; overflow-x: auto; white-space: nowrap;
+    background: #fff; border-bottom: 1px solid #e5e5e5; color: #737373; font: 14px/1 system-ui, -apple-system, sans-serif; }
+  .wf-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .wf-set { display: flex; align-items: center; gap: 2px; flex-shrink: 0; padding: 3px; border-radius: 10px; background: #f4f4f5; }
+  .wf-set button { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 32px; height: 30px; padding: 0 10px;
+    border: 0; border-radius: 7px; background: none; color: #737373; cursor: pointer; }
+  .wf-set button:hover { color: #171717; }
+  .wf-set button[aria-pressed="true"] { background: #fff; color: #171717; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 0 0 1px rgb(0 0 0 / .04); }
+  .wf-set button[data-recommended]::after { content: ""; position: absolute; top: 5px; right: 5px; width: 5px; height: 5px; border-radius: 50%; background: #003366; }
+  .wf-set svg { width: 16px; height: 16px; }
+  .wf-switch { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 0; border: 0; background: none; color: #737373; cursor: pointer; }
+  .wf-switch i { position: relative; width: 36px; height: 20px; border-radius: 10px; background: #e4e4e7; }
+  .wf-switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: translate .15s; }
+  .wf-switch[aria-checked="true"] i { background: #171717; }
+  .wf-switch[aria-checked="true"] i::after { translate: 16px 0; }
+  .wf-menu { position: relative; flex-shrink: 0; }
+  .wf-menu > button { display: flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: none; color: #737373; cursor: pointer; }
+  .wf-menu > button:hover, .wf-menu[data-open] > button { background: #f4f4f5; }
+  .wf-menu b { color: #171717; font-weight: 500; }
+  .wf-popover { position: fixed; z-index: 60; display: grid; min-width: 168px; padding: 4px; background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / .08); }
+  .wf-popover button { display: flex; align-items: center; height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: none; color: #404040; text-align: left; cursor: pointer; }
+  .wf-popover button:hover, .wf-popover button[aria-pressed="true"] { background: #f4f4f5; color: #171717; }
+  .wf-reason { border-bottom: 1px solid #e5e5e5; background: #fafafa; color: #404040; font: 13px/1.5 system-ui, -apple-system, sans-serif; }
+  .wf-reason summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 44px; padding: 8px 16px; cursor: pointer; list-style: none; }
+  .wf-reason summary::-webkit-details-marker { display: none; }
+  .wf-reason-name { color: #171717; font-weight: 600; white-space: nowrap; }
+  .wf-reason-tag { flex-shrink: 0; height: 20px; padding: 0 8px; border-radius: 10px; background: #e6edf5; color: #003366; font-size: 12px; font-weight: 500; line-height: 20px; }
+  .wf-reason-why { flex: 1; min-width: 0; overflow: hidden; color: #525252; text-overflow: ellipsis; white-space: nowrap; }
+  .wf-reason[open] .wf-reason-why { white-space: normal; }
+  .wf-reason-toggle { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; height: 28px; margin-left: auto; padding: 0 8px; border-radius: 6px; color: #171717; font-weight: 500; }
+  .wf-reason-toggle svg { width: 14px; height: 14px; transition: rotate .15s; }
+  .wf-reason[open] .wf-reason-toggle svg { rotate: 180deg; }
+  .wf-reason-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 4px 16px 16px; }
+  .wf-reason-cols { display: grid; max-width: 1120px; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px 32px; }
+  .wf-reason h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; color: #171717; font-size: 12px; font-weight: 600; }
+  .wf-reason h3 i { width: 6px; height: 6px; border-radius: 50%; background: #a3a3a3; }
+  .wf-reason h3 i[data-tone="uu"] { background: #16a34a; }
+  .wf-reason h3 i[data-tone="nhuoc"] { background: #d97706; }
+  .wf-reason ul { display: grid; gap: 2px; margin: 0; padding-left: 16px; }
+  .wf-reason p { margin: 0; }
+  .wf-reason-tips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid #ebebeb; }
+  .wf-reason-tips h3 { margin: 0 4px 0 0; }
+  .wf-reason-tips button { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid #e5e5e5; border-radius: 8px; background: #fff; color: #262626; white-space: nowrap; cursor: pointer; }
+  .wf-reason-tips button:hover { background: #f5f5f5; }
+  .wf-reason-tips button[data-copied] { color: #16a34a; }
+  @media (max-width: 767px) {
+    .wf-reason-why { order: 1; flex-basis: 100%; }
+    .wf-reason-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .wf-reason-tips h3 { flex-basis: 100%; }
+  }
+  [data-wf-block] { position: relative; }
+  [data-wf-block]::before { content: attr(data-wf-block); position: absolute; top: 4px; left: 4px; z-index: 5; display: grid; place-items: center;
+    width: 18px; height: 18px; border-radius: 9px; background: #1f1f1f; color: #fff; font: 500 11px/1 system-ui, sans-serif; pointer-events: none; }
+  [data-wf-block][data-wf-block-out]::before { top: auto; bottom: 100%; }
+  .wf-stage { padding: 0; }
+  .wf-phone-wrap { display: grid; place-items: center; padding: 24px 16px; }
+  .wf-phone { position: relative; width: 375px; max-width: 100%; height: 812px; overflow: auto; border: 1px solid #ddd; border-radius: 24px; background: var(--background); }
+
+  /* ===== Bản thiết kế: khung app ===== */
+  .app { container: app / inline-size; position: relative; display: flex; min-height: calc(100vh - 100px); background: var(--background); }
+  .wf-phone .app { min-height: 100%; }
+  @media (max-width: 439px) { .wf-phone-wrap { padding: 0; } .wf-phone { width: 100%; height: auto; min-height: 812px; border: 0; border-radius: 0; } }
+  .sider { position: sticky; top: 0; display: flex; flex-direction: column; flex-shrink: 0; width: 240px; height: 100vh; max-height: 100%; overflow: hidden; background: var(--surface); transition: width .2s; }
+  .sider--collapsed { width: 64px; }
+  .sider__head { display: flex; align-items: center; height: 64px; padding: 0 16px; border-bottom: 1px solid var(--border); }
+  .sider__nav { display: flex; flex-direction: column; gap: 4px; padding: 12px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 12px; color: rgb(44 44 44 / .7); text-decoration: none; white-space: nowrap; overflow: hidden; cursor: pointer; }
+  .nav-item svg { flex-shrink: 0; font-size: 16px; }
+  .nav-item:hover { background: var(--item-hover); color: var(--foreground); }
+  .nav-item[aria-current="page"] { background: var(--secondary); color: var(--foreground); font-weight: 500; }
+  .sider--collapsed .nav-item span, .sider--collapsed .product-brand__name { display: none; }
+  .main { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+  .topbar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; height: 64px; padding: 0 16px 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .topbar__title { min-width: 0; margin: 0; overflow: hidden; font-size: 16px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar__crumb { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--muted); font-size: 14px; }
+  .topbar__crumb a { display: inline-flex; align-items: center; min-height: 32px; color: var(--muted); text-decoration: none; }
+  .topbar__crumb a:hover { color: var(--foreground); }
+  .topbar__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .user-btn { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 8px 0 4px; border: 0; border-radius: 12px; background: none; cursor: pointer; }
+  .user-btn:hover, .user-btn[aria-expanded="true"] { background: rgb(44 44 44 / .05); }
+  .avatar { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; border-radius: 9999px; background: #e6edf5; color: #1a4775; font-size: 12px; font-weight: 600; }
+  .user-btn__name { font-size: 14px; font-weight: 500; }
+  .user-btn svg { color: var(--muted); font-size: 12px; }
+  .menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 30; display: grid; min-width: 220px; max-width: calc(100cqw - 24px); padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--elevation-popover); }
+  .menu__meta { padding: 8px 12px; color: var(--muted); font-size: 12px; }
+  .menu__item { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--foreground); text-align: left; cursor: pointer; }
+  .menu__item:hover { background: var(--item-hover); }
+  .menu__item--danger { color: var(--danger); }
+  .menu__sep { height: 1px; margin: 4px 0; background: var(--border); }
+  .btn.burger { display: none; }
+  .content { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 16px; padding: 16px; }
+  @container app (min-width: 640px) { .content { padding: 24px; } }
+  @container app (max-width: 639px) {
+    .sider { display: none; }
+    .btn.burger { display: inline-flex; }
+    .topbar { padding-left: 8px; }
+    .user-btn__name { display: none; }
+  }
+  /* Tab trạng thái thành nút "Trạng thái:" dưới 640 (luật chốt #7), đo theo khung app thay vì viewport. */
+  .btn.ds-tabs-mobile { display: none; gap: 6px; }
+  @container app (max-width: 639px) { .ds-tabs-boxed { display: none; } .btn.ds-tabs-mobile { display: inline-flex; } .btn.sider-toggle { display: none; } }
+  @container app (min-width: 640px) { .ds-tabs-boxed { display: flex; } }
+  .drawer-scrim { position: absolute; inset: 0; z-index: 40; background: rgb(0 0 0 / .3); }
+  .drawer { position: absolute; inset: 0 auto 0 0; z-index: 41; width: 280px; max-width: 85%; background: var(--surface); box-shadow: var(--elevation-modal); }
+  .bottombar { position: sticky; bottom: 0; z-index: 20; display: none; grid-template-columns: repeat(5, 1fr); height: 64px; border-top: 1px solid var(--border); background: var(--surface); }
+  .bottombar a { display: grid; place-content: center; justify-items: center; gap: 2px; color: rgb(44 44 44 / .7); font-size: 11px; text-decoration: none; }
+  .bottombar a svg { font-size: 18px; }
+  .bottombar a[aria-current="page"] { color: var(--foreground); font-weight: 600; }
+  @container app (max-width: 639px) { .app[data-nav="duoi"] .bottombar { display: grid; } .app[data-nav="duoi"] .btn.burger { display: none; } }
+
+  /* ===== Control theo theme Ant Design của dự án ===== */
+  .btn { white-space: nowrap; display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1px solid var(--border-strong);
+    border-radius: 12px; background: var(--surface); color: var(--foreground); font-weight: 500; line-height: 1.2; text-align: center; cursor: pointer; transition: background-color .15s; }
+  .btn:hover { background: var(--button-hover); }
+  /* Nút viền đặt trên nền trang hay nền banner: nền rê lấy secondary, #f1f1f3 tan vào #f4f4f6. */
+  .err-block .btn:not(.btn--primary):hover, .ds-banner .btn:hover, .toolbar > .btn:not(.btn--primary):hover, .ds-empty .btn:not(.btn--primary):hover { background: var(--secondary); }
+  .btn svg { font-size: 16px; }
+  .btn--primary { border-color: transparent; background: var(--primary); color: var(--primary-foreground); }
+  .btn--primary:hover { background: var(--primary-hover); }
+  .btn--secondary { border-color: transparent; background: var(--secondary); }
+  .btn--secondary:hover { background: var(--secondary-hover); }
+  .btn--ghost { border-color: transparent; background: transparent; color: var(--muted); }
+  .btn--ghost:hover { background: rgb(44 44 44 / .05); color: var(--foreground); }
+  .btn--sm { min-height: 32px; padding: 0 12px; border-radius: 8px; }
+  .btn--icon { width: 40px; padding: 0; }
+  .btn--icon.btn--sm { width: 32px; }
+  .btn[aria-disabled="true"] { cursor: not-allowed; opacity: .5; }
+  .btn--lg { min-height: 48px; }
+  .btn--block { width: 100%; }
+  .search { position: relative; display: flex; align-items: center; min-width: 0; }
+  .search svg { position: absolute; left: 14px; color: var(--muted); font-size: 16px; pointer-events: none; }
+  .input { width: 100%; height: 40px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); outline: none; transition: border-color .15s, box-shadow .15s; }
+  .input::placeholder { color: var(--muted); }
+  .input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .search .input { padding-left: 40px; }
+  .input--lg { height: 48px; }
+  .input--error { border-color: var(--error); }
+  .field-label { display: block; width: fit-content; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+  .field-hint { min-height: 16px; margin: 6px 0 0; color: var(--error-text); font-size: 12px; }
+
+  .panel { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+  .panel__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px 0; }
+  .panel__title { margin: 0; font-size: 16px; font-weight: 600; }
+  .panel__body { padding: 16px 20px 20px; }
+  .muted { color: var(--muted); }
+  .num { font-variant-numeric: tabular-nums; }
+  .warn-text { color: var(--warning); }
+  .sk { display: block; height: 12px; border-radius: 6px; background: rgb(44 44 44 / .07); }
+
+  /* ===== Bảng tài liệu ===== */
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .toolbar__search { flex: 1 1 220px; max-width: 320px; margin-left: auto; }
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { height: 44px; padding: 0 16px; color: var(--muted); font-size: 12px; font-weight: 500; text-align: left; white-space: nowrap; }
+  .tbl td { height: 64px; padding: 8px 16px; border-top: 1px solid var(--border); vertical-align: middle; }
+  .tbl tbody tr:hover { background: var(--surface-hover); }
+  .tbl .right { text-align: right; }
+  .cell2 { display: grid; min-width: 0; }
+  .cell2__main { overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+  .cell2__sub { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+  .tbl-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); }
+  .doc-list { display: none; margin: 0; padding: 4px 8px; list-style: none; }
+  .doc-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; padding: 12px 8px; border-top: 1px solid var(--border); }
+  .doc-list li:first-child { border-top: 0; }
+  @container app (max-width: 639px) { .tbl-wrap { display: none; } .doc-list { display: block; } .toolbar__search { max-width: none; margin-left: 0; } }
+  @container app (max-width: 1023px) { .col-lg { display: none; } }
+
+  /* ===== Màn duyệt ===== */
+  .page-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 16px; }
+  .page-head__text { flex: 1 1 280px; min-width: 0; }
+  .page-head__title { margin: 0; font-size: 18px; font-weight: 600; text-wrap: balance; }
+  .page-head__desc { max-width: 55ch; margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+  .page-head__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+  .publish-note { margin: 6px 0 0; color: var(--muted); font-size: 12px; text-align: right; }
+  .review { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+  @container app (min-width: 1024px) { .review { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .review .ds-viewer { position: sticky; top: 88px; } }
+  .review .ds-viewer__stage { min-height: 520px; }
+  .switch-view { display: none; }
+  @container app (max-width: 1023px) { .switch-view { display: flex; } .review[data-view="fields"] .ds-viewer { display: none; } .review[data-view="doc"] .fields-col { display: none; } }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: rgb(44 44 44 / .05); }
+  .seg button { height: 34px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: rgb(44 44 44 / .7); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 0 0 1px rgb(0 0 0 / .04); }
+  .fields-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .group { display: grid; gap: 12px; }
+  .group__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; }
+  .group__title { margin: 0; font-size: 16px; font-weight: 600; }
+  .group__count { color: var(--muted); font-size: 14px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); gap: 12px; }
+  .contract { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+  .contract__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .contract__title { margin: 0; font-size: 14px; font-weight: 600; }
+  .stack { display: grid; gap: 12px; }
+  .focus-card > .ds-badge { justify-self: start; }
+  .okrow { display: grid; grid-template-columns: 8rem minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 44px; padding: 6px 12px; border-top: 1px solid var(--border); font-size: 14px; }
+  .okrow:first-child { border-top: 0; }
+  .okrow__label { color: var(--muted); font-size: 12px; }
+  .okrow__value { overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+  @container app (max-width: 639px) {
+    .okrow { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; }
+    .okrow__label { grid-column: 1; grid-row: 1; }
+    .okrow__value { grid-column: 1; grid-row: 2; white-space: normal; }
+    .okrow > .ds-field__extra { grid-column: 2; grid-row: 1 / 3; }
+    .okrow > .ds-field__extra:has(.ds-badge) { grid-column: 1 / -1; grid-row: 3; }
+  }
+  .collapse { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+  .collapse > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 20px; cursor: pointer; list-style: none; }
+  .collapse > summary::-webkit-details-marker { display: none; }
+  .collapse > summary svg { color: var(--muted); transition: rotate .2s; }
+  .collapse[open] > summary svg { rotate: 180deg; }
+  .collapse__body { padding: 0 8px 8px; }
+  .problem { display: grid; gap: 8px; }
+  .ds-field__extra { display: flex; flex-wrap: wrap; gap: 4px; }
+  .focus-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .focus-card { display: grid; gap: 16px; padding: 24px; border: 1px solid var(--border-focus); border-radius: 16px; background: var(--surface); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .focus-card__value { margin: 0; font-size: 20px; font-weight: 600; }
+  .kbd { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--background); color: var(--muted); font: 500 11px/1 ui-monospace, monospace; }
+  .focus-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .field-dots { display: flex; flex-wrap: wrap; gap: 6px; }
+  .field-dots span { width: 10px; height: 10px; border-radius: 9999px; background: var(--secondary); }
+  .field-dots span[data-tone="success"] { background: var(--success); }
+  .field-dots span[data-tone="warning"] { background: var(--warning); }
+  .field-dots span[data-tone="error"] { background: var(--error-strong); }
+  .field-dots span[aria-current="true"] { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+  /* ===== Đăng nhập, trang lỗi ===== */
+  .auth { display: grid; place-items: start center; min-height: 100%; padding: 64px 16px; background: var(--background); }
+  @container auth (min-width: 640px) { .auth { padding-top: 120px; } }
+  .auth-wrap { container: auth / inline-size; min-height: calc(100vh - 100px); }
+  .wf-phone .auth-wrap { min-height: 100%; }
+  .auth-card { display: grid; gap: 20px; width: 100%; max-width: 448px; padding: 32px; border-radius: 16px; background: var(--surface); }
+  @container auth (max-width: 639px) { .auth-card { padding: 24px; } }
+  .auth-card h1 { margin: 12px 0 0; font-size: 20px; font-weight: 600; }
+  .pw { position: relative; }
+  .pw .input { padding-right: 48px; }
+  .pw button { position: absolute; inset: 0 4px 0 auto; display: grid; place-items: center; width: 40px; margin: auto 0; height: 40px; border: 0; border-radius: 8px; background: none; color: var(--muted); cursor: pointer; }
+  .err-block { max-width: 448px; margin: 0 auto; padding: 64px 0; text-align: center; }
+  @container app (min-width: 640px) { .err-block { padding-top: 96px; } }
+  .err-block__code { margin: 0; color: var(--muted); font-size: 14px; font-weight: 500; }
+  .err-block__title { margin: 4px 0 0; font-size: 20px; font-weight: 600; text-wrap: balance; }
+  .err-block__desc { margin: 8px 0 0; color: var(--muted); text-wrap: pretty; }
+  .err-block__desc b { color: var(--foreground); font-weight: 500; }
+  .err-block__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 24px; }
+  @container app (max-width: 639px) { .err-block__actions { flex-direction: column; } }
+  .err-block__foot { margin: 24px 0 0; color: var(--muted); font-size: 12px; }
+  .err-block__code-line { display: inline-flex; align-items: center; gap: 6px; font-family: ui-monospace, monospace; }
+</style>
+
+</head>
+<body>
+<nav class="wf-bar" aria-label="Wireframe">
+  <div class="wf-group"><span>Màn</span><span class="wf-set" data-wf-param="man"></span></div>
+  <div class="wf-group"><span>Phương án</span><span class="wf-set" data-wf-param="v"></span></div>
+  <button type="button" class="wf-switch" data-wf-toggle="mau" role="switch">Màu <i></i></button>
+  <span class="wf-set" data-wf-param="kho"></span>
+  <span class="wf-set" data-wf-param="nav"></span>
+  <div class="wf-menu" id="tt-menu"><button type="button"><span>Trạng thái:</span><b id="tt-current"></b>
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div>
+</nav>
+<details class="wf-reason">
+  <summary>
+    <span class="wf-reason-name" id="reason-name"></span>
+    <span class="wf-reason-tag" id="reason-tag">Khuyên dùng</span>
+    <span class="wf-reason-why" id="reason-why"></span>
+    <span class="wf-reason-toggle"><span>Ưu, nhược</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+  </summary>
+  <div class="wf-reason-body">
+    <div class="wf-reason-cols">
+      <section><h3><i data-tone="uu"></i>Ưu</h3><ul id="reason-pros"></ul></section>
+      <section><h3><i data-tone="nhuoc"></i>Nhược</h3><ul id="reason-cons"></ul></section>
+      <section><h3><i></i>Hợp khi</h3><p id="reason-fit"></p></section>
+    </div>
+    <div class="wf-reason-tips" id="reason-tips"><h3>Gợi ý góp ý</h3></div>
+  </div>
+</details>
+<main id="wf-design" class="wf-stage"></main>
+
+<script>
+const ICONS = {"file-text": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M854.6 288.6L639.4 73.4c-6-6-14.1-9.4-22.6-9.4H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V311.3c0-8.5-3.4-16.7-9.4-22.7zM790.2 326H602V137.8L790.2 326zm1.8 562H232V136h302v216a42 42 0 0042 42h216v494zM504 618H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8zM312 490v48c0 4.4 3.6 8 8 8h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8z\" /></svg>", "team": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M824.2 699.9a301.55 301.55 0 00-86.4-60.4C783.1 602.8 812 546.8 812 484c0-110.8-92.4-201.7-203.2-200-109.1 1.7-197 90.6-197 200 0 62.8 29 118.8 74.2 155.5a300.95 300.95 0 00-86.4 60.4C345 754.6 314 826.8 312 903.8a8 8 0 008 8.2h56c4.3 0 7.9-3.4 8-7.7 1.9-58 25.4-112.3 66.7-153.5A226.62 226.62 0 01612 684c60.9 0 118.2 23.7 161.3 66.8C814.5 792 838 846.3 840 904.3c.1 4.3 3.7 7.7 8 7.7h56a8 8 0 008-8.2c-2-77-33-149.2-87.8-203.9zM612 612c-34.2 0-66.4-13.3-90.5-37.5a126.86 126.86 0 01-37.5-91.8c.3-32.8 13.4-64.5 36.3-88 24-24.6 56.1-38.3 90.4-38.7 33.9-.3 66.8 12.9 91 36.6 24.8 24.3 38.4 56.8 38.4 91.4 0 34.2-13.3 66.3-37.5 90.5A127.3 127.3 0 01612 612zM361.5 510.4c-.9-8.7-1.4-17.5-1.4-26.4 0-15.9 1.5-31.4 4.3-46.5.7-3.6-1.2-7.3-4.5-8.8-13.6-6.1-26.1-14.5-36.9-25.1a127.54 127.54 0 01-38.7-95.4c.9-32.1 13.8-62.6 36.3-85.6 24.7-25.3 57.9-39.1 93.2-38.7 31.9.3 62.7 12.6 86 34.4 7.9 7.4 14.7 15.6 20.4 24.4 2 3.1 5.9 4.4 9.3 3.2 17.6-6.1 36.2-10.4 55.3-12.4 5.6-.6 8.8-6.6 6.3-11.6-32.5-64.3-98.9-108.7-175.7-109.9-110.9-1.7-203.3 89.2-203.3 199.9 0 62.8 28.9 118.8 74.2 155.5-31.8 14.7-61.1 35-86.5 60.4-54.8 54.7-85.8 126.9-87.8 204a8 8 0 008 8.2h56.1c4.3 0 7.9-3.4 8-7.7 1.9-58 25.4-112.3 66.7-153.5 29.4-29.4 65.4-49.8 104.7-59.7 3.9-1 6.5-4.7 6-8.7z\" /></svg>", "send": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><defs><style /></defs><path d=\"M931.4 498.9L94.9 79.5c-3.4-1.7-7.3-2.1-11-1.2a15.99 15.99 0 00-11.7 19.3l86.2 352.2c1.3 5.3 5.2 9.6 10.4 11.3l147.7 50.7-147.6 50.7c-5.2 1.8-9.1 6-10.3 11.3L72.2 926.5c-.9 3.7-.5 7.6 1.2 10.9 3.9 7.9 13.5 11.1 21.5 7.2l836.5-417c3.1-1.5 5.6-4.1 7.2-7.1 3.9-8 .7-17.6-7.2-21.6zM170.8 826.3l50.3-205.6 295.2-101.3c2.3-.8 4.2-2.6 5-5 1.4-4.2-.8-8.7-5-10.2L221.1 403 171 198.2l628 314.9-628.2 313.2z\" /></svg>", "database": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32zm-600 72h560v208H232V136zm560 480H232V408h560v208zm0 272H232V680h560v208zM304 240a40 40 0 1080 0 40 40 0 10-80 0zm0 272a40 40 0 1080 0 40 40 0 10-80 0zm0 272a40 40 0 1080 0 40 40 0 10-80 0z\" /></svg>", "safety-certificate": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M866.9 169.9L527.1 54.1C523 52.7 517.5 52 512 52s-11 .7-15.1 2.1L157.1 169.9c-8.3 2.8-15.1 12.4-15.1 21.2v482.4c0 8.8 5.7 20.4 12.6 25.9L499.3 968c3.5 2.7 8 4.1 12.6 4.1s9.2-1.4 12.6-4.1l344.7-268.6c6.9-5.4 12.6-17 12.6-25.9V191.1c.2-8.8-6.6-18.3-14.9-21.2zM810 654.3L512 886.5 214 654.3V226.7l298-101.6 298 101.6v427.6zm-405.8-201c-3-4.1-7.8-6.6-13-6.6H336c-6.5 0-10.3 7.4-6.5 12.7l126.4 174a16.1 16.1 0 0026 0l212.6-292.7c3.8-5.3 0-12.7-6.5-12.7h-55.2c-5.1 0-10 2.5-13 6.6L468.9 542.4l-64.7-89.1z\" /></svg>", "menu": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M904 160H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8zm0 624H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8zm0-312H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8z\" /></svg>", "upload": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M400 317.7h73.9V656c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V317.7H624c6.7 0 10.4-7.7 6.3-12.9L518.3 163a8 8 0 00-12.6 0l-112 141.7c-4.1 5.3-.4 13 6.3 13zM878 626h-60c-4.4 0-8 3.6-8 8v154H214V634c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v198c0 17.7 14.3 32 32 32h684c17.7 0 32-14.3 32-32V634c0-4.4-3.6-8-8-8z\" /></svg>", "search": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z\" /></svg>", "left": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z\" /></svg>", "right": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z\" /></svg>", "minus": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z\" /></svg>", "plus": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z\" /><path d=\"M192 474h672q8 0 8 8v60q0 8-8 8H160q-8 0-8-8v-60q0-8 8-8z\" /></svg>", "check": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M912 190h-69.9c-9.8 0-19.1 4.5-25.1 12.2L404.7 724.5 207 474a32 32 0 00-25.1-12.2H112c-6.7 0-10.4 7.7-6.3 12.9l273.9 347c12.8 16.2 37.4 16.2 50.3 0l488.4-618.9c4.1-5.1.4-12.8-6.3-12.8z\" /></svg>", "close": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M799.86 166.31c.02 0 .04.02.08.06l57.69 57.7c.04.03.05.05.06.08a.12.12 0 010 .06c0 .03-.02.05-.06.09L569.93 512l287.7 287.7c.04.04.05.06.06.09a.12.12 0 010 .07c0 .02-.02.04-.06.08l-57.7 57.69c-.03.04-.05.05-.07.06a.12.12 0 01-.07 0c-.03 0-.05-.02-.09-.06L512 569.93l-287.7 287.7c-.04.04-.06.05-.09.06a.12.12 0 01-.07 0c-.02 0-.04-.02-.08-.06l-57.69-57.7c-.04-.03-.05-.05-.06-.07a.12.12 0 010-.07c0-.03.02-.05.06-.09L454.07 512l-287.7-287.7c-.04-.04-.05-.06-.06-.09a.12.12 0 010-.07c0-.02.02-.04.06-.08l57.7-57.69c.03-.04.05-.05.07-.06a.12.12 0 01.07 0c.03 0 .05.02.09.06L512 454.07l287.7-287.7c.04-.04.06-.05.09-.06a.12.12 0 01.07 0z\" /></svg>", "edit": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 000-14.1L694.9 114.9c-1.9-1.9-4.4-2.9-7.1-2.9s-5.2 1-7.1 2.9L256.8 538.8c-1.5 1.5-2.4 3.3-2.8 5.3l-29.5 168.2a33.5 33.5 0 009.4 29.8c6.6 6.4 14.9 9.9 23.8 9.9zm67.4-174.4L687.8 215l73.3 73.3-362.7 362.6-88.9 15.7 15.6-89zM880 836H144c-17.7 0-32 14.3-32 32v36c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-36c0-17.7-14.3-32-32-32z\" /></svg>", "eye": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M942.2 486.2C847.4 286.5 704.1 186 512 186c-192.2 0-335.4 100.5-430.2 300.3a60.3 60.3 0 000 51.5C176.6 737.5 319.9 838 512 838c192.2 0 335.4-100.5 430.2-300.3 7.7-16.2 7.7-35 0-51.5zM512 766c-161.3 0-279.4-81.8-362.7-254C232.6 339.8 350.7 258 512 258c161.3 0 279.4 81.8 362.7 254C791.5 684.2 673.4 766 512 766zm-4-430c-97.2 0-176 78.8-176 176s78.8 176 176 176 176-78.8 176-176-78.8-176-176-176zm0 288c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112z\" /></svg>", "reload": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M909.1 209.3l-56.4 44.1C775.8 155.1 656.2 92 521.9 92 290 92 102.3 279.5 102 511.5 101.7 743.7 289.8 932 521.9 932c181.3 0 335.8-115 394.6-276.1 1.5-4.2-.7-8.9-4.9-10.3l-56.7-19.5a8 8 0 00-10.1 4.8c-1.8 5-3.8 10-5.9 14.9-17.3 41-42.1 77.8-73.7 109.4A344.77 344.77 0 01655.9 829c-42.3 17.9-87.4 27-133.8 27-46.5 0-91.5-9.1-133.8-27A341.5 341.5 0 01279 755.2a342.16 342.16 0 01-73.7-109.4c-17.9-42.4-27-87.4-27-133.9s9.1-91.5 27-133.9c17.3-41 42.1-77.8 73.7-109.4 31.6-31.6 68.4-56.4 109.3-73.8 42.3-17.9 87.4-27 133.8-27 46.5 0 91.5 9.1 133.8 27a341.5 341.5 0 01109.3 73.8c9.9 9.9 19.2 20.4 27.8 31.4l-60.2 47a8 8 0 003 14.1l175.6 43c5 1.2 9.9-2.6 9.9-7.7l.8-180.9c-.1-6.6-7.8-10.3-13-6.2z\" /></svg>", "copy": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M832 64H296c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h496v688c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8V96c0-17.7-14.3-32-32-32zM704 192H192c-17.7 0-32 14.3-32 32v530.7c0 8.5 3.4 16.6 9.4 22.6l173.3 173.3c2.2 2.2 4.7 4 7.4 5.5v1.9h4.2c3.5 1.3 7.2 2 11 2H704c17.7 0 32-14.3 32-32V224c0-17.7-14.3-32-32-32zM350 856.2L263.9 770H350v86.2zM664 888H414V746c0-22.1-17.9-40-40-40H232V264h432v624z\" /></svg>", "down": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z\" /></svg>", "user": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M858.5 763.6a374 374 0 00-80.6-119.5 375.63 375.63 0 00-119.5-80.6c-.4-.2-.8-.3-1.2-.5C719.5 518 760 444.7 760 362c0-137-111-248-248-248S264 225 264 362c0 82.7 40.5 156 102.8 201.1-.4.2-.8.3-1.2.5-44.8 18.9-85 46-119.5 80.6a375.63 375.63 0 00-80.6 119.5A371.7 371.7 0 00136 901.8a8 8 0 008 8.2h60c4.4 0 7.9-3.5 8-7.8 2-77.2 33-149.5 87.8-204.3 56.7-56.7 132-87.9 212.2-87.9s155.5 31.2 212.2 87.9C779 752.7 810 825 812 902.2c.1 4.4 3.6 7.8 8 7.8h60a8 8 0 008-8.2c-1-47.8-10.9-94.3-29.5-138.2zM512 534c-45.9 0-89.1-17.9-121.6-50.4S340 407.9 340 362c0-45.9 17.9-89.1 50.4-121.6S466.1 190 512 190s89.1 17.9 121.6 50.4S684 316.1 684 362c0 45.9-17.9 89.1-50.4 121.6S557.9 534 512 534z\" /></svg>", "logout": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M868 732h-70.3c-4.8 0-9.3 2.1-12.3 5.8-7 8.5-14.5 16.7-22.4 24.5a353.84 353.84 0 01-112.7 75.9A352.8 352.8 0 01512.4 866c-47.9 0-94.3-9.4-137.9-27.8a353.84 353.84 0 01-112.7-75.9 353.28 353.28 0 01-76-112.5C167.3 606.2 158 559.9 158 512s9.4-94.2 27.8-137.8c17.8-42.1 43.4-80 76-112.5s70.5-58.1 112.7-75.9c43.6-18.4 90-27.8 137.9-27.8 47.9 0 94.3 9.3 137.9 27.8 42.2 17.8 80.1 43.4 112.7 75.9 7.9 7.9 15.3 16.1 22.4 24.5 3 3.7 7.6 5.8 12.3 5.8H868c6.3 0 10.2-7 6.7-12.3C798 160.5 663.8 81.6 511.3 82 271.7 82.6 79.6 277.1 82 516.4 84.4 751.9 276.2 942 512.4 942c152.1 0 285.7-78.8 362.3-197.7 3.4-5.3-.4-12.3-6.7-12.3zm88.9-226.3L815 393.7c-5.3-4.2-13-.4-13 6.3v76H488c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h314v76c0 6.7 7.8 10.5 13 6.3l141.9-112a8 8 0 000-12.6z\" /></svg>", "menu-fold": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 000 13.8z\" /></svg>", "menu-unfold": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM142.4 642.1L298.7 519a8.84 8.84 0 000-13.9L142.4 381.9c-5.8-4.6-14.4-.5-14.4 6.9v246.3a8.9 8.9 0 0014.4 7z\" /></svg>", "exclamation-circle": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z\" /><path d=\"M464 688a48 48 0 1096 0 48 48 0 10-96 0zm24-112h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z\" /></svg>", "clock-circle": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z\" /><path d=\"M686.7 638.6L544.1 535.5V288c0-4.4-3.6-8-8-8H488c-4.4 0-8 3.6-8 8v275.4c0 2.6 1.2 5 3.3 6.5l165.4 120.6c3.6 2.6 8.6 1.8 11.2-1.7l28.6-39c2.6-3.7 1.8-8.7-1.8-11.2z\" /></svg>", "question-circle": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z\" /><path d=\"M623.6 316.7C593.6 290.4 554 276 512 276s-81.6 14.5-111.6 40.7C369.2 344 352 380.7 352 420v7.6c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V420c0-44.1 43.1-80 96-80s96 35.9 96 80c0 31.1-22 59.6-56.1 72.7-21.2 8.1-39.2 22.3-52.1 40.9-13.1 19-19.9 41.8-19.9 64.9V620c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8v-22.7a48.3 48.3 0 0130.9-44.8c59-22.7 97.1-74.7 97.1-132.5.1-39.3-17.1-76-48.3-103.3zM472 732a40 40 0 1080 0 40 40 0 10-80 0z\" /></svg>", "lock": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M832 464h-68V240c0-70.7-57.3-128-128-128H388c-70.7 0-128 57.3-128 128v224h-68c-17.7 0-32 14.3-32 32v384c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V496c0-17.7-14.3-32-32-32zM332 240c0-30.9 25.1-56 56-56h248c30.9 0 56 25.1 56 56v224H332V240zm460 600H232V536h560v304zM484 701v53c0 4.4 3.6 8 8 8h40c4.4 0 8-3.6 8-8v-53a48.01 48.01 0 10-56 0z\" /></svg>", "calendar": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M880 184H712v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H384v-64c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v64H144c-17.7 0-32 14.3-32 32v664c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V216c0-17.7-14.3-32-32-32zm-40 656H184V460h656v380zM184 392V256h128v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h256v48c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-48h128v136H184z\" /></svg>", "close-circle": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm0 76c-205.4 0-372 166.6-372 372s166.6 372 372 372 372-166.6 372-372-166.6-372-372-372zm128.01 198.83c.03 0 .05.01.09.06l45.02 45.01a.2.2 0 01.05.09.12.12 0 010 .07c0 .02-.01.04-.05.08L557.25 512l127.87 127.86a.27.27 0 01.05.06v.02a.12.12 0 010 .07c0 .03-.01.05-.05.09l-45.02 45.02a.2.2 0 01-.09.05.12.12 0 01-.07 0c-.02 0-.04-.01-.08-.05L512 557.25 384.14 685.12c-.04.04-.06.05-.08.05a.12.12 0 01-.07 0c-.03 0-.05-.01-.09-.05l-45.02-45.02a.2.2 0 01-.05-.09.12.12 0 010-.07c0-.02.01-.04.06-.08L466.75 512 338.88 384.14a.27.27 0 01-.05-.06l-.01-.02a.12.12 0 010-.07c0-.03.01-.05.05-.09l45.02-45.02a.2.2 0 01.09-.05.12.12 0 01.07 0c.02 0 .04.01.08.06L512 466.75l127.86-127.86c.04-.05.06-.06.08-.06a.12.12 0 01.07 0z\" /></svg>", "check-circle": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M699 353h-46.9c-10.2 0-19.9 4.9-25.9 13.3L469 584.3l-71.2-98.8c-6-8.3-15.6-13.3-25.9-13.3H325c-6.5 0-10.3 7.4-6.5 12.7l124.6 172.8a31.8 31.8 0 0051.7 0l210.6-292c3.9-5.3.1-12.7-6.4-12.7z\" /><path d=\"M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z\" /></svg>", "swap": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M847.9 592H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h605.2L612.9 851c-4.1 5.2-.4 13 6.3 13h72.5c4.9 0 9.5-2.2 12.6-6.1l168.8-214.1c16.5-21 1.6-51.8-25.2-51.8zM872 356H266.8l144.3-183c4.1-5.2.4-13-6.3-13h-72.5c-4.9 0-9.5 2.2-12.6 6.1L150.9 380.2c-16.5 21-1.6 51.8 25.1 51.8h696c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z\" /></svg>", "ellipsis": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M176 511a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0zm280 0a56 56 0 10112 0 56 56 0 10-112 0z\" /></svg>", "sync": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M168 504.2c1-43.7 10-86.1 26.9-126 17.3-41 42.1-77.7 73.7-109.4S337 212.3 378 195c42.4-17.9 87.4-27 133.9-27s91.5 9.1 133.8 27A341.5 341.5 0 01755 268.8c9.9 9.9 19.2 20.4 27.8 31.4l-60.2 47a8 8 0 003 14.1l175.7 43c5 1.2 9.9-2.6 9.9-7.7l.8-180.9c0-6.7-7.7-10.5-12.9-6.3l-56.4 44.1C765.8 155.1 646.2 92 511.8 92 282.7 92 96.3 275.6 92 503.8a8 8 0 008 8.2h60c4.4 0 7.9-3.5 8-7.8zm756 7.8h-60c-4.4 0-7.9 3.5-8 7.8-1 43.7-10 86.1-26.9 126-17.3 41-42.1 77.8-73.7 109.4A342.45 342.45 0 01512.1 856a342.24 342.24 0 01-243.2-100.8c-9.9-9.9-19.2-20.4-27.8-31.4l60.2-47a8 8 0 00-3-14.1l-175.7-43c-5-1.2-9.9 2.6-9.9 7.7l-.7 181c0 6.7 7.7 10.5 12.9 6.3l56.4-44.1C258.2 868.9 377.8 932 512.2 932c229.2 0 415.5-183.7 419.8-411.8a8 8 0 00-8-8.2z\" /></svg>", "file-add": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M854.6 288.6L639.4 73.4c-6-6-14.1-9.4-22.6-9.4H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V311.3c0-8.5-3.4-16.7-9.4-22.7zM790.2 326H602V137.8L790.2 326zm1.8 562H232V136h302v216a42 42 0 0042 42h216v494zM544 472c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v108H372c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h108v108c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V644h108c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V472z\" /></svg>", "more": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M456 231a56 56 0 10112 0 56 56 0 10-112 0zm0 280a56 56 0 10112 0 56 56 0 10-112 0zm0 280a56 56 0 10112 0 56 56 0 10-112 0z\" /></svg>", "file-search": "<svg viewBox=\"64 64 896 896\" fill=\"currentColor\" width=\"1em\" height=\"1em\" aria-hidden=\"true\"><path d=\"M688 312v-48c0-4.4-3.6-8-8-8H296c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h384c4.4 0 8-3.6 8-8zm-392 88c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H296zm144 452H208V148h560v344c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8V108c0-17.7-14.3-32-32-32H168c-17.7 0-32 14.3-32 32v784c0 17.7 14.3 32 32 32h272c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm445.7 51.5l-93.3-93.3C814.7 780.7 828 743.9 828 704c0-97.2-78.8-176-176-176s-176 78.8-176 176 78.8 176 176 176c35.8 0 69-10.7 96.8-29l94.7 94.7c1.6 1.6 3.6 2.3 5.6 2.3s4.1-.8 5.6-2.3l31-31a7.9 7.9 0 000-11.2zM652 816c-61.9 0-112-50.1-112-112s50.1-112 112-112 112 50.1 112 112-50.1 112-112 112z\" /></svg>"};
+
+// Wireframe nhóm A. Trạng thái nằm ở ?man=&v=&mau=&kho=&nav=&tt= (probe chạy local) hoặc #man.v.mau.kho.nav.tt (Artifact).
+const icon = (name, cls = '') => (ICONS[name] || '').replace('<svg ', `<svg class="${cls}" `);
+const esc = (text) => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+// ---------- Bảng trạng thái, chép từ components/ds/statusMap.js ----------
+const STATUS = {
+  document: {
+    RECEIVED: ['Đã nhận', 'neutral', 'ring'], PROCESSING: ['Đang trích xuất', 'neutral', 'ring-dot'], SLOW: ['Chậm', 'warning', 'clock-circle'],
+    REVIEW_REQUIRED: ['Chờ duyệt', 'warning', 'ellipsis'], COMPLETED: ['Đã xong', 'success', 'check-circle'], FAILED: ['Lỗi trích xuất', 'error', 'close-circle'],
+  },
+  field: {
+    PROPOSED: ['Đề xuất AI', 'neutral', 'ring-dot'], ACCEPTED: ['Đã chấp nhận', 'success', 'check-circle'], EDITED: ['Đã sửa', 'success', 'edit'],
+    UNKNOWN: ['Không đọc được', 'warning', 'question-circle'], UNKNOWN_KEPT: ['Giữ UNKNOWN', 'neutral', 'lock'], DATE_AMBIGUOUS: ['Ngày mơ hồ', 'warning', 'calendar'], REJECTED: ['Từ chối', 'error', 'close-circle'],
+  },
+  vessel: { NOT_CHECKED: ['Chưa đối chiếu', 'neutral', 'ring'], VERIFIED: ['Đã đối chiếu', 'success', 'check-circle'], CONFLICT: ['Không khớp', 'error', 'close-circle'] },
+  seaService: { ONGOING: ['Đang trên tàu', 'success', 'ring-dot'], OVERLAP: ['Trùng thời gian', 'warning', 'swap'] },
+};
+function badge(group, value) {
+  const [label, tone, mark] = STATUS[group][value];
+  const head = mark === 'ring' || mark === 'ring-dot' ? `<span class="ds-badge__dot ds-badge__dot--${mark}" aria-hidden="true"></span>` : icon(mark, 'ds-badge__icon');
+  return `<span class="ds-badge ds-badge--${tone}">${head}${label}</span>`;
+}
+const btn = (label, { variant = '', size = '', iconName = '', attrs = '' } = {}) =>
+  `<button type="button" class="btn ${variant ? `btn--${variant}` : ''} ${size ? `btn--${size}` : ''}" ${attrs}>${iconName ? icon(iconName) : ''}${label}</button>`;
+
+// ---------- Dữ liệu giả ----------
+const DOCS = [
+  { name: 'so-thuyen-vien-hoang-thi-mai-trang-1.jpg', crew: 'Chưa đọc được', pages: '1 trang', size: '3,1 MB', status: 'FAILED', need: null, wait: '35 phút', by: 'Phạm Văn Tùng', action: 'Nhập tay', note: 'Ảnh mờ, không nhận ra trang sổ' },
+  { name: 'so-thuyen-vien-nguyen-thi-hong-nhung-phuong-anh.pdf', crew: 'Nguyễn Thị Hồng Nhung Phương Anh', pages: '12 trang', size: '4,2 MB', status: 'REVIEW_REQUIRED', need: 4, wait: '2 giờ', by: 'Lê Thu Hà', action: 'Duyệt' },
+  { name: 'so-thuyen-vien-tran-minh-khoi.pdf', crew: 'Trần Minh Khôi', pages: '10 trang', size: '3,6 MB', status: 'REVIEW_REQUIRED', need: 0, wait: '40 phút', by: 'Phạm Văn Tùng', action: 'Duyệt' },
+  { name: 'so-thuyen-vien-le-van-duc.pdf', crew: 'Đang đọc…', pages: '9 trang', size: '2,9 MB', status: 'SLOW', need: null, wait: '12 phút', slow: true, by: 'Phạm Văn Tùng', progress: [7, 9] },
+  { name: 'so-thuyen-vien-pham-quoc-bao.pdf', crew: 'Đang đọc…', pages: '8 trang', size: '2,4 MB', status: 'PROCESSING', need: null, wait: '2 phút', by: 'Lê Thu Hà', progress: [2, 8] },
+  { name: 'so-thuyen-vien-vo-thanh-son.pdf', crew: 'Võ Thanh Sơn', pages: '11 trang', size: '3,8 MB', status: 'COMPLETED', need: null, wait: 'Xong 09:12 · 05/10', by: 'Lê Thu Hà', action: 'Mở' },
+  { name: 'so-thuyen-vien-dao-van-hung.pdf', crew: 'Đào Văn Hùng', pages: '14 trang', size: '5,0 MB', status: 'COMPLETED', need: null, wait: 'Xong 16:40 · 04/10', by: 'Phạm Văn Tùng', action: 'Mở' },
+  { name: 'so-thuyen-vien-ngo-quang-vinh.pdf', crew: 'Ngô Quang Vinh', pages: '8 trang', size: '2,2 MB', status: 'COMPLETED', need: null, wait: 'Xong 11:05 · 04/10', by: 'Lê Thu Hà', action: 'Mở' },
+];
+const TABS = [['all', 'Tất cả', 8], ['processing', 'Đang trích xuất', 2], ['review', 'Chờ duyệt', 2], ['failed', 'Lỗi', 1], ['done', 'Đã xong', 3]];
+const NAV = [['documents', 'Tài liệu', 'file-text'], ['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
+const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
+const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
+
+// ---------- Trạng thái wireframe ----------
+const SCREENS = {
+  'tai-lieu': { label: 'Tài liệu', options: ['a', 'b', 'c', 'd', 'e'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
+  duyet: { label: 'Duyệt', options: ['a', 'b', 'c', 'd', 'e'], recommended: 'b', states: ['du-lieu', 'dang-tai', 'rong', 'loi', 'xung-dot'] },
+  'dang-nhap': { label: 'Đăng nhập', options: ['a'], recommended: 'a', states: ['du-lieu', 'dang-tai', 'rong', 'loi'] },
+  loi: { label: 'Lỗi', options: ['a', 'b', 'c'], recommended: null, states: ['du-lieu'] },
+};
+const STATE_LABELS = { 'du-lieu': 'Có dữ liệu', 'dang-tai': 'Đang tải', rong: 'Rỗng', loi: 'Lỗi', 'xung-dot': 'Xung đột 409' };
+const STATE_LABELS_BY_SCREEN = { duyet: { rong: 'Rỗng: nhập tay' }, 'dang-nhap': { rong: 'Ô trống', loi: 'Sai mật khẩu' } };
+const OPTION_LABELS = { loi: { a: '403', b: '404', c: '500' } };
+const KEYS = ['man', 'v', 'mau', 'kho', 'nav', 'tt'];
+const state = { man: 'duyet', v: '', mau: 'xam', kho: 'desktop', nav: 'menu', tt: 'du-lieu', menuOpen: false, userOpen: false, sider: null, view: 'fields', tab: null };
+(function readState() {
+  const params = new URLSearchParams(location.search);
+  const hash = location.hash.replace(/^#/, '').split('.');
+  KEYS.forEach((key, index) => { state[key] = params.get(key) || (hash.length === KEYS.length ? hash[index] : '') || state[key]; });
+  if (!SCREENS[state.man]) state.man = 'duyet';
+})();
+function normalize() {
+  const screen = SCREENS[state.man];
+  if (!screen.options.includes(state.v)) state.v = screen.recommended || screen.options[0];
+  if (!screen.states.includes(state.tt)) state.tt = 'du-lieu';
+}
+function syncHash() {
+  try { history.replaceState(null, '', `#${KEYS.map((key) => state[key]).join('.')}`); } catch (error) { /* trang xem trước có thể chặn */ }
+}
+
+// ---------- Khung app ----------
+function shell({ title, crumb, content, collapsedDefault = false }) {
+  const collapsed = state.sider === null ? collapsedDefault : state.sider === 'collapsed';
+  const nav = (withLabels = true) => NAV.map(([key, label, iconName]) =>
+    `<a class="nav-item" ${key === 'documents' && state.man !== 'loi' ? 'aria-current="page"' : ''} ${key === 'admin' && state.man === 'loi' && state.v === 'a' ? 'aria-current="page"' : ''} title="${label}">${icon(iconName)}${withLabels ? `<span>${label}</span>` : ''}</a>`).join('');
+  const heading = crumb
+    ? `<nav class="topbar__crumb" aria-label="Đường dẫn"><a href="#">${crumb}</a>${icon('right')}</nav>`
+    : `<h1 class="topbar__title">${title}</h1>`;
+  return `<div class="app" data-nav="${state.nav}">
+    <aside class="sider ${collapsed ? 'sider--collapsed' : ''}" data-wf-block="2">
+      <div class="sider__head">${brand()}</div>
+      <nav class="sider__nav">${nav()}</nav>
+    </aside>
+    <div class="main">
+      <header class="topbar" data-wf-block="1">
+        <button type="button" class="btn btn--ghost btn--icon burger" data-action="menu" aria-label="Mở menu">${icon('menu')}</button>
+        <button type="button" class="btn btn--ghost btn--icon sider-toggle" data-action="sider" aria-label="${collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}">${icon(collapsed ? 'menu-unfold' : 'menu-fold')}</button>
+        ${heading}
+        <div class="topbar__right">
+          <button type="button" class="user-btn" data-action="user" aria-haspopup="menu" aria-expanded="${state.userOpen}">
+            <span class="avatar">PT</span><span class="user-btn__name">Phạm Văn Tùng</span>${icon('down')}
+          </button>
+          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">phamvantung@mcah.demo · Crewing Officer</p><div class="menu__sep"></div>
+            <button type="button" class="menu__item menu__item--danger" role="menuitem">${icon('logout')}Đăng xuất</button></div>` : ''}
+        </div>
+      </header>
+      <div class="content">${content}</div>
+      <nav class="bottombar" aria-label="Điều hướng">${NAV.map(([key, label, iconName]) => `<a ${key === 'documents' ? 'aria-current="page"' : ''}>${icon(iconName)}${label}</a>`).join('')}</nav>
+    </div>
+    ${state.menuOpen ? `<div class="drawer-scrim" data-action="menu"></div><aside class="drawer"><div class="sider__head">${brand()}</div><nav class="sider__nav">${nav()}</nav></aside>` : ''}
+  </div>`;
+}
+
+// ---------- Màn Tài liệu ----------
+const docBadge = (doc) => badge('document', doc.status);
+const waitCell = (doc) => doc.status === 'COMPLETED' ? '<span class="muted">—</span>' : `<span class="num ${doc.slow ? 'warn-text' : 'muted'}" style="white-space:nowrap">${doc.wait}</span>`;
+const needCell = (doc) => (doc.need == null ? '<span class="muted">—</span>' : doc.need === 0 ? '<span class="muted">0</span>' : `<span class="num" style="white-space:nowrap">${doc.need} trường</span>`);
+const actionCell = (doc) => (doc.action ? btn(doc.action, { size: 'sm', variant: doc.action === 'Mở' ? 'ghost' : '' }) : '');
+
+function statusTabs(selected) {
+  const current = TABS.find(([value]) => value === selected);
+  return `<div class="ds-tabs-boxed" role="tablist">${TABS.map(([value, label, count]) =>
+    `<button type="button" role="tab" class="ds-tabs-boxed__tab" data-tab="${value}" aria-selected="${value === selected}">${label}<span class="ds-tabs-boxed__count">${state.tt === 'dang-tai' ? '' : state.tt === 'rong' ? 0 : count}</span></button>`).join('')}</div>
+    <button type="button" class="btn ds-tabs-mobile"><span class="muted">Trạng thái:</span> ${current[1]} · ${state.tt === 'rong' ? 0 : current[2]} ${icon('down')}</button>`;
+}
+
+function docTable({ columns, rows }) {
+  const head = columns.map((column) => `<th class="${column.cls || ''}">${column.title}</th>`).join('');
+  if (state.tt === 'dang-tai') {
+    const skeletonRows = Array.from({ length: 5 }, () => `<tr>${columns.map((column, index) => `<td class="${column.cls || ''}">${index === 0 ? '<span class="sk" style="width:70%"></span><span class="sk" style="width:40%;margin-top:8px"></span>' : '<span class="sk" style="width:60%"></span>'}</td>`).join('')}</tr>`).join('');
+    return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${skeletonRows}</tbody></table></div>
+      <ul class="doc-list">${Array.from({ length: 4 }, () => '<li><span class="sk" style="width:80%"></span><span class="sk" style="width:60px"></span><span class="sk" style="width:50%"></span></li>').join('')}</ul>`;
+  }
+  if (state.tt === 'rong') {
+    return `<div class="ds-empty"><p class="ds-empty__title">Chưa có tài liệu nào</p><p class="ds-empty__text">Tải sổ thuyền viên lên, AI sẽ đọc và đề xuất dữ liệu để bạn duyệt.</p><div class="ds-empty__action">${btn('Tải tài liệu lên', { iconName: 'upload' })}</div></div>`;
+  }
+  if (state.tt === 'loi') {
+    return `<div class="ds-empty" role="alert"><p class="ds-empty__title ds-empty__title--error">Không tải được danh sách tài liệu</p><p class="ds-empty__text">Mất kết nối tới máy chủ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>`;
+  }
+  const body = rows.map((doc) => `<tr>${columns.map((column) => `<td class="${column.cls || ''}">${column.render(doc)}</td>`).join('')}</tr>`).join('');
+  const list = rows.map((doc) => `<li>
+      <span class="cell2"><span class="cell2__main">${esc(doc.crew)}</span><span class="cell2__sub">${esc(doc.name)}</span></span>
+      <span>${docBadge(doc)}</span>
+      <span class="cell2__sub">${doc.slow ? `<span class="warn-text">Chờ ${doc.wait}</span>` : doc.status === 'COMPLETED' ? doc.wait : `Chờ ${doc.wait}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</span>
+      <span>${actionCell(doc)}</span></li>`).join('');
+  return `<div class="tbl-wrap"><table class="tbl"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div><ul class="doc-list">${list}</ul>
+    <div class="tbl-foot"><span>${rows.length} tài liệu</span></div>`;
+}
+
+const COL = {
+  doc: { title: 'Tài liệu', render: (doc) => `<span class="cell2" style="max-width:340px"><span class="cell2__main" title="${doc.name}">${esc(doc.name)}</span><span class="cell2__sub">${esc(doc.crew)} · ${doc.pages}</span></span>` },
+  docD: { title: 'Tài liệu', render: (doc) => `<span class="cell2" style="max-width:360px"><span class="cell2__main">${esc(doc.crew)}</span><span class="cell2__sub" title="${doc.name}">${esc(doc.name)}</span></span>` },
+  crew: { title: 'Thuyền viên', cls: 'col-lg', render: (doc) => `<span class="cell2" style="max-width:220px"><span class="cell2__main" style="font-weight:400">${esc(doc.crew)}</span></span>` },
+  status: { title: 'Trạng thái', render: docBadge },
+  statusD: { title: 'Trạng thái', render: (doc) => `<span class="cell2">${docBadge(doc)}<span class="cell2__sub" style="margin-top:4px">${doc.slow ? `<span class="warn-text">Chờ ${doc.wait}</span>` : doc.status === 'COMPLETED' ? doc.wait : `Chờ ${doc.wait}`}${doc.need ? ` · ${doc.need} trường cần xem` : ''}</span></span>` },
+  need: { title: 'Cần xem', cls: 'right', render: needCell },
+  wait: { title: 'Chờ', cls: 'right', render: waitCell },
+  by: { title: 'Tải lên bởi', cls: 'col-lg', render: (doc) => `<span class="muted" style="white-space:nowrap">${doc.by}</span>` },
+  action: { title: '<span class="ds-sr-only">Thao tác</span>', cls: 'right', render: actionCell },
+};
+
+function documentsScreen() {
+  const v = state.v;
+  const selectedTab = state.tab || (v === 'e' ? 'review' : 'all');
+  const rows = selectedTab === 'all' ? DOCS : DOCS.filter((doc) => ({ processing: ['PROCESSING', 'SLOW'], review: ['REVIEW_REQUIRED'], failed: ['FAILED'], done: ['COMPLETED'] }[selectedTab]).includes(doc.status));
+  const uploadButton = btn('Tải tài liệu lên', { variant: 'primary', iconName: 'upload' });
+  const search = `<label class="search toolbar__search">${icon('search')}<input class="input" placeholder="Tìm theo tên tệp, thuyền viên" aria-label="Tìm tài liệu" /></label>`;
+  const duplicateBanner = state.tt === 'du-lieu' ? `<div data-wf-block="3"><div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">1 tệp không được tải lên vì trùng</p><p class="ds-banner__text">so-thuyen-vien-tran-minh-khoi-ban-chup-lai.pdf giống hệt tài liệu đã tải lúc 09:12 · 03/10/2026.</p></div><div class="ds-banner__action">${btn('Mở tài liệu đó')}</div></div></div>` : '';
+
+  if (v === 'c') {
+    const todo = DOCS.filter((doc) => ['FAILED', 'REVIEW_REQUIRED'].includes(doc.status));
+    const running = DOCS.filter((doc) => ['PROCESSING', 'SLOW'].includes(doc.status));
+    const done = DOCS.filter((doc) => doc.status === 'COMPLETED');
+    const body = state.tt !== 'du-lieu' ? `<div class="panel">${docTable({ columns: [COL.doc, COL.status], rows: [] })}</div>` : `
+      <section class="panel" data-wf-block="5"><div class="panel__head"><h2 class="panel__title">Cần bạn xử lý · ${todo.length}</h2></div>
+        <ul class="ds-files" style="margin:4px 0 0;padding:0 20px 8px">${todo.map((doc) => `<li class="ds-files__row">${icon(doc.status === 'FAILED' ? 'close-circle' : 'file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.crew === 'Chưa đọc được' ? doc.name : doc.crew)}</span></p><p class="ds-files__meta ${doc.status === 'FAILED' ? 'ds-files__meta--error' : ''}">${doc.status === 'FAILED' ? doc.note : `Chờ ${doc.wait} · ${doc.need ? `${doc.need} trường cần xem` : 'không có trường nào cần xem'}`}</p></div>${btn(doc.action, { size: 'sm', variant: doc.status === 'REVIEW_REQUIRED' ? 'primary' : '' })}</li>`).join('')}</ul></section>
+      <section class="panel" data-wf-block="7"><div class="panel__head"><h2 class="panel__title">Đang trích xuất · ${running.length}</h2></div>
+        <ul class="ds-files" style="margin:4px 0 0;padding:0 20px 8px">${running.map((doc) => `<li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><div class="ds-files__line"><p class="ds-files__name"><span class="ds-files__head">${esc(doc.name)}</span></p><p class="ds-files__percent ${doc.slow ? 'warn-text' : ''}">${doc.slow ? 'Chậm · ' : ''}${doc.wait}</p></div><div class="ds-progress ds-progress--thin"><div class="ds-progress__bar" style="width:${Math.round(doc.progress[0] / doc.progress[1] * 100)}%"></div></div><p class="ds-files__meta">Đã đọc ${doc.progress[0]} / ${doc.progress[1]} trang</p></div></li>`).join('')}</ul></section>
+      <details class="collapse" data-wf-block="8"><summary><span><b>Đã xong · ${done.length}</b> <span class="muted">· mới nhất 09:12 · 05/10</span></span>${icon('down')}</summary></details>`;
+    return shell({ title: 'Tài liệu', content: `${duplicateBanner}<div class="toolbar" data-wf-block="4"><span class="muted">${state.tt === 'du-lieu' ? '4 việc cần làm' : ''}</span><span style="margin-left:auto">${uploadButton}</span></div>${body}` });
+  }
+
+  let columns = [COL.doc, COL.status, COL.need, COL.wait, COL.by, COL.action];
+  if (v === 'd') columns = [COL.docD, COL.statusD, COL.action];
+  if (v === 'e') columns = selectedTab === 'all' ? columns : [COL.doc, COL.need, COL.wait, COL.by, COL.action];
+  const toolbar = `<div class="toolbar" data-wf-block="4">${statusTabs(selectedTab)}${search}${v === 'b' ? '' : uploadButton}</div>`;
+  const dropzone = v === 'b' ? `<div class="panel panel__body" data-wf-block="6">
+      <label class="ds-drop"><span class="ds-drop__title">Kéo thả sổ thuyền viên vào đây</span><span class="ds-drop__hint">PDF, JPG hoặc PNG. Tối đa 25 MB và 50 trang mỗi tệp</span><span class="ds-drop__button">${icon('upload')}Chọn tệp</span></label>
+      ${state.tt === 'du-lieu' ? `<ul class="ds-files">
+        <li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><div class="ds-files__line"><p class="ds-files__name"><span class="ds-files__head">so-thuyen-vien-nguyen-van-</span><span class="ds-files__tail">an-ban-2.pdf</span></p><p class="ds-files__percent">71%</p></div><div class="ds-progress ds-progress--thin"><div class="ds-progress__bar" style="width:71%"></div></div></div>${btn('', { variant: 'ghost', size: 'sm', iconName: 'close', attrs: 'aria-label="Huỷ tải"' }).replace('btn--sm', 'btn--sm btn--icon')}</li>
+        <li class="ds-files__row">${icon('file-text', 'ds-files__icon')}<div class="ds-files__body"><p class="ds-files__name"><span class="ds-files__head">so-thuyen-vien-tran-minh-khoi-ban-</span><span class="ds-files__tail">chup-lai.pdf</span></p><p class="ds-files__meta ds-files__meta--warning">Trùng với tài liệu đã tải lúc 09:12 · 03/10/2026 · <button type="button" class="ds-link">Mở tài liệu đó</button></p></div></li>
+      </ul>` : ''}</div>` : '';
+  return shell({ title: 'Tài liệu', content: `${v === 'b' ? '' : duplicateBanner}${dropzone}${toolbar}<div class="panel" data-wf-block="5">${docTable({ columns, rows })}</div>` });
+}
+
+// ---------- Màn Duyệt ----------
+function reviewField({ label, value, fieldState, page, critical, reason, vessel, active, actions, extra }) {
+  const unknown = fieldState === 'UNKNOWN' || fieldState === 'UNKNOWN_KEPT';
+  const defaultActions = [['check', fieldState === 'UNKNOWN' ? 'Giữ UNKNOWN' : 'Chấp nhận'], ['edit', 'Sửa'], ['close', 'Từ chối']];
+  const decided = !['PROPOSED', 'UNKNOWN', 'DATE_AMBIGUOUS'].includes(fieldState);
+  return `<div class="ds-field ${active ? 'ds-field--active' : ''}">
+    <div class="ds-field__head"><span class="ds-field__label">${label}${critical ? '<span class="ds-field__required">*</span>' : ''}</span>
+      ${page ? `<button type="button" class="ds-chip-page">${icon('file-text')}Trang ${page}</button>` : ''}</div>
+    <p class="ds-field__value ${unknown ? 'ds-field__value--unknown' : ''}">${unknown ? 'Không đọc được trên tài liệu' : value}</p>
+    ${extra || ''}
+    <div class="ds-field__foot"><span class="ds-field__badges">${fieldState ? badge('field', fieldState) : ''}${vessel ? badge(vessel[0], vessel[1]) : ''}</span>
+      ${decided ? '' : `<span class="ds-field__actions">${(actions || defaultActions).map(([iconName, text]) => btn(text, { variant: 'ghost', size: 'sm', iconName })).join('')}</span>`}</div>
+    ${reason ? `<p class="ds-field__reason">Lý do: ${reason}</p>` : ''}
+  </div>`;
+}
+
+const PERSONAL = [
+  { label: 'Họ tên', value: 'Nguyễn Thị Hồng Nhung Phương Anh', fieldState: 'PROPOSED', page: 1, critical: true },
+  { label: 'Ngày sinh', value: '02/11/1995', fieldState: 'ACCEPTED', page: 1, critical: true },
+  { label: 'Chức danh', value: 'Able Seaman (AB)', fieldState: 'PROPOSED', page: 1, critical: true },
+];
+const CONTRACTS = [
+  { no: 1, vessel: 'MV Lotus Pearl', fields: [['Tàu', 'MV Lotus Pearl', 'ACCEPTED', true], ['IMO', '9163283', 'ACCEPTED', false, ['vessel', 'VERIFIED']], ['Rank raw', 'AB', 'ACCEPTED'], ['Sign on', '02/03/2021', 'ACCEPTED', true], ['Sign off', '14/11/2021', 'ACCEPTED', true]] },
+  { no: 2, vessel: 'MV Halong Spirit', fields: [['Tàu', 'MV Halong Spirit', 'ACCEPTED', true], ['IMO', '9194945', 'ACCEPTED', false, ['vessel', 'VERIFIED']], ['Rank raw', 'AB', 'ACCEPTED'], ['Sign on', '05/01/2022', 'EDITED', true], ['Sign off', '30/09/2022', 'PROPOSED', true]] },
+  { no: 3, vessel: 'MV Lotus Pearl', fields: [['Tàu', 'MV Lotus Pearl', 'PROPOSED', true], ['IMO', '9524454', 'PROPOSED', false, ['vessel', 'NOT_CHECKED']], ['Rank raw', 'AB', 'ACCEPTED'], ['Sign on', '25/09/2022', 'DATE_AMBIGUOUS', true], ['Sign off', '', 'UNKNOWN', true]] },
+];
+const IMO_ERROR = '<p class="ds-field__reason" style="color:var(--error-text)">Sai số kiểm tra: chữ số cuối phải là 3</p>';
+const PROBLEMS = [
+  { label: 'Sign off · dòng 3', fieldState: 'UNKNOWN', page: 3, critical: true, active: true, actions: [['check', 'Giữ UNKNOWN'], ['edit', 'Sửa'], ['sync', 'Đang trên tàu']] },
+  { label: 'Sign on · dòng 3', value: '25/09/2022', fieldState: 'DATE_AMBIGUOUS', page: 3, critical: true, extra: '<p class="ds-field__reason">Ngày bị dấu đè, có thể là 23/09/2022</p>' },
+  { label: 'IMO · dòng 3', value: '9524454', fieldState: null, page: 3, vessel: ['vessel', 'NOT_CHECKED'], extra: IMO_ERROR, actions: [['edit', 'Sửa'], ['search', 'Đối chiếu tàu']] },
+];
+const OVERLAP = `<div class="ds-field"><div class="ds-field__head"><span class="ds-field__label">Trùng thời gian · dòng 2 và 3</span><button type="button" class="ds-chip-page">${icon('file-text')}Trang 3</button></div>
+  <p class="ds-field__value">25/09/2022 – 30/09/2022 · 6 ngày</p>
+  <div class="ds-field__foot"><span class="ds-field__badges">${badge('seaService', 'OVERLAP')}</span><span class="ds-field__actions">${btn('Xác nhận là bàn giao', { variant: 'ghost', size: 'sm', iconName: 'check' })}${btn('Sửa ngày', { variant: 'ghost', size: 'sm', iconName: 'edit' })}</span></div></div>`;
+const PENDING = [
+  { label: 'Họ tên', value: 'Nguyễn Thị Hồng Nhung Phương Anh', fieldState: 'PROPOSED', page: 1, critical: true },
+  { label: 'Chức danh', value: 'Able Seaman (AB)', fieldState: 'PROPOSED', page: 1, critical: true },
+  { label: 'Sign off · dòng 2', value: '30/09/2022', fieldState: 'PROPOSED', page: 3, critical: true },
+  { label: 'Tàu · dòng 3', value: 'MV Lotus Pearl', fieldState: 'PROPOSED', page: 3, critical: true },
+];
+
+function viewer() {
+  if (state.tt === 'dang-tai') return `<section class="ds-viewer" data-wf-block="5"><header class="ds-viewer__bar"><span class="sk" style="width:240px"></span></header><div class="ds-viewer__stage"><span class="sk" style="width:100%;max-width:520px;height:420px;border-radius:4px"></span></div></section>`;
+  const rows = [['MV Lotus Pearl', '9163283', 'AB', '02/03/2021', '14/11/2021'], ['MV Halong Spirit', '9194945', 'AB', '05/07/2022', '30/09/2022'], ['MV Lotus Pearl', '9524454', 'AB', '2▒/09/2022', '░░/░░/2023']];
+  return `<section class="ds-viewer" data-wf-block="5">
+    <header class="ds-viewer__bar"><p class="ds-viewer__name">so-thuyen-vien-nguyen-thi-hong-nhung-phuong-anh.pdf</p>
+      <div class="ds-viewer__tools">${btn('', { variant: 'ghost', iconName: 'left', attrs: 'aria-label="Trang trước"' }).replace('btn--ghost', 'btn--ghost btn--icon')}<span class="ds-viewer__count">3 / 12</span>${btn('', { variant: 'ghost', iconName: 'right', attrs: 'aria-label="Trang sau"' }).replace('btn--ghost', 'btn--ghost btn--icon')}<span class="ds-viewer__divider"></span>${btn('', { variant: 'ghost', iconName: 'minus', attrs: 'aria-label="Thu nhỏ"' }).replace('btn--ghost', 'btn--ghost btn--icon')}<span class="ds-viewer__count">100%</span>${btn('', { variant: 'ghost', iconName: 'plus', attrs: 'aria-label="Phóng to"' }).replace('btn--ghost', 'btn--ghost btn--icon')}</div></header>
+    <p class="ds-viewer__evidence">Bằng chứng cho <strong>Sign off · dòng 3</strong> nằm ở trang này</p>
+    <div class="ds-viewer__stage"><div class="ds-sample-page" role="img" aria-label="Trang sổ thuyền viên mẫu, dữ liệu giả"><p class="ds-sample-page__title">SEAMAN'S DISCHARGE BOOK · Record of sea service</p>
+      <table><thead><tr><th>Vessel</th><th>IMO</th><th>Rank</th><th>Sign on</th><th>Sign off</th></tr></thead><tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join('')}</tr>`).join('')}</tbody></table>
+      <p class="ds-sample-page__stamp">Master's signature &amp; stamp</p></div></div></section>`;
+}
+
+function okRow([label, value, fieldState, critical, vessel], rowNo, withActions) {
+  const decided = !['PROPOSED', 'UNKNOWN', 'DATE_AMBIGUOUS'].includes(fieldState);
+  const unknown = fieldState === 'UNKNOWN';
+  return `<div class="okrow"><span class="okrow__label">${label}${critical ? '<span class="ds-field__required">*</span>' : ''}</span>
+    <span class="okrow__value ${unknown ? 'ds-field__value--unknown' : ''}">${unknown ? 'Không đọc được' : value}</span>
+    <span class="ds-field__extra">${withActions && !decided ? [['check', 'Chấp nhận'], ['edit', 'Sửa'], ['close', 'Từ chối']].map(([iconName, text]) => btn('', { variant: 'ghost', size: 'sm', iconName, attrs: `aria-label="${text} ${label} dòng ${rowNo}" title="${text}"` }).replace('btn--sm', 'btn--sm btn--icon')).join('') : badge('field', fieldState)}${vessel && !withActions ? badge(vessel[0], vessel[1]) : ''}</span></div>`;
+}
+
+function fieldsColumn() {
+  const v = state.v;
+  if (state.tt === 'dang-tai') return `<div class="fields-col" data-wf-block="6">${Array.from({ length: 4 }, () => '<div class="ds-field"><span class="sk" style="width:30%"></span><span class="sk" style="width:70%;height:16px"></span><span class="sk" style="width:40%"></span></div>').join('')}</div>`;
+  if (state.tt === 'rong') {
+    return `<div class="fields-col" data-wf-block="6"><div role="status" class="ds-banner ds-banner--warning">${icon('exclamation-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">AI không đọc được tài liệu này</p><p class="ds-banner__text">Nhập tay từ trang gốc bên trái. Mỗi trường vẫn ghi trang bạn đang xem làm bằng chứng.</p></div></div>
+      <section class="group"><h2 class="group__title">Thông tin cá nhân</h2><div class="grid-2">${['Họ tên', 'Ngày sinh', 'Chức danh'].map((label) => `<div><label class="field-label">${label} <span class="ds-field__required">*</span></label><input class="input" placeholder="${label === 'Ngày sinh' ? 'dd/mm/yyyy' : ''}" /></div>`).join('')}</div></section>
+      <section class="group"><h2 class="group__title">Sea service</h2><div class="ds-empty" style="padding:24px 16px;border:1px dashed var(--border-strong);border-radius:16px"><p class="ds-empty__title">Chưa có dòng sea service nào</p><div class="ds-empty__action">${btn('Thêm dòng sea service', { iconName: 'plus' })}</div></div></section></div>`;
+  }
+  if (v === 'c') {
+    const dots = [...Array(11).fill('success'), 'neutral', 'neutral', 'neutral', 'neutral', 'warning', 'error', 'warning'];
+    return `<div class="fields-col" data-wf-block="6"><div class="focus-nav"><span class="muted">Trường <b class="num" style="color:var(--foreground)">16 / 18</b> · cần xem 1 / 4</span><span class="ds-field__extra">${btn('Trường trước', { variant: 'ghost', size: 'sm', iconName: 'left' })}${btn('Trường sau', { variant: 'ghost', size: 'sm', iconName: 'right' })}</span></div>
+      <div class="focus-card"><div class="ds-field__head"><span class="ds-field__label">Sign off · dòng 3 <span class="ds-field__required">*</span></span><button type="button" class="ds-chip-page">${icon('file-text')}Trang 3</button></div>
+        <p class="focus-card__value ds-field__value--unknown" style="font-size:16px">Không đọc được trên tài liệu</p>${badge('field', 'UNKNOWN')}
+        <div><label class="field-label">Sửa thành</label><input class="input" placeholder="dd/mm/yyyy, để trống nếu giữ UNKNOWN" /></div>
+        <div class="focus-actions">${btn('Giữ UNKNOWN <span class="kbd">↵</span>', { variant: 'primary' })}${btn('Sửa <span class="kbd">E</span>')}${btn('Đang trên tàu <span class="kbd">O</span>')}${btn('Từ chối <span class="kbd">X</span>', { variant: 'ghost' })}</div></div>
+      <div class="panel panel__body"><p class="ds-field__label" style="margin:0 0 10px">18 trường theo thứ tự trên sổ</p><div class="field-dots">${dots.map((tone, index) => `<span data-tone="${tone}" ${index === 15 ? 'aria-current="true"' : ''} title="Trường ${index + 1}"></span>`).join('')}</div></div></div>`;
+  }
+  if (v === 'a') {
+    return `<div class="fields-col" data-wf-block="6"><section class="group"><h2 class="group__title">Thông tin cá nhân</h2><div class="grid-2">${PERSONAL.map(reviewField).join('')}</div></section>
+      <section class="group"><h2 class="group__title">Sea service · 3 dòng</h2>
+      ${CONTRACTS.map((contract) => `<div class="contract"><div class="contract__head"><h3 class="contract__title">Dòng ${contract.no} · ${contract.vessel}</h3><button type="button" class="ds-chip-page">${icon('file-text')}Trang 3</button></div><div>${contract.fields.map((field) => okRow(field, contract.no, true)).join('')}</div>
+        ${contract.no === 3 ? IMO_ERROR : ''}</div>${contract.no === 2 ? `<div role="status" class="ds-banner ds-banner--warning">${icon('swap', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Dòng 2 và 3 trùng 6 ngày</p><p class="ds-banner__text">25/09/2022 – 30/09/2022</p></div><div class="ds-banner__action">${btn('Xác nhận là bàn giao')}</div></div>` : ''}`).join('')}</section></div>`;
+  }
+  // B, D, E: việc cần xem lên đầu
+  const compact = v === 'd';
+  const hideProposedBadge = v === 'e';
+  const problems = compact
+    ? PROBLEMS.map((item) => reviewField({ ...item, extra: item.label.startsWith('IMO') ? IMO_ERROR : '' })).join('') + OVERLAP
+    : PROBLEMS.map(reviewField).join('') + OVERLAP;
+  const pending = compact
+    ? `<div class="panel" style="padding:4px 8px">${PENDING.map((field) => okRow([field.label, field.value, field.fieldState, field.critical], '', true)).join('')}</div>`
+    : `<div class="stack">${PENDING.map((field) => reviewField(hideProposedBadge ? { ...field, fieldState: 'PROPOSED' } : field)).join('').replace(hideProposedBadge ? /<span class="ds-badge ds-badge--neutral"><span class="ds-badge__dot ds-badge__dot--ring-dot" aria-hidden="true"><\/span>Đề xuất AI<\/span>/g : /$^/, '')}</div>`;
+  return `<div class="fields-col" data-wf-block="6">
+    <section class="group"><div class="group__head"><h2 class="group__title">Cần bạn xem</h2><span class="group__count num">4</span></div>${problems}</section>
+    <section class="group"><div class="group__head"><h2 class="group__title">Chưa duyệt</h2><span class="group__count num">4</span></div>${pending}</section>
+    <details class="collapse"><summary><span><b>Đã duyệt</b> <span class="muted num">· 11 trường</span></span>${icon('down')}</summary><div class="collapse__body">${CONTRACTS[0].fields.map((field) => okRow(field, 1, false)).join('')}</div></details></div>`;
+}
+
+function reviewScreen() {
+  if (state.tt === 'loi') {
+    return shell({ crumb: 'Tài liệu', collapsedDefault: true, content: `<div class="ds-empty" role="alert" data-wf-block="3" style="padding-top:96px"><p class="ds-empty__title ds-empty__title--error">Không tải được tài liệu</p><p class="ds-empty__text">Mất kết nối tới máy chủ. Bản nháp duyệt vẫn được giữ.</p><div class="ds-empty__action">${btn('Thử lại', { iconName: 'reload' })}</div></div>` });
+  }
+  const conflict = state.tt === 'xung-dot' ? `<div role="alert" class="ds-banner ds-banner--error">${icon('close-circle', 'ds-banner__icon')}<div class="ds-banner__body"><p class="ds-banner__title">Hồ sơ vừa được Lê Thu Hà công bố revision 2</p><p class="ds-banner__text">Thay đổi của bạn chưa lưu. Tải lại để xem bản mới rồi duyệt tiếp.</p></div><div class="ds-banner__action">${btn('Tải lại')}</div></div>` : '';
+  const loading = state.tt === 'dang-tai';
+  const head = `<div class="page-head" data-wf-block="3"><div class="page-head__text"><h1 class="page-head__title">${loading ? '<span class="sk" style="width:280px;height:20px"></span>' : 'Nguyễn Thị Hồng Nhung Phương Anh'}</h1>
+      <p class="page-head__desc">${loading ? '' : state.v === 'e' ? 'Sổ thuyền viên · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà' : 'Sổ thuyền viên · 12 trang · tải lên 14:40 hôm nay bởi Lê Thu Hà'}</p></div>
+    <div><div class="page-head__actions">${loading ? '' : '<span role="status" class="ds-save">' + icon('check') + ' Đã lưu</span>'}${btn('Công bố hồ sơ', { variant: 'primary', attrs: 'aria-disabled="true"' })}</div>
+      ${loading || state.tt === 'rong' ? '' : '<p class="publish-note">Còn 6 trường trọng yếu chưa duyệt</p>'}</div></div>`;
+  const progress = loading || state.tt === 'rong' || state.v === 'e' ? '' : `<div data-wf-block="4"><div class="ds-progress-block"><div class="ds-progress-block__head"><p class="ds-progress-block__label">Đã duyệt</p><p class="ds-progress-block__value">11 / 18 trường</p></div><div class="ds-progress"><div class="ds-progress__bar" style="width:61%"></div></div></div></div>`;
+  const switcher = `<div class="switch-view"><div class="seg" role="group" aria-label="Xem"><button type="button" data-view="fields" aria-pressed="${state.view === 'fields'}">Trường</button><button type="button" data-view="doc" aria-pressed="${state.view === 'doc'}">Tài liệu</button></div></div>`;
+  return shell({ crumb: 'Tài liệu', collapsedDefault: true, content: `${conflict}${head}${progress}${switcher}<div class="review" data-view="${state.view}">${viewer()}${fieldsColumn()}</div>` });
+}
+
+// ---------- Màn Đăng nhập ----------
+function loginScreen() {
+  const filled = state.tt === 'du-lieu' || state.tt === 'dang-tai' || state.tt === 'loi';
+  const loading = state.tt === 'dang-tai';
+  const error = state.tt === 'loi';
+  return `<div class="auth-wrap"><div class="auth"><form class="auth-card" data-wf-block="1" onsubmit="return false">
+    <div>${brand()}<h1>Đăng nhập</h1></div>
+    <div><label class="field-label" for="email">Email</label><input id="email" class="input input--lg ${error ? 'input--error' : ''}" type="email" placeholder="ban@congty.vn" ${filled ? 'value="phamvantung@mcah.demo"' : 'autofocus'} /></div>
+    <div><label class="field-label" for="password">Mật khẩu</label><div class="pw"><input id="password" class="input input--lg ${error ? 'input--error' : ''}" type="password" placeholder="Nhập mật khẩu" ${filled ? 'value="matkhau-demo"' : ''} /><button type="button" aria-label="Hiện mật khẩu">${icon('eye')}</button></div>
+      <p class="field-hint" role="alert">${error ? 'Email hoặc mật khẩu không đúng. Kiểm tra lại rồi thử lần nữa.' : ''}</p></div>
+    <button type="submit" class="btn btn--primary btn--lg btn--block" ${loading ? 'aria-busy="true" aria-disabled="true"' : ''}>${loading ? icon('sync') : ''}Đăng nhập</button>
+  </form></div></div>`;
+}
+
+// ---------- Trang lỗi ----------
+function errorScreen() {
+  const pages = {
+    a: { header: 'Không có quyền truy cập', body: `<h1 class="err-block__title">Bạn chưa có quyền xem trang này</h1><p class="err-block__desc">Trang <b>Quản trị</b> chỉ dành cho tài khoản có vai trò Quản trị.</p>
+      <div class="err-block__actions">${btn('Gửi yêu cầu cấp quyền', { variant: 'primary' })}${btn('Về trang Tài liệu')}</div>
+      <p class="err-block__foot">Bạn đang đăng nhập bằng phamvantung@mcah.demo.</p><p style="margin:4px 0 0">${btn('Đổi tài khoản', { variant: 'ghost', size: 'sm' })}</p>` },
+    b: { header: 'Không tìm thấy trang', body: `<p class="err-block__code num">404</p><h1 class="err-block__title">Không tìm thấy trang</h1><p class="err-block__desc">Đường dẫn có thể bị gõ sai, hoặc trang đã được chuyển sang chỗ khác.</p>
+      <div class="err-block__actions">${btn('Về trang Tài liệu', { variant: 'primary' })}${btn('Quay lại trang trước')}</div>` },
+    c: { header: 'Lỗi hệ thống', body: `<h1 class="err-block__title">Trang này đang gặp lỗi</h1><p class="err-block__desc">Lỗi nằm ở phía hệ thống, không phải do bạn. Thử tải lại; nếu vẫn lỗi, gửi mã bên dưới cho quản trị.</p>
+      <div class="err-block__actions">${btn('Tải lại trang', { variant: 'primary' })}${btn('Về trang Tài liệu')}</div>
+      <p class="err-block__foot"><span class="err-block__code-line">Mã lỗi: 7f3a-2c91 ${btn('', { variant: 'ghost', size: 'sm', iconName: 'copy', attrs: 'aria-label="Sao chép mã lỗi" title="Sao chép mã lỗi"' }).replace('btn--sm', 'btn--sm btn--icon')}</span></p>` },
+  };
+  const page = pages[state.v];
+  return shell({ title: page.header, content: `<div class="err-block" data-wf-block="3">${page.body}</div>` });
+}
+
+// ---------- Khung lý do ----------
+const REASONS = {
+  'tai-lieu': {
+    a: ['A · Bảng có tab trạng thái', 'Người dùng đến để thấy sổ nào chờ duyệt hay kẹt: tab đếm theo trạng thái, cột Chờ tô hổ phách khi quá 5 phút, sổ cần xử lý xếp đầu.',
+      ['Đúng quy ước danh sách có lọc theo trạng thái (thay dashboard, mục 7.2)', 'Số sổ chờ duyệt và lỗi thấy ngay trên tab', 'Cùng khuôn với các màn Thuyền viên, Bản xuất sau này'],
+      ['Khung tải lên nằm trong hộp thoại, thêm một bước bấm', 'Bảng 6 cột, dưới 1024px ẩn cột Tải lên bởi'], 'Agency tải sổ theo đợt, phần lớn thời gian là theo dõi và duyệt.', ['Bỏ cột Tải lên bởi', 'Đưa cột Chờ lên trước Trạng thái', 'Tab Chờ duyệt mở mặc định']],
+    b: ['B · Khung tải lên ở đầu trang', 'Tải sổ là bước mở đầu luồng: khung kéo thả luôn ở trên, tệp vừa tải và tệp trùng hiện ngay dưới khung.',
+      ['Kéo thả thẳng vào trang, không mở hộp thoại', 'Thấy tiến độ tải và tệp trùng tại chỗ'], ['Khung chiếm khoảng 200px đầu trang kể cả khi chỉ vào để duyệt', 'Ở 768px bảng bị đẩy xuống dưới màn đầu'],
+      'Người dùng tải sổ liên tục cả ngày.', ['Thu khung tải lên còn một dòng', 'Ẩn khung khi không kéo tệp']],
+    c: ['C · Hàng việc cần làm', 'Chỉ bày việc phải làm ngay: sổ lỗi, sổ chờ duyệt, sổ đang trích xuất; sổ đã xong gập lại.',
+      ['Màn gọn, việc cần làm đứng đầu', 'Mỗi dòng đúng một nút cho việc tiếp theo'], ['Không có bảng đầy đủ để tìm sổ cũ', 'Khác khuôn danh sách của các màn khác trong app'],
+      'Agency ít sổ mỗi ngày, một người lo hết.', ['Thêm ô tìm cho sổ đã xong', 'Gộp Đang trích xuất vào Cần xử lý']],
+    d: ['D · A gọn chữ', 'Mỗi dòng chỉ giữ thứ dùng để chọn sổ: thuyền viên và tên tệp, trạng thái kèm thời gian chờ, nút Duyệt.',
+      ['Bảng 3 cột, không ẩn cột nào ở 768px', 'Mắt dừng ở trạng thái và thời gian chờ'], ['Người tải, số trang chỉ thấy khi mở sổ'], 'Màn hình nhỏ, hay mở trên laptop 13 inch.', ['Thêm lại cột Tải lên bởi']],
+    e: ['E · A bỏ lặp', 'Đang lọc một trạng thái thì ẩn cột Trạng thái vì dòng nào cũng giống nhau; tab Tất cả vẫn có cột đó.',
+      ['Bớt một cột lặp, bảng thoáng hơn', 'Tab đã nói trạng thái, không nói hai lần'], ['Cột nhảy khi đổi tab Tất cả ↔ tab khác'], 'Người dùng hay ở hẳn một tab (Chờ duyệt) cả buổi.', ['Giữ cột Trạng thái ở mọi tab']],
+  },
+  duyet: {
+    a: ['A · Theo nhóm trường', 'Đi lần lượt như sổ: thông tin cá nhân rồi từng dòng sea service, trường có vấn đề tô tại chỗ.',
+      ['Thứ tự trùng thứ tự trên sổ, dễ dò trang', 'Thấy đủ 18 trường cùng lúc'], ['Trường có vấn đề lẫn giữa các trường ổn, dễ sót khi sổ dài', 'Cột phải cuộn dài khi sổ có nhiều dòng sea service'],
+      'Sổ ngắn, ít vấn đề, người duyệt muốn đối chiếu từng dòng.', ['Đưa trường có vấn đề lên đầu mỗi dòng', 'Gập các dòng đã duyệt xong']],
+    b: ['B · Việc cần xem lên đầu', 'Việc chính là không bỏ sót: trường UNKNOWN, ngày mơ hồ, IMO sai, trùng thời gian đứng đầu; trường ổn gập lại.',
+      ['Đúng thứ người duyệt phải làm trước', 'Hợp kịch bản demo với sổ B', 'Đếm rõ còn bao nhiêu việc'], ['Thứ tự khác thứ tự trên sổ, nhảy trang qua lại nhiều hơn'],
+      'Sổ dài, nhiều dòng sea service; demo cho Sales.', ['Gọn hơn: mỗi trường một dòng', 'Bỏ thanh tiến độ', 'Cho chọn sắp theo thứ tự trên sổ']],
+    c: ['C · Từng trường một', 'Mỗi lần một trường, có phím tắt để quyết nhanh mà không rời bàn phím.',
+      ['Nhanh nhất khi đã quen phím tắt', 'Không thể lướt qua trường nào mà không quyết'], ['Không thấy tổng thể hồ sơ', 'Trường ổn cũng phải bấm từng cái (MVP không có chấp nhận hàng loạt)'],
+      'Người duyệt chuyên, cả ngày chỉ làm việc này.', ['Hiện thêm hai trường trước và sau', 'Bỏ phím tắt']],
+    d: ['D · B gọn chữ', 'Như B, nhưng trường chưa duyệt chỉ còn một dòng nhãn, giá trị và nút icon.',
+      ['Cột phải ngắn hơn khoảng một nửa', 'Việc cần xem vẫn đầy đủ ở trên'], ['Nút icon không chữ, người mới phải rê để biết'], 'Sổ có nhiều trường chưa duyệt nhưng ít vấn đề.', ['Nút có chữ ở dòng chưa duyệt']],
+    e: ['E · B bỏ lặp', 'Bỏ thanh tiến độ (số đếm đã có ở đầu từng nhóm và dưới nút Công bố), bỏ badge Đề xuất AI ở nhóm Chưa duyệt (tên nhóm đã nói).',
+      ['Mỗi con số chỉ ở một chỗ', 'Thẻ trường gọn hơn một dòng'], ['Không còn một thanh nhìn là biết tổng tiến độ'], 'Người dùng đã quen màn, không cần nhắc tiến độ.', ['Giữ thanh tiến độ, bỏ câu dưới nút']],
+  },
+  'dang-nhap': {
+    a: ['A · Một cột giữa màn', 'Đề đã liệt kê đủ: logo, email, mật khẩu, nút. Ô và nút cao 48px vì cả màn chỉ có form này.',
+      ['Đúng khuôn màn xác thực (layouts/form.md)', 'Con trỏ nằm sẵn ở ô email'], ['Không có Quên mật khẩu vì backend chưa có; người quên mật khẩu phải nhờ quản trị'], 'Tài khoản do quản trị tạo, không tự đăng ký.', ['Thêm Quên mật khẩu khi backend có']],
+  },
+  loi: {
+    a: ['403 · trong khung app', 'Người đã đăng nhập vẫn ở trong app; nói rõ trang nào, ai được vào, và tài khoản đang dùng.', ['Có đường ra qua sidebar', 'Lý do hay gặp nhất là nhầm tài khoản'], ['Nút Gửi yêu cầu cần backend (chưa có), tạm để handler rỗng'], 'Sau khi sửa phân quyền (B5), vai trò thuyền viên không còn xem được hồ sơ.', ['Bỏ nút Gửi yêu cầu']],
+    b: ['404 · trong khung app', 'Đường dẫn sai vẫn giữ khung app; dòng mã 404 nhỏ trên tiêu đề.', ['Không còn cảnh chuyển về danh sách mà không nói gì'], ['—'], 'Mọi đường dẫn lạ trong app.', ['Thêm ô tìm']],
+    c: ['500 · trong khung app', 'Lỗi của một trang, khung vẫn chạy: tải lại là việc chính, mã lỗi để gửi quản trị.', ['Người dùng biết không phải lỗi của họ', 'Mã lỗi chép được'], ['—'], 'Một API trả lỗi, các trang khác vẫn dùng được.', ['Thêm giờ xảy ra lỗi']],
+  },
+};
+
+// ---------- Vẽ ----------
+function renderToolbar() {
+  const screen = SCREENS[state.man];
+  const set = (param, items, labels = {}) => {
+    const element = document.querySelector(`[data-wf-param="${param}"]`);
+    element.innerHTML = items.map(([value, label, extra = '']) => `<button type="button" data-value="${value}" aria-pressed="${state[param] === value}" ${extra}>${labels[value] || label}</button>`).join('');
+  };
+  set('man', Object.entries(SCREENS).map(([key, value]) => [key, value.label]));
+  set('v', screen.options.map((option) => [option, option.toUpperCase(), option === screen.recommended ? 'data-recommended title="Khuyên dùng"' : '']), OPTION_LABELS[state.man] || {});
+  set('kho', [['desktop', `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></svg>Desktop`], ['mobile', `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>Mobile`]]);
+  set('nav', [['menu', '☰ Menu'], ['duoi', 'Thanh dưới']]);
+  document.querySelector('[data-wf-param="nav"]').style.display = state.kho === 'mobile' && state.man !== 'dang-nhap' ? '' : 'none';
+  const toggle = document.querySelector('[data-wf-toggle="mau"]');
+  toggle.setAttribute('aria-checked', String(state.mau === 'mau'));
+  const labels = { ...STATE_LABELS, ...(STATE_LABELS_BY_SCREEN[state.man] || {}) };
+  document.getElementById('tt-current').textContent = labels[state.tt];
+  document.getElementById('tt-menu').style.display = screen.states.length > 1 ? '' : 'none';
+
+  const [name, why, pros, cons, fit, tips] = REASONS[state.man][state.v];
+  document.getElementById('reason-name').textContent = name;
+  document.getElementById('reason-tag').hidden = state.v !== screen.recommended;
+  document.getElementById('reason-why').textContent = why;
+  document.getElementById('reason-pros').innerHTML = pros.map((line) => `<li>${line}</li>`).join('');
+  document.getElementById('reason-cons').innerHTML = cons.map((line) => `<li>${line}</li>`).join('');
+  document.getElementById('reason-fit').textContent = fit;
+  const tipsEl = document.getElementById('reason-tips');
+  tipsEl.querySelectorAll('button').forEach((button) => button.remove());
+  tips.forEach((tip) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = tip;
+    button.addEventListener('click', async () => { try { await navigator.clipboard.writeText(tip); button.setAttribute('data-copied', ''); setTimeout(() => button.removeAttribute('data-copied'), 1500); } catch (error) { /* bị chặn thì thôi */ } });
+    tipsEl.appendChild(button);
+  });
+}
+
+function renderDesign() {
+  const screens = { 'tai-lieu': documentsScreen, duyet: reviewScreen, 'dang-nhap': loginScreen, loi: errorScreen };
+  const html = screens[state.man]();
+  document.getElementById('wf-design').innerHTML = state.kho === 'mobile' ? `<div class="wf-phone-wrap"><div class="wf-phone">${html}</div></div>` : html;
+  requestAnimationFrame(() => requestAnimationFrame(placeBlockNumbers));
+}
+
+function render() {
+  normalize();
+  document.documentElement.dataset.mau = state.mau;
+  renderToolbar();
+  renderDesign();
+  syncHash();
+}
+
+function placeBlockNumbers() {
+  const overlap = (a, b) => a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+  for (const block of document.querySelectorAll('[data-wf-block]')) {
+    const rect = block.getBoundingClientRect();
+    const numberRect = { left: rect.left + 4, top: rect.top + 4, right: rect.left + 22, bottom: rect.top + 22 };
+    const contentRects = [...block.querySelectorAll('svg, img')].map((node) => node.getBoundingClientRect());
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.textContent.trim()) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      contentRects.push(...range.getClientRects());
+    }
+    block.toggleAttribute('data-wf-block-out', contentRects.some((r) => r.width > 0 && overlap(r, numberRect)));
+  }
+}
+
+// ---------- Tương tác ----------
+document.querySelector('.wf-bar').addEventListener('click', (event) => {
+  const button = event.target.closest('button');
+  if (!button) return;
+  const param = button.closest('[data-wf-param]')?.dataset.wfParam;
+  if (param) {
+    state[param] = button.dataset.value;
+    if (param === 'man' || param === 'v') { state.tab = null; state.sider = null; state.menuOpen = false; state.userOpen = false; }
+    render();
+    return;
+  }
+  if (button.dataset.wfToggle === 'mau') { state.mau = state.mau === 'mau' ? 'xam' : 'mau'; render(); return; }
+  if (button.closest('#tt-menu')) {
+    const menu = document.getElementById('tt-menu');
+    const existing = document.querySelector('.wf-popover');
+    if (existing) { existing.remove(); menu.removeAttribute('data-open'); return; }
+    const rect = button.getBoundingClientRect();
+    const labels = { ...STATE_LABELS, ...(STATE_LABELS_BY_SCREEN[state.man] || {}) };
+    const popover = document.createElement('div');
+    popover.className = 'wf-popover';
+    popover.style.top = `${rect.bottom + 6}px`;
+    popover.style.left = `${Math.min(rect.left, window.innerWidth - 180)}px`;
+    popover.innerHTML = SCREENS[state.man].states.map((value) => `<button type="button" data-tt="${value}" aria-pressed="${state.tt === value}">${labels[value]}</button>`).join('');
+    popover.addEventListener('click', (popEvent) => { const item = popEvent.target.closest('[data-tt]'); if (!item) return; state.tt = item.dataset.tt; popover.remove(); menu.removeAttribute('data-open'); render(); });
+    document.body.appendChild(popover);
+    menu.setAttribute('data-open', '');
+  }
+});
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('#tt-menu') && !event.target.closest('.wf-popover')) { document.querySelector('.wf-popover')?.remove(); document.getElementById('tt-menu').removeAttribute('data-open'); }
+});
+document.getElementById('wf-design').addEventListener('click', (event) => {
+  const target = event.target.closest('[data-action], [data-tab], [data-view]');
+  if (!target) return;
+  if (target.dataset.tab) { state.tab = target.dataset.tab; renderDesign(); return; }
+  if (target.dataset.view) { state.view = target.dataset.view; renderDesign(); return; }
+  const action = target.dataset.action;
+  if (action === 'menu') state.menuOpen = !state.menuOpen;
+  if (action === 'user') state.userOpen = !state.userOpen;
+  if (action === 'sider') {
+    const collapsed = document.querySelector('.sider')?.classList.contains('sider--collapsed');
+    state.sider = collapsed ? 'open' : 'collapsed';
+  }
+  renderDesign();
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key !== 'Escape') return;
+  state.menuOpen = false; state.userOpen = false;
+  document.querySelector('.wf-popover')?.remove();
+  renderDesign();
+});
+addEventListener('resize', placeBlockNumbers);
+render();
+
+</script>
+
+</body>
+</html>

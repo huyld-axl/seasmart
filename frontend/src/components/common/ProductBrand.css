@@ -1,0 +1,45 @@
+.product-brand {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-brand__mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #003366; /* màu nhấn, cùng colorPrimary ở App.jsx */
+  color: #ffffff;
+}
+
+.product-brand__mark svg {
+  width: 20px;
+  height: 20px;
+}
+
+.product-brand__name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c2c2c;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-brand--collapsed .product-brand__name {
+  display: none;
+}
+
+.product-brand--inverted .product-brand__mark {
+  background: #ffffff;
+  color: #001529; /* nền sidebar tối hiện tại */
+}
+
+.product-brand--inverted .product-brand__name {
+  color: #ffffff;
+}

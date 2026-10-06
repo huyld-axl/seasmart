@@ -1,0 +1,359 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>
+<title>MCAH Logo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Trang chọn logo MCAH (skill ui-ux, components/logo.md). Một theme sáng có chủ ý: đây là bản xem
+     trước giao diện sáng của app. Token theo references/tokens.css, màu nhấn navy #003366 của dự án. */
+  :root {
+    color-scheme: light;
+    --app-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --primary: #003366;
+    --primary-foreground: #ffffff;
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #f7f7f8;
+    --border-strong: #eaeaea;
+    --secondary: #e7e8ec;
+    --item-hover: #f1f1f3;
+    --button-hover: #f1f1f3;
+    --ring-focus: rgba(0, 51, 102, 0.1);
+    --border-focus: var(--primary);
+    /* Sidebar tối hiện tại của Marineport, chỉ để đối chiếu. */
+    --legacy-sider: #001529;
+    --legacy-sider-fg: rgba(255, 255, 255, 0.65);
+    /* Hai dải tab trình duyệt. */
+    --chrome-light: #dfe1e5;
+    --chrome-light-tab: #ffffff;
+    --chrome-dark: #202124;
+    --chrome-dark-tab: #35363a;
+    --chrome-dark-fg: #e8eaed;
+    /* Thanh công cụ của trang chọn (nằm ngoài bản thiết kế). */
+    --wf-fg: #171717;
+    --wf-muted: #737373;
+    --wf-track: #f4f4f5;
+    --wf-line: #e5e5e5;
+    --wf-good: #16a34a;
+    --wf-warn: #d97706;
+  }
+  :root[data-mau="xam"] { --primary: #2c2c2c; --ring-focus: rgba(44, 44, 44, 0.1); }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); }
+  button { font: inherit; color: inherit; }
+
+  /* ---- Thanh công cụ, một dòng, không dính đỉnh (design-process.md U3) ---- */
+  .wf-bar { display: flex; align-items: center; gap: 24px; height: 56px; padding: 0 16px; overflow-x: auto; white-space: nowrap;
+    background: #fff; border-bottom: 1px solid var(--wf-line); color: var(--wf-muted); font: 14px/1 system-ui, -apple-system, sans-serif; }
+  .wf-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .wf-set { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 10px; background: var(--wf-track); }
+  .wf-set button { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 32px; height: 30px;
+    padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--wf-muted); cursor: pointer; }
+  .wf-set button:hover { color: var(--wf-fg); }
+  .wf-set button[aria-pressed="true"] { background: #fff; color: var(--wf-fg); font-weight: 500;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .08), 0 0 0 1px rgb(0 0 0 / .04); }
+  .wf-set button[data-recommended]::after { content: ""; position: absolute; top: 5px; right: 5px; width: 5px; height: 5px;
+    border-radius: 50%; background: var(--primary); }
+  .wf-switch { display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 0; border: 0; background: none;
+    color: var(--wf-muted); cursor: pointer; }
+  .wf-switch i { position: relative; width: 36px; height: 20px; border-radius: 10px; background: #e4e4e7; transition: background .15s; }
+  .wf-switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: translate .15s; }
+  .wf-switch[aria-checked="true"] i { background: var(--wf-fg); }
+  .wf-switch[aria-checked="true"] i::after { translate: 16px 0; }
+
+  .wf-reason { border-bottom: 1px solid var(--wf-line); background: #fafafa; color: #404040; font: 13px/1.5 system-ui, -apple-system, sans-serif; }
+  .wf-reason summary { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-height: 44px; padding: 8px 16px; cursor: pointer; list-style: none; }
+  .wf-reason summary::-webkit-details-marker { display: none; }
+  .wf-reason-name { color: var(--wf-fg); font-weight: 600; white-space: nowrap; }
+  .wf-reason-tag { flex-shrink: 0; height: 20px; padding: 0 8px; border-radius: 10px; background: #e6edf5; color: #003366;
+    font-size: 12px; font-weight: 500; line-height: 20px; }
+  .wf-reason-why { flex: 1; min-width: 0; overflow: hidden; color: #525252; text-overflow: ellipsis; white-space: nowrap; }
+  .wf-reason[open] .wf-reason-why { white-space: normal; }
+  .wf-reason-toggle { display: inline-flex; flex-shrink: 0; align-items: center; gap: 4px; height: 28px; margin-left: auto; padding: 0 8px;
+    border-radius: 6px; color: var(--wf-fg); font-weight: 500; }
+  .wf-reason summary:hover .wf-reason-toggle { background: #f0f0f0; }
+  .wf-reason-toggle svg { width: 16px; height: 16px; transition: rotate .15s; }
+  .wf-reason[open] .wf-reason-toggle svg { rotate: 180deg; }
+  .wf-reason-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; padding: 4px 16px 16px; }
+  .wf-reason-cols { display: grid; max-width: 1120px; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px 32px; }
+  .wf-reason h3 { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; color: var(--wf-fg); font-size: 12px; font-weight: 600; }
+  .wf-reason h3 i { width: 6px; height: 6px; border-radius: 50%; background: #a3a3a3; }
+  .wf-reason h3 i[data-tone="uu"] { background: var(--wf-good); }
+  .wf-reason h3 i[data-tone="nhuoc"] { background: var(--wf-warn); }
+  .wf-reason ul { display: grid; gap: 2px; margin: 0; padding-left: 16px; }
+  .wf-reason p { margin: 0; }
+  .wf-reason-tips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid #ebebeb; }
+  .wf-reason-tips h3 { margin: 0 4px 0 0; }
+  .wf-reason-tips button { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--wf-line);
+    border-radius: 8px; background: #fff; color: #262626; white-space: nowrap; cursor: pointer; }
+  .wf-reason-tips button:hover { background: #f5f5f5; }
+  .wf-reason-tips button svg { width: 14px; height: 14px; color: var(--wf-muted); }
+  .wf-reason-tips button [data-icon="da-chep"], .wf-reason-tips button[data-copied] [data-icon="chep"] { display: none; }
+  .wf-reason-tips button[data-copied] [data-icon="da-chep"] { display: block; color: var(--wf-good); }
+  @media (max-width: 767px) {
+    .wf-reason-why { order: 1; flex-basis: 100%; }
+    .wf-reason-toggle span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .wf-reason-tips h3 { flex-basis: 100%; }
+  }
+
+  /* ---- Bản thiết kế ---- */
+  main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; max-width: 1200px; margin: 0 auto; padding: 32px 16px 48px; }
+  .spot { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+  .spot-label { margin: 0; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+
+  .mark-box { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px;
+    background: var(--primary); color: var(--primary-foreground); }
+  .mark-box svg { width: 20px; height: 20px; }
+  .brand { display: flex; min-width: 0; align-items: center; gap: 10px; }
+  .brand-name { overflow: hidden; color: var(--foreground); font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Sidebar sáng theo layouts/app.md: nền trắng cạnh nền xám, không viền phải. */
+  .shell { display: flex; height: 360px; overflow: hidden; border-radius: 12px; background: var(--background); }
+  .sider { display: flex; flex-direction: column; flex-shrink: 0; width: 240px; overflow: hidden; background: var(--surface); }
+  .sider-head { display: flex; align-items: center; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--border-strong); }
+  .nav { display: flex; flex-direction: column; gap: 4px; padding: 12px; }
+  .nav a { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 12px; color: rgb(44 44 44 / .7);
+    font-size: 14px; text-decoration: none; white-space: nowrap; overflow: hidden; }
+  .nav a:hover { background: var(--item-hover); color: var(--foreground); }
+  .nav a[aria-current="page"] { background: var(--secondary); color: var(--foreground); font-weight: 500; }
+  .nav svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .shell-content { flex: 1; min-width: 0; }
+  .shell-content .topbar { height: 56px; border-bottom: 1px solid var(--border-strong); background: var(--surface); }
+  .sider.is-collapsed { width: 64px; }
+  .sider.is-collapsed .brand-name, .sider.is-collapsed .nav span { opacity: 0; }
+
+  .sider.is-legacy { background: var(--legacy-sider); }
+  .sider.is-legacy .sider-head { border-bottom-color: rgb(255 255 255 / .1); }
+  .sider.is-legacy .brand-name { color: #fff; }
+  .sider.is-legacy .nav a { color: var(--legacy-sider-fg); }
+  .sider.is-legacy .nav a[aria-current="page"] { background: rgb(255 255 255 / .1); color: #fff; }
+  .sider.is-legacy .mark-box { background: var(--primary-foreground); color: var(--legacy-sider); }
+
+  /* Màn đăng nhập theo layouts/form.md: một cột, không viền, logo trên tiêu đề. */
+  .auth { display: grid; place-items: center; padding: 48px 16px; border-radius: 12px; background: var(--background); }
+  .auth-form { display: grid; gap: 20px; width: 100%; max-width: 400px; padding: 32px; border-radius: 12px; background: var(--surface); }
+  .auth-form h2 { margin: 8px 0 0; font-size: 20px; font-weight: 600; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-size: 14px; font-weight: 500; }
+  .field input { height: 40px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface);
+    color: var(--foreground); font: inherit; outline: none; }
+  .field input::placeholder { color: var(--muted); }
+  .field input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .btn-primary { height: 40px; border: 0; border-radius: 12px; background: var(--primary); color: var(--primary-foreground); font-weight: 500; cursor: pointer; }
+
+  /* Tab trình duyệt. */
+  .tabs { display: grid; gap: 12px; }
+  .tabstrip { display: flex; align-items: flex-end; gap: 4px; height: 44px; overflow: hidden; padding: 0 12px; border-radius: 12px 12px 0 0; background: var(--chrome-light); }
+  .tab { display: flex; flex-shrink: 1; min-width: 0; align-items: center; gap: 8px; width: 220px; max-width: 100%; white-space: nowrap; height: 36px; padding: 0 12px; border-radius: 10px 10px 0 0;
+    background: var(--chrome-light-tab); color: #202124; font: 12px/1 system-ui, sans-serif; }
+  .tab.is-idle { background: transparent; color: #5f6368; }
+  .tabstrip.is-dark { background: var(--chrome-dark); }
+  .tabstrip.is-dark .tab { background: var(--chrome-dark-tab); color: var(--chrome-dark-fg); }
+  .tabstrip.is-dark .tab.is-idle { background: transparent; color: #9aa0a6; }
+  .favicon { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px;
+    background: var(--primary); color: var(--primary-foreground); }
+  .favicon svg { width: 12px; height: 12px; }
+  .tab .dot { width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%; background: #9aa0a6; }
+
+  /* Hàng cỡ. */
+  .sizes { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-end; padding: 24px; border-radius: 12px; background: var(--surface); }
+  .size { display: grid; justify-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .size .tile { display: flex; align-items: center; justify-content: center; background: var(--primary); color: var(--primary-foreground); }
+  .size .plain { display: flex; align-items: center; justify-content: center; color: var(--foreground); }
+  .size svg { width: 100%; height: 100%; }
+  .divider { width: 1px; align-self: stretch; background: var(--border-strong); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<nav class="wf-bar" aria-label="Trang chọn logo">
+  <div class="wf-group">
+    <span>Logo</span>
+    <span class="wf-set" id="logo-set">
+      <button type="button" data-value="1" data-recommended title="1 · Chữ M dựng bằng khối (khuyên dùng)">1</button>
+      <button type="button" data-value="2" title="2 · Sổ và dấu xác nhận">2</button>
+      <button type="button" data-value="3" title="3 · Mặt trời trên mặt biển">3</button>
+    </span>
+  </div>
+  <button type="button" class="wf-switch" id="mau-switch" role="switch" aria-checked="true">Màu <i></i></button>
+</nav>
+
+<details class="wf-reason">
+  <summary>
+    <span class="wf-reason-name" id="reason-name"></span>
+    <span class="wf-reason-tag" id="reason-tag">Khuyên dùng</span>
+    <span class="wf-reason-why" id="reason-why"></span>
+    <span class="wf-reason-toggle"><span>Ưu, nhược</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></span>
+  </summary>
+  <div class="wf-reason-body">
+    <div class="wf-reason-cols">
+      <section><h3><i data-tone="uu"></i>Ưu</h3><ul id="reason-pros"></ul></section>
+      <section><h3><i data-tone="nhuoc"></i>Nhược</h3><ul id="reason-cons"></ul></section>
+      <section><h3><i></i>Hợp khi</h3><p id="reason-fit"></p></section>
+    </div>
+    <div class="wf-reason-tips" id="reason-tips"><h3>Gợi ý góp ý</h3></div>
+  </div>
+</details>
+
+<main>
+  <section class="spot">
+    <p class="spot-label">Đầu sidebar: mở, thu gọn, và sidebar tối hiện tại (Marineport, chỉ để đối chiếu)</p>
+    <div class="row">
+      <div class="shell" style="width: 420px; max-width: 100%">
+        <aside class="sider" data-slot="sider"></aside>
+        <div class="shell-content"><div class="topbar"></div></div>
+      </div>
+      <div class="shell" style="width: 200px; max-width: 100%">
+        <aside class="sider is-collapsed" data-slot="sider"></aside>
+        <div class="shell-content"><div class="topbar"></div></div>
+      </div>
+      <div class="shell" style="width: 240px; max-width: 100%">
+        <aside class="sider is-legacy" data-slot="sider"></aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="spot">
+    <p class="spot-label">Màn đăng nhập</p>
+    <div class="auth">
+      <form class="auth-form" onsubmit="event.preventDefault()">
+        <div data-slot="brand"></div>
+        <h2>Đăng nhập</h2>
+        <div class="field"><label for="email">Email</label><input id="email" type="email" placeholder="ban@congty.vn" autocomplete="off" /></div>
+        <div class="field"><label for="password">Mật khẩu</label><input id="password" type="password" placeholder="Nhập mật khẩu" autocomplete="off" /></div>
+        <button type="submit" class="btn-primary">Đăng nhập</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="spot">
+    <p class="spot-label">Tab trình duyệt sáng và tối, favicon 16px</p>
+    <div class="tabs">
+      <div class="tabstrip">
+        <div class="tab"><span class="favicon" data-slot="favicon"></span>MCAH · Tài liệu</div>
+        <div class="tab is-idle"><span class="dot"></span>Hộp thư</div>
+      </div>
+      <div class="tabstrip is-dark">
+        <div class="tab"><span class="favicon" data-slot="favicon"></span>MCAH · Tài liệu</div>
+        <div class="tab is-idle"><span class="dot"></span>Hộp thư</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="spot">
+    <p class="spot-label">Cỡ 16, 32, 64px trên nền màu nhấn và trên nền trắng</p>
+    <div class="sizes" id="sizes"></div>
+  </section>
+</main>
+
+<script>
+  // Dấu viết tay trong viewBox 24, vẽ trong vùng 4–20, một màu currentColor (components/logo.md).
+  const MARKS = {
+    1: '<rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/>',
+    2: '<defs><mask id="mcah-mark-2-cut"><rect width="24" height="24" fill="#fff"/><circle cx="15.5" cy="15.5" r="6.5" fill="#000"/></mask></defs>' +
+       '<rect x="4" y="3.5" width="11" height="16" rx="2" mask="url(#mcah-mark-2-cut)"/><circle cx="15.5" cy="15.5" r="4.5"/>',
+    3: '<path fill-rule="evenodd" d="M5 10.5a7 7 0 1 0 14 0a7 7 0 1 0 -14 0Z M4 14h16v3.5H4Z"/>',
+  };
+
+  const REASONS = {
+    1: {
+      name: "1 · Chữ M dựng bằng khối",
+      why: "Tên MCAH ngắn: chữ M dựng từ hai thanh và một khối treo giữa thành dấu riêng, ở 16px vẫn là một khối chắc.",
+      pros: ["Đọc ra ngay chữ đầu của tên sản phẩm", "Ba khối đặc, rõ ở 16px trên cả tab sáng và tối", "Không lẫn với icon nét mảnh của các mục sidebar"],
+      cons: ["Không nói gì về việc chính (sổ, hồ sơ, hàng hải)"],
+      fit: "Muốn dấu gọn, trung tính, dùng lâu dài kể cả khi sản phẩm mở rộng sang chứng chỉ, visa.",
+      tips: ["1 nhưng bo góc tròn hơn", "1 nhưng khối giữa to hơn", "Tên MCAH đậm hơn"],
+    },
+    2: {
+      name: "2 · Sổ và dấu xác nhận",
+      why: "Việc chính là biến sổ thuyền viên thành hồ sơ đã duyệt có bằng chứng: tờ sổ và con dấu đè góc.",
+      pros: ["Nói đúng điểm khác biệt: tài liệu có người duyệt", "Con dấu là thứ quen thuộc trong sổ thuyền viên", "Khoảng cắt quanh dấu giữ hai hình tách nhau"],
+      cons: ["Ở 16px khoảng cắt quanh dấu mảnh, dễ dính thành một khối", "Gần với icon tài liệu thông thường"],
+      fit: "Muốn dấu kể ngay sản phẩm làm gì cho agency, nhất là trên tài liệu Sales.",
+      tips: ["2 nhưng con dấu nhỏ hơn", "2 nhưng tờ sổ bo tròn hơn", "Tên MCAH đậm hơn"],
+    },
+    3: {
+      name: "3 · Mặt trời trên mặt biển",
+      why: "Gợi ngành hàng hải mà không dùng mỏ neo hay bánh lái: mặt trời lặn vào mặt biển, phần giao để rỗng.",
+      pros: ["Nhận ra ngay là ngành biển", "Phần giao rỗng làm dấu có chiều sâu mà vẫn một màu", "Khác hẳn icon các mục sidebar"],
+      cons: ["Không nói gì về hồ sơ, tài liệu", "Hình mặt trời trên biển khá quen trong ngành du lịch"],
+      fit: "Muốn nhận diện ngành hàng hải rõ hơn nhận diện tính năng.",
+      tips: ["3 nhưng mặt biển mỏng hơn", "3 nhưng mặt trời to hơn", "Tên MCAH đậm hơn"],
+    },
+  };
+
+  const NAV = [
+    { label: "Tài liệu", icon: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>' },
+    { label: "Thuyền viên", current: true, icon: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+    { label: "Bản xuất", icon: '<path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M4 7V4a2 2 0 0 1 2-2 2 2 0 0 0-2 2"/><path d="M4.063 20.999a2 2 0 0 0 2 1L18 22a2 2 0 0 0 2-2V7l-5-5H6"/><path d="m5 11-3 3"/><path d="m5 17-3-3h10"/>' },
+    { label: "Danh mục", icon: '<path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>' },
+    { label: "Quản trị", icon: '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>' },
+  ];
+
+  const markSvg = (logo) => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${MARKS[logo]}</svg>`;
+  const brandHtml = (logo) => `<span class="brand"><span class="mark-box">${markSvg(logo)}</span><span class="brand-name">MCAH</span></span>`;
+  const navIcon = (paths) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
+  // Trạng thái: ?logo=&mau= cho probe chạy local, #logo-2 cho link chia sẻ; bấm thanh công cụ thì đổi tại chỗ.
+  const params = new URLSearchParams(location.search);
+  const hashLogo = (location.hash.match(/^#logo-([123])$/) || [])[1];
+  const state = { logo: hashLogo || params.get("logo") || "1", mau: params.get("mau") || "mau" };
+  if (!MARKS[state.logo]) state.logo = "1";
+
+  function render() {
+    document.documentElement.dataset.mau = state.mau;
+    for (const sider of document.querySelectorAll('[data-slot="sider"]')) {
+      sider.innerHTML = `<div class="sider-head">${brandHtml(state.logo)}</div><nav class="nav">${NAV.map((item) =>
+        `<a href="#logo-${state.logo}"${item.current ? ' aria-current="page"' : ""} aria-label="${item.label}">${navIcon(item.icon)}<span>${item.label}</span></a>`).join("")}</nav>`;
+    }
+    for (const slot of document.querySelectorAll('[data-slot="brand"]')) slot.innerHTML = brandHtml(state.logo);
+    for (const slot of document.querySelectorAll('[data-slot="favicon"]')) slot.innerHTML = markSvg(state.logo);
+
+    const sizes = [16, 32, 64];
+    document.getElementById("sizes").innerHTML =
+      sizes.map((size) => `<div class="size"><span class="tile" style="width:${size}px;height:${size}px;border-radius:${Math.round(size / 4)}px;padding:${Math.round(size * 0.19)}px">${markSvg(state.logo)}</span>${size}px</div>`).join("") +
+      '<span class="divider" aria-hidden="true"></span>' +
+      sizes.map((size) => `<div class="size"><span class="plain" style="width:${size}px;height:${size}px">${markSvg(state.logo)}</span>${size}px</div>`).join("");
+
+    const reason = REASONS[state.logo];
+    document.getElementById("reason-name").textContent = reason.name;
+    document.getElementById("reason-tag").hidden = state.logo !== "1";
+    document.getElementById("reason-why").textContent = reason.why;
+    document.getElementById("reason-pros").innerHTML = reason.pros.map((line) => `<li>${line}</li>`).join("");
+    document.getElementById("reason-cons").innerHTML = reason.cons.map((line) => `<li>${line}</li>`).join("");
+    document.getElementById("reason-fit").textContent = reason.fit;
+    const tips = document.getElementById("reason-tips");
+    tips.querySelectorAll("button").forEach((button) => button.remove());
+    for (const tip of reason.tips) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.innerHTML = `${tip}<svg data-icon="chep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg data-icon="da-chep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>`;
+      button.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(tip); } catch { return; }
+        button.setAttribute("data-copied", "");
+        setTimeout(() => button.removeAttribute("data-copied"), 1500);
+      });
+      tips.appendChild(button);
+    }
+
+    for (const button of document.querySelectorAll("#logo-set button")) {
+      button.setAttribute("aria-pressed", String(button.dataset.value === state.logo));
+    }
+    document.getElementById("mau-switch").setAttribute("aria-checked", String(state.mau === "mau"));
+  }
+
+  for (const button of document.querySelectorAll("#logo-set button")) {
+    button.addEventListener("click", () => { state.logo = button.dataset.value; render(); });
+  }
+  document.getElementById("mau-switch").addEventListener("click", () => {
+    state.mau = state.mau === "mau" ? "xam" : "mau";
+    render();
+  });
+  render();
+</script>
+</body></html>

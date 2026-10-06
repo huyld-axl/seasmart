@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu, Avatar, Dropdown, Drawer, Grid } from 'antd'
 import NotificationBell from '../components/common/NotificationBell'
+import ProductBrand from '../components/common/ProductBrand'
 import {
   TeamOutlined,
   BankOutlined,
@@ -97,7 +98,7 @@ export default function AdminLayout() {
               collapsed ? 'admin-layout__logo--collapsed' : 'admin-layout__logo--expanded',
             ].join(' ')}
           >
-            {collapsed ? 'MP' : 'MarinePort'}
+            <ProductBrand collapsed={collapsed} inverted />
           </div>
           <Menu
             theme="dark"
@@ -150,7 +151,7 @@ export default function AdminLayout() {
           body: { padding: 0, background: '#001529' },
           header: { background: '#001529', borderBottom: '1px solid rgba(255,255,255,0.1)' },
         }}
-        title={<span className="admin-layout__drawer-title">MarinePort</span>}
+        title={<ProductBrand inverted />}
         closeIcon={<span className="admin-layout__drawer-close">✕</span>}
       >
         <Menu

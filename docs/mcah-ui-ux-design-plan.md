@@ -846,3 +846,9 @@ Nếu trễ, cắt theo thứ tự:
 | Chỉ liệt kê một phần `layouts/`, `components/` | Mục 3 phủ mọi file, kèm lý do không dùng | Yêu cầu tận dụng hết skill |
 | Canva chỉ ở bảng dự phòng | Giai đoạn 7 riêng, kèm luật claim của tài liệu Sales | Canva là kênh tài liệu Sales |
 | "6 lần gọi/tháng, kế hoạch cần 25–40 lần"; kiểm từng màn bằng `get_screenshot` | Chỉ lệnh đọc riêng bị giới hạn 6 lần/tháng. Đọc, sửa, chụp kiểm đều qua `use_figma` (không bị đếm) | Kiểm lại tài liệu Figma và hướng dẫn `figma-use` sau khi đẩy bản đầu |
+
+## Quyết định: bỏ file Figma/Penpot, dùng UI Kit HTML
+
+Bản dựng lại trong Penpot (qua API) xấu hơn và lỗi hơn wireframe gốc, Figma thì hết hạn mức. Dự án không có designer sửa tay, nên bản thiết kế chính thức là UI Kit HTML:
+`docs/design/ui-kit/mcah-ui.html`, gồm 3 tab: Màn hình (bấm thử được, có màu, chỉ phương án đã chốt), Luồng màn, Design system.
+Artifact: https://claude.ai/artifact/3MDT9n8JptWAPpHkycNskg

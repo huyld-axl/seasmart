@@ -1,0 +1,178 @@
+  /* ===== Vỏ UI Kit: 3 tab (Màn hình · Luồng màn · Design system). Màu lấy token của dự án, chỉ giao diện sáng ===== */
+  :root { color-scheme: light; --sc-head: 56px; --sc-rail: 232px; }
+  html, body { background: var(--background); }
+  [data-wf-block]::before { display: none !important; }
+  [hidden] { display: none !important; }
+  .sc-head { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 70; display: flex; align-items: center; gap: 24px; height: var(--sc-head); padding: 0 16px;
+    background: var(--primary); color: #fff; }
+  .sc-brand { display: flex; align-items: baseline; gap: 8px; flex-shrink: 0; margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .01em; }
+  .sc-brand small { color: rgb(255 255 255 / .65); font-size: 12px; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+  .sc-tabs { display: flex; align-self: stretch; gap: 4px; overflow-x: auto; }
+  .sc-tabs button { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border: 0; background: none; color: rgb(255 255 255 / .7); font: 500 14px/1 var(--app-font); white-space: nowrap; cursor: pointer; }
+  .sc-tabs button:hover { color: #fff; }
+  .sc-tabs button[aria-selected="true"] { color: #fff; }
+  .sc-tabs button[aria-selected="true"]::after { content: ""; position: absolute; right: 12px; bottom: 0; left: 12px; height: 3px; border-radius: 3px 3px 0 0; background: #fff; }
+  .sc-tabs button:focus-visible, .sc-rail button:focus-visible, .fl-node:focus-visible { outline: 2px solid var(--primary-light, #9db4cc); outline-offset: 2px; }
+  .sc-tabs svg { width: 16px; height: 16px; }
+
+  .sc-layout { display: grid; grid-template-columns: var(--sc-rail) minmax(0, 1fr); min-height: calc(100vh - var(--sc-head)); }
+  .sc-rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--sc-head)); align-self: start; height: calc(100vh - var(--sc-head)); overflow-y: auto; padding: 16px 12px 24px; border-right: 1px solid var(--border); background: var(--surface); }
+  .sc-rail h3 { margin: 16px 8px 6px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+  .sc-rail h3:first-child { margin-top: 0; }
+  .sc-rail button { display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: 6px; width: 100%; min-height: 36px; padding: 6px 8px; border: 0; border-radius: 8px; background: none; color: var(--foreground); font: 14px/1.3 var(--app-font); text-align: left; cursor: pointer; }
+  .sc-rail button:hover { background: var(--item-hover, #f4f4f5); }
+  .sc-rail button[aria-current="true"] { background: var(--primary-light, #e6edf5); color: var(--primary); font-weight: 600; }
+  .sc-rail b { color: var(--muted); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sc-rail button[aria-current="true"] b { color: var(--primary); }
+  .sc-main { min-width: 0; }
+  .sc-main .wf-stage { overflow-x: auto; }
+  .sc-main .wf-stage > .app { min-width: 1280px; }
+  .fl-thumb { contain: paint; }
+  .sc-main .wf-bar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--sc-head)); gap: 16px; }
+  .sc-title { margin: 0 8px 0 0; color: var(--foreground); font: 600 15px/1 var(--app-font); white-space: nowrap; }
+  .sc-title b { margin-right: 6px; color: var(--primary); }
+  .sc-var:has(button:only-child) { display: none; }
+  .app { min-height: calc(100vh - var(--sc-head) - 56px); }
+  @media (max-width: 900px) {
+    .sc-layout { grid-template-columns: minmax(0, 1fr); }
+    .sc-rail { position: static; display: flex; gap: 4px; height: auto; overflow-x: auto; padding: 8px 16px; border-right: 0; border-bottom: 1px solid var(--border); }
+    .sc-rail h3 { display: none; }
+    .sc-rail button { grid-template-columns: auto auto; width: auto; white-space: nowrap; }
+    .sc-head { gap: 12px; }
+    .sc-brand small { display: none; }
+  }
+
+  /* ----- Luồng màn ----- */
+  .fl { padding-block: 24px 48px; padding-inline: 24px; }
+  .fl-intro { max-width: 760px; margin: 0 0 24px; }
+  .fl-intro h2 { margin: 0 0 6px; font-size: 20px; font-weight: 600; text-wrap: balance; }
+  .fl-intro p { margin: 0; color: var(--muted); }
+  .fl-scroll { overflow-x: auto; padding-bottom: 8px; }
+  .fl-canvas { position: relative; display: grid; gap: 72px; width: max-content; padding: 8px; }
+  .fl-lane { display: grid; grid-template-columns: 112px repeat(4, 240px); align-items: start; gap: 0 76px; }
+  .fl-lane-label { padding-top: 52px; }
+  .fl-lane-label b { display: block; color: var(--foreground); font-size: 13px; font-weight: 600; }
+  .fl-lane-label span { color: var(--muted); font-size: 12px; }
+  .fl-node { position: relative; z-index: 1; display: grid; gap: 8px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+  .fl-thumb { position: relative; width: 240px; height: 150px; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--background); transition: border-color .15s, box-shadow .15s; }
+  .fl-node:hover .fl-thumb { border-color: var(--primary); box-shadow: 0 6px 20px rgb(0 51 102 / .12); }
+  .fl-thumb-inner { position: absolute; top: 0; left: 0; width: 1440px; height: 900px; overflow: hidden; transform: scale(.16667); transform-origin: 0 0; pointer-events: none; }
+  .fl-thumb-inner .app { min-height: 900px; }
+  .fl-thumb--phone { width: 240px; background: var(--item-hover, #f4f4f5); }
+  .fl-thumb--phone .fl-thumb-inner { left: 85px; width: 375px; height: 812px; transform: scale(.1847); border-radius: 0; }
+  .fl-cap { display: flex; align-items: baseline; gap: 8px; }
+  .fl-cap b { color: var(--primary); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .fl-cap span { font-size: 14px; font-weight: 600; }
+  .fl-cap em { margin-left: auto; color: var(--muted); font-size: 12px; font-style: normal; }
+  .fl-svg { position: absolute; inset: 0; z-index: 0; overflow: visible; pointer-events: none; }
+  .fl-svg path { fill: none; stroke: var(--primary); stroke-width: 1.5; }
+  .fl-svg path.back { stroke-dasharray: 5 4; stroke: var(--muted); }
+  .fl-svg text { fill: var(--foreground); font: 500 11px var(--app-font); paint-order: stroke; stroke: var(--background); stroke-width: 4px; stroke-linejoin: round; }
+  .fl-legend { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 24px; color: var(--muted); font-size: 12px; }
+  .fl-legend i { display: inline-block; width: 28px; margin-right: 8px; border-top: 1.5px solid var(--primary); vertical-align: middle; }
+  .fl-legend i.back { border-top-style: dashed; border-color: var(--muted); }
+
+  /* ----- Design system ----- */
+  .ds-frame { display: block; width: 100%; height: calc(100vh - var(--sc-head)); border: 0; background: #fff; }
+  .ds-wait { padding: 48px 24px; color: var(--muted); }
+<!--SPLIT-->
+<header class="sc-head">
+  <p class="sc-brand">MCAH <small>UI Kit · MVP</small></p>
+  <nav class="sc-tabs" role="tablist" aria-label="Nội dung">
+    <button type="button" role="tab" data-tab="screens" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg>Màn hình</button>
+    <button type="button" role="tab" data-tab="flow" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="6" rx="1"/><rect x="14" y="15" width="7" height="6" rx="1"/><path d="M6.5 9v3a3 3 0 0 0 3 3h4.5"/></svg>Luồng màn</button>
+    <button type="button" role="tab" data-tab="ds" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="8" cy="8" r="4"/><rect x="13" y="13" width="8" height="8" rx="1.5"/><path d="M14 4h6v6"/></svg>Design system</button>
+  </nav>
+</header>
+<div id="tab-screens" role="tabpanel"><div class="sc-layout"><aside class="sc-rail" id="sc-rail" aria-label="Danh sách màn"></aside><div class="sc-main">
+<!--SPLIT-->
+// ---------- Vỏ UI Kit ----------
+var RAIL_GROUPS = [['Hồ sơ thuyền viên', ['dang-nhap', 'thuyen-vien', 'ho-so', 'duyet']], ['Xuất bộ giấy', ['doi-chieu', 'san-sang', 'tao-bo', 'ky-duyet']], ['Ký và lưu', ['ban-xuat', 'ky-online']], ['Khác', ['loi']]];
+function resetLocal() { Object.assign(state, { tab: null, doc: null, focus: null, ptab: null, step: null, vtab: null, stage: null, sel: null, pickDoc: null, cell: null, signStep: null, sider: null, menuOpen: false, userOpen: false }); }
+function renderRail() {
+  if (!RAIL_GROUPS) return;
+  document.getElementById('sc-rail').innerHTML = RAIL_GROUPS.map(([title, keys]) => `<h3>${title}</h3>` + keys.map((key) => `<button type="button" data-go="${key}" aria-current="${state.man === key}"><b>${CODES[key]}</b>${SCREENS[key].label}</button>`).join('')).join('');
+  document.getElementById('sc-title').innerHTML = `<b>${CODES[state.man]}</b>${SCREENS[state.man].label}`;
+}
+function goScreen(key) { state.man = key; resetLocal(); if (key === 'ky-online') state.kho = 'mobile'; else if (state.man !== 'ky-online' && state.kho === 'mobile' && key !== 'dang-nhap') state.kho = 'desktop'; showTab('screens'); render(); window.scrollTo(0, 0); }
+document.getElementById('sc-rail').addEventListener('click', (event) => { const button = event.target.closest('[data-go]'); if (button) goScreen(button.dataset.go); });
+
+const FLOW = [
+  ['Vào hệ thống', 'Crewing Officer', ['dang-nhap', 'thuyen-vien', 'ho-so', 'duyet']],
+  ['Xuất bộ giấy', 'Từ hồ sơ một thuyền viên', ['doi-chieu', 'san-sang', 'tao-bo', 'ky-duyet']],
+  ['Ký và lưu', 'Người duyệt, thuyền viên', [null, 'ky-online', 'ban-xuat', null]],
+];
+const EDGES = [
+  ['dang-nhap', 'thuyen-vien', 'Đăng nhập'], ['thuyen-vien', 'ho-so', 'Chọn người'], ['ho-so', 'duyet', 'Tải giấy tờ'], ['duyet', 'ho-so', 'Duyệt xong', 'back'],
+  ['ho-so', 'doi-chieu', 'Tạo bộ giấy'], ['doi-chieu', 'san-sang', 'Chọn tàu'], ['san-sang', 'tao-bo', 'Đủ điều kiện'], ['tao-bo', 'ky-duyet', 'Gửi duyệt'],
+  ['ky-duyet', 'ky-online', 'Gửi link SMS'], ['ky-online', 'ban-xuat', 'Ký đủ'], ['ban-xuat', 'ky-duyet', 'Xem bộ', 'back'],
+];
+const NOTES = { 'dang-nhap': 'Email, mật khẩu', 'thuyen-vien': 'Danh sách', 'ho-so': 'Upload giấy tờ', duyet: 'So sánh 2 cột', 'doi-chieu': 'Panel trượt', 'san-sang': 'Kiểm tra trước', 'tao-bo': 'Chọn mẫu', 'ky-duyet': 'Ký trong app', 'ky-online': 'Mobile', 'ban-xuat': 'Lịch sử bộ giấy' };
+function thumbHtml(key) {
+  const saved = { ...state };
+  state.man = key; resetLocal(); state.v = SCREENS[key].options[0]; state.tt = SCREENS[key].states[0]; state.kho = key === 'ky-online' ? 'mobile' : 'desktop';
+  let html = '';
+  try { html = screenFns()[key](); } catch (error) { html = ''; }
+  Object.assign(state, saved);
+  return html;
+}
+let flowBuilt = false;
+function buildFlow() {
+  if (flowBuilt) { drawEdges(); return; }
+  flowBuilt = true;
+  const panel = document.getElementById('tab-flow');
+  panel.innerHTML = `<section class="fl"><div class="fl-intro"><h2>Luồng màn MVP</h2><p>Từ danh sách thuyền viên tới bộ giấy đã ký. Bấm một màn để mở bản bấm thử được.</p></div>
+    <div class="fl-scroll"><div class="fl-canvas" id="fl-canvas"><svg class="fl-svg" id="fl-svg" aria-hidden="true"></svg>${FLOW.map(([title, sub, keys]) => `<div class="fl-lane"><div class="fl-lane-label"><b>${title}</b><span>${sub}</span></div>${keys.map((key) => key ? `<div class="fl-node" role="link" tabindex="0" aria-label="Mở ${SCREENS[key].label}" data-go="${key}" id="fl-${key}"><div class="fl-thumb ${key === 'ky-online' ? 'fl-thumb--phone' : ''}"><div class="fl-thumb-inner" inert>${thumbHtml(key)}</div></div><span class="fl-cap"><b>${CODES[key]}</b><span>${SCREENS[key].label}</span></span></div>` : '<span></span>').join('')}</div>`).join('')}</div></div>
+    <p class="fl-legend"><span><i></i>Đi tiếp</span><span><i class="back"></i>Quay lại</span></p></section>`;
+  panel.addEventListener('click', (event) => { const node = event.target.closest('[data-go]'); if (node) goScreen(node.dataset.go); });
+  panel.addEventListener('keydown', (event) => { const node = event.target.closest('[data-go]'); if (node && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); goScreen(node.dataset.go); } });
+  requestAnimationFrame(drawEdges);
+}
+function drawEdges() {
+  const canvas = document.getElementById('fl-canvas'); const svg = document.getElementById('fl-svg');
+  if (!canvas || !canvas.offsetWidth) return;
+  const base = canvas.getBoundingClientRect();
+  const box = (key) => { const r = document.querySelector(`#fl-${key} .fl-thumb`).getBoundingClientRect(); const n = document.getElementById(`fl-${key}`).getBoundingClientRect(); return { nb: n.bottom - base.top, l: r.left - base.left, r: r.right - base.left, t: r.top - base.top, b: r.bottom - base.top, cx: (r.left + r.right) / 2 - base.left, cy: (r.top + r.bottom) / 2 - base.top }; };
+  svg.setAttribute('width', canvas.scrollWidth); svg.setAttribute('height', canvas.scrollHeight);
+  svg.innerHTML = '<defs><marker id="fl-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--primary)" stroke="none"/></marker><marker id="fl-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)" stroke="none"/></marker></defs>' + EDGES.map(([from, to, label, kind]) => {
+    const a = box(from); const b = box(to); let d; let lx; let ly;
+    if (Math.abs(a.cy - b.cy) < 4) {
+      if (kind === 'back') { d = `M${a.l + 24} ${a.nb + 2}C${a.l + 24} ${a.nb + 30} ${b.r - 24} ${b.nb + 30} ${b.r - 24} ${b.nb + 4}`; lx = (a.l + b.r) / 2; ly = a.nb + 32; }
+      else { d = `M${a.r + 4} ${a.cy}L${b.l - 6} ${b.cy}`; lx = (a.r + b.l) / 2; ly = a.cy - 10; }
+    } else if (b.cy > a.cy) {
+      const sx = a.cx; const ex = b.cx; const my = (a.nb + b.t) / 2;
+      d = `M${sx} ${a.nb + 4}C${sx} ${my + 8} ${ex} ${my - 8} ${ex} ${b.t - 6}`; lx = (sx + ex) / 2; ly = my - 6;
+    } else {
+      const sx = a.r - 24; const ex = b.r - 24; const my = (b.nb + a.t) / 2;
+      d = `M${sx} ${a.t - 4}C${sx} ${my - 8} ${ex} ${my + 8} ${ex} ${b.nb + 6}`; lx = Math.min(sx, ex) - 8; ly = my + 4;
+    }
+    const anchor = b.cy < a.cy ? 'end' : 'middle';
+    return `<path d="${d}" class="${kind || ''}" marker-end="url(#${kind === 'back' ? 'fl-b' : 'fl-a'})"/><text x="${lx}" y="${ly}" text-anchor="${anchor}">${label}</text>`;
+  }).join('');
+}
+let dsLoaded = false;
+function loadDs() {
+  if (dsLoaded) return; dsLoaded = true;
+  const panel = document.getElementById('tab-ds');
+  fetch('design-system.html').then((res) => { if (!res.ok) throw new Error(res.status); return res.text(); }).then((html) => {
+    const frame = document.createElement('iframe'); frame.className = 'ds-frame'; frame.title = 'MCAH Design System'; frame.srcdoc = html;
+    panel.innerHTML = ''; panel.appendChild(frame);
+  }).catch(() => { panel.innerHTML = '<p class="ds-wait">Không tải được trang Design system. Tải lại trang để thử lại.</p>'; dsLoaded = false; });
+}
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('[data-tab]').forEach((button) => button.setAttribute('aria-selected', String(button.dataset.tab === tab)));
+  ['screens', 'flow', 'ds'].forEach((key) => { document.getElementById('tab-' + key).hidden = key !== tab; });
+  if (tab === 'flow') buildFlow();
+  if (tab === 'ds') loadDs();
+  try { history.replaceState(null, '', '#' + (tab === 'screens' ? state.man : tab)); } catch (error) { /* bỏ qua */ }
+}
+(function initShell() {
+  ['flow', 'ds'].forEach((key) => { const panel = document.createElement('div'); panel.id = 'tab-' + key; panel.setAttribute('role', 'tabpanel'); panel.hidden = true; document.body.appendChild(panel); });
+  document.querySelector('.sc-tabs').addEventListener('click', (event) => { const button = event.target.closest('[data-tab]'); if (button) showTab(button.dataset.tab); });
+  window.addEventListener('resize', () => { if (currentTab === 'flow') drawEdges(); });
+  const first = INITIAL_HASH;
+  if (first === 'flow' || first === 'ds') showTab(first);
+  if (state.man === 'ky-online') state.kho = 'mobile';
+  render();
+})();

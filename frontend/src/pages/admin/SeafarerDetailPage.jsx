@@ -81,7 +81,7 @@ const PROFILE_TABS = [
   { value: 'exports', label: 'Đã xuất' },
 ]
 
-function AttentionSection({ items }) {
+function AttentionSection({ items, reviewTo }) {
   return (
     <Section title="Cần chú ý">
       {items.length ? (
@@ -94,6 +94,7 @@ function AttentionSection({ items }) {
                 <StatusBadge group="cert" value={item.state} />
               )}
               <span>{item.text}</span>
+              {item.kind === 'review' && <Link to={reviewTo}>Mở màn duyệt</Link>}
             </li>
           ))}
         </ul>
@@ -196,7 +197,7 @@ export default function SeafarerDetailPage() {
         <CrewDropzone firstName={firstName} />
         <div className="crew-two-col">
           <ProfileSection s={seafarer} />
-          <AttentionSection items={attention} />
+          <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} />
         </div>
         <WorkSection s={seafarer} />
         <ContactsSection seafarerId={id} />

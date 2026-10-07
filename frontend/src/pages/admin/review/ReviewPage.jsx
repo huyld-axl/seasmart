@@ -15,6 +15,7 @@ import {
   RightOutlined,
   UndoOutlined,
   UserOutlined,
+  SearchOutlined,
 } from '@ant-design/icons'
 import { seafarerApi } from '../../../api'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -22,6 +23,8 @@ import { EmptyState } from '../../../components/ds/Controls'
 import { DEMO_DOCS, DONE_STATES, docStatus, nextTodo, progress, totalTodo, updateField } from './reviewModel'
 import '../seafarers/SeafarerProfile.css'
 import './ReviewPage.css'
+import VesselMatchPanel from './VesselMatchPanel'
+import useToast from '../../../components/ds/useToast'
 
 const MARKS = {
   ACCEPTED: <CheckOutlined />,
@@ -79,7 +82,7 @@ function Paper({ doc, mode, focus, onFocus, zoom = 1 }) {
 }
 
 // Thanh hành động của ô đang chọn: dính đáy màn hình. Đổi ô thì dựng lại (key) để bỏ bản nháp.
-function FieldBar({ field, onAction }) {
+function FieldBar({ field, onAction, onMatchVessel }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(field.value)
 
@@ -114,10 +117,17 @@ function FieldBar({ field, onAction }) {
               {field.value && <Button icon={<CloseOutlined />} onClick={() => onAction('reject')}>Từ chối</Button>}
             </>
           )}
+          {onMatchVessel && <Button icon={<SearchOutlined />} onClick={onMatchVessel}>Đối chiếu tàu</Button>}
         </div>
       )}
     </div>
   )
+}
+
+// Thông tin tàu đọc từ giấy, để đối chiếu với danh mục Tàu (B1).
+function vesselOnPaper(doc) {
+  const raw = (key) => doc.fields.find((f) => f.key === key)?.raw || ''
+  return { name: raw('ship'), imo: raw('imo'), gt: raw('gt'), flag: raw('flag'), owner: raw('owner') }
 }
 
 export default function ReviewPage() {
@@ -129,6 +139,8 @@ export default function ReviewPage() {
   const [view, setView] = useState('so')
   const [zoom, setZoom] = useState(1)
   const [saved, setSaved] = useState(true)
+  const [matching, setMatching] = useState(false)
+  const toast = useToast()
 
   const { data: seafarer, isLoading, isError, refetch } = useQuery({
     queryKey: ['seafarer', id],
@@ -240,7 +252,28 @@ export default function ReviewPage() {
         </section>
       </div>
 
-      {field && <FieldBar key={`${docKey}-${field.key}-${field.state}-${field.value}`} field={field} onAction={act} />}
+      {field && (
+        <FieldBar
+          key={`${docKey}-${field.key}-${field.state}-${field.value}`}
+          field={field}
+          onAction={act}
+          onMatchVessel={field.key === 'ship' ? () => setMatching(true) : null}
+        />
+      )}
+
+      {matching && (
+        <VesselMatchPanel
+          open
+          paper={vesselOnPaper(doc)}
+          context={`${doc.label} · ${name}`}
+          onClose={() => setMatching(false)}
+          onPick={(vessel) => {
+            setDocs(updateField(docs, docKey, 'ship', 'edit', vessel.vessel_name))
+            setMatching(false)
+            toast.success(`Đã đối chiếu: ${vessel.vessel_name}${vessel.imo_number ? ` · IMO ${vessel.imo_number}` : ''}`)
+          }}
+        />
+      )}
     </div>
   )
 }

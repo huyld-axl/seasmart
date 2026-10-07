@@ -31,6 +31,8 @@ import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
 import ExportListPage from './pages/admin/exports/ExportListPage'
 import ReviewPage from './pages/admin/review/ReviewPage'
+import PackCreatePage from './pages/admin/exports/PackCreatePage'
+import PackSignPage from './pages/admin/exports/PackSignPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -62,6 +64,8 @@ export default function App() {
                 <Route path="/seafarers/:id/edit" element={<SeafarerFormPage />} />
                 <Route path="/seafarers/:id/review" element={<ReviewPage />} />
                 <Route path="/exports" element={<ExportListPage />} />
+                <Route path="/exports/new" element={<PackCreatePage />} />
+                <Route path="/exports/:packId" element={<PackSignPage />} />
                 <Route path="/training-centers" element={<TrainingCenterListPage />} />
                 <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
                 <Route path="/courses" element={<CourseListPage />} />

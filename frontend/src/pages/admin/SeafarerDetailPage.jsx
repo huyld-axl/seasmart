@@ -45,6 +45,8 @@ import StatusBadge from '../../components/ds/StatusBadge'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
 import CrewDropzone from './seafarers/CrewDropzone'
 import { attentionItems, activeContract, headLine, openFilePicker } from './seafarers/profileView'
+import { readinessLevel, readinessRules } from './exports/packModel'
+import './exports/exports.css'
 import { nameInitials } from './seafarers/crewView'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerProfile.css'
@@ -174,6 +176,21 @@ export default function SeafarerDetailPage() {
   const expired = attention.filter((item) => item.state === 'EXPIRED').length
   const expiring = attention.filter((item) => item.state === 'EXPIRING').length
   const firstName = seafarer.full_name.trim().split(/\s+/).slice(-1)[0]
+  const rules = readinessRules({ seafarer, certificates: certList, contracts: contractList, pendingReview: certList.filter((c) => c.status === 'PENDING').length })
+  const readiness = readinessLevel(rules)
+  const failing = rules.filter((rule) => rule.result !== 'PASS')
+  const RULE_ACTIONS = {
+    edit: ['Sửa hồ sơ', () => navigate(`/seafarers/${id}/edit`)],
+    service: ['Xem đi tàu', () => setTab('service')],
+    review: ['Duyệt', () => navigate(`/seafarers/${id}/review`)],
+    upload: ['Thả bản mới', () => dropFiles()],
+  }
+  const READINESS_TEXT = {
+    BLOCKED: `Chưa xuất được: ${failing.filter((r) => r.result === 'FAIL').length} điều kiện không đạt.`,
+    NEEDS_REVIEW: 'Xuất được, nhưng còn chỗ chưa duyệt. Người duyệt bản xuất sẽ thấy cảnh báo.',
+    READY_IN_SCOPE: 'Đủ điều kiện xuất theo các mẫu trong phạm vi MVP.',
+  }
+  const createPack = () => navigate(`/exports/new?seafarer=${id}`)
   const dropFiles = () => {
     if (tab !== 'overview' && tab !== 'docs') setTab('docs')
     setTimeout(() => openFilePicker(pageRef.current), 0)
@@ -245,9 +262,30 @@ export default function SeafarerDetailPage() {
           <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
             <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending} />
           </Dropdown>
-          <Button icon={<SendOutlined />} onClick={() => setTab('exports')}>Xuất hồ sơ</Button>
+          <Button icon={<SendOutlined />} disabled={readiness === 'BLOCKED'} title={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra bên dưới' : undefined} onClick={createPack}>Tạo bộ giấy</Button>
           <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Thả giấy tờ</Button>
         </div>
+      </div>
+
+      <div role={readiness === 'BLOCKED' ? 'alert' : 'status'} className={`ds-banner ds-banner--${{ BLOCKED: 'error', NEEDS_REVIEW: 'warning', READY_IN_SCOPE: 'neutral' }[readiness]}`}>
+        <div className="ds-banner__body">
+          <p className="ds-banner__title"><StatusBadge group="readiness" value={readiness} /> {READINESS_TEXT[readiness]}</p>
+          {failing.length > 0 && (
+            <ul className="rules">
+              {failing.map((rule) => (
+                <li key={rule.title} className="rule">
+                  <span className="rule__mark"><StatusBadge group="rule" value={rule.result} /></span>
+                  <span className="rule__text">
+                    <span>{rule.title}</span>
+                    {rule.reason && <span className="rule__reason">{rule.reason}</span>}
+                  </span>
+                  {rule.action && <Button size="small" onClick={RULE_ACTIONS[rule.action][1]}>{RULE_ACTIONS[rule.action][0]}</Button>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {readiness === 'READY_IN_SCOPE' && <div className="ds-banner__action"><Button onClick={createPack}>Tạo bộ giấy</Button></div>}
       </div>
 
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />

@@ -15,6 +15,7 @@ import {
   DownOutlined,
 } from '@ant-design/icons'
 import NotificationBell from '../components/common/NotificationBell'
+import ErrorBoundary from '../components/common/ErrorBoundary'
 import ProductBrand from '../components/common/ProductBrand'
 import useAuthStore from '../stores/authStore'
 import { ROLE_LABELS } from '../constants/roles'
@@ -130,7 +131,9 @@ export default function AdminLayout() {
         )}
 
         <main className="app-shell__content">
-          <Outlet />
+          <ErrorBoundary resetKey={pathname}>
+            <Outlet />
+          </ErrorBoundary>
         </main>
       </div>
 

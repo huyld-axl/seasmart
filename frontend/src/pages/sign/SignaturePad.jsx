@@ -3,8 +3,10 @@ import { Button } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'
 
 // Ô ký bằng ngón tay hoặc chuột. `onChange(hasInk)` báo đã có nét ký hay chưa.
-export default function SignaturePad({ disabled = false, onChange, resetKey }) {
-  const canvasRef = useRef(null)
+// `canvasRef` (tuỳ chọn): trang cha dùng để lấy ảnh chữ ký bằng canvasRef.current.toDataURL('image/png').
+export default function SignaturePad({ disabled = false, onChange, resetKey, canvasRef: outerRef }) {
+  const innerRef = useRef(null)
+  const canvasRef = outerRef || innerRef
   const drawing = useRef(false)
   const inked = useRef(false)
   const [hasInk, setHasInk] = useState(false)
@@ -21,7 +23,7 @@ export default function SignaturePad({ disabled = false, onChange, resetKey }) {
     ctx.lineJoin = 'round'
     ctx.strokeStyle = '#1d3f91'
     inked.current = false
-  }, [resetKey])
+  }, [resetKey, canvasRef])
 
   const point = (event) => {
     const rect = canvasRef.current.getBoundingClientRect()

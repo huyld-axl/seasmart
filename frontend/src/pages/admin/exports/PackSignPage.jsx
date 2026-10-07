@@ -1,50 +1,72 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { Button, Input, Modal } from 'antd'
-import { EditOutlined, ExclamationCircleOutlined, LockOutlined, RightOutlined, SendOutlined, SyncOutlined } from '@ant-design/icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, Input, Modal, Skeleton } from 'antd'
+import { CopyOutlined, DownloadOutlined, EditOutlined, LockOutlined, RightOutlined, SendOutlined } from '@ant-design/icons'
+import dayjs from 'dayjs'
 import useAuthStore from '../../../stores/authStore'
+import { exportApi } from '../../../api/exportApi'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { EmptyState, ProgressBar } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import A4Preview from './A4Preview'
 import { template } from './packModel'
-import { SELF_SIGN, packStore, signProgress, signState, usePack } from './packStore'
+import { SELF_SIGN, crewPending, pendingInAppSigners, signLink, signProgress, signState } from './packView'
+import { saveBlob } from './download'
 import '../seafarers/SeafarerProfile.css'
 import './exports.css'
 
 // B4 Duyệt và ký (phương án A): danh sách giấy trái, xem trước giữa, chữ ký phải.
 export default function PackSignPage() {
   const { packId } = useParams()
-  const pack = usePack(packId)
   const user = useAuthStore((state) => state.user)
   const toast = useToast()
+  const qc = useQueryClient()
   const [picked, setPicked] = useState(null)
   const [rejecting, setRejecting] = useState(false)
   const [reason, setReason] = useState('')
 
-  if (!pack) {
-    return <EmptyState title="Không tìm thấy bộ giấy" description="Bộ giấy tạm chỉ giữ tới khi tải lại trang (chưa có backend)." action={<Link to="/exports">Về Bản xuất</Link>} />
+  const { data: pack, isLoading, isError, error, refetch } = useQuery({ queryKey: ['export', packId], queryFn: () => exportApi.get(packId) })
+  const done = (text) => (data) => {
+    qc.setQueryData(['export', packId], data)
+    qc.invalidateQueries({ queryKey: ['exports'] })
+    toast.success(text)
+  }
+  const fail = (e) => toast.error(e.response?.data?.error || 'Không thực hiện được. Thử lại sau.')
+  const approve = useMutation({ mutationFn: () => exportApi.approve(packId), onSuccess: done('Đã duyệt, bộ giấy chuyển sang bước ký'), onError: fail })
+  const reject = useMutation({ mutationFn: () => exportApi.reject(packId, reason.trim()), onSuccess: (d) => { setRejecting(false); done('Đã trả lại bộ giấy')(d) }, onError: fail })
+  const sign = useMutation({ mutationFn: (who) => exportApi.sign(packId, who), onSuccess: (d, who) => done(`Đã ký với tư cách ${who}`)(d), onError: fail })
+  const download = useMutation({ mutationFn: () => exportApi.download(packId), onSuccess: (res) => saveBlob(res, `${pack.code}.zip`), onError: fail })
+
+  if (isLoading) return <div className="ds-page"><Skeleton active paragraph={{ rows: 8 }} /></div>
+  if (isError) {
+    return error?.response?.status === 404
+      ? <EmptyState title="Không tìm thấy bộ giấy" description="Bộ giấy có thể đã bị xoá." action={<Link to="/exports">Về Bản xuất</Link>} />
+      : <EmptyState isError title="Không tải được bộ giấy" description="Mất kết nối tới máy chủ." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
   }
 
   const doc = template(picked && pack.docs.includes(picked) ? picked : pack.docs[0])
   const progress = signProgress(pack)
-  const selfCreated = pack.createdBy === user?.email
+  const selfCreated = pack.created_by === user?.id
   const signsOf = (t) => Object.fromEntries(t.signers.map((who) => [who, signState(pack, t.key, who)]))
-  const inAppSigners = [...new Set(pack.docs.flatMap((key) => template(key).signers))].filter((who) => who !== SELF_SIGN)
-  const crewNeeded = pack.docs.some((key) => template(key).signers.includes(SELF_SIGN))
+  const link = pack.sign_token ? signLink(pack.sign_token) : null
 
-  let actions
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(link); toast.success('Đã chép link ký') } catch { toast.error('Trình duyệt chặn chép, hãy bôi đen link để chép') }
+  }
+
+  let actions = null
   if (pack.status === 'PENDING_APPROVAL') {
     actions = selfCreated ? (
       <p className="lock-note"><LockOutlined aria-hidden />Bạn tạo bộ này nên không tự duyệt được. Nhờ người khác duyệt.</p>
     ) : (
       <>
         <Button onClick={() => setRejecting(true)}>Trả lại</Button>
-        <Button type="primary" icon={<SendOutlined />} onClick={() => { packStore.approve(pack.id); toast.success(`Đã duyệt #${pack.id}, đang chờ ký`) }}>Duyệt và gửi ký</Button>
+        <Button type="primary" icon={<SendOutlined />} loading={approve.isPending} onClick={() => approve.mutate()}>Duyệt và gửi ký</Button>
       </>
     )
-  } else if (pack.status === 'SIGNING') {
-    actions = <Button icon={<SyncOutlined />} onClick={() => toast.success('Đã nhắc người chưa ký')}>Nhắc ký</Button>
+  } else if (pack.status === 'DONE') {
+    actions = <Button type="primary" icon={<DownloadOutlined />} loading={download.isPending} onClick={() => download.mutate()}>Tải bộ (.zip)</Button>
   }
 
   return (
@@ -52,24 +74,17 @@ export default function PackSignPage() {
       <nav className="crew-crumb" aria-label="Đường dẫn">
         <Link to="/exports">Bản xuất</Link>
         <RightOutlined aria-hidden />
-        <span aria-current="page">#{pack.id}</span>
+        <span aria-current="page">#{pack.code}</span>
       </nav>
-
-      <div role="status" className="ds-banner ds-banner--warning">
-        <ExclamationCircleOutlined className="ds-banner__icon" aria-hidden />
-        <div className="ds-banner__body">
-          <p className="ds-banner__title">Bộ giấy tạm, chưa lưu</p>
-          <p className="ds-banner__text">Xuất bộ giấy và ký chưa có backend. Bộ này chỉ nằm trong trình duyệt, tải lại trang là mất.</p>
-        </div>
-      </div>
 
       <div className="crew-head">
         <div className="crew-head__text">
-          <h1 className="crew-head__title">{pack.title} · {pack.seafarerName}</h1>
+          <h1 className="crew-head__title">{pack.title} · <Link to={`/seafarers/${pack.seafarer_id}`}>{pack.seafarer_name}</Link></h1>
           <p className="crew-head__desc">
-            <StatusBadge group="export" value={pack.status} /> #{pack.id} · {pack.docs.length} giấy · tạo bởi {pack.createdBy}
+            <StatusBadge group="export" value={pack.status} /> #{pack.code} · {pack.docs.length} giấy · tạo bởi {pack.created_by_email} lúc {dayjs(pack.created_at).format('HH:mm DD/MM')}
           </p>
-          {pack.status === 'REJECTED' && pack.rejectReason && <p className="crew-head__desc">Lý do trả lại: {pack.rejectReason}</p>}
+          {pack.status === 'REJECTED' && <p className="crew-head__desc">Lý do trả lại: {pack.reject_reason}</p>}
+          {pack.status === 'STALE' && <p className="crew-head__desc">{pack.stale_reason}. Tạo bộ mới từ hồ sơ.</p>}
         </div>
         {actions && <div className="crew-head__actions">{actions}</div>}
       </div>
@@ -115,7 +130,7 @@ export default function PackSignPage() {
                 <li key={who}>
                   <span className="ds-cell2">
                     <span className="ds-cell2__main" style={{ fontWeight: 400 }}>{who}</span>
-                    <span className="ds-cell2__sub">{who === SELF_SIGN ? 'Ký online qua link gửi SMS' : 'Ký trong app'}</span>
+                    <span className="ds-cell2__sub">{who === SELF_SIGN ? 'Ký online qua link' : 'Ký trong app'}</span>
                   </span>
                   <StatusBadge group="signature" value={signState(pack, doc.key, who) === 'done' ? 'SIGNED' : 'WAITING'} />
                 </li>
@@ -129,16 +144,19 @@ export default function PackSignPage() {
               </li>
             </ul>
             {pack.status === 'SIGNING' && (
-              <div className="ps-sign-actions" style={{ display: 'grid', gap: 8, marginTop: 12 }}>
-                {inAppSigners.filter((who) => pack.docs.some((key) => template(key).signers.includes(who) && signState(pack, key, who) !== 'done')).map((who) => (
-                  <Button key={who} type="primary" icon={<EditOutlined />} onClick={() => { packStore.signAs(pack.id, who); toast.success(`Đã ký với tư cách ${who}`) }}>
+              <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
+                {pendingInAppSigners(pack).map((who) => (
+                  <Button key={who} type="primary" icon={<EditOutlined />} loading={sign.isPending && sign.variables === who} onClick={() => sign.mutate(who)}>
                     Ký với tư cách {who}
                   </Button>
                 ))}
-                {crewNeeded && pack.docs.some((key) => template(key).signers.includes(SELF_SIGN) && signState(pack, key, SELF_SIGN) !== 'done') && (
+                {crewPending(pack) && link && (
                   <div className="ps-link">
-                    <p className="rv-muted" style={{ margin: 0, fontSize: 12 }}>Thuyền viên ký qua link SMS. Chưa có dịch vụ SMS: mở link dưới đây để thử ký như thuyền viên.</p>
-                    <Link to={`/sign/${pack.id}`}>Mở trang ký của thuyền viên</Link>
+                    <p className="rv-muted" style={{ margin: 0, fontSize: 12 }}>
+                      Gửi link này cho {pack.seafarer_name} để ký trên điện thoại. Link hết hạn lúc {dayjs(pack.sign_token_expires_at).format('HH:mm DD/MM')}.
+                    </p>
+                    <p className="ps-link__url ds-mono">{link}</p>
+                    <Button size="small" icon={<CopyOutlined />} onClick={copyLink}>Chép link ký</Button>
                   </div>
                 )}
               </div>
@@ -149,12 +167,12 @@ export default function PackSignPage() {
 
       <Modal
         open={rejecting}
-        title={`Trả lại #${pack.id}?`}
+        title={`Trả lại #${pack.code}?`}
         okText="Trả lại"
         cancelText="Huỷ"
-        okButtonProps={{ disabled: !reason.trim() }}
+        okButtonProps={{ disabled: !reason.trim(), loading: reject.isPending }}
         onCancel={() => setRejecting(false)}
-        onOk={() => { packStore.reject(pack.id, reason.trim()); setRejecting(false); toast.success(`Đã trả lại #${pack.id}`) }}
+        onOk={() => reject.mutate()}
       >
         <label className="ds-field">
           <span className="ds-field__label">Lý do trả lại</span>

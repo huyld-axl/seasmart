@@ -1,10 +1,23 @@
 import dayjs from 'dayjs'
 import { template } from './packModel'
+
+// Giá trị trên hồ sơ cho một trường mẫu cần; null nếu hồ sơ chưa có.
+function profileValue(label, s, contacts) {
+  const contact = (guarantor) => contacts.find((c) => !!c.is_guarantor === guarantor)
+  const values = {
+    'Cỡ giày': s?.shoe_size,
+    'Nhóm máu': s?.blood_type,
+    'Người thân liên hệ': contact(false) && `${contact(false).full_name}${contact(false).relationship ? ` (${contact(false).relationship})` : ''}`,
+    'Người bảo lãnh': contact(true)?.full_name,
+    'Số tài khoản': s?.bank_account_number,
+  }
+  return values[label] || null
+}
 import './exports.css'
 
 // Xem trước một giấy A4 điền sẵn từ hồ sơ. Trường hồ sơ chưa có hiện "thiếu trong hồ sơ",
 // ô điền lúc xuất để trống thì in ra điền tay.
-export default function A4Preview({ docKey, seafarer, inputs = {}, signs = {}, agency = 'AGENCY DEMO · Hải Phòng' }) {
+export default function A4Preview({ docKey, seafarer, contacts = [], inputs = {}, signs = {}, agency = 'AGENCY DEMO · Hải Phòng' }) {
   const t = template(docKey)
   const fmt = (date) => (date ? dayjs(date).format('DD/MM/YYYY') : null)
   const lines = [
@@ -12,7 +25,7 @@ export default function A4Preview({ docKey, seafarer, inputs = {}, signs = {}, a
     ['Ngày sinh', fmt(seafarer?.date_of_birth)],
     ['Chức danh', seafarer?.rank_name],
     ...t.inputs.map((label) => [label, inputs[label] || '']),
-    ...t.missing.map((label) => [label, null]),
+    ...t.needs.map((label) => [label, profileValue(label, seafarer, contacts)]),
   ]
   const signers = t.signers.length ? t.signers : [null]
   return (

@@ -116,3 +116,5 @@
 .rs-done__icon { color: var(--success); font-size: 40px; }
 .rs-done h1 { margin: 0; font-size: 20px; }
 .rs-done p { margin: 0; color: var(--muted); }
+.ps-link { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); }
+.ps-link__url { margin: 0; padding: 6px 8px; overflow-wrap: anywhere; border-radius: 8px; background: var(--background); font-size: 12px; user-select: all; }

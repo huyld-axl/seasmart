@@ -44,3 +44,5 @@
   .crew-head__actions { width: 100%; }
   .crew-head__actions .ant-btn-primary { flex: 1; }
 }
+.rev-changes { display: grid; gap: 2px; margin: 6px 0 0; padding-left: 16px; color: var(--muted); font-size: 13px; }
+.rev-changes b { color: var(--foreground); font-weight: 500; }

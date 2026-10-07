@@ -50,7 +50,7 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/design-system" element={<DesignSystemPage />} />
-              <Route path="/sign/:packId" element={<RemoteSignPage />} />
+              <Route path="/sign/:token" element={<RemoteSignPage />} />
               <Route path="/" element={<Navigate to="/seafarers" replace />} />
 
               <Route

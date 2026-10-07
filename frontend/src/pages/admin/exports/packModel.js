@@ -116,8 +116,9 @@ export const STAGES = [
   { key: 'roi-tau', label: 'Rời tàu' },
 ]
 
-// signers: người ký; missing: trường hồ sơ chưa có mà mẫu cần; inputs: ô điền lúc xuất; group: nhóm chọn một.
-const d = (key, name, stage, signers, missing, inputs, group = null) => ({ key, name, stage, signers, missing, inputs, group })
+// signers: người ký; needs: trường hồ sơ mẫu cần; inputs: ô điền lúc xuất; group: nhóm chọn một.
+// Giữ khớp với backend/src/constants/pack_templates.js.
+const d = (key, name, stage, signers, needs, inputs, group = null) => ({ key, name, stage, signers, needs, inputs, group })
 export const TEMPLATES = [
   d('kq', 'Kết quả thi tuyển', 'tuyen', ['Giám khảo 1', 'Giám khảo 2', 'Giám đốc'], [], ['Điểm từng tiêu chuẩn']),
   d('tb', 'Thông báo trúng tuyển', 'tuyen', ['Giám đốc'], [], ['Ngày có mặt']),
@@ -151,8 +152,20 @@ export function packInputs(selected) {
   return [...new Set(selected.flatMap((key) => template(key).inputs))]
 }
 
-export function packMissing(selected) {
-  return selected.flatMap((key) => template(key).missing.map((field) => ({ field, doc: template(key).name })))
+// Trường hồ sơ mà mẫu cần → cách kiểm trên hồ sơ thật (seafarer + danh sách người liên hệ).
+export const PROFILE_NEEDS = {
+  'Cỡ giày': (s) => !!s?.shoe_size,
+  'Nhóm máu': (s) => !!s?.blood_type,
+  'Người thân liên hệ': (s, contacts) => contacts.some((c) => !c.is_guarantor),
+  'Người bảo lãnh': (s, contacts) => contacts.some((c) => c.is_guarantor),
+  'Số tài khoản': (s) => !!s?.bank_account_number,
+}
+
+// Trường còn thiếu trên hồ sơ cho các giấy đã chọn.
+export function packMissing(selected, seafarer, contacts = []) {
+  return selected.flatMap((key) => template(key).needs
+    .filter((field) => !PROFILE_NEEDS[field]?.(seafarer, contacts))
+    .map((field) => ({ field, doc: template(key).name })))
 }
 
 // Chữ ký cần trong cả bộ: [{ doc, who }]

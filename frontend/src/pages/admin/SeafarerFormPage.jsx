@@ -19,8 +19,8 @@ const STATUS_OPTIONS = [
 const sectionStyle = {
   fontSize: 15,
   fontWeight: 600,
-  color: '#262626',
-  borderBottom: '2px solid #1677ff',
+  color: 'var(--foreground)',
+  borderBottom: '2px solid var(--primary)',
   paddingBottom: 8,
   marginBottom: 16,
 }
@@ -146,7 +146,7 @@ export default function SeafarerFormPage() {
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate(isEdit ? `/seafarers/${id}` : '/seafarers')}
           />
-          <span style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>
+          <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>
             {isEdit ? 'Chỉnh sửa thuyền viên' : 'Thêm thuyền viên mới'}
           </span>
         </div>
@@ -164,10 +164,10 @@ export default function SeafarerFormPage() {
 
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 24,
-          border: '1px solid #f0f0f0',
+          border: '1px solid var(--border-strong)',
           maxWidth: 680,
         }}
       >

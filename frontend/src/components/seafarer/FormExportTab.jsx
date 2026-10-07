@@ -54,7 +54,7 @@ export default function FormExportTab({ seafarerId, seafarerName }) {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, color: '#595959', fontSize: 13 }}>
+      <div style={{ marginBottom: 16, color: 'var(--muted)', fontSize: 13 }}>
         Click vào từng biểu mẫu để tải file Excel đã điền sẵn thông tin thuyền viên.
       </div>
       <Row gutter={[12, 12]}>
@@ -63,7 +63,7 @@ export default function FormExportTab({ seafarerId, seafarerName }) {
             <Card
               size="small"
               hoverable
-              style={{ borderRadius: 4, border: '1px solid #D9D9D9' }}
+              style={{ borderRadius: 4, border: '1px solid var(--border-strong)' }}
               styles={{ body: { padding: '12px 14px' } }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>

@@ -100,17 +100,17 @@ export default function MessagingPage() {
         display: 'flex',
         height: 'calc(100vh - 120px)',
         gap: 0,
-        background: '#fff',
+        background: 'var(--surface)',
         borderRadius: 8,
         overflow: 'hidden',
-        border: '1px solid #f0f0f0',
+        border: '1px solid var(--border-strong)',
       }}
     >
       {/* Thread list */}
       <div
         style={{
           width: 300,
-          borderRight: '1px solid #f0f0f0',
+          borderRight: '1px solid var(--border-strong)',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -118,7 +118,7 @@ export default function MessagingPage() {
         <div
           style={{
             padding: '12px 16px',
-            borderBottom: '1px solid #f0f0f0',
+            borderBottom: '1px solid var(--border-strong)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -145,8 +145,8 @@ export default function MessagingPage() {
                 style={{
                   padding: '10px 16px',
                   cursor: 'pointer',
-                  background: activeThread === t.id ? '#e6f4ff' : 'transparent',
-                  borderLeft: activeThread === t.id ? '3px solid #1677ff' : '3px solid transparent',
+                  background: activeThread === t.id ? 'var(--primary-light)' : 'transparent',
+                  borderLeft: activeThread === t.id ? '3px solid var(--primary)' : '3px solid transparent',
                 }}
               >
                 <List.Item.Meta
@@ -200,7 +200,7 @@ export default function MessagingPage() {
             <div
               style={{
                 padding: '12px 16px',
-                borderTop: '1px solid #f0f0f0',
+                borderTop: '1px solid var(--border-strong)',
                 display: 'flex',
                 gap: 8,
               }}
@@ -286,7 +286,7 @@ function MessageBubble({ msg }) {
       </Text>
       <div
         style={{
-          background: '#f0f0f0',
+          background: 'var(--border-strong)',
           borderRadius: 12,
           padding: '8px 12px',
           wordBreak: 'break-word',

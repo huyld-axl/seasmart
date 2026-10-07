@@ -70,7 +70,6 @@ export function fromApi(doc) {
     title: doc.title || [doc.label, ''],
     status: doc.status,
     error: doc.error,
-    stamps: [],
     fields: doc.fields.map((field) => ({ ...field, note: field.note || null })),
   }
 }

@@ -321,7 +321,7 @@ function DescList({ fields, isMobile }) {
       column={isMobile ? 1 : 2}
       bordered
       size="small"
-      styles={{ label: { width: 160, background: '#fafafa' } }}
+      styles={{ label: { width: 160, background: 'var(--background)' } }}
     >
       {fields.map(([label, value]) => (
         <Descriptions.Item key={label} label={label}>

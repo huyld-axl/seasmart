@@ -53,19 +53,19 @@ export default function SeafarerImportPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/seafarers')} />
-        <span style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>Import Excel</span>
+        <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Import Excel</span>
       </div>
 
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 24,
-          border: '1px solid #f0f0f0',
+          border: '1px solid var(--border-strong)',
           maxWidth: 640,
         }}
       >
-        <p style={{ color: '#8c8c8c', marginBottom: 20, fontSize: 14 }}>
+        <p style={{ color: 'var(--muted)', marginBottom: 20, fontSize: 14 }}>
           Upload file Excel (.xlsx, .xls) theo đúng định dạng cột. Hệ thống sẽ bỏ qua các dòng trùng
           CCCD.
         </p>
@@ -108,7 +108,7 @@ export default function SeafarerImportPage() {
                 columns={errorColumns}
                 dataSource={result.errors}
                 pagination={false}
-                style={{ border: '1px solid #f0f0f0', borderRadius: 6 }}
+                style={{ border: '1px solid var(--border-strong)', borderRadius: 6 }}
               />
             )}
           </div>

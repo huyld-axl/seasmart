@@ -7,8 +7,8 @@ import dayjs from 'dayjs'
 const sectionStyle = {
   fontSize: 15,
   fontWeight: 600,
-  color: '#262626',
-  borderBottom: '2px solid #1677ff',
+  color: 'var(--foreground)',
+  borderBottom: '2px solid var(--primary)',
   paddingBottom: 8,
   marginBottom: 16,
 }
@@ -79,11 +79,11 @@ export default function SeafarerProfilePage() {
     return (
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 32,
           textAlign: 'center',
-          color: '#8c8c8c',
+          color: 'var(--muted)',
         }}
       >
         Chưa có hồ sơ thuyền viên. Vui lòng liên hệ admin để được liên kết tài khoản.
@@ -92,12 +92,12 @@ export default function SeafarerProfilePage() {
 
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 600, color: '#262626', marginBottom: 24 }}>
+      <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)', marginBottom: 24 }}>
         Hồ sơ cá nhân
       </div>
 
       <div
-        style={{ background: '#fff', borderRadius: 8, padding: 24, border: '1px solid #f0f0f0' }}
+        style={{ background: 'var(--surface)', borderRadius: 8, padding: 24, border: '1px solid var(--border-strong)' }}
       >
         <Form form={form} layout="vertical" onFinish={onFinish} requiredMark={false}>
           <div style={sectionStyle}>Thông tin cá nhân</div>

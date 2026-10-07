@@ -38,7 +38,8 @@ export default function TrainingCenterListPage() {
 
   const { data, isFetching } = useQuery({
     queryKey: ['training-centers', filters],
-    queryFn: () => trainingCenterApi.list(filters).then((r) => r.data),
+    // Bỏ tham số rỗng: backend chỉ nhận is_active = 'true' | 'false'.
+    queryFn: () => trainingCenterApi.list(Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''))).then((r) => r.data),
   })
 
   const createMutation = useMutation({
@@ -78,7 +79,7 @@ export default function TrainingCenterListPage() {
       title: 'Tên trung tâm',
       dataIndex: 'name_vi',
       render: (v, r) => (
-        <a onClick={() => navigate(`/training-centers/${r.id}`)} style={{ color: '#1677ff' }}>
+        <a onClick={() => navigate(`/training-centers/${r.id}`)} style={{ color: 'var(--primary)' }}>
           {v}
         </a>
       ),
@@ -129,7 +130,7 @@ export default function TrainingCenterListPage() {
           gap: 8,
         }}
       >
-        <span style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>Trung tâm đào tạo</span>
+        <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Trung tâm đào tạo</span>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
           Thêm mới
         </Button>
@@ -192,17 +193,17 @@ export default function TrainingCenterListPage() {
 
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 16,
           marginBottom: 16,
-          border: '1px solid #f0f0f0',
+          border: '1px solid var(--border-strong)',
         }}
       >
         <Space wrap>
           <Input
             placeholder="Tìm tên, mã, số giấy phép..."
-            prefix={<SearchOutlined style={{ color: '#8c8c8c' }} />}
+            prefix={<SearchOutlined style={{ color: 'var(--muted)' }} />}
             style={{ flex: 1, minWidth: 140, height: 32, borderRadius: 6 }}
             value={filters.search}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
@@ -234,9 +235,9 @@ export default function TrainingCenterListPage() {
               key={r.id}
               onClick={() => navigate(`/training-centers/${r.id}`)}
               style={{
-                background: '#fff',
+                background: 'var(--surface)',
                 borderRadius: 8,
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--border-strong)',
                 padding: '12px 16px',
                 marginBottom: 8,
                 cursor: 'pointer',
@@ -250,8 +251,8 @@ export default function TrainingCenterListPage() {
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 15, color: '#1677ff' }}>{r.name_vi}</div>
-                  <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+                  <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--primary)' }}>{r.name_vi}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                     {r.code}
                     {r.license_number ? ` · GP: ${r.license_number}` : ''}
                   </div>
@@ -260,7 +261,7 @@ export default function TrainingCenterListPage() {
                   <Tag color={r.is_active ? 'green' : 'default'} style={{ margin: 0 }}>
                     {r.is_active ? 'Hoạt động' : 'Tạm dừng'}
                   </Tag>
-                  <RightOutlined style={{ color: '#bfbfbf', fontSize: 12 }} />
+                  <RightOutlined style={{ color: 'var(--border-strong)', fontSize: 12 }} />
                 </div>
               </div>
               {(r.phone || r.contact_person) && (
@@ -268,7 +269,7 @@ export default function TrainingCenterListPage() {
                   style={{
                     marginTop: 8,
                     fontSize: 13,
-                    color: '#595959',
+                    color: 'var(--muted)',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 6,
@@ -281,7 +282,7 @@ export default function TrainingCenterListPage() {
                     </>
                   )}
                   {r.contact_person && (
-                    <span style={{ color: '#8c8c8c' }}>
+                    <span style={{ color: 'var(--muted)' }}>
                       {r.phone ? ' · ' : ''}
                       {r.contact_person}
                     </span>
@@ -301,7 +302,7 @@ export default function TrainingCenterListPage() {
           </div>
         </div>
       ) : (
-        <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
           <Table
             rowKey="id"
             columns={columns}

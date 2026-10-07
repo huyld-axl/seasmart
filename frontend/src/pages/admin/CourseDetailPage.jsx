@@ -134,7 +134,7 @@ export default function CourseDetailPage() {
       column={isMobile ? 1 : 2}
       bordered
       size="small"
-      labelStyle={{ width: 180, background: '#fafafa' }}
+      labelStyle={{ width: 180, background: 'var(--background)' }}
     >
       <Descriptions.Item label="Mã khóa">{course.course_code || '-'}</Descriptions.Item>
       <Descriptions.Item label="Tên khóa học">{course.name}</Descriptions.Item>
@@ -174,18 +174,18 @@ export default function CourseDetailPage() {
   )
 
   const sectionStyle = {
-    background: '#fff',
-    border: '1px solid #f0f0f0',
+    background: 'var(--surface)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 8,
     marginBottom: 16,
   }
   const sectionHeaderStyle = {
     padding: '10px 16px',
-    borderBottom: '1px solid #f0f0f0',
+    borderBottom: '1px solid var(--border-strong)',
     fontWeight: 600,
     fontSize: 13,
-    color: '#003366',
-    background: '#fafafa',
+    color: 'var(--primary)',
+    background: 'var(--background)',
     borderRadius: '8px 8px 0 0',
   }
 
@@ -198,7 +198,7 @@ export default function CourseDetailPage() {
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#262626',
+              color: 'var(--foreground)',
               flex: 1,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -250,7 +250,7 @@ export default function CourseDetailPage() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/courses')} />
-        <span style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>{course.name}</span>
+        <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>{course.name}</span>
         <Tag color={STATUS_COLOR[course.status]}>
           {STATUS_LABEL[course.status] || course.status}
         </Tag>
@@ -272,7 +272,7 @@ export default function CourseDetailPage() {
         </div>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
         <Tabs items={tabs} style={{ padding: '0 24px' }} />
       </div>
 

@@ -62,16 +62,16 @@ export default function SeafarerVerifyPage() {
     <div style={{ maxWidth: 400, margin: '48px auto' }}>
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 32,
           boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <MailOutlined style={{ fontSize: 40, color: '#1677ff' }} />
+          <MailOutlined style={{ fontSize: 40, color: 'var(--primary)' }} />
           <h2 style={{ fontSize: 18, fontWeight: 600, margin: '12px 0 4px' }}>Xác nhận email</h2>
-          <p style={{ color: '#8c8c8c', fontSize: 14, margin: 0 }}>
+          <p style={{ color: 'var(--muted)', fontSize: 14, margin: 0 }}>
             {sent
               ? `Mã OTP đã gửi đến ${maskedEmail}`
               : 'Nhấn nút bên dưới để nhận mã OTP qua email'}
@@ -112,7 +112,7 @@ export default function SeafarerVerifyPage() {
               block
               loading={sending}
               onClick={handleSend}
-              style={{ color: '#8c8c8c' }}
+              style={{ color: 'var(--muted)' }}
             >
               Gửi lại OTP
             </Button>

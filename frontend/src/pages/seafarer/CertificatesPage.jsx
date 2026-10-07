@@ -100,7 +100,7 @@ export default function SeafarerCertificatesPage() {
         if (!v) return '-'
         const expired = dayjs(v).isBefore(dayjs())
         return (
-          <span style={{ color: expired ? '#ff4d4f' : '#262626' }}>
+          <span style={{ color: expired ? 'var(--danger)' : 'var(--foreground)' }}>
             {dayjs(v).format('DD/MM/YYYY')}
           </span>
         )
@@ -163,7 +163,7 @@ export default function SeafarerCertificatesPage() {
           gap: 8,
         }}
       >
-        <div style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>Chứng chỉ của tôi</div>
+        <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Chứng chỉ của tôi</div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>
           Thêm chứng chỉ
         </Button>
@@ -219,7 +219,7 @@ export default function SeafarerCertificatesPage() {
       {(!list || list.length === 0) && !isLoading ? (
         <Empty
           description="Chưa có chứng chỉ"
-          style={{ padding: 40, background: '#fff', borderRadius: 8 }}
+          style={{ padding: 40, background: 'var(--surface)', borderRadius: 8 }}
         />
       ) : isMobile ? (
         <div>
@@ -227,9 +227,9 @@ export default function SeafarerCertificatesPage() {
             <div
               key={r.id}
               style={{
-                background: '#fff',
+                background: 'var(--surface)',
                 borderRadius: 8,
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--border-strong)',
                 padding: '12px 16px',
                 marginBottom: 8,
               }}
@@ -244,7 +244,7 @@ export default function SeafarerCertificatesPage() {
                 <div style={{ flex: 1, marginRight: 8 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{r.certificate_type_name}</div>
                   {r.certificate_number && (
-                    <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                       Số: {r.certificate_number}
                     </div>
                   )}
@@ -257,7 +257,7 @@ export default function SeafarerCertificatesPage() {
                 style={{
                   marginTop: 6,
                   fontSize: 12,
-                  color: '#595959',
+                  color: 'var(--muted)',
                   display: 'flex',
                   gap: 12,
                   flexWrap: 'wrap',
@@ -267,7 +267,7 @@ export default function SeafarerCertificatesPage() {
                 {r.expiry_date && (
                   <span
                     style={{
-                      color: dayjs(r.expiry_date).isBefore(dayjs()) ? '#ff4d4f' : '#595959',
+                      color: dayjs(r.expiry_date).isBefore(dayjs()) ? 'var(--danger)' : 'var(--muted)',
                     }}
                   >
                     HH: {dayjs(r.expiry_date).format('DD/MM/YYYY')}
@@ -283,7 +283,7 @@ export default function SeafarerCertificatesPage() {
           ))}
         </div>
       ) : (
-        <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
           <Table
             rowKey="id"
             columns={columns}

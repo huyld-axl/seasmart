@@ -92,7 +92,7 @@ export default function CourseListPage() {
       title: 'Tên khóa học',
       dataIndex: 'name',
       render: (v, r) => (
-        <a onClick={() => navigate(`/courses/${r.id}`)} style={{ color: '#1677ff' }}>
+        <a onClick={() => navigate(`/courses/${r.id}`)} style={{ color: 'var(--primary)' }}>
           {v}
         </a>
       ),
@@ -131,7 +131,7 @@ export default function CourseListPage() {
           gap: 8,
         }}
       >
-        <span style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>Khóa học</span>
+        <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Khóa học</span>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
           Thêm mới
         </Button>
@@ -139,17 +139,17 @@ export default function CourseListPage() {
 
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 16,
           marginBottom: 16,
-          border: '1px solid #f0f0f0',
+          border: '1px solid var(--border-strong)',
         }}
       >
         <Space wrap>
           <Input
             placeholder="Tìm tên, mã khóa học..."
-            prefix={<SearchOutlined style={{ color: '#8c8c8c' }} />}
+            prefix={<SearchOutlined style={{ color: 'var(--muted)' }} />}
             style={{ flex: 1, minWidth: 140, height: 32, borderRadius: 6 }}
             value={filters.search}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
@@ -174,7 +174,7 @@ export default function CourseListPage() {
         </Space>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
         {isMobile ? (
           <div>
             {isFetching ? (
@@ -188,7 +188,7 @@ export default function CourseListPage() {
                   onClick={() => navigate(`/courses/${r.id}`)}
                   style={{
                     padding: '12px 16px',
-                    borderBottom: '1px solid #f0f0f0',
+                    borderBottom: '1px solid var(--border-strong)',
                     cursor: 'pointer',
                   }}
                 >
@@ -200,19 +200,19 @@ export default function CourseListPage() {
                       marginBottom: 4,
                     }}
                   >
-                    <span style={{ fontWeight: 600, color: '#1677ff', flex: 1, marginRight: 8 }}>
+                    <span style={{ fontWeight: 600, color: 'var(--primary)', flex: 1, marginRight: 8 }}>
                       {r.name}
                     </span>
                     <Tag color={STATUS_COLOR[r.status]} style={{ marginRight: 4 }}>
                       {STATUS_LABEL[r.status] || r.status}
                     </Tag>
-                    <RightOutlined style={{ color: '#bfbfbf', fontSize: 12 }} />
+                    <RightOutlined style={{ color: 'var(--border-strong)', fontSize: 12 }} />
                   </div>
-                  <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 2 }}>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 2 }}>
                     {[r.course_code, r.training_center_name].filter(Boolean).join(' · ')}
                   </div>
                   {(r.start_date || r.end_date) && (
-                    <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>
                       {r.start_date ? dayjs(r.start_date).format('DD/MM/YYYY') : '?'}
                       {' → '}
                       {r.end_date ? dayjs(r.end_date).format('DD/MM/YYYY') : '?'}

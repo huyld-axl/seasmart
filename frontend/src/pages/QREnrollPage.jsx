@@ -74,7 +74,7 @@ export default function QREnrollPage() {
     return (
       <div style={{ maxWidth: 480, margin: '80px auto', textAlign: 'center' }}>
         <Result
-          icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+          icon={<CheckCircleOutlined style={{ color: 'var(--success)' }} />}
           title="Đăng ký thành công!"
           subTitle={`Thông tin của bạn đã được ghi nhận tại ${linkInfo.training_center.name_vi}. Trung tâm sẽ liên hệ xác nhận sớm nhất.`}
         />

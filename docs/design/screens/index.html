@@ -1,0 +1,116 @@
+<title>MCAH Bộ màn hình</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Instrument+Serif&display=swap">
+<style>
+/* Bố cục: thanh luồng demo ở đầu, rồi lưới màn theo nhóm A–D; bấm một màn để xem lớn, đổi trạng thái và khổ. */
+:root {
+  --bg: #f4f4f6; --surface: #ffffff; --fg: #2c2c2c; --muted: #6b6b70; --line: #e6e6ea; --accent: #003366; --accent-soft: #e6edf5; --chip: #ececf0;
+  --display: 'Instrument Serif', Georgia, serif; --body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #141518; --surface: #1d1f23; --fg: #ececee; --muted: #a2a3aa; --line: #2c2e33; --accent: #8db4e0; --accent-soft: #1f2c3b; --chip: #2a2c31; color-scheme: dark } }
+:root[data-theme="dark"] { --bg: #141518; --surface: #1d1f23; --fg: #ececee; --muted: #a2a3aa; --line: #2c2e33; --accent: #8db4e0; --accent-soft: #1f2c3b; --chip: #2a2c31; color-scheme: dark }
+* { box-sizing: border-box }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 var(--body) }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 64px; display: grid; gap: 40px }
+header { display: grid; gap: 10px }
+.eyebrow { color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase }
+h1 { margin: 0; font: 400 clamp(36px, 6vw, 56px)/1.05 var(--display); text-wrap: balance }
+.lede { margin: 0; max-width: 62ch; color: var(--muted) }
+.links { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 14px }
+a { color: var(--accent) }
+h2 { margin: 0; font: 400 28px/1.2 var(--display) }
+.flow { display: grid; gap: 14px }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; counter-reset: s }
+.steps button { width: 100%; height: 100%; display: grid; gap: 4px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg); font: inherit; text-align: left; cursor: pointer }
+.steps button:hover { border-color: var(--accent) }
+.steps li { counter-increment: s }
+.steps b::before { content: counter(s) '. '; color: var(--accent) }
+.steps span { color: var(--muted); font-size: 13px }
+.group { display: grid; gap: 16px }
+.ghead { display: flex; align-items: baseline; gap: 12px }
+.gid { font: 400 28px/1 var(--display); color: var(--accent) }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 16px }
+.card { display: grid; grid-template-rows: auto 1fr; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; cursor: pointer; text-align: left; padding: 0; color: inherit; font: inherit }
+.card:hover .thumb img { transform: scale(1.015) }
+.card:focus-visible, .steps button:focus-visible, .chip:focus-visible, .seg button:focus-visible, .close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.thumb { aspect-ratio: 16 / 10; overflow: hidden; background: var(--chip); border-bottom: 1px solid var(--line) }
+.thumb img { width: 100%; display: block; transition: transform .3s }
+.meta { display: grid; gap: 6px; padding: 14px 16px 16px; min-width: 0 }
+.title { display: flex; gap: 8px; align-items: baseline; font-weight: 600 }
+.code { color: var(--accent); font-size: 12px; font-weight: 600; letter-spacing: .04em }
+.route { color: var(--muted); font: 12px/1.4 ui-monospace, Menlo, monospace; overflow-wrap: anywhere }
+.desc { margin: 0; color: var(--muted); font-size: 14px }
+.states { display: flex; flex-wrap: wrap; gap: 6px }
+.tag { padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); font-size: 12px }
+dialog { width: min(1240px, calc(100vw - 24px)); max-height: calc(100vh - 24px); padding: 0; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--fg) }
+dialog::backdrop { background: rgb(0 0 0 / .45) }
+.dhead { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 14px 16px; background: var(--surface); border-bottom: 1px solid var(--line) }
+.dhead h3 { margin: 0; font-size: 16px; flex: 1 1 200px }
+.chips { display: flex; flex-wrap: wrap; gap: 6px }
+.chip { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); font: inherit; font-size: 13px; cursor: pointer }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent) }
+.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--chip) }
+.seg button { padding: 6px 12px; border: 0; border-radius: 8px; background: none; color: var(--muted); font: inherit; font-size: 13px; cursor: pointer }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); font-weight: 500 }
+.seg button:disabled { opacity: .4; cursor: not-allowed }
+.close { margin-left: auto; width: 36px; height: 36px; border: 0; border-radius: 10px; background: var(--chip); color: var(--fg); font-size: 18px; cursor: pointer }
+.view { padding: 16px; background: var(--bg); display: grid; justify-items: center }
+.view img { border-radius: 8px; box-shadow: 0 0 0 1px var(--line) }
+.view.m img { width: 375px }
+.note { margin: 0; color: var(--muted); font-size: 13px }
+@media (prefers-reduced-motion: reduce) { .thumb img { transition: none } }
+</style>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">MCAH · thiết kế MVP · bản chốt ngày 07/10/2026</p>
+    <h1>Bộ màn hình MCAH</h1>
+    <p class="lede">Mọi màn đã chốt ở cổng 2, chụp từ wireframe trong repo. Bấm một màn để xem lớn, đổi trạng thái và đổi giữa desktop 1440 với mobile 375. Dữ liệu trên ảnh là dữ liệu giả.</p>
+    <p class="links"><a href="https://claude.ai/artifact/H1raKV5kJfuFqnU3PvSrbW">Wireframe nhóm A (bấm thử được)</a><a href="https://claude.ai/artifact/AJHDiUsNtzoC1vWE7aE4Yq">Wireframe nhóm B và C</a><a href="https://claude.ai/artifact/QfQ3kwDrMyLxW85R1Ln3k6">Design system</a></p>
+  </header>
+  <section class="flow" aria-labelledby="flow-title">
+    <h2 id="flow-title">Kịch bản demo</h2>
+    <ol class="steps" id="steps"></ol>
+  </section>
+  <div id="groups"></div>
+</div>
+<dialog id="dlg" aria-labelledby="dlg-title">
+  <div class="dhead">
+    <h3 id="dlg-title"></h3>
+    <div class="chips" id="dlg-states" role="group" aria-label="Trạng thái"></div>
+    <div class="seg" role="group" aria-label="Khổ"><button type="button" id="k-d" aria-pressed="true">Desktop</button><button type="button" id="k-m" aria-pressed="false">Mobile</button></div>
+    <button type="button" class="close" id="dlg-close" aria-label="Đóng">×</button>
+  </div>
+  <div class="view" id="dlg-view"><img id="dlg-img" alt=""><p class="note" id="dlg-note" hidden>Trạng thái này chỉ chụp ở desktop.</p></div>
+</dialog>
+<script>
+const DATA = [{"id": "A", "name": "Thuyền viên và duyệt giấy tờ", "items": [{"id": "a1", "code": "A1", "name": "Thuyền viên", "route": "/seafarers", "desc": "Danh sách người: tình trạng, tàu hoặc ngày sẵn sàng, giấy tờ hết hạn, độ đầy đủ hồ sơ.", "states": [{"key": "a1", "label": "Có dữ liệu", "d": "img/a1-d.jpg", "m": "img/a1-m.jpg"}, {"key": "a1-tai", "label": "Đang tải", "d": "img/a1-tai-d.jpg", "m": null}, {"key": "a1-rong", "label": "Rỗng", "d": "img/a1-rong-d.jpg", "m": "img/a1-rong-m.jpg"}, {"key": "a1-loi", "label": "Lỗi", "d": "img/a1-loi-d.jpg", "m": "img/a1-loi-m.jpg"}]}, {"id": "a2", "code": "A2", "name": "Hồ sơ thuyền viên", "route": "/seafarers/:id", "desc": "Tab Tổng quan, Giấy tờ, Đi tàu, Đã xuất, Lịch sử. Khung thả giấy tờ để AI đọc là điểm wow.", "states": [{"key": "a2", "label": "Có dữ liệu", "d": "img/a2-d.jpg", "m": "img/a2-m.jpg"}, {"key": "a2-tai", "label": "Đang tải", "d": "img/a2-tai-d.jpg", "m": null}]}, {"id": "a3", "code": "A3", "name": "Duyệt giấy tờ", "route": "/seafarers/:id/documents/:docId/review", "desc": "Bản gốc bên trái, bản số hoá theo khuôn từng loại giấy bên phải, thanh quyết định ở đáy.", "states": [{"key": "a3", "label": "Có dữ liệu", "d": "img/a3-d.jpg", "m": "img/a3-m.jpg"}, {"key": "a3-tai", "label": "Đang tải", "d": "img/a3-tai-d.jpg", "m": null}, {"key": "a3-rong", "label": "AI không đọc được", "d": "img/a3-rong-d.jpg", "m": "img/a3-rong-m.jpg"}, {"key": "a3-409", "label": "Xung đột 409", "d": "img/a3-409-d.jpg", "m": null}]}]}, {"id": "B", "name": "Kiểm tra hồ sơ", "items": [{"id": "b3", "code": "B3", "name": "Đối chiếu tàu", "route": "panel trượt từ màn Duyệt", "desc": "Thẻ tàu ứng viên, mỗi trường ghi Khớp hay Khác; khối bằng chứng thủ công gập được.", "states": [{"key": "b3", "label": "Có ứng viên", "d": "img/b3-d.jpg", "m": "img/b3-m.jpg"}, {"key": "b3-rong", "label": "Không tìm thấy tàu", "d": "img/b3-rong-d.jpg", "m": "img/b3-rong-m.jpg"}, {"key": "b3-imo", "label": "IMO sai số kiểm tra", "d": "img/b3-imo-d.jpg", "m": null}]}, {"id": "b4", "code": "B4", "name": "Sẵn sàng xuất", "route": "trong Hồ sơ", "desc": "Badge cạnh tên và banner lý do, mỗi lý do có nút sửa ngay.", "states": [{"key": "b4", "label": "Bị chặn", "d": "img/b4-d.jpg", "m": "img/b4-m.jpg"}, {"key": "b4-xem", "label": "Cần xem lại", "d": "img/b4-xem-d.jpg", "m": null}, {"key": "b4-ok", "label": "Sẵn sàng", "d": "img/b4-ok-d.jpg", "m": null}]}]}, {"id": "C", "name": "Xuất bộ giấy tờ", "items": [{"id": "c1", "code": "C1", "name": "Tạo bộ giấy", "route": "/exports/new", "desc": "Tick tự do 12 giấy, chọn nhanh theo giai đoạn, dùng lại bộ cũ, xem trước bên phải.", "states": [{"key": "c1", "label": "Một người", "d": "img/c1-d.jpg", "m": "img/c1-m.jpg"}, {"key": "c1-dot", "label": "Nhiều người", "d": "img/c1-dot-d.jpg", "m": null}]}, {"id": "c2", "code": "C2", "name": "Duyệt và ký", "route": "/exports/:id", "desc": "Giấy trong bộ, xem giấy, cột chữ ký (ký trong app, link SMS, ô điền tay).", "states": [{"key": "c2", "label": "Chờ duyệt", "d": "img/c2-d.jpg", "m": "img/c2-m.jpg"}, {"key": "c2-cung", "label": "Người tạo tự duyệt", "d": "img/c2-cung-d.jpg", "m": null}, {"key": "c2-ky", "label": "Đang ký", "d": "img/c2-ky-d.jpg", "m": "img/c2-ky-m.jpg"}, {"key": "c2-xong", "label": "Đã ký đủ", "d": "img/c2-xong-d.jpg", "m": null}]}, {"id": "c3", "code": "C3", "name": "Bản xuất", "route": "/exports", "desc": "Mỗi dòng một bộ giấy, cột tiến độ chữ ký, tab theo trạng thái.", "states": [{"key": "c3", "label": "Có dữ liệu", "d": "img/c3-d.jpg", "m": "img/c3-m.jpg"}, {"key": "c3-rong", "label": "Rỗng", "d": "img/c3-rong-d.jpg", "m": "img/c3-rong-m.jpg"}]}, {"id": "c4", "code": "C4", "name": "Ký online", "route": "link SMS, không cần tài khoản", "desc": "Thuyền viên đọc từng giấy, tick đồng ý, ký bằng ngón tay.", "states": [{"key": "c4", "label": "Đang ký", "d": "img/c4-d.jpg", "m": "img/c4-m.jpg"}, {"key": "c4-xong", "label": "Đã ký xong", "d": "img/c4-xong-d.jpg", "m": "img/c4-xong-m.jpg"}, {"key": "c4-het", "label": "Link hết hạn", "d": "img/c4-het-d.jpg", "m": "img/c4-het-m.jpg"}]}]}, {"id": "D", "name": "Khung chung", "items": [{"id": "d2", "code": "D2", "name": "Đăng nhập", "route": "/login", "desc": "Email, mật khẩu, nút Đăng nhập. Không có Quên mật khẩu vì backend chưa có.", "states": [{"key": "d2", "label": "Ô trống", "d": "img/d2-d.jpg", "m": "img/d2-m.jpg"}, {"key": "d2-loi", "label": "Sai mật khẩu", "d": "img/d2-loi-d.jpg", "m": "img/d2-loi-m.jpg"}]}, {"id": "d5", "code": "D5", "name": "Trang lỗi", "route": "403 · 404 · 500", "desc": "Lỗi nằm trong khung app, luôn có đường ra.", "states": [{"key": "d5-403", "label": "403", "d": "img/d5-403-d.jpg", "m": null}, {"key": "d5-404", "label": "404", "d": "img/d5-404-d.jpg", "m": null}, {"key": "d5-500", "label": "500", "d": "img/d5-500-d.jpg", "m": null}]}]}];
+const STEPS = [['a1', 'Thêm thuyền viên', 'Mở danh sách, chọn Trần Minh Khôi'], ['a2', 'Thả giấy tờ', 'AI nhận ra loại giấy, đọc và điền'], ['a3', 'Duyệt cạnh bản gốc', 'Ô ngày mơ hồ, giữ UNKNOWN'], ['b3', 'Đối chiếu tàu', 'Chọn tàu theo IMO'], ['c1', 'Tạo bộ giấy', 'Tick giấy lên tàu, xem trước'], ['c2', 'Duyệt và ký', 'Giám đốc ký, thuyền viên ký qua SMS']];
+const byId = {}; DATA.forEach((g) => g.items.forEach((s) => { byId[s.id] = s }));
+const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+document.getElementById('steps').innerHTML = STEPS.map(([id, t, sub]) => `<li><button type="button" data-open="${id}"><b>${esc(t)}</b><span>${byId[id].code} · ${esc(sub)}</span></button></li>`).join('');
+document.getElementById('groups').innerHTML = DATA.map((g) => `<section class="group" aria-labelledby="g-${g.id}"><div class="ghead"><span class="gid">${g.id}</span><h2 id="g-${g.id}">${esc(g.name)}</h2></div><div class="grid">${g.items.map((s) => `
+  <button type="button" class="card" data-open="${s.id}"><span class="thumb"><img src="${s.states[0].d}" alt="${esc(s.name)}, desktop" loading="lazy"></span>
+  <span class="meta"><span class="title"><span class="code">${s.code}</span>${esc(s.name)}</span><span class="route">${esc(s.route)}</span><p class="desc">${esc(s.desc)}</p>
+  <span class="states">${s.states.map((st) => `<span class="tag">${esc(st.label)}</span>`).join('')}</span></span></button>`).join('')}</div></section>`).join('');
+const dlg = document.getElementById('dlg'), img = document.getElementById('dlg-img'), view = document.getElementById('dlg-view'), note = document.getElementById('dlg-note');
+const kd = document.getElementById('k-d'), km = document.getElementById('k-m');
+let cur = null, st = 0, kho = 'd';
+function draw() {
+  const s = cur.states[st]; const hasM = !!s.m; if (kho === 'm' && !hasM) kho = 'd';
+  km.disabled = !hasM; kd.setAttribute('aria-pressed', kho === 'd'); km.setAttribute('aria-pressed', kho === 'm');
+  img.src = kho === 'd' ? s.d : s.m; img.alt = `${cur.name}, ${s.label}, ${kho === 'd' ? 'desktop' : 'mobile'}`;
+  view.classList.toggle('m', kho === 'm'); note.hidden = hasM;
+  document.querySelectorAll('#dlg-states .chip').forEach((c, i) => c.setAttribute('aria-pressed', i === st));
+}
+function open(id) {
+  cur = byId[id]; st = 0;
+  document.getElementById('dlg-title').textContent = `${cur.code} · ${cur.name}`;
+  document.getElementById('dlg-states').innerHTML = cur.states.map((s, i) => `<button type="button" class="chip" data-st="${i}">${esc(s.label)}</button>`).join('');
+  draw(); dlg.showModal(); try { history.replaceState(null, '', '#' + id) } catch (e) {}
+}
+document.addEventListener('click', (e) => { const o = e.target.closest('[data-open]'); if (o) open(o.dataset.open); const c = e.target.closest('[data-st]'); if (c) { st = +c.dataset.st; draw() } });
+kd.onclick = () => { kho = 'd'; draw() }; km.onclick = () => { kho = 'm'; draw() };
+document.getElementById('dlg-close').onclick = () => dlg.close();
+dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close() });
+dlg.addEventListener('close', () => { try { history.replaceState(null, '', location.pathname) } catch (e) {} });
+const h = location.hash.slice(1); if (byId[h]) open(h);
+</script>

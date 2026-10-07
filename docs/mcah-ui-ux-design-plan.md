@@ -611,6 +611,18 @@ Màn Quốc gia và Cảng biển dùng chung `MasterSubPage`, nên đổi theo 
 
 ### Giai đoạn 5: chuyển sang Figma (1,5 ngày)
 
+> **Đổi hướng (2026-10-07, HuyLD chốt):** không dùng Figma làm đầu ra nữa, để khỏi phụ thuộc hạn mức công cụ ngoài. **Repo là nguồn thật**:
+> - wireframe đã chốt: `docs/design/wireframes/`;
+> - design system chạy thật: `/design-system`;
+> - code React;
+> - **Bộ màn hình** `docs/design/screens/` (bản publish: https://claude.ai/artifact/1AJrdf3wjBeZUpZoN3zC8X): 11 màn đã chốt, desktop 1440 và mobile 375, kèm các trạng thái, và kịch bản demo 6 bước. Ảnh chụp lại bằng `probe`/Playwright từ wireframe mỗi khi wireframe đổi, không tốn lượt công cụ ngoài.
+>
+> Thay đổi kéo theo:
+> - File Figma "MCAH — MVP Demo UI" dừng ở mức đã dựng: biến, text style, component, màn A1–A3, Đăng nhập, Lỗi. Còn lỗi nền trắng ở vùng nội dung, không sửa tiếp.
+> - FigJam bỏ; sơ đồ luồng thay bằng kịch bản demo trên trang Bộ màn hình.
+> - Khi Sales cần file Figma, dùng plugin html.to.design nhập link wireframe.
+> - Phần dưới đây giữ để tham khảo.
+
 Nguyên tắc: **Figma chép wireframe nấc Màu (và bản dựng nếu đã có), không thiết kế lại.** Chép tới từng px, như `U4` chép wireframe.
 
 #### Cấu trúc file (3 trang, vừa giới hạn Starter)

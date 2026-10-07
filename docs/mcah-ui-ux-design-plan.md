@@ -611,6 +611,21 @@ Màn Quốc gia và Cảng biển dùng chung `MasterSubPage`, nên đổi theo 
 
 ### Giai đoạn 5: chuyển sang Figma (1,5 ngày)
 
+> **Cập nhật 2026-10-07 (sau đổi hướng): HuyLD quyết định quay lại Figma.** File "MCAH — MVP Demo UI" đã có:
+> - Trang 01: biến, text style, component (kể cả khung app, giấy A4, dòng bảng).
+> - Trang 02, 9 màn desktop:
+>   - nhóm A: A1 Thuyền viên, A2 Hồ sơ, A3 Duyệt;
+>   - nhóm B: B3 Đối chiếu tàu, B4 Sẵn sàng xuất;
+>   - nhóm C: C1 Tạo bộ giấy, C2 Duyệt và ký;
+>   - nhóm D: D2 Đăng nhập (desktop và mobile), D5 Lỗi 403/404/500.
+> - **Dừng vì chạm giới hạn số lần gọi công cụ Figma của gói Starter.** Còn thiếu:
+>   - C3 Bản xuất;
+>   - C4 Ký online (mobile);
+>   - các màn mobile và các khung trạng thái;
+>   - trang 03 (prototype demo).
+>
+> Phần này chỉ làm tiếp được khi nâng gói Professional hoặc khi hạn mức được đặt lại.
+>
 > **Đổi hướng (2026-10-07, HuyLD chốt):** không dùng Figma làm đầu ra nữa, để khỏi phụ thuộc hạn mức công cụ ngoài. **Repo là nguồn thật**:
 > - wireframe đã chốt: `docs/design/wireframes/`;
 > - design system chạy thật: `/design-system`;

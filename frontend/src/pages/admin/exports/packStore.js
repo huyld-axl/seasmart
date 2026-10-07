@@ -22,6 +22,19 @@ let packs = [
     demo: true,
   },
 ]
+
+// Thêm vài bộ mẫu ở các trạng thái khác để màn Bản xuất có đủ dạng (dữ liệu giả).
+const demo = (id, seafarerName, rank, title, docs, status, createdBy, createdAt, extra = {}) => ({
+  id, seafarerId: null, seafarerName, title, docs, status, createdBy, createdAt, demo: true,
+  snapshot: { full_name: seafarerName, date_of_birth: '1988-02-10', rank_name: rank },
+  inputs: {}, signs: {}, ...extra,
+})
+packs = packs.concat([
+  demo('B0041', 'Phạm Quốc Bảo', 'Bosun', 'Bộ giấy lên tàu', ['qddd', 'bhxh', 'uql'], 'SIGNING', 'Lê Thu Hà', '2026-10-07T09:30:00', { signs: { 'qddd|Giám đốc': 'done' } }),
+  demo('B0039', 'Võ Thanh Sơn', 'Chief Officer (CO)', 'Bộ giấy tuyển dụng', ['kq', 'tb', 'cv', 'pt'], 'STALE', 'Lê Thu Hà', '2026-10-04T15:10:00', { staleReason: 'Hồ sơ đổi chức danh sau khi tạo bộ' }),
+  demo('B0038', 'Đào Văn Hùng', 'Second Engineer (2/E)', 'Bộ giấy rời tàu', ['qdrt', 'tl'], 'DONE', 'Lê Thu Hà', '2026-10-04T08:20:00', { signs: { 'qdrt|Giám đốc': 'done', 'tl|Thuyền viên': 'done', 'tl|Giám đốc': 'done' } }),
+  demo('B0036', 'Lê Văn Đức', 'Chief Engineer (CE)', 'Bộ giấy tuyển dụng', ['kq', 'tb'], 'REJECTED', 'Lê Thu Hà', '2026-10-03T11:00:00', { rejectReason: 'Thiếu điểm thi tuyển của giám khảo 2' }),
+])
 const listeners = new Set()
 const emit = () => listeners.forEach((listener) => listener())
 const set = (id, patch) => {
@@ -32,7 +45,7 @@ const set = (id, patch) => {
 export const signKey = (doc, who) => `${doc}|${who}`
 
 export function signState(pack, doc, who) {
-  if (pack.status === 'PENDING_APPROVAL' || pack.status === 'REJECTED') return 'wait'
+  if (['PENDING_APPROVAL', 'REJECTED', 'STALE'].includes(pack.status)) return 'wait'
   return pack.signs[signKey(doc, who)] || 'wait'
 }
 
@@ -83,4 +96,28 @@ export function usePacks() {
 
 export function usePack(id) {
   return useSyncExternalStore(packStore.subscribe, () => packStore.get(id))
+}
+
+// Tab của màn Bản xuất (C1).
+export const PACK_TABS = [
+  { value: 'all', label: 'Tất cả' },
+  { value: 'PENDING_APPROVAL', label: 'Chờ duyệt' },
+  { value: 'SIGNING', label: 'Đang ký' },
+  { value: 'STALE', label: 'Cần làm lại' },
+  { value: 'DONE', label: 'Đã xong' },
+]
+
+export function filterPacks(list, tab, search) {
+  const q = search.trim().toLowerCase()
+  return list.filter((pack) => (tab === 'all' || pack.status === tab)
+    && (!q || `${pack.seafarerName} ${pack.id} ${pack.title}`.toLowerCase().includes(q)))
+}
+
+export function countByTab(list) {
+  return Object.fromEntries(PACK_TABS.map((t) => [t.value, t.value === 'all' ? list.length : list.filter((p) => p.status === t.value).length]))
+}
+
+// Giấy thuyền viên cần ký online (C2).
+export function crewDocs(pack) {
+  return pack.docs.filter((key) => template(key).signers.includes(SELF_SIGN))
 }

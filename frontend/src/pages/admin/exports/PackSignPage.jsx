@@ -135,7 +135,12 @@ export default function PackSignPage() {
                     Ký với tư cách {who}
                   </Button>
                 ))}
-                {crewNeeded && <p className="rv-muted" style={{ margin: 0, fontSize: 12 }}>Thuyền viên ký qua link SMS (màn C2, chưa làm).</p>}
+                {crewNeeded && pack.docs.some((key) => template(key).signers.includes(SELF_SIGN) && signState(pack, key, SELF_SIGN) !== 'done') && (
+                  <div className="ps-link">
+                    <p className="rv-muted" style={{ margin: 0, fontSize: 12 }}>Thuyền viên ký qua link SMS. Chưa có dịch vụ SMS: mở link dưới đây để thử ký như thuyền viên.</p>
+                    <Link to={`/sign/${pack.id}`}>Mở trang ký của thuyền viên</Link>
+                  </div>
+                )}
               </div>
             )}
           </div>

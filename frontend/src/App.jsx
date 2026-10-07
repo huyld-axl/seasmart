@@ -33,6 +33,7 @@ import ExportListPage from './pages/admin/exports/ExportListPage'
 import ReviewPage from './pages/admin/review/ReviewPage'
 import PackCreatePage from './pages/admin/exports/PackCreatePage'
 import PackSignPage from './pages/admin/exports/PackSignPage'
+import RemoteSignPage from './pages/sign/RemoteSignPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -48,6 +49,7 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/design-system" element={<DesignSystemPage />} />
+              <Route path="/sign/:packId" element={<RemoteSignPage />} />
               <Route path="/" element={<Navigate to="/seafarers" replace />} />
 
               <Route

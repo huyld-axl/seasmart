@@ -48,7 +48,7 @@ export default function App() {
 
               <Route
                 element={
-                  <ProtectedRoute roles={['admin', 'operator', 'training_center', 'manning_agent']}>
+                  <ProtectedRoute roles={['admin', 'operator', 'reviewer', 'training_center', 'manning_agent']}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -62,7 +62,7 @@ export default function App() {
                 <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
                 <Route path="/courses" element={<CourseListPage />} />
                 <Route path="/courses/:id" element={<CourseDetailPage />} />
-                <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
+                <Route path="/master-data" element={<Navigate to="/master-data/vessels" replace />} />
                 <Route path="/master-data/:tab" element={<MasterSubPage />} />
                 <Route path="/messages" element={<MessagingPage />} />
                 <Route path="/admin/users" element={<UserListPage />} />

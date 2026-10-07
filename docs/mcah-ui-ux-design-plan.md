@@ -588,6 +588,27 @@ quốc gia, thông tin liên lạc agency, chính sách liên lạc mặc địn
 
 Màn Quốc gia và Cảng biển dùng chung `MasterSubPage`, nên đổi theo Loại tàu. Vai trò mới trên `RoleBadge` là việc nhỏ hơn một màn (lối 7), làm cùng lượt.
 
+#### Kết quả giai đoạn 4 (2026-10-07)
+
+- **Wireframe đã chốt:** nhóm A (Thuyền viên A, Hồ sơ A, Duyệt A), nhóm B và C (Đối chiếu A, Sẵn sàng A, Tạo bộ giấy A, Duyệt và ký A, Bản xuất, Ký online). File: `docs/design/wireframes/`.
+- **D3 dựng luôn:** tab **Tàu** và **Chủ tàu** trong Danh mục (`/master-data/vessels`, `/master-data/ship-owners`).
+  - API mới `backend/src/routes/v1/fleet.routes.js`: danh sách có tìm kiếm và phân trang, thêm, sửa, xoá mềm, `POST /:id/restore`.
+  - IMO kiểm số kiểm tra ở cả backend (`utils/imo.js`, có test) và form.
+  - Form thêm và sửa chung một panel trượt; xoá ngay và cho "Hoàn tác" trong toast.
+  - Quyền ghi: `admin` và `operator`, vì xoá mềm khôi phục được.
+- **D4 dựng lại theo gu:**
+  - Mọi tab Danh mục dùng chung khuôn: bảng trong card, tìm kiếm, form trong panel trượt, menu ⋯, hộp xác nhận xoá. Loại danh mục cũ vẫn xoá hẳn nên hộp xác nhận nói rõ không hoàn tác được.
+  - Màn Tài khoản (`/admin/users`, đổi tên từ "Quản lý User"): lọc email, vai trò, trạng thái đăng nhập; công tắc đăng nhập; badge vai trò trung tính.
+  - Thêm vai trò `reviewer` (Người duyệt). Tên hiển thị: `operator` là Crewing Officer, `admin` là Quản trị (`frontend/src/constants/roles.js`).
+  - Sửa lỗi có sẵn: màn danh mục gọi `limit=500` trong khi API cho tối đa 100, danh sách luôn rỗng. Nay tải từng trang 100 dòng.
+- **Design system thêm:**
+  - `SlidePanel` (panel trượt 448px, lớp phủ 15%, vào 500ms), `useToast` (toast góc trên phải, có nút hành động).
+  - Nhóm trạng thái `crew`, `cert`, `signature`, và `export` mở rộng cho bộ giấy tờ.
+  - Lớp dùng chung cho đầu trang, thanh công cụ, card bảng, ô hai tầng.
+  - Thanh bước dùng `Steps` của AntD.
+  - Bản publish: trang design system cùng link cũ.
+- **Chưa làm, để giai đoạn 6 (`U4`):** khung app mới (sidebar sáng 4 mục). D3 và D4 vẫn chạy trong khung `AdminLayout` cũ.
+
 ### Giai đoạn 5: chuyển sang Figma (1,5 ngày)
 
 Nguyên tắc: **Figma chép wireframe nấc Màu (và bản dựng nếu đã có), không thiết kế lại.** Chép tới từng px, như `U4` chép wireframe.

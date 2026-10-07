@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Card, DatePicker, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Tabs, Tooltip } from 'antd'
+import { Button, Card, DatePicker, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Steps, Tabs, Tooltip } from 'antd'
 import {
   DeleteOutlined,
   FileTextOutlined,
@@ -21,6 +21,8 @@ import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import DescriptionList from '../components/ds/DescriptionList'
+import SlidePanel from '../components/ds/SlidePanel'
+import useToast from '../components/ds/useToast'
 import { EmptyState, FilterChips, ListRow, ProgressBar, SaveStatus, StatusTabs } from '../components/ds/Controls'
 import { COLORS, ELEVATION, RADIUS } from '../theme/tokens'
 import './DesignSystemPage.css'
@@ -173,6 +175,49 @@ function Demo({ label, state, children, wide = false }) {
       ) : (
         children
       )}
+    </div>
+  )
+}
+
+// Panel trượt và toast mở thật (bấm nút); thanh bước tĩnh, bước 2/4.
+function OverlayDemos() {
+  const [panelOpen, setPanelOpen] = useState(false)
+  const toast = useToast()
+  return (
+    <div className="dsp-states">
+      <Demo label="Panel trượt: thêm và sửa chung một form">
+        <Button onClick={() => setPanelOpen(true)}>Mở panel Thêm tàu</Button>
+        <SlidePanel
+          open={panelOpen}
+          title="Thêm tàu"
+          onClose={() => setPanelOpen(false)}
+          footer={
+            <>
+              <Button onClick={() => setPanelOpen(false)}>Huỷ</Button>
+              <Button type="primary" onClick={() => setPanelOpen(false)}>Thêm tàu</Button>
+            </>
+          }
+        >
+          <Form layout="vertical" requiredMark>
+            <Form.Item label="Tên tàu" required><Input defaultValue="MV Lotus Pearl" /></Form.Item>
+            <Form.Item label="IMO" extra="Để trống nếu tàu không có IMO."><Input defaultValue="9074729" /></Form.Item>
+          </Form>
+        </SlidePanel>
+      </Demo>
+      <Demo label="Toast: xong việc, có Hoàn tác, lỗi">
+        <div className="dsp-inline">
+          <Button onClick={() => toast.success('Đã lưu MV Lotus Pearl')}>Toast xong việc</Button>
+          <Button onClick={() => toast.success('Đã xoá MV Lotus Pearl', { actionLabel: 'Hoàn tác', onAction: () => toast.success('Đã khôi phục MV Lotus Pearl') })}>Toast có Hoàn tác</Button>
+          <Button onClick={() => toast.error('Không lưu được. Mất kết nối mạng.')}>Toast lỗi</Button>
+        </div>
+      </Demo>
+      <Demo label="Thanh bước" wide>
+        <Steps
+          current={1}
+          size="small"
+          items={[{ title: 'Người' }, { title: 'Giấy tờ' }, { title: 'Điền thêm' }, { title: 'Gửi duyệt' }]}
+        />
+      </Demo>
     </div>
   )
 }
@@ -379,6 +424,10 @@ export default function DesignSystemPage() {
             </Form>
           </Modal._InternalPanelDoNotUseOrYouWillBeFired>
         </div>
+      </Section>
+
+      <Section id="panel" title="Panel trượt, toast, thanh bước">
+        <OverlayDemos />
       </Section>
 
       <Section id="rong" title="Trạng thái rỗng, lỗi, đang tải">

@@ -1,30 +1,31 @@
 import { useParams, Navigate } from 'react-router-dom'
 import { useState } from 'react'
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  Space,
-  Popconfirm,
-  message,
-  Tag,
-} from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { App, Table, Button, Dropdown, Form, Input, InputNumber, Select } from 'antd'
+import { PlusOutlined, EditOutlined, DeleteOutlined, MoreOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/client'
+import SlidePanel from '../../components/ds/SlidePanel'
+import useToast from '../../components/ds/useToast'
+import { EmptyState } from '../../components/ds/Controls'
+import { VesselTab, ShipOwnerTab } from './fleet/FleetTabs'
 
 // ── Generic CRUD hook ──────────────────────────────────────────────────────────
 function useMasterData(resource) {
   const qc = useQueryClient()
   const key = ['master', resource]
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: key,
-    queryFn: () => api.get(`/admin/master/${resource}?limit=500`).then((r) => r.data.data),
+    // API chỉ cho tối đa 100 dòng mỗi trang: tải lần lượt đến hết (danh mục chỉ vài trăm dòng)
+    queryFn: async () => {
+      const rows = []
+      for (let page = 1; page <= 20; page += 1) {
+        const { data } = await api.get(`/admin/master/${resource}`, { params: { limit: 100, page } })
+        rows.push(...data.data)
+        if (rows.length >= data.total || !data.data.length) break
+      }
+      return rows
+    },
   })
 
   const create = useMutation({
@@ -49,107 +50,132 @@ function useMasterData(resource) {
     },
   })
 
-  return { data: data || [], isLoading, create, update, remove }
+  return { data: data || [], isLoading, isError, refetch, create, update, remove }
 }
 
-// ── Generic table + modal ──────────────────────────────────────────────────────
+// ── Bảng danh mục: khuôn danh sách của skill (bảng trong card, form trong panel trượt) ──────────
 function MasterTable({ resource, columns, formFields, title }) {
-  const [open, setOpen] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [search, setSearch] = useState('')
   const [form] = Form.useForm()
-  const { data, isLoading, create, update, remove } = useMasterData(resource)
+  const toast = useToast()
+  const { modal } = App.useApp()
+  const { data, isLoading, isError, refetch, create, update, remove } = useMasterData(resource)
+  const keyword = search.trim().toLowerCase()
+  const rows = keyword
+    ? data.filter((row) => Object.values(row).some((value) => typeof value === 'string' && value.toLowerCase().includes(keyword)))
+    : data
 
-  function openCreate() {
-    setEditing(null)
+  function openPanel(row) {
+    setEditing(row || {})
     form.resetFields()
-    setOpen(true)
-  }
-  function openEdit(row) {
-    setEditing(row)
-    form.setFieldsValue(row)
-    setOpen(true)
+    if (row) form.setFieldsValue(row)
   }
 
-  async function handleOk() {
+  async function submit() {
+    const values = await form.validateFields()
     try {
-      const values = await form.validateFields()
-      if (editing) {
-        await update.mutateAsync({ id: editing.id, ...values })
-        message.success('Đã cập nhật')
-      } else {
-        await create.mutateAsync(values)
-        message.success('Đã thêm mới')
-      }
-      setOpen(false)
-    } catch (e) {
-      if (e?.response?.data?.error) message.error(e.response.data.error)
+      if (editing?.id) await update.mutateAsync({ id: editing.id, ...values })
+      else await create.mutateAsync(values)
+      toast.success(editing?.id ? `Đã lưu ${title}` : `Đã thêm ${title}`)
+      setEditing(null)
+    } catch (error) {
+      toast.error(error?.response?.data?.error || 'Không lưu được. Thử lại sau.')
     }
   }
 
-  async function handleDelete(id) {
-    try {
-      await remove.mutateAsync(id)
-      message.success('Đã xóa')
-    } catch (e) {
-      message.error(e?.response?.data?.error || 'Lỗi khi xóa')
-    }
+  function confirmDelete(row) {
+    const name = row.name_vi || row.name || row.code
+    modal.confirm({
+      title: `Xoá ${title} "${name}"?`,
+      content: 'Mục này bị xoá hẳn, không hoàn tác được. Hồ sơ đang dùng mục này sẽ không còn hiện tên.',
+      okText: `Xoá ${title}`,
+      okButtonProps: { danger: true },
+      cancelText: 'Huỷ',
+      autoFocusButton: 'cancel',
+      onOk: async () => {
+        try {
+          await remove.mutateAsync(row.id)
+          toast.success(`Đã xoá ${title} "${name}"`)
+        } catch (error) {
+          toast.error(error?.response?.data?.error || 'Không xoá được')
+        }
+      },
+    })
   }
 
   const actionCol = {
-    title: '',
-    width: 90,
-    fixed: 'right',
+    title: <span className="ds-sr-only">Thao tác</span>,
+    key: 'actions',
+    width: 56,
+    align: 'right',
     render: (_, row) => (
-      <Space size={4}>
-        <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(row)} />
-        <Popconfirm
-          title="Xóa mục này?"
-          onConfirm={() => handleDelete(row.id)}
-          okText="Xóa"
-          cancelText="Hủy"
-        >
-          <Button size="small" danger icon={<DeleteOutlined />} />
-        </Popconfirm>
-      </Space>
+      <Dropdown
+        trigger={['click']}
+        placement="bottomRight"
+        menu={{
+          items: [
+            { key: 'edit', icon: <EditOutlined />, label: 'Sửa' },
+            { type: 'divider' },
+            { key: 'delete', icon: <DeleteOutlined />, label: 'Xoá', danger: true },
+          ],
+          onClick: ({ key }) => (key === 'edit' ? openPanel(row) : confirmDelete(row)),
+        }}
+      >
+        <Button type="text" icon={<MoreOutlined />} aria-label="Thao tác" />
+      </Dropdown>
     ),
+  }
+
+  let body
+  if (isError) {
+    body = <EmptyState isError title={`Không tải được danh sách ${title}`} description="Mất kết nối tới máy chủ." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
+  } else if (!isLoading && !rows.length) {
+    body = keyword ? (
+      <EmptyState title={`Không có ${title} nào khớp "${search}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
+    ) : (
+      <EmptyState title={`Chưa có ${title} nào`} action={<Button icon={<PlusOutlined />} onClick={() => openPanel(null)}>Thêm {title}</Button>} />
+    )
+  } else {
+    body = (
+      <>
+        <Table rowKey="id" loading={isLoading} dataSource={rows} columns={[...columns, actionCol]} pagination={rows.length > 20 ? { pageSize: 20, showSizeChanger: false, size: 'small' } : false} scroll={{ x: 'max-content' }} onRow={(row) => ({ onDoubleClick: () => openPanel(row) })} />
+        <div className="ds-table-foot">
+          <span className="ds-num">{keyword ? `${rows.length} / ${data.length}` : data.length} {title}</span>
+        </div>
+      </>
+    )
   }
 
   return (
     <>
-      <div
-        style={{
-          marginBottom: 12,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <span style={{ color: '#666' }}>{data.length} mục</span>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Thêm {title}
-        </Button>
+      <div className="ds-toolbar">
+        <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => setSearch(event.target.value)} />
+        <span className="ds-toolbar__end">
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
+            Thêm {title}
+          </Button>
+        </span>
       </div>
-      <Table
-        rowKey="id"
-        size="small"
-        loading={isLoading}
-        dataSource={data}
-        columns={[...columns, actionCol]}
-        pagination={{ pageSize: 20, showSizeChanger: false }}
-        scroll={{ x: 'max-content' }}
-      />
-      <Modal
-        open={open}
-        title={editing ? `Sửa ${title}` : `Thêm ${title}`}
-        onOk={handleOk}
-        onCancel={() => setOpen(false)}
-        confirmLoading={create.isPending || update.isPending}
-        width={520}
+      <div className="ds-card">{body}</div>
+      <SlidePanel
+        open={!!editing}
+        title={editing?.id ? `Sửa ${title}` : `Thêm ${title}`}
+        description={editing?.id ? editing.name_vi || editing.name : null}
+        onClose={() => setEditing(null)}
+        footer={
+          <>
+            <Button onClick={() => setEditing(null)}>Huỷ</Button>
+            <Button type="primary" loading={create.isPending || update.isPending} onClick={submit}>
+              {editing?.id ? 'Lưu' : `Thêm ${title}`}
+            </Button>
+          </>
+        }
       >
-        <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
+        <Form form={form} layout="vertical" onFinish={submit}>
           {formFields}
         </Form>
-      </Modal>
+      </SlidePanel>
     </>
   )
 }
@@ -169,13 +195,13 @@ function CertificateTypeTab() {
           title: 'Hiệu lực (năm)',
           dataIndex: 'validity_years',
           width: 120,
-          render: (v) => v ?? <Tag>Vĩnh viễn</Tag>,
+          render: (v) => v ?? <span className="ds-role">Vĩnh viễn</span>,
         },
         {
           title: 'STCW',
           dataIndex: 'is_stcw',
           width: 70,
-          render: (v) => (v ? <Tag color="blue">STCW</Tag> : null),
+          render: (v) => (v ? <span className="ds-role">STCW</span> : null),
         },
       ]}
       formFields={
@@ -382,6 +408,8 @@ function PortTab() {
 // ── Route map ──────────────────────────────────────────────────────────────────
 
 const TAB_MAP = {
+  vessels: { component: VesselTab, title: 'Tàu', description: 'Danh mục tàu dùng khi đối chiếu sea service. IMO được kiểm số kiểm tra.' },
+  'ship-owners': { component: ShipOwnerTab, title: 'Chủ tàu', description: 'Chủ tàu và người liên hệ của từng chủ tàu.' },
   cert: { component: CertificateTypeTab, title: 'Chứng chỉ' },
   vessel: { component: VesselTypeTab, title: 'Loại tàu' },
   country: { component: CountryTab, title: 'Quốc gia' },
@@ -394,13 +422,18 @@ export default function MasterSubPage() {
   const { tab } = useParams()
   const entry = TAB_MAP[tab]
 
-  if (!entry) return <Navigate to="/master-data/cert" replace />
+  if (!entry) return <Navigate to="/master-data/vessels" replace />
 
   const Component = entry.component
   return (
-    <div>
-      <h2 style={{ marginBottom: 16, fontWeight: 600 }}>{entry.title}</h2>
-      <Component />
+    <div className="ds-page">
+      <div className="ds-page__head">
+        <div>
+          <h1 className="ds-page__title">{entry.title}</h1>
+          {entry.description ? <p className="ds-page__desc">{entry.description}</p> : null}
+        </div>
+      </div>
+      <Component key={tab} />
     </div>
   )
 }

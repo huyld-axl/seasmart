@@ -1,14 +1,6 @@
-import { Tag } from 'antd'
+import { ROLE_LABELS } from '../../../constants/roles'
 
-const ROLE_CONFIG = {
-  admin: { color: 'red', label: 'Admin' },
-  operator: { color: 'blue', label: 'Operator' },
-  training_center: { color: 'green', label: 'Training Center' },
-  manning_agent: { color: 'orange', label: 'Manning Agent' },
-  seafarer: { color: 'cyan', label: 'Seafarer' },
-}
-
+// Vai trò không phải trạng thái: một tông trung tính cho mọi vai (M7), chữ nói vai gì.
 export default function RoleBadge({ role }) {
-  const cfg = ROLE_CONFIG[role] || { color: 'default', label: role }
-  return <Tag color={cfg.color}>{cfg.label}</Tag>
+  return <span className="ds-role">{ROLE_LABELS[role] || role}</span>
 }

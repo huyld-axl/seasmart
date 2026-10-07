@@ -40,12 +40,30 @@ export const STATUS = {
     ONGOING: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
     OVERLAP: { label: 'Trùng thời gian', tone: 'warning', mark: 'overlap' },
   },
+  // Bộ giấy tờ xuất (nhóm C đã chốt: đơn vị xuất là bộ giấy, có bước ký)
   export: {
     DRAFT: { label: 'Nháp', tone: 'neutral', mark: 'ring' },
     PENDING_APPROVAL: { label: 'Chờ duyệt', tone: 'warning', mark: 'ellipsis' },
+    SIGNING: { label: 'Đang ký', tone: 'warning', mark: 'edit' },
+    DONE: { label: 'Đã xong', tone: 'success', mark: 'check' },
     PUBLISHED: { label: 'Đã phát hành', tone: 'success', mark: 'check' },
     STALE: { label: 'Cần làm lại', tone: 'warning', mark: 'refresh' },
     REJECTED: { label: 'Bị trả lại', tone: 'error', mark: 'cross' },
+  },
+  signature: {
+    SIGNED: { label: 'Đã ký', tone: 'success', mark: 'check' },
+    WAITING: { label: 'Chờ ký', tone: 'warning', mark: 'clock' },
+    BY_HAND: { label: 'Ký tay khi in', tone: 'neutral', mark: 'edit' },
+  },
+  crew: {
+    ONBOARD: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
+    STANDBY: { label: 'Chờ tàu', tone: 'neutral', mark: 'ring' },
+    LEAVE: { label: 'Nghỉ phép', tone: 'neutral', mark: 'minus' },
+  },
+  cert: {
+    VALID: { label: 'Còn hạn', tone: 'success', mark: 'check' },
+    EXPIRING: { label: 'Sắp hết hạn', tone: 'warning', mark: 'clock' },
+    EXPIRED: { label: 'Hết hạn', tone: 'error', mark: 'cross' },
   },
 }
 
@@ -56,5 +74,8 @@ export const STATUS_GROUP_LABELS = {
   rule: 'Kết quả rule',
   readiness: 'Readiness',
   seaService: 'Sea service',
-  export: 'Bản xuất',
+  export: 'Bộ giấy tờ',
+  signature: 'Chữ ký',
+  crew: 'Tình trạng thuyền viên',
+  cert: 'Hạn giấy tờ',
 }

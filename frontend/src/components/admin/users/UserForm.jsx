@@ -1,24 +1,23 @@
 import { useEffect } from 'react'
-import { Drawer, Form, Input, Select, Button, Space, Switch } from 'antd'
+import { Button, Form, Input, Select, Switch } from 'antd'
+import SlidePanel from '../../ds/SlidePanel'
+import { ROLES, ROLE_LABELS, ROLE_DESCRIPTIONS } from '../../../constants/roles'
 
-const ROLES = ['admin', 'operator', 'training_center', 'manning_agent', 'seafarer']
-const ROLE_LABELS = {
-  admin: 'Admin',
-  operator: 'Operator',
-  training_center: 'Training Center',
-  manning_agent: 'Manning Agent',
-  seafarer: 'Seafarer',
-}
+const ROLE_OPTIONS = ROLES.map((role) => ({
+  value: role,
+  label: ROLE_LABELS[role],
+  description: ROLE_DESCRIPTIONS[role],
+}))
 
+// Tạo và sửa tài khoản chung một form trong panel trượt (khuôn D3).
 export default function UserForm({ open, onClose, onSubmit, initialValues, loading }) {
   const [form] = Form.useForm()
   const isEdit = !!initialValues?.id
-  const isMobile = window.innerWidth < 768
 
   useEffect(() => {
     if (open) {
       form.resetFields()
-      if (initialValues) form.setFieldsValue(initialValues)
+      if (initialValues) form.setFieldsValue({ ...initialValues, is_active: !!initialValues.is_active })
     }
   }, [open, initialValues, form])
 
@@ -32,18 +31,18 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
   }
 
   return (
-    <Drawer
-      title={isEdit ? 'Sửa user' : 'Tạo user mới'}
+    <SlidePanel
       open={open}
       onClose={onClose}
-      width={isMobile ? '100%' : 480}
+      title={isEdit ? 'Sửa tài khoản' : 'Tạo tài khoản'}
+      description={isEdit ? initialValues.email : 'Người dùng đăng nhập bằng email và mật khẩu này.'}
       footer={
-        <Space>
+        <>
+          <Button onClick={onClose}>Huỷ</Button>
           <Button type="primary" onClick={() => form.submit()} loading={loading}>
-            {isEdit ? 'Lưu' : 'Tạo'}
+            {isEdit ? 'Lưu' : 'Tạo tài khoản'}
           </Button>
-          <Button onClick={onClose}>Hủy</Button>
-        </Space>
+        </>
       }
     >
       <Form form={form} layout="vertical" onFinish={handleFinish}>
@@ -51,11 +50,11 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
           name="email"
           label="Email"
           rules={[
-            { required: true, message: 'Vui lòng nhập email' },
-            { type: 'email', message: 'Email không hợp lệ' },
+            { required: true, message: 'Nhập email đăng nhập' },
+            { type: 'email', message: 'Email phải có dạng ten@congty.com' },
           ]}
         >
-          <Input placeholder="user@example.com" />
+          <Input inputMode="email" autoFocus={!isEdit} />
         </Form.Item>
 
         {!isEdit && (
@@ -63,34 +62,33 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
             name="password"
             label="Mật khẩu"
             rules={[
-              { required: true, message: 'Vui lòng nhập mật khẩu' },
-              { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự' },
+              { required: true, message: 'Nhập mật khẩu' },
+              { min: 6, message: 'Mật khẩu cần ít nhất 6 ký tự' },
             ]}
           >
-            <Input.Password placeholder="Tối thiểu 6 ký tự" />
+            <Input.Password />
           </Form.Item>
         )}
 
-        <Form.Item
-          name="role"
-          label="Role"
-          rules={[{ required: true, message: 'Vui lòng chọn role' }]}
-        >
-          <Select placeholder="Chọn role">
-            {ROLES.map((r) => (
-              <Select.Option key={r} value={r}>
-                {ROLE_LABELS[r]}
-              </Select.Option>
-            ))}
-          </Select>
+        <Form.Item name="role" label="Vai trò" rules={[{ required: true, message: 'Chọn vai trò' }]}>
+          <Select
+            placeholder="Chọn vai trò"
+            options={ROLE_OPTIONS}
+            optionRender={(option) => (
+              <span className="ds-cell2">
+                <span className="ds-cell2__main" style={{ fontWeight: 400 }}>{option.data.label}</span>
+                <span className="ds-cell2__sub">{option.data.description}</span>
+              </span>
+            )}
+          />
         </Form.Item>
 
         {isEdit && (
-          <Form.Item name="is_active" label="Kích hoạt" valuePropName="checked">
+          <Form.Item name="is_active" label="Cho phép đăng nhập" valuePropName="checked">
             <Switch />
           </Form.Item>
         )}
       </Form>
-    </Drawer>
+    </SlidePanel>
   )
 }

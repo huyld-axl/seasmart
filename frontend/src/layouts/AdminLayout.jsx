@@ -39,12 +39,14 @@ function getMenuItems(role) {
     { key: '/training-centers', icon: <BankOutlined />, label: 'Trung tâm đào tạo' },
     { key: '/courses', icon: <BookOutlined />, label: 'Khóa học' },
     { key: '/messages', icon: <MessageOutlined />, label: 'Tin nhắn' },
-    { key: '/admin/users', icon: <UsergroupAddOutlined />, label: 'Quản lý User' },
+    { key: '/admin/users', icon: <UsergroupAddOutlined />, label: 'Tài khoản' },
     {
       key: '/master-data',
       icon: <DatabaseOutlined />,
       label: 'Danh mục',
       children: [
+        { key: '/master-data/vessels', icon: <CarOutlined />, label: 'Tàu' },
+        { key: '/master-data/ship-owners', icon: <BankOutlined />, label: 'Chủ tàu' },
         { key: '/master-data/cert', icon: <SafetyCertificateOutlined />, label: 'Chứng chỉ' },
         { key: '/master-data/vessel', icon: <CarOutlined />, label: 'Loại tàu' },
         { key: '/master-data/contract', icon: <FileTextOutlined />, label: 'Loại hợp đồng' },

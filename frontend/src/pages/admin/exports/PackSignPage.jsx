@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Input, Modal, Skeleton } from 'antd'
-import { CopyOutlined, DownloadOutlined, EditOutlined, LockOutlined, RightOutlined, SendOutlined } from '@ant-design/icons'
+import { Button, Input, Modal, Skeleton, Tooltip } from 'antd'
+import { CopyOutlined, DownloadOutlined, EditOutlined, LockOutlined, MessageOutlined, RightOutlined, SendOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import useAuthStore from '../../../stores/authStore'
 import { exportApi } from '../../../api/exportApi'
@@ -36,6 +36,8 @@ export default function PackSignPage() {
   const approve = useMutation({ mutationFn: () => exportApi.approve(packId), onSuccess: done('Đã duyệt, bộ giấy chuyển sang bước ký'), onError: fail })
   const reject = useMutation({ mutationFn: () => exportApi.reject(packId, reason.trim()), onSuccess: (d) => { setRejecting(false); done('Đã trả lại bộ giấy')(d) }, onError: fail })
   const sign = useMutation({ mutationFn: (who) => exportApi.sign(packId, who), onSuccess: (d, who) => done(`Đã ký với tư cách ${who}`)(d), onError: fail })
+  const { data: sms } = useQuery({ queryKey: ['sms-status'], queryFn: exportApi.smsStatus, staleTime: 5 * 60 * 1000 })
+  const sendSms = useMutation({ mutationFn: () => exportApi.sendSms(packId), onSuccess: (res) => toast.success(`Đã gửi SMS tới ${res.sent_to}`), onError: fail })
   const download = useMutation({ mutationFn: () => exportApi.download(packId), onSuccess: (res) => saveBlob(res, `${pack.code}.zip`), onError: fail })
 
   if (isLoading) return <div className="ds-page"><Skeleton active paragraph={{ rows: 8 }} /></div>
@@ -156,7 +158,12 @@ export default function PackSignPage() {
                       Gửi link này cho {pack.seafarer_name} để ký trên điện thoại. Link hết hạn lúc {dayjs(pack.sign_token_expires_at).format('HH:mm DD/MM')}.
                     </p>
                     <p className="ps-link__url ds-mono">{link}</p>
-                    <Button size="small" icon={<CopyOutlined />} onClick={copyLink}>Chép link ký</Button>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <Button size="small" icon={<CopyOutlined />} onClick={copyLink}>Chép link ký</Button>
+                      <Tooltip title={sms?.configured ? '' : 'Chưa cấu hình gửi SMS trên máy chủ. Chép link rồi gửi tay.'}>
+                        <Button size="small" icon={<MessageOutlined />} disabled={!sms?.configured} loading={sendSms.isPending} onClick={() => sendSms.mutate()}>Gửi SMS</Button>
+                      </Tooltip>
+                    </div>
                   </div>
                 )}
               </div>

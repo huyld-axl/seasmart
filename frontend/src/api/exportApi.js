@@ -8,6 +8,8 @@ export const exportApi = {
   approve: (id) => api.post(`/exports/${id}/approve`, {}).then((r) => r.data),
   reject: (id, reason) => api.post(`/exports/${id}/reject`, { reason }).then((r) => r.data),
   sign: (id, signer) => api.post(`/exports/${id}/sign`, { signer }).then((r) => r.data),
+  smsStatus: () => api.get('/exports/sms').then((r) => r.data),
+  sendSms: (id) => api.post(`/exports/${id}/sms`, {}).then((r) => r.data),
   download: (id) => api.get(`/exports/${id}/download`, { responseType: 'blob' }),
 }
 

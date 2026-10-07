@@ -1,5 +1,6 @@
 const pool = require('../../config/db')
 const { exportPackService } = require('../../services/export_pack.service')
+const { smsService } = require('../../services/sms.service')
 const { TEMPLATE_KEYS, PACK_STATUS } = require('../../constants/pack_templates')
 
 const CREATE_ROLES = ['admin', 'operator']
@@ -61,6 +62,14 @@ async function exportPackRoutes(fastify) {
     ...read,
     schema: { params: idParams, body: { type: 'object', required: ['signer'], additionalProperties: false, properties: { signer: { type: 'string', minLength: 1, maxLength: 50 } } } },
   }, async (request) => exportPackService.signInApp(pool, request.params.id, request.body.signer, request.user))
+
+  fastify.get('/sms', read, async () => ({ configured: smsService.isConfigured() }))
+
+  fastify.post('/:id/sms', {
+    ...read,
+    config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+    schema: { params: idParams },
+  }, async (request) => exportPackService.sendSignSms(pool, request.params.id))
 
   fastify.get('/:id/download', { ...read, schema: { params: idParams } }, async (request, reply) => {
     const { buffer, filename } = await exportPackService.buildZip(pool, request.params.id)

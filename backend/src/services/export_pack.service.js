@@ -1,5 +1,6 @@
 const crypto = require('crypto')
 const PizZip = require('pizzip')
+const { smsService, normalizePhone } = require('./sms.service')
 const { PACK_TEMPLATES, TEMPLATE_KEYS, STAGE_TITLE, SELF_SIGNER, templateOf } = require('../constants/pack_templates')
 const formExportService = require('./form_export.service')
 
@@ -166,6 +167,23 @@ const exportPackService = {
       total,
       counts: Object.fromEntries(Object.entries(counts).map(([k, v]) => [k, Number(v) || 0])),
     }
+  },
+
+  // Gửi link ký qua SMS tới số chính của thuyền viên.
+  async sendSignSms(pool, id) {
+    const pack = await loadPack(pool, id)
+    if (pack.row.status !== 'SIGNING' || !pack.row.sign_token) throw { statusCode: 409, message: 'Bộ giấy chưa ở bước ký' }
+    const crewDocs = pack.docs.filter((key) => templateOf(key).signers.includes(SELF_SIGNER))
+    const signed = new Set(pack.signatures.filter((s) => s.signer === SELF_SIGNER).map((s) => s.template_key))
+    if (!crewDocs.some((key) => !signed.has(key))) throw { statusCode: 409, message: 'Thuyền viên đã ký xong' }
+    const [[seafarer]] = await pool.query('SELECT phone_primary FROM seafarer WHERE id = ?', [pack.row.seafarer_id])
+    const phone = normalizePhone(seafarer?.phone_primary)
+    if (!phone) throw { statusCode: 400, message: 'Hồ sơ chưa có số điện thoại hợp lệ' }
+    const link = `${String(process.env.APP_URL || '').replace(/\/$/, '')}/sign/${pack.row.sign_token}`
+    const until = new Date(pack.row.sign_token_expires_at)
+    const pad = (n) => String(n).padStart(2, '0')
+    const text = `MCAH: Mời ký bộ giấy #${packCode(pack.row.id)} tại ${link} . Link hết hạn ${pad(until.getHours())}:${pad(until.getMinutes())} ${pad(until.getDate())}/${pad(until.getMonth() + 1)}.`
+    return smsService.send(phone, text)
   },
 
   async get(pool, id, user) {

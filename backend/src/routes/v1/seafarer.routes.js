@@ -145,7 +145,23 @@ async function seafarerRoutes(fastify) {
       if (!ADMIN_ROLES.includes(request.user.role)) {
         return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
       }
-      return seafarerService.update(parseInt(request.params.id), request.body, request.user.id)
+      const { reason, ...data } = request.body || {}
+      return seafarerService.update(parseInt(request.params.id), data, request.user.id, reason)
+    }
+  )
+
+  // GET /api/v1/seafarers/:id/revisions — lịch sử sửa hồ sơ
+  fastify.get(
+    '/:id/revisions',
+    {
+      onRequest: [fastify.authenticate],
+      schema: { params: { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } } },
+    },
+    async (request, reply) => {
+      if (request.user.role === 'training_center') {
+        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
+      }
+      return seafarerService.revisions(request.params.id)
     }
   )
 

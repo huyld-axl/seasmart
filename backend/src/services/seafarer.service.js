@@ -1,4 +1,5 @@
 const { OVERVIEW_FIELDS, TAB_CONDITIONS, TABS, shapeRow } = require('../utils/crew_overview')
+const { exportPackService } = require('./export_pack.service')
 const pool = require('../config/db')
 const XLSX = require('xlsx')
 
@@ -67,6 +68,9 @@ const ALLOWED_FIELDS = [
   'weight_kg',
   'shirt_size',
   'pants_size',
+  'blood_type',
+  'education_school',
+  'shoe_size',
   'vessel_group',
   'vessel_name_raw',
   'contract_flight_date',
@@ -78,6 +82,24 @@ const ALLOWED_FIELDS = [
   'status',
   'notes',
 ]
+
+// So giá trị cũ và mới (ngày so theo YYYY-MM-DD, số so như chuỗi); chỉ giữ trường thật sự đổi.
+function comparable(value) {
+  if (value === undefined || value === null || value === '') return null
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  const text = String(value)
+  return /^\d{4}-\d{2}-\d{2}T/.test(text) ? text.slice(0, 10) : text
+}
+
+function diffFields(before, after) {
+  const changes = {}
+  for (const [key, value] of Object.entries(after)) {
+    const from = comparable(before[key])
+    const to = comparable(value)
+    if (from !== to) changes[key] = [from, to]
+  }
+  return changes
+}
 
 function pickAllowed(data) {
   const result = {}
@@ -193,19 +215,42 @@ const seafarerService = {
     return this.getById(result.insertId)
   },
 
-  async update(id, data, updated_by) {
-    await this.getById(id)
+  // Sửa hồ sơ: bắt buộc lý do, ghi lại trường nào đổi từ gì sang gì; bộ giấy chưa xong thành "Cần làm lại".
+  async update(id, data, updated_by, reason) {
+    const text = String(reason || '').trim()
+    if (!text) throw { statusCode: 400, message: 'Ghi lý do sửa hồ sơ' }
+    const [[before]] = await pool.query('SELECT * FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!before) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     const { rank_name, nationality_name, ...rest } = data
     const safeData = pickAllowed(rest)
     if (Object.keys(safeData).length === 0) {
       throw { statusCode: 400, message: 'Không có trường hợp lệ để cập nhật' }
     }
+    const changes = diffFields(before, safeData)
+    if (!Object.keys(changes).length) return this.getById(id)
     await pool.query('UPDATE seafarer SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?', [
       safeData,
       updated_by,
       id,
     ])
+    await pool.query('INSERT INTO seafarer_revision (seafarer_id, changed_by, reason, changes) VALUES (?, ?, ?, ?)', [
+      id,
+      updated_by,
+      text.slice(0, 500),
+      JSON.stringify(changes),
+    ])
+    await exportPackService.markStaleForSeafarer(pool, id)
     return this.getById(id)
+  },
+
+  async revisions(id) {
+    const [rows] = await pool.query(
+      `SELECT r.id, r.reason, r.changes, r.created_at, u.email AS changed_by_email
+       FROM seafarer_revision r LEFT JOIN user u ON u.id = r.changed_by
+       WHERE r.seafarer_id = ? ORDER BY r.created_at DESC, r.id DESC LIMIT 100`,
+      [id]
+    )
+    return rows.map((row) => ({ ...row, changes: typeof row.changes === 'string' ? JSON.parse(row.changes) : row.changes }))
   },
 
   async softDelete(id, updated_by) {
@@ -470,3 +515,4 @@ const seafarerService = {
 }
 
 module.exports = seafarerService
+module.exports.diffFields = diffFields

@@ -4,7 +4,8 @@ const ExcelJS = require('exceljs')
 const path = require('path')
 const pool = require('../config/db')
 
-const FORMS_DIR = path.resolve(__dirname, '../../../../forms')
+// Thư mục mẫu Excel thật (nằm ngoài repo, không commit). Đặt FORMS_DIR trong .env nếu khác mặc định.
+const FORMS_DIR = process.env.FORMS_DIR || path.resolve(__dirname, '../../../../forms')
 
 // DATA column index (1-based, matching Excel columns A=1, B=2, ...)
 // We map field names from DB to QUY UOC column letters

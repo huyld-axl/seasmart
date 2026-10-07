@@ -91,3 +91,5 @@
   .rv-paper { padding: 16px; }
   .rv-pane__stage { padding: 8px; }
 }
+.rv-file { display: block; max-width: none; margin: 0 auto; border-radius: 4px; }
+.rv-file--pdf { width: 100%; height: 640px; border: 0; }

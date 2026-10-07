@@ -4,6 +4,8 @@ export const STATUS = {
   document: {
     RECEIVED: { label: 'Đã nhận', tone: 'neutral', mark: 'ring' },
     PROCESSING: { label: 'Đang trích xuất', tone: 'neutral', mark: 'ring-dot' },
+    READING: { label: 'AI đang đọc', tone: 'neutral', mark: 'ring-dot' },
+    PUBLISHED: { label: 'Đã vào hồ sơ', tone: 'success', mark: 'check' },
     SLOW: { label: 'Chậm', tone: 'warning', mark: 'clock' },
     REVIEW_REQUIRED: { label: 'Chờ duyệt', tone: 'warning', mark: 'ellipsis' },
     COMPLETED: { label: 'Đã xong', tone: 'success', mark: 'check' },

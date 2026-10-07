@@ -214,7 +214,7 @@ export default function SeafarerDetailPage() {
   const bodies = {
     overview: (
       <>
-        <CrewDropzone firstName={firstName} />
+        <CrewDropzone seafarerId={id} firstName={firstName} />
         <div className="crew-two-col">
           <ProfileSection s={seafarer} />
           <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} />
@@ -227,7 +227,7 @@ export default function SeafarerDetailPage() {
     ),
     docs: (
       <>
-        <CrewDropzone firstName={firstName} />
+        <CrewDropzone seafarerId={id} firstName={firstName} />
         <CertificatesSection seafarerId={id} />
       </>
     ),

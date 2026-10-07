@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useRef, useState } from 'react'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
@@ -15,15 +15,20 @@ import {
   DatePicker,
   message,
   Space,
-  Tabs,
   App,
+  Dropdown,
+  Skeleton,
 } from 'antd'
 import {
   ArrowLeftOutlined,
   PlusOutlined,
   DeleteOutlined,
   EditOutlined,
-  FileExcelOutlined,
+  EllipsisOutlined,
+  MoreOutlined,
+  RightOutlined,
+  SendOutlined,
+  UploadOutlined,
 } from '@ant-design/icons'
 import {
   seafarerApi,
@@ -36,6 +41,13 @@ import {
 import ZaloButton from '../../components/common/ZaloButton'
 import FormExportTab from '../../components/seafarer/FormExportTab'
 import dayjs from 'dayjs'
+import StatusBadge from '../../components/ds/StatusBadge'
+import { EmptyState, StatusTabs } from '../../components/ds/Controls'
+import CrewDropzone from './seafarers/CrewDropzone'
+import { attentionItems, activeContract, headLine, openFilePicker } from './seafarers/profileView'
+import { nameInitials } from './seafarers/crewView'
+import './seafarers/SeafarerListPage.css'
+import './seafarers/SeafarerProfile.css'
 
 const { useBreakpoint } = Grid
 
@@ -58,24 +70,38 @@ const STATUS_LABEL = {
   INACTIVE: 'Không hoạt động',
 }
 
-const sectionStyle = {
-  background: '#fff',
-  border: '1px solid #D9D9D9',
-  borderRadius: 2,
-  marginBottom: 16,
-}
 
-const sectionHeaderStyle = {
-  padding: '10px 16px',
-  borderBottom: '1px solid #D9D9D9',
-  fontWeight: 600,
-  fontSize: 13,
-  color: '#003366',
-  background: '#FAFAFA',
-}
 
-const sectionBodyStyle = {
-  padding: 16,
+
+const PROFILE_TABS = [
+  { value: 'overview', label: 'Tổng quan' },
+  { value: 'docs', label: 'Giấy tờ' },
+  { value: 'service', label: 'Đi tàu' },
+  { value: 'training', label: 'Đào tạo' },
+  { value: 'exports', label: 'Đã xuất' },
+]
+
+function AttentionSection({ items }) {
+  return (
+    <Section title="Cần chú ý">
+      {items.length ? (
+        <ul className="crew-attention">
+          {items.map((item) => (
+            <li key={item.text}>
+              {item.kind === 'review' ? (
+                <span className="crew-pending"><EllipsisOutlined aria-hidden />Chờ duyệt</span>
+              ) : (
+                <StatusBadge group="cert" value={item.state} />
+              )}
+              <span>{item.text}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="crew-muted">Giấy tờ còn hạn, không có gì chờ duyệt.</p>
+      )}
+    </Section>
+  )
 }
 
 export default function SeafarerDetailPage() {
@@ -83,13 +109,22 @@ export default function SeafarerDetailPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { modal } = App.useApp()
+  const [tab, setTab] = useState('overview')
+  const pageRef = useRef(null)
 
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
-
-  const { data: seafarer, isLoading } = useQuery({
+  const { data: seafarer, isLoading, isError, refetch } = useQuery({
     queryKey: ['seafarer', id],
     queryFn: () => seafarerApi.getById(id).then((r) => r.data),
+  })
+  const { data: certificates } = useQuery({
+    queryKey: ['certificates', id],
+    queryFn: () => certificateApi.list(id).then((r) => r.data),
+    enabled: !!seafarer,
+  })
+  const { data: contracts } = useQuery({
+    queryKey: ['contracts', id],
+    queryFn: () => contractApi.list(id).then((r) => r.data),
+    enabled: !!seafarer,
   })
 
   const deleteMutation = useMutation({
@@ -104,114 +139,133 @@ export default function SeafarerDetailPage() {
 
   function handleDelete() {
     modal.confirm({
-      title: 'Xác nhận xóa thuyền viên',
-      content: `Bạn có chắc muốn xóa "${seafarer?.full_name}"? Hành động này không thể hoàn tác.`,
-      okText: 'Xóa',
+      title: `Xoá thuyền viên ${seafarer?.full_name}?`,
+      content: 'Hồ sơ, giấy tờ và lịch sử đi tàu của người này sẽ bị ẩn khỏi danh sách.',
+      okText: 'Xoá thuyền viên',
       okType: 'danger',
-      cancelText: 'Hủy',
+      cancelText: 'Huỷ',
       onOk: () => deleteMutation.mutateAsync(),
     })
   }
 
-  if (isLoading) return <Spin style={{ display: 'block', marginTop: 80 }} />
-  if (!seafarer)
+  if (isLoading) {
     return (
-      <div style={{ marginTop: 80, textAlign: 'center', color: '#999' }}>
-        Không tìm thấy thuyền viên.
+      <div className="ds-page">
+        <div className="crew-head"><Skeleton.Avatar active size={64} /><Skeleton active title paragraph={{ rows: 1 }} /></div>
+        <div className="crew-panel crew-panel__body"><Skeleton active paragraph={{ rows: 4 }} /></div>
       </div>
     )
+  }
+  if (isError || !seafarer) {
+    return (
+      <EmptyState
+        isError={isError}
+        title={isError ? 'Không tải được hồ sơ' : 'Không tìm thấy thuyền viên'}
+        description={isError ? 'Mất kết nối tới máy chủ.' : 'Hồ sơ có thể đã bị xoá.'}
+        action={isError ? <Button onClick={() => refetch()}>Thử lại</Button> : <Button onClick={() => navigate('/seafarers')}>Về danh sách</Button>}
+      />
+    )
+  }
 
-  const tabItems = [
-    {
-      key: 'info',
-      label: 'Thông tin',
-      children: (
-        <>
+  const certList = Array.isArray(certificates) ? certificates : certificates?.data || []
+  const contractList = contracts?.data || []
+  const attention = attentionItems(seafarer, certList)
+  const expired = attention.filter((item) => item.state === 'EXPIRED').length
+  const expiring = attention.filter((item) => item.state === 'EXPIRING').length
+  const firstName = seafarer.full_name.trim().split(/\s+/).slice(-1)[0]
+  const dropFiles = () => {
+    if (tab !== 'overview' && tab !== 'docs') setTab('docs')
+    setTimeout(() => openFilePicker(pageRef.current), 0)
+  }
+  const moreMenu = {
+    items: [
+      { key: 'edit', icon: <EditOutlined />, label: 'Sửa thông tin' },
+      { type: 'divider' },
+      { key: 'delete', icon: <DeleteOutlined />, label: 'Xoá thuyền viên', danger: true },
+    ],
+    onClick: ({ key }) => (key === 'edit' ? navigate(`/seafarers/${id}/edit`) : handleDelete()),
+  }
+  const tabs = PROFILE_TABS.map((item) => ({
+    ...item,
+    count: item.value === 'docs' ? certList.length : item.value === 'service' ? contractList.length : null,
+  }))
+
+  const bodies = {
+    overview: (
+      <>
+        <CrewDropzone firstName={firstName} />
+        <div className="crew-two-col">
           <ProfileSection s={seafarer} />
-          <WorkSection s={seafarer} />
-          <FinanceSection s={seafarer} />
-          <PhysicalSection s={seafarer} />
-          <ContactsSection seafarerId={id} />
-          <CertificatesSection seafarerId={id} />
-          <ContractsSection seafarerId={id} />
-          <EnrollmentsSection seafarerId={id} />
-        </>
-      ),
-    },
-    {
-      key: 'forms',
-      label: (
-        <span>
-          <FileExcelOutlined /> Xuất biểu mẫu
-        </span>
-      ),
-      children: <FormExportTab seafarerId={parseInt(id)} seafarerName={seafarer.full_name} />,
-    },
-  ]
+          <AttentionSection items={attention} />
+        </div>
+        <WorkSection s={seafarer} />
+        <ContactsSection seafarerId={id} />
+        <FinanceSection s={seafarer} />
+        <PhysicalSection s={seafarer} />
+      </>
+    ),
+    docs: (
+      <>
+        <CrewDropzone firstName={firstName} />
+        <CertificatesSection seafarerId={id} />
+      </>
+    ),
+    service: <ContractsSection seafarerId={id} />,
+    training: <EnrollmentsSection seafarerId={id} />,
+    exports: (
+      <Section title="Xuất biểu mẫu">
+        <FormExportTab seafarerId={parseInt(id)} seafarerName={seafarer.full_name} />
+      </Section>
+    ),
+  }
 
   return (
-    <div>
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          background: '#fff',
-          borderBottom: '1px solid #E8E8E8',
-          padding: isMobile ? '8px 12px' : '10px 0',
-          marginBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-        }}
-      >
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/seafarers')} />
-        <span
-          style={{
-            fontSize: isMobile ? 15 : 18,
-            fontWeight: 600,
-            color: '#262626',
-            flex: 1,
-            minWidth: 80,
-          }}
-        >
-          {seafarer.full_name}
-        </span>
-        <Tag color={STATUS_COLOR[seafarer.status]} style={{ margin: 0 }}>
-          {STATUS_LABEL[seafarer.status] || seafarer.status}
-        </Tag>
-        <Button
-          icon={<EditOutlined />}
-          size={isMobile ? 'small' : 'middle'}
-          onClick={() => navigate(`/seafarers/${id}/edit`)}
-        >
-          {isMobile ? '' : 'Chỉnh sửa'}
-        </Button>
-        <Button
-          danger
-          icon={<DeleteOutlined />}
-          size={isMobile ? 'small' : 'middle'}
-          loading={deleteMutation.isPending}
-          onClick={handleDelete}
-        >
-          {isMobile ? '' : 'Xóa'}
-        </Button>
+    <div className="ds-page crew-profile" ref={pageRef}>
+      <nav className="crew-crumb" aria-label="Đường dẫn">
+        <Link to="/seafarers">Thuyền viên</Link>
+        <RightOutlined aria-hidden />
+        <span aria-current="page">{seafarer.full_name}</span>
+      </nav>
+
+      <div className="crew-head">
+        <div className="crew-head__person">
+          <span className="crew-avatar crew-avatar--xl" aria-hidden>{nameInitials(seafarer.full_name)}</span>
+          <div className="crew-head__text">
+            <h1 className="crew-head__title">{seafarer.full_name}</h1>
+            <p className="crew-head__desc">{headLine(seafarer, activeContract(contractList)) || seafarer.seafarer_code}</p>
+            <div className="crew-head__badges">
+              <StatusBadge group="crew" value={seafarer.status} />
+              {expired > 0 && <span className="crew-docs crew-docs--error">{expired} giấy tờ hết hạn</span>}
+              {!expired && expiring > 0 && <span className="crew-docs crew-docs--warning">{expiring} sắp hết hạn</span>}
+            </div>
+          </div>
+        </div>
+        <div className="crew-head__actions">
+          <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
+            <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending} />
+          </Dropdown>
+          <Button icon={<SendOutlined />} onClick={() => setTab('exports')}>Xuất hồ sơ</Button>
+          <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Thả giấy tờ</Button>
+        </div>
       </div>
 
-      <Tabs items={tabItems} defaultActiveKey="info" />
+      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
+      {bodies[tab]}
     </div>
   )
 }
 
 const fmt = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-')
 
-function Section({ title, children, noPad }) {
+function Section({ title, children, noPad, extra }) {
   return (
-    <div style={sectionStyle}>
-      <div style={sectionHeaderStyle}>{title}</div>
-      <div style={{ ...sectionBodyStyle, padding: noPad ? 0 : 16 }}>{children}</div>
-    </div>
+    <section className="crew-panel">
+      <div className="crew-panel__head">
+        <h2 className="crew-panel__title">{title}</h2>
+        {extra}
+      </div>
+      <div className={noPad ? undefined : 'crew-panel__body'}>{children}</div>
+    </section>
   )
 }
 

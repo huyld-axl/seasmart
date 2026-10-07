@@ -6,7 +6,7 @@ import './ds.css'
 
 // Tab trạng thái trên bảng, variant `boxed`: đang chọn nền --secondary, mọi tab luôn có viền trong suốt.
 // Dưới sm hàng tab thành nút dropdown có nhãn "Trạng thái:" (luật chốt #7, layouts/app.md "Bảng dữ liệu").
-export function StatusTabs({ tabs, value, onChange }) {
+export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:' }) {
   return (
     <>
       <div className="ds-tabs-boxed" role="tablist">
@@ -26,7 +26,7 @@ export function StatusTabs({ tabs, value, onChange }) {
       </div>
       <Select
         className="ds-tabs-select"
-        prefix={<span className="ds-tabs-select__prefix">Trạng thái:</span>}
+        prefix={<span className="ds-tabs-select__prefix">{mobileLabel}</span>}
         value={value}
         onChange={onChange}
         popupMatchSelectWidth={false}

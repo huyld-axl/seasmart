@@ -1,93 +1,262 @@
-.admin-layout {
+/* Khung app theo UI Kit (docs/design/ui-kit): sidebar sáng 240px (thu gọn 64px), topbar 64px,
+   mục đang chọn nền --secondary, không màu nhấn. Màu lấy biến từ theme/tokens.js. */
+
+.app-shell {
+  display: flex;
   min-height: 100vh;
+  background: var(--background);
 }
 
-.admin-layout__sider {
-  background: #001529;
+.app-shell__sider {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 240px;
+  height: 100vh;
+  overflow: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  transition: width 0.2s;
 }
 
-.admin-layout__logo {
-  height: 56px;
+.app-shell__sider--collapsed {
+  width: 64px;
+}
+
+.app-shell__brand {
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font-weight: 700;
-  font-size: 16px;
+  height: 64px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
 }
 
-.admin-layout__logo--collapsed {
-  justify-content: center;
-  padding: 0;
-}
-
-.admin-layout__logo--expanded {
-  justify-content: flex-start;
-  padding: 0 20px;
-}
-
-.admin-layout__menu {
-  margin-top: 8px;
-}
-
-.admin-layout__header {
-  height: 56px;
-  padding: 0 24px;
-  background: #fff;
+.app-shell__nav {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.admin-layout__header-trigger {
-  cursor: pointer;
-  font-size: 18px;
-  color: #262626;
-}
-
-.admin-layout__content {
-  padding: 24px;
-  background: #f5f5f5;
-}
-
-.admin-layout__content--mobile {
+  flex-direction: column;
+  gap: 4px;
   padding: 12px;
 }
 
-.admin-layout__user {
-  cursor: pointer;
+.app-shell__nav-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+  overflow: hidden;
+  border-radius: 12px;
+  color: rgb(44 44 44 / 0.7);
+  font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
-.admin-layout__user-email {
-  font-size: 14px;
-  color: #262626;
-  max-width: 160px;
+.app-shell__nav-item .anticon {
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.app-shell__nav-item:hover {
+  background: var(--item-hover);
+  color: var(--foreground);
+}
+
+.app-shell__nav-item[aria-current='page'] {
+  background: var(--secondary);
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.app-shell__nav-item:focus-visible,
+.app-shell__tab:focus-visible,
+.app-shell__icon-btn:focus-visible,
+.app-shell__user:focus-visible {
+  outline: 2px solid var(--ring-focus, var(--primary));
+  outline-offset: 2px;
+}
+
+.app-shell__sider--collapsed .app-shell__nav-label {
+  display: none;
+}
+
+.app-shell__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app-shell__topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 64px;
+  padding: 0 16px 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.app-shell__icon-btn {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.app-shell__icon-btn:hover {
+  background: var(--item-hover);
+  color: var(--foreground);
+}
+
+.app-shell__title {
+  min-width: 0;
+  margin: 0;
   overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.admin-layout__drawer-body {
+.app-shell__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.app-shell__user {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 8px 0 4px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
+.app-shell__user:hover,
+.app-shell__user[aria-expanded='true'] {
+  background: rgb(44 44 44 / 0.05);
+}
+
+.app-shell__avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: #e6edf5;
+  color: #1a4775;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.app-shell__user-name {
+  max-width: 200px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell__user-caret {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Trang con của mục Danh mục, Quản trị: hàng tab gạch chân dưới topbar. */
+.app-shell__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 16px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  scrollbar-width: none;
+}
+
+.app-shell__tab {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 44px;
+  padding: 0 12px;
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.app-shell__tab:hover {
+  color: var(--foreground);
+}
+
+.app-shell__tab[aria-current='page'] {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.app-shell__tab[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  bottom: 0;
+  left: 12px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--foreground);
+}
+
+.app-shell__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+  padding: 24px;
+}
+
+.app-shell__drawer .ant-drawer-header {
+  height: 64px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-shell__drawer .ant-drawer-body {
   padding: 0;
-  background: #001529;
 }
 
-.admin-layout__drawer-header {
-  background: #001529;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+@media (max-width: 767px) {
+  .app-shell__topbar {
+    padding-left: 8px;
+  }
 
-.admin-layout__drawer-title {
-  color: #fff;
-  font-weight: 700;
-}
+  .app-shell__user-name {
+    display: none;
+  }
 
-.admin-layout__drawer-close {
-  color: #fff;
+  .app-shell__content {
+    padding: 16px;
+  }
 }
-

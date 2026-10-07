@@ -29,6 +29,7 @@ import QREnrollPage from './pages/QREnrollPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
+import ExportListPage from './pages/admin/exports/ExportListPage'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -58,6 +59,7 @@ export default function App() {
                 <Route path="/seafarers/import" element={<SeafarerImportPage />} />
                 <Route path="/seafarers/:id" element={<SeafarerDetailPage />} />
                 <Route path="/seafarers/:id/edit" element={<SeafarerFormPage />} />
+                <Route path="/exports" element={<ExportListPage />} />
                 <Route path="/training-centers" element={<TrainingCenterListPage />} />
                 <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
                 <Route path="/courses" element={<CourseListPage />} />

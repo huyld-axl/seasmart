@@ -55,10 +55,15 @@ export const STATUS = {
     WAITING: { label: 'Chờ ký', tone: 'warning', mark: 'clock' },
     BY_HAND: { label: 'Ký tay khi in', tone: 'neutral', mark: 'edit' },
   },
+  // Khoá theo cột seafarer.status trong DB.
   crew: {
-    ONBOARD: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
-    STANDBY: { label: 'Chờ tàu', tone: 'neutral', mark: 'ring' },
-    LEAVE: { label: 'Nghỉ phép', tone: 'neutral', mark: 'minus' },
+    ON_VESSEL: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
+    AVAILABLE: { label: 'Chờ tàu', tone: 'neutral', mark: 'ring' },
+    ON_LEAVE: { label: 'Nghỉ phép', tone: 'neutral', mark: 'minus' },
+    TRAINING: { label: 'Đang đào tạo', tone: 'neutral', mark: 'calendar' },
+    BLACKLISTED: { label: 'Không tuyển', tone: 'error', mark: 'cross' },
+    RETIRED: { label: 'Đã nghỉ hưu', tone: 'neutral', mark: 'minus' },
+    INACTIVE: { label: 'Ngừng hoạt động', tone: 'neutral', mark: 'minus' },
   },
   cert: {
     VALID: { label: 'Còn hạn', tone: 'success', mark: 'check' },

@@ -1,3 +1,4 @@
+const { OVERVIEW_FIELDS, TAB_CONDITIONS, TABS, shapeRow } = require('../utils/crew_overview')
 const pool = require('../config/db')
 const XLSX = require('xlsx')
 
@@ -87,7 +88,7 @@ function pickAllowed(data) {
 }
 
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training }, userRole) {
+  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training, tab }, userRole) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
@@ -112,6 +113,18 @@ const seafarerService = {
       where.push('s.status IN (\'AVAILABLE\', \'ON_LEAVE\')')
     }
 
+    const isTC = userRole === 'training_center'
+    // Số đếm của từng tab (màn A1) tính trên bộ lọc hiện tại, trước khi lọc theo tab.
+    let counts = null
+    if (!isTC) {
+      const baseWhere = 'WHERE ' + where.join(' AND ')
+      const countCols = ['COUNT(*) AS all_count', ...TABS.map((key) => `SUM(${TAB_CONDITIONS[key]} ) AS ${key}`)].join(', ')
+      const [[row]] = await pool.query(`SELECT ${countCols} FROM seafarer s ${baseWhere}`, params)
+      counts = { all: Number(row.all_count) || 0 }
+      TABS.forEach((key) => { counts[key] = Number(row[key]) || 0 })
+    }
+    if (!isTC && tab && TAB_CONDITIONS[tab]) where.push(TAB_CONDITIONS[tab])
+
     const whereStr = 'WHERE ' + where.join(' AND ')
 
     const [[{ total }]] = await pool.query(
@@ -119,12 +132,11 @@ const seafarerService = {
       params
     )
 
-    const isTC = userRole === 'training_center'
     const selectFields = isTC
       ? TRAINING_CENTER_SELECT
       : `s.id, s.seafarer_code, s.full_name, s.national_id, s.date_of_birth,
          s.phone_primary, s.email, s.status, s.user_id,
-         r.name_vi as rank_name, r.code as rank_code`
+         r.name_vi as rank_name, r.code as rank_code, ${OVERVIEW_FIELDS}`
 
     const [rows] = await pool.query(
       `SELECT ${selectFields}
@@ -137,7 +149,8 @@ const seafarerService = {
       [...params, limit, offset]
     )
 
-    return { data: rows, total, page, limit }
+    if (isTC) return { data: rows, total, page, limit }
+    return { data: rows.map(shapeRow), total, page, limit, counts }
   },
 
   async getById(id, userRole) {

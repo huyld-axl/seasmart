@@ -668,6 +668,51 @@
 .ds-row__meta { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
 .ds-row__trailing { flex-shrink: 0; }
 
+/* ---------- Panel trượt ---------- */
+.ds-panel .ant-drawer-mask { background: rgb(0 0 0 / 0.15); }
+.ds-panel .ant-drawer-content-wrapper { box-shadow: var(--elevation-modal); }
+.ds-panel.ant-drawer-right .ant-drawer-content-wrapper { transition-duration: 0.5s; transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1); }
+.ds-panel .ant-drawer-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.ds-panel .ant-drawer-body { padding: 24px; }
+.ds-panel .ant-drawer-footer { padding: 16px 24px; border-top: 1px solid var(--border); }
+.ds-panel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ds-panel__heading { min-width: 0; }
+.ds-panel__title { margin: 0; font-size: 18px; font-weight: 600; line-height: 28px; }
+.ds-panel__desc { margin: 2px 0 0; color: var(--muted); font-size: 14px; font-weight: 400; text-wrap: pretty; }
+.ds-panel__foot { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ---------- Toast ---------- */
+.ds-toast.ant-notification-notice { width: auto; max-width: min(440px, calc(100vw - 32px)); padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-popover); }
+.ds-toast .ant-notification-notice-icon { top: 50%; translate: 0 -50%; font-size: 16px; line-height: 1; }
+.ds-toast--success .ant-notification-notice-icon { color: var(--success); }
+.ds-toast--error .ant-notification-notice-icon { color: var(--error-strong); }
+.ds-toast .ant-notification-notice-title, .ds-toast .ant-notification-notice-message { margin: 0 0 0 28px !important; padding: 0 !important; font-size: 14px; }
+.ds-toast .ant-notification-notice-description { display: none; }
+.ds-toast__row { display: flex; align-items: center; gap: 16px; }
+.ds-toast__text { flex: 1; min-width: 0; }
+.ds-toast__action { flex-shrink: 0; }
+
+/* ---------- Đầu trang và thanh công cụ danh sách ---------- */
+.ds-page { display: grid; gap: 16px; }
+.ds-page__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; }
+.ds-page__title { margin: 0; font-size: 20px; font-weight: 600; line-height: 28px; }
+.ds-page__desc { margin: 4px 0 0; color: var(--muted); }
+.ds-page__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ds-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.ds-toolbar__search { flex: 1 1 220px; max-width: 320px; }
+.ds-toolbar__end { margin-left: auto; display: flex; gap: 8px; }
+.ds-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+.ds-card .ant-table-wrapper .ant-table { background: transparent; }
+.ds-table-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); }
+.ds-cell2 { display: grid; min-width: 0; }
+.ds-cell2__main { overflow: hidden; color: var(--foreground); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ds-cell2__sub { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.ds-num { font-variant-numeric: tabular-nums; }
+.ds-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.ds-role { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.ds-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+@media (max-width: 639px) { .ds-form-row { grid-template-columns: minmax(0, 1fr); } }
+
 .product-brand {
   display: inline-flex;
   min-width: 0;
@@ -1133,7 +1178,7 @@
   .a4__title { margin: 8px 0 4px; text-align: center; font-size: 16px; font-weight: 700; letter-spacing: .02em; }
   .a4--small .a4__title { font-size: 12px; }
   .a4__lines { display: grid; gap: 6px; }
-  .a4__line { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+  .a4__line { display: grid; grid-template-columns: 124px 1fr; column-gap: 12px; margin: 0; }
   .a4__line b { font-weight: 700; }
   .a4__miss { padding: 0 6px; border-radius: 4px; background: var(--warning-bg); color: var(--warning); font: 500 12px var(--app-font); }
   .a4__blank { color: #52525c; }
@@ -1459,7 +1504,7 @@ function packCreateScreen() {
   const who = `<div class="who" data-wf-block="3"><span class="field-label" style="margin:0">Thuyền viên</span><span class="who__chips">${people.map((name) => `<span class="chip">${avatar(name)}${name}${people.length > 1 ? `<button type="button" aria-label="Bỏ ${name}">${icon('close')}</button>` : ''}</span>`).join('')}${btn('Thêm người', { size: 'sm', variant: 'ghost', iconName: 'plus' })}</span></div>`;
   const docRow = (d) => { const [key, name, , signers, missing, , group] = d; const on = sel.includes(key); return `<li><label class="doc-pick ${picked === key ? 'doc-pick--on' : ''}" data-pickdoc="${key}"><input type="checkbox" data-toggle="${key}" ${on ? 'checked' : ''} /><span class="cell2"><span class="cell2__main" style="font-weight:400">${name}</span><span class="cell2__sub">${signers.length ? `Ký: ${signers.join(', ')}` : 'Không cần ký'}${group ? ' · thường chỉ chọn một trong hai đơn BHXH' : ''}</span></span>${missing.length ? `<span class="warn-text doc-pick__miss">${icon('exclamation-circle')}Thiếu ${missing.length}</span>` : ''}</label></li>`; };
   const list = `<div class="doc-picks-wrap" data-wf-block="5"><p class="doc-picks__count">Đã chọn <b>${docs.length}</b> / ${DOCS12.length} giấy</p>${STAGES.map(([key, label]) => `<p class="doc-picks__group">${label}</p><ul class="doc-picks">${DOCS12.filter((d) => d[2] === key).map(docRow).join('')}</ul>`).join('')}</div>`;
-  const history = section('Đã xuất cho Trần Minh Khôi · 3 bộ', `<ul class="signers">${[['B0031', '12/03/2026', 'KQ thi tuyển, TB trúng tuyển, CV chủ tàu Trung Quốc, Phiếu thu', 'DONE'], ['B0035', '01/07/2022', 'QĐ điều động, Đơn tham gia BHXH, Ủy quyền nhận lương', 'DONE'], ['B0040', '28/09/2026', 'CV chủ tàu Trung Quốc', 'STALE']].map(([id, date, names, st]) => `<li><span class="cell2" style="flex:1 1 240px"><span class="cell2__main" style="font-weight:400">${names}</span><span class="cell2__sub">#${id} · ${date}</span></span>${packBadge(st)}${btn('Dùng lại', { size: 'sm', variant: 'ghost', iconName: 'copy' })}</li>`).join('')}</ul>`, '', '8');
+  const history = `<details class="collapse" data-wf-block="8"><summary><span><b>Đã xuất cho Trần Minh Khôi · 3 bộ</b> <span class="muted">· dùng lại một bộ cũ</span></span>${icon('down')}</summary><div class="collapse__body" style="padding:0 20px 8px">` + `<ul class="signers">${[['B0031', '12/03/2026', 'KQ thi tuyển, TB trúng tuyển, CV chủ tàu Trung Quốc, Phiếu thu', 'DONE'], ['B0035', '01/07/2022', 'QĐ điều động, Đơn tham gia BHXH, Ủy quyền nhận lương', 'DONE'], ['B0040', '28/09/2026', 'CV chủ tàu Trung Quốc', 'STALE']].map(([id, date, names, st]) => `<li><span class="cell2" style="flex:1 1 240px"><span class="cell2__main" style="font-weight:400">${names}</span><span class="cell2__sub">#${id} · ${date}</span></span>${packBadge(st)}${btn('Dùng lại', { size: 'sm', variant: 'ghost', iconName: 'copy' })}</li>`).join('')}</ul>` + '</div></details>';
   const allInputs = [...new Set(docs.flatMap((d) => d[5]))];
   const allMissing = docs.flatMap((d) => d[4].map((m) => [m, d[1]]));
   const inputsBlock = section('Điền lúc xuất', `<div class="grid-2">${allInputs.map((label) => `<div><label class="field-label">${label}</label><input class="input" placeholder="Để trống thì in ra điền tay" ${label === 'Tên tàu' ? 'value="MV Lotus Pearl"' : ''} /></div>`).join('')}</div>`, '<span class="muted">Dùng chung cho mọi giấy trong bộ</span>', '6');
@@ -1479,7 +1524,7 @@ function packCreateScreen() {
     const bodies = { 1: `${who}${history}`, 2: `${stageTabs}${list}`, 3: `${missingBlock}${inputsBlock}`, 4: a4(picked), 5: `<p class="muted">${docs.length} giấy gửi cho người duyệt; duyệt xong mới gửi ký.</p>` };
     return shell({ crumb: 'Bản xuất', current: 'exports', content: `<div class="narrow">${head}${stepper}<div class="step-body">${bodies[step]}</div><div class="form-foot">${step > 1 ? btn('Quay lại', { iconName: 'left', attrs: `data-step="${step - 1}"` }) : '<span></span>'}${step < 5 ? btn('Tiếp', { variant: 'primary', attrs: `data-step="${step + 1}"` }) : submit}</div></div>` });
   }
-  return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}<div class="pack-a"><div class="pack-a__left">${stageTabs}${list}${missingBlock}${inputsBlock}<div class="form-foot form-foot--stack"><p class="muted" style="margin:0;font-size:12px">Một người khác duyệt bộ giấy trước khi gửi ký.</p>${submit}</div>${history}</div><section class="pack-a__preview" data-wf-block="7"><p class="ds-field__label" style="margin:0 0 8px">Xem trước · ${doc12(picked)[1]}</p>${a4(picked)}</section></div>` });
+  return shell({ crumb: 'Bản xuất', current: 'exports', content: `${head}${who}<div class="pack-a"><div class="pack-a__left">${history}${stageTabs}${list}${missingBlock}${inputsBlock}<div class="form-foot form-foot--stack"><p class="muted" style="margin:0;font-size:12px">Một người khác duyệt bộ giấy trước khi gửi ký.</p>${submit}</div></div><section class="pack-a__preview" data-wf-block="7"><p class="ds-field__label" style="margin:0 0 8px">Xem trước · ${doc12(picked)[1]}</p>${a4(picked)}</section></div>` });
 }
 
 // ---------- C2. Duyệt và ký bộ giấy tờ ----------

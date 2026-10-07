@@ -668,6 +668,51 @@
 .ds-row__meta { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
 .ds-row__trailing { flex-shrink: 0; }
 
+/* ---------- Panel trượt ---------- */
+.ds-panel .ant-drawer-mask { background: rgb(0 0 0 / 0.15); }
+.ds-panel .ant-drawer-content-wrapper { box-shadow: var(--elevation-modal); }
+.ds-panel.ant-drawer-right .ant-drawer-content-wrapper { transition-duration: 0.5s; transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1); }
+.ds-panel .ant-drawer-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); }
+.ds-panel .ant-drawer-body { padding: 24px; }
+.ds-panel .ant-drawer-footer { padding: 16px 24px; border-top: 1px solid var(--border); }
+.ds-panel__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.ds-panel__heading { min-width: 0; }
+.ds-panel__title { margin: 0; font-size: 18px; font-weight: 600; line-height: 28px; }
+.ds-panel__desc { margin: 2px 0 0; color: var(--muted); font-size: 14px; font-weight: 400; text-wrap: pretty; }
+.ds-panel__foot { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ---------- Toast ---------- */
+.ds-toast.ant-notification-notice { width: auto; max-width: min(440px, calc(100vw - 32px)); padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-popover); }
+.ds-toast .ant-notification-notice-icon { top: 50%; translate: 0 -50%; font-size: 16px; line-height: 1; }
+.ds-toast--success .ant-notification-notice-icon { color: var(--success); }
+.ds-toast--error .ant-notification-notice-icon { color: var(--error-strong); }
+.ds-toast .ant-notification-notice-title, .ds-toast .ant-notification-notice-message { margin: 0 0 0 28px !important; padding: 0 !important; font-size: 14px; }
+.ds-toast .ant-notification-notice-description { display: none; }
+.ds-toast__row { display: flex; align-items: center; gap: 16px; }
+.ds-toast__text { flex: 1; min-width: 0; }
+.ds-toast__action { flex-shrink: 0; }
+
+/* ---------- Đầu trang và thanh công cụ danh sách ---------- */
+.ds-page { display: grid; gap: 16px; }
+.ds-page__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 24px; }
+.ds-page__title { margin: 0; font-size: 20px; font-weight: 600; line-height: 28px; }
+.ds-page__desc { margin: 4px 0 0; color: var(--muted); }
+.ds-page__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ds-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.ds-toolbar__search { flex: 1 1 220px; max-width: 320px; }
+.ds-toolbar__end { margin-left: auto; display: flex; gap: 8px; }
+.ds-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); overflow: hidden; }
+.ds-card .ant-table-wrapper .ant-table { background: transparent; }
+.ds-table-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); }
+.ds-cell2 { display: grid; min-width: 0; }
+.ds-cell2__main { overflow: hidden; color: var(--foreground); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ds-cell2__sub { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.ds-num { font-variant-numeric: tabular-nums; }
+.ds-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.ds-role { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.ds-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+@media (max-width: 639px) { .ds-form-row { grid-template-columns: minmax(0, 1fr); } }
+
 .product-brand {
   display: inline-flex;
   min-width: 0;
@@ -1133,7 +1178,7 @@
   .a4__title { margin: 8px 0 4px; text-align: center; font-size: 16px; font-weight: 700; letter-spacing: .02em; }
   .a4--small .a4__title { font-size: 12px; }
   .a4__lines { display: grid; gap: 6px; }
-  .a4__line { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+  .a4__line { display: grid; grid-template-columns: 124px 1fr; column-gap: 12px; margin: 0; }
   .a4__line b { font-weight: 700; }
   .a4__miss { padding: 0 6px; border-radius: 4px; background: var(--warning-bg); color: var(--warning); font: 500 12px var(--app-font); }
   .a4__blank { color: #52525c; }

@@ -1,0 +1,93 @@
+/* Màn A3 Duyệt giấy tờ (UI Kit, phương án A): bản gốc trái, bản số hoá phải, cùng khuôn ô để dò ngang. */
+
+.rv { padding-bottom: 8px; }
+.rv-muted { color: var(--muted); }
+
+.rv-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 16px; }
+.rv-head__text { flex: 1 1 280px; min-width: 0; }
+.rv-head__title { margin: 0; font-size: 18px; font-weight: 600; text-wrap: balance; }
+.rv-head__desc { margin: 4px 0 0; color: var(--muted); }
+.rv-head__actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; }
+.rv-head__note { margin: 6px 0 0; color: var(--muted); font-size: 12px; text-align: right; }
+
+/* Hàng chọn giấy tờ trong lần tải. */
+.rv-docs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+.rv-docs button { display: grid; flex-shrink: 0; gap: 4px; min-width: 220px; padding: 10px 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); color: var(--foreground); font: inherit; text-align: left; cursor: pointer; }
+.rv-docs button:hover { background: var(--item-hover); }
+.rv-docs button[aria-selected='true'] { border-color: var(--foreground); }
+.rv-docs__name { font-weight: 500; }
+.rv-docs__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+
+/* Nút lật Bản gốc / Bản số hoá: chỉ hiện khi màn hẹp, hai cột không đủ chỗ. */
+.rv-seg { display: none; gap: 2px; justify-self: start; padding: 3px; border-radius: 12px; background: rgb(44 44 44 / 0.05); }
+.rv-seg button { height: 34px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: rgb(44 44 44 / 0.7); font: inherit; white-space: nowrap; cursor: pointer; }
+.rv-seg button[aria-pressed='true'] { background: var(--surface); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.04); }
+
+.rv-cmp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1199px) {
+  .rv-seg { display: inline-flex; }
+  .rv-cmp { grid-template-columns: minmax(0, 1fr); }
+  .rv-cmp[data-view='so'] .rv-pane--goc,
+  .rv-cmp[data-view='goc'] .rv-pane--so { display: none; }
+}
+
+.rv-pane { min-width: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.rv-pane__head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 52px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+.rv-pane__title { font-weight: 600; }
+.rv-pane__head > :last-child { margin-left: auto; }
+.rv-pane__file { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rv-pane__tools { display: inline-flex; align-items: center; gap: 4px; }
+.rv-pane__stage { overflow: auto; padding: 16px; background: var(--background); }
+
+/* Tờ giấy. */
+.rv-paper { position: relative; display: grid; gap: 14px; padding: 24px; border-radius: 4px; }
+.rv-paper--goc { background: #f7f1dc; color: #2b2b2b; font-family: Georgia, 'Times New Roman', serif; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06); }
+.rv-paper--so { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.rv-paper__title { margin: 0; padding-right: 72px; font-weight: 700; letter-spacing: 0.02em; }
+.rv-paper__title i { display: block; font-size: 12px; font-weight: 400; letter-spacing: 0; }
+.rv-paper--goc .rv-paper__title i { color: rgb(0 0 0 / 0.62); }
+.rv-paper__photo { position: absolute; top: 20px; right: 20px; display: grid; place-items: center; width: 56px; height: 72px; border: 1px solid rgb(0 0 0 / 0.12); background: rgb(0 0 0 / 0.04); color: var(--muted); font-size: 11px; }
+.rv-paper--so .rv-paper__photo { border-color: var(--border-strong); background: var(--background); font-size: 20px; }
+.rv-paper__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+.rv-paper__stamps { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 24px; margin-top: 8px; color: var(--muted); font-size: 11px; }
+.rv-paper--goc .rv-paper__stamps { color: #9b1c1c; }
+.rv-paper__stamp { display: inline-flex; align-items: center; gap: 8px; }
+.rv-seal { width: 28px; height: 28px; border: 2px solid rgb(155 28 28 / 0.55); border-radius: 50%; }
+
+.rv-pf { display: grid; grid-column: span 2; gap: 2px; min-width: 0; margin: -4px -6px; padding: 4px 6px; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.rv-pf--half { grid-column: span 1; }
+.rv-pf:hover { background: rgb(0 0 0 / 0.035); }
+.rv-pf--focus, .rv-pf--focus:hover { background: rgb(0 51 102 / 0.04); box-shadow: 0 0 0 2px var(--primary); }
+.rv-pf:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.rv-pf__label { font-size: 12px; }
+.rv-pf__label i { margin-left: 6px; color: rgb(0 0 0 / 0.62); font-size: 11px; }
+.rv-paper--so .rv-pf__label, .rv-paper--so .rv-pf__label i { color: var(--muted); }
+.rv-pf--focus .rv-pf__label, .rv-pf--focus .rv-pf__label i { color: var(--foreground); }
+
+.rv-ink { display: block; min-height: 24px; overflow-wrap: anywhere; border-bottom: 1px dotted rgb(0 0 0 / 0.35); color: #1d3f91; font: italic 17px/24px 'Segoe Script', 'Bradley Hand', cursive; }
+.rv-ink-inline { color: #1d3f91; font-style: italic; font-weight: 500; }
+
+.rv-dv { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; padding: 4px 10px; overflow-wrap: anywhere; border: 1px solid var(--border-strong); border-radius: 8px; font-weight: 500; }
+.rv-dv__mark { flex-shrink: 0; font-size: 14px; }
+.rv-dv[data-st='ACCEPTED'] .rv-dv__mark, .rv-dv[data-st='EDITED'] .rv-dv__mark { color: var(--success); }
+.rv-dv[data-st='PROPOSED'] { border-style: dashed; }
+.rv-dv[data-st='UNKNOWN'], .rv-dv[data-st='DATE_AMBIGUOUS'] { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning); }
+.rv-dv[data-st='UNKNOWN'], .rv-dv[data-st='UNKNOWN_KEPT'] { font-style: italic; font-weight: 400; }
+.rv-dv[data-st='UNKNOWN_KEPT'] { color: var(--muted); }
+.rv-dv[data-st='REJECTED'] { border-color: var(--error-text); color: var(--error-text); text-decoration: line-through; }
+.rv-dv[data-st='REJECTED'] .rv-dv__mark { text-decoration: none; }
+
+/* Thanh hành động của ô đang chọn: dính đáy. */
+.rv-bar { position: sticky; bottom: 16px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 14px 16px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); box-shadow: var(--elevation-popover); }
+.rv-bar__text { flex: 1 1 320px; min-width: 0; }
+.rv-bar__label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-weight: 600; }
+.rv-bar__note { margin: 4px 0 0; color: var(--muted); }
+.rv-bar__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.rv-bar__input { width: 240px; max-width: 100%; }
+
+@media (max-width: 639px) {
+  .rv-head__actions { justify-content: flex-start; }
+  .rv-head__note { text-align: left; }
+  .rv-paper { padding: 16px; }
+  .rv-pane__stage { padding: 8px; }
+}

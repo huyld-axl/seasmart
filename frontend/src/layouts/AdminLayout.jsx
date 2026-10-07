@@ -1,70 +1,76 @@
 import { useState } from 'react'
-import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Avatar, Dropdown, Drawer, Grid } from 'antd'
-import NotificationBell from '../components/common/NotificationBell'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { Dropdown, Drawer, Grid } from 'antd'
 import {
   TeamOutlined,
-  BankOutlined,
+  SendOutlined,
+  DatabaseOutlined,
+  SafetyCertificateOutlined,
   BookOutlined,
+  MessageOutlined,
   LogoutOutlined,
-  UserOutlined,
+  MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  DatabaseOutlined,
-  MessageOutlined,
-  SafetyCertificateOutlined,
-  CarOutlined,
-  GlobalOutlined,
-  FileTextOutlined,
-  ReadOutlined,
-  AimOutlined,
-  UsergroupAddOutlined,
+  DownOutlined,
 } from '@ant-design/icons'
+import NotificationBell from '../components/common/NotificationBell'
+import ProductBrand from '../components/common/ProductBrand'
 import useAuthStore from '../stores/authStore'
+import { ROLE_LABELS } from '../constants/roles'
+import { sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
 import './AdminLayout.css'
 
-const { Sider, Header, Content } = Layout
 const { useBreakpoint } = Grid
 
-function getMenuItems(role) {
-  if (role === 'training_center') {
-    return [
-      { key: '/courses', icon: <BookOutlined />, label: 'Khóa học' },
-      { key: '/messages', icon: <MessageOutlined />, label: 'Tin nhắn' },
-    ]
-  }
-  return [
-    { key: '/seafarers', icon: <TeamOutlined />, label: 'Thuyền viên' },
-    { key: '/training-centers', icon: <BankOutlined />, label: 'Trung tâm đào tạo' },
-    { key: '/courses', icon: <BookOutlined />, label: 'Khóa học' },
-    { key: '/messages', icon: <MessageOutlined />, label: 'Tin nhắn' },
-    { key: '/admin/users', icon: <UsergroupAddOutlined />, label: 'Quản lý User' },
-    {
-      key: '/master-data',
-      icon: <DatabaseOutlined />,
-      label: 'Danh mục',
-      children: [
-        { key: '/master-data/cert', icon: <SafetyCertificateOutlined />, label: 'Chứng chỉ' },
-        { key: '/master-data/vessel', icon: <CarOutlined />, label: 'Loại tàu' },
-        { key: '/master-data/contract', icon: <FileTextOutlined />, label: 'Loại hợp đồng' },
-        { key: '/master-data/course', icon: <ReadOutlined />, label: 'Loại khóa học' },
-        { key: '/master-data/port', icon: <AimOutlined />, label: 'Cảng biển' },
-      ],
-    },
-  ]
+const ICONS = {
+  team: <TeamOutlined />,
+  send: <SendOutlined />,
+  database: <DatabaseOutlined />,
+  shield: <SafetyCertificateOutlined />,
+  book: <BookOutlined />,
+  message: <MessageOutlined />,
+}
+
+function SideNav({ sections, current, collapsed, onNavigate }) {
+  return (
+    <nav className="app-shell__nav" aria-label="Điều hướng chính">
+      {sections.map((section) => (
+        <NavLink
+          key={section.key}
+          to={section.to}
+          className="app-shell__nav-item"
+          aria-current={current?.key === section.key ? 'page' : undefined}
+          title={collapsed ? section.label : undefined}
+          onClick={onNavigate}
+        >
+          {ICONS[section.icon]}
+          <span className="app-shell__nav-label">{section.label}</span>
+        </NavLink>
+      ))}
+    </nav>
+  )
 }
 
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
-  const location = useLocation()
+  const { pathname } = useLocation()
   const { user, logout } = useAuthStore()
   const screens = useBreakpoint()
   const isMobile = !screens.md
 
+  const sections = sectionsFor(user?.role)
+  const current = activeSection(sections, pathname)
+  const currentTab = activeTab(current, pathname)
+
   const userMenu = {
-    items: [{ key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true }],
+    items: [
+      { key: 'meta', type: 'group', label: `${user?.email || ''} · ${ROLE_LABELS[user?.role] || ''}` },
+      { type: 'divider' },
+      { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true },
+    ],
     onClick: ({ key }) => {
       if (key === 'logout') {
         logout()
@@ -73,96 +79,72 @@ export default function AdminLayout() {
     },
   }
 
-  const selectedKey = location.pathname
-  const openKeys = location.pathname.startsWith('/master-data') ? ['/master-data'] : []
-
-  const handleMenuClick = ({ key }) => {
-    navigate(key)
-    if (isMobile) setDrawerOpen(false)
-  }
-
   return (
-    <Layout className="admin-layout">
+    <div className="app-shell">
       {!isMobile && (
-        <Sider
-          collapsible
-          collapsed={collapsed}
-          trigger={null}
-          width={240}
-          className="admin-layout__sider"
-        >
-          <div
-            className={[
-              'admin-layout__logo',
-              collapsed ? 'admin-layout__logo--collapsed' : 'admin-layout__logo--expanded',
-            ].join(' ')}
-          >
-            {collapsed ? 'MP' : 'MarinePort'}
+        <aside className={collapsed ? 'app-shell__sider app-shell__sider--collapsed' : 'app-shell__sider'}>
+          <div className="app-shell__brand">
+            <ProductBrand collapsed={collapsed} />
           </div>
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={[selectedKey]}
-            defaultOpenKeys={openKeys}
-            items={getMenuItems(user?.role)}
-            onClick={handleMenuClick}
-            className="admin-layout__menu"
-          />
-        </Sider>
+          <SideNav sections={sections} current={current} collapsed={collapsed} />
+        </aside>
       )}
 
-      <Layout>
-        <Header className="admin-layout__header">
-          <span
-            className="admin-layout__header-trigger"
+      <div className="app-shell__main">
+        <header className="app-shell__topbar">
+          <button
+            type="button"
+            className="app-shell__icon-btn"
+            aria-label={isMobile ? 'Mở menu' : collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
             onClick={() => (isMobile ? setDrawerOpen(true) : setCollapsed(!collapsed))}
           >
-            {isMobile ? (
-              <MenuUnfoldOutlined />
-            ) : collapsed ? (
-              <MenuUnfoldOutlined />
-            ) : (
-              <MenuFoldOutlined />
-            )}
-          </span>
+            {isMobile ? <MenuOutlined /> : collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          </button>
+          <h1 className="app-shell__title">{current?.label || 'MCAH'}</h1>
 
-          <NotificationBell />
+          <div className="app-shell__right">
+            <NotificationBell />
+            <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
+              <button type="button" className="app-shell__user" aria-haspopup="menu">
+                <span className="app-shell__avatar">{initialsOf(user?.email)}</span>
+                <span className="app-shell__user-name">{user?.email}</span>
+                <DownOutlined className="app-shell__user-caret" />
+              </button>
+            </Dropdown>
+          </div>
+        </header>
 
-          <Dropdown menu={userMenu} placement="bottomRight">
-            <div className="admin-layout__user">
-              <Avatar size={32} icon={<UserOutlined />} style={{ background: '#003366' }} />
-              <span className="admin-layout__user-email">{user?.email}</span>
-            </div>
-          </Dropdown>
-        </Header>
+        {current?.tabs && (
+          <nav className="app-shell__tabs" aria-label={current.label}>
+            {current.tabs.map((tab) => (
+              <NavLink
+                key={tab.to}
+                to={tab.to}
+                className="app-shell__tab"
+                aria-current={currentTab?.to === tab.to ? 'page' : undefined}
+              >
+                {tab.label}
+              </NavLink>
+            ))}
+          </nav>
+        )}
 
-        <Content className="admin-layout__content">
+        <main className="app-shell__content">
           <Outlet />
-        </Content>
-      </Layout>
+        </main>
+      </div>
 
       <Drawer
         placement="left"
-        open={drawerOpen}
+        open={isMobile && drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        width={240}
-        styles={{
-          body: { padding: 0, background: '#001529' },
-          header: { background: '#001529', borderBottom: '1px solid rgba(255,255,255,0.1)' },
-        }}
-        title={<span className="admin-layout__drawer-title">MarinePort</span>}
-        closeIcon={<span className="admin-layout__drawer-close">✕</span>}
+        size={280}
+        closable={false}
+        rootClassName="app-shell__drawer"
+        title={<ProductBrand />}
       >
-        <Menu
-          theme="dark"
-          mode="inline"
-          selectedKeys={[selectedKey]}
-          defaultOpenKeys={openKeys}
-          items={getMenuItems(user?.role)}
-          onClick={handleMenuClick}
-          className="admin-layout__menu"
-        />
+        <SideNav sections={sections} current={current} onNavigate={() => setDrawerOpen(false)} />
       </Drawer>
-    </Layout>
+    </div>
   )
 }

@@ -1,92 +1,65 @@
-import { Table, List, Tag, Button, Popconfirm, Space, Switch, Typography } from 'antd'
-import { EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Button, Dropdown, Switch, Table } from 'antd'
+import { DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import RoleBadge from './RoleBadge'
 
+const formatDate = (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : '—')
+
+// Bảng tài khoản: email là chữ chính, vai trò là badge trung tính, công tắc cho phép đăng nhập, menu ⋯.
 export default function UserTable({ data, loading, onEdit, onDelete, onToggleActive }) {
   const navigate = useNavigate()
-  const isMobile = window.innerWidth < 768
 
   const columns = [
-    { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Role', dataIndex: 'role', key: 'role', render: (role) => <RoleBadge role={role} /> },
     {
-      title: 'Kích hoạt',
+      title: 'Tài khoản',
+      key: 'email',
+      render: (_, user) => (
+        <span className="ds-cell2" style={{ maxWidth: 320 }}>
+          <span className="ds-cell2__main">{user.email}</span>
+          <span className="ds-cell2__sub">Tạo ngày {formatDate(user.created_at)}</span>
+        </span>
+      ),
+    },
+    { title: 'Vai trò', dataIndex: 'role', key: 'role', render: (role) => <RoleBadge role={role} /> },
+    {
+      title: 'Đăng nhập',
       dataIndex: 'is_active',
       key: 'is_active',
-      render: (val, record) => (
-        <Switch checked={!!val} onChange={() => onToggleActive(record.id)} size="small" />
+      render: (value, user) => (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
+          <Switch checked={!!value} onChange={() => onToggleActive(user)} aria-label={`Cho phép ${user.email} đăng nhập`} />
+          <span style={{ color: value ? 'var(--foreground)' : 'var(--muted)' }}>{value ? 'Cho phép' : 'Đã khoá'}</span>
+        </span>
       ),
     },
     {
-      title: 'Thao tác',
+      title: <span className="ds-sr-only">Thao tác</span>,
       key: 'actions',
-      render: (_, record) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/admin/users/${record.id}`)}
-          />
-          <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(record)} />
-          <Popconfirm
-            title="Xóa user này?"
-            description="Hành động này không thể hoàn tác."
-            onConfirm={() => onDelete(record.id)}
-            okText="Xóa"
-            cancelText="Hủy"
-          >
-            <Button size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
+      width: 56,
+      align: 'right',
+      render: (_, user) => (
+        <Dropdown
+          trigger={['click']}
+          placement="bottomRight"
+          menu={{
+            items: [
+              { key: 'view', icon: <EyeOutlined />, label: 'Xem chi tiết' },
+              { key: 'edit', icon: <EditOutlined />, label: 'Sửa' },
+              { type: 'divider' },
+              { key: 'delete', icon: <DeleteOutlined />, label: 'Xoá tài khoản', danger: true },
+            ],
+            onClick: ({ key }) => {
+              if (key === 'view') navigate(`/admin/users/${user.id}`)
+              if (key === 'edit') onEdit(user)
+              if (key === 'delete') onDelete(user)
+            },
+          }}
+        >
+          <Button type="text" icon={<MoreOutlined />} aria-label={`Thao tác với ${user.email}`} />
+        </Dropdown>
       ),
     },
   ]
 
-  if (isMobile) {
-    return (
-      <List
-        loading={loading}
-        dataSource={data}
-        renderItem={(item) => (
-          <List.Item
-            actions={[
-              <Button
-                size="small"
-                icon={<EyeOutlined />}
-                onClick={() => navigate(`/admin/users/${item.id}`)}
-              />,
-              <Button size="small" icon={<EditOutlined />} onClick={() => onEdit(item)} />,
-              <Popconfirm
-                title="Xóa user này?"
-                onConfirm={() => onDelete(item.id)}
-                okText="Xóa"
-                cancelText="Hủy"
-              >
-                <Button size="small" danger icon={<DeleteOutlined />} />
-              </Popconfirm>,
-            ]}
-          >
-            <List.Item.Meta
-              title={<Typography.Text>{item.email}</Typography.Text>}
-              description={
-                <Space>
-                  <RoleBadge role={item.role} />
-                  <Switch
-                    checked={!!item.is_active}
-                    onChange={() => onToggleActive(item.id)}
-                    size="small"
-                  />
-                </Space>
-              }
-            />
-          </List.Item>
-        )}
-      />
-    )
-  }
-
-  return (
-    <Table rowKey="id" loading={loading} dataSource={data} columns={columns} pagination={false} />
-  )
+  return <Table rowKey="id" loading={loading} dataSource={data} columns={columns} pagination={false} scroll={{ x: 'max-content' }} />
 }

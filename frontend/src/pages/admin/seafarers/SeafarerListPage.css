@@ -1,0 +1,79 @@
+/* Màn A1 Thuyền viên (UI Kit): bảng một dòng mỗi người, bấm cả dòng để mở hồ sơ. */
+
+.crew-toolbar .ds-toolbar__search { max-width: 320px; }
+
+.crew-person { display: flex; align-items: center; gap: 12px; min-width: 220px; }
+
+.crew-avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: #e6edf5;
+  color: #1a4775;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.crew-pending {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  margin-top: 4px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.crew-nowrap,
+.crew-docs { white-space: nowrap; }
+.crew-docs--error { color: var(--error-text); }
+.crew-docs--warning { color: var(--warning); }
+.crew-docs--muted { color: var(--muted); }
+
+.crew-complete { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); }
+.crew-complete__bar { display: inline-block; width: 56px; height: 4px; overflow: hidden; border-radius: 999px; background: var(--secondary); }
+.crew-complete__bar span { display: block; height: 100%; background: var(--foreground); }
+
+.crew-chevron { color: var(--muted); }
+
+.crew-table .ant-table-tbody > tr { cursor: pointer; }
+.crew-table .ant-table-tbody > tr:focus-visible { outline: 2px solid var(--ring-focus, var(--primary)); outline-offset: -2px; }
+
+.crew-loading { padding: 16px; }
+
+/* Điện thoại: danh sách thẻ dòng thay cho bảng. */
+.crew-list { margin: 0; padding: 0; list-style: none; }
+.crew-list li + li { border-top: 1px solid var(--border); }
+.crew-list__row {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.crew-list__row:hover { background: var(--item-hover); }
+.crew-list__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-left: 44px; }
+.crew-list .crew-person { min-width: 0; }
+
+/* Đầu cột nhỏ, nhạt như UI Kit; nội dung dòng mới là thứ đọc trước. */
+.crew-table .ant-table-thead > tr > th {
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.crew-table .ant-table-thead > tr > th::before { display: none; }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Form, Input, Button, message } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import useAuthStore from '../../stores/authStore'
+import ProductBrand from '../../components/common/ProductBrand'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -36,9 +37,9 @@ export default function LoginPage() {
     >
       <div style={{ width: '100%', maxWidth: 380 }}>
         <div style={{ marginBottom: 24, textAlign: 'center' }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
-            MarinePort
-          </h2>
+          <div style={{ marginBottom: 8 }}>
+            <ProductBrand />
+          </div>
           <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>Đăng nhập để tiếp tục</p>
         </div>
 

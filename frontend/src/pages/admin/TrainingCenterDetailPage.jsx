@@ -127,7 +127,7 @@ export default function TrainingCenterDetailPage() {
       column={isMobile ? 1 : 2}
       bordered
       size="small"
-      labelStyle={{ width: 180, background: '#fafafa' }}
+      labelStyle={{ width: 180, background: 'var(--background)' }}
     >
       <Descriptions.Item label="Mã">{center.code || '-'}</Descriptions.Item>
       <Descriptions.Item label="Tên (VI)">{center.name_vi}</Descriptions.Item>
@@ -165,19 +165,19 @@ export default function TrainingCenterDetailPage() {
   )
 
   const sectionStyle = {
-    background: '#fff',
-    border: '1px solid #f0f0f0',
+    background: 'var(--surface)',
+    border: '1px solid var(--border-strong)',
     borderRadius: 8,
     marginBottom: 16,
   }
 
   const sectionHeaderStyle = {
     padding: '10px 16px',
-    borderBottom: '1px solid #f0f0f0',
+    borderBottom: '1px solid var(--border-strong)',
     fontWeight: 600,
     fontSize: 13,
-    color: '#003366',
-    background: '#fafafa',
+    color: 'var(--primary)',
+    background: 'var(--background)',
     borderRadius: '8px 8px 0 0',
   }
 
@@ -190,7 +190,7 @@ export default function TrainingCenterDetailPage() {
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: '#262626',
+              color: 'var(--foreground)',
               flex: 1,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -242,7 +242,7 @@ export default function TrainingCenterDetailPage() {
         }}
       >
         <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/training-centers')} />
-        <span style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>{center.name_vi}</span>
+        <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>{center.name_vi}</span>
         <Tag color={center.is_active ? 'green' : 'default'}>
           {center.is_active ? 'Hoạt động' : 'Tạm dừng'}
         </Tag>
@@ -307,7 +307,7 @@ export default function TrainingCenterDetailPage() {
         </Form>
       </Modal>
 
-      <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
         <Tabs items={tabs} style={{ padding: '0 24px' }} />
       </div>
     </div>

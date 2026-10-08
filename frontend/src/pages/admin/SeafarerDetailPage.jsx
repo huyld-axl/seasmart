@@ -47,6 +47,8 @@ import CrewDropzone from './seafarers/CrewDropzone'
 import { attentionItems, activeContract, headLine, openFilePicker } from './seafarers/profileView'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
+import ProfileHistory from './seafarers/ProfileHistory'
+import ProfileExports from './seafarers/ProfileExports'
 import { nameInitials } from './seafarers/crewView'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerProfile.css'
@@ -81,6 +83,7 @@ const PROFILE_TABS = [
   { value: 'service', label: 'Đi tàu' },
   { value: 'training', label: 'Đào tạo' },
   { value: 'exports', label: 'Đã xuất' },
+  { value: 'history', label: 'Lịch sử' },
 ]
 
 function AttentionSection({ items, reviewTo }) {
@@ -211,7 +214,7 @@ export default function SeafarerDetailPage() {
   const bodies = {
     overview: (
       <>
-        <CrewDropzone firstName={firstName} />
+        <CrewDropzone seafarerId={id} firstName={firstName} />
         <div className="crew-two-col">
           <ProfileSection s={seafarer} />
           <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} />
@@ -224,17 +227,21 @@ export default function SeafarerDetailPage() {
     ),
     docs: (
       <>
-        <CrewDropzone firstName={firstName} />
+        <CrewDropzone seafarerId={id} firstName={firstName} />
         <CertificatesSection seafarerId={id} />
       </>
     ),
     service: <ContractsSection seafarerId={id} />,
     training: <EnrollmentsSection seafarerId={id} />,
     exports: (
-      <Section title="Xuất biểu mẫu">
-        <FormExportTab seafarerId={parseInt(id)} seafarerName={seafarer.full_name} />
-      </Section>
+      <>
+        <ProfileExports seafarerId={Number(id)} canCreate={readiness !== 'BLOCKED'} blockedReason={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra phía trên' : undefined} />
+        <Section title="Xuất lẻ từng mẫu">
+          <FormExportTab seafarerId={parseInt(id)} seafarerName={seafarer.full_name} />
+        </Section>
+      </>
     ),
+    history: <ProfileHistory seafarerId={id} />,
   }
 
   return (
@@ -314,7 +321,7 @@ function DescList({ fields, isMobile }) {
       column={isMobile ? 1 : 2}
       bordered
       size="small"
-      styles={{ label: { width: 160, background: '#fafafa' } }}
+      styles={{ label: { width: 160, background: 'var(--background)' } }}
     >
       {fields.map(([label, value]) => (
         <Descriptions.Item key={label} label={label}>
@@ -419,6 +426,8 @@ function PhysicalSection({ s }) {
     ['Cân nặng (kg)', s.weight_kg],
     ['Size áo', s.shirt_size],
     ['Size quần', s.pants_size],
+    ['Cỡ giày', s.shoe_size],
+    ['Nhóm máu', s.blood_type],
   ]
   return (
     <Section title="Thể chất">

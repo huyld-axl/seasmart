@@ -1,99 +1,94 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Button } from 'antd'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Button, Skeleton } from 'antd'
 import { CheckCircleFilled } from '@ant-design/icons'
 import ProductBrand from '../../components/common/ProductBrand'
+import { publicSignApi } from '../../api/exportApi'
 import A4Preview from '../admin/exports/A4Preview'
-import { template } from '../admin/exports/packModel'
-import { SELF_SIGN, crewDocs, packStore, signState, usePack } from '../admin/exports/packStore'
 import SignaturePad from './SignaturePad'
 import '../admin/exports/exports.css'
 
-const AGENCY = 'Agency Demo'
-const AGENCY_PHONE = '0900 000 999'
+const AGENCY_PHONE = import.meta.env.VITE_AGENCY_PHONE || ''
 
-// C2 Ký online: thuyền viên mở link SMS trên điện thoại, đọc từng giấy, tick đồng ý, ký bằng ngón tay.
-// Chưa có backend: link chỉ chạy trong cùng tab với app (kho bộ giấy tạm), chưa có hạn 72 giờ thật.
+// C2 Ký online: thuyền viên mở link (SMS) trên điện thoại, đọc từng giấy, tick đồng ý, ký bằng ngón tay.
+// Một chữ ký áp cho mọi giấy thuyền viên cần ký trong bộ; gửi lên khi xong giấy cuối.
 export default function RemoteSignPage() {
-  const { packId } = useParams()
-  const pack = usePack(packId)
+  const { token } = useParams()
   const [step, setStep] = useState(0)
   const [agreed, setAgreed] = useState(false)
   const [inked, setInked] = useState(false)
+  const canvasRef = useRef(null)
+
+  const { data: pack, isLoading, isError, error, refetch } = useQuery({ queryKey: ['sign', token], queryFn: () => publicSignApi.get(token), retry: false })
+  const send = useMutation({ mutationFn: (image) => publicSignApi.sign(token, { image, agreed: true }), onSuccess: () => refetch() })
 
   const head = (
     <header className="rs-head">
       <ProductBrand />
-      {pack && <span className="rs-head__from">{AGENCY} gửi {pack.seafarerName}</span>}
+      {pack && <span className="rs-head__from">Gửi {pack.seafarer_name} · bộ #{pack.code}</span>}
     </header>
   )
+  const shell = (body) => <div className="rs">{head}<main className="rs-main">{body}</main></div>
 
-  const docs = pack ? crewDocs(pack) : []
-  const unusable = !pack || pack.status !== 'SIGNING' || !docs.length
-  const done = pack && docs.length > 0 && docs.every((key) => signState(pack, key, SELF_SIGN) === 'done')
-
-  if (done) {
-    return (
-      <div className="rs">
-        {head}
-        <main className="rs-main">
-          <div className="rs-done" role="status">
-            <CheckCircleFilled className="rs-done__icon" aria-hidden />
-            <h1>Đã ký xong {docs.length} giấy</h1>
-            <p>{AGENCY} đã nhận chữ ký của bạn. Bạn có thể đóng trang này.</p>
-          </div>
-        </main>
+  if (isLoading) return shell(<Skeleton active paragraph={{ rows: 8 }} />)
+  if (isError) {
+    const gone = error?.response?.status === 404
+    return shell(
+      <div className="rs-done" role="alert">
+        <h1>{gone ? 'Link ký không còn dùng được' : 'Không tải được giấy để ký'}</h1>
+        <p>{gone ? 'Link có thể đã hết hạn hoặc bộ giấy đã thay đổi. Liên hệ agency để nhận link mới.' : 'Kiểm tra mạng rồi thử lại.'}</p>
+        {gone && AGENCY_PHONE && <p><b className="ds-num" style={{ userSelect: 'all', color: 'var(--foreground)' }}>{AGENCY_PHONE}</b></p>}
+        {!gone && <Button onClick={() => refetch()}>Thử lại</Button>}
+      </div>
+    )
+  }
+  if (pack.done) {
+    return shell(
+      <div className="rs-done" role="status">
+        <CheckCircleFilled className="rs-done__icon" aria-hidden />
+        <h1>Đã ký xong {pack.docs.length} giấy</h1>
+        <p>Agency đã nhận chữ ký của bạn. Bạn có thể đóng trang này.</p>
       </div>
     )
   }
 
-  if (unusable) {
-    return (
-      <div className="rs">
-        {head}
-        <main className="rs-main">
-          <div className="rs-done" role="alert">
-            <h1>Link ký không còn dùng được</h1>
-            <p>Link có thể đã hết hạn hoặc bộ giấy đã thay đổi. Gọi {AGENCY} để nhận link mới:</p>
-            <p><b className="ds-num" style={{ userSelect: 'all', color: 'var(--foreground)' }}>{AGENCY_PHONE}</b></p>
-          </div>
-        </main>
-      </div>
-    )
-  }
+  const docs = pack.docs
+  const doc = docs[Math.min(step, docs.length - 1)]
+  const last = step >= docs.length - 1
+  const others = Object.fromEntries(pack.other_signatures.filter((s) => s.template_key === doc.key).map((s) => [s.signer, 'done']))
 
-  const docKey = docs[step]
-  const last = step === docs.length - 1
-
-  function signAndNext() {
+  function next() {
     if (last) {
-      packStore.signAs(pack.id, SELF_SIGN)
+      send.mutate(canvasRef.current.toDataURL('image/png'))
       return
     }
     setStep(step + 1)
     setAgreed(false)
-    setInked(false)
     window.scrollTo(0, 0)
   }
 
-  return (
-    <div className="rs">
-      {head}
-      <main className="rs-main">
-        <p className="rs-step">Giấy {step + 1} / {docs.length}</p>
-        <h1 className="rs-title">{template(docKey).name}</h1>
-        <div className="rs-doc">
-          <A4Preview docKey={docKey} seafarer={pack.snapshot} inputs={pack.inputs} signs={Object.fromEntries(template(docKey).signers.map((who) => [who, signState(pack, docKey, who)]))} />
-        </div>
-        <label className="rs-agree">
-          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
-          <span>Tôi đã đọc và đồng ý nội dung giấy này</span>
-        </label>
-        <SignaturePad key={docKey} resetKey={docKey} disabled={!agreed} onChange={setInked} />
-        <Button type="primary" size="large" block disabled={!agreed || !inked} onClick={signAndNext}>
-          {last ? 'Ký và gửi' : 'Ký và sang giấy tiếp'}
-        </Button>
-      </main>
-    </div>
+  return shell(
+    <>
+      <p className="rs-step">Giấy {step + 1} / {docs.length}</p>
+      <h1 className="rs-title">{doc.name}</h1>
+      <div className="rs-doc">
+        <A4Preview docKey={doc.key} seafarer={pack.snapshot} inputs={pack.inputs} signs={others} />
+      </div>
+      <label className="rs-agree">
+        <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+        <span>Tôi đã đọc và đồng ý nội dung giấy này</span>
+      </label>
+      {last ? (
+        <>
+          <p className="rs-step">Ký một lần, chữ ký dùng cho cả {docs.length} giấy.</p>
+          <SignaturePad canvasRef={canvasRef} disabled={!agreed} onChange={setInked} />
+        </>
+      ) : null}
+      {send.isError && <p role="alert" className="crew-docs--error" style={{ margin: 0 }}>{send.error?.response?.data?.error || 'Chưa gửi được chữ ký. Thử lại.'}</p>}
+      <Button type="primary" size="large" block disabled={!agreed || (last && !inked)} loading={send.isPending} onClick={next}>
+        {last ? 'Ký và gửi' : 'Đồng ý, sang giấy tiếp'}
+      </Button>
+    </>
   )
 }

@@ -82,7 +82,7 @@ export default function NotificationBell() {
       <div
         style={{
           padding: '12px 16px',
-          borderBottom: '1px solid #f0f0f0',
+          borderBottom: '1px solid var(--border-strong)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -100,7 +100,7 @@ export default function NotificationBell() {
           <Spin size="small" />
         </div>
       ) : list.length === 0 ? (
-        <div style={{ padding: 24, color: '#8c8c8c', textAlign: 'center' }}>Không có thông báo</div>
+        <div style={{ padding: 24, color: 'var(--muted)', textAlign: 'center' }}>Không có thông báo</div>
       ) : (
         <div>
           {list.map((item) => (
@@ -112,9 +112,9 @@ export default function NotificationBell() {
               onKeyDown={(e) => e.key === 'Enter' && handleItemClick(item)}
               style={{
                 padding: '10px 16px',
-                borderBottom: '1px solid #f0f0f0',
+                borderBottom: '1px solid var(--border-strong)',
                 cursor: 'pointer',
-                background: item.is_read ? '#fff' : '#fafafa',
+                background: item.is_read ? 'var(--surface)' : 'var(--background)',
               }}
             >
               <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -122,9 +122,9 @@ export default function NotificationBell() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: item.is_read ? 400 : 500 }}>{item.title}</div>
                   {item.body && (
-                    <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>{item.body}</div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{item.body}</div>
                   )}
-                  <div style={{ fontSize: 11, color: '#bfbfbf', marginTop: 4 }}>
+                  <div style={{ fontSize: 11, color: 'var(--border-strong)', marginTop: 4 }}>
                     {dayjs(item.created_at).fromNow()}
                   </div>
                 </div>

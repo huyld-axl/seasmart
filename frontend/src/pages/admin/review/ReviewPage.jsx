@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Input, Skeleton } from 'antd'
 import {
   CheckOutlined,
   CloseOutlined,
   EditOutlined,
-  ExclamationCircleOutlined,
+  ReloadOutlined,
   LockOutlined,
   MinusOutlined,
   PlusOutlined,
@@ -14,13 +14,14 @@ import {
   CalendarOutlined,
   RightOutlined,
   UndoOutlined,
-  UserOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
 import { seafarerApi } from '../../../api'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { EmptyState } from '../../../components/ds/Controls'
-import { DEMO_DOCS, DONE_STATES, docStatus, nextTodo, progress, totalTodo, updateField } from './reviewModel'
+import { documentApi } from '../../../api/documentApi'
+import Banner from '../../../components/ds/Banner'
+import { DONE_STATES, canPublish, docStatus, fromApi, nextTodo, progress, reviewable, totalTodo } from './reviewModel'
 import '../seafarers/SeafarerProfile.css'
 import './ReviewPage.css'
 import VesselMatchPanel from './VesselMatchPanel'
@@ -35,16 +36,14 @@ const MARKS = {
   REJECTED: <CloseOutlined />,
 }
 
-// Một tờ giấy: bản gốc (nét chữ tay trên nền giấy) hoặc bản số hoá (ô giá trị theo trạng thái).
-function Paper({ doc, mode, focus, onFocus, zoom = 1 }) {
-  const original = mode === 'goc'
+// Bản số hoá: ô giá trị theo trạng thái, xếp đúng thứ tự trên giấy.
+function Paper({ doc, focus, onFocus }) {
   return (
-    <div className={original ? 'rv-paper rv-paper--goc' : 'rv-paper rv-paper--so'} style={original ? { zoom } : undefined}>
+    <div className="rv-paper rv-paper--so">
       <p className="rv-paper__title">
         {doc.title[0]}
         <i>{doc.title[1]}</i>
       </p>
-      {doc.photo && <span className="rv-paper__photo" aria-hidden>{original ? 'Ảnh' : <UserOutlined />}</span>}
       <div className="rv-paper__fields">
         {doc.fields.map((field) => (
           <button
@@ -58,27 +57,26 @@ function Paper({ doc, mode, focus, onFocus, zoom = 1 }) {
               {field.label}
               <i>{field.english}</i>
             </span>
-            {original ? (
-              <span className={field.raw ? 'rv-ink' : 'rv-ink rv-ink--blank'}>{field.raw || ' '}</span>
-            ) : (
-              <span className="rv-dv" data-st={field.state}>
-                <span>{['UNKNOWN', 'UNKNOWN_KEPT'].includes(field.state) && !field.value ? 'Không có trên giấy' : field.value}</span>
-                {MARKS[field.state] && <span className="rv-dv__mark" aria-hidden>{MARKS[field.state]}</span>}
-              </span>
-            )}
+            <span className="rv-dv" data-st={field.state}>
+              <span>{['UNKNOWN', 'UNKNOWN_KEPT'].includes(field.state) && !field.value ? 'Không có trên giấy' : field.value}</span>
+              {MARKS[field.state] && <span className="rv-dv__mark" aria-hidden>{MARKS[field.state]}</span>}
+            </span>
           </button>
-        ))}
-      </div>
-      <div className="rv-paper__stamps">
-        {doc.stamps.map((stamp) => (
-          <span key={stamp} className="rv-paper__stamp">
-            {original && <span className="rv-seal" aria-hidden />}
-            {stamp}
-          </span>
         ))}
       </div>
     </div>
   )
+}
+
+// Bản gốc: ảnh hoặc PDF thật đã tải lên.
+function OriginalFile({ doc, zoom }) {
+  const { data: blob, isError } = useQuery({ queryKey: ['document-file', doc.id], queryFn: () => documentApi.file(doc.id), staleTime: Infinity })
+  const url = useMemo(() => (blob ? URL.createObjectURL(blob) : null), [blob])
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url) }, [url])
+  if (isError) return <p className="rv-muted">Không tải được tệp gốc.</p>
+  if (!url) return <Skeleton.Image active style={{ width: 320, height: 420 }} />
+  if (doc.mime === 'application/pdf') return <iframe title={`Bản gốc ${doc.file}`} src={url} className="rv-file rv-file--pdf" />
+  return <img src={url} alt={`Bản gốc ${doc.file}`} className="rv-file" style={{ width: `${zoom * 100}%` }} />
 }
 
 // Thanh hành động của ô đang chọn: dính đáy màn hình. Đổi ô thì dựng lại (key) để bỏ bản nháp.
@@ -133,93 +131,147 @@ function vesselOnPaper(doc) {
 export default function ReviewPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [docs, setDocs] = useState(DEMO_DOCS)
-  const [docKey, setDocKey] = useState('so-45')
-  const [focus, setFocus] = useState('off')
+  const qc = useQueryClient()
+  const [docKey, setDocKey] = useState(null)
+  const [focus, setFocus] = useState(null)
   const [view, setView] = useState('so')
   const [zoom, setZoom] = useState(1)
-  const [saved, setSaved] = useState(true)
   const [matching, setMatching] = useState(false)
   const toast = useToast()
 
-  const { data: seafarer, isLoading, isError, refetch } = useQuery({
+  const { data: seafarer, isLoading } = useQuery({
     queryKey: ['seafarer', id],
     queryFn: () => seafarerApi.getById(id).then((r) => r.data),
   })
+  const docsQuery = useQuery({
+    queryKey: ['documents', id],
+    queryFn: () => documentApi.list(id),
+    // Giấy đang được AI đọc: hỏi lại mỗi 3 giây tới khi xong.
+    refetchInterval: (query) => (query.state.data?.data.some((doc) => doc.status === 'READING') ? 3000 : false),
+  })
+  const fail = (e) => toast.error(e.response?.data?.error || 'Không thực hiện được. Thử lại sau.')
+  const putDoc = (updated) => qc.setQueryData(['documents', id], (old) => old && { ...old, data: old.data.map((doc) => (doc.id === updated.id ? updated : doc)) })
+  const decide = useMutation({ mutationFn: ({ docId, key, action, value }) => documentApi.decide(docId, key, action, value), onSuccess: putDoc, onError: fail })
+  const retry = useMutation({ mutationFn: (docId) => documentApi.retry(docId), onSuccess: putDoc, onError: fail })
+  const remove = useMutation({
+    mutationFn: (docId) => documentApi.remove(docId),
+    onSuccess: () => { setDocKey(null); qc.invalidateQueries({ queryKey: ['documents', id] }); toast.success('Đã bỏ giấy') },
+    onError: fail,
+  })
+  const publish = useMutation({
+    mutationFn: () => documentApi.publish(id),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['seafarer', id] })
+      qc.invalidateQueries({ queryKey: ['documents', id] })
+      toast.success(`Đã đưa ${res.documents} giấy vào hồ sơ${res.certificates ? `, thêm ${res.certificates} chứng chỉ` : ''}`)
+      navigate(`/seafarers/${id}`)
+    },
+    onError: fail,
+  })
 
-  if (isError) {
-    return <EmptyState isError title="Không tải được giấy tờ" description="Mất kết nối tới máy chủ. Phần đã duyệt vẫn được giữ." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
+  const name = seafarer?.full_name || ''
+  const crumb = (
+    <nav className="crew-crumb" aria-label="Đường dẫn">
+      <Link to="/seafarers">Thuyền viên</Link>
+      <RightOutlined aria-hidden />
+      {isLoading ? <span>…</span> : <Link to={`/seafarers/${id}`}>{name}</Link>}
+      <RightOutlined aria-hidden />
+      <span aria-current="page">Duyệt giấy tờ</span>
+    </nav>
+  )
+
+  if (docsQuery.isLoading) return <div className="ds-page rv">{crumb}<Skeleton active paragraph={{ rows: 8 }} /></div>
+  if (docsQuery.isError) {
+    return <EmptyState isError title="Không tải được giấy tờ" description="Mất kết nối tới máy chủ. Phần đã duyệt vẫn được giữ." action={<Button onClick={() => docsQuery.refetch()}>Thử lại</Button>} />
   }
 
-  const doc = docs.find((item) => item.key === docKey)
-  const field = doc.fields.find((item) => item.key === focus)
+  const aiConfigured = docsQuery.data.ai_configured
+  const docs = reviewable(docsQuery.data.data.map(fromApi))
+  if (!docs.length) {
+    return (
+      <div className="ds-page rv">
+        {crumb}
+        <EmptyState title="Chưa có giấy tờ chờ duyệt" description={`Thả giấy tờ của ${name || 'thuyền viên'} vào hồ sơ, AI đọc xong sẽ hiện ở đây.`} action={<Link to={`/seafarers/${id}`}>Về hồ sơ</Link>} />
+      </div>
+    )
+  }
+
+  const doc = docs.find((item) => item.key === docKey) || docs[0]
+  const readable = doc.fields.length > 0
+  const field = doc.fields.find((item) => item.key === focus) || doc.fields.find((item) => !DONE_STATES.includes(item.state)) || doc.fields[0]
   const count = progress(doc)
-  const todo = totalTodo(docs)
-  const name = seafarer?.full_name || ''
+  const todo = totalTodo(docs.filter((item) => item.fields.length))
+  const reading = docs.filter((item) => item.status === 'READING').length
 
   function pickDoc(key) {
     const next = docs.find((item) => item.key === key)
     setDocKey(key)
-    setFocus(nextTodo(next, null) || next.fields[0].key)
+    setFocus(nextTodo(next, null) || next.fields[0]?.key || null)
   }
 
   function act(action, value) {
-    const updated = updateField(docs, docKey, focus, action, value)
-    setDocs(updated)
-    setSaved(false)
-    setTimeout(() => setSaved(true), 400)
-    if (action !== 'undo') {
-      const following = nextTodo(updated.find((item) => item.key === docKey), focus)
-      if (following) setFocus(following)
-    }
+    decide.mutate({ docId: doc.id, key: field.key, action, value }, {
+      onSuccess: (updated) => {
+        if (action === 'undo') return
+        const following = nextTodo(fromApi(updated), field.key)
+        if (following) setFocus(following)
+      },
+    })
   }
+
+  const note = reading > 0 ? `AI đang đọc ${reading} giấy` : todo > 0 ? `Còn ${todo} ô chưa duyệt` : 'Đã duyệt hết, đưa vào hồ sơ được'
 
   return (
     <div className="ds-page rv">
-      <nav className="crew-crumb" aria-label="Đường dẫn">
-        <Link to="/seafarers">Thuyền viên</Link>
-        <RightOutlined aria-hidden />
-        {isLoading ? <span>…</span> : <Link to={`/seafarers/${id}`}>{name}</Link>}
-        <RightOutlined aria-hidden />
-        <span aria-current="page">Duyệt giấy tờ</span>
-      </nav>
+      {crumb}
 
-      <div role="status" className="ds-banner ds-banner--warning">
-        <ExclamationCircleOutlined className="ds-banner__icon" aria-hidden />
-        <div className="ds-banner__body">
-          <p className="ds-banner__title">Đang xem bằng giấy tờ mẫu</p>
-          <p className="ds-banner__text">AI đọc giấy tờ chưa được nối, các ô dưới đây là dữ liệu giả để thử luồng duyệt. Kết quả duyệt chưa được lưu vào hồ sơ.</p>
-        </div>
-      </div>
+      {!aiConfigured && (
+        <Banner title="AI đọc giấy tờ chưa được cấu hình" description="Máy chủ chưa có ANTHROPIC_API_KEY nên giấy tải lên chưa được đọc. Cấu hình xong thì bấm Đọc lại ở từng giấy." />
+      )}
 
       <div className="rv-head">
         <div className="rv-head__text">
           {isLoading ? <Skeleton.Input active size="small" style={{ width: 280 }} /> : <h1 className="rv-head__title">Duyệt giấy tờ của {name}</h1>}
-          <p className="rv-head__desc">{docs.length} giấy tờ trong lần tải này</p>
+          <p className="rv-head__desc">{docs.length} giấy tờ chờ duyệt</p>
         </div>
         <div>
           <div className="rv-head__actions">
-            <span role="status" className="ds-save">{saved ? <><CheckOutlined aria-hidden /> Đã lưu</> : 'Đang lưu…'}</span>
-            <Button type="primary" disabled={todo > 0} onClick={() => navigate(`/seafarers/${id}`)}>Đưa vào hồ sơ</Button>
+            <span role="status" className="ds-save">{decide.isPending ? 'Đang lưu…' : <><CheckOutlined aria-hidden /> Đã lưu</>}</span>
+            <Button type="primary" disabled={!canPublish(docs)} loading={publish.isPending} onClick={() => publish.mutate()}>Đưa vào hồ sơ</Button>
           </div>
-          <p className="rv-head__note">{todo > 0 ? `Còn ${todo} ô chưa duyệt` : 'Đã duyệt hết, đưa vào hồ sơ được'}</p>
+          <p className="rv-head__note">{note}</p>
         </div>
       </div>
 
-      <div className="rv-docs" role="tablist" aria-label="Giấy tờ trong lần tải này">
+      <div className="rv-docs" role="tablist" aria-label="Giấy tờ chờ duyệt">
         {docs.map((item) => {
           const p = progress(item)
           return (
-            <button key={item.key} type="button" role="tab" aria-selected={item.key === docKey} onClick={() => pickDoc(item.key)}>
-              <span className="rv-docs__name">{item.label}</span>
+            <button key={item.key} type="button" role="tab" aria-selected={item.key === doc.key} onClick={() => pickDoc(item.key)}>
+              <span className="rv-docs__name">{item.fields.length ? item.label : item.file}</span>
               <span className="rv-docs__meta">
-                {item.page} · <StatusBadge group="document" value={docStatus(item)} />
-                <span className="ds-num">{p.done}/{p.total}</span>
+                {item.page && `${item.page} · `}<StatusBadge group="document" value={item.fields.length ? docStatus(item) : item.status} />
+                {item.fields.length > 0 && <span className="ds-num">{p.done}/{p.total}</span>}
               </span>
             </button>
           )
         })}
       </div>
+
+      {!readable && doc.status === 'FAILED' && (
+        <Banner
+          tone="error"
+          title={`Chưa đọc được ${doc.file}`}
+          description={doc.error}
+          action={(
+            <span style={{ display: 'flex', gap: 8 }}>
+              <Button onClick={() => remove.mutate(doc.id)} loading={remove.isPending}>Bỏ giấy</Button>
+              <Button icon={<ReloadOutlined />} loading={retry.isPending} disabled={!aiConfigured} onClick={() => retry.mutate(doc.id)}>Đọc lại</Button>
+            </span>
+          )}
+        />
+      )}
+      {!readable && doc.status === 'READING' && <Banner tone="neutral" title={`AI đang đọc ${doc.file}`} description="Thường mất dưới một phút. Trang tự cập nhật khi đọc xong." />}
 
       <div className="rv-seg" role="group" aria-label="Xem">
         <button type="button" aria-pressed={view === 'goc'} onClick={() => setView('goc')}>Bản gốc</button>
@@ -231,30 +283,32 @@ export default function ReviewPage() {
           <header className="rv-pane__head">
             <span className="rv-pane__title">Bản gốc</span>
             <span className="rv-muted rv-pane__file">{doc.file}</span>
-            <span className="rv-pane__tools">
-              <Button type="text" size="small" icon={<MinusOutlined />} aria-label="Thu nhỏ" disabled={zoom <= 0.75} onClick={() => setZoom((z) => Math.max(0.75, z - 0.25))} />
-              <span className="ds-num rv-muted">{Math.round(zoom * 100)}%</span>
-              <Button type="text" size="small" icon={<PlusOutlined />} aria-label="Phóng to" disabled={zoom >= 1.5} onClick={() => setZoom((z) => Math.min(1.5, z + 0.25))} />
-            </span>
+            {doc.mime !== 'application/pdf' && (
+              <span className="rv-pane__tools">
+                <Button type="text" size="small" icon={<MinusOutlined />} aria-label="Thu nhỏ" disabled={zoom <= 0.5} onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))} />
+                <span className="ds-num rv-muted">{Math.round(zoom * 100)}%</span>
+                <Button type="text" size="small" icon={<PlusOutlined />} aria-label="Phóng to" disabled={zoom >= 2} onClick={() => setZoom((z) => Math.min(2, z + 0.25))} />
+              </span>
+            )}
           </header>
           <div className="rv-pane__stage">
-            <Paper doc={doc} mode="goc" focus={focus} onFocus={setFocus} zoom={zoom} />
+            <OriginalFile key={doc.id} doc={doc} zoom={zoom} />
           </div>
         </section>
         <section className="rv-pane rv-pane--so" aria-label="Bản số hoá">
           <header className="rv-pane__head">
             <span className="rv-pane__title">Bản số hoá</span>
-            <span className="rv-muted ds-num">{count.done} / {count.total} ô đã duyệt</span>
+            {readable && <span className="rv-muted ds-num">{count.done} / {count.total} ô đã duyệt</span>}
           </header>
           <div className="rv-pane__stage">
-            <Paper doc={doc} mode="so" focus={focus} onFocus={setFocus} />
+            {readable ? <Paper doc={doc} focus={field?.key} onFocus={setFocus} /> : <p className="rv-muted">Chưa có ô nào được đọc.</p>}
           </div>
         </section>
       </div>
 
       {field && (
         <FieldBar
-          key={`${docKey}-${field.key}-${field.state}-${field.value}`}
+          key={`${doc.key}-${field.key}-${field.state}-${field.value}`}
           field={field}
           onAction={act}
           onMatchVessel={field.key === 'ship' ? () => setMatching(true) : null}
@@ -268,7 +322,7 @@ export default function ReviewPage() {
           context={`${doc.label} · ${name}`}
           onClose={() => setMatching(false)}
           onPick={(vessel) => {
-            setDocs(updateField(docs, docKey, 'ship', 'edit', vessel.vessel_name))
+            decide.mutate({ docId: doc.id, key: 'ship', action: 'edit', value: vessel.vessel_name })
             setMatching(false)
             toast.success(`Đã đối chiếu: ${vessel.vessel_name}${vessel.imo_number ? ` · IMO ${vessel.imo_number}` : ''}`)
           }}

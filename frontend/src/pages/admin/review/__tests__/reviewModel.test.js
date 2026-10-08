@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { DEMO_DOCS, applyAction, updateField, progress, docStatus, totalTodo, nextTodo } from '../reviewModel'
+import { DEMO_DOCS } from './demoDocs'
+import { canPublish, fromApi, applyAction, updateField, progress, docStatus, totalTodo, nextTodo } from '../reviewModel'
 
 const doc = DEMO_DOCS.find((d) => d.key === 'so-45')
 const field = (key) => doc.fields.find((f) => f.key === key)
@@ -38,5 +39,23 @@ describe('reviewModel', () => {
     expect(nextTodo(doc, 'gt')).toBe('kw')
     expect(nextTodo(doc, 'off')).toBe('type')
     expect(nextTodo({ fields: [{ key: 'a', state: 'ACCEPTED' }] }, 'a')).toBeNull()
+  })
+})
+
+describe('giấy từ API', () => {
+  const api = { id: 7, label: 'Hộ chiếu', file_name: 'hc.jpg', mime_type: 'image/jpeg', page: null, title: null, status: 'REVIEW_REQUIRED', fields: [{ key: 'no', value: 'C1', state: 'PROPOSED' }] }
+
+  it('đổi sang dạng màn duyệt', () => {
+    expect(fromApi(api)).toMatchObject({ key: '7', file: 'hc.jpg', title: ['Hộ chiếu', ''], fields: [{ key: 'no', note: null }] })
+  })
+
+  it('chỉ đưa vào hồ sơ khi không còn ô cần xem và không còn giấy đang đọc', () => {
+    const doc = fromApi(api)
+    const done = { ...doc, status: 'COMPLETED', fields: [{ key: 'no', state: 'ACCEPTED' }] }
+    expect(canPublish([doc])).toBe(false)
+    expect(canPublish([done])).toBe(true)
+    expect(canPublish([done, { ...doc, status: 'READING', fields: [] }])).toBe(false)
+    expect(canPublish([done, { ...doc, status: 'FAILED', fields: [] }])).toBe(true)
+    expect(canPublish([{ ...doc, status: 'FAILED', fields: [] }])).toBe(false)
   })
 })

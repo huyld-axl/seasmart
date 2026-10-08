@@ -1,90 +1,54 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Form, Input, Button, message } from 'antd'
-import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import { Form, Input, Button } from 'antd'
 import useAuthStore from '../../stores/authStore'
 import ProductBrand from '../../components/common/ProductBrand'
+import './LoginPage.css'
 
+// Đăng nhập (D2, UI Kit): chỉ email, mật khẩu, nút. Lỗi hiện ngay dưới ô mật khẩu, không dùng toast.
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const { login } = useAuthStore()
   const navigate = useNavigate()
 
   const onFinish = async ({ email, password }) => {
     setLoading(true)
+    setError('')
     try {
       const user = await login(email, password)
       if (user.role === 'seafarer') navigate('/seafarer/profile')
       else if (user.role === 'training_center') navigate('/courses')
       else navigate('/seafarers')
     } catch (err) {
-      message.error(err.response?.data?.error || 'Đăng nhập thất bại')
+      const status = err.response?.status
+      if (!err.response) setError('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.')
+      else if (status === 429) setError('Đăng nhập sai quá nhiều lần. Chờ vài phút rồi thử lại.')
+      else setError('Email hoặc mật khẩu không đúng. Kiểm tra lại rồi thử lần nữa.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#F5F5F5',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 380 }}>
-        <div style={{ marginBottom: 24, textAlign: 'center' }}>
-          <div style={{ marginBottom: 8 }}>
-            <ProductBrand />
-          </div>
-          <p style={{ fontSize: 14, color: '#6B7280', margin: 0 }}>Đăng nhập để tiếp tục</p>
+    <main className="login">
+      <div className="login__card">
+        <div>
+          <ProductBrand />
+          <h1 className="login__title">Đăng nhập</h1>
         </div>
-
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 2,
-            padding: 24,
-            border: '1px solid #D9D9D9',
-            boxShadow: 'none',
-          }}
-        >
-          <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
-            <Form.Item
-              label="Email"
-              name="email"
-              style={{ marginBottom: 16 }}
-              rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ' }]}
-            >
-              <Input
-                prefix={<UserOutlined style={{ color: '#9CA3AF' }} />}
-                placeholder="you@example.com"
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Mật khẩu"
-              name="password"
-              style={{ marginBottom: 20 }}
-              rules={[{ required: true, message: 'Nhập mật khẩu' }]}
-            >
-              <Input.Password
-                prefix={<LockOutlined style={{ color: '#9CA3AF' }} />}
-                placeholder="••••••••"
-                size="large"
-              />
-            </Form.Item>
-
-            <Button type="primary" htmlType="submit" block size="large" loading={loading}>
-              Đăng nhập
-            </Button>
-          </Form>
-        </div>
+        <Form layout="vertical" onFinish={onFinish} onValuesChange={() => error && setError('')} requiredMark={false}>
+          <Form.Item label="Email" name="email" rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ, ví dụ ban@congty.vn' }]}>
+            <Input id="email" type="email" size="large" placeholder="ban@congty.vn" autoComplete="username" autoFocus status={error ? 'error' : undefined} />
+          </Form.Item>
+          <Form.Item label="Mật khẩu" name="password" rules={[{ required: true, message: 'Nhập mật khẩu' }]} help={error || undefined} validateStatus={error ? 'error' : undefined}>
+            <Input.Password id="password" size="large" placeholder="Nhập mật khẩu" autoComplete="current-password" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block size="large" loading={loading}>
+            Đăng nhập
+          </Button>
+        </Form>
       </div>
-    </div>
+    </main>
   )
 }

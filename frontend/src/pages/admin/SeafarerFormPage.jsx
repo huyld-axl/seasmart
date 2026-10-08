@@ -19,8 +19,8 @@ const STATUS_OPTIONS = [
 const sectionStyle = {
   fontSize: 15,
   fontWeight: 600,
-  color: '#262626',
-  borderBottom: '2px solid #1677ff',
+  color: 'var(--foreground)',
+  borderBottom: '2px solid var(--primary)',
   paddingBottom: 8,
   marginBottom: 16,
 }
@@ -146,7 +146,7 @@ export default function SeafarerFormPage() {
             icon={<ArrowLeftOutlined />}
             onClick={() => navigate(isEdit ? `/seafarers/${id}` : '/seafarers')}
           />
-          <span style={{ fontSize: 20, fontWeight: 600, color: '#262626' }}>
+          <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>
             {isEdit ? 'Chỉnh sửa thuyền viên' : 'Thêm thuyền viên mới'}
           </span>
         </div>
@@ -164,10 +164,10 @@ export default function SeafarerFormPage() {
 
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 24,
-          border: '1px solid #f0f0f0',
+          border: '1px solid var(--border-strong)',
           maxWidth: 680,
         }}
       >
@@ -295,9 +295,18 @@ export default function SeafarerFormPage() {
           <Form.Item label="Size quần" name="pants_size">
             <Input placeholder="30 / 32" />
           </Form.Item>
+          <Form.Item label="Cỡ giày" name="shoe_size">
+            <Input placeholder="42" maxLength={10} />
+          </Form.Item>
+          <Form.Item label="Nhóm máu" name="blood_type">
+            <Select allowClear placeholder="Chọn nhóm máu" options={['A', 'B', 'AB', 'O'].map((v) => ({ value: v, label: v }))} />
+          </Form.Item>
 
           <Divider />
           <div style={sectionStyle}>Học vấn & Nghề nghiệp</div>
+          <Form.Item label="Trường tốt nghiệp" name="education_school">
+            <Input maxLength={200} />
+          </Form.Item>
           <Form.Item label="Trình độ tiếng Anh" name="english_level">
             <Input placeholder="B2" />
           </Form.Item>
@@ -374,6 +383,17 @@ export default function SeafarerFormPage() {
           <Form.Item label="Ghi chú" name="notes">
             <Input.TextArea rows={3} />
           </Form.Item>
+
+          {isEdit && (
+            <Form.Item
+              label="Lý do sửa"
+              name="reason"
+              extra="Ghi vào lịch sử hồ sơ. Bộ giấy chưa ký xong của người này sẽ chuyển sang Cần làm lại."
+              rules={[{ required: true, whitespace: true, message: 'Ghi lý do sửa, ví dụ: cập nhật hộ chiếu mới' }]}
+            >
+              <Input maxLength={500} placeholder="Ví dụ: cập nhật hộ chiếu mới" />
+            </Form.Item>
+          )}
 
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 8 }}>
             <Button onClick={() => navigate(isEdit ? `/seafarers/${id}` : '/seafarers')}>

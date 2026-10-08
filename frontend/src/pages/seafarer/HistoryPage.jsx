@@ -68,9 +68,9 @@ export default function SeafarerHistoryPage() {
         <div
           key={r.id}
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 8,
-            border: '1px solid #f0f0f0',
+            border: '1px solid var(--border-strong)',
             padding: '12px 16px',
             marginBottom: 8,
           }}
@@ -80,7 +80,7 @@ export default function SeafarerHistoryPage() {
           >
             <div style={{ flex: 1, marginRight: 8 }}>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{r.course_name}</div>
-              <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                 {r.training_center_name}
               </div>
             </div>
@@ -93,7 +93,7 @@ export default function SeafarerHistoryPage() {
               </Tag>
             </div>
           </div>
-          <div style={{ marginTop: 4, fontSize: 12, color: '#8c8c8c', display: 'flex', gap: 12 }}>
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--muted)', display: 'flex', gap: 12 }}>
             {r.enrollment_date && <span>{dayjs(r.enrollment_date).format('DD/MM/YYYY')}</span>}
             {r.total_score != null && (
               <span>
@@ -127,9 +127,9 @@ export default function SeafarerHistoryPage() {
         <div
           key={r.id}
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 8,
-            border: '1px solid #f0f0f0',
+            border: '1px solid var(--border-strong)',
             padding: '12px 16px',
             marginBottom: 8,
           }}
@@ -139,13 +139,13 @@ export default function SeafarerHistoryPage() {
           >
             <div>
               <div style={{ fontWeight: 600, fontSize: 14 }}>{r.vessel_name || '—'}</div>
-              <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                 {r.vessel_type_name}
               </div>
             </div>
             <Tag>{r.status}</Tag>
           </div>
-          <div style={{ marginTop: 4, fontSize: 12, color: '#8c8c8c' }}>
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--muted)' }}>
             {r.start_date ? dayjs(r.start_date).format('DD/MM/YYYY') : '?'}
             {' → '}
             {r.end_date ? dayjs(r.end_date).format('DD/MM/YYYY') : '?'}
@@ -184,10 +184,10 @@ export default function SeafarerHistoryPage() {
 
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 600, color: '#262626', marginBottom: 24 }}>
+      <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)', marginBottom: 24 }}>
         Lịch sử
       </div>
-      <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+      <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
         <Tabs items={tabs} style={{ padding: '0 16px' }} />
       </div>
     </div>

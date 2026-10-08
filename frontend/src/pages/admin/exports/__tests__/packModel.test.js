@@ -67,7 +67,10 @@ describe('bộ giấy 12 mẫu', () => {
 
   it('ô điền chung, trường thiếu, chữ ký cần', () => {
     expect(packInputs(['qddd', 'qdrt'])).toEqual(['Tên tàu', 'Ngày xuống tàu', 'Ngày rời tàu', 'Cảng rời tàu'])
-    expect(packMissing(['bl', 'uql'])).toEqual([{ field: 'Người bảo lãnh', doc: 'Thư bảo lãnh' }, { field: 'Số tài khoản', doc: 'Ủy quyền nhận lương' }])
+    expect(packMissing(['bl', 'uql'], {}, [])).toEqual([{ field: 'Người bảo lãnh', doc: 'Thư bảo lãnh' }, { field: 'Số tài khoản', doc: 'Ủy quyền nhận lương' }])
+    expect(packMissing(['bl', 'uql', 'cv'], { bank_account_number: '1', shoe_size: '42' }, [{ is_guarantor: 1 }])).toEqual([
+      { field: 'Nhóm máu', doc: 'CV chủ tàu Trung Quốc' }, { field: 'Người thân liên hệ', doc: 'CV chủ tàu Trung Quốc' },
+    ])
     expect(packSignatures(['tl', 'cv'])).toEqual([{ doc: 'tl', who: 'Thuyền viên' }, { doc: 'tl', who: 'Giám đốc' }])
   })
 })

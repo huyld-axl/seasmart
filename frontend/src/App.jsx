@@ -34,6 +34,7 @@ import ReviewPage from './pages/admin/review/ReviewPage'
 import PackCreatePage from './pages/admin/exports/PackCreatePage'
 import PackSignPage from './pages/admin/exports/PackSignPage'
 import RemoteSignPage from './pages/sign/RemoteSignPage'
+import StandaloneError from './pages/errors/StandaloneError'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -49,7 +50,7 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/design-system" element={<DesignSystemPage />} />
-              <Route path="/sign/:packId" element={<RemoteSignPage />} />
+              <Route path="/sign/:token" element={<RemoteSignPage />} />
               <Route path="/" element={<Navigate to="/seafarers" replace />} />
 
               <Route
@@ -79,10 +80,7 @@ export default function App() {
                 <Route path="/admin/users/:id" element={<UserDetailPage />} />
               </Route>
 
-              <Route
-                path="/403"
-                element={<div style={{ padding: 40 }}>Không có quyền truy cập</div>}
-              />
+              <Route path="/403" element={<StandaloneError code={403} />} />
               <Route path="/tc/*" element={<Navigate to="/courses" replace />} />
 
               {/* Seafarer public routes */}
@@ -104,7 +102,7 @@ export default function App() {
                 <Route path="/seafarer/history" element={<SeafarerHistoryPage />} />
               </Route>
 
-              <Route path="*" element={<Navigate to="/seafarers" replace />} />
+              <Route path="*" element={<StandaloneError code={404} />} />
             </Routes>
           </BrowserRouter>
         </AntApp>

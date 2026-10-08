@@ -28,6 +28,7 @@ module.exports = fp(async function (fastify) {
     },
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
+    exposedHeaders: ['Content-Disposition'], // để frontend đọc tên file khi tải
   })
 
   // JWT

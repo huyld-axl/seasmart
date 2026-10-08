@@ -1,27 +1,52 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from 'antd'
+import { documentApi } from '../../../api/documentApi'
 import { CloseOutlined, FileAddOutlined, FileTextOutlined, UploadOutlined } from '@ant-design/icons'
 
 const ACCEPT = '.pdf,.jpg,.jpeg,.png'
 const MAX_MB = 25
 
 // Điểm "wow" của hồ sơ: thả giấy tờ vào, AI nhận loại giấy và đọc để người duyệt (A3).
-// Phần gửi tệp lên và AI đọc chưa có backend: `onFiles` để trống cho bước sau nối vào.
-export default function CrewDropzone({ firstName, big = false, onFiles }) {
+// Tệp gửi lên /api/v1/documents; AI đọc ở máy chủ, kết quả duyệt ở màn A3.
+const META = {
+  uploading: 'Đang tải lên…',
+  sent: 'Đã gửi, AI đang đọc',
+}
+
+export default function CrewDropzone({ seafarerId, firstName, big = false }) {
   const [files, setFiles] = useState([])
   const [dragging, setDragging] = useState(false)
+  const qc = useQueryClient()
+
+  const setState = (key, patch) => setFiles((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)))
+
+  async function send(item) {
+    setState(item.key, { state: 'uploading', error: null })
+    try {
+      await documentApi.upload(seafarerId, item.file)
+      setState(item.key, { state: 'sent' })
+      qc.invalidateQueries({ queryKey: ['documents', String(seafarerId)] })
+    } catch (e) {
+      setState(item.key, { state: 'error', error: e.response?.data?.error || 'Chưa gửi được tệp. Thử lại.' })
+    }
+  }
 
   function addFiles(list) {
     const picked = Array.from(list || []).map((file) => ({
       key: `${file.name}-${file.size}-${file.lastModified}`,
       name: file.name,
       tooBig: file.size > MAX_MB * 1024 * 1024,
+      state: 'uploading',
       file,
     }))
-    if (!picked.length) return
-    setFiles((current) => [...current, ...picked.filter((item) => !current.some((old) => old.key === item.key))])
-    onFiles?.(picked.filter((item) => !item.tooBig).map((item) => item.file))
+    const fresh = picked.filter((item) => !files.some((old) => old.key === item.key))
+    if (!fresh.length) return
+    setFiles((current) => [...current, ...fresh])
+    fresh.filter((item) => !item.tooBig).forEach(send)
   }
+  const sent = files.some((item) => item.state === 'sent')
 
   return (
     <div className={big ? 'crew-wow crew-wow--big' : 'crew-wow'}>
@@ -52,15 +77,17 @@ export default function CrewDropzone({ firstName, big = false, onFiles }) {
                 <p className="ds-files__name" title={item.name}>
                   <span className="ds-files__head">{item.name}</span>
                 </p>
-                <p className={item.tooBig ? 'ds-files__meta crew-wow__error' : 'ds-files__meta'}>
-                  {item.tooBig ? `Tệp lớn hơn ${MAX_MB} MB, chọn bản nhỏ hơn` : 'Chờ AI đọc'}
+                <p className={item.tooBig || item.error ? 'ds-files__meta crew-wow__error' : 'ds-files__meta'}>
+                  {item.tooBig ? `Tệp lớn hơn ${MAX_MB} MB, chọn bản nhỏ hơn` : item.error || META[item.state]}
                 </p>
               </div>
+              {item.error && <Button type="text" size="small" onClick={() => send(item)}>Gửi lại</Button>}
               <Button type="text" size="small" icon={<CloseOutlined />} aria-label={`Bỏ ${item.name}`} onClick={() => setFiles((current) => current.filter((old) => old.key !== item.key))} />
             </li>
           ))}
         </ul>
       )}
+      {sent && <p className="ds-files__meta"><Link to={`/seafarers/${seafarerId}/review`}>Mở màn duyệt giấy tờ</Link></p>}
     </div>
   )
 }

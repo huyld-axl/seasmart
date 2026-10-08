@@ -1,0 +1,6 @@
+/* Đăng nhập (UI Kit A0): thẻ trắng 448px giữa nền xám, logo trên tiêu đề. */
+.login { display: grid; place-items: center; min-height: 100vh; padding: 24px 16px; background: var(--background); }
+.login__card { display: grid; gap: 20px; width: 100%; max-width: 448px; padding: 32px; border-radius: 16px; background: var(--surface); }
+.login__title { margin: 12px 0 0; font-size: 20px; font-weight: 600; }
+.login__card .ant-form-item:last-of-type { margin-bottom: 28px; }
+@media (max-width: 639px) { .login__card { padding: 24px; } }

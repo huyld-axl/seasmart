@@ -125,18 +125,18 @@ export default function SeafarerCoursesPage() {
 
   return (
     <div>
-      <div style={{ fontSize: 20, fontWeight: 600, color: '#262626', marginBottom: 24 }}>
+      <div style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)', marginBottom: 24 }}>
         Đăng ký khóa học
       </div>
 
       {myEnrollments.length > 0 && (
         <div
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 8,
             padding: 16,
             marginBottom: 24,
-            border: '1px solid #f0f0f0',
+            border: '1px solid var(--border-strong)',
           }}
         >
           <div style={{ fontWeight: 600, marginBottom: 12 }}>Đăng ký của tôi</div>
@@ -193,11 +193,11 @@ export default function SeafarerCoursesPage() {
 
       <div
         style={{
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius: 8,
           padding: 16,
           marginBottom: 16,
-          border: '1px solid #f0f0f0',
+          border: '1px solid var(--border-strong)',
         }}
       >
         <Select
@@ -213,7 +213,7 @@ export default function SeafarerCoursesPage() {
       {!courses?.data?.length && !isLoading ? (
         <Empty
           description="Không có khóa học nào"
-          style={{ padding: 40, background: '#fff', borderRadius: 8 }}
+          style={{ padding: 40, background: 'var(--surface)', borderRadius: 8 }}
         />
       ) : isMobile ? (
         <div>
@@ -221,9 +221,9 @@ export default function SeafarerCoursesPage() {
             <div
               key={r.id}
               style={{
-                background: '#fff',
+                background: 'var(--surface)',
                 borderRadius: 8,
-                border: '1px solid #f0f0f0',
+                border: '1px solid var(--border-strong)',
                 padding: '12px 16px',
                 marginBottom: 8,
               }}
@@ -237,7 +237,7 @@ export default function SeafarerCoursesPage() {
               >
                 <div style={{ flex: 1, marginRight: 8 }}>
                   <div style={{ fontWeight: 600, fontSize: 15 }}>{r.name}</div>
-                  <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                     {r.training_center_name}
                   </div>
                 </div>
@@ -249,7 +249,7 @@ export default function SeafarerCoursesPage() {
                 style={{
                   marginTop: 6,
                   fontSize: 12,
-                  color: '#595959',
+                  color: 'var(--muted)',
                   display: 'flex',
                   gap: 12,
                   flexWrap: 'wrap',
@@ -279,7 +279,7 @@ export default function SeafarerCoursesPage() {
           ))}
         </div>
       ) : (
-        <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #f0f0f0' }}>
+        <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
           <Table
             rowKey="id"
             columns={columns}

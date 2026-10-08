@@ -29,7 +29,7 @@ export default function SeafarerRegisterPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f5f7fa',
+        background: 'var(--background)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -38,12 +38,12 @@ export default function SeafarerRegisterPage() {
     >
       <div style={{ width: '100%', maxWidth: 360 }}>
         <div style={{ marginBottom: 32 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 600, color: '#262626', margin: '0 0 6px' }}>
+          <h2 style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)', margin: '0 0 6px' }}>
             Đăng ký tài khoản thuyền viên
           </h2>
-          <p style={{ fontSize: 14, color: '#8c8c8c', margin: 0 }}>
+          <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
             Đã có tài khoản?{' '}
-            <a onClick={() => navigate('/login')} style={{ color: '#1677ff' }}>
+            <a onClick={() => navigate('/login')} style={{ color: 'var(--primary)' }}>
               Đăng nhập
             </a>
           </p>
@@ -51,7 +51,7 @@ export default function SeafarerRegisterPage() {
 
         <div
           style={{
-            background: '#fff',
+            background: 'var(--surface)',
             borderRadius: 8,
             padding: 24,
             boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
@@ -64,7 +64,7 @@ export default function SeafarerRegisterPage() {
               rules={[{ required: true, type: 'email', message: 'Nhập email hợp lệ' }]}
             >
               <Input
-                prefix={<UserOutlined style={{ color: '#8c8c8c' }} />}
+                prefix={<UserOutlined style={{ color: 'var(--muted)' }} />}
                 placeholder="you@example.com"
               />
             </Form.Item>
@@ -74,7 +74,7 @@ export default function SeafarerRegisterPage() {
               rules={[{ required: true, min: 6, message: 'Mật khẩu tối thiểu 6 ký tự' }]}
             >
               <Input.Password
-                prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}
+                prefix={<LockOutlined style={{ color: 'var(--muted)' }} />}
                 placeholder="••••••••"
               />
             </Form.Item>
@@ -93,7 +93,7 @@ export default function SeafarerRegisterPage() {
               ]}
             >
               <Input.Password
-                prefix={<LockOutlined style={{ color: '#8c8c8c' }} />}
+                prefix={<LockOutlined style={{ color: 'var(--muted)' }} />}
                 placeholder="••••••••"
               />
             </Form.Item>

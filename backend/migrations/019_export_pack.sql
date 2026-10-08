@@ -1,5 +1,5 @@
--- Migration 010: Bộ giấy tờ xuất cho thuyền viên (B3, B4, C1, C2) và chữ ký
--- Chạy: mysql -u root marineport < migrations/010_export_pack.sql
+-- Migration 019: Bộ giấy tờ xuất cho thuyền viên (B3, B4, C1, C2) và chữ ký
+-- Chạy: mysql -u root marineport < migrations/019_export_pack.sql
 
 CREATE TABLE IF NOT EXISTS `export_pack` (
   `id`                     INT AUTO_INCREMENT PRIMARY KEY,

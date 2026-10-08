@@ -1,6 +1,7 @@
 const crypto = require('crypto')
 const PizZip = require('pizzip')
 const { smsService, normalizePhone } = require('./sms.service')
+const { withTransaction } = require('../utils/transaction')
 const { PACK_TEMPLATES, TEMPLATE_KEYS, STAGE_TITLE, SELF_SIGNER, templateOf } = require('../constants/pack_templates')
 const formExportService = require('./form_export.service')
 
@@ -107,20 +108,6 @@ function shape({ row, docs, signatures }, { includeToken = false } = {}) {
   }
 }
 
-async function withTransaction(pool, fn) {
-  const conn = await pool.getConnection()
-  try {
-    await conn.beginTransaction()
-    const result = await fn(conn)
-    await conn.commit()
-    return result
-  } catch (error) {
-    await conn.rollback()
-    throw error
-  } finally {
-    conn.release()
-  }
-}
 
 const exportPackService = {
   templates: () => PACK_TEMPLATES.map(({ formKey, ...rest }) => ({ ...rest, has_file: !!formKey })),

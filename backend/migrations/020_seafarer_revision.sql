@@ -1,5 +1,5 @@
--- Migration 011: Lịch sử sửa hồ sơ thuyền viên (bắt buộc lý do) và cỡ giày cho mẫu CV chủ tàu
--- Chạy: mysql -u root marineport < migrations/011_seafarer_revision.sql
+-- Migration 020: Lịch sử sửa hồ sơ thuyền viên (bắt buộc lý do) và cỡ giày cho mẫu CV chủ tàu
+-- Chạy: mysql -u root marineport < migrations/020_seafarer_revision.sql
 
 ALTER TABLE seafarer
   ADD COLUMN IF NOT EXISTS shoe_size VARCHAR(10) NULL AFTER pants_size;

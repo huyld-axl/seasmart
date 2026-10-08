@@ -1,6 +1,7 @@
 const { OVERVIEW_FIELDS, TAB_CONDITIONS, TABS, shapeRow } = require('../utils/crew_overview')
 const { exportPackService } = require('./export_pack.service')
 const pool = require('../config/db')
+const { withTransaction } = require('../utils/transaction')
 const XLSX = require('xlsx')
 
 // TASK-B5: training_center chỉ thấy các field này khi GET /seafarers hoặc GET /seafarers/:id
@@ -217,9 +218,16 @@ const seafarerService = {
 
   // Sửa hồ sơ: bắt buộc lý do, ghi lại trường nào đổi từ gì sang gì; bộ giấy chưa xong thành "Cần làm lại".
   async update(id, data, updated_by, reason) {
+    await withTransaction(pool, (conn) => this.applyUpdate(conn, id, data, updated_by, reason))
+    return this.getById(id)
+  },
+
+  // Sửa hồ sơ trên một kết nối cho trước (để gói chung transaction với việc khác):
+  // ghi lịch sử sửa kèm lý do, bộ giấy đang chờ thì chuyển STALE. Trả về các trường đã đổi.
+  async applyUpdate(db, id, data, updated_by, reason) {
     const text = String(reason || '').trim()
     if (!text) throw { statusCode: 400, message: 'Ghi lý do sửa hồ sơ' }
-    const [[before]] = await pool.query('SELECT * FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
+    const [[before]] = await db.query('SELECT * FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
     if (!before) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     const { rank_name, nationality_name, ...rest } = data
     const safeData = pickAllowed(rest)
@@ -227,20 +235,20 @@ const seafarerService = {
       throw { statusCode: 400, message: 'Không có trường hợp lệ để cập nhật' }
     }
     const changes = diffFields(before, safeData)
-    if (!Object.keys(changes).length) return this.getById(id)
-    await pool.query('UPDATE seafarer SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?', [
+    if (!Object.keys(changes).length) return changes
+    await db.query('UPDATE seafarer SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?', [
       safeData,
       updated_by,
       id,
     ])
-    await pool.query('INSERT INTO seafarer_revision (seafarer_id, changed_by, reason, changes) VALUES (?, ?, ?, ?)', [
+    await db.query('INSERT INTO seafarer_revision (seafarer_id, changed_by, reason, changes) VALUES (?, ?, ?, ?)', [
       id,
       updated_by,
       text.slice(0, 500),
       JSON.stringify(changes),
     ])
-    await exportPackService.markStaleForSeafarer(pool, id)
-    return this.getById(id)
+    await exportPackService.markStaleForSeafarer(db, id)
+    return changes
   },
 
   async revisions(id) {

@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const pool = require('../config/db')
+const { withTransaction } = require('../utils/transaction')
 const config = require('../config')
 const documentReader = require('./document_reader.service')
 const seafarerService = require('./seafarer.service')
@@ -209,14 +210,19 @@ const documentService = {
       if (DOC_TYPES[doc.doc_type]?.certificate) certificates.push(await this.certificateRow(doc, fieldsOf(doc)))
     }
 
-    if (Object.keys(profile).length) {
-      await seafarerService.update(seafarerId, profile, userId, `Từ giấy tờ đã duyệt: ${docs.map((doc) => DOC_TYPES[doc.doc_type].label).join(', ')}`)
-    }
-    for (const row of certificates.filter(Boolean)) {
-      await pool.query('INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?', [row, seafarerId, userId, userId])
-    }
-    await pool.query('UPDATE seafarer_document SET status = ?, published_at = NOW(), published_by = ? WHERE id IN (?)', [DOC_STATUS.PUBLISHED, userId, docs.map((doc) => doc.id)])
-    return { documents: docs.length, profile_fields: Object.keys(profile), certificates: certificates.filter(Boolean).length }
+    // Hồ sơ, chứng chỉ và trạng thái giấy ghi cùng một transaction: lỗi giữa chừng thì không ghi gì.
+    await withTransaction(pool, async (conn) => {
+      if (Object.keys(profile).length) {
+        await seafarerService.applyUpdate(conn, seafarerId, profile, userId, `Từ giấy tờ đã duyệt: ${docs.map((doc) => DOC_TYPES[doc.doc_type].label).join(', ')}`)
+      }
+      for (const row of certificates) {
+        await conn.query('INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?', [row, seafarerId, userId, userId])
+      }
+      const [done] = await conn.query('UPDATE seafarer_document SET status = ?, published_at = NOW(), published_by = ? WHERE id IN (?) AND status = ?', [DOC_STATUS.PUBLISHED, userId, docs.map((doc) => doc.id), DOC_STATUS.COMPLETED])
+      // Bấm hai lần cùng lúc: lần sau không thấy giấy COMPLETED nào nữa thì huỷ, tránh ghi chứng chỉ hai lần.
+      if (done.affectedRows !== docs.length) throw { statusCode: 409, message: 'Giấy vừa thay đổi, tải lại trang rồi thử lại' }
+    })
+    return { documents: docs.length, profile_fields: Object.keys(profile), certificates: certificates.length }
   },
 
   async certificateRow(doc, fields) {
@@ -229,6 +235,12 @@ const documentService = {
     if (!code || !issued) throw { statusCode: 400, message: `${doc.file_name}: chứng chỉ cần có "Loại chứng chỉ trong danh mục" và "Cấp ngày" trước khi đưa vào hồ sơ` }
     const [[type]] = await pool.query('SELECT id FROM certificate_type WHERE code = ?', [code])
     if (!type) throw { statusCode: 400, message: `${doc.file_name}: mã loại chứng chỉ "${code}" không có trong danh mục` }
+    if (pick('no').length > 100) throw { statusCode: 400, message: `${doc.file_name}: số chứng chỉ dài quá 100 ký tự` }
+    const [[dup]] = await pool.query(
+      'SELECT id FROM seafarer_certificate WHERE seafarer_id = ? AND certificate_type_id = ? AND issued_date = ?',
+      [doc.seafarer_id, type.id, issued]
+    )
+    if (dup) throw { statusCode: 409, message: `${doc.file_name}: hồ sơ đã có chứng chỉ này (cùng loại, cùng ngày cấp). Bỏ giấy hoặc sửa ngày cấp.` }
     const expiry = pick('valid') ? toIsoDate(pick('valid')) : null
     if (pick('valid') && !expiry) throw { statusCode: 400, message: `${doc.file_name}: ô "Có giá trị đến" chưa đúng dạng ngày dd/mm/yyyy` }
     return {

@@ -5,7 +5,6 @@ const { TEMPLATE_KEYS, PACK_STATUS } = require('../../constants/pack_templates')
 
 const CREATE_ROLES = ['admin', 'operator']
 const REVIEW_ROLES = ['admin', 'operator', 'reviewer']
-const approve = (fastify) => ({ onRequest: [fastify.authenticate, requireRole(['admin', 'reviewer'])] })
 
 const requireRole = (roles) => async (request, reply) => {
   if (!roles.includes(request.user?.role)) return reply.code(403).send({ error: 'Không có quyền' })
@@ -52,10 +51,10 @@ async function exportPackRoutes(fastify) {
     },
   }, async (request, reply) => reply.code(201).send(await exportPackService.create(pool, request.body, request.user)))
 
-  fastify.post('/:id/approve', { ...approve(fastify), schema: { params: idParams } }, async (request) => exportPackService.approve(pool, request.params.id, request.user))
+  fastify.post('/:id/approve', { ...read, schema: { params: idParams } }, async (request) => exportPackService.approve(pool, request.params.id, request.user))
 
   fastify.post('/:id/reject', {
-    ...approve(fastify),
+    ...read,
     schema: { params: idParams, body: { type: 'object', required: ['reason'], additionalProperties: false, properties: { reason: { type: 'string', minLength: 1, maxLength: 500 } } } },
   }, async (request) => exportPackService.reject(pool, request.params.id, request.body.reason, request.user))
 

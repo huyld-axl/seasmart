@@ -49,8 +49,7 @@ export default function PackSignPage() {
 
   const doc = template(picked && pack.docs.includes(picked) ? picked : pack.docs[0])
   const progress = signProgress(pack)
-  const selfCreated = String(pack.created_by) === String(user?.id)
-  const canApprove = ['admin', 'reviewer'].includes(user?.role)
+  const selfCreated = pack.created_by === user?.id
   const signsOf = (t) => Object.fromEntries(t.signers.map((who) => [who, signState(pack, t.key, who)]))
   const link = pack.sign_token ? signLink(pack.sign_token) : null
 
@@ -60,8 +59,8 @@ export default function PackSignPage() {
 
   let actions = null
   if (pack.status === 'PENDING_APPROVAL') {
-    actions = selfCreated || !canApprove ? (
-      <p className="lock-note"><LockOutlined aria-hidden />Cần admin hoặc reviewer khác người tạo để duyệt.</p>
+    actions = selfCreated ? (
+      <p className="lock-note"><LockOutlined aria-hidden />Bạn tạo bộ này nên không tự duyệt được. Nhờ người khác duyệt.</p>
     ) : (
       <>
         <Button onClick={() => setRejecting(true)}>Trả lại</Button>

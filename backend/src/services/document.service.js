@@ -8,6 +8,11 @@ const documentReader = require('./document_reader.service')
 const seafarerService = require('./seafarer.service')
 const { DOC_TYPES, DOC_STATUS, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES } = require('../constants/document_types')
 
+// Old field-key APIs cannot safely edit multipage v2 proposals.
+function assertLegacyDocument(doc) {
+  if (doc.schema_version !== 1) throw { statusCode: 409, code: 'SCHEMA_VERSION_UNSUPPORTED', message: 'Tài liệu v2 cần API MCAH theo trang và proposal ID' }
+}
+
 const FIELD_ACTIONS = ['accept', 'edit', 'reject', 'keepUnknown', 'undo']
 
 // Magic bytes: PDF=%PDF, JPEG=FFD8FF, PNG=89504E47. Không tin MIME trình duyệt gửi lên.
@@ -74,6 +79,7 @@ function shape(doc, fields) {
   const byKey = new Map(fields.map((field) => [field.field_key, field]))
   return {
     id: doc.id,
+    schema_version: doc.schema_version,
     seafarer_id: doc.seafarer_id,
     file_name: doc.file_name,
     mime_type: doc.mime_type,
@@ -132,6 +138,7 @@ const documentService = {
   async extract(id) {
     const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
     if (!doc) return
+    assertLegacyDocument(doc)
     try {
       const [types] = await pool.query('SELECT code, name_vi FROM certificate_type ORDER BY id')
       const result = await documentReader.read(fs.readFileSync(require('../utils/private_storage').privateFile(doc.storage_path)), doc.mime_type, types)
@@ -157,6 +164,7 @@ const documentService = {
 
   async retry(id) {
     const doc = await this.get(id)
+    assertLegacyDocument(doc)
     if (doc.status !== DOC_STATUS.FAILED) throw { statusCode: 409, message: 'Chỉ đọc lại được giấy đọc lỗi' }
     if (!documentReader.isConfigured()) throw { statusCode: 503, message: 'AI đọc giấy tờ chưa được cấu hình (thiếu ANTHROPIC_API_KEY)' }
     await pool.query('UPDATE seafarer_document SET status = ?, error = NULL WHERE id = ?', [DOC_STATUS.READING, id])
@@ -165,7 +173,7 @@ const documentService = {
   },
 
   async list(seafarerId) {
-    const [docs] = await pool.query('SELECT * FROM seafarer_document WHERE seafarer_id = ? AND deleted_at IS NULL ORDER BY id', [seafarerId])
+    const [docs] = await pool.query('SELECT * FROM seafarer_document WHERE seafarer_id = ? AND deleted_at IS NULL AND schema_version = 1 ORDER BY id', [seafarerId])
     if (!docs.length) return []
     const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id IN (?) ORDER BY id', [docs.map((doc) => doc.id)])
     return docs.map((doc) => shape(doc, fields.filter((field) => field.document_id === doc.id)))
@@ -174,6 +182,7 @@ const documentService = {
   async get(id) {
     const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
     if (!doc) throw { statusCode: 404, message: 'Không tìm thấy giấy tờ' }
+    assertLegacyDocument(doc)
     const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id = ? ORDER BY id', [id])
     return shape(doc, fields)
   },
@@ -181,6 +190,7 @@ const documentService = {
   async decide(id, fieldKey, action, value, userId) {
     if (!FIELD_ACTIONS.includes(action)) throw { statusCode: 400, message: 'Hành động không hợp lệ' }
     const doc = await this.get(id)
+    assertLegacyDocument(doc)
     if (doc.status === DOC_STATUS.PUBLISHED) throw { statusCode: 409, message: 'Giấy đã đưa vào hồ sơ, không sửa được nữa' }
     const [[field]] = await pool.query('SELECT * FROM document_field WHERE document_id = ? AND field_key = ?', [id, fieldKey])
     if (!field) throw { statusCode: 404, message: 'Không có ô này trên giấy' }
@@ -201,6 +211,7 @@ const documentService = {
     if (pending.n > 0) throw { statusCode: 409, message: 'Còn giấy chưa duyệt xong' }
     if (!docs.length) throw { statusCode: 409, message: 'Không có giấy nào đã duyệt xong để đưa vào hồ sơ' }
 
+    docs.forEach(assertLegacyDocument)
     const [allFields] = await pool.query('SELECT * FROM document_field WHERE document_id IN (?)', [docs.map((doc) => doc.id)])
     const fieldsOf = (doc) => allFields.filter((field) => field.document_id === doc.id)
     const profile = {}
@@ -256,14 +267,16 @@ const documentService = {
 
   async remove(id) {
     const doc = await this.get(id)
+    assertLegacyDocument(doc)
     if (doc.status === DOC_STATUS.PUBLISHED) throw { statusCode: 409, message: 'Giấy đã đưa vào hồ sơ, không xoá được' }
     await pool.query('UPDATE seafarer_document SET deleted_at = NOW() WHERE id = ?', [id])
     return { success: true }
   },
 
   async fileOf(id) {
-    const [[doc]] = await pool.query('SELECT storage_path, mime_type, file_name FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
+    const [[doc]] = await pool.query('SELECT storage_path, mime_type, file_name, schema_version FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
     if (!doc) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    assertLegacyDocument(doc)
     doc.storage_path = require('../utils/private_storage').privateFile(doc.storage_path)
     return doc
   },

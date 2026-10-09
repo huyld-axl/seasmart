@@ -80,6 +80,13 @@ async function main() {
     await pool.query('UPDATE seafarer_document SET storage_path = ? WHERE id = ?', [require('path').resolve(__dirname, '../package.json'), documentId])
     check((await api('GET', `/documents/${documentId}/file`, reviewer)).statusCode === 403, 'inherited path outside private storage rejected')
     await pool.query('UPDATE seafarer_document SET storage_path = ? WHERE id = ?', [savedSource.storage_path, documentId])
+    await pool.query('UPDATE seafarer_document SET schema_version=2 WHERE id=?', [documentId])
+    for (const [method, path, body] of [['GET', '', undefined], ['GET', '/file', undefined], ['POST', '/retry', undefined], ['DELETE', '', undefined], ['PUT', '/fields/name', { action: 'accept' }]]) {
+      check((await api(method, `/documents/${documentId}${path}`, operator, body)).statusCode === 409, `v1 ${method} ${path || 'detail'} refuses v2 document`)
+    }
+    const [[protectedDoc]] = await pool.query('SELECT schema_version,status,deleted_at FROM seafarer_document WHERE id=?', [documentId])
+    check(protectedDoc.schema_version === 2 && protectedDoc.status === 'FAILED' && protectedDoc.deleted_at === null, 'v1 guard preserves v2 source state')
+    await pool.query('UPDATE seafarer_document SET schema_version=1 WHERE id=?', [documentId])
     check((await api('GET', `/documents/${documentId}/file`)).statusCode === 401, 'source unauthenticated 401')
     check((await api('GET', '/documents/2147483647/file', reviewer)).statusCode === 404, 'missing source 404')
     check((await api('POST', `/documents/${documentId}/retry`, reviewer)).statusCode === 403, 'reviewer cannot retry upload')

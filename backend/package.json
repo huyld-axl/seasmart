@@ -14,7 +14,8 @@
     "db:bootstrap": "node scripts/bootstrap-admin.js",
     "test:integration": "node scripts/integration-smoke.js",
     "test:upgrade": "node scripts/upgrade-smoke.js",
-    "test:install": "node scripts/install-smoke.js"
+    "test:install": "node scripts/install-smoke.js",
+    "test:contract": "node scripts/mcah-contract-smoke.js"
   },
   "keywords": [],
   "author": "",

@@ -1,7 +1,7 @@
 const Anthropic = require('@anthropic-ai/sdk')
 const { DOC_TYPES, AI_STATES } = require('../constants/document_types')
 
-const MODEL = process.env.DOC_READER_MODEL || 'claude-opus-5-5'
+const MODEL = process.env.DOC_READER_MODEL || ''
 
 // Kết quả AI trả về theo đúng khuôn này (structured output), backend lọc lại theo DOC_TYPES.
 const OUTPUT_SCHEMA = {
@@ -84,12 +84,12 @@ function contentBlock(buffer, mimeType) {
 
 const documentReader = {
   isConfigured() {
-    return Boolean(process.env.ANTHROPIC_API_KEY)
+    return Boolean(process.env.ANTHROPIC_API_KEY && MODEL)
   },
 
   async read(buffer, mimeType, certificateTypes = []) {
     if (!this.isConfigured()) {
-      throw { statusCode: 503, message: 'AI đọc giấy tờ chưa được cấu hình (thiếu ANTHROPIC_API_KEY)' }
+      throw { statusCode: 503, message: 'AI đọc giấy tờ chưa được cấu hình (thiếu ANTHROPIC_API_KEY hoặc DOC_READER_MODEL)' }
     }
     const client = new Anthropic()
     const response = await client.beta.messages.create({

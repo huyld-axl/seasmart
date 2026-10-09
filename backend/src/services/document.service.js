@@ -134,7 +134,7 @@ const documentService = {
     if (!doc) return
     try {
       const [types] = await pool.query('SELECT code, name_vi FROM certificate_type ORDER BY id')
-      const result = await documentReader.read(fs.readFileSync(doc.storage_path), doc.mime_type, types)
+      const result = await documentReader.read(fs.readFileSync(require('../utils/private_storage').privateFile(doc.storage_path)), doc.mime_type, types)
       if (!result.doc_type) {
         await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id = ?', [DOC_STATUS.FAILED, 'AI chưa nhận ra loại giấy này. Giấy chưa có khuôn đọc, lưu kèm hồ sơ để xem tay.', id])
         return
@@ -263,7 +263,8 @@ const documentService = {
 
   async fileOf(id) {
     const [[doc]] = await pool.query('SELECT storage_path, mime_type, file_name FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
-    if (!doc || !fs.existsSync(doc.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    if (!doc) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    doc.storage_path = require('../utils/private_storage').privateFile(doc.storage_path)
     return doc
   },
 }

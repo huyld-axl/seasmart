@@ -29,6 +29,8 @@ desktop.ini
 npm-debug.log*
 
 # Uploads (runtime data)
+backend/storage/
+/storage/
 backend/uploads/*
 !backend/uploads/.gitkeep
 

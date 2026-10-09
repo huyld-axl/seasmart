@@ -6,10 +6,15 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "lint": "eslint src",
+    "lint": "eslint src server.js scripts/*.js",
     "lint:fix": "eslint src --fix",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate": "node scripts/migrate.js",
+    "db:bootstrap": "node scripts/bootstrap-admin.js",
+    "test:integration": "node scripts/integration-smoke.js",
+    "test:upgrade": "node scripts/upgrade-smoke.js",
+    "test:install": "node scripts/install-smoke.js"
   },
   "keywords": [],
   "author": "",

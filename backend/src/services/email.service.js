@@ -3,7 +3,7 @@ const path = require('path')
 const sgMail = require('@sendgrid/mail')
 const config = require('../config')
 
-sgMail.setApiKey(config.sendgrid.apiKey || 'dummy')
+if (config.sendgrid.apiKey) sgMail.setApiKey(config.sendgrid.apiKey)
 
 const TEMPLATES_DIR = path.join(__dirname, '../templates')
 

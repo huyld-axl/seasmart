@@ -203,7 +203,7 @@ const exportPackService = {
     await withTransaction(pool, async (conn) => {
       const { row } = await loadPack(conn, id, { forUpdate: true })
       if (row.status !== 'PENDING_APPROVAL') throw { statusCode: 409, message: 'Bộ giấy không còn ở bước chờ duyệt' }
-      require('../constants/mcah_permissions').assertApprover(user, row.created_by)
+      if (row.created_by === user.id) throw { statusCode: 403, message: 'Bạn tạo bộ này nên không tự duyệt được' }
       const token = crypto.randomBytes(32).toString('hex')
       await conn.query(
         `UPDATE export_pack SET status = 'SIGNING', approved_by = ?, approved_at = NOW(),
@@ -220,7 +220,7 @@ const exportPackService = {
     await withTransaction(pool, async (conn) => {
       const { row } = await loadPack(conn, id, { forUpdate: true })
       if (row.status !== 'PENDING_APPROVAL') throw { statusCode: 409, message: 'Bộ giấy không còn ở bước chờ duyệt' }
-      require('../constants/mcah_permissions').assertApprover(user, row.created_by)
+      if (row.created_by === user.id) throw { statusCode: 403, message: 'Bạn tạo bộ này nên không tự trả lại được' }
       await conn.query('UPDATE export_pack SET status = \'REJECTED\', reject_reason = ? WHERE id = ?', [text.slice(0, 500), id])
     })
     return this.get(pool, id, user)

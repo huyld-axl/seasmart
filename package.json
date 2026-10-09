@@ -6,8 +6,7 @@
   "scripts": {
     "prepare": "husky",
     "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",
-    "test": "npm test --prefix backend && npm test --prefix frontend",
-    "build": "npm run build --prefix frontend"
+    "test": "npm test --prefix backend && npm test --prefix frontend"
   },
   "lint-staged": {
     "backend/**/*.js": [

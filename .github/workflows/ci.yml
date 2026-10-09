@@ -1,0 +1,53 @@
+name: MCAH CI
+on: [push, pull_request]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix backend
+      - run: npm ci --prefix frontend
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: ci-root-only-password
+          MARIADB_DATABASE: mcah_ci_test
+          MARIADB_USER: mcah_ci
+          MARIADB_PASSWORD: ci-only-db-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_USER: mcah_ci
+      DB_PASSWORD: ci-only-db-password
+      DB_NAME: mcah_ci_test
+      MCAH_INSTANCE: mcah_ci_test
+      MCAH_TEST_CONFIRM: mcah_ci_test
+      JWT_SECRET: ci-only-jwt-secret-at-least-32-characters
+      UPLOAD_DIR: ./storage/ci/uploads
+      BOOTSTRAP_ADMIN_EMAIL: admin@mcah.test
+      BOOTSTRAP_ADMIN_PASSWORD: ci-only-bootstrap-password
+      ANTHROPIC_API_KEY: ''
+      SENDGRID_API_KEY: ''
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix backend
+      - run: npm run db:migrate --prefix backend
+      - run: npm run db:bootstrap --prefix backend
+      - run: npm run test:integration --prefix backend

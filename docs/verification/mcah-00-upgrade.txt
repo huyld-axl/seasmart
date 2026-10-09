@@ -1,0 +1,9 @@
+> backend@1.0.0 test:upgrade
+> node scripts/upgrade-smoke.js
+
+Upgrade rehearsal target: mcah_00_upgrade_1791530602196_test
+MCAH target: mcah_00_upgrade_1791530602196_test; engine: 11.8.6-MariaDB-5ubuntu0.1 from Ubuntu
+APPLIED 021_mcah_instance.sql
+
+PASS upgrade of full baseline with synthetic profiles/users/documents/exports; all pre-existing data unchanged
+PASS upgraded database rerun does not replay migrations

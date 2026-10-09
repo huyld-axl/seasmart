@@ -2,6 +2,9 @@ const authService = require('../../services/auth.service')
 const config = require('../../config')
 
 async function authRoutes(fastify) {
+  fastify.addHook('onRequest', async (request, reply) => {
+    if (request.url.split('?')[0].includes('/register')) return reply.code(403).send({ error: 'MCAH: admin tạo tài khoản qua /users' })
+  })
   // POST /api/v1/auth/register
   fastify.post(
     '/register',

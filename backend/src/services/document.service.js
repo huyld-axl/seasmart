@@ -9,6 +9,7 @@ const documentPages = require('./document_pages.service')
 const documentSplitter = require('./document_splitter.service')
 const ai = require('./ai')
 const seafarerService = require('./seafarer.service')
+const seaServiceService = require('./sea_service.service')
 const { normalizeDate, normalizeRank, sameName, normalizeNumber } = require('../utils/normalize')
 const { DOC_TYPES, DOC_STATUS, OTHER_TYPE, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES } = require('../constants/document_types')
 
@@ -120,6 +121,9 @@ function shape(doc, fields, lookups = {}) {
     page_to: doc.page_to || null,
     type_source: doc.type_source || null,
     owner_mismatch: Boolean(doc.owner_mismatch),
+    owner_mismatch_confirmed: Boolean(doc.owner_mismatch_confirmed_by),
+    vessel_id: doc.vessel_id || null,
+    vessel_match_status: doc.vessel_match_status || null,
     status: doc.status,
     error: doc.error,
     published_at: doc.published_at,
@@ -441,11 +445,16 @@ const documentService = {
     await pool.query('UPDATE document_field SET value = ?, state = ?, decided_by = ?, decided_at = ? WHERE id = ?', [
       next.value, next.state, undo ? null : userId, undo ? null : new Date(), field.id,
     ])
+    await this.settle(id, doc.doc_type, userId)
+    return this.get(id)
+  },
+
+  // Tính lại trạng thái giấy từ các ô. Giấy xong thì các ô không bắt buộc duyệt được chấp nhận cùng lúc.
+  async settle(id, docType, userId) {
     const [fields] = await pool.query('SELECT field_key, state FROM document_field WHERE document_id = ?', [id])
-    const status = docStatusOf(fields, doc.doc_type)
+    const status = docStatusOf(fields, docType)
     if (status === DOC_STATUS.COMPLETED) {
-      // Ô không bắt buộc duyệt được chấp nhận cùng lúc khi các ô bắt buộc đã quyết xong.
-      const optional = (DOC_TYPES[doc.doc_type]?.fields || []).filter((spec) => spec.optional).map((spec) => spec.key)
+      const optional = (DOC_TYPES[docType]?.fields || []).filter((spec) => spec.optional).map((spec) => spec.key)
       if (optional.length) {
         await pool.query(
           'UPDATE document_field SET state = ?, decided_by = ?, decided_at = NOW() WHERE document_id = ? AND field_key IN (?) AND state = ?',
@@ -454,66 +463,233 @@ const documentService = {
       }
     }
     await pool.query('UPDATE seafarer_document SET status = ? WHERE id = ?', [status, id])
+    return status
+  },
+
+  // Chấp nhận mọi ô PROPOSED (đọc rõ) của một giấy trong một lần; ô trống và ô ngày chưa chắc để lại cho người duyệt.
+  async acceptClear(id, userId) {
+    const doc = await this.get(id)
+    if (doc.status === DOC_STATUS.PUBLISHED) throw { statusCode: 409, message: 'Giấy đã đưa vào hồ sơ, không sửa được nữa' }
+    if (doc.status === DOC_STATUS.READING || doc.status === DOC_STATUS.SKIPPED || !doc.fields.length) {
+      throw { statusCode: 409, message: 'Giấy này chưa có ô nào để chấp nhận' }
+    }
+    await pool.query('UPDATE document_field SET state = ?, decided_by = ?, decided_at = NOW() WHERE document_id = ? AND state = ? AND value <> \'\'', [
+      'ACCEPTED', userId, id, 'PROPOSED',
+    ])
+    await this.settle(id, doc.doc_type, userId)
     return this.get(id)
   },
 
-  // Đưa mọi giấy đã duyệt xong của thuyền viên vào hồ sơ: cột hồ sơ (kèm lịch sử sửa) và chứng chỉ.
+  // Lưu kết quả đối chiếu tàu của trang bố trí chức danh. vesselId null: chưa đối chiếu hoặc không tìm thấy tàu.
+  async setVessel(id, { vesselId = null, status }) {
+    const doc = await this.get(id)
+    if (doc.doc_type !== 'seaman_book_duty') throw { statusCode: 409, message: 'Chỉ trang bố trí chức danh mới đối chiếu tàu' }
+    if (doc.status === DOC_STATUS.PUBLISHED) throw { statusCode: 409, message: 'Giấy đã đưa vào hồ sơ, không sửa được nữa' }
+    let next = status
+    if (vesselId) {
+      const [[vessel]] = await pool.query('SELECT id FROM vessel WHERE id = ? AND deleted_at IS NULL', [vesselId])
+      if (!vessel) throw { statusCode: 400, message: 'Không tìm thấy tàu đã chọn' }
+      next = 'MATCHED'
+    } else if (!['NOT_CHECKED', 'NOT_FOUND'].includes(next)) {
+      next = 'NOT_CHECKED'
+    }
+    await pool.query('UPDATE seafarer_document SET vessel_id = ?, vessel_match_status = ? WHERE id = ?', [vesselId || null, next, id])
+    return this.get(id)
+  },
+
+  // Người duyệt xác nhận giấy có tên khác hồ sơ vẫn đúng người.
+  async confirmOwner(id, userId) {
+    const doc = await this.get(id)
+    if (!doc.owner_mismatch) throw { statusCode: 409, message: 'Giấy này không có cảnh báo khác người' }
+    await pool.query('UPDATE seafarer_document SET owner_mismatch_confirmed_by = ? WHERE id = ?', [userId, id])
+    return this.get(id)
+  },
+
+  // Xác nhận nhiều dòng chứng chỉ một lần. Dòng đủ loại và hạn (hoặc không thời hạn) thì mọi ô đọc rõ được chấp nhận;
+  // dòng thiếu thì bị chặn, kèm lý do, các dòng khác vẫn xác nhận.
+  async confirmCertificates(ids, userId) {
+    const confirmed = []
+    const blocked = []
+    const [types] = await pool.query('SELECT code FROM certificate_type')
+    const codes = new Set(types.map((type) => type.code))
+    for (const id of ids) {
+      const reason = await this.confirmOneCertificate(id, userId, codes)
+      if (reason) blocked.push({ id, reason })
+      else confirmed.push(id)
+    }
+    return { confirmed, blocked }
+  },
+
+  async confirmOneCertificate(id, userId, codes) {
+    const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!doc) return 'Không tìm thấy giấy'
+    if (doc.doc_type !== 'certificate') return 'Không phải chứng chỉ'
+    if (![DOC_STATUS.REVIEW_REQUIRED, DOC_STATUS.COMPLETED].includes(doc.status)) return 'Giấy chưa đọc xong hoặc đã đưa vào hồ sơ'
+    if (doc.owner_mismatch && !doc.owner_mismatch_confirmed_by) return 'Tên trên giấy khác hồ sơ, xác nhận "Vẫn đúng người" trước'
+    const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id = ?', [id])
+    const get = (key) => fields.find((field) => field.field_key === key)
+    const usable = (field) => field && ['PROPOSED', 'ACCEPTED', 'EDITED'].includes(field.state) && field.value
+    const typeCode = get('typeCode')
+    if (!usable(typeCode) || !codes.has(typeCode.value)) return 'Chưa chọn loại chứng chỉ trong danh mục'
+    const valid = get('valid')
+    const noExpiry = get('noExpiry')
+    const hasNoExpiry = usable(noExpiry) && noExpiry.value === 'true'
+    if (valid?.state === 'DATE_AMBIGUOUS') return 'Ngày hết hạn chưa chắc, sửa hoặc chấp nhận ô ngày trước'
+    if (usable(valid)) {
+      if (!toIsoDate(valid.value)) return 'Ngày hết hạn chưa đúng dạng dd/mm/yyyy'
+    } else if (!hasNoExpiry) {
+      return 'Thiếu hạn: nhập ngày hết hạn hoặc đánh dấu không thời hạn'
+    }
+    await withTransaction(pool, async (conn) => {
+      await conn.query('UPDATE document_field SET state = ?, decided_by = ?, decided_at = NOW() WHERE document_id = ? AND state = ? AND value <> \'\'', [
+        'ACCEPTED', userId, id, 'PROPOSED',
+      ])
+      // Có "không thời hạn" thì ô hạn để trống là chủ ý.
+      await conn.query('UPDATE document_field SET state = ?, decided_by = ?, decided_at = NOW() WHERE document_id = ? AND field_key = ? AND state = ?', [
+        'UNKNOWN_KEPT', userId, id, 'valid', 'UNKNOWN',
+      ])
+    })
+    await this.settle(id, doc.doc_type, userId)
+    return null
+  },
+
+  // Đưa mọi giấy đã duyệt xong của thuyền viên vào hồ sơ: cột hồ sơ (kèm lịch sử sửa), chứng chỉ và dòng đi tàu.
   async publish(seafarerId, userId) {
-    const [docs] = await pool.query(`${DOC_SELECT} WHERE d.seafarer_id = ? AND d.status = ? AND d.deleted_at IS NULL`, [seafarerId, DOC_STATUS.COMPLETED])
+    const [docs] = await pool.query(`${DOC_SELECT} WHERE d.seafarer_id = ? AND d.status = ? AND d.deleted_at IS NULL ORDER BY d.upload_id, d.page_from, d.id`, [seafarerId, DOC_STATUS.COMPLETED])
     const [[pending]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE seafarer_id = ? AND status IN (?) AND deleted_at IS NULL', [seafarerId, [DOC_STATUS.REVIEW_REQUIRED, DOC_STATUS.READING]])
     if (pending.n > 0) throw { statusCode: 409, message: 'Còn giấy chưa duyệt xong' }
+    const [[mismatch]] = await pool.query(
+      'SELECT COUNT(*) AS n FROM seafarer_document WHERE seafarer_id = ? AND owner_mismatch = 1 AND owner_mismatch_confirmed_by IS NULL AND status NOT IN (?) AND deleted_at IS NULL',
+      [seafarerId, [DOC_STATUS.PUBLISHED, DOC_STATUS.SKIPPED]]
+    )
+    if (mismatch.n > 0) throw { statusCode: 409, message: 'Có giấy mang tên khác hồ sơ chưa xác nhận. Xác nhận "Vẫn đúng người" hoặc bỏ giấy đó.' }
     if (!docs.length) throw { statusCode: 409, message: 'Không có giấy nào đã duyệt xong để đưa vào hồ sơ' }
 
     const [allFields] = await pool.query('SELECT * FROM document_field WHERE document_id IN (?)', [docs.map((doc) => doc.id)])
     const fieldsOf = (doc) => allFields.filter((field) => field.document_id === doc.id)
+    const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM `rank`')
     const profile = {}
     const certificates = []
+    const seaServices = []
     for (const doc of docs) {
       Object.assign(profile, profileChanges(doc.doc_type, fieldsOf(doc)))
-      if (DOC_TYPES[doc.doc_type]?.certificate) certificates.push(await this.certificateRow(doc, fieldsOf(doc)))
+      if (DOC_TYPES[doc.doc_type]?.certificate) certificates.push(await this.certificateRow(doc, fieldsOf(doc), certificates))
+      if (doc.doc_type === 'seaman_book_duty') seaServices.push(this.seaServiceRow(doc, fieldsOf(doc), ranks, userId))
     }
 
-    // Hồ sơ, chứng chỉ và trạng thái giấy ghi cùng một transaction: lỗi giữa chừng thì không ghi gì.
-    await withTransaction(pool, async (conn) => {
-      if (Object.keys(profile).length) {
-        await seafarerService.applyUpdate(conn, seafarerId, profile, userId, `Từ giấy tờ đã duyệt: ${docs.map((doc) => DOC_TYPES[doc.doc_type].label).join(', ')}`)
-      }
-      for (const row of certificates) {
-        await conn.query('INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?', [row, seafarerId, userId, userId])
-      }
-      const [done] = await conn.query('UPDATE seafarer_document SET status = ?, published_at = NOW(), published_by = ? WHERE id IN (?) AND status = ?', [DOC_STATUS.PUBLISHED, userId, docs.map((doc) => doc.id), DOC_STATUS.COMPLETED])
-      // Bấm hai lần cùng lúc: lần sau không thấy giấy COMPLETED nào nữa thì huỷ, tránh ghi chứng chỉ hai lần.
-      if (done.affectedRows !== docs.length) throw { statusCode: 409, message: 'Giấy vừa thay đổi, tải lại trang rồi thử lại' }
-    })
-    return { documents: docs.length, profile_fields: Object.keys(profile), certificates: certificates.length }
+    // Hồ sơ, chứng chỉ, dòng đi tàu và trạng thái giấy ghi cùng một transaction: lỗi giữa chừng thì không ghi gì.
+    try {
+      await withTransaction(pool, async (conn) => {
+        if (Object.keys(profile).length) {
+          await seafarerService.applyUpdate(conn, seafarerId, profile, userId, `Từ giấy tờ đã duyệt: ${docs.map((doc) => DOC_TYPES[doc.doc_type].label).join(', ')}`)
+        }
+        for (const row of certificates) {
+          await conn.query('INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?', [row, seafarerId, userId, userId])
+        }
+        for (const row of seaServices) await seaServiceService.insertFromDocument(conn, { ...row, seafarer_id: seafarerId })
+        const [done] = await conn.query('UPDATE seafarer_document SET status = ?, published_at = NOW(), published_by = ? WHERE id IN (?) AND status = ?', [DOC_STATUS.PUBLISHED, userId, docs.map((doc) => doc.id), DOC_STATUS.COMPLETED])
+        // Bấm hai lần cùng lúc: lần sau không thấy giấy COMPLETED nào nữa thì huỷ, tránh ghi chứng chỉ và chuyến đi tàu hai lần.
+        if (done.affectedRows !== docs.length) throw { statusCode: 409, message: 'Giấy vừa thay đổi, tải lại trang rồi thử lại' }
+      })
+    } catch (err) {
+      if (err?.code === 'ER_DUP_ENTRY') throw { statusCode: 409, message: 'Hồ sơ đã có dữ liệu trùng với giấy này (cùng loại và cùng ngày cấp, hoặc giấy đã đưa vào hồ sơ). Tải lại trang rồi thử lại.' }
+      throw err
+    }
+    return { documents: docs.length, profile_fields: Object.keys(profile), certificates: certificates.length, sea_services: seaServices.length }
   },
 
-  async certificateRow(doc, fields) {
+  // Một giấy chứng chỉ đã duyệt → một dòng seafarer_certificate. Chỉ bắt buộc loại (hoặc tên trên giấy) và hạn (hoặc không thời hạn).
+  // batch: các dòng chứng chỉ cùng đợt đưa vào hồ sơ, để bắt trùng giữa các giấy với nhau.
+  async certificateRow(doc, fields, batch = []) {
     const pick = (key) => {
       const field = fields.find((item) => item.field_key === key)
       return field && ['ACCEPTED', 'EDITED'].includes(field.state) ? field.value : ''
     }
+    const name = doc.file_name
     const code = pick('typeCode')
-    const issued = toIsoDate(pick('issuedOn'))
-    if (!code || !issued) throw { statusCode: 400, message: `${doc.file_name}: chứng chỉ cần có "Loại chứng chỉ trong danh mục" và "Cấp ngày" trước khi đưa vào hồ sơ` }
-    const [[type]] = await pool.query('SELECT id FROM certificate_type WHERE code = ?', [code])
-    if (!type) throw { statusCode: 400, message: `${doc.file_name}: mã loại chứng chỉ "${code}" không có trong danh mục` }
-    if (pick('no').length > 100) throw { statusCode: 400, message: `${doc.file_name}: số chứng chỉ dài quá 100 ký tự` }
-    const [[dup]] = await pool.query(
-      'SELECT id FROM seafarer_certificate WHERE seafarer_id = ? AND certificate_type_id = ? AND issued_date = ?',
-      [doc.seafarer_id, type.id, issued]
-    )
-    if (dup) throw { statusCode: 409, message: `${doc.file_name}: hồ sơ đã có chứng chỉ này (cùng loại, cùng ngày cấp). Bỏ giấy hoặc sửa ngày cấp.` }
+    const nameRaw = pick('nameRaw').slice(0, 200)
+    let typeId = null
+    if (code) {
+      const [[type]] = await pool.query('SELECT id FROM certificate_type WHERE code = ?', [code])
+      if (!type) throw { statusCode: 400, message: `${name}: mã loại chứng chỉ "${code}" không có trong danh mục` }
+      typeId = type.id
+    } else if (!nameRaw) {
+      throw { statusCode: 400, message: `${name}: chứng chỉ cần có "Loại chứng chỉ trong danh mục" hoặc tên chứng chỉ trên giấy trước khi đưa vào hồ sơ` }
+    }
+
     const expiry = pick('valid') ? toIsoDate(pick('valid')) : null
-    if (pick('valid') && !expiry) throw { statusCode: 400, message: `${doc.file_name}: ô "Có giá trị đến" chưa đúng dạng ngày dd/mm/yyyy` }
+    if (pick('valid') && !expiry) throw { statusCode: 400, message: `${name}: ô "Có giá trị đến" chưa đúng dạng ngày dd/mm/yyyy` }
+    const noExpiry = !expiry && pick('noExpiry') === 'true'
+    if (!expiry && !noExpiry) throw { statusCode: 400, message: `${name}: chứng chỉ cần có hạn hoặc đánh dấu không thời hạn trước khi đưa vào hồ sơ` }
+    const issued = pick('issuedOn') ? toIsoDate(pick('issuedOn')) : null
+    if (pick('issuedOn') && !issued) throw { statusCode: 400, message: `${name}: ô "Cấp ngày" chưa đúng dạng ngày dd/mm/yyyy` }
+    const number = pick('no')
+    if (number.length > 100) throw { statusCode: 400, message: `${name}: số chứng chỉ dài quá 100 ký tự` }
+
+    // Trùng: cùng loại và cùng số, hoặc cùng loại và cùng hạn (với hồ sơ đang có và với các giấy cùng đợt).
+    if (typeId) {
+      const same = (row) => row.certificate_type_id === typeId &&
+        ((number && row.certificate_number === number) || (expiry && row.expiry_date === expiry))
+      const [existing] = await pool.query(
+        `SELECT certificate_type_id, certificate_number, DATE_FORMAT(expiry_date, '%Y-%m-%d') AS expiry_date
+         FROM seafarer_certificate WHERE seafarer_id = ? AND certificate_type_id = ? AND deleted_at IS NULL`,
+        [doc.seafarer_id, typeId]
+      )
+      if (existing.some(same) || batch.some(same)) {
+        throw { statusCode: 409, message: `${name}: hồ sơ đã có chứng chỉ này (cùng loại và cùng số hoặc cùng hạn). Bỏ giấy hoặc sửa số, hạn.` }
+      }
+    }
     return {
-      certificate_type_id: type.id,
-      certificate_number: pick('no') || null,
+      certificate_type_id: typeId,
+      certificate_name_raw: nameRaw || null,
+      certificate_number: number || null,
       issued_date: issued,
       expiry_date: expiry,
-      issued_by: pick('issuer') || null,
+      no_expiry: noExpiry ? 1 : 0,
+      issued_by: pick('issuer').slice(0, 200) || null,
+      holder_name_raw: pick('holder').slice(0, 150) || null,
+      source_document_id: doc.id,
       status: expiry && expiry < new Date().toISOString().slice(0, 10) ? 'EXPIRED' : 'VALID',
-      notes: `Từ giấy tờ đã duyệt: ${doc.file_name}`,
+      notes: `Từ giấy tờ đã duyệt: ${name}`,
+    }
+  },
+
+  // Một trang bố trí chức danh đã duyệt → một dòng sea_service (chữ gốc, chức danh chuẩn hoá bằng code, đối chiếu tàu lấy từ giấy).
+  seaServiceRow(doc, fields, ranks, userId) {
+    const pick = (key) => {
+      const field = fields.find((item) => item.field_key === key)
+      return field && ['ACCEPTED', 'EDITED'].includes(field.state) ? field.value : ''
+    }
+    const name = doc.file_name
+    const date = (key, label) => {
+      const value = pick(key)
+      if (!value) return null
+      const iso = toIsoDate(value)
+      if (!iso) throw { statusCode: 400, message: `${name}: ô "${label}" chưa đúng dạng ngày dd/mm/yyyy` }
+      return iso
+    }
+    const ship = pick('ship')
+    const rank = pick('rank')
+    if (!ship && !rank) throw { statusCode: 400, message: `${name}: trang bố trí chức danh cần có tên tàu hoặc chức danh trước khi đưa vào hồ sơ` }
+    return {
+      document_id: doc.id,
+      vessel_name_raw: ship || null,
+      vessel_type_raw: pick('type') || null,
+      flag_raw: pick('flag') || null,
+      gross_tonnage_raw: pick('gt') || null,
+      engine_power_raw: pick('kw') || null,
+      owner_raw: pick('owner') || null,
+      vessel_id: doc.vessel_id || null,
+      vessel_match_status: doc.vessel_id ? 'MATCHED' : doc.vessel_match_status || 'NOT_CHECKED',
+      rank_raw: rank || null,
+      rank_id: rank ? normalizeRank(rank, ranks)?.id ?? null : null,
+      coc_number: pick('coc') || null,
+      sign_on_date: date('onDate', 'Ngày xuống tàu'),
+      sign_on_port: pick('onPort') || null,
+      sign_off_date: date('offDate', 'Ngày rời tàu'),
+      sign_off_port: pick('offPort') || null,
+      created_by: userId,
+      updated_by: userId,
     }
   },
 

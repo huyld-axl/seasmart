@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { createRequire } from 'module'
 
 const require = createRequire(import.meta.url)
-const { sniffMime, toIsoDate, applyAction, docStatusOf, profileChanges } = require('../document.service')
+const { documentService, sniffMime, toIsoDate, applyAction, docStatusOf, profileChanges } = require('../document.service')
+const pool = require('../../config/db')
 const { normalizeExtraction } = require('../document_reader.service')
 
 describe('document helpers', () => {
@@ -76,5 +77,81 @@ describe('document helpers', () => {
     expect(out.fields[1]).toMatchObject({ value: '', state: 'UNKNOWN' })
     expect(out.fields[2]).toMatchObject({ state: 'UNKNOWN', note: null })
     expect(normalizeExtraction({ doc_type: 'other', fields: [] }).doc_type).toBeNull()
+  })
+})
+
+describe('dòng chứng chỉ và dòng đi tàu từ giấy đã duyệt', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  const doc = { id: 7, seafarer_id: 1, file_name: 'cc.pdf' }
+  const accepted = (key, value) => ({ field_key: key, value, state: 'ACCEPTED' })
+  // Bảng tra giả: BST có trong danh mục (id 5); hồ sơ đang có sẵn `existing`.
+  const mockPool = (existing = []) => vi.spyOn(pool, 'query').mockImplementation(async (sql) => {
+    if (sql.includes('FROM certificate_type')) return [[{ id: 5 }]]
+    if (sql.includes('FROM seafarer_certificate')) return [existing]
+    return [[]]
+  })
+
+  it('không cần ngày cấp: chỉ cần loại và hạn', async () => {
+    mockPool()
+    const row = await documentService.certificateRow(doc, [accepted('typeCode', 'BST'), accepted('valid', '14/03/2028')])
+    expect(row).toMatchObject({ certificate_type_id: 5, issued_date: null, expiry_date: '2028-03-14', no_expiry: 0, source_document_id: 7 })
+  })
+
+  it('không thời hạn: hạn null, no_expiry bật', async () => {
+    mockPool()
+    const row = await documentService.certificateRow(doc, [accepted('typeCode', 'BST'), accepted('noExpiry', 'true')])
+    expect(row).toMatchObject({ expiry_date: null, no_expiry: 1, status: 'VALID' })
+  })
+
+  it('thiếu cả hạn lẫn không thời hạn thì chặn', async () => {
+    mockPool()
+    await expect(documentService.certificateRow(doc, [accepted('typeCode', 'BST'), accepted('noExpiry', 'false')])).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('không thời hạn') })
+  })
+
+  it('không khớp danh mục: lưu tên trên giấy, loại để trống; không có cả hai thì chặn', async () => {
+    mockPool()
+    const row = await documentService.certificateRow(doc, [accepted('nameRaw', 'Ship Security Awareness'), accepted('valid', '01/01/2030')])
+    expect(row).toMatchObject({ certificate_type_id: null, certificate_name_raw: 'Ship Security Awareness' })
+    await expect(documentService.certificateRow(doc, [accepted('valid', '01/01/2030')])).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('mã loại không có trong danh mục thì chặn', async () => {
+    vi.spyOn(pool, 'query').mockResolvedValue([[]])
+    await expect(documentService.certificateRow(doc, [accepted('typeCode', 'KHONGCO'), accepted('valid', '01/01/2030')])).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('trùng: cùng loại và cùng số, hoặc cùng loại và cùng hạn; khác cả hai thì cho qua', async () => {
+    const existing = [{ certificate_type_id: 5, certificate_number: 'A-1', expiry_date: '2028-03-14' }]
+    mockPool(existing)
+    const fields = (no, valid) => [accepted('typeCode', 'BST'), accepted('no', no), accepted('valid', valid)]
+    await expect(documentService.certificateRow(doc, fields('A-1', '01/01/2031'))).rejects.toMatchObject({ statusCode: 409 })
+    await expect(documentService.certificateRow(doc, fields('B-2', '14/03/2028'))).rejects.toMatchObject({ statusCode: 409 })
+    await expect(documentService.certificateRow(doc, fields('B-2', '01/01/2031'))).resolves.toMatchObject({ certificate_number: 'B-2' })
+  })
+
+  it('trùng giữa hai giấy cùng đợt đưa vào hồ sơ', async () => {
+    mockPool()
+    const first = await documentService.certificateRow(doc, [accepted('typeCode', 'BST'), accepted('no', 'X-9'), accepted('valid', '01/01/2031')])
+    await expect(documentService.certificateRow(doc, [accepted('typeCode', 'BST'), accepted('no', 'X-9'), accepted('valid', '02/02/2032')], [first]))
+      .rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('dòng đi tàu: chữ gốc, chức danh chuẩn hoá bằng code, ngày rời tàu trống thì null', () => {
+    const ranks = [{ id: 18, code: 'OLR', name_vi: 'Thợ máy', name_en: 'Oiler' }]
+    const fields = [
+      accepted('ship', 'ATAYAL STAR'), accepted('rank', 'Oiler'), accepted('onPort', 'Singapore'), accepted('onDate', '04/01/2016'),
+      { field_key: 'offDate', value: '', state: 'UNKNOWN_KEPT' }, { field_key: 'coc', value: 'VN-123', state: 'PROPOSED' },
+    ]
+    const row = documentService.seaServiceRow({ ...doc, id: 9, vessel_id: null, vessel_match_status: null }, fields, ranks, 3)
+    expect(row).toMatchObject({
+      document_id: 9, vessel_name_raw: 'ATAYAL STAR', rank_raw: 'Oiler', rank_id: 18, sign_on_date: '2016-01-04', sign_off_date: null,
+      vessel_match_status: 'NOT_CHECKED', coc_number: null, created_by: 3,
+    })
+  })
+
+  it('dòng đi tàu thiếu cả tên tàu lẫn chức danh, hoặc ngày sai thì chặn', () => {
+    expect(() => documentService.seaServiceRow(doc, [accepted('onDate', '04/01/2016')], [], 1)).toThrow()
+    expect(() => documentService.seaServiceRow(doc, [accepted('ship', 'A'), accepted('onDate', '04/01/16')], [], 1)).toThrow()
   })
 })

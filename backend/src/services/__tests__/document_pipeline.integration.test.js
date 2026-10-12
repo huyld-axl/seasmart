@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url)
 const DB_NAME = process.env.INTEGRATION_DB_NAME
 const enabled = Boolean(DB_NAME) && DB_NAME !== 'marineport'
 
-let pool, ai, documentService, makePdf, sharp, uploadDir
+let pool, ai, documentService, seaService, makePdf, sharp, uploadDir
 
 const asFile = (buffer, filename) => ({ toBuffer: async () => buffer, filename, file: { truncated: false } })
 
@@ -48,24 +48,47 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     const [[db]] = await pool.query('SELECT DATABASE() AS name')
     if (db.name !== DB_NAME) throw new Error(`Đang nối nhầm DB ${db.name}`)
     ai = require('../ai')
+    seaService = require('../sea_service.service')
     ;({ documentService } = require('../document.service'))
     ;({ makePdf } = require('../../../test_support/make_pdf'))
     sharp = require('sharp')
     const [[row]] = await pool.query('SELECT id, full_name, full_name_en FROM seafarer WHERE deleted_at IS NULL ORDER BY id LIMIT 1')
     seafarerId = row.id
     seafarer = row
+    // Người dùng thao tác (id 1): DB kiểm không có sẵn, các cột created_by/updated_by có khoá ngoại tới đây.
+    await pool.query("INSERT IGNORE INTO user (id, email, password_hash, role) VALUES (1, 'integration-test@example.invalid', 'x', 'admin')")
     await cleanup()
   })
 
+  // Dọn dữ liệu của test. Việc đọc chạy nền của test trước có thể còn dang dở: đợi nó xong rồi xoá, thử lại nếu vướng khoá ngoại.
   async function cleanup() {
-    await pool.query('DELETE f FROM document_field f JOIN seafarer_document d ON d.id = f.document_id WHERE d.seafarer_id = ?', [seafarerId])
-    await pool.query('DELETE FROM ai_call')
-    await pool.query('DELETE FROM seafarer_document WHERE seafarer_id = ?', [seafarerId])
-    await pool.query('DELETE p FROM document_upload_page p JOIN document_upload u ON u.id = p.upload_id WHERE u.seafarer_id = ?', [seafarerId])
-    await pool.query('DELETE FROM document_upload WHERE seafarer_id = ?', [seafarerId])
+    const deadline = Date.now() + 5000
+    for (;;) {
+      const [[busy]] = await pool.query("SELECT COUNT(*) AS n FROM seafarer_document WHERE seafarer_id = ? AND status = 'READING'", [seafarerId])
+      if (!busy.n || Date.now() > deadline) break
+      await new Promise((resolve) => setTimeout(resolve, 50))
+    }
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        await pool.query('DELETE f FROM document_field f JOIN seafarer_document d ON d.id = f.document_id WHERE d.seafarer_id = ?', [seafarerId])
+        await pool.query('DELETE FROM ai_call')
+        await pool.query('DELETE FROM sea_service WHERE seafarer_id = ?', [seafarerId])
+        await pool.query('DELETE FROM seafarer_certificate WHERE seafarer_id = ? AND source_document_id IS NOT NULL', [seafarerId])
+        await pool.query('DELETE FROM seafarer_document WHERE seafarer_id = ?', [seafarerId])
+        await pool.query('DELETE p FROM document_upload_page p JOIN document_upload u ON u.id = p.upload_id WHERE u.seafarer_id = ?', [seafarerId])
+        await pool.query('DELETE FROM document_upload WHERE seafarer_id = ?', [seafarerId])
+        return
+      } catch (err) {
+        if (attempt >= 3) throw err
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+    }
   }
 
-  beforeEach(() => vi.restoreAllMocks())
+  beforeEach(async () => {
+    vi.restoreAllMocks()
+    await cleanup()
+  })
 
   afterAll(async () => {
     vi.restoreAllMocks()
@@ -94,6 +117,8 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
       return { data, model: 'fake-model', usage: { input: 100, output: 10 }, requestId: 'req_test', latencyMs: 5 }
     })
   }
+
+  const f = (key, value, extra = {}) => ({ key, raw: value, value, state: value ? 'PROPOSED' : 'UNKNOWN', note: '', ...extra })
 
   const finished = (id) => async () => ['DONE', 'FAILED'].includes((await documentService.getUpload(id)).status)
 
@@ -150,7 +175,6 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
   })
 
   it('đọc theo loại: trang chức danh ra 12 ô kèm chức danh chuẩn hoá, chứng chỉ ra khuôn nhẹ, cảnh báo giấy của người khác', async () => {
-    const f = (key, value, extra = {}) => ({ key, raw: value, value, state: value ? 'PROPOSED' : 'UNKNOWN', note: '', ...extra })
     const byTask = {
       book_info: { page_label: 'Trang 1', fields: [f('no', 'VN-0001'), f('name', 'NGUYEN VAN KHAC'), f('dob', '04.1.1990', { value: '04/01/1990' })] },
       book_duty: {
@@ -195,6 +219,176 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     const done = await documentService.decide(cert.id, 'valid', 'accept', undefined, 1)
     expect(done.status).toBe('COMPLETED')
     expect(done.fields.find((x) => x.key === 'no')).toMatchObject({ state: 'ACCEPTED', value: 'BT-10234' })
+  })
+
+  // Một PDF trộn: sổ (thông tin + 2 trang chức danh), chứng chỉ hai mặt, chứng chỉ không khớp danh mục và không thời hạn,
+  // chứng chỉ thứ ba, một trang khác. Đi hết đường tải lên → cắt trang → tách → đọc → duyệt → đưa vào hồ sơ.
+  async function runMixedPdf({ holderOf = () => seafarer.full_name } = {}) {
+    const layout = [
+      'seaman_book_info', 'seaman_book_duty', 'seaman_book_duty', ['certificate', 1], ['certificate', 1], ['certificate', 2], ['certificate', 3], ['other', 4],
+    ]
+    let dutyCalls = 0
+    let singles = 0
+    fakeAi({
+      split: (page) => layout[page - 1],
+      read: (args) => {
+        if (args.task === 'book_info') return { page_label: 'Trang 1', fields: [f('no', 'VN-0001'), f('name', seafarer.full_name)] }
+        if (args.task === 'book_duty') {
+          dutyCalls += 1
+          return dutyCalls === 1
+            ? { page_label: 'T2', fields: [f('ship', 'ATAYAL STAR'), f('rank', 'OLR'), f('onPort', 'Singapore'), f('onDate', '04.1.2016'), f('offPort', 'Busan'), f('offDate', '02/08/2016')] }
+            : { page_label: 'T3', fields: [f('ship', 'SEA LION'), f('rank', 'Bosun 1st'), f('onPort', 'Hai Phong'), f('onDate', '10-FEB-2024'), f('offPort', ''), f('offDate', '')] }
+        }
+        // certificate: gọi theo số ảnh của giấy: hai mặt = 2 ảnh
+        const pageCount = args.images.length
+        if (pageCount === 2) return { page_label: '2 mặt', fields: [f('typeCode', 'BASIC_TRAINING'), f('nameRaw', 'Basic Safety Training'), f('valid', '14/03/2028'), f('noExpiry', 'false'), f('no', 'BT-10234'), f('holder', holderOf('cert1'))] }
+        singles += 1
+        return singles === 1
+          ? { page_label: '1 trang', fields: [f('typeCode', ''), f('nameRaw', 'Ship Security Awareness'), f('valid', ''), f('noExpiry', 'true'), f('holder', holderOf('cert2'))] }
+          : { page_label: '1 trang', fields: [f('typeCode', 'PSCRB'), f('valid', '02/11/2030'), f('noExpiry', 'false'), f('no', 'G-5521'), f('holder', holderOf('cert3'))] }
+      },
+    })
+    const upload = await documentService.upload(seafarerId, asFile(uniquePdf(Array.from({ length: 8 }, (_, i) => `Trang ${i + 1}`)), 'tron.pdf'), 1)
+    await waitFor(finished(upload.id), 'upload xong')
+    return { upload, docs: (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id) }
+  }
+  it('luồng đầy đủ với PDF trộn: ra đúng số dòng đi tàu và chứng chỉ, bấm đưa vào hồ sơ hai lần không tạo trùng', async () => {
+    const { docs } = await runMixedPdf()
+    expect(docs.map((d) => d.doc_type)).toEqual(['seaman_book_info', 'seaman_book_duty', 'seaman_book_duty', 'certificate', 'certificate', 'certificate', 'other'])
+    const [info, duty1, duty2, cert1, cert2, cert3, other] = docs
+    expect(other.status).toBe('SKIPPED')
+    expect(duty1.fields.find((x) => x.key === 'onDate').value).toBe('04/01/2016')
+
+    // Chưa duyệt xong thì chưa đưa vào hồ sơ được.
+    await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('chưa duyệt xong') })
+
+    // Sổ: chấp nhận các ô đọc rõ, ô còn lại (trống) giữ trống. Đối chiếu tàu lưu vào giấy.
+    const [[vessel]] = await pool.query('SELECT id FROM vessel WHERE deleted_at IS NULL LIMIT 1')
+    let vesselId = vessel?.id
+    if (!vesselId) {
+      const [created] = await pool.query("INSERT INTO vessel (vessel_name) VALUES ('ATAYAL STAR (test)')")
+      vesselId = created.insertId
+    }
+    for (const doc of [info, duty1, duty2]) {
+      const accepted = await documentService.acceptClear(doc.id, 1)
+      for (const field of accepted.fields.filter((x) => ['UNKNOWN', 'DATE_AMBIGUOUS'].includes(x.state))) {
+        await documentService.decide(doc.id, field.key, 'keepUnknown', undefined, 1)
+      }
+    }
+    expect((await documentService.get(duty1.id)).status).toBe('COMPLETED')
+    expect(await documentService.setVessel(duty1.id, { vesselId })).toMatchObject({ vessel_match_status: 'MATCHED' })
+    await expect(documentService.setVessel(info.id, { vesselId })).rejects.toMatchObject({ statusCode: 409 })
+
+    // Chứng chỉ: xác nhận hàng loạt. Dòng không khớp danh mục bị chặn kèm lý do, hai dòng còn lại được xác nhận.
+    const result = await documentService.confirmCertificates([cert1.id, cert2.id, cert3.id], 1)
+    expect(result.confirmed).toEqual([cert1.id, cert3.id])
+    expect(result.blocked).toEqual([{ id: cert2.id, reason: expect.stringContaining('loại chứng chỉ') }])
+    // Người duyệt giữ "không khớp danh mục" và xác nhận không thời hạn bằng tay: loại để trống, lưu tên trên giấy.
+    await documentService.decide(cert2.id, 'typeCode', 'keepUnknown', undefined, 1)
+    await documentService.decide(cert2.id, 'noExpiry', 'accept', undefined, 1)
+    await documentService.decide(cert2.id, 'valid', 'keepUnknown', undefined, 1)
+    expect((await documentService.get(cert2.id)).status).toBe('COMPLETED')
+
+    const first = await documentService.publish(seafarerId, 1)
+    expect(first).toMatchObject({ documents: 6, certificates: 3, sea_services: 2 })
+    // Hai lần liền nhau: lần hai không còn giấy nào, không ghi thêm gì.
+    await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409 })
+
+    const services = await seaService.list(seafarerId)
+    expect(services.map((s) => [s.vessel_name_raw, s.rank_raw, s.rank_code, s.sign_on_date, s.sign_off_date, s.vessel_match_status, s.source_type])).toEqual([
+      ['ATAYAL STAR', 'OLR', 'OLR', '2016-01-04', '2016-08-02', 'MATCHED', 'DOCUMENT'],
+      ['SEA LION', 'Bosun 1st', null, '2024-02-10', null, 'NOT_CHECKED', 'DOCUMENT'],
+    ])
+    expect(services[0].vessel_id).toBe(vesselId)
+    const [certs] = await pool.query(
+      `SELECT sc.certificate_type_id, sc.certificate_name_raw, sc.certificate_number, DATE_FORMAT(sc.expiry_date, '%Y-%m-%d') AS expiry,
+              sc.no_expiry, sc.issued_date, sc.holder_name_raw, sc.status, ct.code
+       FROM seafarer_certificate sc LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
+       WHERE sc.seafarer_id = ? AND sc.source_document_id IS NOT NULL ORDER BY sc.source_document_id`,
+      [seafarerId]
+    )
+    expect(certs).toHaveLength(3)
+    expect(certs[0]).toMatchObject({ code: 'BASIC_TRAINING', certificate_number: 'BT-10234', expiry: '2028-03-14', no_expiry: 0, issued_date: null, status: 'VALID' })
+    expect(certs[1]).toMatchObject({ certificate_type_id: null, certificate_name_raw: 'Ship Security Awareness', expiry: null, no_expiry: 1 })
+    expect(certs[2]).toMatchObject({ code: 'PSCRB', expiry: '2030-11-02' })
+    const [[counts]] = await pool.query('SELECT (SELECT COUNT(*) FROM sea_service WHERE seafarer_id = ?) AS ss', [seafarerId])
+    expect(counts.ss).toBe(2)
+
+    // Giấy đã vào hồ sơ không đổi loại, không gom lại, không xoá được.
+    const after = await documentService.list(seafarerId)
+    expect(after.filter((d) => d.status === 'PUBLISHED')).toHaveLength(6)
+    await expect(documentService.retype(duty1.id, 'other')).rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('giấy mang tên khác hồ sơ chặn đưa vào hồ sơ đến khi xác nhận "Vẫn đúng người"', async () => {
+    const { docs } = await runMixedPdf({ holderOf: (which) => (which === 'cert1' ? 'NGUYEN VAN NGUOI KHAC' : seafarer.full_name) })
+    const [info, duty1, duty2, cert1, cert2, cert3] = docs
+    expect(cert1.owner_mismatch).toBe(true)
+    for (const doc of [info, duty1, duty2]) {
+      const accepted = await documentService.acceptClear(doc.id, 1)
+      for (const field of accepted.fields.filter((x) => ['UNKNOWN', 'DATE_AMBIGUOUS'].includes(x.state))) await documentService.decide(doc.id, field.key, 'keepUnknown', undefined, 1)
+    }
+    // Dòng khác người bị chặn khi xác nhận hàng loạt (cert3 vẫn xác nhận được).
+    const blocked = await documentService.confirmCertificates([cert1.id, cert3.id], 1)
+    expect(blocked.confirmed).toEqual([cert3.id])
+    expect(blocked.blocked[0]).toMatchObject({ id: cert1.id, reason: expect.stringContaining('Vẫn đúng người') })
+    await documentService.decide(cert2.id, 'typeCode', 'keepUnknown', undefined, 1)
+    await documentService.decide(cert2.id, 'noExpiry', 'accept', undefined, 1)
+    await documentService.decide(cert2.id, 'valid', 'keepUnknown', undefined, 1)
+    // Duyệt từng ô thì giấy khác người vẫn xong được, nhưng đưa vào hồ sơ thì bị chặn cho đến khi xác nhận.
+    for (const key of ['typeCode', 'valid', 'noExpiry']) await documentService.decide(cert1.id, key, 'accept', undefined, 1)
+    expect((await documentService.get(cert1.id)).status).toBe('COMPLETED')
+
+    await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('tên khác hồ sơ') })
+    await expect(documentService.confirmOwner(cert2.id, 1)).rejects.toMatchObject({ statusCode: 409 })
+    expect(await documentService.confirmOwner(cert1.id, 1)).toMatchObject({ owner_mismatch: true, owner_mismatch_confirmed: true })
+    expect(await documentService.publish(seafarerId, 1)).toMatchObject({ certificates: 3, sea_services: 2 })
+  })
+
+  it('chứng chỉ trùng loại và số (hoặc loại và hạn) với hồ sơ đang có thì chặn, không ghi gì', async () => {
+    const [[type]] = await pool.query("SELECT id FROM certificate_type WHERE code = 'BASIC_TRAINING'")
+    await pool.query(
+      "INSERT INTO seafarer_certificate (seafarer_id, certificate_type_id, certificate_number, issued_date, expiry_date) VALUES (?, ?, 'BT-10234', '2010-01-01', '2020-01-01')",
+      [seafarerId, type.id]
+    )
+    try {
+      const { docs } = await runMixedPdf()
+      for (const doc of docs.filter((d) => d.doc_type !== 'other')) {
+        if (doc.doc_type === 'certificate') continue
+        const accepted = await documentService.acceptClear(doc.id, 1)
+        for (const field of accepted.fields.filter((x) => ['UNKNOWN', 'DATE_AMBIGUOUS'].includes(x.state))) await documentService.decide(doc.id, field.key, 'keepUnknown', undefined, 1)
+      }
+      const certs = docs.filter((d) => d.doc_type === 'certificate')
+      await documentService.confirmCertificates(certs.map((d) => d.id), 1)
+      await documentService.decide(certs[1].id, 'typeCode', 'keepUnknown', undefined, 1)
+      await documentService.decide(certs[1].id, 'noExpiry', 'accept', undefined, 1)
+      await documentService.decide(certs[1].id, 'valid', 'keepUnknown', undefined, 1)
+      await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('đã có chứng chỉ này') })
+      const [[after]] = await pool.query('SELECT (SELECT COUNT(*) FROM sea_service WHERE seafarer_id = ?) AS ss, (SELECT COUNT(*) FROM seafarer_certificate WHERE seafarer_id = ? AND source_document_id IS NOT NULL) AS sc, (SELECT COUNT(*) FROM seafarer_document WHERE seafarer_id = ? AND status = ?) AS pub', [seafarerId, seafarerId, seafarerId, 'PUBLISHED'])
+      expect(after).toMatchObject({ ss: 0, sc: 0, pub: 0 })
+    } finally {
+      await pool.query("DELETE FROM seafarer_certificate WHERE seafarer_id = ? AND certificate_number = 'BT-10234' AND source_document_id IS NULL", [seafarerId])
+    }
+  })
+
+  it('lịch sử đi tàu: nhập tay, sửa và xoá bắt buộc lý do và ghi vào lịch sử hồ sơ', async () => {
+    const created = await seaService.create(seafarerId, { vessel_name_raw: 'MV TEST', rank_raw: '3/E', sign_on_date: '2023-05-01', sign_on_port: 'Hai Phong' }, 1)
+    expect(created).toMatchObject({ source_type: 'MANUAL', rank_code: '3E', sign_on_date: '2023-05-01', sign_off_date: null, vessel_match_status: 'NOT_CHECKED' })
+    await expect(seaService.create(seafarerId, { sign_on_port: 'x' }, 1)).rejects.toMatchObject({ statusCode: 400 })
+    await expect(seaService.create(seafarerId, { vessel_name_raw: 'A', sign_on_date: '2023-02-30' }, 1)).rejects.toMatchObject({ statusCode: 400 })
+
+    await expect(seaService.update(created.id, { sign_off_date: '2023-11-01' }, '  ', 1)).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('lý do') })
+    const updated = await seaService.update(created.id, { sign_off_date: '2023-11-01', sign_off_port: 'Busan' }, 'Bổ sung ngày rời tàu', 1)
+    expect(updated).toMatchObject({ sign_off_date: '2023-11-01', sign_off_port: 'Busan' })
+    const [revisions] = await pool.query('SELECT reason, changes FROM seafarer_revision WHERE seafarer_id = ? ORDER BY id DESC LIMIT 1', [seafarerId])
+    expect(revisions[0].reason).toBe('Bổ sung ngày rời tàu')
+    const changes = typeof revisions[0].changes === 'string' ? JSON.parse(revisions[0].changes) : revisions[0].changes
+    expect(changes[`sea_service#${created.id}.sign_off_date`]).toEqual([null, '2023-11-01'])
+
+    await expect(seaService.remove(created.id, '', 1)).rejects.toMatchObject({ statusCode: 400 })
+    await seaService.remove(created.id, 'Nhập nhầm', 1)
+    expect(await seaService.list(seafarerId)).toHaveLength(0)
+    await expect(seaService.get(created.id)).rejects.toMatchObject({ statusCode: 404 })
   })
 
   it('đổi loại giấy thì đọc lại theo loại mới; đổi sang "Khác" thì không đọc; không đổi được giấy đã vào hồ sơ', async () => {

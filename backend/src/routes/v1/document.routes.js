@@ -86,6 +86,18 @@ async function documentRoutes(fastify) {
   fastify.post('/seafarer/:seafarerId/publish', { ...guard, schema: { params: seafarerParams } }, async (request) =>
     documentService.publish(request.params.seafarerId, request.user.id))
 
+  fastify.post('/certificates/confirm', {
+    ...guard,
+    schema: {
+      body: {
+        type: 'object',
+        required: ['ids'],
+        additionalProperties: false,
+        properties: { ids: { type: 'array', minItems: 1, maxItems: 100, uniqueItems: true, items: { type: 'integer', minimum: 1 } } },
+      },
+    },
+  }, async (request) => documentService.confirmCertificates(request.body.ids, request.user.id))
+
   fastify.get('/:id', { ...guard, schema: { params: idParams } }, async (request) => documentService.get(request.params.id))
 
   fastify.get('/:id/file', { ...guard, schema: { params: idParams } }, async (request, reply) => {
@@ -118,6 +130,27 @@ async function documentRoutes(fastify) {
       body: { type: 'object', required: ['docType'], additionalProperties: false, properties: { docType: { type: 'string', maxLength: 40 } } },
     },
   }, async (request) => documentService.retype(request.params.id, request.body.docType))
+
+  fastify.post('/:id/accept-clear', { ...guard, schema: { params: idParams } }, async (request) =>
+    documentService.acceptClear(request.params.id, request.user.id))
+
+  fastify.put('/:id/vessel', {
+    ...guard,
+    schema: {
+      params: idParams,
+      body: {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          vesselId: { type: ['integer', 'null'], minimum: 1 },
+          status: { type: 'string', enum: ['NOT_CHECKED', 'MATCHED', 'NOT_FOUND'] },
+        },
+      },
+    },
+  }, async (request) => documentService.setVessel(request.params.id, request.body))
+
+  fastify.post('/:id/confirm-owner', { ...guard, schema: { params: idParams } }, async (request) =>
+    documentService.confirmOwner(request.params.id, request.user.id))
 
   fastify.post('/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => documentService.retry(request.params.id))
 

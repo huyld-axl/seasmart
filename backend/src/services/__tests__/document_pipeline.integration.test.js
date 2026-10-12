@@ -31,13 +31,14 @@ const CERT_READING = {
   doc_type: 'certificate',
   page_label: '1 trang',
   fields: [
-    { key: 'typeCode', raw: 'BST', value: 'BST', state: 'PROPOSED', note: '' },
+    { key: 'typeCode', raw: 'BASIC_TRAINING', value: 'BASIC_TRAINING', state: 'PROPOSED', note: '' },
     { key: 'valid', raw: '14/03/2028', value: '14/03/2028', state: 'PROPOSED', note: '' },
   ],
 }
 
 describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () => {
   let seafarerId
+  let seafarer
 
   beforeAll(async () => {
     process.env.DB_NAME = DB_NAME
@@ -50,8 +51,9 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     ;({ documentService } = require('../document.service'))
     ;({ makePdf } = require('../../../test_support/make_pdf'))
     sharp = require('sharp')
-    const [[row]] = await pool.query('SELECT id FROM seafarer WHERE deleted_at IS NULL ORDER BY id LIMIT 1')
+    const [[row]] = await pool.query('SELECT id, full_name, full_name_en FROM seafarer WHERE deleted_at IS NULL ORDER BY id LIMIT 1')
     seafarerId = row.id
+    seafarer = row
     await cleanup()
   })
 
@@ -147,6 +149,54 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     expect(calls.find((c) => c.task === 'split').prompt_version).toBe('split-1')
   })
 
+  it('đọc theo loại: trang chức danh ra 12 ô kèm chức danh chuẩn hoá, chứng chỉ ra khuôn nhẹ, cảnh báo giấy của người khác', async () => {
+    const f = (key, value, extra = {}) => ({ key, raw: value, value, state: value ? 'PROPOSED' : 'UNKNOWN', note: '', ...extra })
+    const byTask = {
+      book_info: { page_label: 'Trang 1', fields: [f('no', 'VN-0001'), f('name', 'NGUYEN VAN KHAC'), f('dob', '04.1.1990', { value: '04/01/1990' })] },
+      book_duty: {
+        page_label: 'Trang 2',
+        fields: [
+          f('ship', 'ATAYAL STAR'), f('rank', '2/E'), f('onPort', 'Singapore'), f('onDate', '17th-FEB-2020'), f('offPort', ''), f('offDate', ''),
+        ],
+      },
+      certificate: {
+        page_label: '1 trang',
+        fields: [f('typeCode', 'BASIC_TRAINING'), f('valid', '14.03.28'), f('noExpiry', 'false'), f('no', 'BT-10234'), f('holder', seafarer.full_name)],
+      },
+    }
+    const types = ['seaman_book_info', 'seaman_book_duty', 'certificate']
+    const callVision = fakeAi({ split: (page) => types[page - 1], read: (args) => byTask[args.task] })
+    const upload = await documentService.upload(seafarerId, asFile(uniquePdf(['Sổ 1', 'Sổ 2', 'Chứng chỉ']), 'tron.pdf'), 1)
+    await waitFor(finished(upload.id), 'upload xong')
+    const docs = (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id)
+    const [info, duty, cert] = docs
+
+    // Mức model theo việc.
+    const tiers = Object.fromEntries(callVision.mock.calls.map((c) => [c[0].task, c[0].tier]))
+    expect(tiers).toMatchObject({ split: 'small', book_info: 'strong', book_duty: 'strong', certificate: 'small' })
+
+    // Trang chức danh: đủ 12 ô theo thứ tự, ngày chuẩn hoá bằng code, chức danh khớp bảng rank (OLR/2E…).
+    expect(duty.fields.map((x) => x.key)).toHaveLength(12)
+    expect(duty.fields.find((x) => x.key === 'onDate')).toMatchObject({ value: '17/02/2020', state: 'PROPOSED' })
+    expect(duty.fields.find((x) => x.key === 'offDate')).toMatchObject({ value: '', state: 'UNKNOWN' })
+    expect(duty.fields.find((x) => x.key === 'rank').normalized).toMatchObject({ code: '2E' })
+    expect(duty.owner_mismatch).toBe(false)
+
+    // Sổ thuyền viên khác tên hồ sơ → cảnh báo; ô số CMND không tự đẩy vào hồ sơ.
+    expect(info.owner_mismatch).toBe(true)
+    // Chứng chỉ cùng tên người: không cảnh báo. Năm hai chữ số → DATE_AMBIGUOUS, chưa xong.
+    expect(cert.owner_mismatch).toBe(false)
+    expect(cert.fields.find((x) => x.key === 'valid')).toMatchObject({ value: '14/03/2028', state: 'DATE_AMBIGUOUS' })
+    expect(cert.status).toBe('REVIEW_REQUIRED')
+
+    // Duyệt ba ô bắt buộc thì giấy xong, các ô không bắt buộc tự được chấp nhận.
+    await documentService.decide(cert.id, 'typeCode', 'accept', undefined, 1)
+    await documentService.decide(cert.id, 'noExpiry', 'accept', undefined, 1)
+    const done = await documentService.decide(cert.id, 'valid', 'accept', undefined, 1)
+    expect(done.status).toBe('COMPLETED')
+    expect(done.fields.find((x) => x.key === 'no')).toMatchObject({ state: 'ACCEPTED', value: 'BT-10234' })
+  })
+
   it('đổi loại giấy thì đọc lại theo loại mới; đổi sang "Khác" thì không đọc; không đổi được giấy đã vào hồ sơ', async () => {
     const callVision = fakeAi({ split: () => 'other' })
     const upload = await documentService.upload(seafarerId, asFile(uniquePdf(['Đổi loại']), 'doi.pdf'), 1)
@@ -159,7 +209,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     expect(reading).toMatchObject({ doc_type: 'certificate', type_source: 'USER', status: 'READING' })
     await waitFor(async () => (await documentService.get(doc.id)).status === 'REVIEW_REQUIRED', 'đọc lại xong')
     const read = await documentService.get(doc.id)
-    expect(read.fields.find((f) => f.key === 'typeCode').value).toBe('BST')
+    expect(read.fields.find((f) => f.key === 'typeCode').value).toBe('BASIC_TRAINING')
 
     const back = await documentService.retype(doc.id, 'other')
     expect(back).toMatchObject({ doc_type: 'other', status: 'SKIPPED', fields: [] })

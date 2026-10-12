@@ -9,6 +9,7 @@ const documentPages = require('./document_pages.service')
 const documentSplitter = require('./document_splitter.service')
 const ai = require('./ai')
 const seafarerService = require('./seafarer.service')
+const { normalizeDate, normalizeRank, sameName, normalizeNumber } = require('../utils/normalize')
 const { DOC_TYPES, DOC_STATUS, OTHER_TYPE, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES } = require('../constants/document_types')
 
 const FIELD_ACTIONS = ['accept', 'edit', 'reject', 'keepUnknown', 'undo']
@@ -32,14 +33,11 @@ function sniffMime(buffer) {
   return null
 }
 
-// '13/03/1990' hoặc '13.03.1990' → '1990-03-13'; sai thì null.
+// Mọi kiểu ngày trên giấy tờ → '1990-03-13'. Ngày chưa chắc (năm hai chữ số) và ngày sai thì null:
+// ô đã duyệt luôn lưu dạng dd/mm/yyyy đủ bốn chữ số năm.
 function toIsoDate(text) {
-  const m = String(text || '').trim().match(/^(\d{1,2})\s*[./-]\s*(\d{1,2})\s*[./-]\s*(\d{4})$/)
-  if (!m) return null
-  const [day, month, year] = [Number(m[1]), Number(m[2]), Number(m[3])]
-  const date = new Date(Date.UTC(year, month - 1, day))
-  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null
-  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  const parsed = normalizeDate(text)
+  return parsed.status === 'OK' ? parsed.iso : null
 }
 
 // Hành động trên một ô, cùng nghĩa với reviewModel.applyAction ở frontend.
@@ -63,8 +61,11 @@ function applyAction(field, action, value) {
   }
 }
 
-function docStatusOf(fields) {
-  return fields.some((field) => TODO_STATES.includes(field.state)) ? DOC_STATUS.REVIEW_REQUIRED : DOC_STATUS.COMPLETED
+// Giấy xong khi mọi ô bắt buộc đã quyết. Truyền docType thì bỏ qua ô optional (không bắt buộc duyệt).
+function docStatusOf(fields, docType) {
+  const optional = new Set((DOC_TYPES[docType]?.fields || []).filter((spec) => spec.optional).map((spec) => spec.key))
+  const todo = fields.some((field) => TODO_STATES.includes(field.state) && !optional.has(field.key || field.field_key))
+  return todo ? DOC_STATUS.REVIEW_REQUIRED : DOC_STATUS.COMPLETED
 }
 
 // Ô đã chấp nhận hoặc sửa, có chỗ trong hồ sơ → dữ liệu cập nhật seafarer.
@@ -80,6 +81,10 @@ function profileChanges(docType, fields) {
     data[spec.target] = value
   }
   return data
+}
+
+function rankView(rank) {
+  return rank ? { id: rank.id, code: rank.code, name_vi: rank.name_vi } : null
 }
 
 function shapeUpload(upload) {
@@ -98,7 +103,7 @@ function shapeUpload(upload) {
   }
 }
 
-function shape(doc, fields) {
+function shape(doc, fields, lookups = {}) {
   const layout = DOC_TYPES[doc.doc_type]
   const byKey = new Map(fields.map((field) => [field.field_key, field]))
   return {
@@ -132,6 +137,9 @@ function shape(doc, fields) {
         value: field.value || '',
         state: field.state,
         note: field.note,
+        optional: Boolean(spec.optional),
+        // Chức danh khớp bảng rank (null nếu không có trong bảng); chỉ trang bố trí chức danh.
+        normalized: spec.key === 'rank' && lookups.ranks ? rankView(normalizeRank(field.value || field.raw_text, lookups.ranks)) : undefined,
       }
     }),
   }
@@ -229,16 +237,18 @@ const documentService = {
 
   // Tệp chưa tách được: upload FAILED và một giấy "chưa tách" mang lỗi để người dùng thấy và bấm Đọc lại.
   async markUnsplit(upload, message, pageCount) {
-    await pool.query('UPDATE document_upload SET status = ?, error = ? WHERE id = ?', [UPLOAD_STATUS.FAILED, message.slice(0, 500), upload.id])
+    const text = message.slice(0, 500)
     const [placeholders] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND doc_type IS NULL AND deleted_at IS NULL', [upload.id])
     if (placeholders.length) {
-      await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id IN (?)', [DOC_STATUS.FAILED, message.slice(0, 500), placeholders.map((row) => row.id)])
-      return
+      await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id IN (?)', [DOC_STATUS.FAILED, text, placeholders.map((row) => row.id)])
+    } else {
+      await pool.query(
+        'INSERT INTO seafarer_document (seafarer_id, upload_id, page_from, page_to, status, error, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [upload.seafarer_id, upload.id, pageCount ? 1 : null, pageCount || null, DOC_STATUS.FAILED, text, upload.created_by]
+      )
     }
-    await pool.query(
-      'INSERT INTO seafarer_document (seafarer_id, upload_id, page_from, page_to, status, error, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [upload.seafarer_id, upload.id, pageCount ? 1 : null, pageCount || null, DOC_STATUS.FAILED, message.slice(0, 500), upload.created_by]
-    )
+    // Upload chỉ báo FAILED sau khi giấy mang lỗi đã có, để người xem thấy cả hai cùng lúc.
+    await pool.query('UPDATE document_upload SET status = ?, error = ? WHERE id = ?', [UPLOAD_STATUS.FAILED, text, upload.id])
   },
 
   // Thay các giấy chưa đưa vào hồ sơ của upload bằng danh sách `papers` [{ type, pageFrom, pageTo, label, source }].
@@ -336,9 +346,11 @@ const documentService = {
           [result.fields.map((field) => [id, field.key, field.raw, field.value, field.state, field.value, field.state, field.note])]
         )
       }
-      await pool.query('UPDATE seafarer_document SET page_label = COALESCE(?, page_label), status = ?, error = NULL WHERE id = ?', [
-        result.page_label, docStatusOf(result.fields), id,
-      ])
+      const mismatch = await this.ownerMismatch(doc, result.fields)
+      await pool.query(
+        'UPDATE seafarer_document SET page_label = COALESCE(?, page_label), status = ?, error = NULL, owner_mismatch = ?, owner_mismatch_confirmed_by = NULL WHERE id = ?',
+        [result.page_label, docStatusOf(result.fields, doc.doc_type), mismatch ? 1 : 0, id]
+      )
     } catch (err) {
       const message = err?.statusCode ? err.message : 'AI đọc giấy bị lỗi. Thử đọc lại.'
       await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id = ?', [DOC_STATUS.FAILED, message.slice(0, 500), id])
@@ -384,14 +396,38 @@ const documentService = {
     const [docs] = await pool.query(`${DOC_SELECT} WHERE d.seafarer_id = ? AND d.deleted_at IS NULL ORDER BY d.upload_id, d.page_from, d.id`, [seafarerId])
     if (!docs.length) return []
     const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id IN (?) ORDER BY id', [docs.map((doc) => doc.id)])
-    return docs.map((doc) => shape(doc, fields.filter((field) => field.document_id === doc.id)))
+    const lookups = await this.lookupsFor(docs)
+    return docs.map((doc) => shape(doc, fields.filter((field) => field.document_id === doc.id), lookups))
   },
 
   async get(id) {
     const [[doc]] = await pool.query(`${DOC_SELECT} WHERE d.id = ? AND d.deleted_at IS NULL`, [id])
     if (!doc) throw { statusCode: 404, message: 'Không tìm thấy giấy tờ' }
     const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id = ? ORDER BY id', [id])
-    return shape(doc, fields)
+    return shape(doc, fields, await this.lookupsFor([doc]))
+  },
+
+  // Bảng tra cho phần chuẩn hoá khi trả về: chỉ nạp bảng chức danh khi có trang bố trí chức danh.
+  async lookupsFor(docs) {
+    if (!docs.some((doc) => doc.doc_type === 'seaman_book_duty')) return {}
+    const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM `rank`')
+    return { ranks }
+  },
+
+  // Tên hoặc số sổ trên giấy khác hồ sơ đang mở → cảnh báo "giấy của người khác".
+  async ownerMismatch(doc, fields) {
+    const valueOf = (key) => fields.find((field) => field.key === key)?.value || ''
+    const [[seafarer]] = await pool.query('SELECT full_name, full_name_en, seaman_book_number FROM seafarer WHERE id = ?', [doc.seafarer_id])
+    if (!seafarer) return false
+    const names = [seafarer.full_name, seafarer.full_name_en].filter(Boolean)
+    const nameDiffers = (paperName) => Boolean(paperName) && names.length > 0 && !names.some((name) => sameName(name, paperName))
+    if (doc.doc_type === 'seaman_book_info') {
+      const paperNo = normalizeNumber(valueOf('no'))
+      const profileNo = normalizeNumber(seafarer.seaman_book_number)
+      return nameDiffers(valueOf('name')) || Boolean(paperNo && profileNo && paperNo !== profileNo)
+    }
+    if (doc.doc_type === 'certificate') return nameDiffers(valueOf('holder'))
+    return false
   },
 
   async decide(id, fieldKey, action, value, userId) {
@@ -405,8 +441,19 @@ const documentService = {
     await pool.query('UPDATE document_field SET value = ?, state = ?, decided_by = ?, decided_at = ? WHERE id = ?', [
       next.value, next.state, undo ? null : userId, undo ? null : new Date(), field.id,
     ])
-    const [fields] = await pool.query('SELECT state FROM document_field WHERE document_id = ?', [id])
-    await pool.query('UPDATE seafarer_document SET status = ? WHERE id = ?', [docStatusOf(fields), id])
+    const [fields] = await pool.query('SELECT field_key, state FROM document_field WHERE document_id = ?', [id])
+    const status = docStatusOf(fields, doc.doc_type)
+    if (status === DOC_STATUS.COMPLETED) {
+      // Ô không bắt buộc duyệt được chấp nhận cùng lúc khi các ô bắt buộc đã quyết xong.
+      const optional = (DOC_TYPES[doc.doc_type]?.fields || []).filter((spec) => spec.optional).map((spec) => spec.key)
+      if (optional.length) {
+        await pool.query(
+          'UPDATE document_field SET state = ?, decided_by = ?, decided_at = NOW() WHERE document_id = ? AND field_key IN (?) AND state = ?',
+          ['ACCEPTED', userId, id, optional, 'PROPOSED']
+        )
+      }
+    }
+    await pool.query('UPDATE seafarer_document SET status = ? WHERE id = ?', [status, id])
     return this.get(id)
   },
 
@@ -464,7 +511,7 @@ const documentService = {
       certificate_number: pick('no') || null,
       issued_date: issued,
       expiry_date: expiry,
-      issued_by: pick('school') || null,
+      issued_by: pick('issuer') || null,
       status: expiry && expiry < new Date().toISOString().slice(0, 10) ? 'EXPIRED' : 'VALID',
       notes: `Từ giấy tờ đã duyệt: ${doc.file_name}`,
     }

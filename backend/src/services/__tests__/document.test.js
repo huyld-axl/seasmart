@@ -18,6 +18,10 @@ describe('document helpers', () => {
     expect(toIsoDate('04 . 1 . 2016')).toBe('2016-01-04')
     expect(toIsoDate('31/02/2020')).toBeNull()
     expect(toIsoDate('1990')).toBeNull()
+    // Dùng chung hàm ngày mới: kiểu tên tháng nhận được, năm hai chữ số thì không (phải người duyệt sửa).
+    expect(toIsoDate('17th-FEB-2020')).toBe('2020-02-17')
+    expect(toIsoDate('JUL.11.2020')).toBe('2020-07-11')
+    expect(toIsoDate('27.03.18')).toBeNull()
   })
 
   it('hành động trên ô', () => {
@@ -32,6 +36,19 @@ describe('document helpers', () => {
   it('giấy xong khi không còn ô cần xem', () => {
     expect(docStatusOf([{ state: 'ACCEPTED' }, { state: 'DATE_AMBIGUOUS' }])).toBe('REVIEW_REQUIRED')
     expect(docStatusOf([{ state: 'ACCEPTED' }, { state: 'REJECTED' }])).toBe('COMPLETED')
+  })
+
+  it('ô không bắt buộc duyệt của chứng chỉ không giữ giấy ở trạng thái chờ duyệt', () => {
+    const fields = [
+      { field_key: 'typeCode', state: 'ACCEPTED' },
+      { field_key: 'valid', state: 'EDITED' },
+      { field_key: 'noExpiry', state: 'ACCEPTED' },
+      { field_key: 'no', state: 'PROPOSED' },
+      { field_key: 'holder', state: 'DATE_AMBIGUOUS' },
+    ]
+    expect(docStatusOf(fields, 'certificate')).toBe('COMPLETED')
+    expect(docStatusOf(fields)).toBe('REVIEW_REQUIRED')
+    expect(docStatusOf([...fields.slice(0, 2), { field_key: 'noExpiry', state: 'PROPOSED' }], 'certificate')).toBe('REVIEW_REQUIRED')
   })
 
   it('chỉ ô đã chấp nhận/sửa và có chỗ trong hồ sơ mới vào hồ sơ', () => {

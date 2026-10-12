@@ -81,6 +81,7 @@ const DOC_STATUS = {
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
   PUBLISHED: 'PUBLISHED',
+  SKIPPED: 'SKIPPED', // giấy loại "Khác": chỉ lưu kèm hồ sơ, không đọc
 }
 
 // Ô AI đề xuất: PROPOSED (đọc được), UNKNOWN (không có trên giấy), DATE_AMBIGUOUS (ngày viết tay chưa chắc).
@@ -88,7 +89,10 @@ const AI_STATES = ['PROPOSED', 'UNKNOWN', 'DATE_AMBIGUOUS']
 const TODO_STATES = AI_STATES
 const DONE_STATES = ['ACCEPTED', 'EDITED', 'UNKNOWN_KEPT', 'REJECTED']
 
+// Loại "Khác": không có khuôn đọc.
+const OTHER_TYPE = 'other'
+
 const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_FILE_BYTES = 25 * 1024 * 1024
 
-module.exports = { DOC_TYPES, DOC_STATUS, AI_STATES, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES }
+module.exports = { DOC_TYPES, DOC_STATUS, OTHER_TYPE, AI_STATES, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES }

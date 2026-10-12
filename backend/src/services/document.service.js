@@ -6,9 +6,10 @@ const { withTransaction } = require('../utils/transaction')
 const config = require('../config')
 const documentReader = require('./document_reader.service')
 const documentPages = require('./document_pages.service')
+const documentSplitter = require('./document_splitter.service')
 const ai = require('./ai')
 const seafarerService = require('./seafarer.service')
-const { DOC_TYPES, DOC_STATUS, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES } = require('../constants/document_types')
+const { DOC_TYPES, DOC_STATUS, OTHER_TYPE, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES } = require('../constants/document_types')
 
 const FIELD_ACTIONS = ['accept', 'edit', 'reject', 'keepUnknown', 'undo']
 const UPLOAD_STATUS = { RECEIVED: 'RECEIVED', SPLITTING: 'SPLITTING', READING: 'READING', DONE: 'DONE', FAILED: 'FAILED' }
@@ -106,7 +107,7 @@ function shape(doc, fields) {
     file_name: doc.file_name,
     mime_type: doc.mime_type,
     doc_type: doc.doc_type,
-    label: layout?.label || 'Chưa nhận ra loại giấy',
+    label: layout?.label || (doc.doc_type === OTHER_TYPE ? 'Giấy khác' : 'Chưa nhận ra loại giấy'),
     title: layout?.title || null,
     page: doc.page_label,
     upload_id: doc.upload_id || null,
@@ -182,26 +183,17 @@ const documentService = {
     return this.getUpload(id)
   },
 
-  // Cắt trang → tạo giấy → đọc. Chạy lại được: bỏ qua bước đã xong (dùng cho khôi phục sau khi máy chủ khởi động lại).
+  // Cắt trang → tách → tạo giấy → đọc. Chạy lại được: bỏ qua bước đã xong (dùng cho khôi phục sau khi máy chủ khởi động lại).
   async process(uploadId) {
     if (running.has(uploadId)) return
     running.add(uploadId)
     try {
       const [[upload]] = await pool.query('SELECT * FROM document_upload WHERE id = ? AND deleted_at IS NULL', [uploadId])
       if (!upload) return
-      try {
-        const pageCount = await this.ensurePages(upload)
-        const [existing] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND deleted_at IS NULL', [uploadId])
-        if (!existing.length) {
-          await pool.query(
-            'INSERT INTO seafarer_document (seafarer_id, upload_id, page_from, page_to, status, created_by) VALUES (?, ?, 1, ?, ?, ?)',
-            [upload.seafarer_id, uploadId, pageCount, DOC_STATUS.READING, upload.created_by]
-          )
-        }
-      } catch (err) {
-        const message = err?.statusCode ? err.message : 'Không cắt được trang của tệp này. Thử tải lại.'
-        await pool.query('UPDATE document_upload SET status = ?, error = ? WHERE id = ?', [UPLOAD_STATUS.FAILED, message.slice(0, 500), uploadId])
-        return
+      const [typed] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND doc_type IS NOT NULL AND deleted_at IS NULL', [uploadId])
+      if (!typed.length) {
+        const ok = await this.splitUpload(upload)
+        if (!ok) return
       }
       await pool.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.READING, uploadId])
       const [docs] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND status = ? AND deleted_at IS NULL ORDER BY id', [uploadId, DOC_STATUS.READING])
@@ -210,6 +202,70 @@ const documentService = {
     } finally {
       running.delete(uploadId)
     }
+  },
+
+  // Cắt trang rồi nhờ AI tách thành các giấy. Trả false nếu không làm được (upload FAILED, có giấy "chưa tách" mang lỗi).
+  async splitUpload(upload) {
+    let pageCount = null
+    try {
+      pageCount = await this.ensurePages(upload)
+      if (!ai.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
+      const [rows] = await pool.query('SELECT page_no, thumb_path FROM document_upload_page WHERE upload_id = ? ORDER BY page_no', [upload.id])
+      const pages = rows.map((row) => ({ page_no: row.page_no, thumbBuffer: fs.readFileSync(row.thumb_path) }))
+      const { entries, papers } = await documentSplitter.split({ uploadId: upload.id, pages })
+      await withTransaction(pool, async (conn) => {
+        for (const entry of entries) {
+          await conn.query('UPDATE document_upload_page SET split_type = ?, split_note = ? WHERE upload_id = ? AND page_no = ?', [entry.type, entry.note, upload.id, entry.page])
+        }
+        await this.replaceDocuments(conn, upload, papers.map((paper) => ({ ...paper, source: 'AI' })))
+      })
+      return true
+    } catch (err) {
+      const message = err?.statusCode ? err.message : 'Không tách được giấy trong tệp này. Thử lại.'
+      await this.markUnsplit(upload, message, pageCount)
+      return false
+    }
+  },
+
+  // Tệp chưa tách được: upload FAILED và một giấy "chưa tách" mang lỗi để người dùng thấy và bấm Đọc lại.
+  async markUnsplit(upload, message, pageCount) {
+    await pool.query('UPDATE document_upload SET status = ?, error = ? WHERE id = ?', [UPLOAD_STATUS.FAILED, message.slice(0, 500), upload.id])
+    const [placeholders] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND doc_type IS NULL AND deleted_at IS NULL', [upload.id])
+    if (placeholders.length) {
+      await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id IN (?)', [DOC_STATUS.FAILED, message.slice(0, 500), placeholders.map((row) => row.id)])
+      return
+    }
+    await pool.query(
+      'INSERT INTO seafarer_document (seafarer_id, upload_id, page_from, page_to, status, error, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [upload.seafarer_id, upload.id, pageCount ? 1 : null, pageCount || null, DOC_STATUS.FAILED, message.slice(0, 500), upload.created_by]
+    )
+  },
+
+  // Thay các giấy chưa đưa vào hồ sơ của upload bằng danh sách `papers` [{ type, pageFrom, pageTo, label, source }].
+  // Giấy có cùng khoảng trang và cùng loại với giấy cũ thì giữ nguyên (không đọc lại, không mất quyết định đã có).
+  async replaceDocuments(conn, upload, papers) {
+    const [old] = await conn.query('SELECT * FROM seafarer_document WHERE upload_id = ? AND status <> ? AND deleted_at IS NULL', [upload.id, DOC_STATUS.PUBLISHED])
+    const kept = new Set()
+    const created = []
+    for (const paper of papers) {
+      const same = old.find((doc) => !kept.has(doc.id) && doc.doc_type === paper.type && doc.page_from === paper.pageFrom && doc.page_to === paper.pageTo)
+      if (same) {
+        kept.add(same.id)
+        continue
+      }
+      const skipped = paper.type === OTHER_TYPE
+      const [result] = await conn.query(
+        'INSERT INTO seafarer_document (seafarer_id, upload_id, page_from, page_to, doc_type, type_source, page_label, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [upload.seafarer_id, upload.id, paper.pageFrom, paper.pageTo, paper.type, paper.source, paper.label || null, skipped ? DOC_STATUS.SKIPPED : DOC_STATUS.READING, upload.created_by]
+      )
+      created.push(result.insertId)
+    }
+    const dropIds = old.filter((doc) => !kept.has(doc.id)).map((doc) => doc.id)
+    if (dropIds.length) {
+      await conn.query('DELETE FROM document_field WHERE document_id IN (?)', [dropIds])
+      await conn.query('UPDATE seafarer_document SET deleted_at = NOW() WHERE id IN (?)', [dropIds])
+    }
+    return created
   },
 
   // Cắt tệp gốc thành ảnh từng trang nếu chưa có (cả tệp cũ trước khi có bảng upload). Trả số trang.
@@ -259,11 +315,16 @@ const documentService = {
 
   async extract(id) {
     const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
-    if (!doc) return
+    if (!doc || doc.status === DOC_STATUS.SKIPPED) return
+    // Giấy "chưa tách": đọc lại nghĩa là tách lại cả tệp.
+    if (!doc.doc_type) {
+      if (doc.upload_id) await this.process(doc.upload_id)
+      return
+    }
     try {
       const [types] = await pool.query('SELECT code, name_vi FROM certificate_type ORDER BY id')
       const images = await this.pageImagesOf(doc)
-      const result = await documentReader.read(images, types, { uploadId: doc.upload_id, documentId: id })
+      const result = await documentReader.read(images, types, { uploadId: doc.upload_id, documentId: id }, doc.doc_type)
       if (!result.doc_type) {
         await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id = ?', [DOC_STATUS.FAILED, 'AI chưa nhận ra loại giấy này. Giấy chưa có khuôn đọc, lưu kèm hồ sơ để xem tay.', id])
         return
@@ -275,8 +336,8 @@ const documentService = {
           [result.fields.map((field) => [id, field.key, field.raw, field.value, field.state, field.value, field.state, field.note])]
         )
       }
-      await pool.query('UPDATE seafarer_document SET doc_type = ?, type_source = ?, page_label = ?, status = ?, error = NULL WHERE id = ?', [
-        result.doc_type, 'AI', result.page_label, docStatusOf(result.fields), id,
+      await pool.query('UPDATE seafarer_document SET page_label = COALESCE(?, page_label), status = ?, error = NULL WHERE id = ?', [
+        result.page_label, docStatusOf(result.fields), id,
       ])
     } catch (err) {
       const message = err?.statusCode ? err.message : 'AI đọc giấy bị lỗi. Thử đọc lại.'
@@ -320,7 +381,7 @@ const documentService = {
   },
 
   async list(seafarerId) {
-    const [docs] = await pool.query(`${DOC_SELECT} WHERE d.seafarer_id = ? AND d.deleted_at IS NULL ORDER BY d.id`, [seafarerId])
+    const [docs] = await pool.query(`${DOC_SELECT} WHERE d.seafarer_id = ? AND d.deleted_at IS NULL ORDER BY d.upload_id, d.page_from, d.id`, [seafarerId])
     if (!docs.length) return []
     const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id IN (?) ORDER BY id', [docs.map((doc) => doc.id)])
     return docs.map((doc) => shape(doc, fields.filter((field) => field.document_id === doc.id)))
@@ -413,7 +474,99 @@ const documentService = {
     const doc = await this.get(id)
     if (doc.status === DOC_STATUS.PUBLISHED) throw { statusCode: 409, message: 'Giấy đã đưa vào hồ sơ, không xoá được' }
     await pool.query('UPDATE seafarer_document SET deleted_at = NOW() WHERE id = ?', [id])
+    // Hết giấy thì bỏ luôn tệp cha, để thả lại cùng tệp không bị báo trùng.
+    if (doc.upload_id) {
+      const [[left]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE upload_id = ? AND deleted_at IS NULL', [doc.upload_id])
+      if (left.n === 0) await pool.query('UPDATE document_upload SET deleted_at = NOW() WHERE id = ?', [doc.upload_id])
+    }
     return { success: true }
+  },
+
+  // Người dùng đổi loại giấy: xoá ô cũ, đọc lại theo loại mới ("other" thì không đọc).
+  async retype(id, docType) {
+    const doc = await this.get(id)
+    if (doc.status === DOC_STATUS.PUBLISHED) throw { statusCode: 409, message: 'Giấy đã đưa vào hồ sơ, không đổi loại được' }
+    if (!DOC_TYPES[docType] && docType !== OTHER_TYPE) throw { statusCode: 400, message: 'Loại giấy không hợp lệ' }
+    if (!doc.upload_id) throw { statusCode: 409, message: 'Giấy cũ chưa có tệp tải lên, không đổi loại được' }
+    if (docType !== OTHER_TYPE && !documentReader.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
+    const skipped = docType === OTHER_TYPE
+    await withTransaction(pool, async (conn) => {
+      await conn.query('DELETE FROM document_field WHERE document_id = ?', [id])
+      await conn.query(
+        'UPDATE seafarer_document SET doc_type = ?, type_source = ?, page_label = NULL, status = ?, error = NULL, owner_mismatch = 0, owner_mismatch_confirmed_by = NULL WHERE id = ?',
+        [docType, 'USER', skipped ? DOC_STATUS.SKIPPED : DOC_STATUS.READING, id]
+      )
+      if (!skipped) await conn.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.READING, doc.upload_id])
+    })
+    if (!skipped) setImmediate(() => { this.extract(id).catch(() => {}) })
+    else await this.finishUpload(doc.upload_id)
+    return this.get(id)
+  },
+
+  // Người dùng gom hoặc tách lại trang: parts = [{ pageFrom, pageTo, docType? }] phải phủ đúng các trang
+  // chưa đưa vào hồ sơ, mỗi trang một lần. Giấy chưa đưa vào hồ sơ được dựng lại theo parts.
+  async regroup(uploadId, parts) {
+    const upload = await this.getUpload(uploadId)
+    const [[row]] = await pool.query('SELECT * FROM document_upload WHERE id = ?', [uploadId])
+    if (!upload.page_count) throw { statusCode: 409, message: 'Tệp chưa được cắt trang' }
+    if (!Array.isArray(parts) || !parts.length) throw { statusCode: 400, message: 'Chưa có nhóm trang nào' }
+    const [published] = await pool.query('SELECT page_from, page_to FROM seafarer_document WHERE upload_id = ? AND status = ? AND deleted_at IS NULL', [uploadId, DOC_STATUS.PUBLISHED])
+    const locked = new Set(published.flatMap((doc) => Array.from({ length: doc.page_to - doc.page_from + 1 }, (_, i) => doc.page_from + i)))
+    const free = []
+    for (let page = 1; page <= upload.page_count; page += 1) if (!locked.has(page)) free.push(page)
+
+    const seen = new Set()
+    for (const part of parts) {
+      const { pageFrom, pageTo } = part
+      if (!Number.isInteger(pageFrom) || !Number.isInteger(pageTo) || pageFrom < 1 || pageTo < pageFrom || pageTo > upload.page_count) {
+        throw { statusCode: 400, message: 'Khoảng trang không hợp lệ' }
+      }
+      if (part.docType && !DOC_TYPES[part.docType] && part.docType !== OTHER_TYPE) throw { statusCode: 400, message: 'Loại giấy không hợp lệ' }
+      for (let page = pageFrom; page <= pageTo; page += 1) {
+        if (locked.has(page)) throw { statusCode: 409, message: `Trang ${page} thuộc giấy đã đưa vào hồ sơ, không gom lại được` }
+        if (seen.has(page)) throw { statusCode: 400, message: `Trang ${page} nằm trong hai nhóm` }
+        seen.add(page)
+      }
+    }
+    const missing = free.filter((page) => !seen.has(page))
+    if (missing.length) throw { statusCode: 400, message: `Còn trang chưa thuộc nhóm nào: ${missing.join(', ')}` }
+
+    const [pageRows] = await pool.query('SELECT page_no, split_type FROM document_upload_page WHERE upload_id = ?', [uploadId])
+    const splitTypeOf = new Map(pageRows.map((page) => [page.page_no, page.split_type]))
+    const [oldDocs] = await pool.query('SELECT page_from, page_to, doc_type FROM seafarer_document WHERE upload_id = ? AND status <> ? AND deleted_at IS NULL', [uploadId, DOC_STATUS.PUBLISHED])
+    const sorted = [...parts].sort((a, b) => a.pageFrom - b.pageFrom)
+    const papers = sorted.map((part) => {
+      let type = part.docType
+      let source = 'USER'
+      if (!type) {
+        // Không chỉ định: giữ loại của giấy cũ cùng khoảng trang, không thì lấy loại AI gán cho trang đầu có loại.
+        const same = oldDocs.find((doc) => doc.page_from === part.pageFrom && doc.page_to === part.pageTo && doc.doc_type)
+        const fromSplit = Array.from({ length: part.pageTo - part.pageFrom + 1 }, (_, i) => splitTypeOf.get(part.pageFrom + i)).find((t) => t && t !== OTHER_TYPE)
+        type = same?.doc_type || fromSplit || OTHER_TYPE
+        source = 'AI'
+      }
+      return { type, pageFrom: part.pageFrom, pageTo: part.pageTo, label: null, source }
+    })
+    if (papers.some((paper) => paper.type !== OTHER_TYPE) && !documentReader.isConfigured()) {
+      throw { statusCode: 503, message: ai.notConfiguredMessage() }
+    }
+
+    const created = await withTransaction(pool, async (conn) => {
+      const ids = await this.replaceDocuments(conn, row, papers)
+      if (ids.length) await conn.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.READING, uploadId])
+      return ids
+    })
+    const reading = created.length
+    if (reading) {
+      const [toRead] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND status = ? AND deleted_at IS NULL', [uploadId, DOC_STATUS.READING])
+      setImmediate(async () => {
+        for (const doc of toRead) await this.extract(doc.id).catch(() => {})
+      })
+    }
+    await this.finishUpload(uploadId)
+    const uploadNow = await this.getUpload(uploadId)
+    const documents = (await this.list(upload.seafarer_id)).filter((doc) => doc.upload_id === uploadId)
+    return { upload: uploadNow, documents }
   },
 
   // Tệp gốc của giấy: tệp cha nếu có, giấy cũ thì tệp trên chính dòng giấy.

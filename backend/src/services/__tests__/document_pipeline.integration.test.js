@@ -1,7 +1,7 @@
 // Kiểm thử tích hợp trên DB riêng (không chạy khi thiếu INTEGRATION_DB_NAME).
 // Chạy: INTEGRATION_DB_NAME=marineport_g15 npm test
 // Nhà cung cấp AI chỉ được giả lập ở đây bằng vi.spyOn; ứng dụng không có đường chạy trả kết quả soạn sẵn.
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
+import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest'
 import { createRequire } from 'module'
 import fs from 'fs'
 import os from 'os'
@@ -63,6 +63,8 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     await pool.query('DELETE FROM document_upload WHERE seafarer_id = ?', [seafarerId])
   }
 
+  beforeEach(() => vi.restoreAllMocks())
+
   afterAll(async () => {
     vi.restoreAllMocks()
     await cleanup()
@@ -70,52 +72,155 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     fs.rmSync(uploadDir, { recursive: true, force: true })
   })
 
-  function fakeAi(readings) {
+  // Giả lập nhà cung cấp theo việc: split(pageNumbers) → mảng loại trang; read(task) → kết quả đọc.
+  function fakeAi({ split = () => 'certificate', read = () => CERT_READING } = {}) {
     vi.spyOn(ai, 'isConfigured').mockReturnValue(true)
-    return vi.spyOn(ai, 'callVision').mockImplementation(async () => ({
-      data: typeof readings === 'function' ? readings() : readings,
-      model: 'fake-model', usage: { input: 100, output: 10 }, requestId: 'req_test', latencyMs: 5,
-    }))
+    return vi.spyOn(ai, 'callVision').mockImplementation(async (args) => {
+      let data
+      if (args.task === 'split') {
+        const numbers = args.instructions.match(/trang số: ([\d, ]+)\./)[1].split(', ').map(Number)
+        data = {
+          pages: numbers.map((page, i) => {
+            const item = split(page, i)
+            const [type, group] = Array.isArray(item) ? item : [item, page]
+            return { page, type, group, page_label: `Trang ${page}`, note: '' }
+          }),
+        }
+      } else {
+        data = read(args)
+      }
+      return { data, model: 'fake-model', usage: { input: 100, output: 10 }, requestId: 'req_test', latencyMs: 5 }
+    })
   }
+
+  const finished = (id) => async () => ['DONE', 'FAILED'].includes((await documentService.getUpload(id)).status)
 
   const uniquePdf = (pages) => makePdf(pages.map((text) => `${text} ${crypto.randomBytes(4).toString('hex')}`))
 
-  it('PDF 10 trang thành 10 ảnh trang, một giấy, đọc xong thì upload DONE', async () => {
-    const callVision = fakeAi(CERT_READING)
+  it('PDF 10 trang → 10 ảnh trang, tách thành đúng các giấy, đọc từng giấy theo trang của nó', async () => {
+    // 1 trang thông tin, 2 trang chức danh, chứng chỉ hai mặt (4-5), chứng chỉ một mặt (6), 4 trang khác.
+    const layout = ['seaman_book_info', 'seaman_book_duty', 'seaman_book_duty', ['certificate', 1], ['certificate', 1], 'certificate']
+    const callVision = fakeAi({
+      split: (page) => layout[page - 1] || ['other', 50],
+      read: (args) => (args.task === 'split' ? null : { ...CERT_READING, doc_type: 'certificate' }),
+    })
     const pdf = uniquePdf(Array.from({ length: 10 }, (_, i) => `Trang ${i + 1}`))
     const upload = await documentService.upload(seafarerId, asFile(pdf, 'sach.pdf'), 1)
     expect(upload).toMatchObject({ file_name: 'sach.pdf', mime_type: 'application/pdf', status: 'RECEIVED' })
 
-    await waitFor(async () => (await documentService.getUpload(upload.id)).status === 'DONE', 'upload DONE')
+    await waitFor(finished(upload.id), 'upload xong')
     const done = await documentService.getUpload(upload.id)
-    expect(done).toMatchObject({ page_count: 10, document_count: 1, error: null })
+    expect(done).toMatchObject({ status: 'DONE', page_count: 10, error: null })
 
     const [pages] = await pool.query('SELECT * FROM document_upload_page WHERE upload_id = ? ORDER BY page_no', [upload.id])
     expect(pages.map((p) => p.page_no)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    for (const page of pages) {
-      expect(fs.existsSync(page.image_path)).toBe(true)
-      expect(fs.existsSync(page.thumb_path)).toBe(true)
-      expect((await sharp(page.image_path).metadata()).format).toBe('jpeg')
+    expect(pages.map((p) => p.split_type)).toEqual([
+      'seaman_book_info', 'seaman_book_duty', 'seaman_book_duty', 'certificate', 'certificate', 'certificate', 'other', 'other', 'other', 'other',
+    ])
+    for (const p of pages) {
+      expect(fs.existsSync(p.image_path)).toBe(true)
+      expect(fs.existsSync(p.thumb_path)).toBe(true)
+      expect((await sharp(p.image_path).metadata()).format).toBe('jpeg')
     }
 
-    const docs = await documentService.list(seafarerId)
-    expect(docs).toHaveLength(1)
-    expect(docs[0]).toMatchObject({ upload_id: upload.id, page_from: 1, page_to: 10, doc_type: 'certificate', file_name: 'sach.pdf', type_source: 'AI' })
-    // Giấy được đọc từ ảnh trang, không phải PDF.
-    const images = callVision.mock.calls[0][0].images
-    expect(images).toHaveLength(10)
-    expect(images.every((image) => image.mimeType === 'image/jpeg')).toBe(true)
-    // Nhật ký ai_call có số liệu, không có nội dung.
+    const docs = (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id)
+    expect(docs.map((d) => [d.doc_type, d.page_from, d.page_to, d.status === 'SKIPPED' ? 'SKIPPED' : 'read'])).toEqual([
+      ['seaman_book_info', 1, 1, 'read'],
+      ['seaman_book_duty', 2, 2, 'read'],
+      ['seaman_book_duty', 3, 3, 'read'],
+      ['certificate', 4, 5, 'read'],
+      ['certificate', 6, 6, 'read'],
+      ['other', 7, 10, 'SKIPPED'],
+    ])
+    expect(docs.every((d) => d.type_source === 'AI' && d.file_name === 'sach.pdf')).toBe(true)
+
+    // Một lần tách (20 ảnh thu nhỏ trở xuống) + mỗi giấy chưa bỏ qua một lần đọc, đúng số trang của giấy.
+    const reads = callVision.mock.calls.map((c) => c[0]).filter((a) => a.task !== 'split')
+    expect(callVision.mock.calls.filter((c) => c[0].task === 'split')).toHaveLength(1)
+    expect(reads.map((a) => a.images.length).sort()).toEqual([1, 1, 1, 1, 2])
+    expect(reads.every((a) => a.images.every((image) => image.mimeType === 'image/jpeg'))).toBe(true)
+
+    // Nhật ký ai_call có số liệu, không có nội dung giấy.
     const [calls] = await pool.query('SELECT * FROM ai_call WHERE upload_id = ?', [upload.id])
-    expect(calls).toHaveLength(1)
-    expect(calls[0]).toMatchObject({ status: 'OK', input_tokens: 100, output_tokens: 10, request_id: 'req_test', model: 'fake-model' })
+    expect(calls.filter((c) => c.task === 'split')).toHaveLength(1)
+    expect(calls.every((c) => c.status === 'OK' && c.input_tokens === 100 && c.model === 'fake-model')).toBe(true)
+    expect(calls.find((c) => c.task === 'split').prompt_version).toBe('split-1')
+  })
+
+  it('đổi loại giấy thì đọc lại theo loại mới; đổi sang "Khác" thì không đọc; không đổi được giấy đã vào hồ sơ', async () => {
+    const callVision = fakeAi({ split: () => 'other' })
+    const upload = await documentService.upload(seafarerId, asFile(uniquePdf(['Đổi loại']), 'doi.pdf'), 1)
+    await waitFor(finished(upload.id), 'upload xong')
+    const [doc] = (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id)
+    expect(doc).toMatchObject({ doc_type: 'other', status: 'SKIPPED', label: 'Giấy khác' })
+    expect(callVision.mock.calls.filter((c) => c[0].task !== 'split')).toHaveLength(0)
+
+    const reading = await documentService.retype(doc.id, 'certificate')
+    expect(reading).toMatchObject({ doc_type: 'certificate', type_source: 'USER', status: 'READING' })
+    await waitFor(async () => (await documentService.get(doc.id)).status === 'REVIEW_REQUIRED', 'đọc lại xong')
+    const read = await documentService.get(doc.id)
+    expect(read.fields.find((f) => f.key === 'typeCode').value).toBe('BST')
+
+    const back = await documentService.retype(doc.id, 'other')
+    expect(back).toMatchObject({ doc_type: 'other', status: 'SKIPPED', fields: [] })
+    await expect(documentService.retype(doc.id, 'khong_co')).rejects.toMatchObject({ statusCode: 400 })
+
+    await pool.query("UPDATE seafarer_document SET status = 'PUBLISHED' WHERE id = ?", [doc.id])
+    await expect(documentService.retype(doc.id, 'certificate')).rejects.toMatchObject({ statusCode: 409 })
+    await pool.query("UPDATE seafarer_document SET status = 'SKIPPED' WHERE id = ?", [doc.id])
+  })
+
+  it('gom và tách lại trang: giữ giấy không đổi, dựng lại giấy đổi, từ chối nhóm sai', async () => {
+    fakeAi({ split: (page) => (page === 3 ? 'other' : ['certificate', page]) })
+    const upload = await documentService.upload(seafarerId, asFile(uniquePdf(['A', 'B', 'C', 'D']), 'gom.pdf'), 1)
+    await waitFor(finished(upload.id), 'upload xong')
+    const before = (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id)
+    expect(before.map((d) => [d.page_from, d.page_to, d.doc_type])).toEqual([[1, 1, 'certificate'], [2, 2, 'certificate'], [3, 3, 'other'], [4, 4, 'certificate']])
+
+    // Gom trang 1-2 thành một chứng chỉ; giữ nguyên trang 3 và 4.
+    const result = await documentService.regroup(upload.id, [{ pageFrom: 1, pageTo: 2 }, { pageFrom: 3, pageTo: 3 }, { pageFrom: 4, pageTo: 4 }])
+    const after = result.documents
+    expect(after.map((d) => [d.page_from, d.page_to, d.doc_type])).toEqual([[1, 2, 'certificate'], [3, 3, 'other'], [4, 4, 'certificate']])
+    // Giấy trang 3 và 4 giữ nguyên id (không đọc lại).
+    expect(after[1].id).toBe(before[2].id)
+    expect(after[2].id).toBe(before[3].id)
+    await waitFor(finished(upload.id), 'đọc lại xong')
+
+    await expect(documentService.regroup(upload.id, [{ pageFrom: 1, pageTo: 3 }, { pageFrom: 3, pageTo: 4 }])).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('hai nhóm') })
+    await expect(documentService.regroup(upload.id, [{ pageFrom: 1, pageTo: 2 }])).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('chưa thuộc nhóm nào') })
+    await expect(documentService.regroup(upload.id, [{ pageFrom: 1, pageTo: 9 }])).rejects.toMatchObject({ statusCode: 400 })
+
+    // Giấy đã đưa vào hồ sơ thì trang của nó bị khoá.
+    await pool.query("UPDATE seafarer_document SET status = 'PUBLISHED' WHERE id = ?", [after[2].id])
+    await expect(documentService.regroup(upload.id, [{ pageFrom: 1, pageTo: 4 }])).rejects.toMatchObject({ statusCode: 409 })
+    const kept = await documentService.regroup(upload.id, [{ pageFrom: 1, pageTo: 3 }])
+    expect(kept.documents.map((d) => [d.page_from, d.page_to, d.status === 'PUBLISHED'])).toEqual([[1, 3, false], [4, 4, true]])
+    await expect(documentService.removeUpload(upload.id)).rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('tách lỗi: giấy "chưa tách" mang lỗi, bấm Đọc lại thì tách lại và thay giấy đó', async () => {
+    vi.spyOn(ai, 'isConfigured').mockReturnValue(true)
+    vi.spyOn(ai, 'callVision').mockRejectedValue({ statusCode: 503, message: 'AI đang quá tải, thử lại sau ít phút' })
+    const upload = await documentService.upload(seafarerId, asFile(uniquePdf(['Tách lỗi', 'Hai']), 'loi.pdf'), 1)
+    await waitFor(finished(upload.id), 'upload FAILED')
+    expect(await documentService.getUpload(upload.id)).toMatchObject({ status: 'FAILED', page_count: 2, error: 'AI đang quá tải, thử lại sau ít phút' })
+    const [placeholder] = (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id)
+    expect(placeholder).toMatchObject({ status: 'FAILED', doc_type: null, error: 'AI đang quá tải, thử lại sau ít phút' })
+
+    vi.restoreAllMocks()
+    fakeAi({ split: () => ['certificate', 1] })
+    expect(await documentService.retry(placeholder.id)).toMatchObject({ status: 'READING' })
+    await waitFor(finished(upload.id), 'tách lại xong')
+    const docs = (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id)
+    expect(docs.map((d) => [d.page_from, d.page_to, d.doc_type])).toEqual([[1, 2, 'certificate']])
+    expect(docs[0].id).not.toBe(placeholder.id)
   })
 
   it('thả trùng tệp thì trả tệp đã có; xoá rồi thả lại thì được', async () => {
-    fakeAi(CERT_READING)
+    fakeAi()
     const pdf = uniquePdf(['Một trang'])
     const first = await documentService.upload(seafarerId, asFile(pdf, 'a.pdf'), 1)
-    await waitFor(async () => (await documentService.getUpload(first.id)).status === 'DONE', 'upload DONE')
+    await waitFor(finished(first.id), 'upload xong')
     const again = await documentService.upload(seafarerId, asFile(pdf, 'doi-ten.pdf'), 1)
     expect(again).toMatchObject({ id: first.id, duplicate: true })
     const [[count]] = await pool.query('SELECT COUNT(*) AS n FROM document_upload WHERE seafarer_id = ? AND sha256 = ?', [seafarerId, crypto.createHash('sha256').update(pdf).digest('hex')])
@@ -125,11 +230,11 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     const third = await documentService.upload(seafarerId, asFile(pdf, 'a.pdf'), 1)
     expect(third.id).not.toBe(first.id)
     expect(third.duplicate).toBeUndefined()
-    await waitFor(async () => (await documentService.getUpload(third.id)).status === 'DONE', 'upload DONE')
+    await waitFor(finished(third.id), 'upload xong')
   })
 
   it('ảnh JPG là một trang; PDF hỏng thì upload FAILED kèm lý do', async () => {
-    fakeAi(CERT_READING)
+    fakeAi()
     const jpg = await sharp({ create: { width: 800, height: 600, channels: 3, background: { r: crypto.randomInt(255), g: 9, b: 9 } } }).jpeg().toBuffer()
     const image = await documentService.upload(seafarerId, asFile(jpg, 'anh.jpg'), 1)
     await waitFor(async () => (await documentService.getUpload(image.id)).status === 'DONE', 'ảnh DONE')
@@ -143,19 +248,20 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
   })
 
   it('chưa cấu hình AI: cắt trang vẫn xong, giấy báo chưa cấu hình, không giả kết quả', async () => {
-    vi.restoreAllMocks()
     vi.spyOn(ai, 'isConfigured').mockReturnValue(false)
     const callVision = vi.spyOn(ai, 'callVision')
     const upload = await documentService.upload(seafarerId, asFile(uniquePdf(['Chưa cấu hình']), 'x.pdf'), 1)
-    await waitFor(async () => (await documentService.getUpload(upload.id)).status === 'DONE', 'upload DONE')
+    await waitFor(finished(upload.id), 'upload xong')
+    expect(await documentService.getUpload(upload.id)).toMatchObject({ status: 'FAILED', page_count: 1 })
     const [doc] = (await documentService.list(seafarerId)).filter((d) => d.upload_id === upload.id)
-    expect(doc.status).toBe('FAILED')
+    expect(doc).toMatchObject({ status: 'FAILED', doc_type: null })
     expect(doc.error).toMatch(/chưa được cấu hình/)
     expect(callVision).not.toHaveBeenCalled()
+    await expect(documentService.retry(doc.id)).rejects.toMatchObject({ statusCode: 503 })
   })
 
   it('khôi phục: upload kẹt quá 5 phút được xử lý lại, giấy cũ chưa có trang tự cắt trang khi đọc', async () => {
-    fakeAi(CERT_READING)
+    fakeAi()
     // Upload kẹt giữa chừng: có tệp gốc, chưa có trang, đang SPLITTING từ 10 phút trước.
     const pdf = uniquePdf(['Kẹt 1', 'Kẹt 2'])
     const dir = path.join(uploadDir, 'documents', String(seafarerId))
@@ -182,7 +288,8 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
       [seafarerId, legacyPdf.length, legacyPath]
     )
     const [legacyDoc] = await pool.query(
-      `INSERT INTO seafarer_document (seafarer_id, upload_id, status, updated_at) VALUES (?, ?, 'READING', NOW() - INTERVAL 10 MINUTE)`,
+      `INSERT INTO seafarer_document (seafarer_id, upload_id, doc_type, type_source, status, updated_at)
+       VALUES (?, ?, 'certificate', 'AI', 'READING', NOW() - INTERVAL 10 MINUTE)`,
       [seafarerId, legacyUpload.insertId]
     )
 

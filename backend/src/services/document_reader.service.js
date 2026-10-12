@@ -36,12 +36,14 @@ function layoutText() {
   }).join('\n\n')
 }
 
-function buildPrompt(certificateTypes) {
+function buildPrompt(certificateTypes, docType = null) {
   const types = certificateTypes.map((c) => `${c.code}: ${c.name_vi}`).join('\n')
   return [
     'Bạn đọc ảnh giấy tờ của thuyền viên Việt Nam cho một agency tuyển dụng. Người duyệt sẽ so từng ô với bản gốc, nên đọc trung thực, không đoán.',
     '',
-    'Bước 1: nhận loại giấy, chọn một doc_type dưới đây; không khớp loại nào thì "other" và để fields rỗng.',
+    docType
+      ? `Bước 1: giấy này đã được nhận là loại "${docType}". Trả doc_type đúng như vậy.`
+      : 'Bước 1: nhận loại giấy, chọn một doc_type dưới đây; không khớp loại nào thì "other" và để fields rỗng.',
     'Bước 2: với mỗi ô của loại đó, trả một phần tử fields:',
     '- key: đúng key trong danh sách.',
     '- raw: chữ đúng như trên giấy, giữ nguyên chính tả và dấu chấm trong ngày.',
@@ -82,7 +84,8 @@ const documentReader = {
   },
 
   // images: [{ buffer, mimeType }] ảnh các trang của giấy. meta: { uploadId, documentId } chỉ để gắn vào nhật ký ai_call.
-  async read(images, certificateTypes = [], meta = {}) {
+  // docType: loại đã biết từ tầng tách (hoặc người dùng chọn); bỏ trống thì AI tự nhận loại.
+  async read(images, certificateTypes = [], meta = {}, docType = null) {
     if (!this.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
     const result = await ai.run({
       task: 'read',
@@ -91,12 +94,12 @@ const documentReader = {
       uploadId: meta.uploadId,
       documentId: meta.documentId,
       promptVersion: PROMPT_VERSION,
-      instructions: buildPrompt(certificateTypes),
+      instructions: buildPrompt(certificateTypes, docType),
       images,
       schemaName: 'document_reading',
       schema: OUTPUT_SCHEMA,
     })
-    return normalizeExtraction(result.data)
+    return normalizeExtraction(docType ? { ...result.data, doc_type: docType } : result.data)
   },
 }
 

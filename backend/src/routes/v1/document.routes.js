@@ -52,6 +52,35 @@ async function documentRoutes(fastify) {
     return reply.send(fs.createReadStream(file))
   })
 
+  fastify.post('/uploads/:id/regroup', {
+    ...guard,
+    schema: {
+      params: idParams,
+      body: {
+        type: 'object',
+        required: ['parts'],
+        additionalProperties: false,
+        properties: {
+          parts: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 100,
+            items: {
+              type: 'object',
+              required: ['pageFrom', 'pageTo'],
+              additionalProperties: false,
+              properties: {
+                pageFrom: { type: 'integer', minimum: 1 },
+                pageTo: { type: 'integer', minimum: 1 },
+                docType: { type: 'string', maxLength: 40 },
+              },
+            },
+          },
+        },
+      },
+    },
+  }, async (request) => documentService.regroup(request.params.id, request.body.parts))
+
   fastify.delete('/uploads/:id', { ...guard, schema: { params: idParams } }, async (request) => documentService.removeUpload(request.params.id))
 
   fastify.post('/seafarer/:seafarerId/publish', { ...guard, schema: { params: seafarerParams } }, async (request) =>
@@ -81,6 +110,14 @@ async function documentRoutes(fastify) {
       },
     },
   }, async (request) => documentService.decide(request.params.id, request.params.key, request.body.action, request.body.value, request.user.id))
+
+  fastify.put('/:id/type', {
+    ...guard,
+    schema: {
+      params: idParams,
+      body: { type: 'object', required: ['docType'], additionalProperties: false, properties: { docType: { type: 'string', maxLength: 40 } } },
+    },
+  }, async (request) => documentService.retype(request.params.id, request.body.docType))
 
   fastify.post('/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => documentService.retry(request.params.id))
 

@@ -41,7 +41,7 @@ describe('lời nhắc theo việc', () => {
   it('mỗi loại một việc, một mức model, một phiên bản', () => {
     expect(reader.taskOf('seaman_book_info')).toEqual({ task: 'book_info', tier: 'strong', version: 'book_info-1' })
     expect(reader.taskOf('seaman_book_duty')).toMatchObject({ task: 'book_duty', tier: 'strong' })
-    expect(reader.taskOf('certificate')).toMatchObject({ task: 'certificate', tier: 'small' })
+    expect(reader.taskOf('certificate')).toMatchObject({ task: 'certificate', tier: 'strong' })
     expect(reader.taskOf('passport')).toMatchObject({ task: 'read', tier: 'small' })
   })
 
@@ -107,7 +107,7 @@ describe('read', () => {
     const run = vi.spyOn(ai, 'run').mockResolvedValue({ data: { doc_type: 'other', page_label: '1 trang', fields: [field('typeCode', 'BST'), field('valid', '14/03/2028')] } })
     const images = [{ buffer: Buffer.from('a'), mimeType: 'image/jpeg' }]
     const out = await reader.read(images, CERT_TYPES, { uploadId: 3, documentId: 8 }, 'certificate')
-    expect(run.mock.calls[0][0]).toMatchObject({ task: 'certificate', tier: 'small', detail: 'high', uploadId: 3, documentId: 8, promptVersion: 'certificate-1', images })
+    expect(run.mock.calls[0][0]).toMatchObject({ task: 'certificate', tier: 'strong', detail: 'high', uploadId: 3, documentId: 8, promptVersion: 'certificate-3', images })
     expect(out.doc_type).toBe('certificate')
     expect(out.fields.find((f) => f.key === 'valid').value).toBe('14/03/2028')
   })

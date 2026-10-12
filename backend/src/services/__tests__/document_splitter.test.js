@@ -65,7 +65,7 @@ describe('split', () => {
     const run = vi.spyOn(ai, 'run').mockResolvedValue({ data: { pages: [page(1, 'certificate', 1), page(2, 'certificate', 1)] } })
     const result = await splitter.split({ uploadId: 4, pages: pages(2) })
     expect(run).toHaveBeenCalledTimes(1)
-    expect(run.mock.calls[0][0]).toMatchObject({ task: 'split', tier: 'small', detail: 'low', uploadId: 4, promptVersion: 'split-1' })
+    expect(run.mock.calls[0][0]).toMatchObject({ task: 'split', tier: 'small', detail: 'low', uploadId: 4, promptVersion: 'split-4' })
     expect(run.mock.calls[0][0].images).toHaveLength(2)
     expect(result.papers).toEqual([{ type: 'certificate', pageFrom: 1, pageTo: 2, label: 'Trang 1' }])
   })

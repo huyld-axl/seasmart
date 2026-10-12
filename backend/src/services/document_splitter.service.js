@@ -1,7 +1,7 @@
 // Tầng 1: một model nhỏ xem ảnh thu nhỏ mọi trang, gán loại từng trang và gom các trang cùng một giấy.
 const ai = require('./ai')
 
-const PROMPT_VERSION = 'split-1'
+const PROMPT_VERSION = 'split-4'
 const BATCH_SIZE = 20
 const SPLIT_TYPES = ['seaman_book_info', 'seaman_book_duty', 'certificate', 'other']
 // Chỉ chứng chỉ (hai mặt) và giấy "khác" mới gom nhiều trang liền nhau thành một giấy.
@@ -38,10 +38,12 @@ function buildPrompt(pageNumbers) {
     'Với MỖI trang trả một phần tử trong pages:',
     '- page: số trang như danh sách trên.',
     '- type, chọn một:',
-    '  - seaman_book_info: trang thông tin của sổ thuyền viên (số sổ, họ tên, ngày sinh, ảnh, nơi cấp).',
+    '  - seaman_book_info: trang thông tin của sổ thuyền viên (số sổ, họ tên, ngày sinh, ảnh, nơi cấp) của sổ thuyền viên VIỆT NAM. Sổ hoặc thẻ thuyền viên của nước khác (ví dụ Panama "Libreta de embarque") là giấy định danh, xếp other.',
     '  - seaman_book_duty: trang "Bố trí chức danh" của sổ thuyền viên (tên tàu, chức danh, ngày và cảng xuống tàu, rời tàu).',
-    '  - certificate: giấy chứng nhận, chứng chỉ, bằng cấp huấn luyện hoặc chuyên môn, kể cả mặt sau của chúng.',
-    '  - other: mọi thứ còn lại (bìa, trang trắng, trang sổ không có thông tin, hộ chiếu, giấy tiêm chủng, ảnh không phải giấy tờ…).',
+    '  - certificate: giấy tờ ghi nhận thuyền viên ĐÃ ĐẠT một chứng chỉ, bằng cấp hay khả năng chuyên môn: chứng chỉ huấn luyện, giấy chứng nhận khả năng chuyên môn (COC, bằng sĩ quan, bằng thuyền trưởng, máy trưởng…), giấy xác nhận hay công nhận của nước khác (endorsement, Panama), kể cả mặt sau.',
+    '  - other: mọi thứ còn lại: giấy tiêm chủng, giấy khám sức khỏe, hộ chiếu, căn cước, hợp đồng, ảnh, bìa, trang trắng, trang sổ không có thông tin.',
+    'Cách phân biệt: sổ thuyền viên có tiêu đề "SỔ THUYỀN VIÊN / SEAMAN\'S BOOK" hoặc "BỐ TRÍ CHỨC DANH / Duties Arrangement". Giấy công nhận bằng của nước khác (Panama "Refrendo" / Endorsement) là certificate. Giấy có các cột "Chức năng / Function", "Mức trách nhiệm / Level", "Hạn chế / Limitation" hoặc dòng "Giấy chứng nhận số / Certificate No" là chứng chỉ, kể cả khi có ảnh người và ô "Chức danh / Capacity".',
+    'Một ảnh có thể chụp hai trang liền nhau của một sổ hay một chứng chỉ (hai trang mở ra): vẫn là MỘT phần tử, loại theo nội dung chính.',
     '- group: số nguyên nhóm trang thuộc cùng một giấy. Hai mặt của một chứng chỉ có cùng group; giấy khác nhau có group khác nhau.',
     '- page_label: tên ngắn của trang bằng tiếng Việt (ví dụ "Chứng chỉ an toàn cơ bản", "Trang bố trí chức danh").',
     '- note: một câu tiếng Việt khi bạn không chắc loại hoặc trang mờ, nghiêng; còn lại để rỗng.',

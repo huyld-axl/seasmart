@@ -171,7 +171,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     const [calls] = await pool.query('SELECT * FROM ai_call WHERE upload_id = ?', [upload.id])
     expect(calls.filter((c) => c.task === 'split')).toHaveLength(1)
     expect(calls.every((c) => c.status === 'OK' && c.input_tokens === 100 && c.model === 'fake-model')).toBe(true)
-    expect(calls.find((c) => c.task === 'split').prompt_version).toBe('split-1')
+    expect(calls.find((c) => c.task === 'split').prompt_version).toBe('split-4')
   })
 
   it('đọc theo loại: trang chức danh ra 12 ô kèm chức danh chuẩn hoá, chứng chỉ ra khuôn nhẹ, cảnh báo giấy của người khác', async () => {
@@ -197,7 +197,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
 
     // Mức model theo việc.
     const tiers = Object.fromEntries(callVision.mock.calls.map((c) => [c[0].task, c[0].tier]))
-    expect(tiers).toMatchObject({ split: 'small', book_info: 'strong', book_duty: 'strong', certificate: 'small' })
+    expect(tiers).toMatchObject({ split: 'small', book_info: 'strong', book_duty: 'strong', certificate: 'strong' })
 
     // Trang chức danh: đủ 12 ô theo thứ tự, ngày chuẩn hoá bằng code, chức danh khớp bảng rank (OLR/2E…).
     expect(duty.fields.map((x) => x.key)).toHaveLength(12)

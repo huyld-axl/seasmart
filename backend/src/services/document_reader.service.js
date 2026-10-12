@@ -4,11 +4,11 @@ const { DOC_TYPES, AI_STATES } = require('../constants/document_types')
 const { normalizeDate } = require('../utils/normalize')
 
 // Việc, mức model và phiên bản lời nhắc của từng loại giấy. Sổ thuyền viên đọc kỹ (model mạnh),
-// chứng chỉ đọc nhẹ (model nhỏ). Loại còn lại (hộ chiếu, tiêm chủng) chỉ vào đây khi người dùng đổi loại tay.
+// chứng chỉ cũng dùng model mạnh vì số chứng chỉ là khoá chống trùng và model nhỏ làm rơi ký tự (đo 12/10/2026: 1/9 so với 8/9). Loại còn lại (hộ chiếu, tiêm chủng) chỉ vào đây khi người dùng đổi loại tay.
 const READING_TASKS = {
   seaman_book_info: { task: 'book_info', tier: 'strong', version: 'book_info-1' },
-  seaman_book_duty: { task: 'book_duty', tier: 'strong', version: 'book_duty-1' },
-  certificate: { task: 'certificate', tier: 'small', version: 'certificate-1' },
+  seaman_book_duty: { task: 'book_duty', tier: 'strong', version: 'book_duty-2' },
+  certificate: { task: 'certificate', tier: 'strong', version: 'certificate-3' },
 }
 const DEFAULT_TASK = { task: 'read', tier: 'small', version: 'read-1' }
 
@@ -22,15 +22,19 @@ const TYPE_NOTES = {
     'Ảnh là một trang "Bố trí chức danh" của sổ thuyền viên, ghi MỘT chuyến đi tàu. Chữ in lẫn chữ viết tay, dấu đóng có thể đè lên chữ.',
     'Tên tàu, loại tàu, quốc tịch tàu, tổng dung tích, công suất, chủ tàu, chức danh, số GCNKNCM: chép đúng như trên giấy.',
     'Chức danh viết tắt (OLR, 2/E, E/Cdt…) thì giữ nguyên chữ viết tắt trong raw và value, không tự đổi sang tên đầy đủ.',
-    'Cảng xuống tàu và ngày xuống tàu là hai ô riêng; cảng rời tàu và ngày rời tàu cũng vậy. Ngày rời tàu để trống khi chuyến chưa kết thúc: state UNKNOWN.',
+    'Một ảnh là hai trang sổ mở ra: trang trái ghi tàu và chức danh, trang phải ghi cảng và ngày xuống, rời tàu. Đọc cả hai thành MỘT chuyến.',
+    'Cảng xuống tàu và ngày xuống tàu là hai ô riêng; cảng rời tàu và ngày rời tàu cũng vậy. Tên cảng có thể viết cùng dòng với ngày hoặc ngay sau ngày. Ngày rời tàu để trống khi chuyến chưa kết thúc: state UNKNOWN.',
+    'Số GCNKNCM (coc): chép chính xác từng ký tự, giữ dấu chấm và chữ cái, không bỏ sót.',
     'Không suy đoán tên tàu hay chức danh từ chữ mờ; không chắc thì UNKNOWN.',
   ],
   certificate: [
-    'Ảnh là một chứng chỉ, giấy chứng nhận hoặc bằng cấp của thuyền viên (có thể gồm cả hai mặt).',
+    'Ảnh là một chứng chỉ, giấy chứng nhận hoặc bằng cấp của thuyền viên (có thể là hai trang mở ra, một bên là bìa).',
     'Chỉ cần tên người, loại, số, ngày cấp, nơi cấp và hạn; không cần chép các nội dung khác.',
+    'Loại chứng chỉ (typeCode) xác định theo nội dung THẬT của giấy: phần "đã hoàn thành khoá huấn luyện về", chức năng, hoặc tên bằng. Không chọn theo tiêu đề chung ở bìa (ví dụ "Huấn luyện nghiệp vụ cơ bản" ở bìa nhưng nội dung là khoá khác).',
+    'Số chứng chỉ (no): chép CHÍNH XÁC từng ký tự ở ô "Giấy chứng nhận số / Certificate No", giữ nguyên chữ hoa, dấu chấm, dấu gạch, dấu "/" và các số 0 ở đầu. Không bỏ sót chữ số, không tự sửa cho "hợp lý". Nếu có nhiều số trên giấy: ưu tiên ô nhãn "Certificate No", "Giấy chứng nhận số" hoặc "CT No"; số "Refrendo" (endorsement no.) và số "Nº Documento" là số khác, không lấy.',
     'valid là ngày hết hạn. Giấy không ghi hạn hoặc ghi không thời hạn thì valid UNKNOWN và noExpiry là "true"; giấy có ngày hết hạn thì noExpiry là "false".',
-    'holder là tên người được cấp như trên giấy; issuer là cơ quan hoặc trường cấp.',
-    'nameRaw là tên chứng chỉ đúng như trên giấy, kể cả khi không khớp mã nào trong danh mục.',
+    'holder là tên người được cấp, chép đúng như trên giấy; issuer là cơ quan hoặc trường cấp.',
+    'nameRaw là tên chứng chỉ hoặc tên khoá đúng như trên giấy, kể cả khi không khớp mã nào trong danh mục.',
   ],
 }
 

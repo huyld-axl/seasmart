@@ -5,11 +5,22 @@ const pool = require('../config/db')
 const { withTransaction } = require('../utils/transaction')
 const config = require('../config')
 const documentReader = require('./document_reader.service')
+const documentPages = require('./document_pages.service')
 const ai = require('./ai')
 const seafarerService = require('./seafarer.service')
 const { DOC_TYPES, DOC_STATUS, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES } = require('../constants/document_types')
 
 const FIELD_ACTIONS = ['accept', 'edit', 'reject', 'keepUnknown', 'undo']
+const UPLOAD_STATUS = { RECEIVED: 'RECEIVED', SPLITTING: 'SPLITTING', READING: 'READING', DONE: 'DONE', FAILED: 'FAILED' }
+const BUSY_UPLOAD_STATES = [UPLOAD_STATUS.RECEIVED, UPLOAD_STATUS.SPLITTING, UPLOAD_STATUS.READING]
+const STALLED_MINUTES = 5
+
+// Một giấy kèm thông tin tệp cha. Giấy cũ chưa có upload_id thì dùng cột tệp trên chính dòng giấy.
+const DOC_SELECT = `SELECT d.*, COALESCE(u.file_name, d.file_name) AS file_name, COALESCE(u.mime_type, d.mime_type) AS mime_type
+  FROM seafarer_document d LEFT JOIN document_upload u ON u.id = d.upload_id`
+
+// Upload đang được xử lý trong tiến trình này, tránh hai lần chạy chồng nhau (khôi phục sau khởi động, bấm lặp).
+const running = new Set()
 
 // Magic bytes: PDF=%PDF, JPEG=FFD8FF, PNG=89504E47. Không tin MIME trình duyệt gửi lên.
 function sniffMime(buffer) {
@@ -70,6 +81,22 @@ function profileChanges(docType, fields) {
   return data
 }
 
+function shapeUpload(upload) {
+  return {
+    id: upload.id,
+    seafarer_id: upload.seafarer_id,
+    file_name: upload.file_name,
+    mime_type: upload.mime_type,
+    file_size: upload.file_size,
+    page_count: upload.page_count,
+    status: upload.status,
+    error: upload.error,
+    document_count: upload.document_count ?? undefined,
+    created_by: upload.created_by,
+    created_at: upload.created_at,
+  }
+}
+
 function shape(doc, fields) {
   const layout = DOC_TYPES[doc.doc_type]
   const byKey = new Map(fields.map((field) => [field.field_key, field]))
@@ -82,6 +109,11 @@ function shape(doc, fields) {
     label: layout?.label || 'Chưa nhận ra loại giấy',
     title: layout?.title || null,
     page: doc.page_label,
+    upload_id: doc.upload_id || null,
+    page_from: doc.page_from || null,
+    page_to: doc.page_to || null,
+    type_source: doc.type_source || null,
+    owner_mismatch: Boolean(doc.owner_mismatch),
     status: doc.status,
     error: doc.error,
     published_at: doc.published_at,
@@ -105,6 +137,8 @@ function shape(doc, fields) {
 }
 
 const documentService = {
+  // Lưu tệp gốc rồi trả upload ngay; cắt trang và đọc chạy nền, frontend hỏi lại trạng thái.
+  // Tệp trùng (cùng sha256, chưa xoá) trả về upload đã có kèm duplicate: true.
   async upload(seafarerId, file, userId) {
     const [[seafarer]] = await pool.query('SELECT id FROM seafarer WHERE id = ? AND deleted_at IS NULL', [seafarerId])
     if (!seafarer) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
@@ -113,6 +147,14 @@ const documentService = {
     const mime = sniffMime(buffer)
     if (!mime || !ALLOWED_MIME.includes(mime)) throw { statusCode: 400, message: 'Chỉ nhận PDF, JPG, PNG' }
 
+    const sha256 = crypto.createHash('sha256').update(buffer).digest('hex')
+    const findDuplicate = async () => {
+      const [[dup]] = await pool.query('SELECT * FROM document_upload WHERE seafarer_id = ? AND sha256 = ? AND deleted_at IS NULL', [seafarerId, sha256])
+      return dup ? { ...shapeUpload(dup), duplicate: true } : null
+    }
+    const existing = await findDuplicate()
+    if (existing) return existing
+
     const dir = path.join(config.upload.dir, 'documents', String(seafarerId))
     fs.mkdirSync(dir, { recursive: true })
     const ext = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png' }[mime]
@@ -120,14 +162,99 @@ const documentService = {
     fs.writeFileSync(storagePath, buffer)
 
     const name = path.basename(String(file.filename || 'giay-to')).slice(0, 255)
-    const [result] = await pool.query(
-      'INSERT INTO seafarer_document (seafarer_id, file_name, mime_type, file_size, storage_path, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [seafarerId, name, mime, buffer.length, storagePath, DOC_STATUS.READING, userId]
-    )
-    const id = result.insertId
-    // AI đọc chạy sau khi trả lời, frontend hỏi lại trạng thái.
-    setImmediate(() => { this.extract(id).catch(() => {}) })
-    return this.get(id)
+    let id
+    try {
+      const [result] = await pool.query(
+        'INSERT INTO document_upload (seafarer_id, file_name, mime_type, file_size, storage_path, sha256, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [seafarerId, name, mime, buffer.length, storagePath, sha256, UPLOAD_STATUS.RECEIVED, userId]
+      )
+      id = result.insertId
+    } catch (err) {
+      fs.rmSync(storagePath, { force: true })
+      // Hai lần thả cùng lúc: lần sau thua khoá UNIQUE, trả tệp của lần trước.
+      if (err?.code === 'ER_DUP_ENTRY') {
+        const dup = await findDuplicate()
+        if (dup) return dup
+      }
+      throw err
+    }
+    setImmediate(() => { this.process(id).catch(() => {}) })
+    return this.getUpload(id)
+  },
+
+  // Cắt trang → tạo giấy → đọc. Chạy lại được: bỏ qua bước đã xong (dùng cho khôi phục sau khi máy chủ khởi động lại).
+  async process(uploadId) {
+    if (running.has(uploadId)) return
+    running.add(uploadId)
+    try {
+      const [[upload]] = await pool.query('SELECT * FROM document_upload WHERE id = ? AND deleted_at IS NULL', [uploadId])
+      if (!upload) return
+      try {
+        const pageCount = await this.ensurePages(upload)
+        const [existing] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND deleted_at IS NULL', [uploadId])
+        if (!existing.length) {
+          await pool.query(
+            'INSERT INTO seafarer_document (seafarer_id, upload_id, page_from, page_to, status, created_by) VALUES (?, ?, 1, ?, ?, ?)',
+            [upload.seafarer_id, uploadId, pageCount, DOC_STATUS.READING, upload.created_by]
+          )
+        }
+      } catch (err) {
+        const message = err?.statusCode ? err.message : 'Không cắt được trang của tệp này. Thử tải lại.'
+        await pool.query('UPDATE document_upload SET status = ?, error = ? WHERE id = ?', [UPLOAD_STATUS.FAILED, message.slice(0, 500), uploadId])
+        return
+      }
+      await pool.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.READING, uploadId])
+      const [docs] = await pool.query('SELECT id FROM seafarer_document WHERE upload_id = ? AND status = ? AND deleted_at IS NULL ORDER BY id', [uploadId, DOC_STATUS.READING])
+      for (const doc of docs) await this.extract(doc.id)
+      await this.finishUpload(uploadId)
+    } finally {
+      running.delete(uploadId)
+    }
+  },
+
+  // Cắt tệp gốc thành ảnh từng trang nếu chưa có (cả tệp cũ trước khi có bảng upload). Trả số trang.
+  async ensurePages(upload) {
+    const [[have]] = await pool.query('SELECT COUNT(*) AS n FROM document_upload_page WHERE upload_id = ?', [upload.id])
+    if (have.n > 0) return have.n
+    await pool.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.SPLITTING, upload.id])
+    if (!fs.existsSync(upload.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp gốc trên máy chủ' }
+    const pages = await documentPages.cut(fs.readFileSync(upload.storage_path), upload.mime_type)
+    const dir = path.join(config.upload.dir, 'documents', String(upload.seafarer_id), String(upload.id))
+    fs.mkdirSync(dir, { recursive: true })
+    const rows = pages.map((page) => {
+      const base = `p${String(page.pageNo).padStart(3, '0')}`
+      const imagePath = path.join(dir, `${base}.jpg`)
+      const thumbPath = path.join(dir, `${base}_t.jpg`)
+      fs.writeFileSync(imagePath, page.image)
+      fs.writeFileSync(thumbPath, page.thumb)
+      return [upload.id, page.pageNo, imagePath, thumbPath, page.width, page.height]
+    })
+    await withTransaction(pool, async (conn) => {
+      await conn.query('INSERT INTO document_upload_page (upload_id, page_no, image_path, thumb_path, width, height) VALUES ?', [rows])
+      await conn.query('UPDATE document_upload SET page_count = ? WHERE id = ?', [pages.length, upload.id])
+    })
+    return pages.length
+  },
+
+  // Upload xong khi không còn giấy nào đang đọc.
+  async finishUpload(uploadId) {
+    if (!uploadId) return
+    const [[reading]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE upload_id = ? AND status = ? AND deleted_at IS NULL', [uploadId, DOC_STATUS.READING])
+    if (reading.n === 0) {
+      await pool.query('UPDATE document_upload SET status = ? WHERE id = ? AND status IN (?)', [UPLOAD_STATUS.DONE, uploadId, [UPLOAD_STATUS.READING, UPLOAD_STATUS.SPLITTING]])
+    }
+  },
+
+  // Ảnh các trang thuộc giấy, theo thứ tự trang.
+  async pageImagesOf(doc) {
+    const [[upload]] = await pool.query('SELECT * FROM document_upload WHERE id = ?', [doc.upload_id])
+    if (!upload) throw { statusCode: 404, message: 'Không tìm thấy tệp của giấy này' }
+    const count = await this.ensurePages(upload)
+    const from = doc.page_from || 1
+    const to = doc.page_to || count
+    const [pages] = await pool.query('SELECT image_path FROM document_upload_page WHERE upload_id = ? AND page_no BETWEEN ? AND ? ORDER BY page_no', [upload.id, from, to])
+    if (!pages.length) throw { statusCode: 404, message: 'Không có ảnh trang cho giấy này' }
+    return pages.map((page) => ({ buffer: fs.readFileSync(page.image_path), mimeType: 'image/jpeg' }))
   },
 
   async extract(id) {
@@ -135,7 +262,8 @@ const documentService = {
     if (!doc) return
     try {
       const [types] = await pool.query('SELECT code, name_vi FROM certificate_type ORDER BY id')
-      const result = await documentReader.read(fs.readFileSync(doc.storage_path), doc.mime_type, types, { documentId: id })
+      const images = await this.pageImagesOf(doc)
+      const result = await documentReader.read(images, types, { uploadId: doc.upload_id, documentId: id })
       if (!result.doc_type) {
         await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id = ?', [DOC_STATUS.FAILED, 'AI chưa nhận ra loại giấy này. Giấy chưa có khuôn đọc, lưu kèm hồ sơ để xem tay.', id])
         return
@@ -147,12 +275,14 @@ const documentService = {
           [result.fields.map((field) => [id, field.key, field.raw, field.value, field.state, field.value, field.state, field.note])]
         )
       }
-      await pool.query('UPDATE seafarer_document SET doc_type = ?, page_label = ?, status = ?, error = NULL WHERE id = ?', [
-        result.doc_type, result.page_label, docStatusOf(result.fields), id,
+      await pool.query('UPDATE seafarer_document SET doc_type = ?, type_source = ?, page_label = ?, status = ?, error = NULL WHERE id = ?', [
+        result.doc_type, 'AI', result.page_label, docStatusOf(result.fields), id,
       ])
     } catch (err) {
       const message = err?.statusCode ? err.message : 'AI đọc giấy bị lỗi. Thử đọc lại.'
       await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id = ?', [DOC_STATUS.FAILED, message.slice(0, 500), id])
+    } finally {
+      await this.finishUpload(doc.upload_id)
     }
   },
 
@@ -161,19 +291,43 @@ const documentService = {
     if (doc.status !== DOC_STATUS.FAILED) throw { statusCode: 409, message: 'Chỉ đọc lại được giấy đọc lỗi' }
     if (!documentReader.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
     await pool.query('UPDATE seafarer_document SET status = ?, error = NULL WHERE id = ?', [DOC_STATUS.READING, id])
+    if (doc.upload_id) await pool.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.READING, doc.upload_id])
     setImmediate(() => { this.extract(id).catch(() => {}) })
     return this.get(id)
   },
 
+  // Khi máy chủ khởi động: đưa vào chạy lại các upload và giấy kẹt quá STALLED_MINUTES phút.
+  // Chạy lần lượt trong nền; trả số lượng đã xếp hàng.
+  async recoverStalled() {
+    const [uploads] = await pool.query(
+      'SELECT id FROM document_upload WHERE deleted_at IS NULL AND status IN (?) AND updated_at < (NOW() - INTERVAL ? MINUTE) ORDER BY id',
+      [BUSY_UPLOAD_STATES, STALLED_MINUTES]
+    )
+    // Giấy đang đọc dở mà upload của nó không còn bận (giấy cũ chưa có upload, hoặc đọc lại một giấy).
+    const [docs] = await pool.query(
+      `SELECT d.id FROM seafarer_document d LEFT JOIN document_upload u ON u.id = d.upload_id
+       WHERE d.deleted_at IS NULL AND d.status = ? AND d.updated_at < (NOW() - INTERVAL ? MINUTE)
+         AND (u.id IS NULL OR u.status NOT IN (?))
+       ORDER BY d.id`,
+      [DOC_STATUS.READING, STALLED_MINUTES, BUSY_UPLOAD_STATES]
+    )
+    const docIds = docs.map((doc) => doc.id)
+    setImmediate(async () => {
+      for (const upload of uploads) await this.process(upload.id).catch(() => {})
+      for (const id of docIds) await this.extract(id).catch(() => {})
+    })
+    return { uploads: uploads.length, documents: docIds.length }
+  },
+
   async list(seafarerId) {
-    const [docs] = await pool.query('SELECT * FROM seafarer_document WHERE seafarer_id = ? AND deleted_at IS NULL ORDER BY id', [seafarerId])
+    const [docs] = await pool.query(`${DOC_SELECT} WHERE d.seafarer_id = ? AND d.deleted_at IS NULL ORDER BY d.id`, [seafarerId])
     if (!docs.length) return []
     const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id IN (?) ORDER BY id', [docs.map((doc) => doc.id)])
     return docs.map((doc) => shape(doc, fields.filter((field) => field.document_id === doc.id)))
   },
 
   async get(id) {
-    const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
+    const [[doc]] = await pool.query(`${DOC_SELECT} WHERE d.id = ? AND d.deleted_at IS NULL`, [id])
     if (!doc) throw { statusCode: 404, message: 'Không tìm thấy giấy tờ' }
     const [fields] = await pool.query('SELECT * FROM document_field WHERE document_id = ? ORDER BY id', [id])
     return shape(doc, fields)
@@ -197,7 +351,7 @@ const documentService = {
 
   // Đưa mọi giấy đã duyệt xong của thuyền viên vào hồ sơ: cột hồ sơ (kèm lịch sử sửa) và chứng chỉ.
   async publish(seafarerId, userId) {
-    const [docs] = await pool.query('SELECT * FROM seafarer_document WHERE seafarer_id = ? AND status = ? AND deleted_at IS NULL', [seafarerId, DOC_STATUS.COMPLETED])
+    const [docs] = await pool.query(`${DOC_SELECT} WHERE d.seafarer_id = ? AND d.status = ? AND d.deleted_at IS NULL`, [seafarerId, DOC_STATUS.COMPLETED])
     const [[pending]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE seafarer_id = ? AND status IN (?) AND deleted_at IS NULL', [seafarerId, [DOC_STATUS.REVIEW_REQUIRED, DOC_STATUS.READING]])
     if (pending.n > 0) throw { statusCode: 409, message: 'Còn giấy chưa duyệt xong' }
     if (!docs.length) throw { statusCode: 409, message: 'Không có giấy nào đã duyệt xong để đưa vào hồ sơ' }
@@ -262,10 +416,64 @@ const documentService = {
     return { success: true }
   },
 
+  // Tệp gốc của giấy: tệp cha nếu có, giấy cũ thì tệp trên chính dòng giấy.
   async fileOf(id) {
-    const [[doc]] = await pool.query('SELECT storage_path, mime_type, file_name FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
-    if (!doc || !fs.existsSync(doc.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    const [[doc]] = await pool.query(
+      `SELECT COALESCE(u.storage_path, d.storage_path) AS storage_path, COALESCE(u.mime_type, d.mime_type) AS mime_type, COALESCE(u.file_name, d.file_name) AS file_name
+       FROM seafarer_document d LEFT JOIN document_upload u ON u.id = d.upload_id WHERE d.id = ? AND d.deleted_at IS NULL`,
+      [id]
+    )
+    if (!doc || !doc.storage_path || !fs.existsSync(doc.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
     return doc
+  },
+
+  async getUpload(id) {
+    const [[upload]] = await pool.query(
+      `SELECT u.*, (SELECT COUNT(*) FROM seafarer_document d WHERE d.upload_id = u.id AND d.deleted_at IS NULL) AS document_count
+       FROM document_upload u WHERE u.id = ? AND u.deleted_at IS NULL`,
+      [id]
+    )
+    if (!upload) throw { statusCode: 404, message: 'Không tìm thấy tệp tải lên' }
+    return shapeUpload(upload)
+  },
+
+  async listUploads(seafarerId) {
+    const [uploads] = await pool.query(
+      `SELECT u.*, (SELECT COUNT(*) FROM seafarer_document d WHERE d.upload_id = u.id AND d.deleted_at IS NULL) AS document_count
+       FROM document_upload u WHERE u.seafarer_id = ? AND u.deleted_at IS NULL ORDER BY u.id`,
+      [seafarerId]
+    )
+    return uploads.map(shapeUpload)
+  },
+
+  async uploadFile(id) {
+    const [[upload]] = await pool.query('SELECT storage_path, mime_type, file_name FROM document_upload WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!upload || !fs.existsSync(upload.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    return upload
+  },
+
+  // size: 'thumb' (ảnh thu nhỏ) hoặc 'full' (ảnh trang đầy đủ).
+  async pageImage(uploadId, pageNo, size) {
+    const [[page]] = await pool.query(
+      `SELECT p.image_path, p.thumb_path FROM document_upload_page p JOIN document_upload u ON u.id = p.upload_id
+       WHERE p.upload_id = ? AND p.page_no = ? AND u.deleted_at IS NULL`,
+      [uploadId, pageNo]
+    )
+    const file = page && (size === 'thumb' ? page.thumb_path : page.image_path)
+    if (!file || !fs.existsSync(file)) throw { statusCode: 404, message: 'Không tìm thấy ảnh trang' }
+    return file
+  },
+
+  // Bỏ cả tệp (và các giấy của nó) khi chưa giấy nào vào hồ sơ.
+  async removeUpload(id) {
+    await this.getUpload(id)
+    const [[published]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE upload_id = ? AND status = ? AND deleted_at IS NULL', [id, DOC_STATUS.PUBLISHED])
+    if (published.n > 0) throw { statusCode: 409, message: 'Tệp có giấy đã đưa vào hồ sơ, không xoá được' }
+    await withTransaction(pool, async (conn) => {
+      await conn.query('UPDATE seafarer_document SET deleted_at = NOW() WHERE upload_id = ? AND deleted_at IS NULL', [id])
+      await conn.query('UPDATE document_upload SET deleted_at = NOW() WHERE id = ?', [id])
+    })
+    return { success: true }
   },
 }
 

@@ -4,6 +4,7 @@ const config = require('./src/config')
 const plugins = require('./src/plugins')
 const v1Routes = require('./src/routes/v1')
 const { startJobs } = require('./src/jobs')
+const { documentService } = require('./src/services/document.service')
 
 const fastify = Fastify({ logger: true })
 
@@ -35,6 +36,10 @@ async function start() {
 
   await fastify.listen({ port: config.port, host: config.host })
   startJobs(fastify.log)
+  // Upload và giấy đang đọc dở từ lần chạy trước (máy chủ tắt giữa chừng) được đưa vào chạy lại.
+  documentService.recoverStalled()
+    .then((queued) => fastify.log.info(queued, 'Khôi phục giấy tờ đang đọc dở'))
+    .catch((err) => fastify.log.error({ err }, 'Không khôi phục được giấy tờ đang đọc dở'))
 }
 
 start().catch((err) => {

@@ -81,8 +81,8 @@ const documentReader = {
     return ai.isConfigured()
   },
 
-  // meta: { uploadId, documentId } chỉ để gắn vào nhật ký ai_call.
-  async read(buffer, mimeType, certificateTypes = [], meta = {}) {
+  // images: [{ buffer, mimeType }] ảnh các trang của giấy. meta: { uploadId, documentId } chỉ để gắn vào nhật ký ai_call.
+  async read(images, certificateTypes = [], meta = {}) {
     if (!this.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
     const result = await ai.run({
       task: 'read',
@@ -92,7 +92,7 @@ const documentReader = {
       documentId: meta.documentId,
       promptVersion: PROMPT_VERSION,
       instructions: buildPrompt(certificateTypes),
-      images: [{ buffer, mimeType }],
+      images,
       schemaName: 'document_reading',
       schema: OUTPUT_SCHEMA,
     })

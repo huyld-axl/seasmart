@@ -1,5 +1,6 @@
 const { documentService } = require('../../services/document.service')
 const documentReader = require('../../services/document_reader.service')
+const ai = require('../../services/ai')
 const { MAX_FILE_BYTES } = require('../../constants/document_types')
 
 const ROLES = ['admin', 'operator', 'reviewer']
@@ -14,10 +15,11 @@ const seafarerParams = { type: 'object', required: ['seafarerId'], properties: {
 async function documentRoutes(fastify) {
   const guard = { onRequest: [fastify.authenticate, requireRole(ROLES)] }
 
-  fastify.get('/status', guard, async () => ({ ai_configured: documentReader.isConfigured() }))
+  fastify.get('/status', guard, async () => ({ ai_configured: documentReader.isConfigured(), ai: ai.describe() }))
 
   fastify.get('/seafarer/:seafarerId', { ...guard, schema: { params: seafarerParams } }, async (request) => ({
     ai_configured: documentReader.isConfigured(),
+    ai: ai.describe(),
     data: await documentService.list(request.params.seafarerId),
   }))
 

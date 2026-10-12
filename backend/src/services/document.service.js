@@ -5,6 +5,7 @@ const pool = require('../config/db')
 const { withTransaction } = require('../utils/transaction')
 const config = require('../config')
 const documentReader = require('./document_reader.service')
+const ai = require('./ai')
 const seafarerService = require('./seafarer.service')
 const { DOC_TYPES, DOC_STATUS, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES } = require('../constants/document_types')
 
@@ -134,7 +135,7 @@ const documentService = {
     if (!doc) return
     try {
       const [types] = await pool.query('SELECT code, name_vi FROM certificate_type ORDER BY id')
-      const result = await documentReader.read(fs.readFileSync(doc.storage_path), doc.mime_type, types)
+      const result = await documentReader.read(fs.readFileSync(doc.storage_path), doc.mime_type, types, { documentId: id })
       if (!result.doc_type) {
         await pool.query('UPDATE seafarer_document SET status = ?, error = ? WHERE id = ?', [DOC_STATUS.FAILED, 'AI chưa nhận ra loại giấy này. Giấy chưa có khuôn đọc, lưu kèm hồ sơ để xem tay.', id])
         return
@@ -158,7 +159,7 @@ const documentService = {
   async retry(id) {
     const doc = await this.get(id)
     if (doc.status !== DOC_STATUS.FAILED) throw { statusCode: 409, message: 'Chỉ đọc lại được giấy đọc lỗi' }
-    if (!documentReader.isConfigured()) throw { statusCode: 503, message: 'AI đọc giấy tờ chưa được cấu hình (thiếu ANTHROPIC_API_KEY)' }
+    if (!documentReader.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
     await pool.query('UPDATE seafarer_document SET status = ?, error = NULL WHERE id = ?', [DOC_STATUS.READING, id])
     setImmediate(() => { this.extract(id).catch(() => {}) })
     return this.get(id)

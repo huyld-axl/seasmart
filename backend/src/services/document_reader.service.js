@@ -1,7 +1,7 @@
-const Anthropic = require('@anthropic-ai/sdk')
+const ai = require('./ai')
 const { DOC_TYPES, AI_STATES } = require('../constants/document_types')
 
-const MODEL = process.env.DOC_READER_MODEL || 'claude-opus-5-5'
+const PROMPT_VERSION = 'read-1'
 
 // Kết quả AI trả về theo đúng khuôn này (structured output), backend lọc lại theo DOC_TYPES.
 const OUTPUT_SCHEMA = {
@@ -76,44 +76,27 @@ function normalizeExtraction(result) {
   return { doc_type: result.doc_type, page_label: String(result.page_label || '').slice(0, 100) || null, fields }
 }
 
-function contentBlock(buffer, mimeType) {
-  const data = buffer.toString('base64')
-  if (mimeType === 'application/pdf') return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data } }
-  return { type: 'image', source: { type: 'base64', media_type: mimeType, data } }
-}
-
 const documentReader = {
   isConfigured() {
-    return Boolean(process.env.ANTHROPIC_API_KEY)
+    return ai.isConfigured()
   },
 
-  async read(buffer, mimeType, certificateTypes = []) {
-    if (!this.isConfigured()) {
-      throw { statusCode: 503, message: 'AI đọc giấy tờ chưa được cấu hình (thiếu ANTHROPIC_API_KEY)' }
-    }
-    const client = new Anthropic()
-    const response = await client.beta.messages.create({
-      model: MODEL,
-      max_tokens: 8000,
-      thinking: { type: 'adaptive' },
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      output_config: { format: { type: 'json_schema', schema: OUTPUT_SCHEMA } },
-      messages: [{
-        role: 'user',
-        content: [contentBlock(buffer, mimeType), { type: 'text', text: buildPrompt(certificateTypes) }],
-      }],
+  // meta: { uploadId, documentId } chỉ để gắn vào nhật ký ai_call.
+  async read(buffer, mimeType, certificateTypes = [], meta = {}) {
+    if (!this.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
+    const result = await ai.run({
+      task: 'read',
+      tier: 'strong',
+      detail: 'high',
+      uploadId: meta.uploadId,
+      documentId: meta.documentId,
+      promptVersion: PROMPT_VERSION,
+      instructions: buildPrompt(certificateTypes),
+      images: [{ buffer, mimeType }],
+      schemaName: 'document_reading',
+      schema: OUTPUT_SCHEMA,
     })
-    if (response.stop_reason === 'refusal') throw { statusCode: 422, message: 'AI không đọc giấy này. Nhập tay giúp.' }
-    if (response.stop_reason === 'max_tokens') throw { statusCode: 422, message: 'Giấy quá dài, AI đọc chưa hết. Tách trang rồi tải lại.' }
-    const text = response.content.filter((block) => block.type === 'text').map((block) => block.text).join('')
-    let parsed
-    try {
-      parsed = JSON.parse(text)
-    } catch {
-      throw { statusCode: 502, message: 'AI trả kết quả không đọc được. Thử lại.' }
-    }
-    return normalizeExtraction(parsed)
+    return normalizeExtraction(result.data)
   },
 }
 

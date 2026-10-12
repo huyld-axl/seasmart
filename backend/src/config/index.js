@@ -27,6 +27,18 @@ module.exports = {
     dir: process.env.UPLOAD_DIR || './uploads',
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024,
   },
+  // AI đọc giấy tờ. Mã model lấy từ môi trường, không ghi cứng trong code.
+  ai: {
+    provider: process.env.AI_PROVIDER || 'openai',
+    openaiApiKey: process.env.OPENAI_API_KEY || '',
+    openaiBaseUrl: process.env.OPENAI_BASE_URL || '',
+    openaiModelSmall: process.env.OPENAI_MODEL_SMALL || '',
+    openaiModelStrong: process.env.OPENAI_MODEL_STRONG || '',
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+    anthropicModel: process.env.DOC_READER_MODEL || '',
+    concurrency: parseInt(process.env.AI_CONCURRENCY) || 3,
+    timeoutMs: parseInt(process.env.AI_TIMEOUT_MS) || 120000,
+  },
   sendgrid: {
     apiKey: process.env.SENDGRID_API_KEY || '',
     fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@marineport.vn',

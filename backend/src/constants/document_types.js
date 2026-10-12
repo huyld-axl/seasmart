@@ -1,6 +1,7 @@
 // Khuôn từng loại giấy tờ AI đọc được: ô xếp đúng thứ tự trên giấy.
 // target: cột hồ sơ seafarer nhận giá trị khi "Đưa vào hồ sơ" (kiểu date thì đổi dd/mm/yyyy sang ISO).
 // Loại giấy không có target thì chỉ lưu kết quả đọc, chưa đẩy vào hồ sơ.
+// optional: ô không bắt buộc duyệt; tự được chấp nhận khi các ô còn lại đã duyệt xong.
 
 const f = (key, label, english, extra = {}) => ({ key, label, english, ...extra })
 
@@ -15,7 +16,8 @@ const DOC_TYPES = {
       f('dob', 'Ngày sinh', 'Date of birth', { half: true, date: true, target: 'date_of_birth' }),
       f('pob', 'Nơi sinh', 'Place of birth'),
       f('nat', 'Quốc tịch', 'Nationality'),
-      f('id', 'Số GCMND hoặc hộ chiếu', 'ID card No or passport', { target: 'national_id' }),
+      // Không tự đẩy vào hồ sơ: ô này là CMND hay hộ chiếu do người duyệt quyết định.
+      f('id', 'Số GCMND hoặc hộ chiếu', 'ID card No or passport'),
       f('issued', 'Nơi cấp, ngày cấp', 'Place, date'),
     ],
   },
@@ -31,8 +33,10 @@ const DOC_TYPES = {
       f('owner', 'Chủ tàu', 'Shipowner'),
       f('rank', 'Chức danh', 'Capacity', { half: true }),
       f('coc', 'Số GCNKNCM', 'No. of COC', { half: true }),
-      f('on', 'Tên cảng, ngày xuống tàu', 'Port, date of embarkation'),
-      f('off', 'Tên cảng, ngày rời tàu', 'Port, date of disembarkation'),
+      f('onPort', 'Cảng xuống tàu', 'Port of embarkation', { half: true }),
+      f('onDate', 'Ngày xuống tàu', 'Date of embarkation', { half: true, date: true }),
+      f('offPort', 'Cảng rời tàu', 'Port of disembarkation', { half: true }),
+      f('offDate', 'Ngày rời tàu', 'Date of disembarkation', { half: true, date: true }),
     ],
   },
   passport: {
@@ -52,14 +56,14 @@ const DOC_TYPES = {
     title: ['GIẤY CHỨNG NHẬN HUẤN LUYỆN', 'Certificate of proficiency'],
     certificate: true,
     fields: [
-      f('school', 'Nơi cấp', 'Issued by'),
-      f('name', 'Chứng nhận', 'Certifies that'),
-      f('course', 'Khoá huấn luyện', 'Training course'),
-      f('reg', 'Theo quy tắc', 'Under Reg.', { half: true }),
       f('typeCode', 'Loại chứng chỉ trong danh mục', 'Certificate type', { half: true }),
-      f('no', 'Giấy chứng nhận số', 'Certificate No', { half: true }),
-      f('issuedOn', 'Cấp ngày', 'Issued on', { half: true, date: true }),
-      f('valid', 'Có giá trị đến', 'Valid until', { date: true }),
+      f('nameRaw', 'Tên chứng chỉ trên giấy', 'Certificate title', { optional: true }),
+      f('valid', 'Có giá trị đến', 'Valid until', { half: true, date: true }),
+      f('noExpiry', 'Không thời hạn', 'No expiry', { half: true }),
+      f('no', 'Giấy chứng nhận số', 'Certificate No', { half: true, optional: true }),
+      f('issuedOn', 'Cấp ngày', 'Issued on', { half: true, date: true, optional: true }),
+      f('issuer', 'Nơi cấp', 'Issued by', { optional: true }),
+      f('holder', 'Tên người trong giấy', 'Holder name', { optional: true }),
     ],
   },
   vaccination: {
@@ -81,6 +85,7 @@ const DOC_STATUS = {
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
   PUBLISHED: 'PUBLISHED',
+  SKIPPED: 'SKIPPED', // giấy loại "Khác": chỉ lưu kèm hồ sơ, không đọc
 }
 
 // Ô AI đề xuất: PROPOSED (đọc được), UNKNOWN (không có trên giấy), DATE_AMBIGUOUS (ngày viết tay chưa chắc).
@@ -88,7 +93,10 @@ const AI_STATES = ['PROPOSED', 'UNKNOWN', 'DATE_AMBIGUOUS']
 const TODO_STATES = AI_STATES
 const DONE_STATES = ['ACCEPTED', 'EDITED', 'UNKNOWN_KEPT', 'REJECTED']
 
+// Loại "Khác": không có khuôn đọc.
+const OTHER_TYPE = 'other'
+
 const ALLOWED_MIME = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_FILE_BYTES = 25 * 1024 * 1024
 
-module.exports = { DOC_TYPES, DOC_STATUS, AI_STATES, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES }
+module.exports = { DOC_TYPES, DOC_STATUS, OTHER_TYPE, AI_STATES, TODO_STATES, DONE_STATES, ALLOWED_MIME, MAX_FILE_BYTES }

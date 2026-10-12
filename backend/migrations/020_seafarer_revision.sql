@@ -1,8 +1,9 @@
 -- Migration 020: Lịch sử sửa hồ sơ thuyền viên (bắt buộc lý do) và cỡ giày cho mẫu CV chủ tàu
 -- Chạy: mysql -u root marineport < migrations/020_seafarer_revision.sql
 
-ALTER TABLE seafarer
-  ADD COLUMN IF NOT EXISTS shoe_size VARCHAR(10) NULL AFTER pants_size;
+SET @ddl = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `seafarer` ADD COLUMN `shoe_size` VARCHAR(10) NULL AFTER pants_size', 'DO 0') FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'seafarer' AND COLUMN_NAME = 'shoe_size');
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS `seafarer_revision` (
   `id`           INT AUTO_INCREMENT PRIMARY KEY,

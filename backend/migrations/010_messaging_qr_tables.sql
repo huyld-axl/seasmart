@@ -34,7 +34,9 @@ CREATE TABLE IF NOT EXISTS `message` (
   FOREIGN KEY (`sender_id`)       REFERENCES `user`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE INDEX IF NOT EXISTS idx_message_conv ON `message` (`conversation_id`, `created_at`);
+SET @ddl = (SELECT IF(COUNT(*) = 0, 'CREATE INDEX `idx_message_conv` ON `message` (`conversation_id`, `created_at`)', 'DO 0') FROM information_schema.STATISTICS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'message' AND INDEX_NAME = 'idx_message_conv');
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- QR enrollment link table
 CREATE TABLE IF NOT EXISTS `qr_enrollment_link` (

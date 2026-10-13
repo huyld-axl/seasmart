@@ -5,12 +5,12 @@
 SET NAMES utf8mb4;
 
 -- 1. Thêm cột category và abbreviation nếu chưa có
-ALTER TABLE `certificate_type`
-  ADD COLUMN IF NOT EXISTS `category`     ENUM('STCW','VN','DOCUMENT','MEDICAL','PANAMA','OTHER')
-                                          NOT NULL DEFAULT 'OTHER'
-                                          COMMENT 'Nhóm chứng chỉ',
-  ADD COLUMN IF NOT EXISTS `abbreviation` VARCHAR(30) NULL
-                                          COMMENT 'Ký hiệu viết tắt nghiệp vụ (PP, SMB, IMO, AFF...)';
+SET @ddl = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `certificate_type` ADD COLUMN `category` ENUM(''STCW'',''VN'',''DOCUMENT'',''MEDICAL'',''PANAMA'',''OTHER'') NOT NULL DEFAULT ''OTHER'' COMMENT ''Nhóm chứng chỉ''', 'DO 0') FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'certificate_type' AND COLUMN_NAME = 'category');
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+SET @ddl = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `certificate_type` ADD COLUMN `abbreviation` VARCHAR(30) NULL COMMENT ''Ký hiệu viết tắt nghiệp vụ (PP, SMB, IMO, AFF...)''', 'DO 0') FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'certificate_type' AND COLUMN_NAME = 'abbreviation');
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- 2. Cập nhật category cho các bản ghi đã có
 UPDATE `certificate_type` SET category = 'STCW' WHERE code IN (

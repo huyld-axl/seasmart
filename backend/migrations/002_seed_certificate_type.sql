@@ -1,8 +1,9 @@
 -- Migration 002: Seed certificate_type
 -- Source: STR-05-06 Danh muc bang cap chung chi cua thuyen vien.pdf
 
-ALTER TABLE certificate_type
-  ADD COLUMN IF NOT EXISTS category ENUM('STCW','VN','OTHER') NOT NULL DEFAULT 'OTHER';
+SET @ddl = (SELECT IF(COUNT(*) = 0, 'ALTER TABLE `certificate_type` ADD COLUMN `category` ENUM(''STCW'',''VN'',''OTHER'') NOT NULL DEFAULT ''OTHER''', 'DO 0') FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'certificate_type' AND COLUMN_NAME = 'category');
+PREPARE stmt FROM @ddl; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 INSERT INTO certificate_type (code, name_vi, name_en, category) VALUES
 -- STCW International (12)

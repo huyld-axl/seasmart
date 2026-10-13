@@ -131,6 +131,37 @@ Các việc nhỏ phát hiện trong lúc làm, cần trước khi dựng giao d
 
 Phạm vi B1 chốt lại sau cổng 2, vì phương án wireframe quyết định cần dữ liệu gì.
 
+### G6a, G6b, G6c, G7 đã làm (13/10)
+
+| Bước | Kết quả |
+|---|---|
+| G6a | `documentApi` mở rộng, `seaServiceApi`, `reviewFlow.js`, `seaServiceView.js`, `certificateView.js`; `vitest.config.js` chỉ chạy `*.test.*` |
+| G6b | Màn riêng `/seafarers/:id/upload` (`UploadPage`, `CrewDropzone`, `uploadView.js`); thêm `POST /documents/uploads/:id/retry` |
+| G6c | `ReviewPage.jsx` viết lại theo T2 (từng giấy, sửa tại ô, chip đối chiếu tàu); bỏ `reviewModel.js`, `demoDocs.js` |
+| G7 | Hồ sơ: tab Chứng chỉ (bảng, thêm, sửa, xoá), tab Đi tàu (`ProfileSeaService.jsx`, sửa và xoá kèm lý do); nút "Tải giấy tờ lên" thay "Thả giấy tờ" |
+| Chạy thử | Đã đi hết luồng trên trình duyệt với AI thật (1 sổ, 2 chứng chỉ): tải lên, duyệt, đưa vào hồ sơ, hiện ở hai tab. K1 đầy đủ (21 tệp, probe sweep) chưa chạy |
+
+### K1 đã làm (13/10)
+
+| Việc | Kết quả |
+|---|---|
+| 21 tệp mẫu qua giao diện thật | Thả một lần cả 21 tệp: xử lý xong sau 198 giây. Ra 10 sổ thuyền viên, 10 chứng chỉ, 2 giấy khác (22 giấy: một PDF Panama có thêm trang "Khác"); không tệp nào lỗi |
+| Duyệt và đưa vào hồ sơ | Duyệt hết 22 giấy bằng giao diện; đưa vào hồ sơ: 20 giấy, 10 chứng chỉ, 9 chuyến đi tàu (đúng 9 trang bố trí chức danh). Giấy mang tên khác hồ sơ bị chặn đúng cho tới khi bấm "Vẫn đúng người" |
+| Lỗi tìm ra và đã sửa | Ngày chứng chỉ lệch một ngày do múi giờ và trạng thái hạn luôn "Còn hạn" (backend trả `Date`); sửa bằng `DATE_FORMAT` trong SELECT. Nút "Đổi loại" nhỏ ở 375px; thông báo `Modal` tĩnh; chữ trơ ở dòng tóm tắt; nền khung ô sửa |
+| probe, 1280 và 375, quét 1440 đến 375 | Màn Tải lên và Duyệt: không có chỗ vỡ ở bề rộng nào, không cuộn ngang. Còn các mục chung của cả app: vòng focus của nút antd, đích bấm 22px của đường dẫn, menu người dùng không chuyển động |
+| Chưa kiểm | Tab Chứng chỉ và Đi tàu bằng `probe.mjs` (tab không có địa chỉ riêng; chỉ kiểm cuộn ngang ở 375); luồng trên điện thoại thật |
+
+### B1 đã làm (13/10, theo wireframe đã chốt)
+
+| Việc | Kết quả |
+|---|---|
+| Tóm tắt tệp | `uploads[].summary`: `total`, `book`, `certificate`, `other`, `unsorted`, `reading`, `to_review`, `failed`, `published`, `phase` (`running`, `done`, `failed`), `stalled` (kẹt quá 5 phút) |
+| Duyệt nhanh một giấy | `POST /documents/:id/accept-clear` không chấp nhận âm thầm ô `confirm` (số GCNKNCM); ngày chưa chắc vốn đã ở lại |
+| Tab Chứng chỉ | `GET /seafarers/:id/certificates` trả `display_name`, `expiry_status` (`VALID`, `EXPIRING` trong 90 ngày, `EXPIRED`, `NO_EXPIRY`), `source` (`document` hoặc `manual`), tên tệp và trang nguồn; thêm tay nhận `no_expiry`, trùng loại và ngày cấp trả 409 |
+| Quét giấy kẹt | Job mỗi 5 phút gọi `recoverStalled`; một giấy chỉ đọc một lần cùng lúc |
+| Bỏ khỏi B1 | CMND hay hộ chiếu (wireframe chốt ô đó "chỉ để so"); danh sách trang (T2 mới không có lưới trang; `page_count`, `page_from`, `page_to` đã có) |
+| Hoãn | Vị trí ô trên ảnh gốc (`regions`), quyết định để sau 13/10. Đã đo thử trên 8 tệp (80 ô), thêm trường vị trí vào cùng lượt đọc: token +5% (vào +2,9%, ra +17,5%), thời gian +8,8%, khung rơi đúng chỗ ở hầu hết ô. 7/80 ô đọc khác chữ giữa hai lượt (có cả số chứng chỉ sai thêm một ký tự), chưa kết luận được là do thêm vị trí hay do dao động giữa các lượt. Trước khi làm: chạy đo đủ 21 tệp, mỗi bên vài lượt; nếu số chứng chỉ giảm thì tách lượt định vị riêng bằng model nhỏ. Màn duyệt tạm chỉ hiện đúng trang bản gốc, chưa tô sáng ô |
+
 ## 7. Rủi ro
 
 | Rủi ro | Cách giảm |

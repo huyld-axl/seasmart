@@ -30,6 +30,7 @@ async function certificateRoutes(fastify) {
             certificate_number: { type: 'string' },
             issued_date: { type: 'string', format: 'date' },
             expiry_date: { type: 'string', format: 'date' },
+            no_expiry: { type: 'boolean' },
             issued_by: { type: 'string' },
             issued_at_country_id: { type: 'integer' },
             status: { type: 'string', enum: ['VALID', 'EXPIRED', 'REVOKED', 'PENDING'] },

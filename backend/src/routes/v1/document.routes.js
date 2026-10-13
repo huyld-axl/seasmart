@@ -81,6 +81,8 @@ async function documentRoutes(fastify) {
     },
   }, async (request) => documentService.regroup(request.params.id, request.body.parts))
 
+  fastify.post('/uploads/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => documentService.retryUpload(request.params.id))
+
   fastify.delete('/uploads/:id', { ...guard, schema: { params: idParams } }, async (request) => documentService.removeUpload(request.params.id))
 
   fastify.post('/seafarer/:seafarerId/publish', { ...guard, schema: { params: seafarerParams } }, async (request) =>

@@ -259,6 +259,12 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     expect(other.status).toBe('SKIPPED')
     expect(duty1.fields.find((x) => x.key === 'onDate').value).toBe('04/01/2016')
 
+    // Tóm tắt tệp cho màn Tải giấy tờ lên: xong, đếm đúng theo loại, khớp số giấy của tệp.
+    const [upload] = await documentService.listUploads(seafarerId)
+    expect(upload.summary).toMatchObject({ phase: 'done', stalled: false, reading: 0, failed: 0, book: 3, certificate: 3 })
+    expect(upload.summary.total).toBe(upload.document_count)
+    expect(upload.summary.to_review).toBeGreaterThan(0)
+
     // Chưa duyệt xong thì chưa đưa vào hồ sơ được.
     await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('chưa duyệt xong') })
 
@@ -271,6 +277,8 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     }
     for (const doc of [info, duty1, duty2]) {
       const accepted = await documentService.acceptClear(doc.id, 1)
+      // Ô cần chạm một lần (số GCNKNCM) không được chấp nhận âm thầm: duyệt tay từng ô.
+      for (const field of accepted.fields.filter((x) => x.state === 'PROPOSED')) await documentService.decide(doc.id, field.key, 'accept', undefined, 1)
       for (const field of accepted.fields.filter((x) => ['UNKNOWN', 'DATE_AMBIGUOUS'].includes(x.state))) {
         await documentService.decide(doc.id, field.key, 'keepUnknown', undefined, 1)
       }
@@ -326,6 +334,8 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     expect(cert1.owner_mismatch).toBe(true)
     for (const doc of [info, duty1, duty2]) {
       const accepted = await documentService.acceptClear(doc.id, 1)
+      // Ô cần chạm một lần (số GCNKNCM) không được chấp nhận âm thầm: duyệt tay từng ô.
+      for (const field of accepted.fields.filter((x) => x.state === 'PROPOSED')) await documentService.decide(doc.id, field.key, 'accept', undefined, 1)
       for (const field of accepted.fields.filter((x) => ['UNKNOWN', 'DATE_AMBIGUOUS'].includes(x.state))) await documentService.decide(doc.id, field.key, 'keepUnknown', undefined, 1)
     }
     // Dòng khác người bị chặn khi xác nhận hàng loạt (cert3 vẫn xác nhận được).
@@ -356,6 +366,8 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
       for (const doc of docs.filter((d) => d.doc_type !== 'other')) {
         if (doc.doc_type === 'certificate') continue
         const accepted = await documentService.acceptClear(doc.id, 1)
+      // Ô cần chạm một lần (số GCNKNCM) không được chấp nhận âm thầm: duyệt tay từng ô.
+      for (const field of accepted.fields.filter((x) => x.state === 'PROPOSED')) await documentService.decide(doc.id, field.key, 'accept', undefined, 1)
         for (const field of accepted.fields.filter((x) => ['UNKNOWN', 'DATE_AMBIGUOUS'].includes(x.state))) await documentService.decide(doc.id, field.key, 'keepUnknown', undefined, 1)
       }
       const certs = docs.filter((d) => d.doc_type === 'certificate')

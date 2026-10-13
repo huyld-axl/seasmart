@@ -8,10 +8,10 @@
 ## 0. Tóm tắt
 
 1. Backend đã xong và đã đo bằng AI thật trên 21 tệp mẫu: tách đúng loại 21/21, ô đúng 98%.
-2. Giao diện chưa làm. UI Kit hiện có (lập 07/10) chưa có năm màn của tính năng này.
-3. Việc còn lại đi theo thứ tự: brief → wireframe → anh chọn → bổ sung design system → dựng thật → kiểm trên trình duyệt → tài liệu.
-4. Có hai chỗ phải dừng chờ anh: duyệt brief (cổng 1) và chọn phương án wireframe (cổng 2). Ngoài hai chỗ đó không hỏi.
-5. Khối lượng: khoảng **8 ngày làm việc**.
+2. **Giao diện đã xong (13/10):** màn Tải giấy tờ lên, màn Duyệt từng giấy, tab Chứng chỉ và tab Đi tàu ở hồ sơ; wireframe, design system và UI Kit đã bổ sung. Đã đi hết luồng với 21 tệp mẫu qua giao diện thật (mục K1 ở mục 6).
+3. Năm màn T1–T5 trong bản kế hoạch gốc nay còn ba: T2, T3, T4 gộp thành màn Duyệt từng giấy; T1 thành màn riêng; T5 là hai tab của hồ sơ.
+4. Việc còn mở: tô sáng ô trên bản gốc (cần AI trả vị trí ô), bảng giá của bên trung gian để quy ra tiền, kiểm trên điện thoại thật. Xem mục 10.
+5. Tài liệu cài và chạy: `README.md` ở thư mục gốc.
 
 ## 1. Đã xong
 
@@ -230,3 +230,24 @@ Loại giấy: `seaman_book_info` (8 ô), `seaman_book_duty` (12 ô: tàu, loạ
 Giấy "chưa tách" (tệp lỗi khi cắt trang hoặc tách): upload `FAILED` kèm một giấy `FAILED` không có loại; bấm Đọc lại ở giấy đó thì tách lại cả tệp.
 
 Đo lại bất cứ lúc nào (gọi AI thật, tốn tiền): `DB_NAME=marineport_g15 node scripts/eval_reader.js --truth ../docs/samples/ban_doc_chuan.json`
+
+## 10. Số liệu cuối và việc còn mở (13/10)
+
+| Chỉ số | Kết quả |
+|---|---|
+| Luồng 21 tệp mẫu qua giao diện thật | 198 giây từ lúc thả đến lúc xong; 10 sổ, 10 chứng chỉ, 2 giấy khác; 0 tệp lỗi |
+| Đưa vào hồ sơ | 20 giấy, 10 chứng chỉ, 9 chuyến đi tàu (đúng số trang bố trí chức danh) |
+| Test | Backend 128 (gồm 13 test tích hợp trên DB riêng); frontend 62 |
+| Lint, build | 0 lỗi; build frontend qua |
+| Độ rộng đã đo | probe 1280 và 375, quét 1440 đến 375: không có chỗ vỡ ở màn Tải lên và màn Duyệt |
+
+Số đo độ đúng của AI (98% ô đúng, số chứng chỉ 8/9, số GCNKNCM 7/9) giữ nguyên như mục 1; chưa đo lại sau B1 vì lời nhắc và model không đổi.
+
+| Việc còn mở | Ghi chú |
+|---|---|
+| Tô sáng ô trên bản gốc | Thêm vị trí ô vào lượt đọc tốn thêm khoảng 5% token; trước khi làm cần đo lại độ đúng số chứng chỉ trên 21 tệp (mục 6, dòng "Hoãn") |
+| Chưa quy ra tiền | Cần bảng giá của bên trung gian; có sẵn số token mỗi tệp trong bảng `ai_call` |
+| Kiểm trên điện thoại thật và probe riêng cho hai tab hồ sơ | Tab không có địa chỉ riêng nên `probe.mjs` chưa mở thẳng được |
+| Thứ tự giấy trong màn duyệt | Theo thứ tự tệp xử lý xong, nên có thể bắt đầu bằng trang bố trí chức danh thay vì trang thông tin |
+| Vòng focus của nút antd, đích bấm 22px của đường dẫn | Của khung app chung, không riêng tính năng này |
+| Sửa và xoá chứng chỉ chưa bắt ghi lý do | Chờ quyết định; chuyến đi tàu đã bắt |

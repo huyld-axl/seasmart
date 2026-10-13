@@ -6,7 +6,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    include: ['src/**/*.test.{js,jsx}', 'src/**/__tests__/**/*.{js,jsx}'],
+    // Chỉ tệp *.test.*: tệp hỗ trợ trong __tests__ (demoDocs.js) không phải bộ test.
+    include: ['src/**/*.test.{js,jsx}'],
     setupFiles: ['./src/test-setup.js'],
   },
 })

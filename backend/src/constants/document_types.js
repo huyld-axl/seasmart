@@ -2,6 +2,7 @@
 // target: cột hồ sơ seafarer nhận giá trị khi "Đưa vào hồ sơ" (kiểu date thì đổi dd/mm/yyyy sang ISO).
 // Loại giấy không có target thì chỉ lưu kết quả đọc, chưa đẩy vào hồ sơ.
 // optional: ô không bắt buộc duyệt; tự được chấp nhận khi các ô còn lại đã duyệt xong.
+// confirm: ô sai một ký tự là sai pháp lý (số dài): không chấp nhận âm thầm khi duyệt nhanh, người duyệt chạm một lần.
 
 const f = (key, label, english, extra = {}) => ({ key, label, english, ...extra })
 
@@ -32,7 +33,7 @@ const DOC_TYPES = {
       f('kw', 'Tổng công suất máy chính', 'Main engine\'s power'),
       f('owner', 'Chủ tàu', 'Shipowner'),
       f('rank', 'Chức danh', 'Capacity', { half: true }),
-      f('coc', 'Số GCNKNCM', 'No. of COC', { half: true }),
+      f('coc', 'Số GCNKNCM', 'No. of COC', { half: true, confirm: true }),
       f('onPort', 'Cảng xuống tàu', 'Port of embarkation', { half: true }),
       f('onDate', 'Ngày xuống tàu', 'Date of embarkation', { half: true, date: true }),
       f('offPort', 'Cảng rời tàu', 'Port of disembarkation', { half: true }),

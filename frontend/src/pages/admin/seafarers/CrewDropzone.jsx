@@ -1,94 +1,94 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useQueryClient } from '@tanstack/react-query'
-import { Button } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Banner from '../../../components/ds/Banner'
+import UploadPanel from '../../../components/ds/UploadPanel'
 import { documentApi } from '../../../api/documentApi'
-import { CloseOutlined, FileAddOutlined, FileTextOutlined, UploadOutlined } from '@ant-design/icons'
+import useToast from '../../../components/ds/useToast'
+import { displayDate, hasRunning, localFile, panelSummary, rejectReason, serverFile } from './uploadView'
 
-const ACCEPT = '.pdf,.jpg,.jpeg,.png'
-const MAX_MB = 25
-
-// Điểm "wow" của hồ sơ: thả giấy tờ vào, AI nhận loại giấy và đọc để người duyệt (A3).
-// Tệp gửi lên /api/v1/documents; AI đọc ở máy chủ, kết quả duyệt ở màn A3.
-const META = {
-  uploading: 'Đang tải lên…',
-  sent: 'Đã gửi, AI đang đọc',
-}
-
-export default function CrewDropzone({ seafarerId, firstName, big = false }) {
-  const [files, setFiles] = useState([])
-  const [dragging, setDragging] = useState(false)
+// Màn "Tải giấy tờ lên" (T1): thả tệp, thấy đang xử lý hay xong. Tệp gửi lên /api/v1/documents; AI đọc ở máy chủ.
+// Tải lại trang không mất: danh sách lấy từ máy chủ và hỏi lại mỗi 3 giây khi còn tệp đang chạy.
+export default function CrewDropzone({ seafarerId, firstName, onReview }) {
+  const [locals, setLocals] = useState([])
   const qc = useQueryClient()
+  const toast = useToast()
+  const queryKey = ['documents', String(seafarerId)]
 
-  const setState = (key, patch) => setFiles((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)))
+  const { data, isLoading } = useQuery({
+    queryKey,
+    queryFn: () => documentApi.list(seafarerId),
+    refetchInterval: (query) => {
+      const aiOn = query.state.data?.ai_configured !== false
+      return hasRunning((query.state.data?.uploads || []).map((u) => serverFile(u, { aiConfigured: aiOn }))) ? 3000 : false
+    },
+  })
+  const aiConfigured = data?.ai_configured !== false
+  const setLocal = (key, patch) => setLocals((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)))
+  const dropLocal = (key) => setLocals((current) => current.filter((item) => item.key !== key))
+  const fail = (e) => toast.error(e.response?.data?.error || 'Không thực hiện được. Thử lại sau.')
+
+  const removeUpload = useMutation({
+    mutationFn: (uploadId) => documentApi.removeUpload(uploadId),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+    onError: fail,
+  })
+  const retryUpload = useMutation({
+    mutationFn: (uploadId) => documentApi.retryUpload(uploadId),
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+    onError: fail,
+  })
 
   async function send(item) {
-    setState(item.key, { state: 'uploading', error: null })
+    setLocal(item.key, { state: 'running', error: null })
     try {
-      await documentApi.upload(seafarerId, item.file)
-      setState(item.key, { state: 'sent' })
-      qc.invalidateQueries({ queryKey: ['documents', String(seafarerId)] })
+      const res = await documentApi.upload(seafarerId, item.file)
+      if (res.duplicate) setLocal(item.key, { state: 'duplicate', duplicateOf: displayDate(res.created_at) })
+      else dropLocal(item.key)
+      qc.invalidateQueries({ queryKey })
     } catch (e) {
-      setState(item.key, { state: 'error', error: e.response?.data?.error || 'Chưa gửi được tệp. Thử lại.' })
+      setLocal(item.key, { state: 'unsent', error: e.response?.data?.error })
     }
   }
 
   function addFiles(list) {
-    const picked = Array.from(list || []).map((file) => ({
-      key: `${file.name}-${file.size}-${file.lastModified}`,
-      name: file.name,
-      tooBig: file.size > MAX_MB * 1024 * 1024,
-      state: 'uploading',
-      file,
-    }))
-    const fresh = picked.filter((item) => !files.some((old) => old.key === item.key))
+    const picked = Array.from(list || []).map((file) => {
+      const rejected = rejectReason(file)
+      return {
+        key: `${file.name}-${file.size}-${file.lastModified}`,
+        name: file.name,
+        mime: file.type,
+        file,
+        state: rejected ? rejected.state : 'running',
+        size: rejected?.size,
+      }
+    })
+    const fresh = picked.filter((item) => !locals.some((old) => old.key === item.key))
     if (!fresh.length) return
-    setFiles((current) => [...current, ...fresh])
-    fresh.filter((item) => !item.tooBig).forEach(send)
+    setLocals((current) => [...current, ...fresh])
+    fresh.filter((item) => item.state === 'running').forEach(send)
   }
-  const sent = files.some((item) => item.state === 'sent')
 
+  const serverFiles = (data?.uploads || []).map((upload) => serverFile(upload, { aiConfigured }))
+  const files = [...locals.map(localFile), ...serverFiles]
+  const summary = files.length ? panelSummary(files, { aiConfigured }) : undefined
+  const localByKey = new Map(locals.map((item) => [item.key, item]))
+
+  if (isLoading) return null
   return (
-    <div className={big ? 'crew-wow crew-wow--big' : 'crew-wow'}>
-      <label
-        className={dragging ? 'ds-drop crew-wow__drop is-dragging' : 'ds-drop crew-wow__drop'}
-        onDragOver={(event) => { event.preventDefault(); setDragging(true) }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(event) => { event.preventDefault(); setDragging(false); addFiles(event.dataTransfer.files) }}
-      >
-        <input type="file" multiple accept={ACCEPT} className="ds-sr-only" onChange={(event) => { addFiles(event.target.files); event.target.value = '' }} />
-        <span className="crew-wow__spark" aria-hidden><FileAddOutlined /></span>
-        <span className="ds-drop__title">Thả giấy tờ của {firstName} vào đây</span>
-        <span className="ds-drop__hint">
-          Sổ thuyền viên, hộ chiếu, chứng chỉ, giấy tiêm chủng. AI tự nhận ra loại giấy tờ, đọc và điền vào đúng mục để bạn duyệt.
-        </span>
-        <span className="ds-drop__button">
-          <UploadOutlined aria-hidden />
-          Chọn tệp
-        </span>
-      </label>
-
-      {files.length > 0 && (
-        <ul className="ds-files crew-wow__files">
-          {files.map((item) => (
-            <li key={item.key} className="ds-files__row">
-              <FileTextOutlined className="ds-files__icon" aria-hidden />
-              <div className="ds-files__body">
-                <p className="ds-files__name" title={item.name}>
-                  <span className="ds-files__head">{item.name}</span>
-                </p>
-                <p className={item.tooBig || item.error ? 'ds-files__meta crew-wow__error' : 'ds-files__meta'}>
-                  {item.tooBig ? `Tệp lớn hơn ${MAX_MB} MB, chọn bản nhỏ hơn` : item.error || META[item.state]}
-                </p>
-              </div>
-              {item.error && <Button type="text" size="small" onClick={() => send(item)}>Gửi lại</Button>}
-              <Button type="text" size="small" icon={<CloseOutlined />} aria-label={`Bỏ ${item.name}`} onClick={() => setFiles((current) => current.filter((old) => old.key !== item.key))} />
-            </li>
-          ))}
-        </ul>
+    <>
+      {!aiConfigured && (
+        <Banner title="AI đọc giấy tờ chưa được cấu hình" description="Tệp tải lên vẫn được lưu kèm hồ sơ nhưng chưa được đọc. Cấu hình xong thì bấm Đọc lại." />
       )}
-      {sent && <p className="ds-files__meta"><Link to={`/seafarers/${seafarerId}/review`}>Mở màn duyệt giấy tờ</Link></p>}
-    </div>
+      <UploadPanel
+        files={files}
+        summary={summary}
+        seafarerName={firstName}
+        onSelect={(event) => { addFiles(event.target.files); event.target.value = '' }}
+        onReview={onReview}
+        onRetry={(file) => (file.localKey ? send(localByKey.get(file.localKey)) : retryUpload.mutate(file.uploadId))}
+        onRemove={(file) => (file.localKey ? dropLocal(file.localKey) : removeUpload.mutate(file.uploadId))}
+        onOpenDuplicate={() => toast.success('Tệp này đã có trong hồ sơ, xem ở danh sách bên dưới.')}
+      />
+    </>
   )
 }
-

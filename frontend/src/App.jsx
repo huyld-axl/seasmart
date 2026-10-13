@@ -31,6 +31,7 @@ import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
 import ExportListPage from './pages/admin/exports/ExportListPage'
 import ReviewPage from './pages/admin/review/ReviewPage'
+import UploadPage from './pages/admin/UploadPage'
 import PackCreatePage from './pages/admin/exports/PackCreatePage'
 import PackSignPage from './pages/admin/exports/PackSignPage'
 import RemoteSignPage from './pages/sign/RemoteSignPage'
@@ -65,6 +66,7 @@ export default function App() {
                 <Route path="/seafarers/import" element={<SeafarerImportPage />} />
                 <Route path="/seafarers/:id" element={<SeafarerDetailPage />} />
                 <Route path="/seafarers/:id/edit" element={<SeafarerFormPage />} />
+                <Route path="/seafarers/:id/upload" element={<UploadPage />} />
                 <Route path="/seafarers/:id/review" element={<ReviewPage />} />
                 <Route path="/exports" element={<ExportListPage />} />
                 <Route path="/exports/new" element={<PackCreatePage />} />

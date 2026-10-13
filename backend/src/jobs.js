@@ -248,6 +248,17 @@ function startJobs(logger) {
     }
   })
 
+  // Job 6 (mỗi 5 phút): đưa vào chạy lại tệp và giấy AI đọc kẹt quá 5 phút (trước đây chỉ làm lúc khởi động).
+  const documentService = require('./services/document.service').documentService
+  cron.schedule('*/5 * * * *', async () => {
+    try {
+      const queued = await documentService.recoverStalled()
+      if (queued.uploads || queued.documents) logger.info(queued, 'Job: queued stalled documents')
+    } catch (err) {
+      logger.error({ err }, 'Job: failed to recover stalled documents')
+    }
+  })
+
   logger.info('Background jobs started')
 }
 

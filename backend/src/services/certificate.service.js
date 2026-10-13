@@ -6,18 +6,56 @@ const config = require('../config')
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const ALLOWED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png']
 
+const EXPIRING_DAYS = 90
+
+// Trạng thái hạn để hiện: không thời hạn, hết hạn, sắp hết hạn (trong 90 ngày), còn hạn.
+// Tính từ ngày hết hạn, không tin cột status (job đêm mới cập nhật cột đó).
+function expiryStatusOf(row, now = new Date()) {
+  if (row.no_expiry) return 'NO_EXPIRY'
+  if (!row.expiry_date) return 'NO_EXPIRY'
+  // Chuỗi yyyy-mm-dd (SELECT đã định dạng) hoặc Date của driver (giờ địa phương).
+  const expiry = row.expiry_date instanceof Date
+    ? new Date(row.expiry_date.getFullYear(), row.expiry_date.getMonth(), row.expiry_date.getDate())
+    : new Date(`${String(row.expiry_date).slice(0, 10)}T00:00:00`)
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  if (expiry < today) return 'EXPIRED'
+  const days = Math.round((expiry - today) / 86400000)
+  return days <= EXPIRING_DAYS ? 'EXPIRING' : 'VALID'
+}
+
+// Một dòng cho tab Chứng chỉ: tên hiện ra (loại trong danh mục, hoặc tên trên giấy), nguồn, trạng thái hạn.
+function shapeCertificate(row, now) {
+  const fromDocument = Boolean(row.source_document_id)
+  return {
+    ...row,
+    display_name: row.certificate_type_name || row.certificate_name_raw || 'Chứng chỉ chưa rõ loại',
+    expiry_status: expiryStatusOf(row, now),
+    source: fromDocument ? 'document' : 'manual',
+    source_file_name: row.source_file_name || null,
+    source_page: row.source_page || null,
+  }
+}
+
 const certificateService = {
   async list(seafarerId, { page = 1, limit = 50 } = {}) {
     const offset = (page - 1) * limit
+    // Hết hạn sớm nhất lên trước (đã hết hạn đứng đầu), không thời hạn xuống cuối.
     const [rows] = await pool.query(
       `SELECT sc.*,
+              DATE_FORMAT(sc.issued_date, '%Y-%m-%d') AS issued_date,
+              DATE_FORMAT(sc.expiry_date, '%Y-%m-%d') AS expiry_date,
               ct.name_vi as certificate_type_name,
-              c.name_vi  as issued_at_country_name
+              c.name_vi  as issued_at_country_name,
+              COALESCE(u.file_name, sd.file_name) AS source_file_name,
+              sd.page_label AS source_page,
+              sd.upload_id AS source_upload_id
        FROM seafarer_certificate sc
        LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
        LEFT JOIN country c ON c.id = sc.issued_at_country_id
+       LEFT JOIN seafarer_document sd ON sd.id = sc.source_document_id
+       LEFT JOIN document_upload u ON u.id = sd.upload_id
        WHERE sc.seafarer_id = ? AND sc.deleted_at IS NULL
-       ORDER BY sc.expiry_date ASC
+       ORDER BY (sc.no_expiry = 1 OR sc.expiry_date IS NULL), sc.expiry_date ASC, sc.id ASC
        LIMIT ? OFFSET ?`,
       [seafarerId, limit, offset]
     )
@@ -25,12 +63,15 @@ const certificateService = {
       'SELECT COUNT(*) as total FROM seafarer_certificate WHERE seafarer_id = ? AND deleted_at IS NULL',
       [seafarerId]
     )
-    return { data: rows, total, page, limit }
+    const now = new Date()
+    return { data: rows.map((row) => shapeCertificate(row, now)), total, page, limit }
   },
 
   async getById(id, seafarerId) {
     const [rows] = await pool.query(
       `SELECT sc.*,
+              DATE_FORMAT(sc.issued_date, '%Y-%m-%d') AS issued_date,
+              DATE_FORMAT(sc.expiry_date, '%Y-%m-%d') AS expiry_date,
               ct.name_vi as certificate_type_name,
               c.name_vi  as issued_at_country_name
        FROM seafarer_certificate sc
@@ -40,15 +81,20 @@ const certificateService = {
       [id, seafarerId]
     )
     if (!rows[0]) throw { statusCode: 404, message: 'Không tìm thấy chứng chỉ' }
-    return rows[0]
+    return shapeCertificate(rows[0])
   },
 
   async create(seafarerId, data, created_by) {
-    const [result] = await pool.query(
-      'INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?',
-      [data, seafarerId, created_by, created_by]
-    )
-    return this.getById(result.insertId, seafarerId)
+    try {
+      const [result] = await pool.query(
+        'INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?',
+        [data, seafarerId, created_by, created_by]
+      )
+      return this.getById(result.insertId, seafarerId)
+    } catch (err) {
+      if (err?.code === 'ER_DUP_ENTRY') throw { statusCode: 409, message: 'Hồ sơ đã có chứng chỉ này (cùng loại và cùng ngày cấp)' }
+      throw err
+    }
   },
 
   async update(id, seafarerId, data, updated_by) {
@@ -108,3 +154,4 @@ const certificateService = {
 }
 
 module.exports = certificateService
+module.exports.expiryStatusOf = expiryStatusOf

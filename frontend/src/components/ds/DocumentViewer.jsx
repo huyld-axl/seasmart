@@ -5,12 +5,17 @@ import './ds.css'
 // Khung xem trang tài liệu gốc, cột trái màn duyệt (3.2.3). Chưa có mẫu đã duyệt: mượn khuôn card
 // (card.md) + nút chỉ icon (small-controls.md). Bằng chứng ở mức trang (MVP không có bbox).
 // `children` là ảnh trang; không truyền thì vẽ một trang sổ thuyền viên mẫu (synthetic).
+// `regions` (tuỳ chọn) là các ô trên ảnh theo phần trăm [{ key, x, y, w, h }]; `activeRegion` được tô sáng,
+// khớp với ô đang chọn bên phải (màn duyệt từng giấy). Cần AI trả vị trí ô; không có thì bỏ trống.
 export default function DocumentViewer({
   fileName,
   page,
   pageCount,
   zoom = 100,
   evidenceLabel,
+  regions = [],
+  activeRegion,
+  onRegionClick,
   children,
   onPrevPage,
   onNextPage,
@@ -44,7 +49,26 @@ export default function DocumentViewer({
           Bằng chứng cho <strong>{evidenceLabel}</strong> nằm ở trang này
         </p>
       ) : null}
-      <div className="ds-viewer__stage">{children || <SamplePage />}</div>
+      <div className="ds-viewer__stage">
+        {regions.length > 0 ? (
+          <div className="ds-viewer__sheet">
+            {children || <SamplePage />}
+            {regions.map((region) => (
+              <button
+                key={region.key}
+                type="button"
+                aria-label={`Ô ${region.label || region.key} trên bản gốc`}
+                aria-pressed={region.key === activeRegion}
+                className={`ds-viewer__region${region.key === activeRegion ? ' ds-viewer__region--active' : ''}`}
+                style={{ left: `${region.x}%`, top: `${region.y}%`, width: `${region.w}%`, height: `${region.h}%` }}
+                onClick={() => onRegionClick?.(region.key)}
+              />
+            ))}
+          </div>
+        ) : (
+          children || <SamplePage />
+        )}
+      </div>
     </section>
   )
 }

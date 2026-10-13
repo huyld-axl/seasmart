@@ -12,6 +12,7 @@ import {
   Form,
   Input,
   Select,
+  Checkbox,
   DatePicker,
   message,
   Space,
@@ -42,9 +43,13 @@ import ZaloButton from '../../components/common/ZaloButton'
 import FormExportTab from '../../components/seafarer/FormExportTab'
 import dayjs from 'dayjs'
 import StatusBadge from '../../components/ds/StatusBadge'
+import useToast from '../../components/ds/useToast'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
-import CrewDropzone from './seafarers/CrewDropzone'
-import { attentionItems, activeContract, headLine, openFilePicker } from './seafarers/profileView'
+import ProfileSeaService from './seafarers/ProfileSeaService'
+import CertificateTable from '../../components/ds/CertificateTable'
+import { toTableCerts } from './seafarers/certificateView'
+import { documentApi } from '../../api/documentApi'
+import { attentionItems, activeContract, headLine } from './seafarers/profileView'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
 import ProfileHistory from './seafarers/ProfileHistory'
@@ -79,7 +84,7 @@ const STATUS_LABEL = {
 
 const PROFILE_TABS = [
   { value: 'overview', label: 'Tổng quan' },
-  { value: 'docs', label: 'Giấy tờ' },
+  { value: 'docs', label: 'Chứng chỉ' },
   { value: 'service', label: 'Đi tàu' },
   { value: 'training', label: 'Đào tạo' },
   { value: 'exports', label: 'Đã xuất' },
@@ -178,7 +183,6 @@ export default function SeafarerDetailPage() {
   const attention = attentionItems(seafarer, certList)
   const expired = attention.filter((item) => item.state === 'EXPIRED').length
   const expiring = attention.filter((item) => item.state === 'EXPIRING').length
-  const firstName = seafarer.full_name.trim().split(/\s+/).slice(-1)[0]
   const rules = readinessRules({ seafarer, certificates: certList, contracts: contractList, pendingReview: certList.filter((c) => c.status === 'PENDING').length })
   const readiness = readinessLevel(rules)
   const failing = rules.filter((rule) => rule.result !== 'PASS')
@@ -186,7 +190,7 @@ export default function SeafarerDetailPage() {
     edit: ['Sửa hồ sơ', () => navigate(`/seafarers/${id}/edit`)],
     service: ['Xem đi tàu', () => setTab('service')],
     review: ['Duyệt', () => navigate(`/seafarers/${id}/review`)],
-    upload: ['Thả bản mới', () => dropFiles()],
+    upload: ['Tải giấy tờ lên', () => dropFiles()],
   }
   const READINESS_TEXT = {
     BLOCKED: `Chưa xuất được: ${failing.filter((r) => r.result === 'FAIL').length} điều kiện không đạt.`,
@@ -194,10 +198,7 @@ export default function SeafarerDetailPage() {
     READY_IN_SCOPE: 'Đủ điều kiện xuất theo các mẫu trong phạm vi MVP.',
   }
   const createPack = () => navigate(`/exports/new?seafarer=${id}`)
-  const dropFiles = () => {
-    if (tab !== 'overview' && tab !== 'docs') setTab('docs')
-    setTimeout(() => openFilePicker(pageRef.current), 0)
-  }
+  const dropFiles = () => navigate(`/seafarers/${id}/upload`)
   const moreMenu = {
     items: [
       { key: 'edit', icon: <EditOutlined />, label: 'Sửa thông tin' },
@@ -208,13 +209,12 @@ export default function SeafarerDetailPage() {
   }
   const tabs = PROFILE_TABS.map((item) => ({
     ...item,
-    count: item.value === 'docs' ? certList.length : item.value === 'service' ? contractList.length : null,
+    count: item.value === 'docs' ? certList.length : null,
   }))
 
   const bodies = {
     overview: (
       <>
-        <CrewDropzone seafarerId={id} firstName={firstName} />
         <div className="crew-two-col">
           <ProfileSection s={seafarer} />
           <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} />
@@ -226,12 +226,14 @@ export default function SeafarerDetailPage() {
       </>
     ),
     docs: (
+      <CertificatesSection seafarerId={id} />
+    ),
+    service: (
       <>
-        <CrewDropzone seafarerId={id} firstName={firstName} />
-        <CertificatesSection seafarerId={id} />
+        <ProfileSeaService seafarerId={id} />
+        <ContractsSection seafarerId={id} />
       </>
     ),
-    service: <ContractsSection seafarerId={id} />,
     training: <EnrollmentsSection seafarerId={id} />,
     exports: (
       <>
@@ -270,7 +272,7 @@ export default function SeafarerDetailPage() {
             <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending} />
           </Dropdown>
           <Button icon={<SendOutlined />} disabled={readiness === 'BLOCKED'} title={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra bên dưới' : undefined} onClick={createPack}>Tạo bộ giấy</Button>
-          <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Thả giấy tờ</Button>
+          <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Tải giấy tờ lên</Button>
         </div>
       </div>
 
@@ -616,19 +618,12 @@ function ContactsSection({ seafarerId }) {
   )
 }
 
-function certExpiryStatus(expiryDate) {
-  if (!expiryDate) return { color: 'default', label: '-' }
-  const d = dayjs(expiryDate)
-  if (d.isBefore(dayjs(), 'day')) return { color: 'red', label: 'Hết hạn' }
-  if (d.diff(dayjs(), 'day') <= 30) return { color: 'orange', label: 'Sắp hết hạn' }
-  return { color: 'green', label: 'Còn hiệu lực' }
-}
-
 function CertificatesSection({ seafarerId }) {
   const queryClient = useQueryClient()
-  const [addOpen, setAddOpen] = useState(false)
+  const [editing, setEditing] = useState(null) // null | 'new' | dòng chứng chỉ
   const [certFile, setCertFile] = useState(null)
   const [form] = Form.useForm()
+  const toast = useToast()
 
   const { data, isLoading } = useQuery({
     queryKey: ['certificates', seafarerId],
@@ -640,154 +635,131 @@ function CertificatesSection({ seafarerId }) {
     queryFn: () => lookupApi.certificateTypes().then((r) => r.data),
   })
 
-  const createMutation = useMutation({
-    mutationFn: async (values) => {
+  const close = () => { setEditing(null); form.resetFields(); setCertFile(null) }
+  const saved = (text) => () => {
+    toast.success(text)
+    close()
+    queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
+  }
+  const failed = (text) => (e) => toast.error(e.response?.data?.error || text)
+
+  const saveMutation = useMutation({
+    mutationFn: async ({ row, values }) => {
+      const noExpiry = Boolean(values.no_expiry)
       const payload = {
         certificate_type_id: values.certificate_type_id,
         certificate_number: values.certificate_number || undefined,
-        issued_date: values.issued_date?.format?.('YYYY-MM-DD') || values.issued_date,
-        expiry_date: values.expiry_date?.format?.('YYYY-MM-DD') || values.expiry_date,
+        issued_date: values.issued_date?.format?.('YYYY-MM-DD') || undefined,
+        expiry_date: noExpiry ? undefined : values.expiry_date?.format?.('YYYY-MM-DD') || undefined,
+        no_expiry: noExpiry,
       }
-      const res = await certificateApi.create(seafarerId, payload)
-      const cert = res.data
-      if (certFile && cert?.id) {
-        await certificateApi.upload(seafarerId, cert.id, certFile)
+      if (row) {
+        await certificateApi.update(seafarerId, row.id, { ...payload, expiry_date: payload.expiry_date || null, issued_date: payload.issued_date || null })
+        if (certFile) await certificateApi.upload(seafarerId, row.id, certFile)
+        return row
       }
+      const cert = (await certificateApi.create(seafarerId, payload)).data
+      if (certFile && cert?.id) await certificateApi.upload(seafarerId, cert.id, certFile)
       return cert
     },
-    onSuccess: () => {
-      message.success('Thêm chứng chỉ thành công')
-      setAddOpen(false)
-      form.resetFields()
-      setCertFile(null)
-      queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Thêm chứng chỉ thất bại'),
+    onSuccess: (_, { row }) => saved(row ? 'Đã lưu chứng chỉ' : 'Đã thêm chứng chỉ')(),
+    onError: failed('Không lưu được chứng chỉ'),
   })
 
   const deleteMutation = useMutation({
     mutationFn: (certId) => certificateApi.remove(seafarerId, certId),
-    onSuccess: () => {
-      message.success('Đã xóa chứng chỉ')
-      queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Xóa thất bại'),
+    onSuccess: saved('Đã xoá chứng chỉ'),
+    onError: failed('Xoá thất bại'),
   })
 
   function handleDeleteCert(row) {
     Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc muốn xóa chứng chỉ "${row.certificate_type_name}"?`,
-      okText: 'Xóa',
+      title: 'Xoá chứng chỉ?',
+      content: `Bạn có chắc muốn xoá chứng chỉ "${row.display_name}"?`,
+      okText: 'Xoá',
+      cancelText: 'Huỷ',
       okType: 'danger',
-      onOk: () => deleteMutation.mutate(row.id),
+      onOk: () => deleteMutation.mutateAsync(row.id),
     })
   }
 
-  const columns = [
-    { title: 'Loại chứng chỉ', dataIndex: 'certificate_type_name' },
-    { title: 'Số chứng chỉ', dataIndex: 'certificate_number' },
-    { title: 'Ngày cấp', dataIndex: 'issued_date', render: (v) => fmt(v) },
-    {
-      title: 'Ngày hết hạn',
-      dataIndex: 'expiry_date',
-      render: (v) => {
-        const s = certExpiryStatus(v)
-        return <Tag color={s.color}>{s.label}</Tag>
-      },
-    },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      render: (v) => (
-        <Tag color={v === 'VALID' ? 'green' : v === 'EXPIRED' ? 'red' : 'default'}>{v}</Tag>
-      ),
-    },
-    {
-      title: 'File',
-      dataIndex: 'document_url',
-      render: (v) =>
-        v ? (
-          <a href={v} target="_blank" rel="noreferrer">
-            Xem
-          </a>
-        ) : (
-          '-'
-        ),
-    },
-    {
-      title: '',
-      width: 80,
-      render: (_, r) => (
-        <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteCert(r)} />
-      ),
-    },
-  ]
+  function startEdit(row) {
+    setEditing(row)
+    form.setFieldsValue({
+      certificate_type_id: row.certificate_type_id,
+      certificate_number: row.certificate_number,
+      issued_date: row.issued_date ? dayjs(row.issued_date) : null,
+      expiry_date: row.expiry_date ? dayjs(row.expiry_date) : null,
+      no_expiry: Boolean(row.no_expiry),
+    })
+  }
+
+  async function openSource(cert) {
+    if (!cert.uploadId) return toast.error('Chứng chỉ này không còn bản gốc.')
+    try {
+      const blob = await documentApi.uploadFile(cert.uploadId)
+      window.open(URL.createObjectURL(blob), '_blank', 'noopener')
+    } catch (e) {
+      failed('Không mở được bản gốc')(e)
+    }
+  }
+
+  const rows = data?.data || []
+  const isNew = editing === 'new'
+  const noExpiry = Form.useWatch('no_expiry', form)
 
   return (
-    <Section title="Chứng chỉ" noPad>
-      <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          type="primary"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => setAddOpen(true)}
-        >
-          Thêm chứng chỉ
-        </Button>
-      </div>
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={data?.data || []}
-        loading={isLoading}
-        size="small"
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-      />
+    <Section title={<>Chứng chỉ {rows.length ? <span className="ds-num">{rows.length}</span> : null}</>} noPad extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setEditing('new') }}>Thêm chứng chỉ</Button>}>
+      {isLoading ? (
+        <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
+      ) : rows.length === 0 ? (
+        <EmptyState title="Chưa có chứng chỉ nào" description="Bấm Tải giấy tờ lên ở đầu hồ sơ. Chứng chỉ duyệt xong sẽ hiện ở đây." />
+      ) : (
+        <CertificateTable
+          certs={toTableCerts(rows)}
+          onEdit={(cert) => startEdit(cert.raw)}
+          onOpenSource={openSource}
+        />
+      )}
       <Modal
-        title="Thêm chứng chỉ"
-        open={addOpen}
-        onCancel={() => {
-          setAddOpen(false)
-          form.resetFields()
-          setCertFile(null)
-        }}
+        title={isNew ? 'Thêm chứng chỉ' : 'Sửa chứng chỉ'}
+        open={editing !== null}
+        onCancel={close}
         footer={null}
         width={440}
+        destroyOnHidden
       >
-        <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item name="certificate_type_id" label="Loại chứng chỉ" rules={[{ required: true }]}>
+        <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v })}>
+          <Form.Item name="certificate_type_id" label="Loại chứng chỉ" rules={[{ required: true, message: 'Chọn loại chứng chỉ' }]}>
             <Select
               placeholder="Chọn loại"
-              options={(certTypes?.data || certTypes || []).map((c) => ({
-                value: c.id,
-                label: c.name_vi || c.name,
-              }))}
+              showSearch
+              optionFilterProp="label"
+              options={(certTypes?.data || certTypes || []).map((c) => ({ value: c.id, label: c.name_vi || c.name }))}
             />
           </Form.Item>
           <Form.Item name="certificate_number" label="Số chứng chỉ">
             <Input />
           </Form.Item>
-          <Form.Item name="issued_date" label="Ngày cấp">
+          <Form.Item name="issued_date" label="Ngày cấp" rules={[{ required: true, message: 'Nhập ngày cấp' }]}>
             <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="expiry_date" label="Ngày hết hạn">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+          <Form.Item name="expiry_date" label="Có giá trị đến" rules={[{ required: !noExpiry, message: 'Nhập hạn hoặc đánh dấu không thời hạn' }]}>
+            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabled={Boolean(noExpiry)} />
+          </Form.Item>
+          <Form.Item name="no_expiry" valuePropName="checked">
+            <Checkbox>Không thời hạn</Checkbox>
           </Form.Item>
           <Form.Item label="File đính kèm">
-            <Input
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => setCertFile(e.target.files?.[0] || null)}
-            />
+            <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={(e) => setCertFile(e.target.files?.[0] || null)} />
           </Form.Item>
           <Form.Item>
-            <Space>
-              <Button onClick={() => setAddOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-                Thêm
-              </Button>
+            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+              {isNew ? <span /> : <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteCert(editing)}>Xoá chứng chỉ</Button>}
+              <Space>
+                <Button onClick={close}>Huỷ</Button>
+                <Button type="primary" htmlType="submit" loading={saveMutation.isPending}>Lưu</Button>
+              </Space>
             </Space>
           </Form.Item>
         </Form>

@@ -24,6 +24,7 @@ const DOC_SELECT = `SELECT d.*, COALESCE(u.file_name, d.file_name) AS file_name,
 
 // Upload đang được xử lý trong tiến trình này, tránh hai lần chạy chồng nhau (khôi phục sau khởi động, bấm lặp).
 const running = new Set()
+const reading = new Set()
 
 // Magic bytes: PDF=%PDF, JPEG=FFD8FF, PNG=89504E47. Không tin MIME trình duyệt gửi lên.
 function sniffMime(buffer) {
@@ -88,6 +89,36 @@ function rankView(rank) {
   return rank ? { id: rank.id, code: rank.code, name_vi: rank.name_vi } : null
 }
 
+// Loại giấy theo cách người dùng nói: sổ, chứng chỉ, khác. Giấy chưa nhận ra loại thì chưa xếp.
+const BOOK_TYPES = ['seaman_book_info', 'seaman_book_duty']
+function categoryOf(docType) {
+  if (!docType) return 'unsorted'
+  if (BOOK_TYPES.includes(docType)) return 'book'
+  if (DOC_TYPES[docType]?.certificate) return 'certificate'
+  return 'other'
+}
+
+// Tóm tắt một tệp cho màn Tải giấy tờ lên: đang xử lý hay xong, có bao nhiêu giấy mỗi loại.
+// groups: [{ doc_type, status, n }] của các giấy thuộc tệp. `now` để test.
+function summarizeUpload(upload, groups = [], now = Date.now()) {
+  const summary = { total: 0, book: 0, certificate: 0, other: 0, unsorted: 0, reading: 0, to_review: 0, failed: 0, published: 0 }
+  for (const group of groups) {
+    const n = Number(group.n) || 0
+    summary.total += n
+    summary[categoryOf(group.doc_type)] += n
+    if (group.status === DOC_STATUS.READING) summary.reading += n
+    else if (group.status === DOC_STATUS.REVIEW_REQUIRED) summary.to_review += n
+    else if (group.status === DOC_STATUS.FAILED) summary.failed += n
+    else if (group.status === DOC_STATUS.PUBLISHED) summary.published += n
+  }
+  const busy = BUSY_UPLOAD_STATES.includes(upload.status)
+  const updated = upload.updated_at ? new Date(upload.updated_at).getTime() : null
+  const stalled = busy && updated !== null && now - updated > STALLED_MINUTES * 60 * 1000
+  // phase: running (đang xử lý), done (xong), failed (tệp lỗi, cần thử lại). Giấy lỗi lẻ không làm cả tệp thành lỗi.
+  const phase = upload.status === UPLOAD_STATUS.FAILED ? 'failed' : busy ? 'running' : 'done'
+  return { ...summary, phase, stalled }
+}
+
 function shapeUpload(upload) {
   return {
     id: upload.id,
@@ -99,6 +130,7 @@ function shapeUpload(upload) {
     status: upload.status,
     error: upload.error,
     document_count: upload.document_count ?? undefined,
+    summary: upload.summary,
     created_by: upload.created_by,
     created_at: upload.created_at,
   }
@@ -142,6 +174,8 @@ function shape(doc, fields, lookups = {}) {
         state: field.state,
         note: field.note,
         optional: Boolean(spec.optional),
+        // Ô cần người duyệt chạm một lần (số GCNKNCM): duyệt nhanh không chấp nhận âm thầm.
+        confirm: Boolean(spec.confirm),
         // Chức danh khớp bảng rank (null nếu không có trong bảng); chỉ trang bố trí chức danh.
         normalized: spec.key === 'rank' && lookups.ranks ? rankView(normalizeRank(field.value || field.raw_text, lookups.ranks)) : undefined,
       }
@@ -327,7 +361,18 @@ const documentService = {
     return pages.map((page) => ({ buffer: fs.readFileSync(page.image_path), mimeType: 'image/jpeg' }))
   },
 
+  // Một giấy chỉ đọc một lần cùng lúc: quét giấy kẹt định kỳ không được chạy chồng lên lần đọc đang chạy.
   async extract(id) {
+    if (reading.has(id)) return
+    reading.add(id)
+    try {
+      await this.extractOnce(id)
+    } finally {
+      reading.delete(id)
+    }
+  },
+
+  async extractOnce(id) {
     const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [id])
     if (!doc || doc.status === DOC_STATUS.SKIPPED) return
     // Giấy "chưa tách": đọc lại nghĩa là tách lại cả tệp.
@@ -473,9 +518,12 @@ const documentService = {
     if (doc.status === DOC_STATUS.READING || doc.status === DOC_STATUS.SKIPPED || !doc.fields.length) {
       throw { statusCode: 409, message: 'Giấy này chưa có ô nào để chấp nhận' }
     }
-    await pool.query('UPDATE document_field SET state = ?, decided_by = ?, decided_at = NOW() WHERE document_id = ? AND state = ? AND value <> \'\'', [
-      'ACCEPTED', userId, id, 'PROPOSED',
-    ])
+    // Ô "confirm" (số GCNKNCM) không chấp nhận âm thầm: người duyệt chạm vào từng ô.
+    const touch = (DOC_TYPES[doc.doc_type]?.fields || []).filter((spec) => spec.confirm).map((spec) => spec.key)
+    await pool.query(
+      `UPDATE document_field SET state = ?, decided_by = ?, decided_at = NOW() WHERE document_id = ? AND state = ? AND value <> ''${touch.length ? ' AND field_key NOT IN (?)' : ''}`,
+      touch.length ? ['ACCEPTED', userId, id, 'PROPOSED', touch] : ['ACCEPTED', userId, id, 'PROPOSED']
+    )
     await this.settle(id, doc.doc_type, userId)
     return this.get(id)
   },
@@ -819,7 +867,13 @@ const documentService = {
        FROM document_upload u WHERE u.seafarer_id = ? AND u.deleted_at IS NULL ORDER BY u.id`,
       [seafarerId]
     )
-    return uploads.map(shapeUpload)
+    if (!uploads.length) return []
+    const [groups] = await pool.query(
+      `SELECT upload_id, doc_type, status, COUNT(*) AS n FROM seafarer_document
+       WHERE upload_id IN (?) AND deleted_at IS NULL GROUP BY upload_id, doc_type, status`,
+      [uploads.map((upload) => upload.id)]
+    )
+    return uploads.map((upload) => shapeUpload({ ...upload, summary: summarizeUpload(upload, groups.filter((group) => group.upload_id === upload.id)) }))
   },
 
   async uploadFile(id) {
@@ -841,6 +895,18 @@ const documentService = {
   },
 
   // Bỏ cả tệp (và các giấy của nó) khi chưa giấy nào vào hồ sơ.
+  // Thử lại cả tệp: tệp lỗi hoặc đã kẹt quá STALLED_MINUTES phút. Chạy lại từ bước còn dở (process bỏ qua bước đã xong).
+  async retryUpload(id) {
+    const [[upload]] = await pool.query('SELECT * FROM document_upload WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!upload) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    const stalled = BUSY_UPLOAD_STATES.includes(upload.status) && Date.now() - new Date(upload.updated_at).getTime() > STALLED_MINUTES * 60 * 1000
+    if (upload.status !== UPLOAD_STATUS.FAILED && !stalled) throw { statusCode: 409, message: 'Chỉ thử lại được tệp lỗi hoặc đang kẹt' }
+    if (!documentReader.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
+    await pool.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.RECEIVED, id])
+    setImmediate(() => { this.process(id).catch(() => {}) })
+    return this.getUpload(id)
+  },
+
   async removeUpload(id) {
     await this.getUpload(id)
     const [[published]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE upload_id = ? AND status = ? AND deleted_at IS NULL', [id, DOC_STATUS.PUBLISHED])
@@ -853,4 +919,4 @@ const documentService = {
   },
 }
 
-module.exports = { documentService, sniffMime, toIsoDate, applyAction, docStatusOf, profileChanges, DONE_STATES }
+module.exports = { documentService, summarizeUpload, categoryOf, sniffMime, toIsoDate, applyAction, docStatusOf, profileChanges, DONE_STATES }

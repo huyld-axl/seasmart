@@ -8,10 +8,10 @@
 ## 0. Tóm tắt
 
 1. Backend đã xong và đã đo bằng AI thật trên 21 tệp mẫu: tách đúng loại 21/21, ô đúng 98%.
-2. Giao diện chưa làm. UI Kit hiện có (lập 07/10) chưa có năm màn của tính năng này.
-3. Việc còn lại đi theo thứ tự: brief → wireframe → anh chọn → bổ sung design system → dựng thật → kiểm trên trình duyệt → tài liệu.
-4. Có hai chỗ phải dừng chờ anh: duyệt brief (cổng 1) và chọn phương án wireframe (cổng 2). Ngoài hai chỗ đó không hỏi.
-5. Khối lượng: khoảng **8 ngày làm việc**.
+2. **Giao diện đã xong (13/10):** màn Tải giấy tờ lên, màn Duyệt từng giấy, tab Chứng chỉ và tab Đi tàu ở hồ sơ; wireframe, design system và UI Kit đã bổ sung. Đã đi hết luồng với 21 tệp mẫu qua giao diện thật (mục K1 ở mục 6).
+3. Năm màn T1–T5 trong bản kế hoạch gốc nay còn ba: T2, T3, T4 gộp thành màn Duyệt từng giấy; T1 thành màn riêng; T5 là hai tab của hồ sơ.
+4. Việc còn mở: tô sáng ô trên bản gốc (cần AI trả vị trí ô), bảng giá của bên trung gian để quy ra tiền, kiểm trên điện thoại thật. Xem mục 10.
+5. Tài liệu cài và chạy: `README.md` ở thư mục gốc.
 
 ## 1. Đã xong
 
@@ -131,6 +131,37 @@ Các việc nhỏ phát hiện trong lúc làm, cần trước khi dựng giao d
 
 Phạm vi B1 chốt lại sau cổng 2, vì phương án wireframe quyết định cần dữ liệu gì.
 
+### G6a, G6b, G6c, G7 đã làm (13/10)
+
+| Bước | Kết quả |
+|---|---|
+| G6a | `documentApi` mở rộng, `seaServiceApi`, `reviewFlow.js`, `seaServiceView.js`, `certificateView.js`; `vitest.config.js` chỉ chạy `*.test.*` |
+| G6b | Màn riêng `/seafarers/:id/upload` (`UploadPage`, `CrewDropzone`, `uploadView.js`); thêm `POST /documents/uploads/:id/retry` |
+| G6c | `ReviewPage.jsx` viết lại theo T2 (từng giấy, sửa tại ô, chip đối chiếu tàu); bỏ `reviewModel.js`, `demoDocs.js` |
+| G7 | Hồ sơ: tab Chứng chỉ (bảng, thêm, sửa, xoá), tab Đi tàu (`ProfileSeaService.jsx`, sửa và xoá kèm lý do); nút "Tải giấy tờ lên" thay "Thả giấy tờ" |
+| Chạy thử | Đã đi hết luồng trên trình duyệt với AI thật (1 sổ, 2 chứng chỉ): tải lên, duyệt, đưa vào hồ sơ, hiện ở hai tab. K1 đầy đủ (21 tệp, probe sweep) chưa chạy |
+
+### K1 đã làm (13/10)
+
+| Việc | Kết quả |
+|---|---|
+| 21 tệp mẫu qua giao diện thật | Thả một lần cả 21 tệp: xử lý xong sau 198 giây. Ra 10 sổ thuyền viên, 10 chứng chỉ, 2 giấy khác (22 giấy: một PDF Panama có thêm trang "Khác"); không tệp nào lỗi |
+| Duyệt và đưa vào hồ sơ | Duyệt hết 22 giấy bằng giao diện; đưa vào hồ sơ: 20 giấy, 10 chứng chỉ, 9 chuyến đi tàu (đúng 9 trang bố trí chức danh). Giấy mang tên khác hồ sơ bị chặn đúng cho tới khi bấm "Vẫn đúng người" |
+| Lỗi tìm ra và đã sửa | Ngày chứng chỉ lệch một ngày do múi giờ và trạng thái hạn luôn "Còn hạn" (backend trả `Date`); sửa bằng `DATE_FORMAT` trong SELECT. Nút "Đổi loại" nhỏ ở 375px; thông báo `Modal` tĩnh; chữ trơ ở dòng tóm tắt; nền khung ô sửa |
+| probe, 1280 và 375, quét 1440 đến 375 | Màn Tải lên và Duyệt: không có chỗ vỡ ở bề rộng nào, không cuộn ngang. Còn các mục chung của cả app: vòng focus của nút antd, đích bấm 22px của đường dẫn, menu người dùng không chuyển động |
+| Chưa kiểm | Tab Chứng chỉ và Đi tàu bằng `probe.mjs` (tab không có địa chỉ riêng; chỉ kiểm cuộn ngang ở 375); luồng trên điện thoại thật |
+
+### B1 đã làm (13/10, theo wireframe đã chốt)
+
+| Việc | Kết quả |
+|---|---|
+| Tóm tắt tệp | `uploads[].summary`: `total`, `book`, `certificate`, `other`, `unsorted`, `reading`, `to_review`, `failed`, `published`, `phase` (`running`, `done`, `failed`), `stalled` (kẹt quá 5 phút) |
+| Duyệt nhanh một giấy | `POST /documents/:id/accept-clear` không chấp nhận âm thầm ô `confirm` (số GCNKNCM); ngày chưa chắc vốn đã ở lại |
+| Tab Chứng chỉ | `GET /seafarers/:id/certificates` trả `display_name`, `expiry_status` (`VALID`, `EXPIRING` trong 90 ngày, `EXPIRED`, `NO_EXPIRY`), `source` (`document` hoặc `manual`), tên tệp và trang nguồn; thêm tay nhận `no_expiry`, trùng loại và ngày cấp trả 409 |
+| Quét giấy kẹt | Job mỗi 5 phút gọi `recoverStalled`; một giấy chỉ đọc một lần cùng lúc |
+| Bỏ khỏi B1 | CMND hay hộ chiếu (wireframe chốt ô đó "chỉ để so"); danh sách trang (T2 mới không có lưới trang; `page_count`, `page_from`, `page_to` đã có) |
+| Hoãn | Vị trí ô trên ảnh gốc (`regions`), quyết định để sau 13/10. Đã đo thử trên 8 tệp (80 ô), thêm trường vị trí vào cùng lượt đọc: token +5% (vào +2,9%, ra +17,5%), thời gian +8,8%, khung rơi đúng chỗ ở hầu hết ô. 7/80 ô đọc khác chữ giữa hai lượt (có cả số chứng chỉ sai thêm một ký tự), chưa kết luận được là do thêm vị trí hay do dao động giữa các lượt. Trước khi làm: chạy đo đủ 21 tệp, mỗi bên vài lượt; nếu số chứng chỉ giảm thì tách lượt định vị riêng bằng model nhỏ. Màn duyệt tạm chỉ hiện đúng trang bản gốc, chưa tô sáng ô |
+
 ## 7. Rủi ro
 
 | Rủi ro | Cách giảm |
@@ -199,3 +230,24 @@ Loại giấy: `seaman_book_info` (8 ô), `seaman_book_duty` (12 ô: tàu, loạ
 Giấy "chưa tách" (tệp lỗi khi cắt trang hoặc tách): upload `FAILED` kèm một giấy `FAILED` không có loại; bấm Đọc lại ở giấy đó thì tách lại cả tệp.
 
 Đo lại bất cứ lúc nào (gọi AI thật, tốn tiền): `DB_NAME=marineport_g15 node scripts/eval_reader.js --truth ../docs/samples/ban_doc_chuan.json`
+
+## 10. Số liệu cuối và việc còn mở (13/10)
+
+| Chỉ số | Kết quả |
+|---|---|
+| Luồng 21 tệp mẫu qua giao diện thật | 198 giây từ lúc thả đến lúc xong; 10 sổ, 10 chứng chỉ, 2 giấy khác; 0 tệp lỗi |
+| Đưa vào hồ sơ | 20 giấy, 10 chứng chỉ, 9 chuyến đi tàu (đúng số trang bố trí chức danh) |
+| Test | Backend 128 (gồm 13 test tích hợp trên DB riêng); frontend 62 |
+| Lint, build | 0 lỗi; build frontend qua |
+| Độ rộng đã đo | probe 1280 và 375, quét 1440 đến 375: không có chỗ vỡ ở màn Tải lên và màn Duyệt |
+
+Số đo độ đúng của AI (98% ô đúng, số chứng chỉ 8/9, số GCNKNCM 7/9) giữ nguyên như mục 1; chưa đo lại sau B1 vì lời nhắc và model không đổi.
+
+| Việc còn mở | Ghi chú |
+|---|---|
+| Tô sáng ô trên bản gốc | Thêm vị trí ô vào lượt đọc tốn thêm khoảng 5% token; trước khi làm cần đo lại độ đúng số chứng chỉ trên 21 tệp (mục 6, dòng "Hoãn") |
+| Chưa quy ra tiền | Cần bảng giá của bên trung gian; có sẵn số token mỗi tệp trong bảng `ai_call` |
+| Kiểm trên điện thoại thật và probe riêng cho hai tab hồ sơ | Tab không có địa chỉ riêng nên `probe.mjs` chưa mở thẳng được |
+| Thứ tự giấy trong màn duyệt | Theo thứ tự tệp xử lý xong, nên có thể bắt đầu bằng trang bố trí chức danh thay vì trang thông tin |
+| Vòng focus của nút antd, đích bấm 22px của đường dẫn | Của khung app chung, không riêng tính năng này |
+| Sửa và xoá chứng chỉ chưa bắt ghi lý do | Chờ quyết định; chuyến đi tàu đã bắt |

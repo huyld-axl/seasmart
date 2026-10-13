@@ -17,6 +17,13 @@ import { STATUS, STATUS_GROUP_LABELS } from '../components/ds/statusMap'
 import ReviewField from '../components/ds/ReviewField'
 import DocumentViewer from '../components/ds/DocumentViewer'
 import FileDropzone from '../components/ds/FileDropzone'
+import UploadPanel from '../components/ds/UploadPanel'
+import FieldInput from '../components/ds/FieldInput'
+import VesselMatchChip from '../components/ds/VesselMatchChip'
+import DocTypeBar from '../components/ds/DocTypeBar'
+import ReviewPager from '../components/ds/ReviewPager'
+import SeaServiceTimeline from '../components/ds/SeaServiceTimeline'
+import CertificateTable from '../components/ds/CertificateTable'
 import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
@@ -86,6 +93,37 @@ const FIELD_STATES = [
   { label: 'Sign on · dòng 3', value: '24/09/2022', state: 'DATE_AMBIGUOUS', page: 3, isCritical: true },
   { label: 'Rank raw · dòng 1', value: 'Bosun', state: 'REJECTED', page: 3, reason: 'Sổ ghi AB, AI đọc lẫn sang dòng chữ ký' },
   { label: 'IMO · dòng 3', value: '9524454', state: 'PROPOSED', page: 3, vesselStatus: 'NOT_CHECKED' },
+]
+
+const UPLOADS = [
+  { id: 'u1', name: 'So-thuyen-vien-Khoi.pdf', kind: 'pdf', state: 'running' },
+  { id: 'u2', name: 'IMG_2041.jpg', kind: 'image', state: 'running' },
+  { id: 'u3', name: 'chung-chi-an-toan-2-mat.pdf', kind: 'pdf', state: 'done', summary: '1 chứng chỉ' },
+  { id: 'u4', name: 'Ho-chieu.jpg', kind: 'image', state: 'other', summary: 'Giấy khác (hộ chiếu)' },
+]
+const UPLOAD_PROBLEMS = [
+  { id: 'p1', name: 'Scan_0019.pdf', kind: 'pdf', state: 'error', error: 'Không đọc được tệp này.' },
+  { id: 'p2', name: 'Giay-khen-2019.pdf', kind: 'pdf', state: 'stuck' },
+  { id: 'p3', name: 'ghi-chu-chuyen-tau.docx', kind: 'other', state: 'unsupported' },
+  { id: 'p4', name: 'Scan-so-day-du.pdf', kind: 'pdf', state: 'tooBig', size: '31,4 MB' },
+  { id: 'p5', name: 'IMG_2041 (1).jpg', kind: 'image', state: 'duplicate', duplicateOf: '10/10/2026' },
+  { id: 'p6', name: 'IMG_2050.jpg', kind: 'image', state: 'unsent' },
+  { id: 'p7', name: 'IMG_2051.jpg', kind: 'image', state: 'saved' },
+]
+const TRIPS = [
+  { id: 't1', vessel: 'PACIFIC ARROW 2', vesselSub: 'Hàng rời · Marshall Islands · 35.410 GT', signOn: '15/03/2020', signOff: null, ongoing: true, rank: '2/E', rankName: 'Máy hai', vesselStatus: 'NOT_CHECKED', source: { type: 'document', label: 'Từ sổ thuyền viên, tr.5' } },
+  { id: 't2', vessel: 'SEA ORCHID', vesselSub: 'Container · Panama · 18.230 GT', signOn: '09/08/2019', signOff: '21/01/2020', rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'NOT_FOUND', overlapNote: 'Trùng với chuyến PACIFIC ARROW 2 từ 15/03/2020', source: { type: 'document', label: 'Từ sổ thuyền viên, tr.4' } },
+  { id: 't3', vessel: 'MV Halong Spirit', vesselSub: 'Hàng rời · Việt Nam · 4.120 GT', signOn: '03/12/2018', signOff: '17/06/2019', rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'VERIFIED', source: { type: 'manual' } },
+]
+const CERTS = [
+  { id: 'c1', name: 'Advanced Fire Fighting', number: 'A2949.AF/BNHP', issuedOn: '02/07/2020', expiresOn: '02/07/2025', status: 'EXPIRED' },
+  { id: 'c2', name: 'Ship Security Officer', number: 'SSO/HP/1182', issuedOn: '17/02/2022', expiresOn: '17/02/2027', status: 'VALID' },
+  { id: 'c3', name: 'Basic Safety Training', number: 'BST/HP/0237/2023', issuedOn: '14/05/2023', expiresOn: '14/05/2028', status: 'VALID' },
+  { id: 'c4', name: 'Medical First Aid', number: 'MFA 55102', issuedOn: '21/03/2021', expiresOn: '', status: 'NO_EXPIRY', manual: true },
+]
+const VIEWER_REGIONS = [
+  { key: 'vessel', label: 'Tên tàu', x: 6, y: 22, w: 56, h: 12 },
+  { key: 'signOff', label: 'Ngày rời tàu', x: 6, y: 60, w: 40, h: 12 },
 ]
 
 const FILES = [
@@ -475,6 +513,73 @@ export default function DesignSystemPage() {
       <Section id="tai-len" title="Khung kéo thả tệp">
         <div className="dsp-box dsp-box--pad">
           <FileDropzone files={FILES} />
+        </div>
+      </Section>
+
+      <Section id="tai-giay-to" title="Tải giấy tờ lên">
+        <p className="dsp-note">Một khung: dòng tóm tắt, mỗi tệp một dòng, khung thả ở chân. Người dùng chỉ cần biết đang xử lý, xong, hoặc tệp nào cần làm gì.</p>
+        <div className="dsp-states">
+          <Demo label="Chưa có tệp" wide state="none"><UploadPanel seafarerName="Khôi" /></Demo>
+          <Demo label="Đang xử lý và đã xong" wide state="running">
+            <UploadPanel files={UPLOADS} summary={{ title: 'Đang xử lý 2 tệp. Bạn có thể làm việc khác, trang tự cập nhật.', note: 'Xong đến đâu duyệt được đến đó.' }} />
+          </Demo>
+          <Demo label="Xử lý xong, chờ duyệt" wide state="done">
+            <UploadPanel files={UPLOADS.filter((file) => file.state !== 'running')} summary={{ title: 'Xong: 1 chứng chỉ, 1 khác', action: 'Duyệt 1 giấy' }} />
+          </Demo>
+          <Demo label="Tệp cần xử lý: lỗi, kẹt, sai định dạng, quá lớn, trùng, chưa gửi, chưa đọc" wide state="problems">
+            <UploadPanel files={UPLOAD_PROBLEMS} summary={{ title: '7 tệp cần bạn xử lý' }} />
+          </Demo>
+        </div>
+      </Section>
+
+      <Section id="duyet-giay" title="Duyệt từng giấy">
+        <p className="dsp-note">Bản gốc bên trái, ô bên phải. Bỏ qua ô là chấp nhận, gõ khác là "Đã sửa" (dấu tích xanh lá). Chỉ ngày chưa chắc và số GCNKNCM cần bấm ✓ một lần.</p>
+        <div className="dsp-states">
+          <Demo label="Ô: giữ nguyên, có đích" state="plain">
+            <FieldInput label="Chức danh" value="OLR" destination="profile" hint="→ Thợ máy (Oiler)" />
+          </Demo>
+          <Demo label="Ô: ngày AI chưa chắc, cần ✓" state="unsure">
+            <FieldInput label="Ngày rời tàu" value="17/06/2019" state="DATE_AMBIGUOUS" needsConfirm hint="Chữ viết tay, kiểm lại với bản gốc" />
+          </Demo>
+          <Demo label="Ô: đã sửa" state="edited">
+            <FieldInput label="Ngày rời tàu" value="12/06/2019" state="EDITED" aiRead="17/06/2019" />
+          </Demo>
+          <Demo label="Ô: không đọc được" state="unknown">
+            <FieldInput label="Loại tàu" value="" state="UNKNOWN" />
+          </Demo>
+          <Demo label="Ô: số cần so, đã xác nhận" state="confirmed">
+            <FieldInput label="Số GCNKNCM" value="004217/HP" state="ACCEPTED" needsConfirm mono hint="Số dài, so từng ký tự với bản gốc" />
+          </Demo>
+          <Demo label="Ô Tên tàu kèm chip đối chiếu" state="vessel">
+            <FieldInput label="Tên tàu" value="MV Halong Spirit" isActive>
+              <VesselMatchChip status="NOT_CHECKED" />
+            </FieldInput>
+          </Demo>
+          <Demo label="Chip đối chiếu: khớp, chưa kiểm, không thấy" state="chips">
+            <div className="dsp-inline">
+              <VesselMatchChip status="VERIFIED" />
+              <VesselMatchChip status="NOT_CHECKED" />
+              <VesselMatchChip status="NOT_FOUND" />
+            </div>
+          </Demo>
+          <Demo label="Loại giấy và chuyển giấy" state="typebar">
+            <DocTypeBar kind="book" subtitle="Bố trí chức danh · chuyến 2" />
+            <ReviewPager index={3} total={9} />
+          </Demo>
+        </div>
+        <Demo label="Khung xem bản gốc có vùng ô (cần AI trả vị trí ô)" wide>
+          <DocumentViewer fileName="so-thuyen-vien-khoi.pdf" page={3} pageCount={12} regions={VIEWER_REGIONS} activeRegion="signOff" />
+        </Demo>
+      </Section>
+
+      <Section id="ho-so-giay-to" title="Chuyến đi tàu và chứng chỉ">
+        <div className="dsp-states">
+          <Demo label="Chuyến đi tàu: đang trên tàu, trùng thời gian, nhập tay" wide>
+            <SeaServiceTimeline trips={TRIPS} />
+          </Demo>
+          <Demo label="Bảng chứng chỉ: còn hạn, hết hạn, không thời hạn (nhập tay)" wide>
+            <div className="dsp-box"><CertificateTable certs={CERTS} /></div>
+          </Demo>
         </div>
       </Section>
 

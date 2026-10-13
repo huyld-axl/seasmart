@@ -71,6 +71,13 @@ export const STATUS = {
     VALID: { label: 'Còn hạn', tone: 'success', mark: 'check' },
     EXPIRING: { label: 'Sắp hết hạn', tone: 'warning', mark: 'clock' },
     EXPIRED: { label: 'Hết hạn', tone: 'error', mark: 'cross' },
+    NO_EXPIRY: { label: 'Không thời hạn', tone: 'neutral', mark: 'ring' },
+  },
+  // Tệp ở màn tải giấy tờ lên: người dùng chỉ cần biết đang xử lý hay xong (T1)
+  upload: {
+    RUNNING: { label: 'Đang xử lý', tone: 'neutral', mark: 'ring-dot' },
+    DONE: { label: 'Xong', tone: 'success', mark: 'check' },
+    OTHER: { label: 'Khác', tone: 'neutral', mark: 'ring' },
   },
 }
 
@@ -85,4 +92,5 @@ export const STATUS_GROUP_LABELS = {
   signature: 'Chữ ký',
   crew: 'Tình trạng thuyền viên',
   cert: 'Hạn giấy tờ',
+  upload: 'Tệp tải lên',
 }

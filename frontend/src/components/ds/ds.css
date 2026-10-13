@@ -104,7 +104,7 @@
   padding: 8px 12px 8px 20px;
   border-bottom: 1px solid var(--border-strong);
 }
-.ds-viewer__name { flex: 1 1 200px; min-width: 0; margin: 0; overflow: hidden; font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ds-viewer__name { flex: 1 1 120px; min-width: 0; margin: 0; overflow: hidden; font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .ds-viewer__tools { display: flex; flex-shrink: 0; align-items: center; gap: 2px; }
 .ds-viewer__count { min-width: 44px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; text-align: center; }
 .ds-viewer__divider { width: 1px; height: 20px; margin: 0 6px; background: var(--border-strong); }
@@ -375,3 +375,121 @@
 .ds-role { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral); font-size: 12px; font-weight: 500; white-space: nowrap; }
 .ds-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
 @media (max-width: 639px) { .ds-form-row { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- AI đọc giấy tờ: tải lên (T1), duyệt từng giấy (T2), chuyến đi tàu và chứng chỉ (T5) ---------- */
+
+/* Khung thả tệp mới: một hàng có biểu tượng; --slim là phần chân của khung tải lên, --big khi chưa có tệp */
+.ds-updrop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 16px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--primary-light);
+  cursor: pointer;
+}
+.ds-updrop__icon { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--surface); color: var(--primary); font-size: 20px; }
+.ds-updrop__text { display: grid; flex: 1 1 240px; min-width: 0; }
+.ds-updrop__title { font-size: 14px; font-weight: 500; }
+.ds-updrop__hint { margin-top: 2px; color: var(--neutral); font-size: 14px; text-wrap: pretty; }
+.ds-updrop--big { flex-direction: column; justify-content: center; padding: 40px 24px; text-align: center; }
+.ds-updrop--big .ds-updrop__text { flex: 0 1 auto; }
+.ds-updrop--slim { padding: 10px 16px; border: 0; border-top: 1px dashed var(--border-strong); border-radius: 0 0 16px 16px; }
+.ds-updrop--slim .ds-updrop__icon { width: 32px; height: 32px; font-size: 16px; }
+
+/* Khung một khối: dòng tóm tắt, danh sách tệp, khung thả */
+.ds-uploads { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.ds-uploads__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+.ds-uploads__title { margin: 0; font-size: 14px; font-weight: 600; text-wrap: balance; }
+.ds-uploads__note { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+.ds-uploads__list { margin: 0; padding: 0 16px; list-style: none; }
+.ds-uprow { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+@media (max-width: 639px) { .ds-uprow { flex-wrap: wrap; } .ds-uprow__actions { flex-basis: 100%; padding-left: 32px; } }
+.ds-uprow:first-child { border-top: 0; }
+.ds-uprow__icon { flex-shrink: 0; color: var(--muted); font-size: 20px; }
+.ds-uprow__name { flex: 1 1 120px; min-width: 0; overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.ds-uprow__state { display: inline-flex; flex-wrap: wrap; min-width: 0; justify-content: flex-end; align-items: center; gap: 4px 8px; font-size: 14px; text-wrap: balance; }
+.ds-uprow__state--error { color: var(--error-strong); }
+.ds-uprow__state--warning { color: var(--warning); }
+.ds-uprow__note { color: var(--muted); font-size: 12px; }
+.ds-uprow__actions { display: flex; flex-wrap: wrap; flex-shrink: 0; gap: 4px; }
+
+/* Ô dữ liệu sửa tại chỗ */
+.ds-fin { display: grid; align-content: start; gap: 4px; min-width: 0; }
+.ds-fin__head { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 500; }
+.ds-fin__head i { margin-left: auto; font-style: normal; font-weight: 400; }
+.ds-fin__req { color: var(--error-text); }
+.ds-fin__edited { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; color: var(--success); font-weight: 500; }
+.ds-fin__head i + .ds-fin__edited { margin-left: 0; }
+.ds-fin__box { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ds-fin__input { flex: 1 1 140px; min-width: 0; }
+.ds-fin__input--mono input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: slashed-zero tabular-nums; letter-spacing: 0.06em; }
+.ds-fin--warn .ds-fin__input { border-color: var(--warning-border); background: var(--warning-bg); }
+.ds-fin--edited .ds-fin__input { border-color: var(--success); }
+.ds-fin--active .ds-fin__input { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+.ds-fin__confirm { flex-shrink: 0; border-color: var(--warning-border); color: var(--warning); }
+.ds-fin__done { display: grid; place-items: center; width: 32px; color: var(--success); font-size: 16px; }
+.ds-fin__hint { color: var(--muted); font-size: 12px; text-wrap: pretty; }
+.ds-fin__hint--warn { color: var(--warning); }
+
+/* Chip đối chiếu tàu */
+.ds-vchip { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; }
+.ds-vchip:disabled { cursor: not-allowed; opacity: 0.6; }
+.ds-vchip--ok { border-color: transparent; background: var(--success-bg); color: var(--success); cursor: default; }
+.ds-vchip--warn { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning); }
+
+/* Đầu khung bên phải: loại giấy và Đổi loại */
+.ds-typebar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; min-height: 52px; padding: 8px 16px; border-bottom: 1px solid var(--border); }
+.ds-typebar__kind { display: inline-flex; align-items: center; gap: 6px; justify-self: start; height: 28px; padding: 0 12px; border-radius: 9999px; background: var(--secondary); font-weight: 500; white-space: nowrap; }
+.ds-typebar__kind--other { background: var(--neutral-bg); color: var(--neutral); }
+.ds-typebar__change { min-height: 32px; }
+.ds-typebar__sub { grid-column: 1 / -1; font-weight: 600; text-wrap: balance; }
+
+/* Bộ chuyển giấy */
+.ds-pager { display: inline-flex; align-items: center; gap: 4px; }
+.ds-pager__count { min-width: 64px; font-variant-numeric: tabular-nums; text-align: center; }
+
+/* Vùng ô trên ảnh gốc, khớp với ô đang chọn bên phải */
+.ds-viewer__sheet { position: relative; width: 100%; max-width: 100%; }
+.ds-viewer__region { position: absolute; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+.ds-viewer__region:hover { background: rgb(0 0 0 / 0.04); }
+.ds-viewer__region--active, .ds-viewer__region--active:hover { background: var(--primary-light); box-shadow: 0 0 0 2px var(--primary); }
+
+/* Chuyến đi tàu trên đường dọc */
+.ds-trips { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.ds-trip { position: relative; display: grid; gap: 8px; margin-left: 20px; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); }
+.ds-trip::before { content: ""; position: absolute; top: 20px; left: -20px; width: 10px; height: 10px; border-radius: 9999px; background: var(--border-strong); box-shadow: 0 0 0 3px var(--background); }
+.ds-trip[data-now="true"]::before { background: var(--success); }
+.ds-trip::after { content: ""; position: absolute; top: 34px; bottom: -14px; left: -16px; width: 2px; background: var(--border-strong); }
+.ds-trip:last-child::after { display: none; }
+.ds-trip__head { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
+.ds-trip__vessel { flex: 1 1 80px; min-width: 0; overflow-wrap: anywhere; }
+.ds-trip__sub { margin: 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.ds-trip__dates { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 13px; }
+.ds-trip__date { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-variant-numeric: slashed-zero tabular-nums; }
+.ds-trip__none { color: var(--muted); font-size: 12px; }
+.ds-trip__flags { display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.ds-trip__overlap { margin: 0; color: var(--warning); font-size: 12px; text-wrap: pretty; }
+.ds-trip__source { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; color: var(--muted); font-size: 12px; }
+
+/* Bảng chứng chỉ: rộng thì bảng, hẹp thì thẻ */
+.ds-ctable__table { width: 100%; border-collapse: collapse; }
+.ds-ctable__table th { height: 44px; padding: 0 12px; color: var(--muted); font-size: 12px; font-weight: 500; text-align: left; white-space: nowrap; }
+.ds-ctable__table td { padding: 10px 12px; border-top: 1px solid var(--border); vertical-align: top; }
+.ds-ctable__table tbody tr:hover { background: var(--surface-hover); }
+.ds-ctable__table tr[data-tone="warn"] td:first-child { box-shadow: inset 3px 0 0 var(--warning); }
+.ds-ctable__table .ds-ctable__r { text-align: right; }
+.ds-ctable__mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-variant-numeric: slashed-zero tabular-nums; white-space: nowrap; }
+.ds-ctable__note { color: var(--muted); font-size: 12px; }
+.ds-ctable__src .ds-link, .ds-trip__source .ds-link { font-size: 13px; }
+.ds-ctable__src { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; white-space: nowrap; }
+.ds-ccards { display: none; margin: 0; padding: 0; list-style: none; }
+.ds-ccards li { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.ds-ccards li:first-child { border-top: 0; }
+.ds-ccards__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+@media (max-width: 639px) {
+  .ds-ctable__table { display: none; }
+  .ds-ccards { display: block; }
+}

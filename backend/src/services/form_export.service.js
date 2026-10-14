@@ -1,11 +1,20 @@
 // form_export.service.js
 // Fills HD-Hong form templates with seafarer data per QUY UOC mapping
 const ExcelJS = require('exceljs')
+const fs = require('fs')
 const path = require('path')
 const pool = require('../config/db')
+const { sheetToHtml, parseRange } = require('../utils/sheet_html')
+const { fillCvTq } = require('./cv_tq_form.service')
+const { vndWords, parseAmount } = require('../utils/vnd_words')
 
 // Thư mục mẫu Excel thật (nằm ngoài repo, không commit). Đặt FORMS_DIR trong .env nếu khác mặc định.
 const FORMS_DIR = process.env.FORMS_DIR || path.resolve(__dirname, '../../../../forms')
+
+// Dòng thuyền viên thứ 2 trở đi trong QĐ điều động, QĐ rời tàu, Thư bảo lãnh: bộ giấy một người thì để trống.
+const EXTRA_ROWS_BLANK = Object.fromEntries(
+  [[67, 78], [86, 89], [111, 118]].flatMap(([from, to]) => Array.from({ length: to - from + 1 }, (_, i) => [`HD${from + i}`, '']))
+)
 
 // DATA column index (1-based, matching Excel columns A=1, B=2, ...)
 // We map field names from DB to QUY UOC column letters
@@ -39,6 +48,7 @@ function buildSeafarerRow(s, owner) {
   const yyyy = String(now.getFullYear())
 
   return {
+    ...EXTRA_ROWS_BLANK,
     // HĐ1
     HD1: s.seafarer_code || '',
     HD2: ngayBay ? String(new Date(ngayBay).getFullYear()).slice(-2) : '',
@@ -229,40 +239,163 @@ async function getOwnerByVessel(vesselName) {
   }
 }
 
-async function fillForm(formFileName, data) {
+// Chủ tàu chọn ở ô "Nộp cho" của bộ giấy.
+async function getOwnerById(shipOwnerId) {
+  const [[row]] = await pool.query(
+    'SELECT company_name, contact_person, address FROM ship_owner WHERE id = ? AND deleted_at IS NULL',
+    [shipOwnerId]
+  )
+  if (!row) return null
+  return { name: row.company_name, representative: row.contact_person || '', rep_title: '', address: row.address || '', contract_date: null }
+}
+
+// Mã điền trong mẫu: HD4, H37, và cả kiểu viết rời "HD 101". Mã không có trong dữ liệu thì giữ nguyên.
+const PLACEHOLDER = /\bHD?\s?(\d{1,3})\b/g
+function fillText(text, data) {
+  return text.replace(PLACEHOLDER, (found, n) => {
+    const value = data[`HD${n}`] ?? data[`H${n}`]
+    return value === undefined ? found : String(value)
+  })
+}
+
+// Sheet in ra: sheet đầu tiên đang hiện và có nội dung (mẫu CV có một sheet ẩn đứng trước).
+const mainSheet = (wb) => wb.worksheets.find((ws) => ws.state === 'visible' && ws.rowCount > 0) || wb.worksheets[0]
+
+async function openTemplate(formFileName) {
   const templatePath = path.join(FORMS_DIR, formFileName)
+  if (!fs.existsSync(templatePath)) throw { statusCode: 404, message: 'Chưa có file mẫu trên máy chủ' }
   const wb = new ExcelJS.Workbook()
   await wb.xlsx.readFile(templatePath)
+  if (!mainSheet(wb)) throw { statusCode: 422, message: 'Không đọc được file mẫu' }
+  return wb
+}
 
-  const ws = wb.worksheets[0]
+async function fillWorkbook(formFileName, data) {
+  const wb = await openTemplate(formFileName)
+  const ws = mainSheet(wb)
 
   ws.eachRow((row) => {
     row.eachCell({ includeEmpty: false }, (cell) => {
+      if (cell.isMerged && cell.master !== cell) return
       const v = cell.value
-      if (typeof v !== 'string') return
-
-      // Replace exact placeholder (whole cell = placeholder)
-      const trimmed = v.trim()
-      if (data[trimmed] !== undefined) {
-        cell.value = data[trimmed]
-        return
+      if (typeof v === 'string') {
+        const filled = fillText(v, data)
+        if (filled !== v) cell.value = filled
+      } else if (v?.richText) {
+        cell.value = { richText: v.richText.map((run) => ({ ...run, text: fillText(run.text, data) })) }
       }
-
-      // Replace inline placeholder within text (e.g. "Ông HD100", "MV HD80 do Công ty : H81")
-      let replaced = v
-      let changed = false
-      for (const [key, val] of Object.entries(data)) {
-        if (replaced.includes(key)) {
-          replaced = replaced.split(key).join(String(val))
-          changed = true
-        }
-      }
-      if (changed) cell.value = replaced
     })
   })
+  return wb
+}
 
-  const buf = await wb.xlsx.writeBuffer()
-  return buf
+async function loadFormData(seafarerId, { shipOwnerId, inputs = {} } = {}) {
+  const seafarer = seafarerId ? await getSeafarerData(seafarerId) : {}
+  if (inputs['Tên tàu']) seafarer.vessel_name_raw = inputs['Tên tàu']
+  const owner = (shipOwnerId && (await getOwnerById(shipOwnerId))) || (await getOwnerByVessel(seafarer.vessel_name_raw))
+  return { seafarer, data: buildSeafarerRow(seafarer, owner) }
+}
+
+// "Thông tin điền thêm" của từng giấy → ô trên mẫu đó. Mỗi đích: [địa chỉ ô, (giá trị gõ, nội dung ô hiện có) => nội dung mới].
+// "Tên tàu" không nằm ở đây: nó thay tên tàu của hồ sơ nên đi qua các mã HDxx.
+const set = (cell) => [cell, (value) => value]
+const after = (cell) => [cell, (value, current) => `${String(current ?? '').trimEnd()} ${value}`]
+const DOTS = '[….]+'
+function fillDate(value, current) {
+  const date = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(value.trim())
+  const written = date ? `ngày ${date[1].padStart(2, '0')} tháng ${date[2].padStart(2, '0')} năm ${date[3]}` : `ngày ${value}`
+  return String(current ?? '').replace(new RegExp(`ngày\\s*${DOTS}\\s*tháng\\s*${DOTS}\\s*năm\\s*${DOTS}`, 'i'), written)
+}
+// Số tiền không đọc được thì trả undefined: giữ nguyên ô của mẫu.
+const amount = (format) => (value) => {
+  const number = parseAmount(value)
+  return number === null ? undefined : format(number)
+}
+const INPUT_CELLS = {
+  tb_trung_tuyen: { 'Ngày có mặt': [after('A15')] },
+  phieu_thu: {
+    'Số tiền': [['B7', amount((n) => n)], ['A8', amount((n) => `(${vndWords(n)})`)], ['F10', amount((n) => `${vndWords(n)}./.`)]],
+    'Lý do thu': [set('C6')],
+  },
+  qd_dieu_dong: { 'Ngày xuống tàu': [after('B25')] },
+  don_bh: { 'Mức đóng': [['E17', (value) => `Mức đóng : ${value}`]] },
+  uy_quyen_cn: { 'Người được ủy quyền': [set('B16')] },
+  uy_quyen: { 'Người nhận lương': [set('C31')] },
+  qd_roi_tau: { 'Cảng rời tàu': [after('B22')], 'Ngày rời tàu': [after('B23')] },
+  thanh_ly: { 'Ngày thanh lý': [['A13', fillDate]] },
+}
+
+function applyInputs(ws, formKey, inputs = {}) {
+  for (const [label, targets] of Object.entries(INPUT_CELLS[formKey] || {})) {
+    const value = typeof inputs[label] === 'string' ? inputs[label].trim() : ''
+    if (!value) continue
+    for (const [address, write] of targets) {
+      const cell = ws.getCell(address)
+      const next = write(value, cell.text)
+      if (next !== undefined) cell.value = next
+    }
+  }
+}
+
+// Ô người dùng sửa tay trên giấy: { 'B7': 'nội dung mới' }. Ghi sau cùng nên thắng mọi cách điền khác.
+// Giá trị là mảng đoạn [{ text, bold, italic, underline, strike, color, size }] thì ghi thành rich text trên nền phông của ô.
+// Giá trị { runs, align } thì đổi thêm căn lề ngang của ô.
+// Ô đang là số thì giữ kiểu số nếu nội dung mới vẫn đọc được thành số.
+function runFont(base, run) {
+  const font = { ...base, bold: !!run.bold, italic: !!run.italic, underline: !!run.underline, strike: !!run.strike }
+  if (run.color) font.color = { argb: `FF${run.color.slice(1).toUpperCase()}` }
+  if (run.size) font.size = run.size
+  return font
+}
+
+function applyEdits(ws, edits = {}) {
+  for (const [address, edit] of Object.entries(edits)) {
+    const at = ws.getCell(address)
+    const cell = at.isMerged ? at.master : at
+    const { runs: text, align } = edit && typeof edit === 'object' && !Array.isArray(edit) ? edit : { runs: edit }
+    if (align) cell.alignment = { ...cell.alignment, horizontal: align }
+    if (Array.isArray(text)) {
+      cell.value = { richText: text.map((run) => ({ text: run.text, font: runFont(cell.font, run) })) }
+      continue
+    }
+    const current = cell.value?.formula || cell.value?.sharedFormula ? cell.value.result : cell.value
+    const plain = /#,##0/.test(cell.numFmt || '') ? text.replace(/\./g, '').replace(',', '.') : text
+    cell.value = typeof current === 'number' && text.trim() && Number.isFinite(Number(plain)) ? Number(plain) : text
+  }
+}
+
+// Điền một mẫu cho một thuyền viên: mẫu có `fill` điền theo ô, còn lại điền theo mã HDxx.
+async function buildForm(meta, seafarerId, options) {
+  if (meta.fill) {
+    const wb = await openTemplate(meta.file)
+    const seafarer = await meta.fill(wb, mainSheet(wb), seafarerId, pool)
+    applyEdits(mainSheet(wb), options?.edits)
+    return { wb, seafarer }
+  }
+  const { seafarer, data } = await loadFormData(seafarerId, options)
+  const wb = await fillWorkbook(meta.file, data)
+  applyInputs(mainSheet(wb), meta.key, options?.inputs)
+  applyEdits(mainSheet(wb), options?.edits)
+  return { wb, seafarer }
+}
+
+// Bản dùng để chuyển PDF: chỉ in sheet chính và đúng vùng in như bản xem trước, khổ A4, co cho vừa bề ngang một trang.
+function layoutForPdf(wb, gridlines) {
+  const main = mainSheet(wb)
+  for (const ws of wb.worksheets) if (ws !== main && ws.state === 'visible') ws.state = 'hidden'
+  // LibreOffice không đọc vùng in exceljs ghi ra, nên ẩn hẳn cột và dòng nằm ngoài vùng in (ghi chú, mã tra cứu của mẫu).
+  const area = parseRange(main.pageSetup?.printArea)
+  if (area) {
+    for (let c = 1; c <= main.dimensions.right; c += 1) if (c < area.left || c > area.right) main.getColumn(c).hidden = true
+    for (let r = 1; r <= main.dimensions.bottom; r += 1) if (r < area.top || r > area.bottom) main.getRow(r).hidden = true
+  }
+  main.pageSetup = { ...main.pageSetup, paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, showGridLines: gridlines }
+}
+
+function formMeta(formKey) {
+  const meta = FORM_META.find((f) => f.key === formKey)
+  if (!meta) throw { statusCode: 400, message: `Form không hợp lệ: ${formKey}` }
+  return meta
 }
 
 const FORM_META = [
@@ -278,20 +411,37 @@ const FORM_META = [
   { key: 'kq_thi_tuyen', label: 'KQ Thi tuyển', file: 'KQ thi tuyển.xlsx' },
   { key: 'qd_roi_tau', label: 'Quyết định rời tàu', file: 'Quyết định rời tàu.xlsx' },
   { key: 'thanh_ly', label: 'Thanh lý hợp đồng', file: 'Thanh lý.xlsx' },
+  { key: 'cv_tq', label: 'CV chủ tàu Trung Quốc', file: 'CV TQ.xlsx', fill: fillCvTq },
 ]
 
 module.exports = {
   FORM_META,
-  async exportForm(seafarerId, formKey) {
-    const meta = FORM_META.find((f) => f.key === formKey)
-    if (!meta) throw { statusCode: 400, message: `Form không hợp lệ: ${formKey}` }
-
-    const seafarer = await getSeafarerData(seafarerId)
-    const owner = await getOwnerByVessel(seafarer.vessel_name_raw)
-    const data = buildSeafarerRow(seafarer, owner)
-
-    const buf = await fillForm(meta.file, data)
-    return { buffer: buf, filename: `${meta.label} - ${seafarer.full_name}.xlsx` }
+  fillText,
+  applyInputs,
+  applyEdits,
+  // options: { shipOwnerId, inputs, edits } lấy từ bộ giấy; bỏ trống thì suy chủ tàu từ tên tàu trên hồ sơ.
+  // options.pdfSource: trả thêm một bản Excel đã chỉnh khổ in, dùng để chuyển PDF.
+  async exportForm(seafarerId, formKey, options) {
+    const meta = formMeta(formKey)
+    const { wb, seafarer } = await buildForm(meta, seafarerId, options)
+    // options.gridlines: có/không đường lưới ô, khi mở trong Excel và khi in ra PDF. Bỏ trống thì theo file mẫu.
+    if (typeof options?.gridlines === 'boolean') {
+      const main = mainSheet(wb)
+      main.views = [{ ...(main.views?.[0] || {}), showGridLines: options.gridlines }]
+    }
+    const buf = await wb.xlsx.writeBuffer()
+    let pdfSource
+    if (options?.pdfSource) {
+      layoutForPdf(wb, !!options.gridlines)
+      pdfSource = await wb.xlsx.writeBuffer()
+    }
+    return { buffer: buf, pdfSource, filename: `${meta.label} - ${seafarer.full_name}.xlsx` }
+  },
+  // Xem trước: cùng file mẫu và cùng cách điền như lúc xuất. Chưa chọn thuyền viên thì ra mẫu trống.
+  async previewForm(seafarerId, formKey, options) {
+    const meta = formMeta(formKey)
+    const { wb } = await buildForm(meta, seafarerId, options)
+    return sheetToHtml(mainSheet(wb), wb)
   },
   async listForms() {
     return FORM_META.map(({ key, label }) => ({ key, label }))

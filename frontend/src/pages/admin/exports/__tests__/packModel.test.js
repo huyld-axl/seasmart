@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import dayjs from 'dayjs'
 import {
   matchName, matchVessel, rankCandidates, paperImoState, overlappingContracts, readinessRules, readinessLevel,
-  TEMPLATES, stagePick, toggleTemplate, packInputs, packMissing, packSignatures,
+  TEMPLATES, stagePick, toggleTemplate, docFields, editCount, setEdit, packMissing,
 } from '../packModel'
 
 const paper = { name: 'HALONG SPIRIT', gt: '300', flag: 'VN', owner: 'CHỦ TÀU DEMO A' }
@@ -65,12 +65,24 @@ describe('bộ giấy 12 mẫu', () => {
     expect(toggleTemplate(['qddd', 'uql'], 'qddd')).toEqual(['uql'])
   })
 
-  it('ô điền chung, trường thiếu, chữ ký cần', () => {
-    expect(packInputs(['qddd', 'qdrt'])).toEqual(['Tên tàu', 'Ngày xuống tàu', 'Ngày rời tàu', 'Cảng rời tàu'])
+  it('thông tin điền thêm theo từng giấy', () => {
+    expect(docFields('qdrt')).toEqual([{ label: 'Ngày rời tàu', hint: 'dd/mm/yyyy' }, { label: 'Cảng rời tàu', hint: 'Tên cảng' }])
+    expect(docFields('qddd').map((f) => f.label)).toEqual(['Ngày xuống tàu'])
+    expect(docFields('cv')).toEqual([])
+  })
+
+  it('ô sửa tay: ghi, bỏ, đếm', () => {
+    const one = setEdit({}, 'pt', 'C6', 'Phí hồ sơ')
+    expect(one).toEqual({ pt: { C6: 'Phí hồ sơ' } })
+    expect(editCount(setEdit(one, 'pt', 'B7', ''), 'pt')).toBe(2)
+    expect(setEdit(one, 'pt', 'C6', null)).toEqual({})
+    expect(editCount(one, 'tl')).toBe(0)
+  })
+
+  it('trường hồ sơ còn thiếu cho các giấy đã chọn', () => {
     expect(packMissing(['bl', 'uql'], {}, [])).toEqual([{ field: 'Người bảo lãnh', doc: 'Thư bảo lãnh' }, { field: 'Số tài khoản', doc: 'Ủy quyền nhận lương' }])
     expect(packMissing(['bl', 'uql', 'cv'], { bank_account_number: '1', shoe_size: '42' }, [{ is_guarantor: 1 }])).toEqual([
       { field: 'Nhóm máu', doc: 'CV chủ tàu Trung Quốc' }, { field: 'Người thân liên hệ', doc: 'CV chủ tàu Trung Quốc' },
     ])
-    expect(packSignatures(['tl', 'cv'])).toEqual([{ doc: 'tl', who: 'Thuyền viên' }, { doc: 'tl', who: 'Giám đốc' }])
   })
 })

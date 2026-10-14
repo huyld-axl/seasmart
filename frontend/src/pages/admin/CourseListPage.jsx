@@ -137,44 +137,35 @@ export default function CourseListPage() {
         </Button>
       </div>
 
-      <div
-        style={{
-          background: 'var(--surface)',
-          borderRadius: 8,
-          padding: 16,
-          marginBottom: 16,
-          border: '1px solid var(--border-strong)',
-        }}
-      >
-        <Space wrap>
-          <Input
-            placeholder="Tìm tên, mã khóa học..."
-            prefix={<SearchOutlined style={{ color: 'var(--muted)' }} />}
-            style={{ flex: 1, minWidth: 140, height: 32, borderRadius: 6 }}
-            value={filters.search}
-            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
-            allowClear
-          />
-          <Select
-            placeholder="Trung tâm đào tạo"
-            style={{ minWidth: 180, height: 32 }}
-            value={filters.training_center_id || undefined}
-            onChange={(v) => setFilters((f) => ({ ...f, training_center_id: v ?? '', page: 1 }))}
-            allowClear
-            options={(centers?.data || []).map((c) => ({ value: c.id, label: c.name_vi }))}
-          />
-          <Select
-            placeholder="Trạng thái"
-            style={{ minWidth: 140, height: 32 }}
-            value={filters.status || undefined}
-            onChange={(v) => setFilters((f) => ({ ...f, status: v || '', page: 1 }))}
-            allowClear
-            options={Object.entries(STATUS_LABEL).map(([v, l]) => ({ value: v, label: l }))}
-          />
-        </Space>
-      </div>
-
-      <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
+      <div className="ds-card">
+        <div className="ds-toolbar">
+          <Space wrap>
+            <Input
+              placeholder="Tìm tên, mã khóa học..."
+              prefix={<SearchOutlined style={{ color: 'var(--muted)' }} />}
+              style={{ flex: 1, minWidth: 140, height: 32, borderRadius: 6 }}
+              value={filters.search}
+              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+              allowClear
+            />
+            <Select
+              placeholder="Trung tâm đào tạo"
+              style={{ minWidth: 180, height: 32 }}
+              value={filters.training_center_id || undefined}
+              onChange={(v) => setFilters((f) => ({ ...f, training_center_id: v ?? '', page: 1 }))}
+              allowClear
+              options={(centers?.data || []).map((c) => ({ value: c.id, label: c.name_vi }))}
+            />
+            <Select
+              placeholder="Trạng thái"
+              style={{ minWidth: 140, height: 32 }}
+              value={filters.status || undefined}
+              onChange={(v) => setFilters((f) => ({ ...f, status: v || '', page: 1 }))}
+              allowClear
+              options={Object.entries(STATUS_LABEL).map(([v, l]) => ({ value: v, label: l }))}
+            />
+          </Space>
+        </div>
         {isMobile ? (
           <div>
             {isFetching ? (
@@ -188,7 +179,7 @@ export default function CourseListPage() {
                   onClick={() => navigate(`/courses/${r.id}`)}
                   style={{
                     padding: '12px 16px',
-                    borderBottom: '1px solid var(--border-strong)',
+                    borderBottom: '1px solid var(--border)',
                     cursor: 'pointer',
                   }}
                 >

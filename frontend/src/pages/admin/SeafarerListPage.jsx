@@ -15,7 +15,8 @@ import { seafarerApi } from '../../api'
 import api from '../../api/client'
 import StatusBadge from '../../components/ds/StatusBadge'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
-import { CREW_TABS, availabilityText, docsAlert, nameInitials } from './seafarers/crewView'
+import { CREW_TABS, availabilityText, docsAlert } from './seafarers/crewView'
+import CrewPhoto from './seafarers/CrewPhoto'
 import './seafarers/SeafarerListPage.css'
 
 const { useBreakpoint } = Grid
@@ -24,7 +25,7 @@ const PAGE_SIZE = 20
 function Person({ row }) {
   return (
     <span className="crew-person">
-      <span className="crew-avatar" aria-hidden>{nameInitials(row.full_name)}</span>
+      <CrewPhoto />
       <span className="ds-cell2">
         <span className="ds-cell2__main">{row.full_name}</span>
         <span className="ds-cell2__sub">{row.rank_name || 'Chưa có chức danh'}</span>
@@ -158,28 +159,27 @@ export default function SeafarerListPage() {
   const total = data?.total || 0
   return (
     <div className="ds-page">
-      <div className="ds-toolbar crew-toolbar">
-        <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
-        <Input
-          className="ds-toolbar__search"
-          allowClear
-          prefix={<SearchOutlined />}
-          placeholder="Tìm tên, CCCD, số sổ"
-          aria-label="Tìm thuyền viên"
-          value={search}
-          onChange={(event) => { setSearch(event.target.value); setPage(1) }}
-        />
-        <span className="ds-toolbar__end">
-          <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
-            <Button icon={<MoreOutlined />} aria-label="Nhập, xuất Excel" />
-          </Dropdown>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
-            Thêm thuyền viên
-          </Button>
-        </span>
-      </div>
-
       <div className="ds-card">
+        <div className="ds-toolbar crew-toolbar">
+          <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <Input
+            className="ds-toolbar__search"
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Tìm tên, CCCD, số sổ"
+            aria-label="Tìm thuyền viên"
+            value={search}
+            onChange={(event) => { setSearch(event.target.value); setPage(1) }}
+          />
+          <span className="ds-toolbar__end">
+            <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
+              <Button icon={<MoreOutlined />} aria-label="Nhập, xuất Excel" />
+            </Dropdown>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
+              Thêm thuyền viên
+            </Button>
+          </span>
+        </div>
         {body}
         {rows.length > 0 && (
           <div className="ds-table-foot">

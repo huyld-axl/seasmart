@@ -1,15 +1,18 @@
-const crypto = require('crypto')
 const PizZip = require('pizzip')
-const { smsService, normalizePhone } = require('./sms.service')
 const { withTransaction } = require('../utils/transaction')
-const { PACK_TEMPLATES, TEMPLATE_KEYS, STAGE_TITLE, SELF_SIGNER, templateOf } = require('../constants/pack_templates')
+const { xlsxToPdf } = require('../utils/xlsx_pdf')
+const { PACK_TEMPLATES, TEMPLATE_KEYS, STAGE_TITLE, templateOf } = require('../constants/pack_templates')
 const formExportService = require('./form_export.service')
 
-// Bộ giấy tờ xuất (B3 tạo, B4 duyệt và ký, C1 danh sách, C2 thuyền viên ký qua link).
+// Bộ giấy tờ xuất (B3 tạo, B4 xem và tải, C1 danh sách). Tạo xong là tải về được ngay: từng giấy hoặc cả bộ, PDF hoặc Excel.
+// Giấy in ra rồi ký tay; không có bước duyệt hay ký online.
 
-const SIGN_LINK_HOURS = 72
-const MAX_SIGNATURE_BYTES = 300 * 1024
-const INPUT_KEYS = [...new Set(['Điểm từng tiêu chuẩn', 'Ngày có mặt', 'Số tiền', 'Lý do thu', 'Tên tàu', 'Ngày xuống tàu', 'Mức đóng', 'Người được ủy quyền', 'Người nhận lương', 'Ngày rời tàu', 'Cảng rời tàu', 'Ngày thanh lý'])]
+const MAX_EDITS_PER_DOC = 200
+const INPUT_KEYS = [...new Set(['Ngày có mặt', 'Số tiền', 'Lý do thu', 'Tên tàu', 'Ngày xuống tàu', 'Mức đóng', 'Người được ủy quyền', 'Người nhận lương', 'Ngày rời tàu', 'Cảng rời tàu', 'Ngày thanh lý'])]
+const CONTENT_TYPE = {
+  pdf: 'application/pdf',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+}
 
 // ---------- Luật thuần (có test) ----------
 
@@ -38,13 +41,52 @@ function cleanInputs(inputs) {
   return out
 }
 
-function requiredSignatures(docs) {
-  return docs.flatMap((key) => templateOf(key).signers.map((signer) => ({ templateKey: key, signer })))
+const MAX_RUNS_PER_CELL = 50
+const ALIGNS = ['left', 'center', 'right', 'justify']
+const HEX_COLOR = /^#[0-9a-f]{6}$/i
+
+// Một đoạn chữ: luôn có ba cờ đậm, nghiêng, gạch chân; gạch ngang, màu (#rrggbb), cỡ chữ (pt) chỉ có khi khác ô gốc.
+function cleanRun(run) {
+  const out = { text: run.text.slice(0, 2000), bold: run.bold === true, italic: run.italic === true, underline: run.underline === true }
+  if (run.strike === true) out.strike = true
+  if (typeof run.color === 'string' && HEX_COLOR.test(run.color)) out.color = run.color.toLowerCase()
+  const size = Number(run.size)
+  if (run.size != null && Number.isFinite(size) && size >= 6 && size <= 72) out.size = Math.round(size * 2) / 2
+  return out
 }
 
-function isComplete(docs, signatures) {
-  const done = new Set(signatures.map((s) => `${s.template_key}|${s.signer}`))
-  return requiredSignatures(docs).every((s) => done.has(`${s.templateKey}|${s.signer}`))
+function cleanRuns(value) {
+  if (typeof value === 'string') return value.slice(0, 2000)
+  if (!Array.isArray(value)) return undefined
+  const runs = value
+    .filter((run) => run && typeof run.text === 'string' && run.text)
+    .slice(0, MAX_RUNS_PER_CELL)
+    .map(cleanRun)
+  return runs.length ? runs : ''
+}
+
+// Giá trị một ô sửa tay: chuỗi, mảng đoạn có định dạng, hoặc { runs: chuỗi | mảng đoạn, align } khi đổi căn lề.
+// Không hợp lệ thì trả undefined.
+function cleanCell(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const runs = cleanRuns(value.runs)
+    if (runs === undefined) return undefined
+    return ALIGNS.includes(value.align) ? { runs, align: value.align } : runs
+  }
+  return cleanRuns(value)
+}
+
+// Ô sửa tay trên giấy: { mẫu: { 'B7': 'nội dung' } }. Chỉ giữ mẫu có trong bộ và địa chỉ ô hợp lệ; chuỗi rỗng là xoá trắng ô.
+function cleanEdits(edits, docs) {
+  const out = {}
+  for (const key of docs) {
+    const cells = Object.entries(edits?.[key] || {})
+      .map(([address, value]) => [address, cleanCell(value)])
+      .filter(([address, value]) => /^[A-Z]{1,2}[1-9]\d{0,3}$/.test(address) && value !== undefined)
+      .slice(0, MAX_EDITS_PER_DOC)
+    if (cells.length) out[key] = Object.fromEntries(cells)
+  }
+  return out
 }
 
 const packCode = (id) => `B${String(id).padStart(4, '0')}`
@@ -53,11 +95,15 @@ const packIdFromCode = (code) => {
   return match ? Number(match[1]) : null
 }
 
-function checkSignatureImage(image) {
-  if (typeof image !== 'string' || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(image)) {
-    throw { statusCode: 400, message: 'Chữ ký phải là ảnh PNG' }
-  }
-  if (image.length > MAX_SIGNATURE_BYTES * 1.4) throw { statusCode: 413, message: 'Ảnh chữ ký quá lớn' }
+// Tên file trong bộ: số thứ tự theo vị trí giấy trong bộ, bỏ ký tự không đặt tên file được.
+const safeName = (text) => String(text).replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim()
+const docFileName = (docs, key, format) => `${String(docs.indexOf(key) + 1).padStart(2, '0')} ${safeName(templateOf(key).name)}.${format}`
+
+// Đường dẫn các file trong .zip: một thư mục mang mã bộ và tên người; tải cả hai định dạng thì chia thư mục con PDF và Excel.
+function zipPaths(folder, docs, key, format) {
+  const sub = { pdf: 'PDF', xlsx: 'Excel' }
+  const formats = format === 'all' ? ['pdf', 'xlsx'] : [format]
+  return Object.fromEntries(formats.map((f) => [f, `${folder}/${format === 'all' ? `${sub[f]}/` : ''}${docFileName(docs, key, f)}`]))
 }
 
 // ---------- DB ----------
@@ -66,56 +112,71 @@ const parseJson = (value) => (typeof value === 'string' ? JSON.parse(value) : va
 
 async function loadPack(pool, id, { forUpdate = false } = {}) {
   const [[row]] = await pool.query(
-    `SELECT p.*, s.full_name AS seafarer_name, u.email AS created_by_email, a.email AS approved_by_email
+    `SELECT p.*, s.full_name AS seafarer_name, o.company_name AS ship_owner_name, u.email AS created_by_email
      FROM export_pack p
      JOIN seafarer s ON s.id = p.seafarer_id
+     LEFT JOIN ship_owner o ON o.id = p.ship_owner_id
      JOIN user u ON u.id = p.created_by
-     LEFT JOIN user a ON a.id = p.approved_by
      WHERE p.id = ? AND p.deleted_at IS NULL${forUpdate ? ' FOR UPDATE' : ''}`,
     [id]
   )
   if (!row) throw { statusCode: 404, message: 'Không tìm thấy bộ giấy' }
   const [docs] = await pool.query('SELECT template_key FROM export_pack_doc WHERE pack_id = ? ORDER BY sort_order', [id])
-  const [signatures] = await pool.query(
-    `SELECT es.template_key, es.signer, es.signed_at, es.signed_by_user_id, u.email AS signed_by_email
-     FROM export_signature es LEFT JOIN user u ON u.id = es.signed_by_user_id WHERE es.pack_id = ?`,
-    [id]
-  )
-  return { row, docs: docs.map((d) => d.template_key), signatures }
+  return { row, docs: docs.map((d) => d.template_key) }
 }
 
-function shape({ row, docs, signatures }, { includeToken = false } = {}) {
+function shape({ row, docs }) {
   return {
     id: row.id,
     code: packCode(row.id),
     seafarer_id: row.seafarer_id,
     seafarer_name: row.seafarer_name,
+    ship_owner_id: row.ship_owner_id,
+    ship_owner_name: row.ship_owner_name || null,
     title: row.title,
-    status: row.status,
     docs,
     inputs: parseJson(row.inputs),
-    snapshot: parseJson(row.snapshot),
-    reject_reason: row.reject_reason,
-    stale_reason: row.stale_reason,
+    edits: parseJson(row.edits),
     created_by: row.created_by,
     created_by_email: row.created_by_email,
-    approved_by_email: row.approved_by_email || null,
-    approved_at: row.approved_at,
     created_at: row.created_at,
-    signatures: signatures.map((s) => ({ template_key: s.template_key, signer: s.signer, signed_at: s.signed_at, signed_by_email: s.signed_by_email || null })),
-    sign_token: includeToken && row.status === 'SIGNING' ? row.sign_token : undefined,
-    sign_token_expires_at: includeToken && row.status === 'SIGNING' ? row.sign_token_expires_at : undefined,
   }
 }
 
+// Điền các giấy `keys` của bộ ra file Excel, rồi chuyển PDF nếu cần.
+// Trả về { files: [{ key, xlsx, pdf }], missing: ['Tên giấy: lý do'] }.
+async function renderDocs({ row, keys, wantPdf, gridlines }) {
+  const edits = parseJson(row.edits)
+  const files = []
+  const missing = []
+  for (const key of keys) {
+    const tpl = templateOf(key)
+    if (!tpl.formKey) { missing.push(`${tpl.name}: chưa có file mẫu`); continue }
+    try {
+      const { buffer, pdfSource } = await formExportService.exportForm(row.seafarer_id, tpl.formKey, {
+        shipOwnerId: row.ship_owner_id, inputs: parseJson(row.inputs), edits: edits[key], pdfSource: wantPdf, gridlines,
+      })
+      files.push({ key, xlsx: Buffer.from(buffer), pdfSource: wantPdf ? Buffer.from(pdfSource) : null, pdf: null })
+    } catch (error) {
+      missing.push(`${tpl.name}: ${error.statusCode === 404 ? 'chưa có file mẫu trên máy chủ' : 'không điền được từ hồ sơ'}`)
+    }
+  }
+  if (wantPdf && files.length) {
+    const pdfs = await xlsxToPdf(files.map((file) => file.pdfSource))
+    files.forEach((file, i) => {
+      file.pdf = pdfs[i]
+      if (!file.pdf) missing.push(`${templateOf(file.key).name}: không chuyển được sang PDF`)
+    })
+  }
+  return { files, missing }
+}
 
 const exportPackService = {
   templates: () => PACK_TEMPLATES.map(({ formKey, ...rest }) => ({ ...rest, has_file: !!formKey })),
 
-  async list(pool, { status, search, seafarer_id: seafarerId, page = 1, limit = 50 }) {
+  async list(pool, { search, seafarer_id: seafarerId, page = 1, limit = 50 }) {
     const where = ['p.deleted_at IS NULL']
     const params = []
-    if (status) { where.push('p.status = ?'); params.push(status) }
     if (seafarerId) { where.push('p.seafarer_id = ?'); params.push(seafarerId) }
     if (search) {
       const code = packIdFromCode(search.trim())
@@ -124,62 +185,36 @@ const exportPackService = {
       if (code) params.push(code)
     }
     const whereSql = where.join(' AND ')
-    const [[counts]] = await pool.query(
-      `SELECT COUNT(*) AS \`all\`,
-         SUM(p.status = 'PENDING_APPROVAL') AS PENDING_APPROVAL, SUM(p.status = 'SIGNING') AS SIGNING,
-         SUM(p.status = 'STALE') AS STALE, SUM(p.status = 'DONE') AS DONE, SUM(p.status = 'REJECTED') AS REJECTED
-       FROM export_pack p JOIN seafarer s ON s.id = p.seafarer_id
-       WHERE ${['p.deleted_at IS NULL', ...(seafarerId ? ['p.seafarer_id = ?'] : [])].join(' AND ')}`,
-      seafarerId ? [seafarerId] : []
-    )
     const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM export_pack p JOIN seafarer s ON s.id = p.seafarer_id WHERE ${whereSql}`, params)
     const offset = (page - 1) * limit
     const [rows] = await pool.query(
-      `SELECT p.id, p.seafarer_id, s.full_name AS seafarer_name, p.title, p.status, p.created_at, u.email AS created_by_email, p.created_by,
-         (SELECT GROUP_CONCAT(d.template_key ORDER BY d.sort_order) FROM export_pack_doc d WHERE d.pack_id = p.id) AS doc_keys,
-         (SELECT COUNT(*) FROM export_signature es WHERE es.pack_id = p.id) AS signed_count
+      `SELECT p.id, p.seafarer_id, s.full_name AS seafarer_name, p.ship_owner_id, o.company_name AS ship_owner_name, p.title, p.created_at, u.email AS created_by_email, p.created_by,
+         (SELECT GROUP_CONCAT(d.template_key ORDER BY d.sort_order) FROM export_pack_doc d WHERE d.pack_id = p.id) AS doc_keys
        FROM export_pack p JOIN seafarer s ON s.id = p.seafarer_id JOIN user u ON u.id = p.created_by
+       LEFT JOIN ship_owner o ON o.id = p.ship_owner_id
        WHERE ${whereSql} ORDER BY p.id DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     )
     return {
-      data: rows.map((r) => {
-        const docs = r.doc_keys ? r.doc_keys.split(',') : []
-        return {
-          id: r.id, code: packCode(r.id), seafarer_id: r.seafarer_id, seafarer_name: r.seafarer_name, title: r.title, status: r.status,
-          docs, created_at: r.created_at, created_by: r.created_by, created_by_email: r.created_by_email,
-          signed: Number(r.signed_count) || 0, signatures_needed: requiredSignatures(docs).length,
-        }
-      }),
+      data: rows.map((r) => ({
+        id: r.id, code: packCode(r.id), seafarer_id: r.seafarer_id, seafarer_name: r.seafarer_name,
+        ship_owner_id: r.ship_owner_id, ship_owner_name: r.ship_owner_name || null, title: r.title,
+        docs: r.doc_keys ? r.doc_keys.split(',') : [], created_at: r.created_at, created_by: r.created_by, created_by_email: r.created_by_email,
+      })),
       total,
-      counts: Object.fromEntries(Object.entries(counts).map(([k, v]) => [k, Number(v) || 0])),
     }
   },
 
-  // Gửi link ký qua SMS tới số chính của thuyền viên.
-  async sendSignSms(pool, id) {
-    const pack = await loadPack(pool, id)
-    if (pack.row.status !== 'SIGNING' || !pack.row.sign_token) throw { statusCode: 409, message: 'Bộ giấy chưa ở bước ký' }
-    const crewDocs = pack.docs.filter((key) => templateOf(key).signers.includes(SELF_SIGNER))
-    const signed = new Set(pack.signatures.filter((s) => s.signer === SELF_SIGNER).map((s) => s.template_key))
-    if (!crewDocs.some((key) => !signed.has(key))) throw { statusCode: 409, message: 'Thuyền viên đã ký xong' }
-    const [[seafarer]] = await pool.query('SELECT phone_primary FROM seafarer WHERE id = ?', [pack.row.seafarer_id])
-    const phone = normalizePhone(seafarer?.phone_primary)
-    if (!phone) throw { statusCode: 400, message: 'Hồ sơ chưa có số điện thoại hợp lệ' }
-    const link = `${String(process.env.APP_URL || '').replace(/\/$/, '')}/sign/${pack.row.sign_token}`
-    const until = new Date(pack.row.sign_token_expires_at)
-    const pad = (n) => String(n).padStart(2, '0')
-    const text = `MCAH: Mời ký bộ giấy #${packCode(pack.row.id)} tại ${link} . Link hết hạn ${pad(until.getHours())}:${pad(until.getMinutes())} ${pad(until.getDate())}/${pad(until.getMonth() + 1)}.`
-    return smsService.send(phone, text)
+  async get(pool, id) {
+    return shape(await loadPack(pool, id))
   },
 
-  async get(pool, id, user) {
-    const pack = await loadPack(pool, id)
-    return shape(pack, { includeToken: user && ['admin', 'operator', 'reviewer'].includes(user.role) })
-  },
-
-  async create(pool, { seafarer_id: seafarerId, docs, inputs }, user) {
+  async create(pool, { seafarer_id: seafarerId, ship_owner_id: shipOwnerId = null, docs, inputs, edits }, user) {
     const keys = normalizeDocs(docs)
+    if (shipOwnerId) {
+      const [[owner]] = await pool.query('SELECT id FROM ship_owner WHERE id = ? AND deleted_at IS NULL', [shipOwnerId])
+      if (!owner) throw { statusCode: 404, message: 'Không tìm thấy chủ tàu' }
+    }
     const [[seafarer]] = await pool.query(
       `SELECT s.id, s.full_name, s.date_of_birth, r.name_vi AS rank_name FROM seafarer s LEFT JOIN rank r ON r.id = s.current_rank_id
        WHERE s.id = ? AND s.deleted_at IS NULL`,
@@ -189,138 +224,61 @@ const exportPackService = {
     const snapshot = { full_name: seafarer.full_name, date_of_birth: seafarer.date_of_birth, rank_name: seafarer.rank_name }
     const id = await withTransaction(pool, async (conn) => {
       const [result] = await conn.query(
-        'INSERT INTO export_pack (seafarer_id, title, inputs, snapshot, created_by) VALUES (?, ?, ?, ?, ?)',
-        [seafarerId, packTitle(keys), JSON.stringify(cleanInputs(inputs)), JSON.stringify(snapshot), user.id]
+        'INSERT INTO export_pack (seafarer_id, ship_owner_id, title, status, inputs, edits, snapshot, created_by) VALUES (?, ?, ?, \'DONE\', ?, ?, ?, ?)',
+        [seafarerId, shipOwnerId || null, packTitle(keys), JSON.stringify(cleanInputs(inputs)), JSON.stringify(cleanEdits(edits, keys)), JSON.stringify(snapshot), user.id]
       )
       await conn.query('INSERT INTO export_pack_doc (pack_id, template_key, sort_order) VALUES ?', [keys.map((key, i) => [result.insertId, key, i])])
       return result.insertId
     })
-    return this.get(pool, id, user)
+    return this.get(pool, id)
   },
 
-  // Người tạo không tự duyệt bộ của mình.
-  async approve(pool, id, user) {
-    await withTransaction(pool, async (conn) => {
-      const { row } = await loadPack(conn, id, { forUpdate: true })
-      if (row.status !== 'PENDING_APPROVAL') throw { statusCode: 409, message: 'Bộ giấy không còn ở bước chờ duyệt' }
-      if (row.created_by === user.id) throw { statusCode: 403, message: 'Bạn tạo bộ này nên không tự duyệt được' }
-      const token = crypto.randomBytes(32).toString('hex')
-      await conn.query(
-        `UPDATE export_pack SET status = 'SIGNING', approved_by = ?, approved_at = NOW(),
-           sign_token = ?, sign_token_expires_at = DATE_ADD(NOW(), INTERVAL ${SIGN_LINK_HOURS} HOUR) WHERE id = ?`,
-        [user.id, token, id]
-      )
+  // Xem trước một giấy đúng như file sẽ xuất: cùng file mẫu, cùng cách điền. Chưa chọn thuyền viên thì ra mẫu trống.
+  async preview({ seafarer_id: seafarerId, template_key: templateKey, ship_owner_id: shipOwnerId, inputs, edits }) {
+    const tpl = templateOf(templateKey)
+    if (!tpl.formKey) throw { statusCode: 404, message: 'Giấy này chưa có file mẫu' }
+    return formExportService.previewForm(seafarerId || null, tpl.formKey, {
+      shipOwnerId, inputs: cleanInputs(inputs), edits: cleanEdits({ [templateKey]: edits }, [templateKey])[templateKey],
     })
-    return this.get(pool, id, user)
   },
 
-  async reject(pool, id, reason, user) {
-    const text = String(reason || '').trim()
-    if (!text) throw { statusCode: 400, message: 'Ghi lý do trả lại' }
+  // Sửa thông tin điền thêm và ô sửa tay của một bộ đã tạo.
+  async update(pool, id, { inputs, edits }) {
     await withTransaction(pool, async (conn) => {
-      const { row } = await loadPack(conn, id, { forUpdate: true })
-      if (row.status !== 'PENDING_APPROVAL') throw { statusCode: 409, message: 'Bộ giấy không còn ở bước chờ duyệt' }
-      if (row.created_by === user.id) throw { statusCode: 403, message: 'Bạn tạo bộ này nên không tự trả lại được' }
-      await conn.query('UPDATE export_pack SET status = \'REJECTED\', reject_reason = ? WHERE id = ?', [text.slice(0, 500), id])
+      const { docs } = await loadPack(conn, id, { forUpdate: true })
+      await conn.query('UPDATE export_pack SET inputs = ?, edits = ? WHERE id = ?', [JSON.stringify(cleanInputs(inputs)), JSON.stringify(cleanEdits(edits, docs)), id])
     })
-    return this.get(pool, id, user)
+    return this.get(pool, id)
   },
 
-  // Ký trong app mọi giấy mà vai `signer` cần ký (không phải thuyền viên).
-  async signInApp(pool, id, signer, user) {
-    if (signer === SELF_SIGNER) throw { statusCode: 400, message: 'Thuyền viên ký qua link SMS, không ký trong app' }
-    await withTransaction(pool, async (conn) => {
-      const { row, docs } = await loadPack(conn, id, { forUpdate: true })
-      if (row.status !== 'SIGNING') throw { statusCode: 409, message: 'Bộ giấy chưa ở bước ký' }
-      const mine = requiredSignatures(docs).filter((s) => s.signer === signer)
-      if (!mine.length) throw { statusCode: 400, message: `Bộ này không có giấy nào cần ${signer} ký` }
-      await conn.query(
-        'INSERT IGNORE INTO export_signature (pack_id, template_key, signer, signed_by_user_id) VALUES ?',
-        [mine.map((s) => [id, s.templateKey, s.signer, user.id])]
-      )
-      await finishIfComplete(conn, id)
-    })
-    return this.get(pool, id, user)
-  },
-
-  // ---------- Link ký của thuyền viên (không đăng nhập) ----------
-  async getByToken(pool, token) {
-    const pack = await packByToken(pool, token)
-    const crewDocs = pack.docs.filter((key) => templateOf(key).signers.includes(SELF_SIGNER))
-    const signed = new Set(pack.signatures.filter((s) => s.signer === SELF_SIGNER).map((s) => s.template_key))
-    return {
-      code: packCode(pack.row.id),
-      seafarer_name: pack.row.seafarer_name,
-      snapshot: parseJson(pack.row.snapshot),
-      inputs: parseJson(pack.row.inputs),
-      docs: crewDocs.map((key) => ({ key, name: templateOf(key).name, signers: templateOf(key).signers, signed: signed.has(key) })),
-      other_signatures: pack.signatures.filter((s) => s.signer !== SELF_SIGNER).map((s) => ({ template_key: s.template_key, signer: s.signer })),
-      done: crewDocs.length > 0 && crewDocs.every((key) => signed.has(key)),
-    }
-  },
-
-  async signByToken(pool, token, { image, agreed }, ip) {
-    if (agreed !== true) throw { statusCode: 400, message: 'Cần đồng ý nội dung giấy trước khi ký' }
-    checkSignatureImage(image)
-    const pack = await packByToken(pool, token)
-    const crewDocs = pack.docs.filter((key) => templateOf(key).signers.includes(SELF_SIGNER))
-    if (!crewDocs.length) throw { statusCode: 400, message: 'Bộ này không có giấy nào thuyền viên cần ký' }
-    await withTransaction(pool, async (conn) => {
-      await conn.query(
-        'INSERT IGNORE INTO export_signature (pack_id, template_key, signer, signature_image, signed_ip) VALUES ?',
-        [crewDocs.map((key) => [pack.row.id, key, SELF_SIGNER, image, ip || null])]
-      )
-      await finishIfComplete(conn, pack.row.id)
-    })
-    return this.getByToken(pool, token)
-  },
-
-  // Hồ sơ đổi thì bộ chưa xong phải làm lại.
-  async markStaleForSeafarer(pool, seafarerId, reason = 'Hồ sơ đã sửa sau khi tạo bộ') {
-    await pool.query(
-      'UPDATE export_pack SET status = \'STALE\', stale_reason = ?, sign_token = NULL WHERE seafarer_id = ? AND status IN (\'PENDING_APPROVAL\', \'SIGNING\') AND deleted_at IS NULL',
-      [reason, seafarerId]
-    )
-  },
-
-  // File .zip: mỗi giấy có mẫu Excel thì điền từ hồ sơ; giấy chưa có mẫu ghi vào danh sách thiếu.
-  async buildZip(pool, id) {
+  // Một giấy của bộ, PDF hoặc Excel.
+  async buildDoc(pool, id, key, format, gridlines = false) {
     const { row, docs } = await loadPack(pool, id)
-    if (row.status !== 'DONE') throw { statusCode: 409, message: 'Chỉ tải được bộ đã ký xong' }
+    if (!docs.includes(key)) throw { statusCode: 404, message: 'Bộ này không có giấy đó' }
+    const { files, missing } = await renderDocs({ row, keys: [key], wantPdf: format === 'pdf', gridlines })
+    const buffer = files[0]?.[format]
+    if (!buffer) throw { statusCode: 422, message: `Chưa xuất được ${missing[0] || templateOf(key).name}` }
+    return { buffer, contentType: CONTENT_TYPE[format], filename: `${safeName(templateOf(key).name)} - ${safeName(row.seafarer_name)}.${format}` }
+  },
+
+  // Cả bộ trong một file .zip, giải nén ra một thư mục. format: pdf | xlsx | all (cả hai, chia thư mục con).
+  // Giấy không xuất được ghi vào CHUA-CO.txt.
+  async buildZip(pool, id, format = 'all', gridlines = false) {
+    const { row, docs } = await loadPack(pool, id)
+    const { files, missing } = await renderDocs({ row, keys: docs, wantPdf: format !== 'xlsx', gridlines })
+    const folder = `${packCode(row.id)} ${safeName(row.seafarer_name)}`
     const zip = new PizZip()
-    const missing = []
-    for (const key of docs) {
-      const tpl = templateOf(key)
-      if (!tpl.formKey) { missing.push(`${tpl.name}: chưa có file mẫu`); continue }
-      try {
-        const { buffer } = await formExportService.exportForm(row.seafarer_id, tpl.formKey)
-        zip.file(`${String(docs.indexOf(key) + 1).padStart(2, '0')} ${tpl.name}.xlsx`, Buffer.from(buffer))
-      } catch (error) {
-        missing.push(`${tpl.name}: ${/not found/i.test(error.message || '') ? 'chưa có file mẫu trên máy chủ' : 'không điền được từ hồ sơ'}`)
+    for (const file of files) {
+      for (const [f, filePath] of Object.entries(zipPaths(folder, docs, file.key, format))) {
+        if (file[f]) zip.file(filePath, file[f])
       }
     }
-    if (missing.length) zip.file('CHUA-CO.txt', `Các giấy chưa xuất được:\n${missing.join('\n')}\n`)
-    return { buffer: zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }), filename: `${packCode(row.id)} ${row.seafarer_name}.zip` }
+    if (missing.length) zip.file(`${folder}/CHUA-CO.txt`, `Các giấy chưa xuất được:\n${missing.join('\n')}\n`)
+    return { buffer: zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }), filename: `${folder}.zip` }
   },
-}
-
-async function packByToken(pool, token) {
-  if (!/^[a-f0-9]{64}$/.test(String(token || ''))) throw { statusCode: 404, message: 'Link ký không còn dùng được' }
-  const [[found]] = await pool.query(
-    'SELECT id FROM export_pack WHERE sign_token = ? AND status IN (\'SIGNING\', \'DONE\') AND sign_token_expires_at > NOW() AND deleted_at IS NULL',
-    [token]
-  )
-  if (!found) throw { statusCode: 404, message: 'Link ký không còn dùng được' }
-  return loadPack(pool, found.id)
-}
-
-async function finishIfComplete(conn, id) {
-  const { docs, signatures } = await loadPack(conn, id)
-  if (isComplete(docs, signatures)) await conn.query('UPDATE export_pack SET status = \'DONE\' WHERE id = ? AND status = \'SIGNING\'', [id])
 }
 
 module.exports = {
   exportPackService,
-  normalizeDocs, packTitle, cleanInputs, requiredSignatures, isComplete, packCode, packIdFromCode, checkSignatureImage,
-  SIGN_LINK_HOURS,
+  normalizeDocs, packTitle, cleanInputs, cleanEdits, packCode, packIdFromCode, zipPaths,
 }

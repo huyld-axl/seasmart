@@ -4,7 +4,6 @@ import { Button, Skeleton } from 'antd'
 import { PlusOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { exportApi } from '../../../api/exportApi'
-import StatusBadge from '../../../components/ds/StatusBadge'
 import { EmptyState } from '../../../components/ds/Controls'
 import { template } from '../exports/packModel'
 
@@ -29,7 +28,6 @@ export default function ProfileExports({ seafarerId, canCreate, blockedReason })
               <span className="ds-cell2__main" style={{ fontWeight: 400, whiteSpace: 'normal' }}>{p.docs.map((key) => template(key).name).join(', ')}</span>
               <span className="ds-cell2__sub">#{p.code} · {dayjs(p.created_at).format('DD/MM/YYYY')} · {p.created_by_email}</span>
             </span>
-            <StatusBadge group="export" value={p.status} />
             <Button size="small" type="text" icon={<RightOutlined />} iconPosition="end" onClick={() => navigate(`/exports/${p.id}`)}>Mở</Button>
           </li>
         ))}

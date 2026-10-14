@@ -45,3 +45,7 @@ coverage/
 
 # Bộ ảnh mẫu giấy tờ thật và bản đọc chuẩn (có dữ liệu cá nhân): không đưa vào repo
 docs/samples/
+
+# Runtime uploads
+storage/
+backend/storage/

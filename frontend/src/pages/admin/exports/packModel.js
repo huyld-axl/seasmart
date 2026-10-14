@@ -116,15 +116,15 @@ export const STAGES = [
   { key: 'roi-tau', label: 'Rời tàu' },
 ]
 
-// signers: người ký; needs: trường hồ sơ mẫu cần; inputs: ô điền lúc xuất; group: nhóm chọn một.
+// signers: người ký tay trên giấy in ra; needs: trường hồ sơ mẫu cần; inputs: thông tin điền thêm của riêng giấy đó (hồ sơ không có); group: nhóm chọn một.
 // Giữ khớp với backend/src/constants/pack_templates.js.
 const d = (key, name, stage, signers, needs, inputs, group = null) => ({ key, name, stage, signers, needs, inputs, group })
 export const TEMPLATES = [
-  d('kq', 'Kết quả thi tuyển', 'tuyen', ['Giám khảo 1', 'Giám khảo 2', 'Giám đốc'], [], ['Điểm từng tiêu chuẩn']),
+  d('kq', 'Kết quả thi tuyển', 'tuyen', ['Giám khảo 1', 'Giám khảo 2', 'Giám đốc'], [], []),
   d('tb', 'Thông báo trúng tuyển', 'tuyen', ['Giám đốc'], [], ['Ngày có mặt']),
   d('cv', 'CV chủ tàu Trung Quốc', 'tuyen', [], ['Cỡ giày', 'Nhóm máu', 'Người thân liên hệ'], []),
   d('pt', 'Phiếu thu', 'tuyen', ['Người nộp tiền', 'Thủ quỹ', 'Kế toán trưởng'], [], ['Số tiền', 'Lý do thu']),
-  d('qddd', 'Quyết định điều động', 'di-tau', ['Giám đốc'], [], ['Tên tàu', 'Ngày xuống tàu']),
+  d('qddd', 'Quyết định điều động', 'di-tau', ['Giám đốc'], [], ['Ngày xuống tàu']),
   d('bhxh', 'Đơn tham gia BHXH', 'di-tau', ['Thuyền viên'], [], ['Mức đóng'], 'bhxh'),
   d('kbhxh', 'Đơn không tham gia BHXH', 'di-tau', ['Thuyền viên'], [], [], 'bhxh'),
   d('bl', 'Thư bảo lãnh', 'di-tau', ['Giám đốc'], ['Người bảo lãnh'], []),
@@ -148,8 +148,32 @@ export function toggleTemplate(selected, key) {
   return TEMPLATES.map((t) => t.key).filter((k) => kept.includes(k) || k === key)
 }
 
-export function packInputs(selected) {
-  return [...new Set(selected.flatMap((key) => template(key).inputs))]
+// Tên tàu dùng chung cho cả bộ: thay tên tàu trên hồ sơ ở mọi giấy có in tên tàu.
+export const VESSEL_FIELD = 'Tên tàu'
+
+// Gợi ý cách gõ cho từng thông tin điền thêm.
+const FIELD_HINTS = {
+  'Ngày có mặt': 'dd/mm/yyyy', 'Ngày xuống tàu': 'dd/mm/yyyy', 'Ngày rời tàu': 'dd/mm/yyyy', 'Ngày thanh lý': 'dd/mm/yyyy',
+  'Số tiền': 'Ví dụ: 1.250.000', 'Lý do thu': 'Ví dụ: Phí hồ sơ', 'Mức đóng': 'Ví dụ: 5.000.000 đ/tháng',
+  'Người được ủy quyền': 'Họ tên', 'Người nhận lương': 'Họ tên', 'Cảng rời tàu': 'Tên cảng',
+}
+
+// Thông tin điền thêm của một giấy: [{ label, hint }]
+export function docFields(key) {
+  return template(key).inputs.map((label) => ({ label, hint: FIELD_HINTS[label] || '' }))
+}
+
+// Số ô đã sửa tay trên một giấy.
+export const editCount = (edits, key) => Object.keys(edits?.[key] || {}).length
+
+// Ghi một ô sửa tay vào { giấy: { ô: giá trị } }; giá trị là chuỗi hoặc mảng đoạn có định dạng (cellEdit.js); null là bỏ sửa, trả ô về nội dung gốc.
+export function setEdit(edits = {}, key, address, text) {
+  const cells = { ...(edits[key] || {}) }
+  if (text === null) delete cells[address]
+  else cells[address] = text
+  const next = { ...edits, [key]: cells }
+  if (!Object.keys(cells).length) delete next[key]
+  return next
 }
 
 // Trường hồ sơ mà mẫu cần → cách kiểm trên hồ sơ thật (seafarer + danh sách người liên hệ).
@@ -166,9 +190,4 @@ export function packMissing(selected, seafarer, contacts = []) {
   return selected.flatMap((key) => template(key).needs
     .filter((field) => !PROFILE_NEEDS[field]?.(seafarer, contacts))
     .map((field) => ({ field, doc: template(key).name })))
-}
-
-// Chữ ký cần trong cả bộ: [{ doc, who }]
-export function packSignatures(selected) {
-  return selected.flatMap((key) => template(key).signers.map((who) => ({ doc: key, who })))
 }

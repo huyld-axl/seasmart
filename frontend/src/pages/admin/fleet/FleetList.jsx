@@ -99,26 +99,28 @@ export default function FleetList({ queryKey, resourceApi, noun, columns, render
 
   return (
     <>
-      <div className="ds-toolbar">
-        <Input
-          className="ds-toolbar__search"
-          allowClear
-          prefix={<SearchOutlined />}
-          placeholder={searchPlaceholder}
-          aria-label={searchPlaceholder}
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value)
-            setPage(1)
-          }}
-        />
-        <span className="ds-toolbar__end">
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-            Thêm {noun}
-          </Button>
-        </span>
+      <div className="ds-card">
+        <div className="ds-toolbar">
+          <Input
+            className="ds-toolbar__search"
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
+            }}
+          />
+          <span className="ds-toolbar__end">
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
+              Thêm {noun}
+            </Button>
+          </span>
+        </div>
+        {body}
       </div>
-      <div className="ds-card">{body}</div>
       <SlidePanel
         open={!!editing}
         title={editing?.id ? `Sửa ${noun}` : `Thêm ${noun}`}

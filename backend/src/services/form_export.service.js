@@ -8,8 +8,8 @@ const { sheetToHtml, parseRange } = require('../utils/sheet_html')
 const { fillCvTq } = require('./cv_tq_form.service')
 const { vndWords, parseAmount } = require('../utils/vnd_words')
 
-// Thư mục mẫu Excel thật (nằm ngoài repo, không commit). Đặt FORMS_DIR trong .env nếu khác mặc định.
-const FORMS_DIR = process.env.FORMS_DIR || path.resolve(__dirname, '../../../../forms')
+// Thư mục mẫu Excel (backend/forms, có trong repo). Đặt FORMS_DIR trong .env nếu muốn dùng thư mục khác.
+const FORMS_DIR = process.env.FORMS_DIR || path.resolve(__dirname, '../../forms')
 
 // Dòng thuyền viên thứ 2 trở đi trong QĐ điều động, QĐ rời tàu, Thư bảo lãnh: bộ giấy một người thì để trống.
 const EXTRA_ROWS_BLANK = Object.fromEntries(

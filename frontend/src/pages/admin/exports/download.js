@@ -10,3 +10,12 @@ export function saveBlob(res, fallbackName) {
   link.click()
   URL.revokeObjectURL(url)
 }
+
+// Câu lỗi của một lần tải file: máy chủ trả JSON nhưng axios đang đọc dạng blob.
+export async function downloadError(error, fallback = 'Không tải được file. Thử lại sau.') {
+  try {
+    return JSON.parse(await error.response.data.text()).error || fallback
+  } catch {
+    return fallback
+  }
+}

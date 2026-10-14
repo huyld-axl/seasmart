@@ -20,7 +20,8 @@ api.interceptors.response.use(
     if (err.response?.status === 401 && !err.config.url.includes('/auth/login')) {
       localStorage.removeItem('token')
       window.location.href = '/login'
-    } else {
+    } else if (err.config?.responseType !== 'blob') {
+      // Tải file (blob): câu lỗi nằm trong blob, nơi gọi tự đọc và báo.
       const msg =
         err.response?.data?.error || err.response?.data?.message || err.message || 'Có lỗi xảy ra'
       message.error(msg)

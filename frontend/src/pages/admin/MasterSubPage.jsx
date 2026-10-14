@@ -149,15 +149,17 @@ function MasterTable({ resource, columns, formFields, title }) {
 
   return (
     <>
-      <div className="ds-toolbar">
-        <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => setSearch(event.target.value)} />
-        <span className="ds-toolbar__end">
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-            Thêm {title}
-          </Button>
-        </span>
+      <div className="ds-card">
+        <div className="ds-toolbar">
+          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => setSearch(event.target.value)} />
+          <span className="ds-toolbar__end">
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
+              Thêm {title}
+            </Button>
+          </span>
+        </div>
+        {body}
       </div>
-      <div className="ds-card">{body}</div>
       <SlidePanel
         open={!!editing}
         title={editing?.id ? `Sửa ${title}` : `Thêm ${title}`}

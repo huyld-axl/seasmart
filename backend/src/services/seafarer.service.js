@@ -1,5 +1,4 @@
 const { OVERVIEW_FIELDS, TAB_CONDITIONS, TABS, shapeRow } = require('../utils/crew_overview')
-const { exportPackService } = require('./export_pack.service')
 const pool = require('../config/db')
 const { withTransaction } = require('../utils/transaction')
 const XLSX = require('xlsx')
@@ -247,7 +246,6 @@ const seafarerService = {
       text.slice(0, 500),
       JSON.stringify(changes),
     ])
-    await exportPackService.markStaleForSeafarer(db, id)
     return changes
   },
 

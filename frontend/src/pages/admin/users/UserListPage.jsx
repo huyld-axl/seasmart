@@ -98,45 +98,47 @@ export default function UserListPage() {
           <p className="ds-page__desc">Ai đăng nhập được vào MCAH và với vai trò gì.</p>
         </div>
       </div>
-      <div className="ds-toolbar">
-        <Input
-          className="ds-toolbar__search"
-          allowClear
-          prefix={<SearchOutlined />}
-          placeholder="Tìm theo email"
-          aria-label="Tìm theo email"
-          defaultValue={filters.email}
-          onPressEnter={(event) => setFilter('email', event.target.value.trim())}
-          onChange={(event) => !event.target.value && setFilter('email', '')}
-        />
-        <Select
-          allowClear
-          style={{ width: 200 }}
-          placeholder="Vai trò: Tất cả"
-          value={filters.role}
-          onChange={(value) => setFilter('role', value)}
-          options={ROLES.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
-          aria-label="Lọc theo vai trò"
-        />
-        <Select
-          allowClear
-          style={{ width: 180 }}
-          placeholder="Đăng nhập: Tất cả"
-          value={filters.is_active}
-          onChange={(value) => setFilter('is_active', value)}
-          options={[
-            { value: 'true', label: 'Cho phép' },
-            { value: 'false', label: 'Đã khoá' },
-          ]}
-          aria-label="Lọc theo trạng thái đăng nhập"
-        />
-        <span className="ds-toolbar__end">
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-            Tạo tài khoản
-          </Button>
-        </span>
+      <div className="ds-card">
+        <div className="ds-toolbar">
+          <Input
+            className="ds-toolbar__search"
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Tìm theo email"
+            aria-label="Tìm theo email"
+            defaultValue={filters.email}
+            onPressEnter={(event) => setFilter('email', event.target.value.trim())}
+            onChange={(event) => !event.target.value && setFilter('email', '')}
+          />
+          <Select
+            allowClear
+            style={{ width: 200 }}
+            placeholder="Vai trò: Tất cả"
+            value={filters.role}
+            onChange={(value) => setFilter('role', value)}
+            options={ROLES.map((role) => ({ value: role, label: ROLE_LABELS[role] }))}
+            aria-label="Lọc theo vai trò"
+          />
+          <Select
+            allowClear
+            style={{ width: 180 }}
+            placeholder="Đăng nhập: Tất cả"
+            value={filters.is_active}
+            onChange={(value) => setFilter('is_active', value)}
+            options={[
+              { value: 'true', label: 'Cho phép' },
+              { value: 'false', label: 'Đã khoá' },
+            ]}
+            aria-label="Lọc theo trạng thái đăng nhập"
+          />
+          <span className="ds-toolbar__end">
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
+              Tạo tài khoản
+            </Button>
+          </span>
+        </div>
+        {body}
       </div>
-      <div className="ds-card">{body}</div>
       <UserForm open={panelOpen} onClose={() => setPanelOpen(false)} onSubmit={handleSubmit} initialValues={editTarget} loading={createUser.isPending || updateUser.isPending} />
     </div>
   )

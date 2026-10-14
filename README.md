@@ -55,7 +55,8 @@ Các migration chạy lại nhiều lần không lỗi. Migration 021 đến 024
 | `OPENAI_MODEL_STRONG` | Model mạnh, dùng để đọc sổ thuyền viên và chứng chỉ (số chứng chỉ sai ít hơn nhiều so với model nhỏ) |
 | `AI_CONCURRENCY` | Số lời gọi AI chạy đồng thời (mặc định 3) |
 | `AI_TIMEOUT_MS` | Hết giờ một lời gọi (mặc định 120000); lời gọi tự thử lại 3 lần |
-| `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_TOKEN`, `APP_URL` | Gửi link ký online (không liên quan AI đọc giấy tờ) |
+| `SOFFICE_PATH` | Lệnh LibreOffice dùng để xuất giấy tờ ra PDF (mặc định `soffice`). Máy chủ phải cài LibreOffice; chưa cài thì chỉ tải được Excel |
+| `SMS_WEBHOOK_URL`, `SMS_WEBHOOK_TOKEN`, `APP_URL` | Cổng gửi SMS. Hiện không tính năng nào dùng (ký online đã bỏ) |
 
 Frontend: `VITE_API_URL` là địa chỉ API (`http://localhost:3000/api/v1`). Hai biến `VITE_LOCAL_DEMO_*` chỉ để có nút
 đăng nhập nhanh trên máy cá nhân; chúng nằm trong mã JS đã build, chỉ dùng tài khoản thử, không dùng tài khoản thật.

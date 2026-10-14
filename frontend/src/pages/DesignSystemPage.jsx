@@ -1,12 +1,14 @@
 import { useState } from 'react'
-import { Button, Card, DatePicker, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Steps, Tabs, Tooltip } from 'antd'
+import { Button, Card, DatePicker, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Steps, Table, Tabs, Tooltip } from 'antd'
 import {
   DeleteOutlined,
   FileTextOutlined,
   DatabaseOutlined,
   MoreOutlined,
+  PlusOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
+  SearchOutlined,
   SendOutlined,
   TeamOutlined,
   UploadOutlined,
@@ -191,6 +193,32 @@ function contrastRatio(foreground, background) {
   const [light, dark] = [luminance(foreground), luminance(background)].sort((a, b) => b - a)
   return (light + 0.05) / (dark + 0.05)
 }
+
+// Khung danh sách (luật chốt #19): thanh công cụ, dòng tiêu đề, các dòng và dòng chân cùng một card.
+const LIST_TABS = [
+  { value: 'all', label: 'Tất cả', count: 3 },
+  { value: 'onboard', label: 'Đang trên tàu', count: 1 },
+  { value: 'waiting', label: 'Chờ tàu', count: 2 },
+]
+const LIST_ROWS = [
+  { id: 1, name: 'Trần Minh Khôi', rank: 'Thợ máy chính (Oiler)', status: 'ON_VESSEL', where: 'MV Lotus Pearl · đến 05/01/2027' },
+  { id: 2, name: 'Lê Văn Đức', rank: 'Chief Engineer (CE)', status: 'AVAILABLE', where: 'Sẵn sàng từ 01/11/2026' },
+  { id: 3, name: 'Hoàng Thị Mai Trang', rank: 'Cook', status: 'AVAILABLE', where: 'Sẵn sàng từ ngay' },
+]
+const LIST_COLUMNS = [
+  {
+    title: 'Thuyền viên',
+    key: 'person',
+    render: (_, row) => (
+      <span className="ds-cell2">
+        <span className="ds-cell2__main">{row.name}</span>
+        <span className="ds-cell2__sub">{row.rank}</span>
+      </span>
+    ),
+  },
+  { title: 'Tình trạng', key: 'status', width: 160, render: (_, row) => <StatusBadge group="crew" value={row.status} /> },
+  { title: 'Tàu / sẵn sàng', dataIndex: 'where', key: 'where' },
+]
 
 function Section({ id, title, children }) {
   return (
@@ -440,6 +468,22 @@ export default function DesignSystemPage() {
           <Card title="Thông tin cá nhân">
             <DescriptionList items={DETAILS} />
           </Card>
+        </div>
+      </Section>
+
+      <Section id="khung-danh-sach" title="Khung danh sách">
+        <div className="ds-card">
+          <div className="ds-toolbar">
+            <StatusTabs tabs={LIST_TABS} value="all" />
+            <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder="Tìm tên, CCCD, số sổ" aria-label="Tìm thuyền viên" />
+            <span className="ds-toolbar__end">
+              <Button type="primary" icon={<PlusOutlined />}>Thêm thuyền viên</Button>
+            </span>
+          </div>
+          <Table rowKey="id" dataSource={LIST_ROWS} columns={LIST_COLUMNS} pagination={false} scroll={{ x: 'max-content' }} />
+          <div className="ds-table-foot">
+            <span className="ds-num">{LIST_ROWS.length} thuyền viên</span>
+          </div>
         </div>
       </Section>
 

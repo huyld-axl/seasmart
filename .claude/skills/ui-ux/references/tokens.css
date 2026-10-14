@@ -38,13 +38,15 @@
                               trên --surface, 4.51:1 trên --background */
   /* Đường tóc trang trí: viền card, viền khung dropdown, đường chia trong danh
      sách và trong menu. Nhạt đến mức chỉ đủ vạch ranh giới. Xem luật M13, M14. */
-  --border: #f7f7f8;
+  /* Dự án MCAH: chủ dự án chốt lại 13/10/2026 (luật chốt #19). Bản cũ #f7f7f8 (1.07:1) làm khung
+     danh sách mờ, không rõ ranh giới. Nay 1.25:1 trên --surface. */
+  --border: #e5e6ea;
   /* Đậm hơn ĐÚNG một bậc. Cho viền Ô NHẬP và NÚT OUTLINE (viền là thứ duy nhất
      báo "đây là chỗ gõ / chỗ bấm", vì cả hai cùng nền trắng với card), đường kẻ
      khung app và viền card khi hover. Đây là token viền thứ hai và cũng là token
      cuối, xem luật M14, M16. ~1.2:1 với nền trắng: đánh đổi thẩm mỹ có chủ ý,
      xem P3 trong styles.md. */
-  --border-strong: #eaeaea;   /* #f2f2f2 (1.1:1) mờ quá, radio gần như vô hình;
+  --border-strong: #d3d5db;   /* 1.47:1, chốt lại 13/10/2026 cùng --border (luật chốt #19). Trước đó #eaeaea: #f2f2f2 (1.1:1) mờ quá, radio gần như vô hình;
                                  #e4e4e7 (1.27:1) thì đường kẻ sidebar đậm. Chốt ở giữa. */
 
   /* Lớp nổi nhỏ: dropdown, popover, menu, select, toast, command palette. Nền sáng bằng card;

@@ -15,13 +15,14 @@ export const COLORS = {
   muted: '#707070', // chữ phụ, nhãn, placeholder. 4.95:1 trên surface, 4.51:1 trên background
 
   // Hai token viền (M14): đường tóc của card và vạch chia; viền ô nhập, nút viền, đường kẻ khung app.
-  border: '#f7f7f8',
-  borderStrong: '#eaeaea',
+  // Chủ dự án chốt lại 13/10/2026 (luật chốt #19): bản cũ #f7f7f8 / #eaeaea làm khung danh sách mờ, không rõ ranh giới.
+  border: '#e5e6ea', // 1.25:1 trên surface
+  borderStrong: '#d3d5db', // 1.47:1 trên surface
 
   secondary: '#e7e8ec', // mục đang chọn (sidebar, tab, trang), nút phụ
   secondaryHover: '#dbdce2',
-  itemHover: '#f4f4f6', // rê mục sidebar, dòng danh sách
-  surfaceHover: '#f8f8fa',
+  itemHover: '#f4f4f6', // rê mục sidebar, dòng danh sách, dòng bảng
+  surfaceHover: '#f8f8fa', // nền dòng tiêu đề bảng, rê card chọn
   buttonHover: '#f1f1f3', // rê nút viền: chỉ đổi nền (luật chốt #5)
 
   ringFocus: 'rgba(0, 51, 102, 0.1)',
@@ -158,7 +159,7 @@ export const antTheme = {
     Layout: { bodyBg: COLORS.background, headerBg: COLORS.surface, siderBg: COLORS.surface, headerHeight: 56, headerPadding: '0 24px' },
     Tabs: { inkBarColor: COLORS.foreground, itemSelectedColor: COLORS.foreground, itemHoverColor: COLORS.foreground, itemColor: 'rgba(44, 44, 44, 0.7)' },
     Pagination: { itemActiveBg: COLORS.secondary, itemSize: 36 },
-    Table: { headerBg: COLORS.surface, headerColor: COLORS.muted, rowHoverBg: COLORS.surfaceHover, borderColor: COLORS.border, headerSplitColor: 'transparent' },
+    Table: { headerBg: COLORS.surfaceHover, headerColor: COLORS.neutral, rowHoverBg: COLORS.itemHover, borderColor: COLORS.border, headerSplitColor: 'transparent' },
     Tag: { defaultBg: COLORS.neutralBg, defaultColor: COLORS.neutral },
     Descriptions: { labelColor: COLORS.muted },
     Tooltip: { colorBgSpotlight: COLORS.foreground },

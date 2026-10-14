@@ -54,7 +54,7 @@ import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
 import ProfileHistory from './seafarers/ProfileHistory'
 import ProfileExports from './seafarers/ProfileExports'
-import { nameInitials } from './seafarers/crewView'
+import CrewPhoto from './seafarers/CrewPhoto'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerProfile.css'
 
@@ -162,7 +162,7 @@ export default function SeafarerDetailPage() {
   if (isLoading) {
     return (
       <div className="ds-page">
-        <div className="crew-head"><Skeleton.Avatar active size={64} /><Skeleton active title paragraph={{ rows: 1 }} /></div>
+        <div className="crew-head"><Skeleton.Avatar active shape="square" style={{ width: 96, height: 128, borderRadius: 0 }} /><Skeleton active title paragraph={{ rows: 1 }} /></div>
         <div className="crew-panel crew-panel__body"><Skeleton active paragraph={{ rows: 4 }} /></div>
       </div>
     )
@@ -256,7 +256,7 @@ export default function SeafarerDetailPage() {
 
       <div className="crew-head">
         <div className="crew-head__person">
-          <span className="crew-avatar crew-avatar--xl" aria-hidden>{nameInitials(seafarer.full_name)}</span>
+          <CrewPhoto size="xl" />
           <div className="crew-head__text">
             <h1 className="crew-head__title">{seafarer.full_name}</h1>
             <p className="crew-head__desc">{headLine(seafarer, activeContract(contractList)) || seafarer.seafarer_code}</p>
@@ -521,23 +521,17 @@ function ContactsSection({ seafarerId }) {
   ]
 
   return (
-    <Section title="Người thân / Bảo lãnh" noPad>
-      <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          type="primary"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => setAddOpen(true)}
-        >
-          Thêm liên hệ
-        </Button>
-      </div>
+    <Section
+      title="Người thân / Bảo lãnh"
+      noPad
+      extra={<Button icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>Thêm liên hệ</Button>}
+    >
       <Table
         rowKey="id"
         columns={columns}
         dataSource={data || []}
         loading={isLoading}
-        size="small"
+        locale={{ emptyText: <EmptyState title="Chưa có người thân, người bảo lãnh nào" /> }}
         pagination={false}
         scroll={{ x: 'max-content' }}
       />
@@ -902,23 +896,17 @@ function ContractsSection({ seafarerId }) {
   const list = data?.data || []
 
   return (
-    <Section title="Hợp đồng" noPad>
-      <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          type="primary"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => setAddOpen(true)}
-        >
-          Thêm hợp đồng
-        </Button>
-      </div>
+    <Section
+      title="Hợp đồng"
+      noPad
+      extra={<Button icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>Thêm hợp đồng</Button>}
+    >
       <Table
         rowKey="id"
         columns={columns}
         dataSource={list}
         loading={isLoading}
-        size="small"
+        locale={{ emptyText: <EmptyState title="Chưa có hợp đồng nào" /> }}
         pagination={false}
         scroll={{ x: 'max-content' }}
       />
@@ -1066,23 +1054,17 @@ function EnrollmentsSection({ seafarerId }) {
   ]
 
   return (
-    <Section title="Đào tạo" noPad>
-      <div style={{ padding: '8px 16px', display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          type="primary"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => setAddOpen(true)}
-        >
-          Thêm đăng ký
-        </Button>
-      </div>
+    <Section
+      title="Đào tạo"
+      noPad
+      extra={<Button icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>Thêm đăng ký</Button>}
+    >
       <Table
         rowKey="id"
         columns={columns}
         dataSource={data?.data || []}
         loading={isLoading}
-        size="small"
+        locale={{ emptyText: <EmptyState title="Chưa đăng ký khoá học nào" /> }}
         pagination={false}
         scroll={{ x: 'max-content' }}
       />

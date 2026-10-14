@@ -33,8 +33,7 @@ import ExportListPage from './pages/admin/exports/ExportListPage'
 import ReviewPage from './pages/admin/review/ReviewPage'
 import UploadPage from './pages/admin/UploadPage'
 import PackCreatePage from './pages/admin/exports/PackCreatePage'
-import PackSignPage from './pages/admin/exports/PackSignPage'
-import RemoteSignPage from './pages/sign/RemoteSignPage'
+import PackDetailPage from './pages/admin/exports/PackDetailPage'
 import StandaloneError from './pages/errors/StandaloneError'
 
 const queryClient = new QueryClient({
@@ -51,7 +50,6 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/design-system" element={<DesignSystemPage />} />
-              <Route path="/sign/:token" element={<RemoteSignPage />} />
               <Route path="/" element={<Navigate to="/seafarers" replace />} />
 
               <Route
@@ -70,7 +68,7 @@ export default function App() {
                 <Route path="/seafarers/:id/review" element={<ReviewPage />} />
                 <Route path="/exports" element={<ExportListPage />} />
                 <Route path="/exports/new" element={<PackCreatePage />} />
-                <Route path="/exports/:packId" element={<PackSignPage />} />
+                <Route path="/exports/:packId" element={<PackDetailPage />} />
                 <Route path="/training-centers" element={<TrainingCenterListPage />} />
                 <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
                 <Route path="/courses" element={<CourseListPage />} />

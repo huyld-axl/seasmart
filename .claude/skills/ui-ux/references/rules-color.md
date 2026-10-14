@@ -253,6 +253,11 @@ Trang phẳng, sạch; thứ bậc đến từ cỡ chữ, độ đậm và màu
 
 **M14. Hai token viền, chia theo vai trò. Không có cái thứ ba.**
 
+> **Đổi giá trị 13/10/2026 (luật chốt #19).** Chủ dự án xem màn danh sách thật thấy mờ, không rõ
+> khung, chốt `--border` `#e5e6ea` và `--border-strong` `#d3d5db` cho toàn app. Hai vai dưới đây giữ
+> nguyên; các câu "nhạt được bao nhiêu thì nhạt" và ngưỡng "`#e4e4e7` là đậm" ở mục này và trong
+> `styles.md`, `layouts/` là số liệu cũ, không còn áp cho dự án này.
+
 | Token | Cho | Vì sao |
 | --- | --- | --- |
 | `--border` | Viền card, khung dropdown, đường chia trong danh sách và menu, **đường kẻ dưới đầu sidebar và dưới header** (cùng màu vạch trong menu, chủ dự án chốt, `layouts/app.md`) | **Trang trí**: chỉ vạch ranh giới, nhạt được bao nhiêu thì nhạt |

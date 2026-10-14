@@ -191,37 +191,30 @@ export default function TrainingCenterListPage() {
         </Form>
       </Modal>
 
-      <div
-        style={{
-          background: 'var(--surface)',
-          borderRadius: 8,
-          padding: 16,
-          marginBottom: 16,
-          border: '1px solid var(--border-strong)',
-        }}
-      >
-        <Space wrap>
-          <Input
-            placeholder="Tìm tên, mã, số giấy phép..."
-            prefix={<SearchOutlined style={{ color: 'var(--muted)' }} />}
-            style={{ flex: 1, minWidth: 140, height: 32, borderRadius: 6 }}
-            value={filters.search}
-            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
-            allowClear
-          />
-          <Select
-            placeholder="Trạng thái"
-            style={{ minWidth: 140, height: 32 }}
-            value={filters.is_active || undefined}
-            onChange={(v) => setFilters((f) => ({ ...f, is_active: v ?? '', page: 1 }))}
-            allowClear
-            options={[
-              { value: 'true', label: 'Hoạt động' },
-              { value: 'false', label: 'Tạm dừng' },
-            ]}
-          />
-        </Space>
-      </div>
+      <div className="ds-card">
+        <div className="ds-toolbar">
+          <Space wrap>
+            <Input
+              placeholder="Tìm tên, mã, số giấy phép..."
+              prefix={<SearchOutlined style={{ color: 'var(--muted)' }} />}
+              style={{ flex: 1, minWidth: 140, height: 32, borderRadius: 6 }}
+              value={filters.search}
+              onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value, page: 1 }))}
+              allowClear
+            />
+            <Select
+              placeholder="Trạng thái"
+              style={{ minWidth: 140, height: 32 }}
+              value={filters.is_active || undefined}
+              onChange={(v) => setFilters((f) => ({ ...f, is_active: v ?? '', page: 1 }))}
+              allowClear
+              options={[
+                { value: 'true', label: 'Hoạt động' },
+                { value: 'false', label: 'Tạm dừng' },
+              ]}
+            />
+          </Space>
+        </div>
 
       {isMobile ? (
         <div>
@@ -235,11 +228,8 @@ export default function TrainingCenterListPage() {
               key={r.id}
               onClick={() => navigate(`/training-centers/${r.id}`)}
               style={{
-                background: 'var(--surface)',
-                borderRadius: 8,
-                border: '1px solid var(--border-strong)',
                 padding: '12px 16px',
-                marginBottom: 8,
+                borderBottom: '1px solid var(--border)',
                 cursor: 'pointer',
               }}
             >
@@ -291,7 +281,7 @@ export default function TrainingCenterListPage() {
               )}
             </div>
           ))}
-          <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <div style={{ padding: '12px 16px', textAlign: 'center' }}>
             <Pagination
               current={filters.page}
               pageSize={filters.limit}
@@ -302,7 +292,7 @@ export default function TrainingCenterListPage() {
           </div>
         </div>
       ) : (
-        <div style={{ background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border-strong)' }}>
+        <div>
           <Table
             rowKey="id"
             columns={columns}
@@ -321,6 +311,7 @@ export default function TrainingCenterListPage() {
           />
         </div>
       )}
+      </div>
     </div>
   )
 }

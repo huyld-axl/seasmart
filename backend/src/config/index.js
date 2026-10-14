@@ -1,7 +1,8 @@
-require('dotenv').config()
+require('dotenv').config({ quiet: true })
+const fs = require('fs')
 
 const INSECURE_JWT_DEFAULTS = ['dev_secret', 'change_this_to_a_long_random_string', 'secret', '']
-const jwtSecret = process.env.JWT_SECRET
+const jwtSecret = process.env.JWT_SECRET || (process.env.JWT_SECRET_FILE ? fs.readFileSync(process.env.JWT_SECRET_FILE, 'utf8').trim() : '')
 if (!jwtSecret || INSECURE_JWT_DEFAULTS.includes(jwtSecret)) {
   throw new Error(
     'JWT_SECRET is not set or is using an insecure default value. ' +
@@ -14,10 +15,10 @@ module.exports = {
   host: process.env.HOST || '0.0.0.0',
   db: {
     host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT) || 3306,
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'marineport',
+    port: parseInt(process.env.DB_PORT) || 5432,
+    user: process.env.DB_USER || process.env.POSTGRES_USER || 'seasmart',
+    password: process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD || '',
+    database: process.env.DB_NAME || process.env.POSTGRES_DB || 'seasmart',
   },
   jwt: {
     secret: jwtSecret,

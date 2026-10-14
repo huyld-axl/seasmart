@@ -1,23 +1,22 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Input, Skeleton, Tooltip } from 'antd'
+import { Button, Skeleton, Tooltip } from 'antd'
 import { EditOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import useAuthStore from '../../../stores/authStore'
 import { exportApi } from '../../../api/exportApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
-import DocFields from './DocFields'
 import { DocDownload, PackDownload } from './DownloadButtons'
 import FormPreview from './FormPreview'
 import PreviewNav from './PreviewNav'
-import { VESSEL_FIELD, editCount, setEdit, template } from './packModel'
+import { editCount, setEdit, template } from './packModel'
 import '../seafarers/SeafarerProfile.css'
 import './exports.css'
 
 // B4 Bộ giấy đã tạo: danh sách giấy bên trái, xem trước bên phải. Tải từng giấy hoặc cả bộ (PDF, Excel).
-// Sửa thông tin điền thêm và sửa tay trên giấy qua draft, bấm Lưu mới ghi.
+// Sửa trực tiếp trên giấy qua draft, bấm Lưu mới ghi.
 export default function PackDetailPage() {
   const { packId } = useParams()
   const user = useAuthStore((state) => state.user)
@@ -47,7 +46,6 @@ export default function PackDetailPage() {
   const doc = template(picked && pack.docs.includes(picked) ? picked : pack.docs[0])
   const mayEdit = ['admin', 'operator'].includes(user?.role)
   const shown = draft || { inputs: pack.inputs, edits: pack.edits || {} }
-  const setInput = (label, value) => setDraft({ ...draft, inputs: { ...draft.inputs, [label]: value } })
   const saveFirst = draft ? 'Lưu hoặc huỷ thay đổi trước khi tải' : ''
 
   return (
@@ -106,20 +104,6 @@ export default function PackDetailPage() {
             </span>
           </div>
           <div className="crew-panel__body">
-            {draft && (
-              <div className="ps-edit">
-                <p className="ps-edit__hint">
-                  Điền thêm cho {doc.name}, hoặc bấm vào ô bất kỳ trên giấy để sửa tay (ô đã sửa có nền vàng{editCount(draft.edits, doc.key) ? `, đang có ${editCount(draft.edits, doc.key)} ô` : ''}). Bấm Lưu thay đổi để ghi lại.
-                </p>
-                <div className="pk-fields">
-                  <label className="ds-field">
-                    <span className="ds-field__label">{VESSEL_FIELD} · dùng cho cả bộ</span>
-                    <Input allowClear placeholder="Để trống thì lấy theo hồ sơ" value={draft.inputs[VESSEL_FIELD] || ''} onChange={(event) => setInput(VESSEL_FIELD, event.target.value)} />
-                  </label>
-                </div>
-                <DocFields docKey={doc.key} inputs={draft.inputs} onChange={setInput} />
-              </div>
-            )}
             <FormPreview
               docKey={doc.key}
               seafarerId={pack.seafarer_id}

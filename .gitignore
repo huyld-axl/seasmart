@@ -49,3 +49,9 @@ docs/samples/
 # Runtime uploads
 storage/
 backend/storage/
+
+# Deployment credentials and lock
+docker/postgres.env
+docker/jwt_secret
+backups/
+.deploy.lock

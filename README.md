@@ -4,18 +4,96 @@ Cổng tuyển dụng và quản lý thuyền viên hàng hải. Phần chính c
 thả sổ thuyền viên, chứng chỉ, giấy khác vào hồ sơ; AI tách từng giấy, đọc từng ô; người duyệt so với bản gốc rồi
 đưa vào hồ sơ (chứng chỉ và chuyến đi tàu).
 
-- Backend: Fastify 5, MySQL/MariaDB (`mysql2`), JWT. Thư mục `backend/`.
+- Backend: Fastify 5, PostgreSQL 17 (`pg`), JWT. Thư mục `backend/`.
 - Frontend: React 19, Ant Design 6, React Query, Vite. Thư mục `frontend/`.
 - Quy ước mã và kiến trúc: `CLAUDE.md`. Kế hoạch, số đo và quyết định của tính năng AI: `docs/mcah-ke-hoach-ai-tach-doc-giay-to.md`.
 
 ## Cần có
 
 - Node.js (đã chạy với bản 24; dự án chưa khai báo `engines`).
-- MySQL 8 hoặc MariaDB, bộ ký tự `utf8mb4` (đã chạy với MariaDB).
+- PostgreSQL 17. Có cấu hình Docker và script deploy ở [docker/README.md](docker/README.md).
 - Một khoá gọi AI (OpenAI hoặc endpoint tương thích). Không có khoá thì ứng dụng vẫn chạy: tệp tải lên được lưu
   kèm hồ sơ và báo "AI chưa được cấu hình", chưa được đọc.
 
-## Cài và chạy
+## Triển khai bằng Docker trên máy mới
+
+Cần Docker Engine, Docker Compose V2 và Docker Buildx; máy phải chạy được `docker compose`.
+Script dùng Bash, `openssl` và `flock`, phù hợp Linux hoặc WSL. Không cần cài Node.js hay PostgreSQL trực tiếp trên máy.
+
+```bash
+git clone <URL_REPO>
+cd seasmart
+
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+Điền cấu hình cần thiết vào hai file `.env`, đặc biệt cấu hình AI nếu dùng tính năng đọc giấy tờ.
+Docker dùng đúng `frontend/.env`; file `frontend/.env.local` trong hướng dẫn chạy local bên dưới không thay thế file này.
+
+```bash
+bash deploy.sh
+```
+
+Script sẽ:
+
+1. Tạo `docker/postgres.env` và `docker/jwt_secret` nếu chưa có, dùng cho PostgreSQL và JWT trong Docker.
+2. Build image backend và frontend. Image backend có LibreOffice để xuất PDF.
+3. Khởi động PostgreSQL, chạy migration và kiểm tra cấu hình/kết nối database.
+4. Khởi động backend/frontend và chờ các container báo healthy.
+
+Mở ứng dụng tại **http://localhost:8080**. Backend mặc định ở `127.0.0.1:3000`, PostgreSQL ở `127.0.0.1:5433`.
+Frontend Docker gọi API qua `/api/v1` trên cùng địa chỉ ứng dụng.
+
+Máy mới chỉ có schema và dữ liệu danh mục từ migration; dữ liệu nghiệp vụ và tài khoản trên máy cũ không đi theo Git.
+Nếu không khôi phục database cũ, tạo tài khoản quản trị đầu tiên bằng lệnh sau rồi nhập email và mật khẩu theo hướng dẫn:
+
+```bash
+docker compose --env-file /dev/null exec backend node scripts/seed_admin.js
+```
+
+Mật khẩu cần ít nhất 12 ký tự; script yêu cầu nhập lại để xác nhận.
+
+### Cập nhật code và migration tự động
+
+```bash
+git pull
+bash deploy.sh
+```
+
+Mỗi lần chạy `bash deploy.sh` (hoặc `bash deploy.sh --deploy`), script build lại ứng dụng và tự chạy
+các file SQL trong `backend/migrations/postgres/` theo thứ tự tên file:
+
+- File mới chưa áp dụng: chạy trong transaction và ghi vào bảng `schema_migration`.
+- File đã áp dụng, checksum không đổi: bỏ qua.
+- File đã áp dụng nhưng nội dung bị sửa: báo lỗi và dừng triển khai.
+- Migration bị lỗi: rollback migration đó và dừng triển khai; các migration trước đó đã thành công vẫn được giữ.
+
+Khi thay đổi cấu trúc database, **thêm file migration mới**, ví dụ `003_add_export_field.sql`, thay vì sửa file đã chạy.
+Chế độ `--build-only` chỉ build image, không chạy migration và không khởi động lại ứng dụng.
+
+### Lệnh vận hành
+
+```bash
+bash deploy.sh --status          # Xem trạng thái container
+bash deploy.sh --stop            # Dừng dịch vụ, giữ database và tệp đã tải lên
+bash deploy.sh --build-only      # Chỉ build image
+
+# Nếu mạng Docker khi build không tải được dependency, dùng mạng host
+BUILD_NETWORK=host bash deploy.sh
+
+# Đổi cổng frontend nếu 8080 đã được sử dụng
+WEB_PORT=8081 bash deploy.sh
+```
+
+Trước khi push, đưa đầy đủ cấu hình Docker, `deploy.sh`, script backend, migration và **12 file mẫu Excel trong `forms/` ở root**
+vào Git. Docker gắn thư mục `forms/` vào backend để xem trước và xuất giấy tờ; không có mẫu thì API xem trước trả 404.
+
+Không commit `.env`, `docker/postgres.env` hoặc `docker/jwt_secret`. Database và tệp đã tải lên nằm trong Docker volumes;
+muốn chuyển dữ liệu sang máy khác cần sao lưu và khôi phục riêng cả database lẫn tệp tải lên.
+Xem thêm cấu hình tại [docker/README.md](docker/README.md).
+
+## Cài và chạy local bằng Node.js
 
 ```bash
 # 1. Cài thư viện (ba lần: gốc cho husky và lint-staged, backend, frontend)
@@ -23,22 +101,20 @@ npm install
 npm install --prefix backend
 npm install --prefix frontend
 
-# 2. Tạo CSDL rồi chạy migration theo thứ tự tên tệp
-mysql -u root -e "CREATE DATABASE marineport CHARACTER SET utf8mb4"
-mysql -u root marineport < migration.sql
-for f in backend/migrations/*.sql; do mysql -u root marineport < "$f"; done
-
-# 3. Cấu hình
+# 2. Cấu hình PostgreSQL local (hoặc dùng ./deploy.sh để chạy toàn bộ bằng Docker)
 cp backend/.env.example backend/.env       # điền JWT_SECRET (>= 32 ký tự), DB_PASSWORD, khoá AI
 cp frontend/.env.example frontend/.env.local
+
+# 3. Tạo database PostgreSQL theo DB_NAME rồi chạy schema và danh mục
+npm run migrate --prefix backend
 
 # 4. Chạy
 npm run dev --prefix backend               # http://localhost:3000
 npm run dev --prefix frontend              # http://localhost:5173
 ```
 
-Các migration chạy lại nhiều lần không lỗi. Migration 021 đến 024 là của tính năng AI đọc giấy tờ
-(tệp tải lên, chuyến đi tàu, chứng chỉ từ giấy, nhật ký gọi AI).
+Migration PostgreSQL ở `backend/migrations/postgres/`, có transaction và checksum,
+chạy lại sẽ bỏ qua các file đã áp dụng. Các migration MySQL cũ giữ để tham chiếu.
 
 ## Cấu hình `backend/.env`
 
@@ -82,17 +158,16 @@ chưa có giao diện để người dùng tự chia lại trang hay tách giấ
 npm test                 # backend và frontend
 npm run lint
 
-# Test tích hợp trên DB riêng (không bao giờ dùng DB chính; tên DB phải khác `marineport`)
-mysql -u root -e "CREATE DATABASE marineport_g15 CHARACTER SET utf8mb4"
-# nạp migration.sql và backend/migrations vào marineport_g15 như trên, rồi:
-INTEGRATION_DB_NAME=marineport_g15 npm test --prefix backend
+# Test tích hợp trên PostgreSQL riêng, có schema và một hồ sơ thuyền viên giả
+# Không dùng database chính. Tạo seasmart_test và chạy migration trước.
+INTEGRATION_DB_NAME=seasmart_test npm test --prefix backend
 ```
 
 Đo độ đúng của AI trên bộ mẫu (gọi AI thật, tốn token, gửi ảnh mẫu tới nhà cung cấp đang cấu hình):
 
 ```bash
 cd backend
-DB_NAME=marineport_g15 node scripts/eval_reader.js --truth ../docs/samples/ban_doc_chuan.json --out /tmp/eval.json
+DB_NAME=seasmart_test node scripts/eval_reader.js --truth ../docs/samples/ban_doc_chuan.json --out /tmp/eval.json
 ```
 
 Bộ mẫu `docs/samples/` chứa giấy tờ thật nên nằm ngoài git (`.gitignore`).

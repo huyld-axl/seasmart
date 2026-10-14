@@ -21,20 +21,20 @@ async function listUsers(filters = {}, pagination = {}) {
     params.push(is_active === 'true' || is_active === true ? 1 : 0)
   }
   if (email) {
-    conditions.push('email LIKE ?')
+    conditions.push('unaccent(email::text) ILIKE unaccent(?)')
     params.push(`%${email}%`)
   }
 
   const where = conditions.join(' AND ')
 
   const [[{ total }]] = await pool.query(
-    `SELECT COUNT(*) AS total FROM \`user\` WHERE ${where}`,
+    `SELECT COUNT(*) AS total FROM "user" WHERE ${where}`,
     params
   )
 
   const [rows] = await pool.query(
     `SELECT id, email, role, is_active, verification_status, created_at, updated_at
-     FROM \`user\` WHERE ${where}
+     FROM "user" WHERE ${where}
      ORDER BY created_at DESC
      LIMIT ? OFFSET ?`,
     [...params, limit, offset]
@@ -46,7 +46,7 @@ async function listUsers(filters = {}, pagination = {}) {
 async function getUserById(id) {
   const [rows] = await pool.query(
     `SELECT id, email, role, is_active, verification_status, created_at, updated_at
-     FROM \`user\` WHERE id = ? AND deleted_at IS NULL`,
+     FROM "user" WHERE id = ? AND deleted_at IS NULL`,
     [id]
   )
   return rows[0] || null
@@ -56,7 +56,7 @@ async function createUser(data) {
   const { email, password, role } = data
 
   const [existing] = await pool.query(
-    'SELECT id FROM `user` WHERE email = ? AND deleted_at IS NULL',
+    'SELECT id FROM "user" WHERE email = ? AND deleted_at IS NULL',
     [email]
   )
   if (existing.length > 0) {
@@ -67,7 +67,7 @@ async function createUser(data) {
 
   const hash = await bcrypt.hash(password, SALT_ROUNDS)
   const [result] = await pool.query(
-    `INSERT INTO \`user\` (email, password_hash, role, is_active, created_at, updated_at)
+    `INSERT INTO "user" (email, password_hash, role, is_active, created_at, updated_at)
      VALUES (?, ?, ?, 1, NOW(), NOW())`,
     [email, hash, role]
   )
@@ -95,7 +95,7 @@ async function updateUser(id, data) {
 
   if (data.email) {
     const [existing] = await pool.query(
-      'SELECT id FROM `user` WHERE email = ? AND id != ? AND deleted_at IS NULL',
+      'SELECT id FROM "user" WHERE email = ? AND id != ? AND deleted_at IS NULL',
       [data.email, id]
     )
     if (existing.length > 0) {
@@ -109,7 +109,7 @@ async function updateUser(id, data) {
   params.push(id)
 
   await pool.query(
-    `UPDATE \`user\` SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`,
+    `UPDATE "user" SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`,
     params
   )
 
@@ -117,12 +117,12 @@ async function updateUser(id, data) {
 }
 
 async function softDeleteUser(id) {
-  await pool.query('UPDATE `user` SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [id])
+  await pool.query('UPDATE "user" SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [id])
 }
 
 async function toggleActive(id) {
   await pool.query(
-    `UPDATE \`user\` SET is_active = NOT is_active, updated_at = NOW()
+    `UPDATE "user" SET is_active = 1 - is_active, updated_at = NOW()
      WHERE id = ? AND deleted_at IS NULL`,
     [id]
   )
@@ -136,12 +136,12 @@ async function searchUsers(q) {
   const term = `%${q.trim()}%`
   const [rows] = await pool.query(
     `SELECT u.id, u.email, u.role,
-            COALESCE(s.full_name, tc.name, u.email) AS display_name
-     FROM \`user\` u
+            COALESCE(s.full_name, tc.name_vi, u.email) AS display_name
+     FROM "user" u
      LEFT JOIN seafarer s ON u.linked_entity_type = 'seafarer' AND u.linked_entity_id = s.id AND s.deleted_at IS NULL
      LEFT JOIN training_center tc ON u.linked_entity_type = 'training_center' AND u.linked_entity_id = tc.id AND tc.deleted_at IS NULL
      WHERE u.deleted_at IS NULL
-       AND (u.email LIKE ? OR s.full_name LIKE ? OR tc.name LIKE ?)
+       AND (unaccent(u.email::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(tc.name_vi::text) ILIKE unaccent(?))
      ORDER BY u.email
      LIMIT 20`,
     [term, term, term]

@@ -1,5 +1,5 @@
 // Kiểm thử tích hợp trên DB riêng (không chạy khi thiếu INTEGRATION_DB_NAME).
-// Chạy: INTEGRATION_DB_NAME=marineport_g15 npm test
+// Chạy: INTEGRATION_DB_NAME=seasmart_test npm test
 // Nhà cung cấp AI chỉ được giả lập ở đây bằng vi.spyOn; ứng dụng không có đường chạy trả kết quả soạn sẵn.
 import { describe, it, expect, beforeAll, beforeEach, afterAll, vi } from 'vitest'
 import { createRequire } from 'module'
@@ -10,7 +10,7 @@ import crypto from 'crypto'
 
 const require = createRequire(import.meta.url)
 const DB_NAME = process.env.INTEGRATION_DB_NAME
-const enabled = Boolean(DB_NAME) && DB_NAME !== 'marineport'
+const enabled = Boolean(DB_NAME) && /^seasmart_.*test/.test(DB_NAME) && DB_NAME !== process.env.DB_NAME
 
 let pool, ai, documentService, seaService, makePdf, sharp, uploadDir
 
@@ -45,7 +45,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     uploadDir = fs.mkdtempSync(path.join(os.tmpdir(), 'mcah-upload-'))
     process.env.UPLOAD_DIR = uploadDir
     pool = require('../../config/db')
-    const [[db]] = await pool.query('SELECT DATABASE() AS name')
+    const [[db]] = await pool.query('SELECT current_database() AS name')
     if (db.name !== DB_NAME) throw new Error(`Đang nối nhầm DB ${db.name}`)
     ai = require('../ai')
     seaService = require('../sea_service.service')
@@ -56,7 +56,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     seafarerId = row.id
     seafarer = row
     // Người dùng thao tác (id 1): DB kiểm không có sẵn, các cột created_by/updated_by có khoá ngoại tới đây.
-    await pool.query("INSERT IGNORE INTO user (id, email, password_hash, role) VALUES (1, 'integration-test@example.invalid', 'x', 'admin')")
+    await pool.query("INSERT INTO \"user\" (id, email, password_hash, role) VALUES (1, 'integration-test@example.invalid', 'x', 'admin') ON CONFLICT (id) DO NOTHING")
     await cleanup()
   })
 
@@ -70,12 +70,12 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     }
     for (let attempt = 0; ; attempt += 1) {
       try {
-        await pool.query('DELETE f FROM document_field f JOIN seafarer_document d ON d.id = f.document_id WHERE d.seafarer_id = ?', [seafarerId])
+        await pool.query('DELETE FROM document_field f USING seafarer_document d WHERE d.id = f.document_id AND d.seafarer_id = ?', [seafarerId])
         await pool.query('DELETE FROM ai_call')
         await pool.query('DELETE FROM sea_service WHERE seafarer_id = ?', [seafarerId])
         await pool.query('DELETE FROM seafarer_certificate WHERE seafarer_id = ? AND source_document_id IS NOT NULL', [seafarerId])
         await pool.query('DELETE FROM seafarer_document WHERE seafarer_id = ?', [seafarerId])
-        await pool.query('DELETE p FROM document_upload_page p JOIN document_upload u ON u.id = p.upload_id WHERE u.seafarer_id = ?', [seafarerId])
+        await pool.query('DELETE FROM document_upload_page p USING document_upload u WHERE u.id = p.upload_id AND u.seafarer_id = ?', [seafarerId])
         await pool.query('DELETE FROM document_upload WHERE seafarer_id = ?', [seafarerId])
         return
       } catch (err) {
@@ -309,7 +309,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     ])
     expect(services[0].vessel_id).toBe(vesselId)
     const [certs] = await pool.query(
-      `SELECT sc.certificate_type_id, sc.certificate_name_raw, sc.certificate_number, DATE_FORMAT(sc.expiry_date, '%Y-%m-%d') AS expiry,
+      `SELECT sc.certificate_type_id, sc.certificate_name_raw, sc.certificate_number, TO_CHAR(sc.expiry_date, 'YYYY-MM-DD') AS expiry,
               sc.no_expiry, sc.issued_date, sc.holder_name_raw, sc.status, ct.code
        FROM seafarer_certificate sc LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
        WHERE sc.seafarer_id = ? AND sc.source_document_id IS NOT NULL ORDER BY sc.source_document_id`,
@@ -526,13 +526,13 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     fs.writeFileSync(stuckPath, pdf)
     const [r] = await pool.query(
       `INSERT INTO document_upload (seafarer_id, file_name, mime_type, file_size, storage_path, sha256, status, updated_at)
-       VALUES (?, 'ket.pdf', 'application/pdf', ?, ?, ?, 'SPLITTING', NOW() - INTERVAL 10 MINUTE)`,
+       VALUES (?, 'ket.pdf', 'application/pdf', ?, ?, ?, 'SPLITTING', NOW() - INTERVAL '10 minutes')`,
       [seafarerId, pdf.length, stuckPath, crypto.createHash('sha256').update(pdf).digest('hex')]
     )
     // Một upload bận nhưng mới (1 phút): không được đụng vào.
     const [fresh] = await pool.query(
       `INSERT INTO document_upload (seafarer_id, file_name, mime_type, file_size, storage_path, sha256, status, updated_at)
-       VALUES (?, 'moi.pdf', 'application/pdf', 1, '/khong/co', ?, 'SPLITTING', NOW() - INTERVAL 1 MINUTE)`,
+       VALUES (?, 'moi.pdf', 'application/pdf', 1, '/khong/co', ?, 'SPLITTING', NOW() - INTERVAL '1 minute')`,
       [seafarerId, crypto.randomBytes(32).toString('hex')]
     )
     // Giấy cũ (trước khi có bảng upload) kẹt READING, tệp gốc trên chính dòng giấy.
@@ -545,7 +545,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     )
     const [legacyDoc] = await pool.query(
       `INSERT INTO seafarer_document (seafarer_id, upload_id, doc_type, type_source, status, updated_at)
-       VALUES (?, ?, 'certificate', 'AI', 'READING', NOW() - INTERVAL 10 MINUTE)`,
+       VALUES (?, ?, 'certificate', 'AI', 'READING', NOW() - INTERVAL '10 minutes')`,
       [seafarerId, legacyUpload.insertId]
     )
 

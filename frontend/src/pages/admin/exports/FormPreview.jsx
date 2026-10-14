@@ -1,10 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Checkbox, Skeleton, Tooltip } from 'antd'
 import { exportApi } from '../../../api/exportApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import useExportPrefsStore from '../../../stores/exportPrefsStore'
-import { pxToPt, readCell, toHex, writeCell } from './cellEdit'
+import { pxToPt, readCell, toHex, withBaseStyles, writeCell } from './cellEdit'
 import EditToolbar from './EditToolbar'
 import './exports.css'
 
@@ -14,21 +14,42 @@ html.grid td{box-shadow:inset 0 0 0 .5px #c4c4cc}
 html.edit td[data-cell]{cursor:text}
 html.edit td[data-cell]:hover{outline:1px dashed #71717a;outline-offset:-1px}
 html.edit td[data-cell]:focus{outline:2px solid #003366;outline-offset:-1px;background:#fff}
-html.edit td.ed{background:#fff4d6 !important;box-shadow:inset 0 -2px 0 #b45309}
+html.edit:not(.fill-highlight) td.ed{background:#fff4d6 !important;box-shadow:inset 0 -2px 0 #b45309}
+html.fill-highlight td.ed{box-shadow:inset 0 -2px 0 #b45309}
+html.fill-highlight [data-fill-state="filled"],html.fill-highlight td[data-fill-state="filled"] *{color:#b91c1c !important}
+html.fill-highlight [data-fill-state="missing"]{background:#fff2a8 !important}
+html.fill-highlight span[data-fill-empty]{display:inline-block;min-width:3em;min-height:1em;vertical-align:baseline}
+html.fill-highlight span[data-fill-empty]::before{content:'\\00a0'}
+html.fill-highlight td[data-fill-edited] span[data-fill-state="missing"]{background:transparent !important}
+html.fill-highlight td[data-fill-edited] span[data-fill-empty]{display:inline;min-width:0;min-height:0}
+html.fill-highlight td[data-fill-edited] span[data-fill-empty]::before{content:none}
 `
 const key = (value) => JSON.stringify(value)
 const NATIVE = { bold: 'bold', italic: 'italic', underline: 'underline', strike: 'strikeThrough' }
 // Dấu trạng thái ô lúc bắt đầu sửa: nội dung và căn lề (đổi căn lề không đổi nội dung).
 const snapshot = (td) => `${td.innerHTML}\u0000${td.style.textAlign}`
 
+function markEdited(td) {
+  td.dataset.fillEdited = 'true'
+  if (td.textContent.trim()) td.dataset.fillState = 'filled'
+  else if (td.dataset.fillField) td.dataset.fillState = 'missing'
+  else delete td.dataset.fillState
+}
+function restoreState(td, base) {
+  delete td.dataset.fillEdited
+  if (base.state) td.dataset.fillState = base.state
+  else delete td.dataset.fillState
+}
+
 // Xem trước một giấy đúng như file sẽ xuất: máy chủ điền file mẫu thật rồi trả về HTML.
 // Chưa chọn thuyền viên thì ra mẫu trống.
 // editable: bấm vào ô bất kỳ để sửa tay, có thanh định dạng kiểu WordPress (EditToolbar).
 // edits = { 'B7': giá trị } của giấy này (giá trị: xem cellEdit.js); onEdit(ô, giá trị | null).
-export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = {}, edits = {}, editable = false, onEdit, label }) {
+export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = {}, edits = {}, editable = false, onEdit, label, highlightFields = false, persistWhileEditing = false }) {
   const box = useRef(null)
   const frame = useRef(null)
   const original = useRef(new Map()) // ô → { html, value, align } máy chủ trả về, để bỏ sửa
+  const beforeEdit = useRef(new WeakMap())
   const latest = useRef({})
   const selection = useRef(null) // { td, range }: chỗ bôi đen gần nhất trong ô, để thanh định dạng dùng lại khi tiêu điểm đã rời trang giấy
   const [active, setActive] = useState(null)
@@ -39,7 +60,8 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
   const setGridlines = useExportPrefsStore((state) => state.setGridlines)
   const inputsKey = JSON.stringify(inputs)
   const editsKey = JSON.stringify(edits)
-  useEffect(() => { latest.current = { edits, editable, onEdit, gridlines } })
+  useEffect(() => { latest.current = { edits, editable, onEdit, gridlines, highlightFields, persistWhileEditing } })
+
 
   // Chờ người dùng ngừng gõ thông tin điền thêm rồi mới dựng lại.
   useEffect(() => {
@@ -68,18 +90,19 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
   })
 
   // Vẽ đường lưới, ô sửa tay lên trang giấy và bật/tắt cho gõ vào ô.
-  function paint() {
+  const paint = useCallback(() => {
     const doc = frame.current?.contentDocument
     if (!doc?.body) return
-    const { edits: current = {}, editable: on, gridlines: grid } = latest.current
+    const { edits: current = {}, editable: on, gridlines: grid, highlightFields: highlight } = latest.current
     doc.documentElement.classList.toggle('grid', !!grid)
     doc.documentElement.classList.toggle('edit', !!on)
+    doc.documentElement.classList.toggle('fill-highlight', !!highlight)
     if (!on) return
-    doc.querySelectorAll('td[data-cell]').forEach((td) => {
+    withBaseStyles(doc.body, () => doc.querySelectorAll('td[data-cell]').forEach((td) => {
       const address = td.dataset.cell
       if (!original.current.has(address)) {
         const align = td.style.textAlign
-        original.current.set(address, { html: td.innerHTML, value: readCell(td, align), align })
+        original.current.set(address, { html: td.innerHTML, value: readCell(td, align), align, state: td.dataset.fillState })
       }
       const base = original.current.get(address)
       if (!td.isContentEditable) td.contentEditable = 'true'
@@ -89,34 +112,55 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
           td.dataset.shown = key(current[address])
         }
         td.classList.add('ed')
+        markEdited(td)
       } else if (td.classList.contains('ed')) {
         td.innerHTML = base.html
         td.style.textAlign = base.align
         td.classList.remove('ed')
+        restoreState(td, base)
         delete td.dataset.shown
       }
-    })
-  }
-  const measure = () => setSheetHeight(frame.current?.contentDocument?.body?.scrollHeight || 0)
+    }))
+  }, [frame, latest, original])
+  const measure = useCallback(() => setSheetHeight(frame.current?.contentDocument?.body?.scrollHeight || 0), [frame, setSheetHeight])
 
-  function commit(td) {
-    const { edits: current = {}, editable: on, onEdit: report } = latest.current
+  function persistCell(td) {
+    const { edits: current = {}, editable: on, onEdit: report, persistWhileEditing: live } = latest.current
     const address = td.dataset.cell
     const base = original.current.get(address)
-    if (!on || !base) return
-    const original = () => { td.innerHTML = base.html; td.style.textAlign = base.align }
-    const restore = () => {
-      if (current[address] === undefined) original()
-      else writeCell(td, current[address], base.align)
-    }
-    const untouched = snapshot(td) === td.dataset.before
-    delete td.dataset.before
-    if (td.dataset.cancel) { delete td.dataset.cancel; restore(); return }
-    if (untouched) return
+    if (!live || !on || !base) return
     const value = readCell(td, base.align)
     if (key(value) === key(current[address] ?? base.value)) return
     td.dataset.shown = key(value)
-    if (key(value) === key(base.value)) original()
+    report?.(address, key(value) === key(base.value) ? null : value)
+  }
+
+  function commit(td) {
+    const { edits: current = {}, editable: on, onEdit: report, persistWhileEditing: live } = latest.current
+    const address = td.dataset.cell
+    const base = original.current.get(address)
+    if (!on || !base) return
+    const restoreOriginal = () => { td.innerHTML = base.html; td.style.textAlign = base.align; restoreState(td, base) }
+    const restore = (value) => {
+      if (value === undefined) restoreOriginal()
+      else { writeCell(td, value, base.align); markEdited(td) }
+    }
+    const untouched = snapshot(td) === td.dataset.before
+    delete td.dataset.before
+    if (td.dataset.cancel) {
+      delete td.dataset.cancel
+      const value = live ? beforeEdit.current.get(td) : current[address]
+      restore(value)
+      if (live) report?.(address, value ?? null)
+      beforeEdit.current.delete(td)
+      return
+    }
+    beforeEdit.current.delete(td)
+    if (untouched) { if (current[address] === undefined) restoreState(td, base); return }
+    const value = readCell(td, base.align)
+    if (key(value) === key(current[address] ?? base.value)) return
+    td.dataset.shown = key(value)
+    if (key(value) === key(base.value)) restoreOriginal()
     report?.(address, key(value) === key(base.value) ? null : value)
     measure()
   }
@@ -130,7 +174,11 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
     doc.head.appendChild(style)
     if (editable) {
       const cellOf = (e) => e.target.closest?.('td[data-cell]')
-      doc.addEventListener('focusin', (e) => { const td = cellOf(e); if (td) td.dataset.before = snapshot(td) })
+      doc.addEventListener('focusin', (e) => {
+        const td = cellOf(e)
+        if (td) { td.dataset.before = snapshot(td); beforeEdit.current.set(td, latest.current.edits?.[td.dataset.cell]) }
+      })
+      doc.addEventListener('input', (e) => { const td = cellOf(e); if (td) { markEdited(td); persistCell(td) } })
       doc.addEventListener('selectionchange', () => track(doc))
       doc.addEventListener('focusout', (e) => { if (cellOf(e)) commit(cellOf(e)) })
       // Dán từ nơi khác: chỉ lấy chữ, bỏ định dạng lạ.
@@ -154,7 +202,7 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
     paint()
     const raf = requestAnimationFrame(measure)
     return () => cancelAnimationFrame(raf)
-  }, [editsKey, gridlines])
+  }, [editsKey, gridlines, highlightFields, paint, measure])
 
   // Nhớ chỗ bôi đen trong ô và đọc định dạng tại đó để thanh công cụ sáng đúng nút.
   function track(doc) {
@@ -168,7 +216,10 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
       return
     }
     selection.current = { td, range: sel.getRangeAt(0).cloneRange() }
-    const style = doc.defaultView.getComputedStyle(el)
+    const style = withBaseStyles(td, () => {
+      const native = doc.defaultView.getComputedStyle(el)
+      return { fontSize: native.fontSize, color: native.color }
+    })
     setActive({
       cell: td.dataset.cell,
       bold: doc.queryCommandState('bold'),
@@ -194,8 +245,8 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
       if (td.contains(range.startContainer) && td.contains(range.endContainer)) sel.addRange(range)
       else { const all = doc.createRange(); all.selectNodeContents(td); sel.addRange(all) }
     }
-    if (['undo', 'redo'].includes(name)) { doc.execCommand(name); track(doc); return }
-    if (name === 'align') { td.style.textAlign = value; track(doc); return }
+    if (['undo', 'redo'].includes(name)) { doc.execCommand(name); track(doc); persistCell(td); return }
+    if (name === 'align') { td.style.textAlign = value; track(doc); persistCell(td); return }
     if (sel.isCollapsed) { const all = doc.createRange(); all.selectNodeContents(td); sel.removeAllRanges(); sel.addRange(all) }
     if (NATIVE[name]) doc.execCommand(NATIVE[name])
     else if (name === 'color') {
@@ -217,6 +268,7 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
       td.style.textAlign = original.current.get(td.dataset.cell)?.align || ''
     }
     track(doc)
+    persistCell(td)
   }
 
   let content
@@ -254,6 +306,12 @@ export default function FormPreview({ docKey, seafarerId, shipOwnerId, inputs = 
   return (
     <div className="fp-wrap">
       <div className="fp__tools">
+        {highlightFields && (
+          <div className="fp__legend" role="note" aria-label="Trạng thái điền thông tin">
+            <span className="fp__legend-filled">Đã điền</span>
+            <span className="fp__legend-missing">Cần điền, đang trống</span>
+          </div>
+        )}
         <Tooltip title="Như trong Excel. Áp dụng cho cả bản xem trước và file PDF, Excel tải về.">
           <Checkbox className="fp__grid" checked={gridlines} onChange={(event) => setGridlines(event.target.checked)}>Hiện đường lưới</Checkbox>
         </Tooltip>

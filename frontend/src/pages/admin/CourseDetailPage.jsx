@@ -50,12 +50,12 @@ export default function CourseDetailPage() {
 
   const { data: enrollments, isLoading: enrollLoading } = useQuery({
     queryKey: ['enrollments', { course_id: id }],
-    queryFn: () => enrollmentApi.list({ course_id: id, limit: 200 }).then((r) => r.data),
+    queryFn: () => enrollmentApi.listAll({ course_id: id }),
   })
 
   const { data: centers } = useQuery({
     queryKey: ['training-centers-all'],
-    queryFn: () => trainingCenterApi.list({ limit: 200 }).then((r) => r.data),
+    queryFn: () => trainingCenterApi.listAll(),
   })
 
   const { data: courseTypes } = useQuery({

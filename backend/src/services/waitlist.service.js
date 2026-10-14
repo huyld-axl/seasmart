@@ -50,7 +50,7 @@ const waitlistService = {
     try {
       await conn.beginTransaction()
       await conn.query(
-        'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date) VALUES (?, ?, \'PENDING\', CURDATE())',
+        'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date) VALUES (?, ?, \'PENDING\', CURRENT_DATE)',
         [entry.course_id, entry.seafarer_id]
       )
       await conn.query('UPDATE enrollment_waitlist SET status = \'ENROLLED\' WHERE id = ?', [

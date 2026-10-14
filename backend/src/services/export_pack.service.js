@@ -116,7 +116,7 @@ async function loadPack(pool, id, { forUpdate = false } = {}) {
      FROM export_pack p
      JOIN seafarer s ON s.id = p.seafarer_id
      LEFT JOIN ship_owner o ON o.id = p.ship_owner_id
-     JOIN user u ON u.id = p.created_by
+     JOIN "user" u ON u.id = p.created_by
      WHERE p.id = ? AND p.deleted_at IS NULL${forUpdate ? ' FOR UPDATE' : ''}`,
     [id]
   )
@@ -180,7 +180,7 @@ const exportPackService = {
     if (seafarerId) { where.push('p.seafarer_id = ?'); params.push(seafarerId) }
     if (search) {
       const code = packIdFromCode(search.trim())
-      where.push(code ? '(s.full_name LIKE ? OR p.id = ?)' : 's.full_name LIKE ?')
+      where.push(code ? '(unaccent(s.full_name::text) ILIKE unaccent(?) OR p.id = ?)' : 'unaccent(s.full_name::text) ILIKE unaccent(?)')
       params.push(`%${search.trim()}%`)
       if (code) params.push(code)
     }
@@ -189,8 +189,8 @@ const exportPackService = {
     const offset = (page - 1) * limit
     const [rows] = await pool.query(
       `SELECT p.id, p.seafarer_id, s.full_name AS seafarer_name, p.ship_owner_id, o.company_name AS ship_owner_name, p.title, p.created_at, u.email AS created_by_email, p.created_by,
-         (SELECT GROUP_CONCAT(d.template_key ORDER BY d.sort_order) FROM export_pack_doc d WHERE d.pack_id = p.id) AS doc_keys
-       FROM export_pack p JOIN seafarer s ON s.id = p.seafarer_id JOIN user u ON u.id = p.created_by
+         (SELECT STRING_AGG(d.template_key, ',' ORDER BY d.sort_order) FROM export_pack_doc d WHERE d.pack_id = p.id) AS doc_keys
+       FROM export_pack p JOIN seafarer s ON s.id = p.seafarer_id JOIN "user" u ON u.id = p.created_by
        LEFT JOIN ship_owner o ON o.id = p.ship_owner_id
        WHERE ${whereSql} ORDER BY p.id DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset]
@@ -216,7 +216,7 @@ const exportPackService = {
       if (!owner) throw { statusCode: 404, message: 'Không tìm thấy chủ tàu' }
     }
     const [[seafarer]] = await pool.query(
-      `SELECT s.id, s.full_name, s.date_of_birth, r.name_vi AS rank_name FROM seafarer s LEFT JOIN rank r ON r.id = s.current_rank_id
+      `SELECT s.id, s.full_name, s.date_of_birth, r.name_vi AS rank_name FROM seafarer s LEFT JOIN "rank" r ON r.id = s.current_rank_id
        WHERE s.id = ? AND s.deleted_at IS NULL`,
       [seafarerId]
     )

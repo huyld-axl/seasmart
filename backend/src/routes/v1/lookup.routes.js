@@ -30,7 +30,7 @@ async function lookupRoutes(fastify) {
   fastify.get('/ranks', async () => {
     return getCached('ranks', async () => {
       const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en, department FROM `rank` ORDER BY department, name_vi'
+        'SELECT id, code, name_vi, name_en, department FROM "rank" ORDER BY department, name_vi'
       )
       return rows
     })
@@ -85,7 +85,7 @@ async function lookupRoutes(fastify) {
     const { search } = request.query
     if (search) {
       const [rows] = await pool.query(
-        'SELECT id, vessel_name FROM vessel WHERE vessel_name LIKE ? ORDER BY vessel_name LIMIT 50',
+        'SELECT id, vessel_name FROM vessel WHERE unaccent(vessel_name::text) ILIKE unaccent(?) ORDER BY vessel_name LIMIT 50',
         [`%${search}%`]
       )
       return rows
@@ -110,7 +110,7 @@ async function lookupRoutes(fastify) {
         params.push(parseInt(country_id))
       }
       if (search) {
-        sql += ' AND p.name LIKE ?'
+        sql += ' AND unaccent(p.name::text) ILIKE unaccent(?)'
         params.push(`%${search}%`)
       }
       sql += ' ORDER BY p.name LIMIT 100'

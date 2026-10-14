@@ -57,7 +57,7 @@ const notificationService = {
   async hasRecentDuplicate(userId, type, refId, withinHours = 24) {
     const [rows] = await pool.query(
       `SELECT 1 FROM notification
-       WHERE user_id = ? AND type = ? AND ref_id = ? AND created_at > DATE_SUB(NOW(), INTERVAL ? HOUR)
+       WHERE user_id = ? AND type = ? AND ref_id = ? AND created_at > (NOW() - (? * INTERVAL '1 hour'))
        LIMIT 1`,
       [userId, type, refId, withinHours]
     )

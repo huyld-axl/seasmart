@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Grid, Input, Skeleton, Table } from 'antd'
+import { Button, Grid, Input, Modal, Skeleton, Table } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { EmptyState } from '../../../components/ds/Controls'
 import { STAGES, template } from './packModel'
 import { exportApi } from '../../../api/exportApi'
 import { PackDownload } from './DownloadButtons'
+import useAuthStore from '../../../stores/authStore'
+import useExportDraft from './useExportDraft'
+import { hasDraft } from './exportDraft'
 import '../seafarers/SeafarerListPage.css'
 import './exports.css'
 
@@ -22,6 +25,9 @@ export default function ExportListPage() {
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
   const [search, setSearch] = useState('')
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const userId = useAuthStore((state) => state.user?.id)
+  const { data: draft, savedAt, clearDraft } = useExportDraft(userId)
 
   const query = { search: search.trim() || undefined, limit: 100 }
   const { data, isLoading, isError, refetch } = useQuery({
@@ -91,6 +97,31 @@ export default function ExportListPage() {
 
   return (
     <div className="ds-page">
+
+      <Modal
+        open={hasDraft(draft)}
+        centered
+        closable={false}
+        maskClosable={false}
+        keyboard={false}
+        title={confirmDiscard ? 'Hủy bản nháp đang sửa?' : 'Bạn có bộ giấy đang làm dở'}
+        footer={confirmDiscard ? [
+          <Button key="back" onClick={() => setConfirmDiscard(false)}>Quay lại</Button>,
+          <Button key="discard" danger type="primary" onClick={() => { clearDraft(); setConfirmDiscard(false) }}>Hủy và xóa dữ liệu</Button>,
+        ] : [
+          <Button key="cancel" danger onClick={() => setConfirmDiscard(true)}>Hủy bản nháp</Button>,
+          <Button key="continue" type="primary" onClick={() => navigate('/exports/new')}>Tiếp tục sửa</Button>,
+        ]}
+      >
+        {confirmDiscard ? (
+          <p>Hủy bản nháp sẽ làm mất toàn bộ dữ liệu đang sửa: ứng viên, chủ tàu, giấy đã chọn, thông tin nhập thêm và các ô sửa tay. Bạn sẽ không thể khôi phục bản nháp này.</p>
+        ) : (
+          <>
+            <p>Bản nháp có {draft.people.length} ứng viên và {draft.selected.length} giấy đã chọn{savedAt ? `, lưu lúc ${dayjs(savedAt).format('HH:mm DD/MM/YYYY')}` : ''}.</p>
+            <p>Bạn muốn tiếp tục sửa hay hủy bản nháp để bắt đầu lại?</p>
+          </>
+        )}
+      </Modal>
 
       <div className="ds-card">
         <div className="ds-toolbar crew-toolbar">

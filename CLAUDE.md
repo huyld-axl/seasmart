@@ -11,10 +11,10 @@
 
 **Marineport** — Cổng tuyển dụng & quản lý thuyền viên hàng hải.
 
-- **Backend:** Fastify 5 + MySQL (mysql2 pool)
+- **Backend:** Fastify 5 + PostgreSQL 17 (pg pool)
 - **Frontend:** React 19 + Ant Design 6 + React Query 5 + Zustand 5 + Vite 8
 - **Auth:** JWT (`@fastify/jwt`), 5 roles: `admin`, `operator`, `training_center`, `manning_agent`, `seafarer`
-- **Database:** 23 tables, 4 domain groups (Master Data, User, Seafarer, Training)
+- **Database:** PostgreSQL migrations in `backend/migrations/postgres/`; legacy MySQL SQL files are archival.
 
 ## 2. Architecture
 
@@ -44,7 +44,7 @@ frontend/
 │   └── utils/             # Frontend helpers
 ```
 
-**Data flow:** Routes → Services → DB pool (mysql2)
+**Data flow:** Routes → Services → PostgreSQL pool (pg), with bound query parameters.
 
 ## 3. Coding Conventions
 

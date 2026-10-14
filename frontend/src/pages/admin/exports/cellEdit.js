@@ -63,9 +63,17 @@ export function splitValue(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? { runs: value.runs, align: value.align || null } : { runs: value, align: null }
 }
 
+// Filling hints are visual only. Read native font colors when saving an edit.
+export function withBaseStyles(td, read) {
+  const root = td.ownerDocument.documentElement
+  const highlighted = root.classList.contains('fill-highlight')
+  if (highlighted) root.classList.remove('fill-highlight')
+  try { return read() } finally { if (highlighted) root.classList.add('fill-highlight') }
+}
+
 // Nội dung ô đang hiện → chuỗi nếu cả ô một kiểu chữ như ô gốc, không thì mảng đoạn.
 // baseAlign: căn lề gốc của ô; đổi khác thì trả về { runs, align }.
-export function readCell(td, baseAlign = '') {
+function readNativeCell(td, baseAlign = '') {
   const base = formatOf(td, td)
   const runs = []
   const walk = (node) => {
@@ -87,6 +95,10 @@ export function readCell(td, baseAlign = '') {
   const content = clean.every((run) => same(run, base)) ? text : clean.map((run) => compact(run, base))
   const align = td.style.textAlign || ''
   return ALIGNS.includes(align) && align !== baseAlign ? { runs: content, align } : content
+}
+
+export function readCell(td, baseAlign = '') {
+  return withBaseStyles(td, () => readNativeCell(td, baseAlign))
 }
 
 // Vẽ một giá trị sửa tay vào ô. baseAlign: căn lề gốc, dùng khi giá trị không đổi căn lề.

@@ -55,7 +55,7 @@ async function messagingRoutes(fastify) {
               u.email AS sender_email,
               COALESCE(s.full_name, u.email) AS sender_name
        FROM message m
-       JOIN \`user\` u ON u.id = m.sender_id
+       JOIN "user" u ON u.id = m.sender_id
        LEFT JOIN seafarer s ON s.user_id = m.sender_id
        WHERE m.conversation_id = ? AND m.deleted_at IS NULL
        ORDER BY m.created_at DESC

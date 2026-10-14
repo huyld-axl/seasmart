@@ -12,13 +12,13 @@ const MATCH_STATUSES = ['NOT_CHECKED', 'MATCHED', 'NOT_FOUND']
 // Ngày trả về dạng yyyy-mm-dd (không qua múi giờ).
 const SELECT = `SELECT s.id, s.seafarer_id, s.document_id, s.source_type, s.vessel_name_raw, s.vessel_type_raw, s.flag_raw,
   s.gross_tonnage_raw, s.engine_power_raw, s.owner_raw, s.vessel_id, s.vessel_match_status, s.rank_raw, s.rank_id, s.coc_number,
-  DATE_FORMAT(s.sign_on_date, '%Y-%m-%d') AS sign_on_date, s.sign_on_port,
-  DATE_FORMAT(s.sign_off_date, '%Y-%m-%d') AS sign_off_date, s.sign_off_port,
+  TO_CHAR(s.sign_on_date, 'YYYY-MM-DD') AS sign_on_date, s.sign_on_port,
+  TO_CHAR(s.sign_off_date, 'YYYY-MM-DD') AS sign_off_date, s.sign_off_port,
   s.notes, s.created_by, s.updated_by, s.created_at, s.updated_at,
   v.vessel_name AS vessel_name, r.name_vi AS rank_name, r.code AS rank_code
   FROM sea_service s
   LEFT JOIN vessel v ON v.id = s.vessel_id
-  LEFT JOIN \`rank\` r ON r.id = s.rank_id`
+  LEFT JOIN "rank" r ON r.id = s.rank_id`
 
 function cleanDate(value, label) {
   if (value === undefined) return undefined
@@ -83,12 +83,12 @@ const seaService = {
       if (body.rank_id === null) {
         data.rank_id = null
       } else {
-        const [[rank]] = await pool.query('SELECT id FROM `rank` WHERE id = ?', [body.rank_id])
+        const [[rank]] = await pool.query('SELECT id FROM "rank" WHERE id = ?', [body.rank_id])
         if (!rank) throw { statusCode: 400, message: 'Không tìm thấy chức danh đã chọn' }
         data.rank_id = rank.id
       }
     } else if (data.rank_raw !== undefined) {
-      const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM `rank`')
+      const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM "rank"')
       data.rank_id = data.rank_raw ? normalizeRank(data.rank_raw, ranks)?.id ?? null : null
     }
     if (!partial && !data.vessel_name_raw && !data.rank_raw) {

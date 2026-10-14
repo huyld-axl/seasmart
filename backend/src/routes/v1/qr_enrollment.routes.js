@@ -222,7 +222,7 @@ async function qrEnrollmentRoutes(fastify) {
           )
           if (!alreadyEnrolled) {
             const [ins] = await conn.query(
-              'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date) VALUES (?,?,\'PENDING\',CURDATE())',
+              'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date) VALUES (?,?,\'PENDING\',CURRENT_DATE)',
               [link.course_id, seafarerId]
             )
             if (ins.insertId) enrollmentService.notifyEnrollmentPending(ins.insertId)

@@ -32,7 +32,7 @@ const seafarerPortalService = {
     const [rows] = await pool.query(
       `SELECT s.*, r.name_vi as rank_name, c.name_vi as nationality_name
        FROM seafarer s
-       LEFT JOIN rank r ON r.id = s.current_rank_id
+       LEFT JOIN "rank" r ON r.id = s.current_rank_id
        LEFT JOIN country c ON c.id = s.nationality_id
        WHERE s.user_id = ? AND s.deleted_at IS NULL`,
       [userId]
@@ -182,7 +182,7 @@ const seafarerPortalService = {
 
     if (hasSlot) {
       const [result] = await pool.query(
-        'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date) VALUES (?, ?, \'PENDING\', CURDATE())',
+        'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date) VALUES (?, ?, \'PENDING\', CURRENT_DATE)',
         [courseId, seafarerId]
       )
       enrollmentService.notifyEnrollmentPending(result.insertId)
@@ -201,7 +201,7 @@ const seafarerPortalService = {
     if (waitExists) throw { statusCode: 409, message: 'Bạn đã có trong danh sách chờ khóa học này' }
 
     const [[{ nextPos }]] = await pool.query(
-      'SELECT COALESCE(MAX(position), 0) + 1 as nextPos FROM enrollment_waitlist WHERE course_id = ? AND status = \'WAITING\'',
+      'SELECT COALESCE(MAX(position), 0) + 1 as "nextPos" FROM enrollment_waitlist WHERE course_id = ? AND status = \'WAITING\'',
       [courseId]
     )
     const [wr] = await pool.query(

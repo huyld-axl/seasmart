@@ -1,6 +1,28 @@
 import api from './client'
 export { notificationApi } from './notificationApi'
 
+function cleanListParams(params = {}) {
+  return Object.fromEntries(
+    Object.entries(params).filter(([, value]) => value !== '' && value != null)
+  )
+}
+
+async function listAllPages(url, params = {}) {
+  const rows = []
+  let total = 0
+  let page = 1
+  do {
+    const { data } = await api.get(url, {
+      params: { ...cleanListParams(params), page, limit: 100 },
+    })
+    rows.push(...data.data)
+    total = Number(data.total)
+    if (data.data.length === 0) break
+    page += 1
+  } while (rows.length < total)
+  return { data: rows, total }
+}
+
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
@@ -11,12 +33,7 @@ export const authApi = {
 }
 
 export const seafarerApi = {
-  list: (params) => {
-    const clean = Object.fromEntries(
-      Object.entries(params).filter(([, v]) => v !== '' && v != null)
-    )
-    return api.get('/seafarers', { params: clean })
-  },
+  list: (params) => api.get('/seafarers', { params: cleanListParams(params) }),
   getById: (id) => api.get(`/seafarers/${id}`),
   create: (data) => api.post('/seafarers', data),
   update: (id, data) => api.put(`/seafarers/${id}`, data),
@@ -36,7 +53,8 @@ export const seafarerApi = {
 }
 
 export const trainingCenterApi = {
-  list: (params) => api.get('/training-centers', { params }),
+  list: (params) => api.get('/training-centers', { params: cleanListParams(params) }),
+  listAll: (params) => listAllPages('/training-centers', params),
   getById: (id) => api.get(`/training-centers/${id}`),
   create: (data) => api.post('/training-centers', data),
   update: (id, data) => api.put(`/training-centers/${id}`, data),
@@ -44,7 +62,8 @@ export const trainingCenterApi = {
 }
 
 export const courseApi = {
-  list: (params) => api.get('/training-courses', { params }),
+  list: (params) => api.get('/training-courses', { params: cleanListParams(params) }),
+  listAll: (params) => listAllPages('/training-courses', params),
   getById: (id) => api.get(`/training-courses/${id}`),
   create: (data) => api.post('/training-courses', data),
   update: (id, data) => api.put(`/training-courses/${id}`, data),
@@ -52,7 +71,8 @@ export const courseApi = {
 }
 
 export const enrollmentApi = {
-  list: (params) => api.get('/enrollments', { params }),
+  list: (params) => api.get('/enrollments', { params: cleanListParams(params) }),
+  listAll: (params) => listAllPages('/enrollments', params),
   getById: (id) => api.get(`/enrollments/${id}`),
   create: (data) => api.post('/enrollments', data),
   update: (id, data) => api.put(`/enrollments/${id}`, data),

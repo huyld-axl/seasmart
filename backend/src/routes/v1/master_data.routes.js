@@ -58,10 +58,10 @@ function makeCrud(table, orderBy = 'name_vi') {
       async (request) => {
         const { search } = request.query
         const { page, limit, offset } = parsePaging(request.query, { defaultLimit: 50 })
-        let sql = `SELECT * FROM \`${table}\` WHERE 1=1`
+        let sql = `SELECT * FROM "${table}" WHERE 1=1`
         const params = []
         if (search) {
-          sql += ' AND (name_vi LIKE ? OR name_en LIKE ? OR code LIKE ?)'
+          sql += ' AND (unaccent(name_vi::text) ILIKE unaccent(?) OR unaccent(name_en::text) ILIKE unaccent(?) OR unaccent(code::text) ILIKE unaccent(?))'
           params.push(`%${search}%`, `%${search}%`, `%${search}%`)
         }
         sql += ` ORDER BY ${orderBy} LIMIT ? OFFSET ?`
@@ -69,10 +69,10 @@ function makeCrud(table, orderBy = 'name_vi') {
         const [rows] = await pool.query(sql, params)
 
         // COUNT với cùng filter search
-        let countSql = `SELECT COUNT(*) AS total FROM \`${table}\` WHERE 1=1`
+        let countSql = `SELECT COUNT(*) AS total FROM "${table}" WHERE 1=1`
         const countParams = []
         if (search) {
-          countSql += ' AND (name_vi LIKE ? OR name_en LIKE ? OR code LIKE ?)'
+          countSql += ' AND (unaccent(name_vi::text) ILIKE unaccent(?) OR unaccent(name_en::text) ILIKE unaccent(?) OR unaccent(code::text) ILIKE unaccent(?))'
           countParams.push(`%${search}%`, `%${search}%`, `%${search}%`)
         }
         const [[{ total }]] = await pool.query(countSql, countParams)
@@ -82,7 +82,7 @@ function makeCrud(table, orderBy = 'name_vi') {
 
     // GET ONE
     fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-      const [[row]] = await pool.query(`SELECT * FROM \`${table}\` WHERE id = ?`, [
+      const [[row]] = await pool.query(`SELECT * FROM "${table}" WHERE id = ?`, [
         parseInt(request.params.id),
       ])
       if (!row) return reply.code(404).send({ error: 'Không tìm thấy' })
@@ -97,13 +97,13 @@ function makeCrud(table, orderBy = 'name_vi') {
       const body = request.body
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
-      const sql = `INSERT INTO \`${table}\` (${cols.map((c) => `\`${c}\``).join(',')}) VALUES (${cols.map(() => '?').join(',')})`
+      const sql = `INSERT INTO "${table}" (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`
       const [res] = await pool.query(
         sql,
         cols.map((c) => body[c])
       )
       invalidateCache(table)
-      const [[created]] = await pool.query(`SELECT * FROM \`${table}\` WHERE id = ?`, [
+      const [[created]] = await pool.query(`SELECT * FROM "${table}" WHERE id = ?`, [
         res.insertId,
       ])
       return reply.code(201).send(created)
@@ -117,10 +117,10 @@ function makeCrud(table, orderBy = 'name_vi') {
       const body = request.body
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
-      const sql = `UPDATE \`${table}\` SET ${cols.map((c) => `\`${c}\` = ?`).join(',')} WHERE id = ?`
+      const sql = `UPDATE "${table}" SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ?`
       await pool.query(sql, [...cols.map((c) => body[c]), parseInt(request.params.id)])
       invalidateCache(table)
-      const [[updated]] = await pool.query(`SELECT * FROM \`${table}\` WHERE id = ?`, [
+      const [[updated]] = await pool.query(`SELECT * FROM "${table}" WHERE id = ?`, [
         parseInt(request.params.id),
       ])
       return updated
@@ -130,7 +130,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
       if (request.user.role !== 'admin')
         return reply.code(403).send({ error: 'Chỉ admin mới có quyền xóa' })
-      await pool.query(`DELETE FROM \`${table}\` WHERE id = ?`, [parseInt(request.params.id)])
+      await pool.query(`DELETE FROM "${table}" WHERE id = ?`, [parseInt(request.params.id)])
       invalidateCache(table)
       return { success: true }
     })
@@ -149,22 +149,22 @@ async function portRoutes(fastify) {
       const { search } = request.query
       const { limit, offset } = parsePaging(request.query, { defaultLimit: 50 })
       let sql = `SELECT p.*, c.name_vi AS country_name, c.code AS country_code
-               FROM \`port\` p
-               LEFT JOIN \`country\` c ON c.id = p.country_id
+               FROM "port" p
+               LEFT JOIN "country" c ON c.id = p.country_id
                WHERE 1=1`
       const params = []
       if (search) {
-        sql += ' AND (p.name LIKE ? OR p.un_locode LIKE ?)'
+        sql += ' AND (unaccent(p.name::text) ILIKE unaccent(?) OR unaccent(p.un_locode::text) ILIKE unaccent(?))'
         params.push(`%${search}%`, `%${search}%`)
       }
       sql += ' ORDER BY p.name LIMIT ? OFFSET ?'
       params.push(limit, offset)
       const [rows] = await pool.query(sql, params)
 
-      let countSql = 'SELECT COUNT(*) AS total FROM `port` p WHERE 1=1'
+      let countSql = 'SELECT COUNT(*) AS total FROM "port" p WHERE 1=1'
       const countParams = []
       if (search) {
-        countSql += ' AND (p.name LIKE ? OR p.un_locode LIKE ?)'
+        countSql += ' AND (unaccent(p.name::text) ILIKE unaccent(?) OR unaccent(p.un_locode::text) ILIKE unaccent(?))'
         countParams.push(`%${search}%`, `%${search}%`)
       }
       const [[{ total }]] = await pool.query(countSql, countParams)
@@ -175,7 +175,7 @@ async function portRoutes(fastify) {
   // GET ONE
   fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     const [[row]] = await pool.query(
-      'SELECT p.*, c.name_vi AS country_name FROM `port` p LEFT JOIN `country` c ON c.id = p.country_id WHERE p.id = ?',
+      'SELECT p.*, c.name_vi AS country_name FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [parseInt(request.params.id)]
     )
     if (!row) return reply.code(404).send({ error: 'Không tìm thấy' })
@@ -189,11 +189,11 @@ async function portRoutes(fastify) {
     }
     const { name, un_locode, country_id } = request.body
     const [res] = await pool.query(
-      'INSERT INTO `port` (name, un_locode, country_id) VALUES (?, ?, ?)',
+      'INSERT INTO "port" (name, un_locode, country_id) VALUES (?, ?, ?)',
       [name, un_locode || null, country_id]
     )
     const [[created]] = await pool.query(
-      'SELECT p.*, c.name_vi AS country_name FROM `port` p LEFT JOIN `country` c ON c.id = p.country_id WHERE p.id = ?',
+      'SELECT p.*, c.name_vi AS country_name FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [res.insertId]
     )
     return reply.code(201).send(created)
@@ -205,14 +205,14 @@ async function portRoutes(fastify) {
       return reply.code(403).send({ error: 'Không có quyền' })
     }
     const { name, un_locode, country_id } = request.body
-    await pool.query('UPDATE `port` SET name = ?, un_locode = ?, country_id = ? WHERE id = ?', [
+    await pool.query('UPDATE "port" SET name = ?, un_locode = ?, country_id = ? WHERE id = ?', [
       name,
       un_locode || null,
       country_id,
       parseInt(request.params.id),
     ])
     const [[updated]] = await pool.query(
-      'SELECT p.*, c.name_vi AS country_name FROM `port` p LEFT JOIN `country` c ON c.id = p.country_id WHERE p.id = ?',
+      'SELECT p.*, c.name_vi AS country_name FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [parseInt(request.params.id)]
     )
     return updated
@@ -222,7 +222,7 @@ async function portRoutes(fastify) {
   fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
     if (request.user.role !== 'admin')
       return reply.code(403).send({ error: 'Chỉ admin mới có quyền xóa' })
-    await pool.query('DELETE FROM `port` WHERE id = ?', [parseInt(request.params.id)])
+    await pool.query('DELETE FROM "port" WHERE id = ?', [parseInt(request.params.id)])
     return { success: true }
   })
 }

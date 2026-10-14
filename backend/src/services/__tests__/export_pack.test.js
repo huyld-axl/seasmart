@@ -6,11 +6,25 @@ const { PACK_TEMPLATES } = require('../../constants/pack_templates')
 const { diffFields } = require('../seafarer.service')
 const { fillText, applyInputs, applyEdits } = require('../form_export.service')
 const { vndWords, parseAmount } = require('../../utils/vnd_words')
-const { parseRange } = require('../../utils/sheet_html')
+const { parseRange, sheetToHtml } = require('../../utils/sheet_html')
+const { getFieldMarks } = require('../../utils/form_fields')
 const { cvCells, monthsOnBoard } = require('../cv_tq_form.service')
 const ExcelJS = require('exceljs')
 
 describe('bộ giấy tờ: luật thuần', () => {
+  it('marks missing inputs, filled currency and cleared manual edits on the preview', () => {
+    const ws = new ExcelJS.Workbook().addWorksheet('Form')
+    ws.getCell('B7').value = 100000
+    ws.getCell('B7').numFmt = '#,##0'
+    ws.getCell('C6').value = 'Lý do thu'
+    applyInputs(ws, 'phieu_thu', {})
+    expect(getFieldMarks(ws.getCell('C6')).full).toBe('missing')
+    applyInputs(ws, 'phieu_thu', { 'Số tiền': '1.250.000', 'Lý do thu': 'Phí hồ sơ' })
+    expect(getFieldMarks(ws.getCell('B7')).full).toBe('filled')
+    expect(sheetToHtml(ws).html).toContain('1.250.000')
+    applyEdits(ws, { C6: '' })
+    expect(getFieldMarks(ws.getCell('C6')).full).toBe('missing')
+  })
   it('12 mẫu, mẫu nào cũng có file Excel', () => {
     expect(PACK_TEMPLATES).toHaveLength(12)
     expect(PACK_TEMPLATES.filter((t) => !t.formKey)).toEqual([])

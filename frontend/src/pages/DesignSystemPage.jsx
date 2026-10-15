@@ -29,6 +29,7 @@ import CertificateTable from '../components/ds/CertificateTable'
 import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
+import ToggleRow from '../components/ds/ToggleRow'
 import DescriptionList from '../components/ds/DescriptionList'
 import SlidePanel from '../components/ds/SlidePanel'
 import useToast from '../components/ds/useToast'
@@ -650,6 +651,16 @@ export default function DesignSystemPage() {
         <div className="dsp-stack">
           <ChoiceCardGroup name="template" legend="Mẫu bản xuất" columns={2} options={TEMPLATE_OPTIONS} value={template} onChange={setTemplate} />
           <ChoiceCardGroup name="contact" legend="Thông tin liên lạc trên bản xuất" options={CONTACT_OPTIONS} value={contactPolicy} onChange={setContactPolicy} />
+        </div>
+      </Section>
+
+      <Section id="cong-tac" title="Công tắc bật tắt">
+        <div className="dsp-stack">
+          <p className="dsp-note">Một kiểu duy nhất cho thuộc tính có / không: nồi hơi, lạnh, người thân là liên lạc hay bảo lãnh. Chọn một trong nhiều giá trị thì dùng nhóm nút, không dùng công tắc.</p>
+          <div className="ds-toggle-grid">
+            <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
+            <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
+          </div>
         </div>
       </Section>
 

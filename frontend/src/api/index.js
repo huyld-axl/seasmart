@@ -136,5 +136,6 @@ export const lookupApi = {
   courseTypes: () => api.get('/lookup/course-types'),
   countries: () => api.get('/lookup/countries'),
   vesselTypes: () => api.get('/lookup/vessel-types'),
+  ports: () => api.get('/lookup/ports'),
   vessels: (search) => api.get('/lookup/vessels', search ? { params: { search } } : {}),
 }

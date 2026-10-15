@@ -18,7 +18,12 @@ import TrainingCenterDetailPage from './pages/admin/TrainingCenterDetailPage'
 import CourseListPage from './pages/admin/CourseListPage'
 import CourseDetailPage from './pages/admin/CourseDetailPage'
 import MasterSubPage from './pages/admin/MasterSubPage'
-import FleetPage from './pages/admin/fleet/FleetPage'
+import VesselListPage from './pages/admin/fleet/VesselListPage'
+import VesselDetailPage from './pages/admin/fleet/VesselDetailPage'
+import VesselFormPage from './pages/admin/fleet/VesselFormPage'
+import PartnerListPage from './pages/admin/fleet/PartnerListPage'
+import PartnerDetailPage from './pages/admin/fleet/PartnerDetailPage'
+import PartnerFormPage from './pages/admin/fleet/PartnerFormPage'
 import MessagingPage from './pages/admin/MessagingPage'
 import SeafarerRegisterPage from './pages/seafarer/RegisterPage'
 import SeafarerVerifyPage from './pages/seafarer/VerifyPage'
@@ -74,8 +79,17 @@ export default function App() {
                 <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
                 <Route path="/courses" element={<CourseListPage />} />
                 <Route path="/courses/:id" element={<CourseDetailPage />} />
-                <Route path="/fleet" element={<Navigate to="/fleet/vessels" replace />} />
-                <Route path="/fleet/:tab" element={<FleetPage />} />
+                <Route path="/vessels" element={<VesselListPage />} />
+                <Route path="/vessels/new" element={<VesselFormPage />} />
+                <Route path="/vessels/:id" element={<VesselDetailPage />} />
+                <Route path="/vessels/:id/edit" element={<VesselFormPage />} />
+                <Route path="/partners" element={<PartnerListPage />} />
+                <Route path="/partners/new" element={<PartnerFormPage />} />
+                <Route path="/partners/:id" element={<PartnerDetailPage />} />
+                <Route path="/partners/:id/edit" element={<PartnerFormPage />} />
+                <Route path="/fleet" element={<Navigate to="/vessels" replace />} />
+                <Route path="/fleet/vessels" element={<Navigate to="/vessels" replace />} />
+                <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />
                 <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
                 <Route path="/master-data/:tab" element={<MasterSubPage />} />
                 <Route path="/messages" element={<MessagingPage />} />

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from 'antd'
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons'
+import ToggleRow from '../../../components/ds/ToggleRow'
 
 
 // Hình người mặc định khi chưa có ảnh, khung đứng 4x6.
@@ -44,24 +45,13 @@ export function ChoiceGroup({ value, onChange, options, label, id }) {
   )
 }
 
-// Bật tắt nhiều lựa chọn cùng lúc (người thân vừa là liên lạc vừa là bảo lãnh). value là mảng.
-export function ToggleGroup({ value = [], onChange, options, label }) {
-  const toggle = (key) => onChange?.(value.includes(key) ? value.filter((v) => v !== key) : [...value, key])
+// Bật tắt từng loại của một người thân (vừa là liên lạc vừa là bảo lãnh). value là mảng khoá đang bật.
+export function KindToggles({ value = [], onChange, options }) {
+  const set = (key, on) => onChange?.(on ? [...value, key] : value.filter((item) => item !== key))
   return (
-    <div className="sf-toggles" role="group" aria-label={label}>
-      {options.map((opt) => (
-        <button
-          key={opt.value}
-          type="button"
-          className="sf-toggle"
-          aria-pressed={value.includes(opt.value)}
-          onClick={() => toggle(opt.value)}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-          {opt.label}
-        </button>
+    <div className="ds-toggle-grid">
+      {options.map((option) => (
+        <ToggleRow key={option.value} label={option.label} value={value.includes(option.value)} onChange={(on) => set(option.value, on)} />
       ))}
     </div>
   )

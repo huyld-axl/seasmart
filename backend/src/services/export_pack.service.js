@@ -174,10 +174,11 @@ async function renderDocs({ row, keys, wantPdf, gridlines }) {
 const exportPackService = {
   templates: () => PACK_TEMPLATES.map(({ formKey, ...rest }) => ({ ...rest, has_file: !!formKey })),
 
-  async list(pool, { search, seafarer_id: seafarerId, page = 1, limit = 50 }) {
+  async list(pool, { search, seafarer_id: seafarerId, ship_owner_id: shipOwnerId, page = 1, limit = 50 }) {
     const where = ['p.deleted_at IS NULL']
     const params = []
     if (seafarerId) { where.push('p.seafarer_id = ?'); params.push(seafarerId) }
+    if (shipOwnerId) { where.push('p.ship_owner_id = ?'); params.push(shipOwnerId) }
     if (search) {
       const code = packIdFromCode(search.trim())
       where.push(code ? '(unaccent(s.full_name::text) ILIKE unaccent(?) OR p.id = ?)' : 'unaccent(s.full_name::text) ILIKE unaccent(?)')

@@ -6,7 +6,7 @@ import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, Ri
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi } from '../../api'
 import { FIELD_LABELS } from './seafarers/fieldLabels'
-import { ChoiceGroup, PhotoField, PhotoFrame, ToggleGroup } from './seafarers/SeafarerFormParts'
+import { ChoiceGroup, KindToggles, PhotoField, PhotoFrame } from './seafarers/SeafarerFormParts'
 import { photoProblem } from './seafarers/photoRules'
 import './seafarers/SeafarerForm.css'
 
@@ -672,7 +672,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                         <Input />
                       </Form.Item>
                       <Form.Item name={[name, 'kinds']} label="Loại">
-                        <ToggleGroup options={CONTACT_KINDS} label="Loại" />
+                        <KindToggles options={CONTACT_KINDS} />
                       </Form.Item>
                       <Form.Item
                         name={[name, 'full_name']}

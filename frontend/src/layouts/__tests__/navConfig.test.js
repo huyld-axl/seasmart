@@ -19,8 +19,8 @@ describe('navConfig', () => {
   })
 
   it('chọn tab con của mục', () => {
-    expect(activeSection(NAV_SECTIONS, '/fleet/ship-owners').key).toBe('ship-owners')
-    expect(activeSection(NAV_SECTIONS, '/fleet/vessels').key).toBe('vessels')
+    expect(activeSection(NAV_SECTIONS, '/partners/7/edit').key).toBe('ship-owners')
+    expect(activeSection(NAV_SECTIONS, '/vessels/new').key).toBe('vessels')
     expect(activeTab(activeSection(NAV_SECTIONS, '/seafarers'), '/seafarers')).toBeNull()
   })
 

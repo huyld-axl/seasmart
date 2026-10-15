@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Input, Popconfirm, Select, Tooltip } from 'antd'
@@ -6,7 +6,7 @@ import { CloseOutlined, CopyOutlined, EditOutlined, ExclamationCircleOutlined, H
 import dayjs from 'dayjs'
 import { seafarerApi } from '../../../api'
 import { exportApi } from '../../../api/exportApi'
-import { shipOwnerApi } from '../../../api/fleetApi'
+import { shipOwnerApi, vesselApi } from '../../../api/fleetApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import useAuthStore from '../../../stores/authStore'
@@ -50,6 +50,30 @@ function PeoplePicker({ people, labels, onChange }) {
   )
 }
 
+// Tên tàu của cả bộ: chọn trong danh mục Tàu. Giá trị lưu là tên tàu (cùng chỗ lưu cũ), để trống thì lấy theo hồ sơ.
+function VesselPicker({ value, onChange }) {
+  const [search, setSearch] = useState('')
+  const { data, isFetching } = useQuery({
+    queryKey: ['vessel-pick', search],
+    queryFn: () => vesselApi.list({ search: search || undefined, limit: 50 }),
+  })
+  return (
+    <Select
+      showSearch
+      allowClear
+      filterOption={false}
+      placeholder="Để trống thì lấy theo hồ sơ"
+      loading={isFetching}
+      value={value || undefined}
+      optionLabelProp="value"
+      onSearch={setSearch}
+      onChange={(name) => onChange(name || '')}
+      notFoundContent={isFetching ? 'Đang tìm…' : <span>Chưa có tàu khớp. Thêm ở <Link to="/vessels/new">mục Tàu</Link>.</span>}
+      options={(data?.data || []).map((v) => ({ value: v.vessel_name, label: v.imo_number ? `${v.vessel_name} · IMO ${v.imo_number}` : v.vessel_name }))}
+    />
+  )
+}
+
 // Nộp cho: chủ tàu nhận bộ giấy.
 function OwnerPicker({ value, label, onChange }) {
   const [search, setSearch] = useState('')
@@ -68,7 +92,7 @@ function OwnerPicker({ value, label, onChange }) {
       value={value ? { value, label: label || data?.data?.find((owner) => owner.id === value)?.company_name } : undefined}
       onSearch={setSearch}
       onChange={(item) => onChange(item?.value ?? null, item?.label ?? null)}
-      notFoundContent={isFetching ? 'Đang tìm…' : <span>Chưa có chủ tàu khớp. Thêm ở <Link to="/fleet/ship-owners">mục Chủ tàu</Link>.</span>}
+      notFoundContent={isFetching ? 'Đang tìm…' : <span>Chưa có chủ tàu khớp. Thêm ở <Link to="/partners">mục Đối tác</Link>.</span>}
       options={(data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
     />
   )
@@ -95,6 +119,25 @@ export default function PackCreatePage() {
   const setViewId = (value) => setField('viewId', value)
   const setEditing = (value) => setField('editing', value)
   const [submitting, setSubmitting] = useState(false)
+
+  // Mở từ màn chi tiết đối tác (?owner=): chọn sẵn đối tác ở mục "Nộp cho".
+  const ownerParam = params.get('owner')
+  useEffect(() => {
+    if (!ownerParam || ownerId) return undefined
+    let cancelled = false
+    shipOwnerApi
+      .get(ownerParam)
+      .then((owner) => {
+        if (cancelled) return
+        setField('ownerId', owner.id)
+        setField('ownerLabel', owner.company_name)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ownerParam])
 
   const profiles = useQueries({
     queries: people.map((id) => ({ queryKey: ['seafarer', id], queryFn: () => seafarerApi.getById(id).then((r) => r.data) })),
@@ -217,7 +260,7 @@ export default function PackCreatePage() {
         </label>
         <label className="ds-field">
           <span className="ds-field__label">{VESSEL_FIELD}</span>
-          <Input allowClear placeholder="Để trống thì lấy theo hồ sơ" value={inputs[VESSEL_FIELD] || ''} onChange={(event) => setInput(VESSEL_FIELD, event.target.value)} />
+          <VesselPicker value={inputs[VESSEL_FIELD]} onChange={(name) => setInput(VESSEL_FIELD, name)} />
         </label>
       </div>
 

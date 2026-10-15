@@ -41,6 +41,7 @@ async function exportPackRoutes(fastify) {
         properties: {
           search: { type: 'string', maxLength: 100 },
           seafarer_id: { type: 'integer', minimum: 1 },
+          ship_owner_id: { type: 'integer', minimum: 1 },
           page: { type: 'integer', minimum: 1, default: 1 },
           limit: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
         },

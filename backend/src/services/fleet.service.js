@@ -3,8 +3,18 @@ const { isValidImo } = require('../utils/imo')
 const MAX_LIST_LIMIT = 100
 
 // Cột được phép ghi cho từng bảng (pickAllowed)
-const VESSEL_COLUMNS = ['vessel_name', 'imo_number', 'vessel_type_id', 'flag_country_id', 'ship_owner_id', 'gross_tonnage', 'deadweight', 'year_built', 'notes']
-const OWNER_COLUMNS = ['code', 'company_name', 'company_name_en', 'country_id', 'address', 'contact_person', 'contact_phone', 'contact_email', 'notes']
+const VESSEL_COLUMNS = [
+  'vessel_name', 'vessel_name_prev', 'imo_number', 'call_sign', 'mmsi',
+  'vessel_type_id', 'flag_country_id', 'year_built', 'port_of_registry_id', 'classification_society', 'status', 'class_status',
+  'gross_tonnage', 'net_tonnage', 'deadweight', 'length_overall', 'passenger_capacity', 'crew_capacity',
+  'engine_power_kw', 'engine_type', 'dp_class', 'has_boiler', 'has_refrigeration',
+  'ship_owner_id', 'technical_manager', 'commercial_manager', 'notes',
+]
+const OWNER_COLUMNS = [
+  'code', 'company_name', 'company_name_en', 'country_id', 'tax_id', 'address', 'phone', 'fax', 'email', 'website',
+  'contact_person', 'contact_phone', 'contact_email', 'is_active', 'notes',
+]
+const VESSEL_STATUSES = ['ACTIVE', 'LAID_UP', 'UNDER_CONSTRUCTION', 'SCRAPPED']
 
 function pickAllowed(data, allowed) {
   return Object.fromEntries(
@@ -35,17 +45,27 @@ async function duplicateGuard(promise, message) {
   }
 }
 
-const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.imo_number, v.vessel_type_id, vt.name_vi AS vessel_type_name,
-    v.flag_country_id, c.name_vi AS flag_name, v.ship_owner_id, o.company_name AS ship_owner_name,
-    v.gross_tonnage, v.deadweight, v.year_built, v.notes, v.updated_at
+const ON_BOARD = 'ss.deleted_at IS NULL AND ss.sign_off_date IS NULL AND ss.sign_on_date IS NOT NULL'
+
+const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_number, v.call_sign, v.mmsi,
+    v.vessel_type_id, vt.name_vi AS vessel_type_name, v.flag_country_id, c.name_vi AS flag_name,
+    v.year_built, v.port_of_registry_id, p.name AS port_of_registry_name, v.classification_society, v.status, v.class_status,
+    v.gross_tonnage, v.net_tonnage, v.deadweight, v.length_overall, v.passenger_capacity, v.crew_capacity,
+    v.engine_power_kw, v.engine_type, v.dp_class, v.has_boiler, v.has_refrigeration,
+    v.ship_owner_id, o.company_name AS ship_owner_name, o.code AS ship_owner_code,
+    v.technical_manager, v.commercial_manager, v.notes, v.updated_at,
+    (SELECT COUNT(*) FROM sea_service ss WHERE ss.vessel_id = v.id AND ${ON_BOARD}) AS crew_on_board
   FROM vessel v
   LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
   LEFT JOIN country c ON c.id = v.flag_country_id
+  LEFT JOIN port p ON p.id = v.port_of_registry_id
   LEFT JOIN ship_owner o ON o.id = v.ship_owner_id`
 
 const OWNER_SELECT = `SELECT o.id, o.code, o.company_name, o.company_name_en, o.country_id, c.name_vi AS country_name,
-    o.address, o.contact_person, o.contact_phone, o.contact_email, o.notes, o.updated_at,
-    (SELECT COUNT(*) FROM vessel v WHERE v.ship_owner_id = o.id AND v.deleted_at IS NULL) AS vessel_count
+    o.tax_id, o.address, o.phone, o.fax, o.email, o.website,
+    o.contact_person, o.contact_phone, o.contact_email, o.is_active, o.notes, o.updated_at,
+    (SELECT COUNT(*) FROM vessel v WHERE v.ship_owner_id = o.id AND v.deleted_at IS NULL) AS vessel_count,
+    (SELECT COUNT(*) FROM export_pack ep WHERE ep.ship_owner_id = o.id AND ep.deleted_at IS NULL) AS pack_count
   FROM ship_owner o
   LEFT JOIN country c ON c.id = o.country_id`
 
@@ -53,20 +73,51 @@ const fleetService = {
   async listVessels(pool, query) {
     const { limit, offset } = paging(query)
     const params = []
-    let where = 'WHERE v.deleted_at IS NULL'
+    let search = ''
     if (query.search) {
-      where += ' AND (unaccent(v.vessel_name::text) ILIKE unaccent(?) OR unaccent(v.imo_number::text) ILIKE unaccent(?))'
-      params.push(`%${query.search}%`, `%${query.search}%`)
+      search = ' AND (unaccent(v.vessel_name::text) ILIKE unaccent(?) OR unaccent(v.imo_number::text) ILIKE unaccent(?) OR unaccent(o.company_name::text) ILIKE unaccent(?))'
+      params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)
     }
-    const [rows] = await pool.query(`${VESSEL_SELECT} ${where} ORDER BY v.vessel_name LIMIT ? OFFSET ?`, [...params, limit, offset])
-    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM vessel v ${where}`, params)
-    return { data: rows, total }
+    const status = VESSEL_STATUSES.includes(query.status) ? query.status : null
+    const from = 'FROM vessel v LEFT JOIN ship_owner o ON o.id = v.ship_owner_id WHERE v.deleted_at IS NULL'
+    const [rows] = await pool.query(
+      `${VESSEL_SELECT} WHERE v.deleted_at IS NULL${search}${status ? ' AND v.status = ?' : ''} ORDER BY v.vessel_name LIMIT ? OFFSET ?`,
+      [...params, ...(status ? [status] : []), limit, offset]
+    )
+    const [countRows] = await pool.query(`SELECT v.status, COUNT(*) AS n ${from}${search} GROUP BY v.status`, params)
+    const counts = { all: 0, ...Object.fromEntries(VESSEL_STATUSES.map((key) => [key, 0])) }
+    for (const row of countRows) {
+      counts[row.status] = Number(row.n)
+      counts.all += Number(row.n)
+    }
+    return { data: rows, total: status ? counts[status] : counts.all, counts }
   },
 
   async getVessel(pool, id) {
     const [[row]] = await pool.query(`${VESSEL_SELECT} WHERE v.id = ? AND v.deleted_at IS NULL`, [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy tàu' }
     return row
+  },
+
+  async getVesselDetail(pool, id) {
+    const vessel = await this.getVessel(pool, id)
+    return { ...vessel, usage: await this.vesselUsage(pool, id) }
+  },
+
+  // Các chuyến đi tàu đã khớp với tàu này, mới nhất trước. Đang trên tàu là chuyến chưa có ngày rời.
+  async listVesselService(pool, id) {
+    await this.getVessel(pool, id)
+    const [rows] = await pool.query(
+      `SELECT ss.id, ss.seafarer_id, s.full_name AS seafarer_name, COALESCE(r.name_vi, ss.rank_raw) AS rank_name,
+              ss.sign_on_date, ss.sign_off_date, (${ON_BOARD}) AS on_board
+       FROM sea_service ss
+       JOIN seafarer s ON s.id = ss.seafarer_id AND s.deleted_at IS NULL
+       LEFT JOIN "rank" r ON r.id = ss.rank_id
+       WHERE ss.vessel_id = ? AND ss.deleted_at IS NULL
+       ORDER BY ss.sign_on_date DESC NULLS LAST, ss.id DESC LIMIT 200`,
+      [id]
+    )
+    return { data: rows, total: rows.length }
   },
 
   async createVessel(pool, body) {
@@ -96,9 +147,33 @@ const fleetService = {
   },
 
   async softDelete(pool, table, id) {
+    if (table === 'vessel') {
+      const usage = await this.vesselUsage(pool, id)
+      if (usage.total) throw { statusCode: 409, message: `Tàu đang được dùng ở ${usage.total} chỗ, không xoá được. Đổi trạng thái sang Nằm bờ hoặc Phá dỡ.` }
+    }
+    if (table === 'ship_owner') {
+      const usage = await this.ownerUsage(pool, id)
+      if (usage.total) throw { statusCode: 409, message: `Đối tác đang được dùng ở ${usage.total} chỗ, không xoá được. Chuyển sang Ngừng hợp tác.` }
+    }
     const [result] = await pool.query(`UPDATE "${table}" SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL`, [id])
     if (!result.affectedRows) throw { statusCode: 404, message: 'Không tìm thấy' }
     return { success: true }
+  },
+
+  async vesselUsage(pool, id) {
+    const [[a]] = await pool.query('SELECT COUNT(*) AS n FROM sea_service WHERE vessel_id = ? AND deleted_at IS NULL', [id])
+    const [[b]] = await pool.query('SELECT COUNT(*) AS n FROM employment_contract WHERE vessel_id = ? AND deleted_at IS NULL', [id])
+    const [[c]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE vessel_id = ? AND deleted_at IS NULL', [id])
+    const usage = { sea_service: Number(a.n), contracts: Number(b.n), documents: Number(c.n) }
+    return { ...usage, total: usage.sea_service + usage.contracts + usage.documents }
+  },
+
+  async ownerUsage(pool, id) {
+    const [[a]] = await pool.query('SELECT COUNT(*) AS n FROM vessel WHERE ship_owner_id = ? AND deleted_at IS NULL', [id])
+    const [[b]] = await pool.query('SELECT COUNT(*) AS n FROM employment_contract WHERE ship_owner_id = ? AND deleted_at IS NULL', [id])
+    const [[c]] = await pool.query('SELECT COUNT(*) AS n FROM export_pack WHERE ship_owner_id = ? AND deleted_at IS NULL', [id])
+    const usage = { vessels: Number(a.n), contracts: Number(b.n), packs: Number(c.n) }
+    return { ...usage, total: usage.vessels + usage.contracts + usage.packs }
   },
 
   async restore(pool, table, id) {
@@ -113,29 +188,58 @@ const fleetService = {
   async listOwners(pool, query) {
     const { limit, offset } = paging(query)
     const params = []
-    let where = 'WHERE o.deleted_at IS NULL'
+    let search = ''
     if (query.search) {
-      where += ' AND (unaccent(o.company_name::text) ILIKE unaccent(?) OR unaccent(o.code::text) ILIKE unaccent(?))'
-      params.push(`%${query.search}%`, `%${query.search}%`)
+      search = ' AND (unaccent(o.company_name::text) ILIKE unaccent(?) OR unaccent(o.code::text) ILIKE unaccent(?) OR unaccent(COALESCE(o.contact_person, \'\')::text) ILIKE unaccent(?))'
+      params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)
     }
-    const [rows] = await pool.query(`${OWNER_SELECT} ${where} ORDER BY o.company_name LIMIT ? OFFSET ?`, [...params, limit, offset])
-    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM ship_owner o ${where}`, params)
-    return { data: rows, total }
+    const active = query.active === '1' ? 1 : query.active === '0' ? 0 : null
+    const [rows] = await pool.query(
+      `${OWNER_SELECT} WHERE o.deleted_at IS NULL${search}${active == null ? '' : ' AND o.is_active = ?'} ORDER BY o.company_name LIMIT ? OFFSET ?`,
+      [...params, ...(active == null ? [] : [active]), limit, offset]
+    )
+    const [countRows] = await pool.query(`SELECT o.is_active, COUNT(*) AS n FROM ship_owner o WHERE o.deleted_at IS NULL${search} GROUP BY o.is_active`, params)
+    const counts = { all: 0, active: 0, inactive: 0 }
+    for (const row of countRows) {
+      counts[Number(row.is_active) === 1 ? 'active' : 'inactive'] = Number(row.n)
+      counts.all += Number(row.n)
+    }
+    const total = active == null ? counts.all : active === 1 ? counts.active : counts.inactive
+    return { data: rows, total, counts }
   },
 
   async getOwner(pool, id) {
     const [[row]] = await pool.query(`${OWNER_SELECT} WHERE o.id = ? AND o.deleted_at IS NULL`, [id])
-    if (!row) throw { statusCode: 404, message: 'Không tìm thấy chủ tàu' }
+    if (!row) throw { statusCode: 404, message: 'Không tìm thấy đối tác' }
     return row
+  },
+
+  async getOwnerDetail(pool, id) {
+    const owner = await this.getOwner(pool, id)
+    const [vessels] = await pool.query(
+      `SELECT v.id, v.vessel_name, v.imo_number, vt.name_vi AS vessel_type_name, v.status,
+              (SELECT COUNT(*) FROM sea_service ss WHERE ss.vessel_id = v.id AND ${ON_BOARD}) AS crew_on_board
+       FROM vessel v LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
+       WHERE v.ship_owner_id = ? AND v.deleted_at IS NULL ORDER BY v.vessel_name`,
+      [id]
+    )
+    const [packs] = await pool.query(
+      `SELECT p.id, p.title, p.created_at, s.full_name AS seafarer_name, s.id AS seafarer_id
+       FROM export_pack p JOIN seafarer s ON s.id = p.seafarer_id
+       WHERE p.ship_owner_id = ? AND p.deleted_at IS NULL ORDER BY p.id DESC LIMIT 5`,
+      [id]
+    )
+    const usage = await this.ownerUsage(pool, id)
+    return { ...owner, vessels, recent_packs: packs, usage }
   },
 
   async createOwner(pool, body) {
     const data = pickAllowed(body, OWNER_COLUMNS)
-    if (!data.code || !data.company_name) throw { statusCode: 400, message: 'Thiếu mã hoặc tên chủ tàu' }
+    if (!data.code || !data.company_name) throw { statusCode: 400, message: 'Thiếu mã hoặc tên đối tác' }
     const cols = Object.keys(data)
     const [result] = await duplicateGuard(
       pool.query(`INSERT INTO ship_owner (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`, Object.values(data)),
-      'Mã chủ tàu đã tồn tại'
+      'Mã đối tác đã tồn tại'
     )
     return this.getOwner(pool, result.insertId)
   },
@@ -144,16 +248,16 @@ const fleetService = {
     const data = pickAllowed(body, OWNER_COLUMNS)
     if (!Object.keys(data).length) throw { statusCode: 400, message: 'Không có dữ liệu hợp lệ' }
     if (('code' in data && !data.code) || ('company_name' in data && !data.company_name)) {
-      throw { statusCode: 400, message: 'Thiếu mã hoặc tên chủ tàu' }
+      throw { statusCode: 400, message: 'Thiếu mã hoặc tên đối tác' }
     }
     await this.getOwner(pool, id)
     const cols = Object.keys(data)
     await duplicateGuard(
       pool.query(`UPDATE ship_owner SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
-      'Mã chủ tàu đã tồn tại'
+      'Mã đối tác đã tồn tại'
     )
     return this.getOwner(pool, id)
   },
 }
 
-module.exports = { fleetService, pickAllowed, VESSEL_COLUMNS, OWNER_COLUMNS }
+module.exports = { fleetService, pickAllowed, VESSEL_COLUMNS, OWNER_COLUMNS, VESSEL_STATUSES }

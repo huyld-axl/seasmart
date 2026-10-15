@@ -95,6 +95,26 @@ module.exports = seafarerService
 
 **UI text:** Vietnamese. **Code identifiers:** English.
 
+### 3.3 Form thêm / sửa (thuyền viên, tàu, đối tác và các form CRUD sau này)
+
+Mọi form thêm / sửa theo một kiểu, lấy form thuyền viên làm chuẩn. Dùng chung khung `FormFrame` ở `pages/admin/fleet/FleetParts.jsx` và CSS `sf-*` của `SeafarerForm.css`.
+
+- **Thêm mới:** nút lưu **luôn bấm được**. Thiếu trường bắt buộc thì hiện lỗi ngay dưới trường và cuộn tới ô lỗi đầu tiên. Không disable nút để ép người dùng điền.
+- **Sửa:** nút lưu chỉ **disable khi chưa có thay đổi nào**. Trường đã đổi có viền màu nhấn và chip "Đã sửa", thanh lưu hiện số thay đổi.
+- **Thêm mới có thêm nút "Lưu & thêm … khác"** cạnh nút chính: lưu xong ở lại trang, form về trống, cuộn lên đầu. Nút chính "Thêm …" lưu xong thì sang trang chi tiết.
+- Nút Huỷ quay về chi tiết (khi sửa) hoặc danh sách (khi thêm). Thanh lưu dính đáy màn hình.
+- Chữ trên nút: "Thêm {đối tượng}" / "Lưu thay đổi" / "Lưu & thêm {đối tượng} khác" / "Huỷ".
+
+### 3.4 Control dùng chung (design system)
+
+Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm vào `components/ds/`, minh hoạ ở `/design-system`, rồi mới dùng. Không tự dựng kiểu riêng trong từng trang.
+
+| Nhu cầu | Dùng | Không dùng |
+|---|---|---|
+| Bật / tắt một thuộc tính có / không (nồi hơi, lạnh, người thân là liên lạc, bảo lãnh) | `ToggleRow` (`components/ds/ToggleRow.jsx`) | Nút dạng chip bấm bật, checkbox, `Switch` đặt lẻ |
+| Chọn **một** trong vài giá trị | Nhóm nút `ChoiceGroup` (cho phép bỏ chọn) hoặc `SegmentedPick` (luôn có một giá trị) | Radio, nhiều `ToggleRow` thay cho một lựa chọn |
+| Chọn từ danh sách dài | `Select` có tìm kiếm | Ô nhập tự do khi đã có danh mục |
+
 ## 4. API Conventions
 
 - Base path: `/api/v1/`

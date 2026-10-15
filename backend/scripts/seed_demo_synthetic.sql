@@ -102,19 +102,19 @@ INSERT INTO vessel (
 ('9900019', '574000118', 'XVHL8', 'HAI LONG 18', 'OCEAN BREEZE', (SELECT id FROM vessel_type WHERE code = 'BULK'), @vn,
  (SELECT id FROM port WHERE un_locode = 'VNHPH'),
  17018.00, 10108.00, 28300.00, 169.37, 2009, 'VR',
- @hls, 'Hai Long Shipping JSC', 'Hai Long Shipping JSC', 'IN_SERVICE', 'Máy chính 5.850 kW. Tuyến Việt Nam - Indonesia - Philippines.'),
+ @hls, 'Hai Long Shipping JSC', 'Hai Long Shipping JSC', 'ACTIVE', 'Máy chính 5.850 kW. Tuyến Việt Nam - Indonesia - Philippines.'),
 ('9900021', '574000126', 'XVHL6', 'HAI LONG 26', NULL, (SELECT id FROM vessel_type WHERE code = 'GENERAL-CARGO'), @vn,
  (SELECT id FROM port WHERE un_locode = 'VNHPH'),
  8216.00, 5295.00, 12500.00, 136.40, 2011, 'VR',
- @hls, 'Hai Long Shipping JSC', 'Hai Long Shipping JSC', 'IN_SERVICE', 'Máy chính 3.310 kW. Tuyến nội địa và Đông Nam Á.'),
+ @hls, 'Hai Long Shipping JSC', 'Hai Long Shipping JSC', 'ACTIVE', 'Máy chính 3.310 kW. Tuyến nội địa và Đông Nam Á.'),
 ('9900033', '352000133', '3EEG3', 'EASTERN GRACE', NULL, (SELECT id FROM vessel_type WHERE code = 'BULK'), @pa,
  NULL,
  31540.00, 18765.00, 55800.00, 189.99, 2014, 'NK',
- @eos, 'Eastern Ocean Ship Management Co., Limited', 'Eastern Ocean Chartering Ltd.', 'IN_SERVICE', 'Máy chính 8.200 kW. Tuyến Trung Quốc - Úc - Nam Mỹ.'),
+ @eos, 'Eastern Ocean Ship Management Co., Limited', 'Eastern Ocean Chartering Ltd.', 'ACTIVE', 'Máy chính 8.200 kW. Tuyến Trung Quốc - Úc - Nam Mỹ.'),
 ('9900045', '477000145', 'VREP5', 'EASTERN PEARL', 'PEARL RIVER 5', (SELECT id FROM vessel_type WHERE code = 'CONTAINER'), @hk,
  NULL,
  9610.00, 4680.00, 12700.00, 142.70, 2008, 'CCS',
- @eos, 'Eastern Ocean Ship Management Co., Limited', 'Eastern Ocean Chartering Ltd.', 'IN_SERVICE', 'Máy chính 7.200 kW, sức chở 1.050 TEU. Tuyến nội Á.');
+ @eos, 'Eastern Ocean Ship Management Co., Limited', 'Eastern Ocean Chartering Ltd.', 'ACTIVE', 'Máy chính 7.200 kW, sức chở 1.050 TEU. Tuyến nội Á.');
 
 SET @hl18 = (SELECT id FROM vessel WHERE imo_number = '9900019');
 SET @hl26 = (SELECT id FROM vessel WHERE imo_number = '9900021');

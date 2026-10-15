@@ -504,3 +504,12 @@
   .ds-ctable__table { display: none; }
   .ds-ccards { display: block; }
 }
+
+/* ---------- Công tắc bật / tắt (ToggleRow) ---------- */
+.ds-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); }
+.ds-toggle-row__text { display: grid; min-width: 0; }
+.ds-toggle-row__hint { color: var(--muted); font-size: 12px; }
+.ds-toggle-row__end { display: inline-flex; flex-shrink: 0; align-items: center; gap: 12px; }
+.ds-toggle-row__state { color: var(--muted); font-size: 12px; }
+.ds-toggle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 639px) { .ds-toggle-grid { grid-template-columns: minmax(0, 1fr); } }

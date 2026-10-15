@@ -81,14 +81,6 @@
 .sf-seg button[aria-pressed='true'] { background: var(--surface); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.04); }
 .sf-changed .sf-seg { box-shadow: 0 0 0 1px var(--primary); }
 
-/* Nút bật tắt nhiều lựa chọn (loại người thân). */
-.sf-toggles { display: flex; flex-wrap: wrap; gap: 8px; }
-.sf-toggle { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: color-mix(in srgb, var(--foreground) 80%, transparent); font: inherit; cursor: pointer; }
-.sf-toggle:hover { background: var(--button-hover); }
-.sf-toggle svg { display: none; width: 14px; height: 14px; }
-.sf-toggle[aria-pressed='true'] { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 500; }
-.sf-toggle[aria-pressed='true'] svg { display: block; }
-
 /* Ảnh chân dung 4x6. */
 .sf-drop { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--surface-hover); }
 .sf-drop.is-dragging { border-color: var(--primary); background: var(--primary-light); }

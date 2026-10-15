@@ -65,6 +65,17 @@ export const STATUS = {
     RETIRED: { label: 'Đã nghỉ hưu', tone: 'neutral', mark: 'minus' },
     INACTIVE: { label: 'Ngừng hoạt động', tone: 'neutral', mark: 'minus' },
   },
+  // Trạng thái tàu (cột vessel.status) và đối tác (ship_owner.is_active).
+  vesselStatus: {
+    ACTIVE: { label: 'Hoạt động', tone: 'success', mark: 'check' },
+    LAID_UP: { label: 'Nằm bờ', tone: 'neutral', mark: 'minus' },
+    UNDER_CONSTRUCTION: { label: 'Đang đóng', tone: 'warning', mark: 'clock' },
+    SCRAPPED: { label: 'Phá dỡ', tone: 'neutral', mark: 'cross' },
+  },
+  partner: {
+    ACTIVE: { label: 'Đang hợp tác', tone: 'success', mark: 'check' },
+    INACTIVE: { label: 'Ngừng hợp tác', tone: 'neutral', mark: 'minus' },
+  },
   cert: {
     VALID: { label: 'Còn hạn', tone: 'success', mark: 'check' },
     EXPIRING: { label: 'Sắp hết hạn', tone: 'warning', mark: 'clock' },
@@ -89,6 +100,8 @@ export const STATUS_GROUP_LABELS = {
   export: 'Bộ giấy tờ',
   signature: 'Chữ ký',
   crew: 'Tình trạng thuyền viên',
+  vesselStatus: 'Trạng thái tàu',
+  partner: 'Tình trạng đối tác',
   cert: 'Hạn giấy tờ',
   upload: 'Tệp tải lên',
 }

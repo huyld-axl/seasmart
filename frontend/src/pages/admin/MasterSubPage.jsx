@@ -421,7 +421,8 @@ export default function MasterSubPage() {
   const { tab } = useParams()
   const entry = TAB_MAP[tab]
 
-  if (tab === 'vessels' || tab === 'ship-owners') return <Navigate to={`/fleet/${tab}`} replace />
+  if (tab === 'vessels') return <Navigate to="/vessels" replace />
+  if (tab === 'ship-owners') return <Navigate to="/partners" replace />
   if (!entry) return <Navigate to="/master-data/cert" replace />
 
   const Component = entry.component

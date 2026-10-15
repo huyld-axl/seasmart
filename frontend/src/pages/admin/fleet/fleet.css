@@ -1,0 +1,38 @@
+/* Màn Tàu và Đối tác: dùng lại khung danh sách (ds-*), hồ sơ (crew-*) và form (sf-*) của màn Thuyền viên.
+   Ở đây chỉ thêm các phần riêng: ô biểu tượng, danh sách liên quan, hàng "đang được dùng ở". */
+
+.fl-tile {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #e6edf5;
+  color: #4a6a8f;
+  font-size: 12px;
+  font-weight: 600;
+}
+.fl-tile .anticon { font-size: 18px; }
+.fl-tile--lg { width: 64px; height: 64px; border-radius: 16px; font-size: 20px; }
+.fl-tile--lg .anticon { font-size: 30px; }
+.fl-who { display: flex; align-items: center; gap: 12px; min-width: 240px; }
+.fl-pill { display: inline-flex; justify-self: start; align-items: center; height: 22px; margin-top: 4px; padding: 0 8px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral); font-size: 12px; font-weight: 500; white-space: nowrap; }
+
+.fl-head-meta { color: var(--muted); font-size: 12px; }
+.fl-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+
+/* Danh sách liên quan ở cột phải: tàu, thuyền viên, bộ giấy. */
+.fl-rows { margin: 0; padding: 0; list-style: none; }
+.fl-rows li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.fl-rows li:first-child { padding-top: 0; border-top: 0; }
+.fl-rows__main { display: grid; flex: 1; min-width: 0; }
+.fl-rows__main a { overflow: hidden; color: var(--foreground); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.fl-rows__end { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fl-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+.fl-attn { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.fl-attn li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.fl-readonly .ant-input[disabled] { color: var(--neutral); background: var(--surface-hover); }
+.fl-count { margin: 0; color: var(--muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.fl-unit-hint { margin-left: 8px; color: var(--muted); font-size: 12px; font-weight: 400; }

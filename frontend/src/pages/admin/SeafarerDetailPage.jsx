@@ -341,6 +341,7 @@ function ProfileSection({ s }) {
     ['Mã thuyền viên', s.seafarer_code],
     ['Họ và tên', s.full_name],
     ['Họ tên (EN)', s.full_name_en],
+    ['Tên tiếng Trung', s.full_name_zh],
     ['Ngày sinh', fmt(s.date_of_birth)],
     ['Giới tính', s.gender === 'M' ? 'Nam' : s.gender === 'F' ? 'Nữ' : '-'],
     ['Tình trạng hôn nhân', s.marital_status],
@@ -352,6 +353,8 @@ function ProfileSection({ s }) {
     ['Nơi cấp CCCD', s.national_id_issued_place],
     ['Hộ chiếu', s.passport_number],
     ['Ngày cấp HC', fmt(s.passport_issued_date)],
+    ['Hạn HC', fmt(s.passport_expiry)],
+    ['Nơi sinh', s.place_of_birth],
     ['Sổ thuyền viên', s.seaman_book_number],
     ['Chức danh', s.rank_name],
     ['Chức danh (VI)', s.rank_name_vi],
@@ -371,6 +374,7 @@ function ProfileSection({ s }) {
     ['Quê quán - Xã', s.permanent_ward],
     ['Quê quán - Huyện', s.permanent_district],
     ['Quê quán - Tỉnh', s.permanent_province],
+    ['Nguyên quán', s.place_of_origin],
     ['Nơi thường trú', s.permanent_address],
   ]
   return (
@@ -408,11 +412,17 @@ function WorkSection({ s }) {
 function FinanceSection({ s }) {
   const screens = useBreakpoint()
   const isMobile = !screens.md
-  const fields = [
-    ['Số tài khoản', s.bank_account_number],
-    ['Ngân hàng', s.bank_name],
-    ['Chủ tài khoản', s.bank_account_holder],
-  ]
+  const banks = s.bank_accounts?.length
+    ? s.bank_accounts
+    : [{ account_number: s.bank_account_number, bank_name: s.bank_name, account_holder: s.bank_account_holder }]
+  const fields = banks.flatMap((b, i) => {
+    const n = banks.length > 1 ? ` ${i + 1}` : ''
+    return [
+      [`Số tài khoản${n}`, b.account_number],
+      [`Ngân hàng${n}`, b.bank_name],
+      [`Chủ tài khoản${n}`, b.account_holder],
+    ]
+  })
   return (
     <Section title="Tài chính">
       <DescList fields={fields} isMobile={isMobile} />
@@ -429,6 +439,7 @@ function PhysicalSection({ s }) {
     ['Size áo', s.shirt_size],
     ['Size quần', s.pants_size],
     ['Cỡ giày', s.shoe_size],
+    ['Size bảo hộ', s.ppe_size],
     ['Nhóm máu', s.blood_type],
   ]
   return (

@@ -2,6 +2,10 @@ const { OVERVIEW_FIELDS, TAB_CONDITIONS, TABS, shapeRow } = require('../utils/cr
 const pool = require('../config/db')
 const { withTransaction } = require('../utils/transaction')
 const XLSX = require('xlsx')
+const fs = require('fs')
+const path = require('path')
+const crypto = require('crypto')
+const config = require('../config')
 
 // TASK-B5: training_center chỉ thấy các field này khi GET /seafarers hoặc GET /seafarers/:id
 const TRAINING_CENTER_ALLOWED_FIELDS = [
@@ -35,7 +39,10 @@ function filterCertificateFieldsForTC(rows) {
 const ALLOWED_FIELDS = [
   'full_name',
   'full_name_en',
+  'full_name_zh',
   'date_of_birth',
+  'place_of_birth',
+  'place_of_origin',
   'gender',
   'nationality_id',
   'seafarer_code',
@@ -44,6 +51,7 @@ const ALLOWED_FIELDS = [
   'national_id_issued_place',
   'passport_number',
   'passport_issued_date',
+  'passport_expiry',
   'seaman_book_number',
   'current_rank_id',
   'rank_name_vi',
@@ -70,7 +78,11 @@ const ALLOWED_FIELDS = [
   'pants_size',
   'blood_type',
   'education_school',
+  'education_level',
+  'education_major',
+  'english_level',
   'shoe_size',
+  'ppe_size',
   'vessel_group',
   'vessel_name_raw',
   'contract_flight_date',
@@ -107,6 +119,84 @@ function pickAllowed(data) {
     if (data[key] !== undefined) result[key] = data[key]
   }
   return result
+}
+
+// Danh sách đi kèm hồ sơ (form gửi cả mảng): tài khoản ngân hàng và gia quyến.
+// Dòng có id thì sửa đúng các cột của form (giữ cột khác do nhập Excel ghi), dòng mới thì thêm, dòng bị bỏ thì xóa.
+const BANK_FIELDS = ['bank_name', 'account_number', 'account_holder']
+const CONTACT_FIELDS = [
+  'is_emergency_contact',
+  'is_guarantor',
+  'full_name',
+  'relationship',
+  'phone_primary',
+  'guarantor_id_number',
+  'guarantor_id_issued_date',
+  'guarantor_id_issued_place',
+  'address',
+]
+const CONTACT_FLAGS = ['is_emergency_contact', 'is_guarantor']
+
+function cleanRows(rows, fields) {
+  if (!Array.isArray(rows)) return null
+  return rows
+    .map((row) => {
+      const clean = { id: Number.isInteger(row?.id) ? row.id : null }
+      for (const key of fields) {
+        const value = row?.[key]
+        clean[key] = value === undefined || value === '' ? null : typeof value === 'string' ? value.trim() || null : value
+      }
+      return clean
+    })
+    .filter((row) => fields.some((key) => !CONTACT_FLAGS.includes(key) && row[key] !== null))
+}
+
+function cleanContacts(rows) {
+  const clean = cleanRows(rows, CONTACT_FIELDS)
+  if (!clean) return null
+  return clean.map((row) => {
+    if (!row.full_name) throw { statusCode: 400, message: 'Ghi họ tên người thân' }
+    return {
+      ...row,
+      relationship: row.relationship || '',
+      is_emergency_contact: row.is_emergency_contact ? 1 : 0,
+      is_guarantor: row.is_guarantor ? 1 : 0,
+    }
+  })
+}
+
+function sameRows(before, after, fields) {
+  const shape = (rows) => JSON.stringify(rows.map((row) => fields.map((key) => comparable(row[key]))))
+  return shape(before) === shape(after)
+}
+
+const describeBanks = (rows) => rows.map((r) => [r.bank_name, r.account_number].filter(Boolean).join(' · ')).join('; ') || null
+const describeContacts = (rows) => rows.map((r) => [r.full_name, r.relationship].filter(Boolean).join(' · ')).join('; ') || null
+
+async function syncRows(db, table, seafarerId, rows, fields, extra = () => ({})) {
+  const [existing] = await db.query(`SELECT * FROM ${table} WHERE seafarer_id = ? ORDER BY ${table === 'seafarer_bank_account' ? 'sort_order, ' : ''}id`, [seafarerId])
+  const ownIds = new Set(existing.map((row) => row.id))
+  const kept = []
+  for (const [index, row] of rows.entries()) {
+    const values = { ...Object.fromEntries(fields.map((key) => [key, row[key]])), ...extra(index) }
+    if (row.id && ownIds.has(row.id)) {
+      await db.query(`UPDATE ${table} SET ? WHERE id = ? AND seafarer_id = ?`, [values, row.id, seafarerId])
+      kept.push(row.id)
+    } else {
+      const [result] = await db.query(`INSERT INTO ${table} SET ?`, [{ ...values, seafarer_id: seafarerId }])
+      kept.push(result.insertId)
+    }
+  }
+  const removed = existing.filter((row) => !kept.includes(row.id)).map((row) => row.id)
+  if (removed.length) await db.query(`DELETE FROM ${table} WHERE seafarer_id = ? AND id IN (?)`, [seafarerId, removed])
+  return existing
+}
+
+// Ảnh chân dung: chỉ JPG/PNG, nhận theo magic bytes, không tin MIME trình duyệt gửi.
+function sniffImage(buffer) {
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg'
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) return 'image/png'
+  return null
 }
 
 const seafarerService = {
@@ -202,17 +292,100 @@ const seafarerService = {
         [id]
       )
       result.certificates = filterCertificateFieldsForTC(certs)
+    } else {
+      const { photo_path, photo_mime, ...rest } = result
+      const [banks] = await pool.query(
+        'SELECT id, bank_name, account_number, account_holder FROM seafarer_bank_account WHERE seafarer_id = ? ORDER BY sort_order, id',
+        [id]
+      )
+      result = { ...rest, has_photo: Boolean(photo_path), bank_accounts: banks }
     }
     return result
   },
 
+  // Tạo hồ sơ: chỉ bắt buộc họ tên. Thiếu quốc tịch thì lấy Việt Nam.
   async create(data, created_by) {
-    const safeData = pickAllowed(data)
-    const [result] = await pool.query(
-      'INSERT INTO seafarer SET ?, created_by = ?, updated_by = ?',
-      [safeData, created_by, created_by]
-    )
-    return this.getById(result.insertId)
+    const id = await withTransaction(pool, async (db) => {
+      const safeData = pickAllowed(data)
+      if (!safeData.nationality_id) {
+        const [[vn]] = await db.query('SELECT id FROM country WHERE code = ?', ['VN'])
+        if (!vn) throw { statusCode: 400, message: 'Chọn quốc tịch' }
+        safeData.nationality_id = vn.id
+      }
+      const [result] = await db.query('INSERT INTO seafarer SET ?', [
+        { ...safeData, created_by, updated_by: created_by },
+      ])
+      await this.saveLists(db, result.insertId, data)
+      return result.insertId
+    })
+    return this.getById(id)
+  },
+
+  // Lưu tài khoản ngân hàng và gia quyến nếu form gửi kèm. Trả về thay đổi để ghi lịch sử.
+  async saveLists(db, id, data) {
+    const changes = {}
+    const banks = cleanRows(data.bank_accounts, BANK_FIELDS)
+    if (banks) {
+      const before = await syncRows(db, 'seafarer_bank_account', id, banks, BANK_FIELDS, (index) => ({ sort_order: index }))
+      if (!sameRows(before, banks, BANK_FIELDS)) changes.bank_accounts = [describeBanks(before), describeBanks(banks)]
+      // Cột bank_* trên hồ sơ luôn bằng tài khoản đầu tiên (biểu mẫu Excel đọc từ đây).
+      const first = banks[0] || {}
+      await db.query('UPDATE seafarer SET bank_name = ?, bank_account_number = ?, bank_account_holder = ? WHERE id = ?', [
+        first.bank_name ?? null,
+        first.account_number ?? null,
+        first.account_holder ?? null,
+        id,
+      ])
+    }
+    const contacts = cleanContacts(data.contacts)
+    if (contacts) {
+      const before = await syncRows(db, 'seafarer_contact', id, contacts, CONTACT_FIELDS)
+      if (!sameRows(before, contacts, CONTACT_FIELDS)) changes.contacts = [describeContacts(before), describeContacts(contacts)]
+    }
+    return changes
+  },
+
+  async savePhoto(id, file, updated_by) {
+    const buffer = await file.toBuffer()
+    if (file.file?.truncated || buffer.length > config.upload.maxFileSize) {
+      throw { statusCode: 413, message: 'Ảnh lớn hơn 10 MB, chọn ảnh nhỏ hơn' }
+    }
+    const mime = sniffImage(buffer)
+    if (!mime) throw { statusCode: 400, message: 'Chỉ nhận ảnh JPG hoặc PNG' }
+    const [[row]] = await pool.query('SELECT photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!row) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
+
+    const dir = path.join(config.upload.dir, 'photos')
+    fs.mkdirSync(dir, { recursive: true })
+    const storagePath = path.join(dir, `${id}_${Date.now()}_${crypto.randomBytes(6).toString('hex')}${mime === 'image/png' ? '.png' : '.jpg'}`)
+    fs.writeFileSync(storagePath, buffer)
+    try {
+      await pool.query('UPDATE seafarer SET photo_path = ?, photo_mime = ?, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [
+        storagePath,
+        mime,
+        updated_by,
+        id,
+      ])
+    } catch (err) {
+      fs.rmSync(storagePath, { force: true })
+      throw err
+    }
+    if (row.photo_path) fs.rmSync(row.photo_path, { force: true })
+    return { has_photo: true }
+  },
+
+  async getPhoto(id) {
+    const [[row]] = await pool.query('SELECT photo_path, photo_mime FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!row?.photo_path || !fs.existsSync(row.photo_path)) throw { statusCode: 404, message: 'Chưa có ảnh chân dung' }
+    return { path: row.photo_path, mime: row.photo_mime }
+  },
+
+  async removePhoto(id, updated_by) {
+    const [[row]] = await pool.query('SELECT photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!row) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
+    await pool.query('UPDATE seafarer SET photo_path = NULL, photo_mime = NULL, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [updated_by, id])
+    if (row.photo_path) fs.rmSync(row.photo_path, { force: true })
+    return { has_photo: false }
   },
 
   // Sửa hồ sơ: bắt buộc lý do, ghi lại trường nào đổi từ gì sang gì; bộ giấy chưa xong thành "Cần làm lại".
@@ -230,16 +403,21 @@ const seafarerService = {
     if (!before) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     const { rank_name, nationality_name, ...rest } = data
     const safeData = pickAllowed(rest)
-    if (Object.keys(safeData).length === 0) {
+    const hasLists = Array.isArray(data.bank_accounts) || Array.isArray(data.contacts)
+    if (Object.keys(safeData).length === 0 && !hasLists) {
       throw { statusCode: 400, message: 'Không có trường hợp lệ để cập nhật' }
     }
+    // Cột bank_* đi theo danh sách tài khoản khi form gửi danh sách, không sửa riêng.
+    if (Array.isArray(data.bank_accounts)) {
+      delete safeData.bank_name
+      delete safeData.bank_account_number
+      delete safeData.bank_account_holder
+    }
     const changes = diffFields(before, safeData)
+    Object.assign(changes, await this.saveLists(db, id, data))
     if (!Object.keys(changes).length) return changes
-    await db.query('UPDATE seafarer SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?', [
-      safeData,
-      updated_by,
-      id,
-    ])
+    // updated_at do trigger touch_updated_at đặt.
+    await db.query('UPDATE seafarer SET ? WHERE id = ?', [{ ...safeData, updated_by }, id])
     await db.query('INSERT INTO seafarer_revision (seafarer_id, changed_by, reason, changes) VALUES (?, ?, ?, ?)', [
       id,
       updated_by,
@@ -298,9 +476,8 @@ const seafarerService = {
     for (const k of allowed) {
       if (data[k] !== undefined) fields[k] = data[k]
     }
-    const [result] = await pool.query('INSERT INTO seafarer_contact SET ?, seafarer_id = ?', [
-      fields,
-      seafarerId,
+    const [result] = await pool.query('INSERT INTO seafarer_contact SET ?', [
+      { ...fields, seafarer_id: seafarerId },
     ])
     const [rows] = await pool.query('SELECT * FROM seafarer_contact WHERE id = ?', [
       result.insertId,

@@ -7,6 +7,20 @@ const cell = (html, style = '') => {
 }
 
 describe('ô sửa tay: đọc và vẽ lại', () => {
+  it('does not save the red preview hint as an edited font color', () => {
+    const style = document.createElement('style')
+    style.textContent = 'html.fill-highlight [data-fill-state="filled"] { color: rgb(185, 28, 28) !important; }'
+    document.head.appendChild(style)
+    document.documentElement.classList.add('fill-highlight')
+    try {
+      const td = cell('Tên: <span data-fill-state="filled">NGUYỄN VĂN A</span>', 'color:rgb(0,0,0)')
+      expect(readCell(td)).toBe('Tên: NGUYỄN VĂN A')
+      expect(document.documentElement.classList.contains('fill-highlight')).toBe(true)
+    } finally {
+      style.remove()
+      document.documentElement.classList.remove('fill-highlight')
+    }
+  })
   it('chữ một kiểu như ô gốc thì là chuỗi', () => {
     expect(readCell(cell('Phí hồ sơ', 'text-align:left'), 'left')).toBe('Phí hồ sơ')
   })

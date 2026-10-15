@@ -117,7 +117,7 @@ const seafarerService = {
 
     if (search) {
       where.push(
-        '(s.full_name LIKE ? OR s.national_id LIKE ? OR s.seaman_book_number LIKE ? OR s.seafarer_code LIKE ?)'
+        '(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seaman_book_number::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))'
       )
       const q = `${search}%`
       params.push(q, q, q, q)
@@ -140,7 +140,7 @@ const seafarerService = {
     let counts = null
     if (!isTC) {
       const baseWhere = 'WHERE ' + where.join(' AND ')
-      const countCols = ['COUNT(*) AS all_count', ...TABS.map((key) => `SUM(${TAB_CONDITIONS[key]} ) AS ${key}`)].join(', ')
+      const countCols = ['COUNT(*) AS all_count', ...TABS.map((key) => `SUM((${TAB_CONDITIONS[key]})::integer) AS ${key}`)].join(', ')
       const [[row]] = await pool.query(`SELECT ${countCols} FROM seafarer s ${baseWhere}`, params)
       counts = { all: Number(row.all_count) || 0 }
       TABS.forEach((key) => { counts[key] = Number(row[key]) || 0 })
@@ -163,7 +163,7 @@ const seafarerService = {
     const [rows] = await pool.query(
       `SELECT ${selectFields}
        FROM seafarer s
-       LEFT JOIN rank r ON r.id = s.current_rank_id
+       LEFT JOIN "rank" r ON r.id = s.current_rank_id
        ${isTC ? 'LEFT JOIN country c ON c.id = s.nationality_id' : ''}
        ${whereStr}
        ORDER BY s.id DESC
@@ -184,7 +184,7 @@ const seafarerService = {
     const [rows] = await pool.query(
       `SELECT ${selectFields}
        FROM seafarer s
-       LEFT JOIN rank r ON r.id = s.current_rank_id
+       LEFT JOIN "rank" r ON r.id = s.current_rank_id
        LEFT JOIN country c ON c.id = s.nationality_id
        WHERE s.id = ? AND s.deleted_at IS NULL`,
       [id]
@@ -252,7 +252,7 @@ const seafarerService = {
   async revisions(id) {
     const [rows] = await pool.query(
       `SELECT r.id, r.reason, r.changes, r.created_at, u.email AS changed_by_email
-       FROM seafarer_revision r LEFT JOIN user u ON u.id = r.changed_by
+       FROM seafarer_revision r LEFT JOIN "user" u ON u.id = r.changed_by
        WHERE r.seafarer_id = ? ORDER BY r.created_at DESC, r.id DESC LIMIT 100`,
       [id]
     )
@@ -322,7 +322,7 @@ const seafarerService = {
     const params = []
 
     if (search) {
-      where.push('(s.full_name LIKE ? OR s.national_id LIKE ? OR s.seafarer_code LIKE ?)')
+      where.push('(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))')
       const q = `${search}%`
       params.push(q, q, q)
     }
@@ -375,7 +375,7 @@ const seafarerService = {
         s.contract_return_date,
         s.rank_name_vi
        FROM seafarer s
-       LEFT JOIN \`rank\` r ON r.id = s.current_rank_id
+       LEFT JOIN "rank" r ON r.id = s.current_rank_id
        WHERE ${where.join(' AND ')}
        ORDER BY s.seafarer_code ASC
        LIMIT ${EXPORT_LIMIT}`,

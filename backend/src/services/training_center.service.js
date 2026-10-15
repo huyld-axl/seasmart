@@ -7,7 +7,7 @@ const trainingCenterService = {
     const params = []
 
     if (search) {
-      where.push('(name_vi LIKE ? OR name_en LIKE ? OR code LIKE ? OR license_number LIKE ?)')
+      where.push('(unaccent(name_vi::text) ILIKE unaccent(?) OR unaccent(name_en::text) ILIKE unaccent(?) OR unaccent(code::text) ILIKE unaccent(?) OR unaccent(license_number::text) ILIKE unaccent(?))')
       const q = `%${search}%`
       params.push(q, q, q, q)
     }
@@ -54,7 +54,7 @@ const trainingCenterService = {
     // Nếu có user_id thì link user với training center
     if (data.user_id) {
       await pool.query(
-        'UPDATE user SET linked_entity_type = \'training_center\', linked_entity_id = ? WHERE id = ?',
+        'UPDATE "user" SET linked_entity_type = \'training_center\', linked_entity_id = ? WHERE id = ?',
         [result.insertId, data.user_id]
       )
     }

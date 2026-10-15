@@ -12,21 +12,21 @@ function generateOtp() {
 
 const authService = {
   async register({ email, password, role }) {
-    const [existing] = await pool.query('SELECT id FROM `user` WHERE email = ?', [email])
+    const [existing] = await pool.query('SELECT id FROM "user" WHERE email = ?', [email])
     if (existing.length > 0) {
       throw { statusCode: 409, message: 'Email đã được sử dụng' }
     }
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS)
     const [result] = await pool.query(
-      'INSERT INTO `user` (email, password_hash, role) VALUES (?, ?, ?)',
+      'INSERT INTO "user" (email, password_hash, role) VALUES (?, ?, ?)',
       [email, password_hash, role]
     )
     return { id: result.insertId, email, role }
   },
 
   async login({ email, password }) {
-    const [rows] = await pool.query('SELECT * FROM `user` WHERE email = ? AND deleted_at IS NULL', [
+    const [rows] = await pool.query('SELECT * FROM "user" WHERE email = ? AND deleted_at IS NULL', [
       email,
     ])
     const user = rows[0]
@@ -36,7 +36,7 @@ const authService = {
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) throw { statusCode: 401, message: 'Email hoặc mật khẩu không đúng' }
 
-    await pool.query('UPDATE `user` SET last_login_at = NOW() WHERE id = ?', [user.id])
+    await pool.query('UPDATE "user" SET last_login_at = NOW() WHERE id = ?', [user.id])
 
     return {
       id: user.id,
@@ -49,12 +49,12 @@ const authService = {
   },
 
   async registerSeafarer({ email, password }) {
-    const [existing] = await pool.query('SELECT id FROM `user` WHERE email = ?', [email])
+    const [existing] = await pool.query('SELECT id FROM "user" WHERE email = ?', [email])
     if (existing.length > 0) throw { statusCode: 409, message: 'Email đã được sử dụng' }
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS)
     const [result] = await pool.query(
-      'INSERT INTO `user` (email, password_hash, role, verification_status) VALUES (?, ?, \'seafarer\', \'unverified\')',
+      'INSERT INTO "user" (email, password_hash, role, verification_status) VALUES (?, ?, \'seafarer\', \'unverified\')',
       [email, password_hash]
     )
     return { id: result.insertId, email, role: 'seafarer', verification_status: 'unverified' }
@@ -115,7 +115,7 @@ const authService = {
     }
 
     await pool.query('UPDATE otp_verification SET used_at = NOW() WHERE id = ?', [record.id])
-    await pool.query('UPDATE `user` SET verification_status = \'verified\' WHERE id = ?', [userId])
+    await pool.query('UPDATE "user" SET verification_status = \'verified\' WHERE id = ?', [userId])
 
     return { message: 'Xác nhận thành công' }
   },

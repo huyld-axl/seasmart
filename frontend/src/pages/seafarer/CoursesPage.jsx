@@ -61,7 +61,7 @@ export default function SeafarerCoursesPage() {
 
   const { data: centers } = useQuery({
     queryKey: ['training-centers-all'],
-    queryFn: () => trainingCenterApi.list({ limit: 200 }).then((r) => r.data),
+    queryFn: () => trainingCenterApi.listAll(),
   })
 
   const mutation = useMutation({

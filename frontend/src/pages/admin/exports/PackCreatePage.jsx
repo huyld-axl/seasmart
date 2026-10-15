@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Input, Select, Tooltip } from 'antd'
+import { Button, Input, Popconfirm, Select, Tooltip } from 'antd'
 import { CloseOutlined, CopyOutlined, EditOutlined, ExclamationCircleOutlined, HistoryOutlined, RightOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi } from '../../../api'
@@ -9,6 +9,9 @@ import { exportApi } from '../../../api/exportApi'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
+import useAuthStore from '../../../stores/authStore'
+import useExportDraft from './useExportDraft'
+import { hasDraft } from './exportDraft'
 import DocFields from './DocFields'
 import FormPreview from './FormPreview'
 import PreviewNav from './PreviewNav'
@@ -22,6 +25,7 @@ const personLabel = (s) => `${s.full_name}${s.rank_name ? ` · ${s.rank_name}` :
 // Chọn ứng viên cho đợt: tìm theo tên, CCCD, số sổ; tick nhiều người một lượt.
 function PeoplePicker({ people, labels, onChange }) {
   const [search, setSearch] = useState('')
+  const [open, setOpen] = useState(false)
   const { data, isFetching } = useQuery({
     queryKey: ['seafarer-pick', search],
     queryFn: () => seafarerApi.list({ search, limit: 20 }).then((r) => r.data.data),
@@ -29,6 +33,9 @@ function PeoplePicker({ people, labels, onChange }) {
   return (
     <Select
       mode="multiple"
+      open={open}
+      onOpenChange={setOpen}
+      onSelect={() => setOpen(false)}
       labelInValue
       showSearch
       filterOption={false}
@@ -44,7 +51,7 @@ function PeoplePicker({ people, labels, onChange }) {
 }
 
 // Nộp cho: chủ tàu nhận bộ giấy.
-function OwnerPicker({ value, onChange }) {
+function OwnerPicker({ value, label, onChange }) {
   const [search, setSearch] = useState('')
   const { data, isFetching } = useQuery({
     queryKey: ['ship-owner-pick', search],
@@ -54,12 +61,13 @@ function OwnerPicker({ value, onChange }) {
     <Select
       showSearch
       allowClear
+      labelInValue
       filterOption={false}
       placeholder="Chọn chủ tàu"
       loading={isFetching}
-      value={value}
+      value={value ? { value, label: label || data?.data?.find((owner) => owner.id === value)?.company_name } : undefined}
       onSearch={setSearch}
-      onChange={(id) => onChange(id ?? null)}
+      onChange={(item) => onChange(item?.value ?? null, item?.label ?? null)}
       notFoundContent={isFetching ? 'Đang tìm…' : <span>Chưa có chủ tàu khớp. Thêm ở <Link to="/master-data/ship-owners">Danh mục chủ tàu</Link>.</span>}
       options={(data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
     />
@@ -74,15 +82,18 @@ export default function PackCreatePage() {
   const navigate = useNavigate()
   const toast = useToast()
   const qc = useQueryClient()
-  const [people, setPeople] = useState(() => (params.get('seafarer') ? [params.get('seafarer')] : []))
-  const [picked, setPicked] = useState(null)
-  const [pickedLabels, setPickedLabels] = useState({})
-  const [ownerId, setOwnerId] = useState(null)
-  const [selected, setSelected] = useState([])
-  const [inputs, setInputs] = useState({})
-  const [edits, setEdits] = useState({})
-  const [viewId, setViewId] = useState(null)
-  const [editing, setEditing] = useState(false)
+  const userId = useAuthStore((state) => state.user?.id)
+  const { data: draft, savedAt, storageError, setField, clearDraft } = useExportDraft(userId, params.get('seafarer'))
+  const { people, picked, pickedLabels, ownerId, ownerLabel, selected, inputs, edits, viewId, editing } = draft
+  const setPeople = (value) => setField('people', value)
+  const setPicked = (value) => setField('picked', value)
+  const setPickedLabels = (value) => setField('pickedLabels', value)
+  const setOwnerId = (value) => setField('ownerId', value)
+  const setSelected = (value) => setField('selected', value)
+  const setInputs = (value) => setField('inputs', value)
+  const setEdits = (value) => setField('edits', value)
+  const setViewId = (value) => setField('viewId', value)
+  const setEditing = (value) => setField('editing', value)
   const [submitting, setSubmitting] = useState(false)
 
   const profiles = useQueries({
@@ -148,9 +159,17 @@ export default function PackCreatePage() {
         created.push(await exportApi.create({ seafarer_id: s.id, ship_owner_id: ownerId, docs: selected, inputs, edits: edits[s.id] || {} }))
       }
       qc.invalidateQueries({ queryKey: ['exports'] })
+      clearDraft()
       if (created.length === 1) navigate(`/exports/${created[0].id}`)
       else { toast.success(`Đã tạo ${created.length} bộ giấy`); navigate('/exports') }
     } catch (e) {
+      if (created.length) {
+        // Retain unfinished people in the draft without creating duplicate
+        // packs for the people whose requests already succeeded.
+        const done = new Set(seafarers.slice(0, created.length).map((person) => String(person.id)))
+        setPeople(people.filter((id) => !done.has(String(id))))
+        qc.invalidateQueries({ queryKey: ['exports'] })
+      }
       toast.error(`${e.response?.data?.error || 'Không tạo được bộ giấy'}${created.length ? `. Đã tạo ${created.length}/${seafarers.length} bộ trước khi lỗi.` : ''}`)
     } finally {
       setSubmitting(false)
@@ -174,6 +193,19 @@ export default function PackCreatePage() {
         </div>
       </div>
 
+      {(hasDraft(draft) || storageError) && (
+        <div className="pk-draft" role="status">
+          <span>{storageError
+            ? 'Không lưu được nháp trên trình duyệt. Dữ liệu được giữ khi chuyển màn, nhưng có thể mất nếu tải lại hoặc đóng trang.'
+            : savedAt
+              ? `Đã lưu nháp lúc ${dayjs(savedAt).format('HH:mm:ss')} trên trình duyệt này. Bạn có thể rời màn và quay lại làm tiếp.`
+              : 'Các thay đổi sẽ được tự động lưu nháp trên trình duyệt này.'}</span>
+          <Popconfirm title="Xóa bản nháp và bắt đầu lại?" description="Các lựa chọn và ô đã sửa sẽ bị xóa." okText="Xóa bản nháp" cancelText="Giữ lại" onConfirm={clearDraft}>
+            <Button size="small" danger disabled={submitting}>Xóa bản nháp</Button>
+          </Popconfirm>
+        </div>
+      )}
+
       <div className="pk-who">
         <label className="ds-field">
           <span className="ds-field__label">Ứng viên{people.length > 1 ? ` · ${people.length} người` : ''}</span>
@@ -181,7 +213,7 @@ export default function PackCreatePage() {
         </label>
         <label className="ds-field">
           <span className="ds-field__label">Nộp cho</span>
-          <OwnerPicker value={ownerId} onChange={setOwnerId} />
+          <OwnerPicker value={ownerId} label={ownerLabel} onChange={(id, label) => { setOwnerId(id); setField('ownerLabel', label) }} />
         </label>
         <label className="ds-field">
           <span className="ds-field__label">{VESSEL_FIELD}</span>
@@ -329,10 +361,12 @@ export default function PackCreatePage() {
                 {!viewing
                   ? 'Mẫu trống, chưa chọn ứng viên'
                   : editing
-                    ? `Bấm vào ô bất kỳ trên giấy để sửa. Ô đã sửa có nền vàng${seafarers.length > 1 ? `, chỉ áp dụng cho giấy của ${viewing.full_name}` : ''}.`
+                    ? `Bấm vào ô bất kỳ trên giấy để sửa${seafarers.length > 1 ? `, chỉ áp dụng cho giấy của ${viewing.full_name}` : ''}.`
                     : `Giấy của ${viewing.full_name}, đúng như file sẽ xuất`}
               </p>
               <FormPreview
+                highlightFields
+                persistWhileEditing
                 docKey={preview}
                 seafarerId={viewing?.id}
                 shipOwnerId={ownerId}

@@ -292,7 +292,7 @@ const enrollmentService = {
         `INSERT INTO enrollment_score
          (enrollment_id, criteria_code, criteria_name, score, max_score, grade, notes)
          VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE score = VALUES(score), grade = VALUES(grade), notes = VALUES(notes)`,
+         ON CONFLICT (enrollment_id, criteria_code) DO UPDATE SET score = EXCLUDED.score, grade = EXCLUDED.grade, notes = EXCLUDED.notes`,
         [
           enrollmentId,
           score.criteria_code,

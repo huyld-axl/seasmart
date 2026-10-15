@@ -10,7 +10,7 @@ function startJobs(logger) {
       const [result] = await pool.query(
         `UPDATE seafarer_certificate
          SET status = 'EXPIRED', updated_at = NOW()
-         WHERE expiry_date < CURDATE() AND status = 'VALID' AND deleted_at IS NULL`
+         WHERE expiry_date < CURRENT_DATE AND status = 'VALID' AND deleted_at IS NULL`
       )
       logger.info({ affectedRows: result.affectedRows }, 'Job: expired certificates updated')
     } catch (err) {
@@ -23,14 +23,14 @@ function startJobs(logger) {
     try {
       const [result] = await pool.query(
         `UPDATE seafarer s
-         SET s.status = 'AVAILABLE', s.updated_at = NOW()
+         SET status = 'AVAILABLE', updated_at = NOW()
          WHERE s.status = 'ON_VESSEL'
            AND s.deleted_at IS NULL
            AND NOT EXISTS (
              SELECT 1 FROM employment_contract ec
              WHERE ec.seafarer_id = s.id
                AND ec.deleted_at IS NULL
-               AND (ec.actual_end_date IS NULL OR ec.actual_end_date >= CURDATE())
+               AND (ec.actual_end_date IS NULL OR ec.actual_end_date >= CURRENT_DATE)
            )`
       )
       logger.info({ affectedRows: result.affectedRows }, 'Job: seafarer status reconciled')
@@ -106,7 +106,7 @@ function startJobs(logger) {
            FROM seafarer_certificate sc
            JOIN seafarer s ON s.id = sc.seafarer_id AND s.deleted_at IS NULL AND s.user_id IS NOT NULL
            LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
-           WHERE sc.deleted_at IS NULL AND sc.expiry_date = DATE_ADD(CURDATE(), INTERVAL ? DAY)`,
+           WHERE sc.deleted_at IS NULL AND sc.expiry_date = (CURRENT_DATE + (? * INTERVAL '1 day'))`,
           [days]
         )
         for (const row of certs) {
@@ -133,7 +133,7 @@ function startJobs(logger) {
         `SELECT ec.id, ec.seafarer_id, s.user_id, ec.end_date
          FROM employment_contract ec
          JOIN seafarer s ON s.id = ec.seafarer_id AND s.deleted_at IS NULL AND s.user_id IS NOT NULL
-         WHERE ec.deleted_at IS NULL AND ec.end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)`
+         WHERE ec.deleted_at IS NULL AND ec.end_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day'))`
       )
       for (const row of contracts) {
         const dup = await notificationService.hasRecentDuplicate(
@@ -157,9 +157,9 @@ function startJobs(logger) {
       const [docs] = await pool.query(
         `SELECT id, user_id, full_name, passport_expiry, seaman_book_expiry, medical_cert_expiry
          FROM seafarer WHERE deleted_at IS NULL AND user_id IS NOT NULL
-         AND (passport_expiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-           OR seaman_book_expiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY)
-           OR medical_cert_expiry BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY))`
+         AND (passport_expiry BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day'))
+           OR seaman_book_expiry BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day'))
+           OR medical_cert_expiry BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day')))`
       )
       for (const row of docs) {
         if (row.passport_expiry) {

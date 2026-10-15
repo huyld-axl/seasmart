@@ -99,7 +99,7 @@ describe('tab Chứng chỉ', () => {
   })
 
   it('thêm tay trùng loại và ngày cấp thì báo 409, không lỗi 500', async () => {
-    vi.spyOn(pool, 'query').mockRejectedValue(Object.assign(new Error('dup'), { code: 'ER_DUP_ENTRY' }))
+    vi.spyOn(pool, 'query').mockRejectedValue(Object.assign(new Error('dup'), { code: '23505' }))
     await expect(certificateService.create(1, { certificate_type_id: 3 }, 1)).rejects.toMatchObject({ statusCode: 409 })
   })
 })

@@ -7,9 +7,10 @@ const pool = require('../config/db')
 const { sheetToHtml, parseRange } = require('../utils/sheet_html')
 const { fillCvTq } = require('./cv_tq_form.service')
 const { vndWords, parseAmount } = require('../utils/vnd_words')
+const { markCell, markParts, fillMarkedText, markInput } = require('../utils/form_fields')
 
-// Thư mục mẫu Excel (backend/forms, có trong repo). Đặt FORMS_DIR trong .env nếu muốn dùng thư mục khác.
-const FORMS_DIR = process.env.FORMS_DIR || path.resolve(__dirname, '../../forms')
+// Thư mục mẫu Excel ở forms/ tại root dự án. Đặt FORMS_DIR nếu muốn dùng thư mục khác.
+const FORMS_DIR = process.env.FORMS_DIR || path.resolve(__dirname, '../../../forms')
 
 // Dòng thuyền viên thứ 2 trở đi trong QĐ điều động, QĐ rời tàu, Thư bảo lãnh: bộ giấy một người thì để trống.
 const EXTRA_ROWS_BLANK = Object.fromEntries(
@@ -208,7 +209,7 @@ async function getSeafarerData(seafarerId) {
             r.name_vi as rank_name_vi,
             r.name_en as rank_name_en
      FROM seafarer s
-     LEFT JOIN rank r ON r.id = s.current_rank_id
+     LEFT JOIN "rank" r ON r.id = s.current_rank_id
      WHERE s.id = ? AND s.deleted_at IS NULL`,
     [seafarerId]
   )
@@ -220,7 +221,7 @@ async function getOwnerByVessel(vesselName) {
   if (!vesselName) return null
   // Try DB first, fall back to static data from the Excel file
   try {
-    const [rows] = await pool.query('SELECT * FROM ship_owner WHERE vessel_name LIKE ? LIMIT 1', [
+    const [rows] = await pool.query('SELECT * FROM ship_owner WHERE unaccent(vessel_name::text) ILIKE unaccent(?) LIMIT 1', [
       `%${vesselName}%`,
     ])
     if (rows[0]) return rows[0]
@@ -250,12 +251,8 @@ async function getOwnerById(shipOwnerId) {
 }
 
 // Mã điền trong mẫu: HD4, H37, và cả kiểu viết rời "HD 101". Mã không có trong dữ liệu thì giữ nguyên.
-const PLACEHOLDER = /\bHD?\s?(\d{1,3})\b/g
 function fillText(text, data) {
-  return text.replace(PLACEHOLDER, (found, n) => {
-    const value = data[`HD${n}`] ?? data[`H${n}`]
-    return value === undefined ? found : String(value)
-  })
+  return fillMarkedText(text, data).value
 }
 
 // Sheet in ra: sheet đầu tiên đang hiện và có nội dung (mẫu CV có một sheet ẩn đứng trước).
@@ -279,10 +276,19 @@ async function fillWorkbook(formFileName, data) {
       if (cell.isMerged && cell.master !== cell) return
       const v = cell.value
       if (typeof v === 'string') {
-        const filled = fillText(v, data)
-        if (filled !== v) cell.value = filled
+        const filled = fillMarkedText(v, data, new Set(Object.keys(EXTRA_ROWS_BLANK)))
+        if (filled.value !== v) cell.value = filled.value
+        markParts(cell, filled.parts)
       } else if (v?.richText) {
-        cell.value = { richText: v.richText.map((run) => ({ ...run, text: fillText(run.text, data) })) }
+        let offset = 0
+        const parts = []
+        cell.value = { richText: v.richText.map((run) => {
+          const filled = fillMarkedText(run.text, data, new Set(Object.keys(EXTRA_ROWS_BLANK)))
+          parts.push(...filled.parts.map((part) => ({ ...part, start: part.start + offset, end: part.end + offset })))
+          offset += filled.value.length
+          return { ...run, text: filled.value }
+        }) }
+        markParts(cell, parts)
       }
     })
   })
@@ -328,11 +334,15 @@ const INPUT_CELLS = {
 function applyInputs(ws, formKey, inputs = {}) {
   for (const [label, targets] of Object.entries(INPUT_CELLS[formKey] || {})) {
     const value = typeof inputs[label] === 'string' ? inputs[label].trim() : ''
-    if (!value) continue
     for (const [address, write] of targets) {
       const cell = ws.getCell(address)
-      const next = write(value, cell.text)
-      if (next !== undefined) cell.value = next
+      const before = cell.text
+      const next = value ? write(value, before) : undefined
+      if (next !== undefined) {
+        cell.value = next
+        if (typeof next === 'number') markCell(cell, next)
+        else markInput(cell, before, cell.text, true)
+      } else markInput(cell, before, before, false)
     }
   }
 }
@@ -356,11 +366,13 @@ function applyEdits(ws, edits = {}) {
     if (align) cell.alignment = { ...cell.alignment, horizontal: align }
     if (Array.isArray(text)) {
       cell.value = { richText: text.map((run) => ({ text: run.text, font: runFont(cell.font, run) })) }
+      markCell(cell, text.map((run) => run.text).join(''))
       continue
     }
     const current = cell.value?.formula || cell.value?.sharedFormula ? cell.value.result : cell.value
     const plain = /#,##0/.test(cell.numFmt || '') ? text.replace(/\./g, '').replace(',', '.') : text
     cell.value = typeof current === 'number' && text.trim() && Number.isFinite(Number(plain)) ? Number(plain) : text
+    markCell(cell, text)
   }
 }
 

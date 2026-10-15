@@ -96,7 +96,7 @@ function parseBH(val) {
 }
 
 async function getRankMap() {
-  const [rows] = await pool.query('SELECT id, code FROM `rank`')
+  const [rows] = await pool.query('SELECT id, code FROM "rank"')
   const map = {}
   rows.forEach((r) => {
     map[r.code.toUpperCase()] = r.id
@@ -320,9 +320,9 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
     } catch (err) {
       // Sanitize error message — không lộ DB schema ra client
       let safeMsg = 'Lỗi khi lưu dữ liệu'
-      if (err.code === 'ER_DUP_ENTRY') safeMsg = 'Dữ liệu bị trùng lặp'
-      else if (err.code === 'ER_DATA_TOO_LONG') safeMsg = 'Dữ liệu quá dài cho một trường'
-      else if (err.code === 'ER_BAD_NULL_ERROR') safeMsg = 'Thiếu dữ liệu bắt buộc'
+      if (err.code === '23505') safeMsg = 'Dữ liệu bị trùng lặp'
+      else if (err.code === '22001') safeMsg = 'Dữ liệu quá dài cho một trường'
+      else if (err.code === '23502') safeMsg = 'Thiếu dữ liệu bắt buộc'
       else if (err.statusCode) safeMsg = err.message // lỗi business logic từ code
       results.errors.push({
         row: rowNum,
@@ -422,7 +422,7 @@ async function importEnrollments(courseId, fileBuffer, userId, userRole, linkedE
 
       const notes = row.notes != null ? String(row.notes).trim() : null
       await pool.query(
-        'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date, notes) VALUES (?, ?, \'PENDING\', CURDATE(), ?)',
+        'INSERT INTO training_enrollment (course_id, seafarer_id, status, enrollment_date, notes) VALUES (?, ?, \'PENDING\', CURRENT_DATE, ?)',
         [courseId, seafarer.id, notes]
       )
       results.success++

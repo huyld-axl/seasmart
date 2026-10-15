@@ -42,7 +42,7 @@ const trainingCourseService = {
     }
 
     if (search) {
-      where.push('(tc.name LIKE ? OR tc.course_code LIKE ?)')
+      where.push('(unaccent(tc.name::text) ILIKE unaccent(?) OR unaccent(tc.course_code::text) ILIKE unaccent(?))')
       const q = `%${search}%`
       params.push(q, q)
     }
@@ -82,7 +82,7 @@ const trainingCourseService = {
        LEFT JOIN training_center ctr ON ctr.id = tc.training_center_id
        LEFT JOIN training_enrollment e ON e.course_id = tc.id AND e.deleted_at IS NULL
        WHERE tc.id = ? AND tc.deleted_at IS NULL
-       GROUP BY tc.id`,
+       GROUP BY tc.id, ct.name_vi, ctr.name_vi`,
       [id]
     )
     if (!rows[0]) throw { statusCode: 404, message: 'Không tìm thấy khóa học' }

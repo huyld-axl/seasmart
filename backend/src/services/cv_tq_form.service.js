@@ -3,6 +3,7 @@
 // Sheet "CREW LIST": một dòng thuyền viên.
 
 const SERVICE_COLUMNS = ['C', 'D', 'E', 'F', 'G']
+const { markCell } = require('../utils/form_fields')
 
 // Dòng chứng chỉ trên mẫu ← mã certificate_type.
 const CERTIFICATE_ROWS = {
@@ -152,9 +153,16 @@ function crewListCells({ seafarer: s }) {
 
 // Điền workbook mẫu. Chưa chọn thuyền viên (xem trước mẫu trống) thì giữ nguyên mẫu.
 async function fillCvTq(wb, sheet, seafarerId, pool) {
-  if (!seafarerId) return {}
+  if (!seafarerId) {
+    for (const address of Object.keys(cvCells({ seafarer: {}, certificates: [], services: [], kin: null }))) markCell(sheet.getCell(address), '')
+    return {}
+  }
   const data = await loadCvData(pool, seafarerId)
-  for (const [address, value] of Object.entries(cvCells(data))) sheet.getCell(address).value = value
+  for (const [address, value] of Object.entries(cvCells(data))) {
+    const cell = sheet.getCell(address)
+    cell.value = value
+    markCell(cell, value)
+  }
   const crewList = wb.worksheets.find((ws) => /crew list/i.test(ws.name))
   if (crewList) for (const [address, value] of Object.entries(crewListCells(data))) crewList.getCell(address).value = value
   return data.seafarer

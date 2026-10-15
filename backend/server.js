@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config({ quiet: true })
 const Fastify = require('fastify')
 const config = require('./src/config')
 const plugins = require('./src/plugins')

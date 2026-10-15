@@ -30,7 +30,7 @@ async function duplicateGuard(promise, message) {
   try {
     return await promise
   } catch (error) {
-    if (error.code === 'ER_DUP_ENTRY') throw { statusCode: 409, message }
+    if (error.code === '23505') throw { statusCode: 409, message }
     throw error
   }
 }
@@ -55,7 +55,7 @@ const fleetService = {
     const params = []
     let where = 'WHERE v.deleted_at IS NULL'
     if (query.search) {
-      where += ' AND (v.vessel_name LIKE ? OR v.imo_number LIKE ?)'
+      where += ' AND (unaccent(v.vessel_name::text) ILIKE unaccent(?) OR unaccent(v.imo_number::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`)
     }
     const [rows] = await pool.query(`${VESSEL_SELECT} ${where} ORDER BY v.vessel_name LIMIT ? OFFSET ?`, [...params, limit, offset])
@@ -75,7 +75,7 @@ const fleetService = {
     validateVessel(data)
     const cols = Object.keys(data)
     const [result] = await duplicateGuard(
-      pool.query(`INSERT INTO vessel (${cols.map((c) => `\`${c}\``).join(',')}) VALUES (${cols.map(() => '?').join(',')})`, Object.values(data)),
+      pool.query(`INSERT INTO vessel (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`, Object.values(data)),
       'IMO này đã có trong danh mục'
     )
     return this.getVessel(pool, result.insertId)
@@ -89,21 +89,21 @@ const fleetService = {
     await this.getVessel(pool, id)
     const cols = Object.keys(data)
     await duplicateGuard(
-      pool.query(`UPDATE vessel SET ${cols.map((c) => `\`${c}\` = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
+      pool.query(`UPDATE vessel SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
       'IMO này đã có trong danh mục'
     )
     return this.getVessel(pool, id)
   },
 
   async softDelete(pool, table, id) {
-    const [result] = await pool.query(`UPDATE \`${table}\` SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL`, [id])
+    const [result] = await pool.query(`UPDATE "${table}" SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL`, [id])
     if (!result.affectedRows) throw { statusCode: 404, message: 'Không tìm thấy' }
     return { success: true }
   },
 
   async restore(pool, table, id) {
     const [result] = await duplicateGuard(
-      pool.query(`UPDATE \`${table}\` SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL`, [id]),
+      pool.query(`UPDATE "${table}" SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL`, [id]),
       'Không khôi phục được: mã hoặc IMO đã được dùng cho bản ghi khác'
     )
     if (!result.affectedRows) throw { statusCode: 404, message: 'Không có bản ghi đã xoá để khôi phục' }
@@ -115,7 +115,7 @@ const fleetService = {
     const params = []
     let where = 'WHERE o.deleted_at IS NULL'
     if (query.search) {
-      where += ' AND (o.company_name LIKE ? OR o.code LIKE ?)'
+      where += ' AND (unaccent(o.company_name::text) ILIKE unaccent(?) OR unaccent(o.code::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`)
     }
     const [rows] = await pool.query(`${OWNER_SELECT} ${where} ORDER BY o.company_name LIMIT ? OFFSET ?`, [...params, limit, offset])
@@ -134,7 +134,7 @@ const fleetService = {
     if (!data.code || !data.company_name) throw { statusCode: 400, message: 'Thiếu mã hoặc tên chủ tàu' }
     const cols = Object.keys(data)
     const [result] = await duplicateGuard(
-      pool.query(`INSERT INTO ship_owner (${cols.map((c) => `\`${c}\``).join(',')}) VALUES (${cols.map(() => '?').join(',')})`, Object.values(data)),
+      pool.query(`INSERT INTO ship_owner (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`, Object.values(data)),
       'Mã chủ tàu đã tồn tại'
     )
     return this.getOwner(pool, result.insertId)
@@ -149,7 +149,7 @@ const fleetService = {
     await this.getOwner(pool, id)
     const cols = Object.keys(data)
     await duplicateGuard(
-      pool.query(`UPDATE ship_owner SET ${cols.map((c) => `\`${c}\` = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
+      pool.query(`UPDATE ship_owner SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
       'Mã chủ tàu đã tồn tại'
     )
     return this.getOwner(pool, id)

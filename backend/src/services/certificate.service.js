@@ -42,8 +42,8 @@ const certificateService = {
     // Hết hạn sớm nhất lên trước (đã hết hạn đứng đầu), không thời hạn xuống cuối.
     const [rows] = await pool.query(
       `SELECT sc.*,
-              DATE_FORMAT(sc.issued_date, '%Y-%m-%d') AS issued_date,
-              DATE_FORMAT(sc.expiry_date, '%Y-%m-%d') AS expiry_date,
+              TO_CHAR(sc.issued_date, 'YYYY-MM-DD') AS issued_date,
+              TO_CHAR(sc.expiry_date, 'YYYY-MM-DD') AS expiry_date,
               ct.name_vi as certificate_type_name,
               c.name_vi  as issued_at_country_name,
               COALESCE(u.file_name, sd.file_name) AS source_file_name,
@@ -70,8 +70,8 @@ const certificateService = {
   async getById(id, seafarerId) {
     const [rows] = await pool.query(
       `SELECT sc.*,
-              DATE_FORMAT(sc.issued_date, '%Y-%m-%d') AS issued_date,
-              DATE_FORMAT(sc.expiry_date, '%Y-%m-%d') AS expiry_date,
+              TO_CHAR(sc.issued_date, 'YYYY-MM-DD') AS issued_date,
+              TO_CHAR(sc.expiry_date, 'YYYY-MM-DD') AS expiry_date,
               ct.name_vi as certificate_type_name,
               c.name_vi  as issued_at_country_name
        FROM seafarer_certificate sc
@@ -87,12 +87,12 @@ const certificateService = {
   async create(seafarerId, data, created_by) {
     try {
       const [result] = await pool.query(
-        'INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?',
-        [data, seafarerId, created_by, created_by]
+        'INSERT INTO seafarer_certificate SET ?',
+        [{ ...data, seafarer_id: seafarerId, created_by, updated_by: created_by }]
       )
       return this.getById(result.insertId, seafarerId)
     } catch (err) {
-      if (err?.code === 'ER_DUP_ENTRY') throw { statusCode: 409, message: 'Hồ sơ đã có chứng chỉ này (cùng loại và cùng ngày cấp)' }
+      if (err?.code === '23505') throw { statusCode: 409, message: 'Hồ sơ đã có chứng chỉ này (cùng loại và cùng ngày cấp)' }
       throw err
     }
   },

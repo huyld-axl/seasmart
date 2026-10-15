@@ -219,7 +219,7 @@ const documentService = {
     } catch (err) {
       fs.rmSync(storagePath, { force: true })
       // Hai lần thả cùng lúc: lần sau thua khoá UNIQUE, trả tệp của lần trước.
-      if (err?.code === 'ER_DUP_ENTRY') {
+      if (err?.code === '23505') {
         const dup = await findDuplicate()
         if (dup) return dup
       }
@@ -422,13 +422,13 @@ const documentService = {
   // Chạy lần lượt trong nền; trả số lượng đã xếp hàng.
   async recoverStalled() {
     const [uploads] = await pool.query(
-      'SELECT id FROM document_upload WHERE deleted_at IS NULL AND status IN (?) AND updated_at < (NOW() - INTERVAL ? MINUTE) ORDER BY id',
+      'SELECT id FROM document_upload WHERE deleted_at IS NULL AND status IN (?) AND updated_at < (NOW() - (? * INTERVAL \'1 minute\')) ORDER BY id',
       [BUSY_UPLOAD_STATES, STALLED_MINUTES]
     )
     // Giấy đang đọc dở mà upload của nó không còn bận (giấy cũ chưa có upload, hoặc đọc lại một giấy).
     const [docs] = await pool.query(
       `SELECT d.id FROM seafarer_document d LEFT JOIN document_upload u ON u.id = d.upload_id
-       WHERE d.deleted_at IS NULL AND d.status = ? AND d.updated_at < (NOW() - INTERVAL ? MINUTE)
+       WHERE d.deleted_at IS NULL AND d.status = ? AND d.updated_at < (NOW() - (? * INTERVAL '1 minute'))
          AND (u.id IS NULL OR u.status NOT IN (?))
        ORDER BY d.id`,
       [DOC_STATUS.READING, STALLED_MINUTES, BUSY_UPLOAD_STATES]
@@ -459,7 +459,7 @@ const documentService = {
   // Bảng tra cho phần chuẩn hoá khi trả về: chỉ nạp bảng chức danh khi có trang bố trí chức danh.
   async lookupsFor(docs) {
     if (!docs.some((doc) => doc.doc_type === 'seaman_book_duty')) return {}
-    const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM `rank`')
+    const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM "rank"')
     return { ranks }
   },
 
@@ -615,7 +615,7 @@ const documentService = {
 
     const [allFields] = await pool.query('SELECT * FROM document_field WHERE document_id IN (?)', [docs.map((doc) => doc.id)])
     const fieldsOf = (doc) => allFields.filter((field) => field.document_id === doc.id)
-    const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM `rank`')
+    const [ranks] = await pool.query('SELECT id, code, name_vi, name_en FROM "rank"')
     const profile = {}
     const certificates = []
     const seaServices = []
@@ -632,7 +632,7 @@ const documentService = {
           await seafarerService.applyUpdate(conn, seafarerId, profile, userId, `Từ giấy tờ đã duyệt: ${docs.map((doc) => DOC_TYPES[doc.doc_type].label).join(', ')}`)
         }
         for (const row of certificates) {
-          await conn.query('INSERT INTO seafarer_certificate SET ?, seafarer_id = ?, created_by = ?, updated_by = ?', [row, seafarerId, userId, userId])
+          await conn.query('INSERT INTO seafarer_certificate SET ?', [{ ...row, seafarer_id: seafarerId, created_by: userId, updated_by: userId }])
         }
         for (const row of seaServices) await seaServiceService.insertFromDocument(conn, { ...row, seafarer_id: seafarerId })
         const [done] = await conn.query('UPDATE seafarer_document SET status = ?, published_at = NOW(), published_by = ? WHERE id IN (?) AND status = ?', [DOC_STATUS.PUBLISHED, userId, docs.map((doc) => doc.id), DOC_STATUS.COMPLETED])
@@ -640,7 +640,7 @@ const documentService = {
         if (done.affectedRows !== docs.length) throw { statusCode: 409, message: 'Giấy vừa thay đổi, tải lại trang rồi thử lại' }
       })
     } catch (err) {
-      if (err?.code === 'ER_DUP_ENTRY') throw { statusCode: 409, message: 'Hồ sơ đã có dữ liệu trùng với giấy này (cùng loại và cùng ngày cấp, hoặc giấy đã đưa vào hồ sơ). Tải lại trang rồi thử lại.' }
+      if (err?.code === '23505') throw { statusCode: 409, message: 'Hồ sơ đã có dữ liệu trùng với giấy này (cùng loại và cùng ngày cấp, hoặc giấy đã đưa vào hồ sơ). Tải lại trang rồi thử lại.' }
       throw err
     }
     return { documents: docs.length, profile_fields: Object.keys(profile), certificates: certificates.length, sea_services: seaServices.length }
@@ -679,7 +679,7 @@ const documentService = {
       const same = (row) => row.certificate_type_id === typeId &&
         ((number && row.certificate_number === number) || (expiry && row.expiry_date === expiry))
       const [existing] = await pool.query(
-        `SELECT certificate_type_id, certificate_number, DATE_FORMAT(expiry_date, '%Y-%m-%d') AS expiry_date
+        `SELECT certificate_type_id, certificate_number, TO_CHAR(expiry_date, 'YYYY-MM-DD') AS expiry_date
          FROM seafarer_certificate WHERE seafarer_id = ? AND certificate_type_id = ? AND deleted_at IS NULL`,
         [doc.seafarer_id, typeId]
       )

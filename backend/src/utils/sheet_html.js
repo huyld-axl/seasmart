@@ -4,6 +4,7 @@
 const PX_PER_CHAR = 7
 const DEFAULT_COL_WIDTH = 8.43
 const OVERFLOW_ROOM = 16 // chữ không xuống dòng ở cột cuối tràn ra ngoài bảng như trong Excel
+const { getFieldMarks } = require('./form_fields')
 const BORDER = { thin: '1px solid', hair: '1px dotted', dotted: '1px dotted', dashed: '1px dashed', medium: '2px solid', thick: '3px solid', double: '3px double' }
 
 const esc = (text) => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -33,7 +34,7 @@ function fontCss(font = {}) {
   return css
 }
 
-function cellHtml(cell) {
+function rawCellHtml(cell) {
   const value = cell.value
   if (value === null || value === undefined) return ''
   if (value instanceof Date) return `${pad(value.getDate())}/${pad(value.getMonth() + 1)}/${value.getFullYear()}`
@@ -45,6 +46,37 @@ function cellHtml(cell) {
   if (typeof result === 'number' && /#,##0/.test(cell.numFmt || '')) return esc(result.toLocaleString('vi-VN'))
   if (result && typeof result === 'object') return esc(cell.text || '')
   return esc(result ?? '')
+}
+
+function markedText(text, parts, offset = 0, last = true) {
+  const end = offset + text.length
+  let cursor = offset, html = ''
+  for (const part of parts) {
+    const empty = part.start === part.end
+    if (empty && !(part.start >= offset && (part.start < end || (last && part.start === end)))) continue
+    const start = Math.max(offset, part.start, cursor), stop = Math.min(end, part.end)
+    if (!empty && start >= stop) continue
+    html += esc(text.slice(cursor - offset, start - offset))
+    const label = part.state === 'missing' ? 'Chưa điền' : 'Đã điền'
+    html += `<span data-fill-state="${part.state}"${empty ? ' data-fill-empty="true"' : ''} title="${label}">${esc(text.slice(start - offset, stop - offset))}</span>`
+    cursor = stop
+  }
+  return html + esc(text.slice(cursor - offset))
+}
+
+function cellHtml(cell) {
+  const marks = getFieldMarks(cell)
+  if (!marks?.parts) return rawCellHtml(cell)
+  const value = cell.value
+  if (value?.richText) {
+    let offset = 0
+    return value.richText.map((run, index) => {
+      const html = markedText(run.text, marks.parts, offset, index === value.richText.length - 1)
+      offset += run.text.length
+      return `<span style="${['font-weight:400', 'font-style:normal', ...fontCss(run.font)].join(';')}">${html}</span>`
+    }).join('')
+  }
+  return markedText(cell.text || '', marks.parts)
 }
 
 function cellCss(cell) {
@@ -120,7 +152,9 @@ function sheetToHtml(ws, wb) {
       const span = spans.get(`${r}:${c}`)
       const attrs = span ? ` rowspan="${span.rowspan}" colspan="${span.colspan}"` : ''
       const cell = row.getCell(c)
-      cells.push(`<td${attrs} data-cell="${cell.address}" style="${cellCss(cell)}">${cellHtml(cell)}</td>`)
+      const marks = getFieldMarks(cell)
+      const fillAttrs = marks ? ` data-fill-field="true" data-fill-state="${marks.full || 'mixed'}"` : ''
+      cells.push(`<td${attrs} data-cell="${cell.address}"${fillAttrs} style="${cellCss(cell)}">${cellHtml(cell)}</td>`)
     }
     const height = Math.round((row.height || ws.properties?.defaultRowHeight || 15) * 96 / 72)
     rows.push(`<tr style="height:${height}px">${cells.join('')}</tr>`)

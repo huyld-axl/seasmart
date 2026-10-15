@@ -5,11 +5,11 @@ const EXPIRING_DAYS = 90
 
 // Giấy tờ có hạn: chứng chỉ (trừ bị thu hồi) + hộ chiếu, sổ thuyền viên, giấy khám sức khỏe.
 const dateCount = (cond) =>
-  `(IFNULL(s.passport_expiry ${cond}, 0) + IFNULL(s.seaman_book_expiry ${cond}, 0) + IFNULL(s.medical_cert_expiry ${cond}, 0)
+  `(COALESCE((s.passport_expiry ${cond})::integer, 0) + COALESCE((s.seaman_book_expiry ${cond})::integer, 0) + COALESCE((s.medical_cert_expiry ${cond})::integer, 0)
     + (SELECT COUNT(*) FROM seafarer_certificate sc WHERE sc.seafarer_id = s.id AND sc.status <> 'REVOKED' AND sc.expiry_date ${cond}))`
 
-const EXPIRED_EXPR = dateCount('< CURDATE()')
-const EXPIRING_EXPR = dateCount(`BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ${EXPIRING_DAYS} DAY)`)
+const EXPIRED_EXPR = dateCount('< CURRENT_DATE')
+const EXPIRING_EXPR = dateCount(`BETWEEN CURRENT_DATE AND (CURRENT_DATE + (${EXPIRING_DAYS} * INTERVAL '1 day'))`)
 const PENDING_EXPR = '(SELECT COUNT(*) FROM seafarer_certificate sc WHERE sc.seafarer_id = s.id AND sc.status = \'PENDING\')'
 
 // Hợp đồng đang chạy mới nhất: tàu và ngày dự kiến rời tàu.

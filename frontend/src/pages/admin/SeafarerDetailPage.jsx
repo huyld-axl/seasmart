@@ -1009,7 +1009,7 @@ function EnrollmentsSection({ seafarerId }) {
 
   const { data: courses } = useQuery({
     queryKey: ['courses-all'],
-    queryFn: () => courseApi.list({ limit: 200 }).then((r) => r.data),
+    queryFn: () => courseApi.listAll(),
     enabled: addOpen,
   })
 

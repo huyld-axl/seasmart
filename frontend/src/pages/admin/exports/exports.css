@@ -32,6 +32,8 @@
 .vp-manual__body { display: grid; gap: 12px; padding: 4px 16px 16px; }
 
 /* Tạo bộ giấy (B3). */
+.pk-draft { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 10px 12px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); font-size: 12px; }
+.pk-draft span { flex: 1 1 240px; }
 .pk-who { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 0 16px; }
 @media (max-width: 899px) { .pk-who { grid-template-columns: minmax(0, 1fr); } }
 .pk-who .ant-select { width: 100%; }
@@ -71,6 +73,9 @@
 .fp__page { margin: 0 auto; overflow: hidden; }
 .fp-wrap { display: grid; gap: 8px; min-width: 0; }
 .fp__tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-height: 24px; }
+.fp__legend { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; }
+.fp__legend-filled { color: #b91c1c; font-weight: 600; }
+.fp__legend-missing { padding: 1px 5px; background: #fff2a8; color: #39300a; border-radius: 2px; }
 /* Thanh định dạng kiểu WordPress, dính liền phía trên trang giấy đang sửa. */
 .fp-rt { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; margin-bottom: -8px; padding: 4px 6px; border: 1px solid var(--border-strong); border-bottom: 0; background: var(--surface-hover); }
 .fp-rt__group { display: inline-flex; align-items: center; gap: 2px; }

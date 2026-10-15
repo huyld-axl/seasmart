@@ -1,0 +1,102 @@
+name: seasmart
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file:
+      - path: ./docker/postgres.env
+        format: raw
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  backend:
+    image: seasmart-backend:local
+    build:
+      context: ./backend
+      network: ${BUILD_NETWORK:-default}
+    restart: unless-stopped
+    init: true
+    secrets:
+      - backend_env
+      - jwt_secret
+    env_file:
+      - path: ./docker/postgres.env
+        format: raw
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      UPLOAD_DIR: ./uploads
+      FORMS_DIR: /app/forms
+      SOFFICE_PATH: soffice
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173,http://127.0.0.1:5173}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${BACKEND_PORT:-3000}:3000"
+    volumes:
+      - uploads:/app/backend/uploads
+      - type: bind
+        source: ${FORMS_HOST_DIR:-./forms}
+        target: /app/forms
+        read_only: true
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    logging: *logging
+
+  frontend:
+    image: seasmart-frontend:local
+    build:
+      context: ./frontend
+      network: ${BUILD_NETWORK:-default}
+      args:
+        FRONTEND_BUILD_ID: ${FRONTEND_BUILD_ID:-manual}
+        FRONTEND_API_URL: ${FRONTEND_API_URL:-/api/v1}
+      secrets:
+        - frontend_env
+    restart: unless-stopped
+    ports:
+      - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8080}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    logging: *logging
+
+secrets:
+  backend_env:
+    file: ./backend/.env
+  frontend_env:
+    file: ./frontend/.env
+  jwt_secret:
+    file: ./docker/jwt_secret
+
+volumes:
+  postgres_data:
+  uploads:

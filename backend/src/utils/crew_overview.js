@@ -51,7 +51,7 @@ function completeness(row) {
   return Math.round((filled / COMPLETENESS_FIELDS.length) * 100)
 }
 
-const HELPER_FIELDS = ['passport_number', 'seaman_book_number', 'medical_cert_number', 'nationality_id', 'current_rank_id']
+const HELPER_FIELDS = ['seaman_book_number', 'medical_cert_number', 'nationality_id', 'current_rank_id']
 
 // Bỏ cột chỉ dùng để tính, giữ số liệu dạng số.
 function shapeRow(row) {

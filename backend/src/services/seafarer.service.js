@@ -247,7 +247,7 @@ const seafarerService = {
     const selectFields = isTC
       ? TRAINING_CENTER_SELECT
       : `s.id, s.seafarer_code, s.full_name, s.national_id, s.date_of_birth,
-         s.phone_primary, s.email, s.status, s.user_id,
+         s.gender, s.place_of_birth, s.phone_primary, s.email, s.status, s.user_id,
          r.name_vi as rank_name, r.code as rank_code, ${OVERVIEW_FIELDS}`
 
     const [rows] = await pool.query(

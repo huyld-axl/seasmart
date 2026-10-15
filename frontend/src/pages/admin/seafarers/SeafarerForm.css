@@ -150,3 +150,12 @@
 }
 .sf-photo--btn { padding: 0; border: 0; cursor: pointer; }
 .sf-photo--btn:hover { box-shadow: 0 0 0 2px var(--primary); }
+
+/* Màn xem hồ sơ (chỉ đọc): nhãn nhỏ phía trên, giá trị bên dưới, trong cùng lưới 12 cột với form */
+.sf-ro { margin: 0; }
+.sf-ro__label { margin: 0 0 4px; color: var(--neutral); font-size: 13px; }
+.sf-ro__value { margin: 0; min-height: 22px; color: var(--foreground); overflow-wrap: anywhere; }
+.sf-ro__empty { color: var(--muted); }
+.sf-ro-group { display: flex; flex-direction: column; gap: 14px; }
+.sf-ro-group + .sf-ro-group, .sf-items + .sf-ro-group, .sf-grid + .sf-ro-group { margin-top: 20px; }
+.sf-grid > .sf-c12 { grid-column: 1 / -1; }

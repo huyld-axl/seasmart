@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { NAV_SECTIONS, sectionsFor, activeSection, activeTab, initialsOf } from '../navConfig'
 
 describe('navConfig', () => {
-  it('sidebar có đúng 4 mục theo thứ tự đã chốt', () => {
-    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Thuyền viên', 'Bản xuất', 'Danh mục', 'Quản trị'])
+  it('sidebar có đúng 6 mục theo thứ tự đã chốt', () => {
+    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Thuyền viên', 'Bản xuất', 'Tàu', 'Đối tác', 'Danh mục', 'Quản trị'])
   })
 
   it('trung tâm đào tạo chỉ thấy khóa học và tin nhắn', () => {
@@ -19,8 +19,8 @@ describe('navConfig', () => {
   })
 
   it('chọn tab con của mục', () => {
-    const catalog = activeSection(NAV_SECTIONS, '/master-data/ship-owners')
-    expect(activeTab(catalog, '/master-data/ship-owners').label).toBe('Chủ tàu')
+    expect(activeSection(NAV_SECTIONS, '/fleet/ship-owners').key).toBe('ship-owners')
+    expect(activeSection(NAV_SECTIONS, '/fleet/vessels').key).toBe('vessels')
     expect(activeTab(activeSection(NAV_SECTIONS, '/seafarers'), '/seafarers')).toBeNull()
   })
 

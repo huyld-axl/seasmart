@@ -119,7 +119,7 @@ async function seafarerRoutes(fastify) {
             national_id: { type: 'string' },
             passport_number: { type: 'string' },
             seaman_book_number: { type: 'string' },
-            gender: { type: 'string', enum: ['M', 'F'] },
+            gender: { type: 'string', enum: ['M', 'F', 'O'] },
             phone_primary: { type: 'string' },
             email: { type: 'string' },
             status: { type: 'string' },

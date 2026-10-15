@@ -7,7 +7,6 @@ import api from '../../api/client'
 import SlidePanel from '../../components/ds/SlidePanel'
 import useToast from '../../components/ds/useToast'
 import { EmptyState } from '../../components/ds/Controls'
-import { VesselTab, ShipOwnerTab } from './fleet/FleetTabs'
 
 // ── Generic CRUD hook ──────────────────────────────────────────────────────────
 function useMasterData(resource) {
@@ -410,8 +409,6 @@ function PortTab() {
 // ── Route map ──────────────────────────────────────────────────────────────────
 
 const TAB_MAP = {
-  vessels: { component: VesselTab, title: 'Tàu', description: 'Danh mục tàu dùng khi đối chiếu sea service. IMO được kiểm số kiểm tra.' },
-  'ship-owners': { component: ShipOwnerTab, title: 'Chủ tàu', description: 'Chủ tàu và người liên hệ của từng chủ tàu.' },
   cert: { component: CertificateTypeTab, title: 'Chứng chỉ' },
   vessel: { component: VesselTypeTab, title: 'Loại tàu' },
   country: { component: CountryTab, title: 'Quốc gia' },
@@ -424,7 +421,8 @@ export default function MasterSubPage() {
   const { tab } = useParams()
   const entry = TAB_MAP[tab]
 
-  if (!entry) return <Navigate to="/master-data/vessels" replace />
+  if (tab === 'vessels' || tab === 'ship-owners') return <Navigate to={`/fleet/${tab}`} replace />
+  if (!entry) return <Navigate to="/master-data/cert" replace />
 
   const Component = entry.component
   return (

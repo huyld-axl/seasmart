@@ -68,7 +68,7 @@ function OwnerPicker({ value, label, onChange }) {
       value={value ? { value, label: label || data?.data?.find((owner) => owner.id === value)?.company_name } : undefined}
       onSearch={setSearch}
       onChange={(item) => onChange(item?.value ?? null, item?.label ?? null)}
-      notFoundContent={isFetching ? 'Đang tìm…' : <span>Chưa có chủ tàu khớp. Thêm ở <Link to="/master-data/ship-owners">Danh mục chủ tàu</Link>.</span>}
+      notFoundContent={isFetching ? 'Đang tìm…' : <span>Chưa có chủ tàu khớp. Thêm ở <Link to="/fleet/ship-owners">mục Chủ tàu</Link>.</span>}
       options={(data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
     />
   )

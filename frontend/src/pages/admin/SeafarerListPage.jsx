@@ -13,14 +13,14 @@ import {
 } from '@ant-design/icons'
 import { seafarerApi } from '../../api'
 import api from '../../api/client'
-import StatusBadge from '../../components/ds/StatusBadge'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
-import { CREW_TABS, availabilityText, docsAlert } from './seafarers/crewView'
+import { CREW_TABS, availabilityText } from './seafarers/crewView'
 import CrewPhoto from './seafarers/CrewPhoto'
 import './seafarers/SeafarerListPage.css'
 
 const { useBreakpoint } = Grid
 const PAGE_SIZE = 20
+const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 
 function Person({ row }) {
   return (
@@ -36,22 +36,6 @@ function Person({ row }) {
           </span>
         )}
       </span>
-    </span>
-  )
-}
-
-function DocsCell({ row }) {
-  const alert = docsAlert(row)
-  return <span className={`crew-docs crew-docs--${alert.tone}`}>{alert.text}</span>
-}
-
-function Completeness({ value }) {
-  return (
-    <span className="crew-complete" title={`Hồ sơ đầy đủ ${value}%`}>
-      <span className="crew-complete__bar">
-        <span style={{ width: `${value}%` }} />
-      </span>
-      <span className="ds-num">{value}%</span>
     </span>
   )
 }
@@ -107,10 +91,11 @@ export default function SeafarerListPage() {
 
   const columns = [
     { title: 'Thuyền viên', key: 'person', render: (_, row) => <Person row={row} /> },
-    { title: 'Tình trạng', key: 'status', width: 160, render: (_, row) => <StatusBadge group="crew" value={row.status} /> },
-    { title: 'Tàu / sẵn sàng', key: 'where', render: (_, row) => <span className="crew-nowrap">{availabilityText(row)}</span> },
-    { title: 'Giấy tờ', key: 'docs', width: 180, responsive: ['lg'], render: (_, row) => <DocsCell row={row} /> },
-    { title: 'Hồ sơ', key: 'complete', width: 140, responsive: ['lg'], render: (_, row) => <Completeness value={row.completeness} /> },
+    { title: 'Giới tính', key: 'gender', width: 100, responsive: ['lg'], render: (_, row) => GENDER_LABELS[row.gender] || '—' },
+    { title: 'Nơi sinh', dataIndex: 'place_of_birth', responsive: ['lg'], render: (value) => value || '—' },
+    { title: 'Hộ chiếu', dataIndex: 'passport_number', width: 130, responsive: ['lg'], render: (value) => (value ? <span className="ds-mono">{value}</span> : '—') },
+    { title: 'Tàu đang sign on', key: 'vessel', render: (_, row) => <span className="crew-nowrap">{row.status === 'ON_VESSEL' && row.vessel_name ? row.vessel_name : '—'}</span> },
+    { title: 'Tình trạng', key: 'where', render: (_, row) => <span className="crew-nowrap">{availabilityText(row)}</span> },
     { title: <span className="ds-sr-only">Mở</span>, key: 'open', width: 48, align: 'right', render: () => <RightOutlined className="crew-chevron" /> },
   ]
 
@@ -134,8 +119,7 @@ export default function SeafarerListPage() {
             <button type="button" className="crew-list__row" onClick={() => open(row)}>
               <Person row={row} />
               <span className="crew-list__meta">
-                <StatusBadge group="crew" value={row.status} />
-                <span className="ds-cell2__sub">{availabilityText(row)} · <DocsCell row={row} /></span>
+                <span className="ds-cell2__sub">{availabilityText(row)}</span>
               </span>
             </button>
           </li>

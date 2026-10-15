@@ -52,6 +52,7 @@ import { documentApi } from '../../api/documentApi'
 import { attentionItems, activeContract, headLine } from './seafarers/profileView'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
+import ProfileOverview from './seafarers/ProfileOverview'
 import ProfileHistory from './seafarers/ProfileHistory'
 import ProfileExports from './seafarers/ProfileExports'
 import CrewPhoto from './seafarers/CrewPhoto'
@@ -126,6 +127,20 @@ export default function SeafarerDetailPage() {
   const { data: seafarer, isLoading, isError, refetch } = useQuery({
     queryKey: ['seafarer', id],
     queryFn: () => seafarerApi.getById(id).then((r) => r.data),
+  })
+  const { data: photo } = useQuery({
+    queryKey: ['seafarer-photo', id, seafarer?.updated_at],
+    queryFn: () =>
+      seafarerApi.getPhoto(id).then(
+        (blob) =>
+          new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result)
+            reader.onerror = () => reject(reader.error)
+            reader.readAsDataURL(blob)
+          })
+      ),
+    enabled: Boolean(seafarer?.has_photo),
   })
   const { data: certificates } = useQuery({
     queryKey: ['certificates', id],
@@ -215,14 +230,9 @@ export default function SeafarerDetailPage() {
   const bodies = {
     overview: (
       <>
-        <div className="crew-two-col">
-          <ProfileSection s={seafarer} />
-          <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} />
-        </div>
+        <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} />
+        <ProfileOverview seafarer={seafarer} seafarerId={id} />
         <WorkSection s={seafarer} />
-        <ContactsSection seafarerId={id} />
-        <FinanceSection s={seafarer} />
-        <PhysicalSection s={seafarer} />
       </>
     ),
     docs: (
@@ -256,7 +266,7 @@ export default function SeafarerDetailPage() {
 
       <div className="crew-head">
         <div className="crew-head__person">
-          <CrewPhoto size="xl" />
+          <CrewPhoto size="xl" src={photo} />
           <div className="crew-head__text">
             <h1 className="crew-head__title">{seafarer.full_name}</h1>
             <p className="crew-head__desc">{headLine(seafarer, activeContract(contractList)) || seafarer.seafarer_code}</p>
@@ -334,56 +344,6 @@ function DescList({ fields, isMobile }) {
   )
 }
 
-function ProfileSection({ s }) {
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
-  const fields = [
-    ['Mã thuyền viên', s.seafarer_code],
-    ['Họ và tên', s.full_name],
-    ['Họ tên (EN)', s.full_name_en],
-    ['Tên tiếng Trung', s.full_name_zh],
-    ['Ngày sinh', fmt(s.date_of_birth)],
-    ['Giới tính', s.gender === 'M' ? 'Nam' : s.gender === 'F' ? 'Nữ' : '-'],
-    ['Tình trạng hôn nhân', s.marital_status],
-    ['Số con', s.children_count != null ? s.children_count : '-'],
-    ['Thông tin con', s.children_info],
-    ['Tuổi con', s.children_ages],
-    ['CCCD', s.national_id],
-    ['Ngày cấp CCCD', fmt(s.national_id_issued_date)],
-    ['Nơi cấp CCCD', s.national_id_issued_place],
-    ['Hộ chiếu', s.passport_number],
-    ['Ngày cấp HC', fmt(s.passport_issued_date)],
-    ['Hạn HC', fmt(s.passport_expiry)],
-    ['Nơi sinh', s.place_of_birth],
-    ['Sổ thuyền viên', s.seaman_book_number],
-    ['Chức danh', s.rank_name],
-    ['Chức danh (VI)', s.rank_name_vi],
-    ['Quốc tịch', s.nationality_name],
-    [
-      'SĐT',
-      s.phone_primary ? (
-        <span>
-          {s.phone_primary}
-          <ZaloButton phone={s.phone_primary} />
-        </span>
-      ) : (
-        '-'
-      ),
-    ],
-    ['Email', s.email],
-    ['Quê quán - Xã', s.permanent_ward],
-    ['Quê quán - Huyện', s.permanent_district],
-    ['Quê quán - Tỉnh', s.permanent_province],
-    ['Nguyên quán', s.place_of_origin],
-    ['Nơi thường trú', s.permanent_address],
-  ]
-  return (
-    <Section title="Hồ sơ cá nhân">
-      <DescList fields={fields} isMobile={isMobile} />
-    </Section>
-  )
-}
-
 function WorkSection({ s }) {
   const screens = useBreakpoint()
   const isMobile = !screens.md
@@ -405,220 +365,6 @@ function WorkSection({ s }) {
   return (
     <Section title="Công tác">
       <DescList fields={fields} isMobile={isMobile} />
-    </Section>
-  )
-}
-
-function FinanceSection({ s }) {
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
-  const banks = s.bank_accounts?.length
-    ? s.bank_accounts
-    : [{ account_number: s.bank_account_number, bank_name: s.bank_name, account_holder: s.bank_account_holder }]
-  const fields = banks.flatMap((b, i) => {
-    const n = banks.length > 1 ? ` ${i + 1}` : ''
-    return [
-      [`Số tài khoản${n}`, b.account_number],
-      [`Ngân hàng${n}`, b.bank_name],
-      [`Chủ tài khoản${n}`, b.account_holder],
-    ]
-  })
-  return (
-    <Section title="Tài chính">
-      <DescList fields={fields} isMobile={isMobile} />
-    </Section>
-  )
-}
-
-function PhysicalSection({ s }) {
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
-  const fields = [
-    ['Chiều cao (cm)', s.height_cm],
-    ['Cân nặng (kg)', s.weight_kg],
-    ['Size áo', s.shirt_size],
-    ['Size quần', s.pants_size],
-    ['Cỡ giày', s.shoe_size],
-    ['Size bảo hộ', s.ppe_size],
-    ['Nhóm máu', s.blood_type],
-  ]
-  return (
-    <Section title="Thể chất">
-      <DescList fields={fields} isMobile={isMobile} />
-    </Section>
-  )
-}
-
-function ContactsSection({ seafarerId }) {
-  const queryClient = useQueryClient()
-  const [addOpen, setAddOpen] = useState(false)
-  const [form] = Form.useForm()
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['seafarer-contacts', seafarerId],
-    queryFn: () => seafarerApi.getContacts(seafarerId).then((r) => r.data),
-  })
-
-  const createMutation = useMutation({
-    mutationFn: (values) =>
-      seafarerApi.createContact(seafarerId, {
-        ...values,
-        date_of_birth: values.date_of_birth?.format?.('YYYY-MM-DD') || undefined,
-        guarantor_id_issued_date:
-          values.guarantor_id_issued_date?.format?.('YYYY-MM-DD') || undefined,
-        is_guarantor: values.is_guarantor ? 1 : 0,
-        is_emergency_contact: values.is_emergency_contact ? 1 : 0,
-      }),
-    onSuccess: () => {
-      message.success('Thêm liên hệ thành công')
-      setAddOpen(false)
-      form.resetFields()
-      queryClient.invalidateQueries({ queryKey: ['seafarer-contacts', seafarerId] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Thêm thất bại'),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (contactId) => seafarerApi.deleteContact(seafarerId, contactId),
-    onSuccess: () => {
-      message.success('Đã xóa liên hệ')
-      queryClient.invalidateQueries({ queryKey: ['seafarer-contacts', seafarerId] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Xóa thất bại'),
-  })
-
-  function handleDelete(row) {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Xóa liên hệ "${row.full_name}"?`,
-      okText: 'Xóa',
-      okType: 'danger',
-      onOk: () => deleteMutation.mutate(row.id),
-    })
-  }
-
-  const columns = [
-    {
-      title: 'Loại',
-      render: (r) =>
-        r.is_guarantor ? <Tag color="orange">Bảo lãnh</Tag> : <Tag color="blue">Liên lạc</Tag>,
-    },
-    { title: 'Họ tên', dataIndex: 'full_name' },
-    { title: 'Quan hệ', dataIndex: 'relationship' },
-    {
-      title: 'SĐT',
-      dataIndex: 'phone_primary',
-      render: (v) =>
-        v ? (
-          <span>
-            {v}
-            <ZaloButton phone={v} />
-          </span>
-        ) : (
-          '-'
-        ),
-    },
-    { title: 'CCCD', dataIndex: 'national_id' },
-    { title: 'Ngày sinh', dataIndex: 'date_of_birth', render: (v) => fmt(v) },
-    { title: 'Số CCCD bảo lãnh', dataIndex: 'guarantor_id_number' },
-    { title: 'Ngày cấp', dataIndex: 'guarantor_id_issued_date', render: (v) => fmt(v) },
-    {
-      title: '',
-      width: 60,
-      render: (_, r) => (
-        <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r)} />
-      ),
-    },
-  ]
-
-  return (
-    <Section
-      title="Người thân / Bảo lãnh"
-      noPad
-      extra={<Button icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>Thêm liên hệ</Button>}
-    >
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={data || []}
-        loading={isLoading}
-        locale={{ emptyText: <EmptyState title="Chưa có người thân, người bảo lãnh nào" /> }}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-      />
-      <Modal
-        title="Thêm người thân / Bảo lãnh"
-        open={addOpen}
-        onCancel={() => {
-          setAddOpen(false)
-          form.resetFields()
-        }}
-        footer={null}
-        width={480}
-      >
-        <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item name="full_name" label="Họ và tên" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="relationship" label="Quan hệ" rules={[{ required: true }]}>
-            <Select
-              options={[
-                { value: 'Vợ', label: 'Vợ' },
-                { value: 'Chồng', label: 'Chồng' },
-                { value: 'Bố', label: 'Bố' },
-                { value: 'Mẹ', label: 'Mẹ' },
-                { value: 'Con', label: 'Con' },
-                { value: 'Anh/Chị/Em', label: 'Anh/Chị/Em' },
-                { value: 'Khác', label: 'Khác' },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="phone_primary" label="SĐT">
-            <Input />
-          </Form.Item>
-          <Form.Item name="national_id" label="CCCD">
-            <Input />
-          </Form.Item>
-          <Form.Item name="date_of_birth" label="Ngày sinh">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="is_guarantor" label="Vai trò">
-            <Select
-              options={[
-                { value: false, label: 'Liên lạc khẩn cấp' },
-                { value: true, label: 'Người bảo lãnh' },
-              ]}
-            />
-          </Form.Item>
-          <Form.Item name="guarantor_id_number" label="Số CCCD bảo lãnh">
-            <Input />
-          </Form.Item>
-          <Form.Item name="guarantor_id_issued_date" label="Ngày cấp CCCD bảo lãnh">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="guarantor_id_issued_place" label="Nơi cấp CCCD bảo lãnh">
-            <Input />
-          </Form.Item>
-          <Form.Item name="address" label="Địa chỉ">
-            <Input.TextArea rows={2} />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button
-                onClick={() => {
-                  setAddOpen(false)
-                  form.resetFields()
-                }}
-              >
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-                Thêm
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
     </Section>
   )
 }

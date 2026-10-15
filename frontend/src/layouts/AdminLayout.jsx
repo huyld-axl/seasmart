@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Dropdown, Drawer, Grid } from 'antd'
+import Icon from '@ant-design/icons'
 import {
   TeamOutlined,
   SendOutlined,
@@ -24,10 +25,25 @@ import './AdminLayout.css'
 
 const { useBreakpoint } = Grid
 
+const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+const ShipSvg = () => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>
+    <path d="M12 3v9M12 5h5l-5 4M3 15l2 4h14l2-4-9-3z" />
+    <path d="M2 21c2 0 2-1 5-1s3 1 5 1 3-1 5-1 3 1 5 1" />
+  </svg>
+)
+const BuildingSvg = () => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>
+    <path d="M4 21V5l9-2v18M13 9l7 2v10M2 21h20M8 8h1M8 12h1M8 16h1M16 15h1M16 18h1" />
+  </svg>
+)
+
 const ICONS = {
   team: <TeamOutlined />,
   send: <SendOutlined />,
   database: <DatabaseOutlined />,
+  ship: <Icon component={ShipSvg} />,
+  building: <Icon component={BuildingSvg} />,
   shield: <SafetyCertificateOutlined />,
   book: <BookOutlined />,
   message: <MessageOutlined />,

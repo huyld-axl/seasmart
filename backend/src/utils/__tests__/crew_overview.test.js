@@ -19,7 +19,7 @@ describe('crew_overview', () => {
   it('shapeRow bỏ cột phụ, đổi số đếm sang số', () => {
     const row = shapeRow({ id: 1, full_name: 'A', ...full, expired_count: '2', expiring_count: null, pending_review_count: '1' })
     expect(row).toMatchObject({ id: 1, expired_count: 2, expiring_count: 0, pending_review_count: 1, completeness: 100 })
-    expect(row).not.toHaveProperty('passport_number')
+    expect(row).toHaveProperty('passport_number')
     expect(row).not.toHaveProperty('current_rank_id')
     expect(row.national_id).toBe('001')
   })

@@ -114,6 +114,7 @@ export default function SeafarerProfilePage() {
             <Radio.Group>
               <Radio value="M">Nam</Radio>
               <Radio value="F">Nữ</Radio>
+              <Radio value="O">Khác</Radio>
             </Radio.Group>
           </Form.Item>
           <Form.Item label="Quốc tịch" name="nationality_id">

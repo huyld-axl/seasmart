@@ -22,6 +22,7 @@ const YES_NO_OPTIONS = [
 const GENDER_OPTIONS = [
   { value: 'M', label: 'Nam' },
   { value: 'F', label: 'Nữ' },
+  { value: 'O', label: 'Khác' },
 ]
 const STATUS_OPTIONS = [
   { value: 'AVAILABLE', label: 'Sẵn sàng' },

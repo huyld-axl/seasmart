@@ -13,6 +13,7 @@
   overflow: hidden;
   background: #e6edf5;
 }
+.crew-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .crew-avatar svg { display: block; width: 100%; height: 100%; fill: #a9bbd0; }
 
 .crew-pending {

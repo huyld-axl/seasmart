@@ -18,6 +18,7 @@ import TrainingCenterDetailPage from './pages/admin/TrainingCenterDetailPage'
 import CourseListPage from './pages/admin/CourseListPage'
 import CourseDetailPage from './pages/admin/CourseDetailPage'
 import MasterSubPage from './pages/admin/MasterSubPage'
+import FleetPage from './pages/admin/fleet/FleetPage'
 import MessagingPage from './pages/admin/MessagingPage'
 import SeafarerRegisterPage from './pages/seafarer/RegisterPage'
 import SeafarerVerifyPage from './pages/seafarer/VerifyPage'
@@ -73,7 +74,9 @@ export default function App() {
                 <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
                 <Route path="/courses" element={<CourseListPage />} />
                 <Route path="/courses/:id" element={<CourseDetailPage />} />
-                <Route path="/master-data" element={<Navigate to="/master-data/vessels" replace />} />
+                <Route path="/fleet" element={<Navigate to="/fleet/vessels" replace />} />
+                <Route path="/fleet/:tab" element={<FleetPage />} />
+                <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
                 <Route path="/master-data/:tab" element={<MasterSubPage />} />
                 <Route path="/messages" element={<MessagingPage />} />
                 <Route path="/admin/users" element={<UserListPage />} />

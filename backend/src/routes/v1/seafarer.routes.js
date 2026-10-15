@@ -1,5 +1,7 @@
 const seafarerService = require('../../services/seafarer.service')
 const formExportService = require('../../services/form_export.service')
+const config = require('../../config')
+const fs = require('fs')
 
 const ADMIN_ROLES = ['admin', 'operator']
 const MAX_LIST_LIMIT = 100
@@ -108,9 +110,9 @@ async function seafarerRoutes(fastify) {
       schema: {
         body: {
           type: 'object',
-          required: ['full_name', 'date_of_birth', 'nationality_id'],
+          required: ['full_name'],
           properties: {
-            full_name: { type: 'string' },
+            full_name: { type: 'string', minLength: 1 },
             date_of_birth: { type: 'string', format: 'date' },
             nationality_id: { type: 'integer' },
             seafarer_code: { type: 'string' },
@@ -122,6 +124,8 @@ async function seafarerRoutes(fastify) {
             email: { type: 'string' },
             status: { type: 'string' },
             current_rank_id: { type: 'integer' },
+            bank_accounts: { type: 'array', maxItems: 20, items: { type: 'object' } },
+            contacts: { type: 'array', maxItems: 30, items: { type: 'object' } },
           },
         },
       },
@@ -149,6 +153,35 @@ async function seafarerRoutes(fastify) {
       return seafarerService.update(parseInt(request.params.id), data, request.user.id, reason)
     }
   )
+
+  // Ảnh chân dung 4x6: GET trả ảnh, POST (multipart, field "file") thay ảnh, DELETE gỡ ảnh.
+  const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
+
+  fastify.get('/:id/photo', { onRequest: [fastify.authenticate], schema: { params: idParams } }, async (request, reply) => {
+    if (request.user.role === 'training_center') {
+      return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
+    }
+    const photo = await seafarerService.getPhoto(request.params.id)
+    reply.header('Content-Type', photo.mime)
+    reply.header('Cache-Control', 'private, no-cache')
+    return reply.send(fs.createReadStream(photo.path))
+  })
+
+  fastify.post('/:id/photo', { onRequest: [fastify.authenticate], schema: { params: idParams } }, async (request, reply) => {
+    if (!ADMIN_ROLES.includes(request.user.role)) {
+      return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
+    }
+    const file = await request.file({ limits: { fileSize: config.upload.maxFileSize, files: 1 } })
+    if (!file) throw { statusCode: 400, message: 'Chưa chọn ảnh' }
+    return seafarerService.savePhoto(request.params.id, file, request.user.id)
+  })
+
+  fastify.delete('/:id/photo', { onRequest: [fastify.authenticate], schema: { params: idParams } }, async (request, reply) => {
+    if (!ADMIN_ROLES.includes(request.user.role)) {
+      return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
+    }
+    return seafarerService.removePhoto(request.params.id, request.user.id)
+  })
 
   // GET /api/v1/seafarers/:id/revisions — lịch sử sửa hồ sơ
   fastify.get(

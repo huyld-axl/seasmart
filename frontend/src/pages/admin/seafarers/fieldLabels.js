@@ -8,4 +8,7 @@ export const FIELD_LABELS = {
   permanent_address: 'Địa chỉ thường trú', temporary_address: 'Địa chỉ tạm trú', bank_account_number: 'Số tài khoản', bank_name: 'Ngân hàng', bank_account_holder: 'Chủ tài khoản',
   marital_status: 'Hôn nhân', height_cm: 'Chiều cao', weight_kg: 'Cân nặng', shirt_size: 'Size áo', pants_size: 'Size quần', shoe_size: 'Cỡ giày',
   blood_type: 'Nhóm máu', education_school: 'Trường tốt nghiệp', social_insurance_number: 'Số sổ BHXH', notes: 'Ghi chú',
+  full_name_zh: 'Tên tiếng Trung', place_of_origin: 'Nguyên quán', place_of_birth: 'Nơi sinh', ppe_size: 'Size bảo hộ',
+  education_level: 'Bằng cấp', education_major: 'Ngành học', english_level: 'Trình độ tiếng Anh', children_count: 'Số con',
+  social_insurance_joined: 'Tham gia BHXH', bank_accounts: 'Tài khoản ngân hàng', contacts: 'Gia quyến',
 }

@@ -41,6 +41,13 @@ export const seafarerApi = {
   getContacts: (id) => api.get(`/seafarers/${id}/contacts`),
   createContact: (id, data) => api.post(`/seafarers/${id}/contacts`, data),
   deleteContact: (id, contactId) => api.delete(`/seafarers/${id}/contacts/${contactId}`),
+  getPhoto: (id) => api.get(`/seafarers/${id}/photo`, { responseType: 'blob' }).then((r) => r.data),
+  uploadPhoto: (id, file) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post(`/seafarers/${id}/photo`, form)
+  },
+  removePhoto: (id) => api.delete(`/seafarers/${id}/photo`),
   downloadTemplate: () => api.get('/import/excel/template', { responseType: 'blob' }),
   importFile: (file) => {
     const form = new FormData()

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
-const { plan } = require('../migrate_employment_contracts')
+const { plan } = require('../../../scripts/migrate_employment_contracts')
 
 const TODAY = '2026-10-19'
 const base = { start_date: '2026-01-01', end_date: '2027-01-01', actual_end_date: null, sign_on_port_id: 1, sign_off_port_id: 2 }

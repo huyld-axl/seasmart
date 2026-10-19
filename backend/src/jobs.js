@@ -125,9 +125,9 @@ function startJobs(logger) {
       }
       const [contracts] = await pool.query(
         `SELECT ec.id, ec.seafarer_id, s.user_id, ec.end_date
-         FROM employment_contract ec
+         FROM seafarer_contract ec
          JOIN seafarer s ON s.id = ec.seafarer_id AND s.deleted_at IS NULL AND s.user_id IS NOT NULL
-         WHERE ec.deleted_at IS NULL AND ec.end_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day'))`
+         WHERE ec.status = 'ACTIVE' AND ec.deleted_at IS NULL AND ec.end_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day'))`
       )
       for (const row of contracts) {
         const dup = await notificationService.hasRecentDuplicate(
@@ -140,7 +140,7 @@ function startJobs(logger) {
           await notificationService.create({
             user_id: row.user_id,
             type: 'CONTRACT_END',
-            ref_table: 'employment_contract',
+            ref_table: 'seafarer_contract',
             ref_id: row.seafarer_id,
             title: 'Hợp đồng sắp kết thúc',
             body: `Hợp đồng kết thúc vào ${row.end_date}.`,

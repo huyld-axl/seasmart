@@ -32,7 +32,7 @@ describe('fleet.service', () => {
   it('không xoá tàu đang được dùng, báo 409', async () => {
     const pool = fakePool([
       ['FROM sea_service', () => count(2)],
-      ['FROM employment_contract', () => count(1)],
+      ['FROM voyage', () => count(1)],
       ['FROM seafarer_document', () => count(0)],
     ])
     await expect(fleetService.softDelete(pool, 'vessel', 5)).rejects.toMatchObject({ statusCode: 409 })
@@ -42,7 +42,7 @@ describe('fleet.service', () => {
   it('xoá mềm tàu chưa ai dùng', async () => {
     const pool = fakePool([
       ['FROM sea_service', () => count(0)],
-      ['FROM employment_contract', () => count(0)],
+      ['FROM voyage', () => count(0)],
       ['FROM seafarer_document', () => count(0)],
       ['UPDATE "vessel"', () => [{ affectedRows: 1 }]],
     ])
@@ -52,7 +52,7 @@ describe('fleet.service', () => {
   it('không xoá đối tác đang có tàu, báo 409', async () => {
     const pool = fakePool([
       ['FROM vessel', () => count(3)],
-      ['FROM employment_contract', () => count(0)],
+      ['FROM voyage', () => count(0)],
       ['FROM export_pack', () => count(0)],
     ])
     await expect(fleetService.softDelete(pool, 'ship_owner', 2)).rejects.toMatchObject({ statusCode: 409 })

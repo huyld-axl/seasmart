@@ -84,17 +84,21 @@ const seafarerPortalService = {
     const profile = await this.getProfile(userId)
     const offset = (page - 1) * limit
     const [rows] = await pool.query(
-      `SELECT ec.*, v.name as vessel_name, vt.name_vi as vessel_type_name
-       FROM employment_contract ec
-       LEFT JOIN vessel v ON v.id = ec.vessel_id
+      `SELECT ec.id, ec.contract_number, ec.start_date, ec.end_date, ec.status,
+              v.vessel_name, vt.name_vi as vessel_type_name, r.name_vi as rank_name
+       FROM seafarer_contract ec
+       JOIN voyage_position vp ON vp.id = ec.voyage_position_id
+       JOIN voyage vy ON vy.id = vp.voyage_id
+       JOIN vessel v ON v.id = vy.vessel_id
        LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
-       WHERE ec.seafarer_id = ? AND ec.deleted_at IS NULL
+       LEFT JOIN "rank" r ON r.id = vp.rank_id
+       WHERE ec.seafarer_id = ? AND ec.deleted_at IS NULL AND ec.status NOT IN ('DRAFT', 'REJECTED')
        ORDER BY ec.start_date DESC
        LIMIT ? OFFSET ?`,
       [profile.id, limit, offset]
     )
     const [[{ total }]] = await pool.query(
-      'SELECT COUNT(*) as total FROM employment_contract WHERE seafarer_id = ? AND deleted_at IS NULL',
+      'SELECT COUNT(*) as total FROM seafarer_contract WHERE seafarer_id = ? AND deleted_at IS NULL AND status NOT IN (\'DRAFT\', \'REJECTED\')',
       [profile.id]
     )
     return { data: rows, total, page, limit }

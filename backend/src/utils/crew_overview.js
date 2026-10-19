@@ -12,9 +12,12 @@ const EXPIRED_EXPR = dateCount('< CURRENT_DATE')
 const EXPIRING_EXPR = dateCount(`BETWEEN CURRENT_DATE AND (CURRENT_DATE + (${EXPIRING_DAYS} * INTERVAL '1 day'))`)
 const PENDING_EXPR = '(SELECT COUNT(*) FROM seafarer_certificate sc WHERE sc.seafarer_id = s.id AND sc.status = \'PENDING\')'
 
-// Hợp đồng đang chạy mới nhất: tàu và ngày dự kiến rời tàu.
+// Hợp đồng Hiệu lực mới nhất (seafarer_contract): tàu của chuyến và ngày kết thúc hợp đồng.
 const activeContract = (column) =>
-  `(SELECT ${column} FROM employment_contract ec JOIN vessel v ON v.id = ec.vessel_id
+  `(SELECT ${column} FROM seafarer_contract ec
+    JOIN voyage_position vp ON vp.id = ec.voyage_position_id
+    JOIN voyage vy ON vy.id = vp.voyage_id
+    JOIN vessel v ON v.id = vy.vessel_id
     WHERE ec.seafarer_id = s.id AND ec.status = 'ACTIVE' AND ec.deleted_at IS NULL
     ORDER BY ec.start_date DESC LIMIT 1)`
 

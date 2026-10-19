@@ -1,0 +1,20 @@
+/* Màn Chuyến tàu: dùng lại khung danh sách (ds-*) và hồ sơ (crew-*, fl-*); ở đây chỉ thêm phần riêng. */
+
+.vy-due { display: inline-flex; justify-self: start; align-items: center; gap: 4px; height: 22px; margin-top: 4px; padding: 0 8px; border: 1px solid; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.vy-due--warning { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning); }
+.vy-due--error { border-color: var(--error-border); background: var(--error-bg); color: var(--error-strong); }
+
+.vy-dates { display: grid; gap: 2px; min-width: 120px; font-variant-numeric: tabular-nums; }
+.vy-dates__main { font-weight: 500; }
+.vy-dates__sub { color: var(--muted); }
+.vy-tag { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+
+.vy-fill { display: grid; gap: 2px; min-width: 110px; }
+.vy-fill__row { display: flex; align-items: center; gap: 8px; }
+.vy-fill__bar { display: block; flex: 1; min-width: 48px; }
+.vy-fill__num { font-weight: 500; }
+
+.vy-owner-filter { min-width: 200px; }
+.vy-foot-unit { color: var(--muted); }
+.vy-pos { color: var(--foreground); font-weight: 500; font-variant-numeric: tabular-nums; }
+.vy-fill__bar .ds-progress__bar { display: block; height: 100%; }

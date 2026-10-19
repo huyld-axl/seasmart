@@ -225,13 +225,13 @@ function VoyageForm({ voyage }) {
                         <Form.Item name={[field.name, 'id']} hidden noStyle><Input /></Form.Item>
                         <Form.Item name={[field.name, 'hasContract']} hidden noStyle><Input /></Form.Item>
                         <span className="vp__n">{index + 1}</span>
-                        <Form.Item name={[field.name, 'rank_id']} rules={[{ required: true, message: 'Chọn chức danh' }]}>
+                        <Form.Item className="vp__rank" name={[field.name, 'rank_id']} rules={[{ required: true, message: 'Chọn chức danh' }]}>
                           <Select {...selectProps} allowClear={false} loading={ranks.isLoading} options={rankOptions} placeholder="Chọn chức danh" aria-label={`Chức danh dòng ${index + 1}`} />
                         </Form.Item>
-                        <Form.Item name={[field.name, 'budget_total_usd']} rules={[{ required: true, message: 'Nhập budget' }]}>
+                        <Form.Item className="vp__m1" name={[field.name, 'budget_total_usd']} rules={[{ required: true, message: 'Nhập budget' }]}>
                           <MoneyInput aria-label={`Tổng chuyến dòng ${index + 1}`} />
                         </Form.Item>
-                        <Form.Item name={[field.name, 'budget_monthly_usd']} rules={[{ required: true, message: 'Nhập budget' }]}>
+                        <Form.Item className="vp__m2" name={[field.name, 'budget_monthly_usd']} rules={[{ required: true, message: 'Nhập budget' }]}>
                           <MoneyInput aria-label={`Mỗi tháng dòng ${index + 1}`} />
                         </Form.Item>
                         <span className="vp__actions">

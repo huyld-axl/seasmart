@@ -676,3 +676,4 @@ Danh sách đi:
 | Ngày | Bước | Commit | Ghi chú |
 |---|---|---|---|
 | 2026-10-19 | — | — | Lập kế hoạch. Wireframe bản 13 chép vào `docs/design/wireframes/chuyen-tau-hop-dong.html`. |
+| 2026-10-19 | 0 | (commit này) | Tạo nhánh `feature/chuyen-tau-hop-dong` từ `feature/seafarer-form-redesign` (cây sạch). Mốc: backend lint 0 lỗi/14 cảnh báo, test 148 qua/17 bỏ qua; frontend lint 0 lỗi/1 cảnh báo, test 89 qua. Không có test đỏ. Lưu ý: `wrapConnection` trả INSERT dạng `[{ insertId, rows }]`, nên `nextCode` ở bước 2 đọc `res.rows[0].last_value`, không destructure `[[row]]`. |

@@ -65,7 +65,8 @@ async function requireEditor(request, reply) {
 }
 
 async function voyageRoutes(fastify) {
-  const read = { onRequest: [fastify.authenticate] }
+  // Budget và chênh lệch là số nội bộ: đọc cũng chỉ cho vai trò nội bộ.
+  const read = { onRequest: [fastify.authenticate, requireEditor] }
   const write = { onRequest: [fastify.authenticate, requireEditor] }
 
   fastify.get('/', { ...read, schema: { querystring: listQuery } }, async (request) => voyageService.list(pool, request.query))

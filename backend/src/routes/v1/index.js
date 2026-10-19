@@ -19,6 +19,7 @@ const waitlistRoutes = require('./waitlist.routes')
 const { exportPackRoutes } = require('./export_pack.routes')
 const documentRoutes = require('./document.routes')
 const voyageRoutes = require('./voyage.routes')
+const seafarerContractRoutes = require('./seafarer_contract.routes')
 const { seafarerSeaServiceRoutes, seaServiceRoutes } = require('./sea_service.routes')
 
 async function v1Routes(fastify) {
@@ -45,6 +46,7 @@ async function v1Routes(fastify) {
   fastify.register(seafarerSeaServiceRoutes, { prefix: '/seafarers/:seafarerId/sea-services' })
   fastify.register(seaServiceRoutes, { prefix: '/sea-services' })
   fastify.register(voyageRoutes, { prefix: '/voyages' })
+  fastify.register(seafarerContractRoutes, { prefix: '/contracts' })
 }
 
 module.exports = v1Routes

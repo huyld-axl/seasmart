@@ -28,7 +28,7 @@ const OVERVIEW_FIELDS = `${activeContract('v.vessel_name')} AS vessel_name,
 // Tab trạng thái trên màn A1 → điều kiện WHERE.
 const TAB_CONDITIONS = {
   onboard: 's.status = \'ON_VESSEL\'',
-  standby: 's.status IN (\'AVAILABLE\', \'ON_LEAVE\')',
+  standby: 's.status = \'AVAILABLE\'',
   review: `${PENDING_EXPR} > 0`,
   expiring: `(${EXPIRED_EXPR} + ${EXPIRING_EXPR}) > 0`,
 }

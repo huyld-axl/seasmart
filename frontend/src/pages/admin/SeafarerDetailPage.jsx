@@ -64,20 +64,10 @@ const { useBreakpoint } = Grid
 const STATUS_COLOR = {
   AVAILABLE: 'green',
   ON_VESSEL: 'blue',
-  ON_LEAVE: 'orange',
-  TRAINING: 'purple',
-  BLACKLISTED: 'red',
-  RETIRED: 'default',
-  INACTIVE: 'default',
 }
 const STATUS_LABEL = {
   AVAILABLE: 'Ở bờ',
   ON_VESSEL: 'Đang trên tàu',
-  ON_LEAVE: 'Nghỉ phép',
-  TRAINING: 'Đang đào tạo',
-  BLACKLISTED: 'Blacklist',
-  RETIRED: 'Đã nghỉ hưu',
-  INACTIVE: 'Không hoạt động',
 }
 
 

@@ -71,8 +71,8 @@ const STATUS_COLOR = {
   INACTIVE: 'default',
 }
 const STATUS_LABEL = {
-  AVAILABLE: 'Sẵn sàng',
-  ON_VESSEL: 'Đang tàu',
+  AVAILABLE: 'Ở bờ',
+  ON_VESSEL: 'Đang trên tàu',
   ON_LEAVE: 'Nghỉ phép',
   TRAINING: 'Đang đào tạo',
   BLACKLISTED: 'Blacklist',

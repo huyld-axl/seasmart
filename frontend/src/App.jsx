@@ -24,6 +24,12 @@ import VesselFormPage from './pages/admin/fleet/VesselFormPage'
 import PartnerListPage from './pages/admin/fleet/PartnerListPage'
 import PartnerDetailPage from './pages/admin/fleet/PartnerDetailPage'
 import PartnerFormPage from './pages/admin/fleet/PartnerFormPage'
+import VoyageListPage from './pages/admin/voyages/VoyageListPage'
+import VoyageFormPage from './pages/admin/voyages/VoyageFormPage'
+import VoyageDetailPage from './pages/admin/voyages/VoyageDetailPage'
+import ContractListPage from './pages/admin/contracts/ContractListPage'
+import ContractFormPage from './pages/admin/contracts/ContractFormPage'
+import ContractDetailPage from './pages/admin/contracts/ContractDetailPage'
 import MessagingPage from './pages/admin/MessagingPage'
 import SeafarerRegisterPage from './pages/seafarer/RegisterPage'
 import SeafarerVerifyPage from './pages/seafarer/VerifyPage'
@@ -87,6 +93,14 @@ export default function App() {
                 <Route path="/partners/new" element={<PartnerFormPage />} />
                 <Route path="/partners/:id" element={<PartnerDetailPage />} />
                 <Route path="/partners/:id/edit" element={<PartnerFormPage />} />
+                <Route path="/voyages" element={<VoyageListPage />} />
+                <Route path="/voyages/new" element={<VoyageFormPage />} />
+                <Route path="/voyages/:id" element={<VoyageDetailPage />} />
+                <Route path="/voyages/:id/edit" element={<VoyageFormPage />} />
+                <Route path="/contracts" element={<ContractListPage />} />
+                <Route path="/contracts/new" element={<ContractFormPage />} />
+                <Route path="/contracts/:id" element={<ContractDetailPage />} />
+                <Route path="/contracts/:id/edit" element={<ContractFormPage />} />
                 <Route path="/fleet" element={<Navigate to="/vessels" replace />} />
                 <Route path="/fleet/vessels" element={<Navigate to="/vessels" replace />} />
                 <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />

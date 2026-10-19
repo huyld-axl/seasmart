@@ -9,6 +9,8 @@ export const NAV_SECTIONS = [
     to: '/seafarers',
     match: ['/seafarers'],
   },
+  { key: 'voyages', label: 'Chuyến tàu', icon: 'anchor', to: '/voyages', match: ['/voyages'] },
+  { key: 'contracts', label: 'Hợp đồng', icon: 'file', to: '/contracts', match: ['/contracts'] },
   {
     key: 'exports',
     label: 'Bản xuất',

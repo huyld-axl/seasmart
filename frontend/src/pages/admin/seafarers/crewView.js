@@ -19,7 +19,7 @@ export function availabilityText(row) {
     if (!row.vessel_name) return 'Đang trên tàu'
     return end ? `${row.vessel_name} · đến ${end}` : row.vessel_name
   }
-  if (row.status === 'AVAILABLE') return 'Sẵn sàng'
+  if (row.status === 'AVAILABLE') return 'Ở bờ'
   if (row.status === 'ON_LEAVE') return 'Đang nghỉ phép'
   return '—'
 }

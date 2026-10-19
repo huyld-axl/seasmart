@@ -9,7 +9,7 @@ describe('crewView', () => {
   })
 
   it('chờ tàu, nghỉ phép, trạng thái khác', () => {
-    expect(availabilityText({ status: 'AVAILABLE' })).toBe('Sẵn sàng')
+    expect(availabilityText({ status: 'AVAILABLE' })).toBe('Ở bờ')
     expect(availabilityText({ status: 'ON_LEAVE' })).toBe('Đang nghỉ phép')
     expect(availabilityText({ status: 'RETIRED' })).toBe('—')
   })

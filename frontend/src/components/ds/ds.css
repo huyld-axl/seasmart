@@ -349,6 +349,7 @@
 .ds-toast .ant-notification-notice-icon { top: 50%; translate: 0 -50%; font-size: 16px; line-height: 1; }
 .ds-toast--success .ant-notification-notice-icon { color: var(--success); }
 .ds-toast--error .ant-notification-notice-icon { color: var(--error-strong); }
+.ds-toast--info .ant-notification-notice-icon { color: var(--muted); }
 .ds-toast .ant-notification-notice-title, .ds-toast .ant-notification-notice-message { margin: 0 0 0 28px !important; padding: 0 !important; font-size: 14px; }
 .ds-toast .ant-notification-notice-description { display: none; }
 .ds-toast__row { display: flex; align-items: center; gap: 16px; }

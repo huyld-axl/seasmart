@@ -1,5 +1,5 @@
 import { App, Button, Grid } from 'antd'
-import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons'
 
 // Toast (layouts/overlay.md): góc trên phải, lên đỉnh giữa dưới sm. Có hành động thì nút nằm cuối dòng.
 export default function useToast() {
@@ -15,7 +15,7 @@ export default function useToast() {
       duration: onAction ? 8 : duration,
       className: `ds-toast ds-toast--${kind}`,
       closeIcon: kind === 'error',
-      icon: kind === 'error' ? <CloseCircleOutlined /> : <CheckCircleOutlined />,
+      icon: kind === 'error' ? <CloseCircleOutlined /> : kind === 'info' ? <InfoCircleOutlined /> : <CheckCircleOutlined />,
       title: (
         <span className="ds-toast__row">
           <span className="ds-toast__text">{text}</span>
@@ -39,5 +39,6 @@ export default function useToast() {
   return {
     success: (text, options) => show('success', text, options),
     error: (text, options) => show('error', text, options),
+    info: (text, options) => show('info', text, options),
   }
 }

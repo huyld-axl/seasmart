@@ -14,6 +14,7 @@ import {
   UploadOutlined,
 } from '@ant-design/icons'
 import ProductBrand from '../components/common/ProductBrand'
+import MoneyInput from '../components/ds/MoneyInput'
 import StatusBadge from '../components/ds/StatusBadge'
 import { STATUS, STATUS_GROUP_LABELS } from '../components/ds/statusMap'
 import ReviewField from '../components/ds/ReviewField'
@@ -447,6 +448,9 @@ export default function DesignSystemPage() {
             </Demo>
             <Demo label="Ô chọn">
               <Form.Item label="Rank"><Select placeholder="Chọn Rank" options={[{ value: 'AB', label: 'Able Seaman (AB)' }, { value: 'CO', label: 'Chief Officer' }]} /></Form.Item>
+            </Demo>
+            <Demo label="Ô tiền">
+              <Form.Item label="Lương cơ bản"><MoneyInput defaultValue={1150} /></Form.Item>
             </Demo>
             <Demo label="Ô chọn ngày">
               <Form.Item label="Sign off"><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>

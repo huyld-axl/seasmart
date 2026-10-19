@@ -514,3 +514,8 @@
 .ds-toggle-row__state { color: var(--muted); font-size: 12px; }
 .ds-toggle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 639px) { .ds-toggle-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Ô nhập tiền (MoneyInput): canh phải, đuôi USD, dấu chấm hàng nghìn, dấu phẩy thập phân. */
+.ds-money.ant-input-number { width: 100%; }
+.ds-money .ant-input-number-input { text-align: right; font-variant-numeric: tabular-nums; }
+.ds-money .ant-input-number-suffix { color: var(--muted); font-size: 12px; }

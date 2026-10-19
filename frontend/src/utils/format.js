@@ -10,6 +10,13 @@ export function formatDate(value) {
   return d.isValid() ? d.format('DD/MM/YYYY') : ''
 }
 
+// Ngày giờ DD/MM/YYYY HH:mm (giờ máy người xem).
+export function formatDateTime(value) {
+  if (!value) return ''
+  const d = dayjs(value)
+  return d.isValid() ? d.format('DD/MM/YYYY HH:mm') : ''
+}
+
 // fixed: luôn hai chữ số lẻ (ô nhập, bảng khoản); không có fixed thì bỏ ",00" (cột tổng).
 export function formatUsd(value, { fixed = false } = {}) {
   if (value === null || value === undefined || value === '' || Number.isNaN(Number(value))) return ''

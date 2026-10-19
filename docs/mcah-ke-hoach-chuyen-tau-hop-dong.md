@@ -677,3 +677,4 @@ Danh sách đi:
 |---|---|---|---|
 | 2026-10-19 | — | — | Lập kế hoạch. Wireframe bản 13 chép vào `docs/design/wireframes/chuyen-tau-hop-dong.html`. |
 | 2026-10-19 | 0 | (commit này) | Tạo nhánh `feature/chuyen-tau-hop-dong` từ `feature/seafarer-form-redesign` (cây sạch). Mốc: backend lint 0 lỗi/14 cảnh báo, test 148 qua/17 bỏ qua; frontend lint 0 lỗi/1 cảnh báo, test 89 qua. Không có test đỏ. Lưu ý: `wrapConnection` trả INSERT dạng `[{ insertId, rows }]`, nên `nextCode` ở bước 2 đọc `res.rows[0].last_value`, không destructure `[[row]]`. |
+| 2026-10-19 | 1 | (commit này) | Thêm `005_voyage_contract.sql`, migrate chạy qua trên DB dev, chạy lần hai không làm gì; 7 bảng mới có mặt, `contract_payroll` (0 dòng) đã xoá. Khác kế hoạch: bỏ dòng `DELETE FROM contract_payroll` trong `scripts/seed_demo_synthetic.sql` vì bảng không còn. Script seed chưa xoá các bảng mới (chuyến, hợp đồng) — việc còn mở nếu cần chạy lại seed khi đã có dữ liệu chuyến. |

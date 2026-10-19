@@ -260,4 +260,4 @@ const fleetService = {
   },
 }
 
-module.exports = { fleetService, pickAllowed, VESSEL_COLUMNS, OWNER_COLUMNS, VESSEL_STATUSES }
+module.exports = { fleetService, pickAllowed, paging, VESSEL_COLUMNS, OWNER_COLUMNS, VESSEL_STATUSES }

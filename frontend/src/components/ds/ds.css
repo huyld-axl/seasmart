@@ -519,3 +519,6 @@
 .ds-money.ant-input-number { width: 100%; }
 .ds-money .ant-input-number-input { text-align: right; font-variant-numeric: tabular-nums; }
 .ds-money .ant-input-number-suffix { color: var(--muted); font-size: 12px; }
+
+/* Toast ở màn hẹp: nằm trên thanh lưu / thanh cân đối dính đáy (cao hơn khi các nút xuống nhiều hàng). */
+@media (max-width: 575px) { .ant-notification-bottom { bottom: 190px !important; } }

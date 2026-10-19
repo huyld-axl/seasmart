@@ -57,7 +57,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={viVN} theme={antTheme}>
-        <AntApp>
+        <AntApp notification={{ bottom: 96 }}>
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<LoginPage />} />

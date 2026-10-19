@@ -1,11 +1,12 @@
 import { App, Button, Grid } from 'antd'
 import { CheckCircleOutlined, CloseCircleOutlined, InfoCircleOutlined } from '@ant-design/icons'
 
-// Toast (layouts/overlay.md): góc trên phải, lên đỉnh giữa dưới sm. Có hành động thì nút nằm cuối dòng.
+// Toast: góc dưới phải, dưới giữa ở màn hẹp. Không đặt ở trên vì che các nút đầu trang (Duyệt, Bắt đầu chuyến…);
+// chừa chỗ cho thanh lưu dính đáy (App.jsx đặt bottom, ds.css chỉnh màn hẹp). Có hành động thì nút nằm cuối dòng.
 export default function useToast() {
   const { notification } = App.useApp()
   const screens = Grid.useBreakpoint()
-  const placement = screens.sm ? 'topRight' : 'top'
+  const placement = screens.sm ? 'bottomRight' : 'bottom'
 
   function show(kind, text, { actionLabel, onAction, duration = 5 } = {}) {
     const key = `${Date.now()}-${Math.random()}`

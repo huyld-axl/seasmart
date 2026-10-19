@@ -88,4 +88,4 @@ function displayStatus({ status, positionsTotal, positionsFilled }) {
   return positionsTotal > 0 && positionsFilled >= positionsTotal ? 'FULL' : 'RECRUITING'
 }
 
-module.exports = { monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, round2 }
+module.exports = { parseDate, addMonths, monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, round2 }

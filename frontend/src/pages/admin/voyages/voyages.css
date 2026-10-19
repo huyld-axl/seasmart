@@ -43,3 +43,52 @@
   .vp__row > .ant-form-item:nth-of-type(2), .vp__row > .ant-form-item:nth-of-type(3) { grid-column: span 1; }
   .vp__actions { grid-column: 4; grid-row: 1; }
 }
+
+/* Chi tiết chuyến */
+.vd-muted { color: var(--muted); }
+.vd-facts-panel { display: grid; gap: 16px; }
+.vd-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.vd-fact { display: grid; gap: 2px; margin: 0; }
+.vd-fact > dd { margin: 0; }
+.vd-fact__label { margin: 0; color: var(--muted); font-size: 12px; }
+.vd-fact__value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.vd-fact__sub { color: var(--muted); font-size: 12px; }
+.vd-fact__sub--error { color: var(--error-strong); }
+.vd-owner { padding-top: 16px; border-top: 1px solid var(--border); }
+.vd-owner__text { margin: 2px 0 0; }
+
+.vd-sums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.vd-sum { display: flex; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.vd-sum__icon { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: #e6edf5; color: #4a6a8f; }
+.vd-sum__body { min-width: 0; }
+.vd-sum__body p { margin: 0; }
+.vd-sum__label { color: var(--muted); font-size: 13px; }
+.vd-sum__value b { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vd-sum__sub { margin-top: 4px !important; color: var(--muted); font-size: 12px; }
+.vd-unit { color: var(--muted); font-size: 12px; }
+
+.vd-count { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.vd-rank { font-weight: 500; }
+.vd-diff .ds-cell2__sub { text-align: right; }
+.vd-foot { display: grid; gap: 4px; padding: 12px 16px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+.vd-foot p { margin: 0; }
+
+@media (max-width: 991px) {
+  .vd-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vd-sums { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Hộp thoại Bắt đầu / Kết thúc chuyến */
+.vt-desc { margin: 4px 0 0; color: var(--muted); font-size: 14px; font-weight: 400; }
+.vt-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.vt-box { margin-top: 4px; border: 1px solid var(--border); border-radius: 12px; }
+.vt-box__head { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
+.vt-box__count { color: var(--muted); font-weight: 400; }
+.vt-list { margin: 0; padding: 0; list-style: none; }
+.vt-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--border); }
+.vt-list li:first-child { border-top: 0; }
+.vt-list__states { display: flex; flex-shrink: 0; align-items: center; gap: 8px; color: var(--muted); }
+.vt-empty { margin: 0; padding: 12px 16px; color: var(--muted); }
+.vt-warn { margin-top: 16px; }
+.vt-skipped { margin: 4px 0 0; padding-left: 20px; }
+@media (max-width: 575px) { .vt-fields { grid-template-columns: minmax(0, 1fr); } }

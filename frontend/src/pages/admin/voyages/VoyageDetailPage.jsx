@@ -156,7 +156,7 @@ export default function VoyageDetailPage() {
         row.contract ? (
           <Button type="link" onClick={() => navigate(`/contracts/${row.contract.id}`)}>Mở hợp đồng</Button>
         ) : ended ? null : (
-          <Button type="link" onClick={() => navigate(`/contracts/new?positionId=${row.id}`)}>Tạo hợp đồng</Button>
+          <Button type="link" onClick={() => navigate(`/contracts/new?positionId=${row.id}&voyageId=${voyage.id}`)}>Tạo hợp đồng</Button>
         ),
     },
   ]

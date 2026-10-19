@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { balance, itemRows, payOptions, termLabel, toFormValues, newFormValues, toPayload } from '../contractView'
+import { balance, balanceNotes, itemRows, payOptions, termLabel, toFormValues, newFormValues, toPayload } from '../contractView'
 
 const item = (kind, receivable_usd, payable_usd) => ({ kind, receivable_usd, payable_usd })
 
@@ -76,5 +76,16 @@ describe('form <-> payload', () => {
     expect(payload.items).toHaveLength(13)
     expect(payload.items[0]).toEqual({ kind: 'MONTHLY', item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 })
     expect(payload.items[12]).toEqual({ kind: 'ONE_TIME', custom_name: 'Bảo hiểm', receivable_usd: null, payable_usd: 7 })
+  })
+})
+
+describe('balanceNotes', () => {
+  it('ghi chú cho ba số cân đối', () => {
+    const ok = balance({ items: [item('MONTHLY', 1900, 1650)], budgetMonthly: 1900, contractMonths: 9 })
+    expect(balanceNotes(ok)).toEqual({ receivable: 'Bằng budget', payable: '87% budget', diff: '13% budget' })
+    const over = balance({ items: [item('MONTHLY', 2020, 100)], budgetMonthly: 1900, contractMonths: 1 })
+    expect(balanceNotes(over)).toEqual({ receivable: 'Vượt budget 120', payable: '5% budget', diff: 'Vượt budget 20' })
+    const loss = balance({ items: [item('MONTHLY', 1000, 1200)], budgetMonthly: 1900, contractMonths: 1 })
+    expect(balanceNotes(loss).diff).toBe('Phải chi lớn hơn phải thu 200')
   })
 })

@@ -2,6 +2,7 @@
 // `balance` phải cho cùng kết quả với contractBalance ở backend/src/utils/voyage_math.js.
 import dayjs from 'dayjs'
 import { DEFAULT_ITEMS, DEFAULT_TERMS, CLOSING_DAYS, PAY_DAYS, PAY_MONTH_OFFSETS } from '../../../constants/voyageContract'
+import { formatUsd } from '../../../utils/format'
 
 const API_DATE = 'YYYY-MM-DD'
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
@@ -31,6 +32,18 @@ export function balance({ items, budgetMonthly, contractMonths }) {
     payableOk: payableMonthly <= budget,
     diffOk: diffMonthly >= 0 && diffMonthly <= budget,
   }
+}
+
+// Dòng chú thích (title) cho ba số cân đối: bằng, bao nhiêu % budget, vượt bao nhiêu.
+export function balanceNotes(b) {
+  const budget = b.budgetMonthly
+  const pct = (v) => (budget > 0 ? `${Math.round((v / budget) * 100)}% budget` : 'Chưa có budget')
+  const side = (v) => (v === budget ? 'Bằng budget' : v < budget ? pct(v) : `Vượt budget ${formatUsd(round2(v - budget))}`)
+  let diff
+  if (b.diffMonthly < 0) diff = `Phải chi lớn hơn phải thu ${formatUsd(round2(-b.diffMonthly))}`
+  else if (b.diffMonthly > budget) diff = `Vượt budget ${formatUsd(round2(b.diffMonthly - budget))}`
+  else diff = pct(b.diffMonthly)
+  return { receivable: side(b.receivableMonthly), payable: side(b.payableMonthly), diff }
 }
 
 const KIND_ORDER = ['MONTHLY', 'ONE_TIME']

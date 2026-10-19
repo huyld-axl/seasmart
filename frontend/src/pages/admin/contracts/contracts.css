@@ -1,0 +1,50 @@
+/* Màn Hợp đồng: bảng khoản hai cột, kỳ thanh toán, thanh cân đối. Dùng lại khung form (sf-*) và hồ sơ (crew-*). */
+
+.ct-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.ct-table { width: 100%; min-width: 640px; border-collapse: collapse; table-layout: fixed; }
+.ct-table th, .ct-table td { padding: 8px 12px; border-top: 1px solid var(--border); text-align: left; vertical-align: middle; }
+.ct-table thead th { padding: 12px; border-top: 0; background: var(--surface-hover, #f6f7f8); color: var(--muted); font-size: 12px; font-weight: 600; }
+.ct-table td + td, .ct-table thead th + th { border-left: 1px solid var(--border); }
+.ct-side { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--foreground); font-size: 14px; }
+.ct-side__name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ct-tag { display: inline-flex; flex-shrink: 0; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+.ct-tag--receivable { background: var(--success-bg); color: var(--success); }
+.ct-tag--payable { background: var(--neutral-bg); color: var(--neutral); }
+.ct-group th { padding: 10px 12px; background: #ececee; font-size: 14px; font-weight: 600; }
+.ct-group__unit { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.ct-name { font-weight: 400; }
+.ct-name__hint { display: block; color: var(--muted); font-size: 12px; }
+.ct-name__edit { display: flex; align-items: center; gap: 4px; }
+.ct-add td { padding: 4px 8px; }
+.ct-total th, .ct-total td { background: var(--surface-hover, #f6f7f8); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.ct-total th { text-align: left; }
+.ct-total--once th, .ct-total--once td { font-weight: 500; }
+.ct-ro { display: block; text-align: right; font-variant-numeric: tabular-nums; }
+.ct-ro__empty { color: var(--muted); }
+.ct-table--terms .ant-select { width: 100%; }
+
+.ct-panel .sf-panel__head { padding-bottom: 0; }
+.ct-pos .ant-input[disabled] { color: var(--neutral); background: var(--surface-hover); }
+.ct-form { display: grid; gap: 16px; }
+.ct-sec-title { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+
+/* Thanh cân đối: cùng khung sf-savebar, thêm khối budget và ba số. */
+.ct-bar { align-items: stretch; gap: 12px 24px; padding: 10px 16px; }
+.ct-budget { display: grid; align-content: center; gap: 2px; padding: 6px 14px; border-radius: 12px; background: #e6edf5; color: #1d3c61; }
+.ct-budget__label { font-size: 12px; font-weight: 600; }
+.ct-budget__value b { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ct-figs { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; gap: 12px 32px; min-width: 0; }
+.ct-fig { display: grid; gap: 2px; }
+.ct-fig__label { color: var(--muted); font-size: 12px; }
+.ct-fig__value { display: inline-flex; align-items: center; gap: 6px; }
+.ct-fig__value b { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ct-fig__unit { color: var(--muted); font-size: 12px; }
+.ct-ok { color: var(--success); }
+.ct-bad--warning { color: var(--warning); }
+.ct-bad--error { color: var(--error-strong); }
+.ct-bar .sf-savebar__actions { align-self: center; }
+
+@media (max-width: 767px) {
+  .ct-bar { padding: 12px; }
+  .ct-budget { flex: 1 1 100%; }
+}

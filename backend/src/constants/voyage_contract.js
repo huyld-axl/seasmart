@@ -30,7 +30,6 @@ const DEFAULT_TERMS = {
 }
 
 const DUE_SOON_DAYS = 3
-const VOYAGE_EDITOR_ROLES = ['admin', 'operator']
 
 module.exports = {
   VOYAGE_STATUSES,
@@ -44,5 +43,4 @@ module.exports = {
   HOLIDAY_RULES,
   DEFAULT_TERMS,
   DUE_SOON_DAYS,
-  VOYAGE_EDITOR_ROLES,
 }

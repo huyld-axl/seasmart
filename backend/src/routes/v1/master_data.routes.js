@@ -52,7 +52,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     fastify.get(
       '/',
       {
-        onRequest: [fastify.authenticate],
+        onRequest: [fastify.authenticate, fastify.can('catalog.view')],
         schema: { querystring: listQuerySchema },
       },
       async (request) => {
@@ -81,7 +81,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     )
 
     // GET ONE
-    fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+    fastify.get('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.view')] }, async (request, reply) => {
       const [[row]] = await pool.query(`SELECT * FROM "${table}" WHERE id = ?`, [
         parseInt(request.params.id),
       ])
@@ -90,10 +90,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     })
 
     // CREATE
-    fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-      if (!['admin', 'operator'].includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền' })
-      }
+    fastify.post('/', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
@@ -110,10 +107,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     })
 
     // UPDATE
-    fastify.put('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-      if (!['admin', 'operator'].includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền' })
-      }
+    fastify.put('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
@@ -127,9 +121,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     })
 
     // DELETE
-    fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-      if (request.user.role !== 'admin')
-        return reply.code(403).send({ error: 'Chỉ admin mới có quyền xóa' })
+    fastify.delete('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.delete')] }, async (request) => {
       await pool.query(`DELETE FROM "${table}" WHERE id = ?`, [parseInt(request.params.id)])
       invalidateCache(table)
       return { success: true }
@@ -142,7 +134,7 @@ async function portRoutes(fastify) {
   fastify.get(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('catalog.view')],
       schema: { querystring: listQuerySchema },
     },
     async (request) => {
@@ -173,7 +165,7 @@ async function portRoutes(fastify) {
   )
 
   // GET ONE
-  fastify.get('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+  fastify.get('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.view')] }, async (request, reply) => {
     const [[row]] = await pool.query(
       'SELECT p.*, c.name_vi AS country_name FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [parseInt(request.params.id)]
@@ -183,10 +175,7 @@ async function portRoutes(fastify) {
   })
 
   // CREATE
-  fastify.post('/', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    if (!['admin', 'operator'].includes(request.user.role)) {
-      return reply.code(403).send({ error: 'Không có quyền' })
-    }
+  fastify.post('/', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
     const { name, un_locode, country_id } = request.body
     const [res] = await pool.query(
       'INSERT INTO "port" (name, un_locode, country_id) VALUES (?, ?, ?)',
@@ -200,10 +189,7 @@ async function portRoutes(fastify) {
   })
 
   // UPDATE
-  fastify.put('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    if (!['admin', 'operator'].includes(request.user.role)) {
-      return reply.code(403).send({ error: 'Không có quyền' })
-    }
+  fastify.put('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request) => {
     const { name, un_locode, country_id } = request.body
     await pool.query('UPDATE "port" SET name = ?, un_locode = ?, country_id = ? WHERE id = ?', [
       name,
@@ -219,9 +205,7 @@ async function portRoutes(fastify) {
   })
 
   // DELETE
-  fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
-    if (request.user.role !== 'admin')
-      return reply.code(403).send({ error: 'Chỉ admin mới có quyền xóa' })
+  fastify.delete('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.delete')] }, async (request) => {
     await pool.query('DELETE FROM "port" WHERE id = ?', [parseInt(request.params.id)])
     return { success: true }
   })

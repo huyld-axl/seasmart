@@ -1,10 +1,6 @@
 const seaServiceService = require('../../services/sea_service.service')
 
-const ROLES = ['admin', 'operator', 'reviewer']
-
-const requireRole = (roles) => async (request, reply) => {
-  if (!roles.includes(request.user?.role)) return reply.code(403).send({ error: 'Không có quyền' })
-}
+const { assertSeafarerInScope, assertChildInScope } = require('../../utils/scope')
 
 const text = (max) => ({ type: ['string', 'null'], maxLength: max })
 const date = { type: ['string', 'null'], pattern: '^\\d{4}-\\d{2}-\\d{2}$' }
@@ -31,20 +27,22 @@ const tripProperties = {
 
 // Lịch sử đi tàu của một thuyền viên: /api/v1/seafarers/:seafarerId/sea-services
 async function seafarerSeaServiceRoutes(fastify) {
-  const guard = { onRequest: [fastify.authenticate, requireRole(ROLES)] }
-
   fastify.get('/', {
-    ...guard,
+    onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
     schema: { params: { type: 'object', required: ['seafarerId'], properties: { seafarerId: { type: 'integer', minimum: 1 } } } },
-  }, async (request) => ({ data: await seaServiceService.list(request.params.seafarerId) }))
+  }, async (request) => {
+    await assertSeafarerInScope(request, request.params.seafarerId)
+    return { data: await seaServiceService.list(request.params.seafarerId) }
+  })
 
   fastify.post('/', {
-    ...guard,
+    onRequest: [fastify.authenticate, fastify.can('seafarer.sea')],
     schema: {
       params: { type: 'object', required: ['seafarerId'], properties: { seafarerId: { type: 'integer', minimum: 1 } } },
       body: { type: 'object', additionalProperties: false, properties: tripProperties },
     },
   }, async (request, reply) => {
+    await assertSeafarerInScope(request, request.params.seafarerId)
     const row = await seaServiceService.create(request.params.seafarerId, request.body, request.user.id)
     return reply.code(201).send(row)
   })
@@ -52,7 +50,7 @@ async function seafarerSeaServiceRoutes(fastify) {
 
 // Sửa, xoá một chuyến: /api/v1/sea-services/:id (bắt buộc lý do, ghi vào lịch sử hồ sơ)
 async function seaServiceRoutes(fastify) {
-  const guard = { onRequest: [fastify.authenticate, requireRole(ROLES)] }
+  const guard = { onRequest: [fastify.authenticate, fastify.can('seafarer.sea')] }
 
   fastify.put('/:id', {
     ...guard,
@@ -66,6 +64,7 @@ async function seaServiceRoutes(fastify) {
       },
     },
   }, async (request) => {
+    await assertChildInScope(request, 'sea_service', request.params.id)
     const { reason, ...data } = request.body
     return seaServiceService.update(request.params.id, data, reason, request.user.id)
   })
@@ -76,7 +75,10 @@ async function seaServiceRoutes(fastify) {
       params: idParams,
       body: { type: 'object', required: ['reason'], additionalProperties: false, properties: { reason: { type: 'string', minLength: 1, maxLength: 500 } } },
     },
-  }, async (request) => seaServiceService.remove(request.params.id, request.body.reason, request.user.id))
+  }, async (request) => {
+    await assertChildInScope(request, 'sea_service', request.params.id)
+    return seaServiceService.remove(request.params.id, request.body.reason, request.user.id)
+  })
 }
 
 module.exports = { seafarerSeaServiceRoutes, seaServiceRoutes }

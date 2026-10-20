@@ -1,6 +1,9 @@
 const pool = require('../../config/db')
 const { voyageService } = require('../../services/voyage.service')
-const { VOYAGE_DISPLAY_STATUSES, VOYAGE_EDITOR_ROLES } = require('../../constants/voyage_contract')
+const { VOYAGE_DISPLAY_STATUSES } = require('../../constants/voyage_contract')
+const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
+
+const NOT_FOUND = 'Không tìm thấy chuyến tàu'
 
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 const listQuery = {
@@ -58,30 +61,36 @@ const endBody = {
   properties: { actual_disembark_date: date, disembark_port_id: { type: 'integer', minimum: 1 } },
 }
 
-async function requireEditor(request, reply) {
-  if (!VOYAGE_EDITOR_ROLES.includes(request.user?.role)) {
-    return reply.code(403).send({ error: 'Không có quyền' })
-  }
-}
-
 async function voyageRoutes(fastify) {
-  // Budget và chênh lệch là số nội bộ: đọc cũng chỉ cho vai trò nội bộ.
-  const read = { onRequest: [fastify.authenticate, requireEditor] }
-  const write = { onRequest: [fastify.authenticate, requireEditor] }
+  const can = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`voyage.${action}`)] })
+  const inScope = (request) => assertRecordInScope(request, 'voyage', request.params.id, NOT_FOUND)
 
-  fastify.get('/', { ...read, schema: { querystring: listQuery } }, async (request) => voyageService.list(pool, request.query))
-  fastify.get('/:id', { ...read, schema: { params: idParams } }, async (request) => voyageService.get(pool, request.params.id))
-  fastify.post('/', { ...write, schema: { body: voyageBody } }, async (request, reply) => {
+  fastify.get('/', { ...can('view'), schema: { querystring: listQuery } }, async (request) =>
+    voyageService.list(pool, { ...request.query, ownerId: ownerIdFor(request, 'voyage') }))
+  fastify.get('/:id', { ...can('view'), schema: { params: idParams } }, async (request) => {
+    await inScope(request)
+    return voyageService.get(pool, request.params.id)
+  })
+  fastify.post('/', { ...can('create'), schema: { body: voyageBody } }, async (request, reply) => {
     const row = await voyageService.create(pool, request.body, request.user.id)
     return reply.code(201).send(row)
   })
-  fastify.put('/:id', { ...write, schema: { params: idParams, body: voyageBody } }, async (request) =>
-    voyageService.update(pool, request.params.id, request.body, request.user.id))
-  fastify.delete('/:id', { ...write, schema: { params: idParams } }, async (request) => voyageService.softDelete(pool, request.params.id))
-  fastify.post('/:id/start', { ...write, schema: { params: idParams, body: startBody } }, async (request) =>
-    voyageService.transition(pool, request.params.id, 'start', request.body, request.user.id))
-  fastify.post('/:id/end', { ...write, schema: { params: idParams, body: endBody } }, async (request) =>
-    voyageService.transition(pool, request.params.id, 'end', request.body, request.user.id))
+  fastify.put('/:id', { ...can('update'), schema: { params: idParams, body: voyageBody } }, async (request) => {
+    await inScope(request)
+    return voyageService.update(pool, request.params.id, request.body, request.user.id)
+  })
+  fastify.delete('/:id', { ...can('delete'), schema: { params: idParams } }, async (request) => {
+    await inScope(request)
+    return voyageService.softDelete(pool, request.params.id)
+  })
+  fastify.post('/:id/start', { ...can('run'), schema: { params: idParams, body: startBody } }, async (request) => {
+    await inScope(request)
+    return voyageService.transition(pool, request.params.id, 'start', request.body, request.user.id)
+  })
+  fastify.post('/:id/end', { ...can('run'), schema: { params: idParams, body: endBody } }, async (request) => {
+    await inScope(request)
+    return voyageService.transition(pool, request.params.id, 'end', request.body, request.user.id)
+  })
 }
 
 module.exports = voyageRoutes

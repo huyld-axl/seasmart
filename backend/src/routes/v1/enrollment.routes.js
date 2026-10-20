@@ -4,7 +4,6 @@ const {
   getEnrollmentImportTemplateBuffer,
 } = require('../../services/import.service')
 
-const ADMIN_ROLES = ['admin', 'operator']
 const MAX_LIST_LIMIT = 100
 
 async function enrollmentRoutes(fastify) {
@@ -12,12 +11,9 @@ async function enrollmentRoutes(fastify) {
   fastify.get(
     '/import/template',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
     },
     async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền' })
-      }
       const buffer = getEnrollmentImportTemplateBuffer()
       reply.header(
         'Content-Type',
@@ -32,13 +28,10 @@ async function enrollmentRoutes(fastify) {
   fastify.post(
     '/import',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
       config: { bodyLimit: 5 * 1024 * 1024 },
     },
     async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền' })
-      }
       try {
         let courseId = null
         let buffer = null
@@ -67,7 +60,7 @@ async function enrollmentRoutes(fastify) {
   fastify.get(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
       schema: {
         querystring: {
           type: 'object',
@@ -113,12 +106,9 @@ async function enrollmentRoutes(fastify) {
   fastify.get(
     '/:seafarerId/training-history',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
     },
-    async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền' })
-      }
+    async (request) => {
       const seafarerId = parseInt(request.params.seafarerId)
       const rows = await enrollmentService.getTrainingHistory(seafarerId)
       return rows
@@ -129,7 +119,7 @@ async function enrollmentRoutes(fastify) {
   fastify.get(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
     },
     async (request) => {
       return enrollmentService.getById(parseInt(request.params.id))
@@ -140,7 +130,7 @@ async function enrollmentRoutes(fastify) {
   fastify.post(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
       schema: {
         body: {
           type: 'object',
@@ -157,9 +147,6 @@ async function enrollmentRoutes(fastify) {
       },
     },
     async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
       const enrollment = await enrollmentService.create(request.body, request.user.id)
       return reply.code(201).send(enrollment)
     }
@@ -169,7 +156,7 @@ async function enrollmentRoutes(fastify) {
   fastify.put(
     '/:id/approve',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
       schema: {
         body: {
           type: 'object',
@@ -178,9 +165,6 @@ async function enrollmentRoutes(fastify) {
       },
     },
     async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
       try {
         const out = await enrollmentService.approve(
           parseInt(request.params.id),
@@ -198,7 +182,7 @@ async function enrollmentRoutes(fastify) {
   fastify.put(
     '/:id/reject',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
       schema: {
         body: {
           type: 'object',
@@ -208,9 +192,6 @@ async function enrollmentRoutes(fastify) {
       },
     },
     async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
       try {
         const out = await enrollmentService.reject(
           parseInt(request.params.id),
@@ -228,12 +209,9 @@ async function enrollmentRoutes(fastify) {
   fastify.put(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
     },
-    async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
+    async (request) => {
       return enrollmentService.update(parseInt(request.params.id), request.body, request.user.id)
     }
   )
@@ -242,7 +220,7 @@ async function enrollmentRoutes(fastify) {
   fastify.post(
     '/:id/scores',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
       schema: {
         body: {
           type: 'object',
@@ -280,12 +258,9 @@ async function enrollmentRoutes(fastify) {
   fastify.delete(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.delete')],
     },
-    async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
+    async (request) => {
       return enrollmentService.softDelete(parseInt(request.params.id), request.user.id)
     }
   )

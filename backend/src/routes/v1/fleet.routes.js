@@ -1,8 +1,6 @@
 const pool = require('../../config/db')
 const { fleetService, VESSEL_STATUSES } = require('../../services/fleet.service')
 
-const EDITOR_ROLES = ['admin', 'operator']
-
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 const listQuery = {
   type: 'object',
@@ -72,28 +70,23 @@ const ownerBody = {
   },
 }
 
-async function requireEditor(request, reply) {
-  if (!EDITOR_ROLES.includes(request.user?.role)) {
-    return reply.code(403).send({ error: 'Không có quyền' })
-  }
-}
-
 // Một bộ CRUD có xoá mềm và khôi phục cho tàu hoặc đối tác. `extra` thêm các route chỉ đọc riêng.
-function crudRoutes({ table, list, get, create, update, extra }) {
+// `perm`: mục quyền (vessel | partner).
+function crudRoutes({ table, perm, list, get, create, update, extra }) {
   return async function (fastify) {
-    const read = { onRequest: [fastify.authenticate] }
-    const write = { onRequest: [fastify.authenticate, requireEditor] }
+    const read = { onRequest: [fastify.authenticate, fastify.can(`${perm}.view`)] }
+    const onRequest = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`${perm}.${action}`)] })
 
     fastify.get('/', { ...read, schema: { querystring: listQuery } }, async (request) => list(pool, request.query))
     fastify.get('/:id', { ...read, schema: { params: idParams } }, async (request) => get(pool, request.params.id))
     if (extra) extra(fastify, { read, idParams })
-    fastify.post('/', { ...write, schema: { body: { ...create.schema, required: create.required } } }, async (request, reply) => {
+    fastify.post('/', { ...onRequest('create'), schema: { body: { ...create.schema, required: create.required } } }, async (request, reply) => {
       const row = await create.fn(pool, request.body)
       return reply.code(201).send(row)
     })
-    fastify.put('/:id', { ...write, schema: { params: idParams, body: update.schema } }, async (request) => update.fn(pool, request.params.id, request.body))
-    fastify.delete('/:id', { ...write, schema: { params: idParams } }, async (request) => fleetService.softDelete(pool, table, request.params.id))
-    fastify.post('/:id/restore', { ...write, schema: { params: idParams } }, async (request) => fleetService.restore(pool, table, request.params.id))
+    fastify.put('/:id', { ...onRequest('update'), schema: { params: idParams, body: update.schema } }, async (request) => update.fn(pool, request.params.id, request.body))
+    fastify.delete('/:id', { ...onRequest('delete'), schema: { params: idParams } }, async (request) => fleetService.softDelete(pool, table, request.params.id))
+    fastify.post('/:id/restore', { ...onRequest('update'), schema: { params: idParams } }, async (request) => fleetService.restore(pool, table, request.params.id))
   }
 }
 
@@ -101,6 +94,7 @@ async function fleetRoutes(fastify) {
   fastify.register(
     crudRoutes({
       table: 'vessel',
+      perm: 'vessel',
       list: (db, query) => fleetService.listVessels(db, query),
       get: (db, id) => fleetService.getVesselDetail(db, id),
       create: { schema: vesselBody, required: ['vessel_name'], fn: (db, body) => fleetService.createVessel(db, body) },
@@ -114,6 +108,7 @@ async function fleetRoutes(fastify) {
   fastify.register(
     crudRoutes({
       table: 'ship_owner',
+      perm: 'partner',
       list: (db, query) => fleetService.listOwners(db, query),
       get: (db, id) => fleetService.getOwnerDetail(db, id),
       create: { schema: ownerBody, required: ['code', 'company_name'], fn: (db, body) => fleetService.createOwner(db, body) },

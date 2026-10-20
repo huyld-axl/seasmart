@@ -142,6 +142,10 @@ const voyageService = {
     const { page, limit, offset } = paging(query)
     const params = []
     let where = 'WHERE v.deleted_at IS NULL'
+    if (query.ownerId) {
+      where += ' AND v.created_by = ?'
+      params.push(Number(query.ownerId))
+    }
     if (query.search) {
       where += ' AND (unaccent(v.code::text) ILIKE unaccent(?) OR unaccent(ves.vessel_name::text) ILIKE unaccent(?) OR unaccent(o.company_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)

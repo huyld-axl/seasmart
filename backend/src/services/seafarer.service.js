@@ -171,11 +171,15 @@ function sniffImage(buffer) {
 }
 
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training, tab }) {
+  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training, tab, ownerId }) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
 
+    if (ownerId) {
+      where.push('s.created_by = ?')
+      params.push(ownerId)
+    }
     if (search) {
       where.push(
         '(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seaman_book_number::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))'
@@ -440,9 +444,14 @@ const seafarerService = {
     return { success: true }
   },
 
-  async exportExcel({ search, status, rank_id }) {
+  async exportExcel({ search, status, rank_id, ownerId }) {
     const where = ['s.deleted_at IS NULL']
     const params = []
+
+    if (ownerId) {
+      where.push('s.created_by = ?')
+      params.push(ownerId)
+    }
 
     if (search) {
       where.push('(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))')

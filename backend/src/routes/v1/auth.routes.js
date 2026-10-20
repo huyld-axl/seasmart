@@ -23,8 +23,7 @@ async function authRoutes(fastify) {
       const user = await authService.login(request.body)
       const access = await loadAccess(user.id)
       const token = fastify.jwt.sign(
-        // Tạm giữ `role` trong token cho các route chưa chuyển sang kiểm quyền; bỏ ở Bước 5.
-        { id: user.id, email: user.email, role: user.role },
+        { id: user.id, email: user.email },
         { expiresIn: config.jwt.expiresIn || '7d' }
       )
       return { user: toClientUser(access), token }

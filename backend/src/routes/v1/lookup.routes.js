@@ -26,7 +26,10 @@ async function getCached(key, queryFn) {
   return data
 }
 
+// Danh sách chọn dùng ở nhiều màn: chỉ cần đăng nhập, không cần quyền riêng.
 async function lookupRoutes(fastify) {
+  fastify.addHook('onRequest', fastify.authenticate)
+
   fastify.get('/ranks', async () => {
     return getCached('ranks', async () => {
       const [rows] = await pool.query(

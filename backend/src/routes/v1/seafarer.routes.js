@@ -2,8 +2,9 @@ const seafarerService = require('../../services/seafarer.service')
 const formExportService = require('../../services/form_export.service')
 const config = require('../../config')
 const fs = require('fs')
+const { ownerIdFor, assertSeafarerInScope } = require('../../utils/scope')
+const { assertInScope } = require('../../plugins/access')
 
-const ADMIN_ROLES = ['admin', 'operator']
 const MAX_LIST_LIMIT = 100
 
 async function seafarerRoutes(fastify) {
@@ -11,7 +12,7 @@ async function seafarerRoutes(fastify) {
   fastify.get(
     '/forms',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
     },
     async () => {
       return formExportService.listForms()
@@ -22,10 +23,11 @@ async function seafarerRoutes(fastify) {
   fastify.get(
     '/:id/export-form/:formKey',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
     },
     async (request, reply) => {
       const { id, formKey } = request.params
+      await assertSeafarerInScope(request, parseInt(id))
       const { buffer, filename } = await formExportService.exportForm(parseInt(id), formKey)
       const encoded = encodeURIComponent(filename)
       reply
@@ -39,11 +41,16 @@ async function seafarerRoutes(fastify) {
   fastify.get(
     '/export',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
     },
     async (request, reply) => {
       const { search, status, rank_id } = request.query
-      const buffer = await seafarerService.exportExcel({ search, status, rank_id })
+      const buffer = await seafarerService.exportExcel({
+        search,
+        status,
+        rank_id,
+        ownerId: ownerIdFor(request, 'seafarer'),
+      })
       const filename = `thuyen-vien-${new Date().toISOString().slice(0, 10)}.xlsx`
       reply
         .header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -52,11 +59,11 @@ async function seafarerRoutes(fastify) {
     }
   )
 
-  // GET /api/v1/seafarers (TASK-B5: training_center thấy pool giới hạn field + ?available_for_training=true)
+  // GET /api/v1/seafarers
   fastify.get(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
       schema: {
         querystring: {
           type: 'object',
@@ -85,6 +92,7 @@ async function seafarerRoutes(fastify) {
           rank_id: parseInt(rank_id) || null,
           available_for_training: available_for_training || null,
           tab: tab || null,
+          ownerId: ownerIdFor(request, 'seafarer'),
         }
       )
     }
@@ -94,10 +102,12 @@ async function seafarerRoutes(fastify) {
   fastify.get(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
     },
     async (request) => {
-      return seafarerService.getById(parseInt(request.params.id))
+      const seafarer = await seafarerService.getById(parseInt(request.params.id))
+      assertInScope(request, 'seafarer', seafarer, 'Không tìm thấy thuyền viên')
+      return seafarer
     }
   )
 
@@ -105,7 +115,7 @@ async function seafarerRoutes(fastify) {
   fastify.post(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.create')],
       schema: {
         body: {
           type: 'object',
@@ -130,9 +140,6 @@ async function seafarerRoutes(fastify) {
       },
     },
     async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
       const seafarer = await seafarerService.create(request.body, request.user.id)
       return reply.code(201).send(seafarer)
     }
@@ -142,12 +149,10 @@ async function seafarerRoutes(fastify) {
   fastify.put(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.update')],
     },
-    async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
+    async (request) => {
+      await assertSeafarerInScope(request, parseInt(request.params.id))
       const { reason, ...data } = request.body || {}
       return seafarerService.update(parseInt(request.params.id), data, request.user.id, reason)
     }
@@ -156,26 +161,23 @@ async function seafarerRoutes(fastify) {
   // Ảnh chân dung 4x6: GET trả ảnh, POST (multipart, field "file") thay ảnh, DELETE gỡ ảnh.
   const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 
-  fastify.get('/:id/photo', { onRequest: [fastify.authenticate], schema: { params: idParams } }, async (request, reply) => {
+  fastify.get('/:id/photo', { onRequest: [fastify.authenticate, fastify.can('seafarer.view')], schema: { params: idParams } }, async (request, reply) => {
+    await assertSeafarerInScope(request, request.params.id)
     const photo = await seafarerService.getPhoto(request.params.id)
     reply.header('Content-Type', photo.mime)
     reply.header('Cache-Control', 'private, no-cache')
     return reply.send(fs.createReadStream(photo.path))
   })
 
-  fastify.post('/:id/photo', { onRequest: [fastify.authenticate], schema: { params: idParams } }, async (request, reply) => {
-    if (!ADMIN_ROLES.includes(request.user.role)) {
-      return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-    }
+  fastify.post('/:id/photo', { onRequest: [fastify.authenticate, fastify.can('seafarer.update')], schema: { params: idParams } }, async (request) => {
+    await assertSeafarerInScope(request, request.params.id)
     const file = await request.file({ limits: { fileSize: config.upload.maxFileSize, files: 1 } })
     if (!file) throw { statusCode: 400, message: 'Chưa chọn ảnh' }
     return seafarerService.savePhoto(request.params.id, file, request.user.id)
   })
 
-  fastify.delete('/:id/photo', { onRequest: [fastify.authenticate], schema: { params: idParams } }, async (request, reply) => {
-    if (!ADMIN_ROLES.includes(request.user.role)) {
-      return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-    }
+  fastify.delete('/:id/photo', { onRequest: [fastify.authenticate, fastify.can('seafarer.update')], schema: { params: idParams } }, async (request) => {
+    await assertSeafarerInScope(request, request.params.id)
     return seafarerService.removePhoto(request.params.id, request.user.id)
   })
 
@@ -183,10 +185,11 @@ async function seafarerRoutes(fastify) {
   fastify.get(
     '/:id/revisions',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
       schema: { params: { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } } },
     },
     async (request) => {
+      await assertSeafarerInScope(request, request.params.id)
       return seafarerService.revisions(request.params.id)
     }
   )
@@ -195,12 +198,10 @@ async function seafarerRoutes(fastify) {
   fastify.delete(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.delete')],
     },
-    async (request, reply) => {
-      if (!ADMIN_ROLES.includes(request.user.role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
+    async (request) => {
+      await assertSeafarerInScope(request, parseInt(request.params.id))
       return seafarerService.softDelete(parseInt(request.params.id), request.user.id)
     }
   )
@@ -210,9 +211,10 @@ async function seafarerContactRoutes(fastify) {
   fastify.get(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
     },
     async (request) => {
+      await assertSeafarerInScope(request, parseInt(request.params.seafarerId))
       return seafarerService.getContacts(parseInt(request.params.seafarerId))
     }
   )
@@ -220,7 +222,7 @@ async function seafarerContactRoutes(fastify) {
   fastify.post(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.update')],
       schema: {
         body: {
           type: 'object',
@@ -246,6 +248,7 @@ async function seafarerContactRoutes(fastify) {
       },
     },
     async (request, reply) => {
+      await assertSeafarerInScope(request, parseInt(request.params.seafarerId))
       const contact = await seafarerService.createContact(
         parseInt(request.params.seafarerId),
         request.body
@@ -257,9 +260,10 @@ async function seafarerContactRoutes(fastify) {
   fastify.delete(
     '/:contactId',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.update')],
     },
     async (request, reply) => {
+      await assertSeafarerInScope(request, parseInt(request.params.seafarerId))
       try {
         return await seafarerService.deleteContact(
           parseInt(request.params.seafarerId),

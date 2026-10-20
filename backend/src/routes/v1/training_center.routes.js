@@ -7,7 +7,7 @@ async function trainingCenterRoutes(fastify) {
   fastify.get(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
       schema: {
         querystring: {
           type: 'object',
@@ -35,7 +35,7 @@ async function trainingCenterRoutes(fastify) {
   fastify.get(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
     },
     async (request) => {
       return trainingCenterService.getById(parseInt(request.params.id))
@@ -46,7 +46,7 @@ async function trainingCenterRoutes(fastify) {
   fastify.post(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
       schema: {
         body: {
           type: 'object',
@@ -70,10 +70,6 @@ async function trainingCenterRoutes(fastify) {
       },
     },
     async (request, reply) => {
-      const { role } = request.user
-      if (!['admin', 'operator'].includes(role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện' })
-      }
       const center = await trainingCenterService.create(request.body, request.user.id)
       return reply.code(201).send(center)
     }
@@ -83,13 +79,9 @@ async function trainingCenterRoutes(fastify) {
   fastify.put(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
     },
-    async (request, reply) => {
-      const { role } = request.user
-      if (!['admin', 'operator'].includes(role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện' })
-      }
+    async (request) => {
       return trainingCenterService.update(parseInt(request.params.id), request.body, request.user.id)
     }
   )
@@ -98,12 +90,9 @@ async function trainingCenterRoutes(fastify) {
   fastify.delete(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.delete')],
     },
-    async (request, reply) => {
-      if (request.user.role !== 'admin') {
-        return reply.code(403).send({ error: 'Chỉ admin mới có quyền xóa' })
-      }
+    async (request) => {
       return trainingCenterService.softDelete(parseInt(request.params.id), request.user.id)
     }
   )

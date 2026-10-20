@@ -5,24 +5,13 @@ const {
   listUsersQuerySchema,
 } = require('../../schemas/userSchemas')
 
-function adminOnly(fastify) {
-  return {
-    onRequest: [fastify.authenticate],
-    preHandler: async (request, reply) => {
-      if (request.user.role !== 'admin') {
-        return reply.code(403).send({ message: 'Chỉ admin mới có quyền truy cập' })
-      }
-    },
-  }
-}
-
-function authRequired(fastify) {
-  return { onRequest: [fastify.authenticate] }
+function guard(fastify, perm) {
+  return { onRequest: [fastify.authenticate, fastify.can(perm)] }
 }
 
 async function usersRoutes(fastify) {
-  // GET /api/v1/users/search?q=... — for messaging user picker (all roles)
-  fastify.get('/search', authRequired(fastify), async (request) => {
+  // GET /api/v1/users/search?q=... — ô chọn người nhận tin nhắn
+  fastify.get('/search', guard(fastify, 'message.view'), async (request) => {
     const q = request.query.q || ''
     const list = await userService.searchUsers(q)
     return { data: list }
@@ -32,7 +21,7 @@ async function usersRoutes(fastify) {
   fastify.get(
     '/',
     {
-      ...adminOnly(fastify),
+      ...guard(fastify, 'account.view'),
       schema: listUsersQuerySchema,
     },
     async (request) => {
@@ -43,7 +32,7 @@ async function usersRoutes(fastify) {
   )
 
   // GET /api/v1/users/:id
-  fastify.get('/:id', adminOnly(fastify), async (request, reply) => {
+  fastify.get('/:id', guard(fastify, 'account.view'), async (request, reply) => {
     const user = await userService.getUserById(request.params.id)
     if (!user) return reply.code(404).send({ message: 'Không tìm thấy user' })
     return { data: user }
@@ -53,7 +42,7 @@ async function usersRoutes(fastify) {
   fastify.post(
     '/',
     {
-      ...adminOnly(fastify),
+      ...guard(fastify, 'account.update'),
       schema: createUserSchema,
     },
     async (request, reply) => {
@@ -70,7 +59,7 @@ async function usersRoutes(fastify) {
   fastify.patch(
     '/:id',
     {
-      ...adminOnly(fastify),
+      ...guard(fastify, 'account.update'),
       schema: updateUserSchema,
     },
     async (request, reply) => {
@@ -95,7 +84,7 @@ async function usersRoutes(fastify) {
   )
 
   // DELETE /api/v1/users/:id
-  fastify.delete('/:id', adminOnly(fastify), async (request, reply) => {
+  fastify.delete('/:id', guard(fastify, 'account.delete'), async (request, reply) => {
     if (String(request.user.id) === String(request.params.id)) {
       return reply.code(403).send({ message: 'Không thể xóa tài khoản của chính mình' })
     }
@@ -109,7 +98,7 @@ async function usersRoutes(fastify) {
   })
 
   // PATCH /api/v1/users/:id/toggle-active
-  fastify.patch('/:id/toggle-active', adminOnly(fastify), async (request, reply) => {
+  fastify.patch('/:id/toggle-active', guard(fastify, 'account.update'), async (request, reply) => {
     if (String(request.user.id) === String(request.params.id)) {
       return reply.code(403).send({ message: 'Không thể tự khóa tài khoản của chính mình' })
     }

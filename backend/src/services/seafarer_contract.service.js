@@ -142,6 +142,10 @@ const seafarerContractService = {
     const { page, limit, offset } = paging(query)
     const params = []
     let where = 'WHERE c.deleted_at IS NULL'
+    if (query.ownerId) {
+      where += ' AND c.created_by = ?'
+      params.push(Number(query.ownerId))
+    }
     if (query.search) {
       where += ' AND (unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`)

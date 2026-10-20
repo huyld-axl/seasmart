@@ -2,7 +2,7 @@ const pool = require('../../config/db')
 
 async function messagingRoutes(fastify) {
   // GET /api/v1/messages/threads — list conversations for current user
-  fastify.get('/threads', { onRequest: [fastify.authenticate] }, async (request) => {
+  fastify.get('/threads', { onRequest: [fastify.authenticate, fastify.can('message.view')] }, async (request) => {
     const userId = request.user.id
     // Dùng JOIN thay vì correlated subqueries để tránh N+1
     const [rows] = await pool.query(
@@ -35,7 +35,7 @@ async function messagingRoutes(fastify) {
   })
 
   // GET /api/v1/messages/threads/:id — messages in a thread
-  fastify.get('/threads/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+  fastify.get('/threads/:id', { onRequest: [fastify.authenticate, fastify.can('message.view')] }, async (request, reply) => {
     const userId = request.user.id
     const convId = parseInt(request.params.id)
 
@@ -76,7 +76,7 @@ async function messagingRoutes(fastify) {
   fastify.post(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('message.view')],
       schema: {
         body: {
           type: 'object',
@@ -150,12 +150,12 @@ async function messagingRoutes(fastify) {
   )
 
   // DELETE /api/v1/messages/:id — soft delete own message
-  fastify.delete('/:id', { onRequest: [fastify.authenticate] }, async (request, reply) => {
+  fastify.delete('/:id', { onRequest: [fastify.authenticate, fastify.can('message.view')] }, async (request, reply) => {
     const userId = request.user.id
     const msgId = parseInt(request.params.id)
     const [[msg]] = await pool.query('SELECT sender_id FROM message WHERE id = ?', [msgId])
     if (!msg) return reply.code(404).send({ error: 'Không tìm thấy tin nhắn' })
-    if (msg.sender_id !== userId && request.user.role !== 'admin') {
+    if (msg.sender_id !== userId && !request.access.isAdmin) {
       return reply.code(403).send({ error: 'Không có quyền xóa tin nhắn này' })
     }
     await pool.query('UPDATE message SET deleted_at = NOW() WHERE id = ?', [msgId])

@@ -7,7 +7,7 @@ async function trainingCourseRoutes(fastify) {
   fastify.get(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
       schema: {
         querystring: {
           type: 'object',
@@ -41,7 +41,7 @@ async function trainingCourseRoutes(fastify) {
   fastify.get(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.view')],
     },
     async (request) => {
       return trainingCourseService.getById(parseInt(request.params.id))
@@ -52,7 +52,7 @@ async function trainingCourseRoutes(fastify) {
   fastify.post(
     '/',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
       schema: {
         body: {
           type: 'object',
@@ -76,10 +76,6 @@ async function trainingCourseRoutes(fastify) {
       },
     },
     async (request, reply) => {
-      const { role } = request.user
-      if (!['admin', 'operator'].includes(role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện' })
-      }
       const course = await trainingCourseService.create(request.body, request.user.id)
       return reply.code(201).send(course)
     }
@@ -89,13 +85,9 @@ async function trainingCourseRoutes(fastify) {
   fastify.put(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.update')],
     },
-    async (request, reply) => {
-      const { role } = request.user
-      if (!['admin', 'operator'].includes(role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện' })
-      }
+    async (request) => {
       return trainingCourseService.update(
         parseInt(request.params.id),
         request.body,
@@ -108,13 +100,9 @@ async function trainingCourseRoutes(fastify) {
   fastify.delete(
     '/:id',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('training.delete')],
     },
-    async (request, reply) => {
-      const { role } = request.user
-      if (!['admin', 'operator'].includes(role)) {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện' })
-      }
+    async (request) => {
       return trainingCourseService.softDelete(parseInt(request.params.id), request.user.id)
     }
   )

@@ -2,12 +2,9 @@ const pool = require('../../config/db')
 const { exportPackService } = require('../../services/export_pack.service')
 const { TEMPLATE_KEYS, EXPORT_FORMATS } = require('../../constants/pack_templates')
 
-const CREATE_ROLES = ['admin', 'operator']
-const REVIEW_ROLES = ['admin', 'operator', 'reviewer']
+const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
 
-const requireRole = (roles) => async (request, reply) => {
-  if (!roles.includes(request.user?.role)) return reply.code(403).send({ error: 'Không có quyền' })
-}
+const NOT_FOUND = 'Không tìm thấy bộ giấy'
 const inputsSchema = { type: 'object', additionalProperties: { type: 'string', maxLength: 200 } }
 // Ô sửa tay của một giấy: { 'B7': 'nội dung mới' }, hoặc mảng đoạn có định dạng [{ text, bold, italic, underline }]
 const runSchema = {
@@ -29,7 +26,9 @@ const sendFile = (reply, { buffer, filename, contentType }) => reply
 
 // Bộ giấy tờ xuất: /api/v1/exports
 async function exportPackRoutes(fastify) {
-  const read = { onRequest: [fastify.authenticate, requireRole(REVIEW_ROLES)] }
+  const read = { onRequest: [fastify.authenticate, fastify.can('export.view')] }
+  const write = { onRequest: [fastify.authenticate, fastify.can('export.create')] }
+  const download = { onRequest: [fastify.authenticate, fastify.can('export.view', 'export.download')] }
 
   fastify.get('/templates', read, async () => exportPackService.templates())
 
@@ -47,12 +46,15 @@ async function exportPackRoutes(fastify) {
         },
       },
     },
-  }, async (request) => exportPackService.list(pool, request.query))
+  }, async (request) => exportPackService.list(pool, { ...request.query, ownerId: ownerIdFor(request, 'export') }))
 
-  fastify.get('/:id', { ...read, schema: { params: idParams } }, async (request) => exportPackService.get(pool, request.params.id))
+  fastify.get('/:id', { ...read, schema: { params: idParams } }, async (request) => {
+    await assertRecordInScope(request, 'export', request.params.id, NOT_FOUND)
+    return exportPackService.get(pool, request.params.id)
+  })
 
   fastify.post('/', {
-    onRequest: [fastify.authenticate, requireRole(CREATE_ROLES)],
+    ...write,
     schema: {
       body: {
         type: 'object',
@@ -70,7 +72,7 @@ async function exportPackRoutes(fastify) {
   }, async (request, reply) => reply.code(201).send(await exportPackService.create(pool, request.body, request.user)))
 
   fastify.post('/preview', {
-    ...read,
+    ...write,
     schema: {
       body: {
         type: 'object',
@@ -88,27 +90,34 @@ async function exportPackRoutes(fastify) {
   }, async (request) => exportPackService.preview(request.body))
 
   fastify.put('/:id', {
-    onRequest: [fastify.authenticate, requireRole(CREATE_ROLES)],
+    ...write,
     schema: { params: idParams, body: { type: 'object', additionalProperties: false, properties: { inputs: inputsSchema, edits: packEditsSchema } } },
-  }, async (request) => exportPackService.update(pool, request.params.id, request.body))
+  }, async (request) => {
+    await assertRecordInScope(request, 'export', request.params.id, NOT_FOUND)
+    return exportPackService.update(pool, request.params.id, request.body)
+  })
 
   // Cả bộ trong một .zip (giải nén ra một thư mục): PDF, Excel, hoặc cả hai.
   fastify.get('/:id/download', {
-    ...read,
+    ...download,
     schema: { params: idParams, querystring: { type: 'object', properties: { format: { type: 'string', enum: [...EXPORT_FORMATS, 'all'], default: 'all' }, gridlines } } },
   }, async (request, reply) => {
+    await assertRecordInScope(request, 'export', request.params.id, NOT_FOUND)
     const { buffer, filename } = await exportPackService.buildZip(pool, request.params.id, request.query.format, request.query.gridlines)
     return sendFile(reply, { buffer, filename, contentType: 'application/zip' })
   })
 
   // Một giấy của bộ: PDF hoặc Excel.
   fastify.get('/:id/docs/:key/download', {
-    ...read,
+    ...download,
     schema: {
       params: { type: 'object', required: ['id', 'key'], properties: { id: { type: 'integer', minimum: 1 }, key: { type: 'string', enum: TEMPLATE_KEYS } } },
       querystring: { type: 'object', properties: { format: { type: 'string', enum: EXPORT_FORMATS, default: 'pdf' }, gridlines } },
     },
-  }, async (request, reply) => sendFile(reply, await exportPackService.buildDoc(pool, request.params.id, request.params.key, request.query.format, request.query.gridlines)))
+  }, async (request, reply) => {
+    await assertRecordInScope(request, 'export', request.params.id, NOT_FOUND)
+    return sendFile(reply, await exportPackService.buildDoc(pool, request.params.id, request.params.key, request.query.format, request.query.gridlines))
+  })
 }
 
 module.exports = { exportPackRoutes }

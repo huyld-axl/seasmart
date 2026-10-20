@@ -514,3 +514,66 @@
     font-size: 18px;
   }
 }
+
+/* Điện thoại: chọn một vai trò, mỗi mục một khối. */
+.rm-phone {
+  display: grid;
+  gap: 12px;
+}
+.rm-phone__field {
+  display: grid;
+  gap: 4px;
+}
+.rm-phone__label {
+  font-weight: 500;
+}
+.rm-phone__label--sm {
+  font-size: 12px;
+}
+.rm-phone__muted {
+  color: var(--muted);
+}
+.rm-mrole {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.rm-mrole__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rm-mrole__top b {
+  font-size: 15px;
+  font-weight: 600;
+}
+.rm-mrole__top .rm-rh__menu {
+  margin-left: auto;
+  color: var(--muted);
+}
+.rm-mmod {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.rm-mmod__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  font-weight: 600;
+}
+.rm-mmod__head small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+.rm-mmod__body {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
+}

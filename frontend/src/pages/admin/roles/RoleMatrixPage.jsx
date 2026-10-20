@@ -4,6 +4,7 @@ import { App, Button, Input, Skeleton } from 'antd'
 import { CheckCircleFilled, InfoCircleOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
+import useMediaQuery from '../../../hooks/useMediaQuery'
 import {
   useDeleteRole,
   useRoleCatalog,
@@ -15,6 +16,7 @@ import PermissionMatrix from './PermissionMatrix'
 import RoleDeleteModal from './RoleDeleteModal'
 import RoleFormModal from './RoleFormModal'
 import RoleIcon from './RoleIcon'
+import RolePhoneView from './RolePhoneView'
 import RoleSaveModal from './RoleSaveModal'
 import {
   allChanges,
@@ -46,6 +48,8 @@ export default function RoleMatrixPage() {
   const [form, setForm] = useState(null) // { mode: 'add' | 'edit', role?, initial? }
   const [deleting, setDeleting] = useState(null)
   const [saveOpen, setSaveOpen] = useState(false)
+  const [phoneRoleId, setPhoneRoleId] = useState(null)
+  const isPhone = useMediaQuery('(max-width: 639px)')
   const scrollRef = useRef(null)
 
   const modules = catalogQuery.data?.modules
@@ -220,7 +224,7 @@ export default function RoleMatrixPage() {
   } else {
     body = (
       <>
-        {roles.length === 1 ? (
+        {roles.length === 1 && !isPhone ? (
           <div className="rm-hint">
             <RoleIcon name="info" />
             <span>
@@ -236,23 +240,37 @@ export default function RoleMatrixPage() {
             </Button>
           </div>
         ) : null}
-        <PermissionMatrix
-          modules={modules}
-          roles={roles}
-          draft={draft}
-          total={total}
-          query={query}
-          collapsed={collapsed}
-          flashId={flashId}
-          scrollRef={scrollRef}
-          menuFor={menuFor}
-          onCell={onCell}
-          onModule={onModule}
-          onScope={onScope}
-          onCollapse={onCollapse}
-          onAdd={() => setForm({ mode: 'add' })}
-          onClearQuery={() => setQuery('')}
-        />
+        {isPhone ? (
+          <RolePhoneView
+            modules={modules}
+            roles={roles}
+            draft={draft}
+            total={total}
+            roleId={phoneRoleId}
+            onRole={setPhoneRoleId}
+            onCell={onCell}
+            onScope={onScope}
+            menuFor={menuFor}
+          />
+        ) : (
+          <PermissionMatrix
+            modules={modules}
+            roles={roles}
+            draft={draft}
+            total={total}
+            query={query}
+            collapsed={collapsed}
+            flashId={flashId}
+            scrollRef={scrollRef}
+            menuFor={menuFor}
+            onCell={onCell}
+            onModule={onModule}
+            onScope={onScope}
+            onCollapse={onCollapse}
+            onAdd={() => setForm({ mode: 'add' })}
+            onClearQuery={() => setQuery('')}
+          />
+        )}
         <div className="sf-savebar">
           {dirty ? (
             <div className="sf-savebar__msg">
@@ -285,21 +303,24 @@ export default function RoleMatrixPage() {
       <div className="rm-head">
         <div>
           <h1>Vai trò và quyền</h1>
-          <p>
-            Tích ô để cho vai trò làm việc đó. Mục có phạm vi thì chọn thêm xem được tất cả hay chỉ
-            bản ghi do mình tạo. Mỗi tài khoản một vai trò, gán ở tab Tài khoản. Quản trị viên luôn
-            có toàn quyền.
-          </p>
+          {isPhone ? null : (
+            <p>
+              Tích ô để cho vai trò làm việc đó. Mục có phạm vi thì chọn thêm xem được tất cả hay
+              chỉ bản ghi do mình tạo. Mỗi tài khoản một vai trò, gán ở tab Tài khoản. Quản trị viên
+              luôn có toàn quyền.
+            </p>
+          )}
         </div>
         <Button
           type="primary"
+          size={isPhone ? 'small' : 'middle'}
           icon={<RoleIcon name="plus" />}
           onClick={() => setForm({ mode: 'add' })}
         >
           Thêm vai trò
         </Button>
       </div>
-      {ready ? (
+      {ready && !isPhone ? (
         <div className="rm-toolbar">
           <Input
             className="rm-search"
@@ -354,7 +375,10 @@ export default function RoleMatrixPage() {
         initial={form?.initial}
         roles={roles}
         onClose={() => setForm(null)}
-        onCreated={(role) => setFlashId(role.id)}
+        onCreated={(role) => {
+          setFlashId(role.id)
+          setPhoneRoleId(role.id)
+        }}
       />
       <RoleDeleteModal
         role={deleting}

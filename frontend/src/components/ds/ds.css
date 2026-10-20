@@ -533,6 +533,8 @@
 
 /* ---------- Công tắc bật / tắt (ToggleRow) ---------- */
 .ds-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); }
+.ds-toggle-row.is-changed { border-color: var(--primary); background: var(--primary-light); }
+.ds-toggle-row__chip { display: inline-flex; align-items: center; height: 20px; margin-left: 8px; padding: 0 8px; border-radius: 999px; background: #eef3f8; color: var(--primary); font-size: 11px; font-weight: 500; }
 .ds-toggle-row__text { display: grid; min-width: 0; }
 .ds-toggle-row__hint { color: var(--muted); font-size: 12px; }
 .ds-toggle-row__end { display: inline-flex; flex-shrink: 0; align-items: center; gap: 12px; }

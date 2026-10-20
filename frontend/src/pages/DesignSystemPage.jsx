@@ -677,6 +677,7 @@ export default function DesignSystemPage() {
           <div className="ds-toggle-grid">
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
+            <Demo label="Đã sửa, chưa lưu"><ToggleRow label="Nồi hơi" value changed onChange={() => {}} /></Demo>
           </div>
         </div>
       </Section>

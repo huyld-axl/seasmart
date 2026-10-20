@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, App as AntApp } from 'antd'
 // Bản ESM: bản CommonJS 'antd/locale/vi_VN' qua Vite thành { default: … }, ConfigProvider rơi về tiếng Anh.
@@ -60,11 +60,110 @@ function HomeRedirect() {
 function useRefreshAccess() {
   const token = useAuthStore((state) => state.token)
   useEffect(() => {
-    if (token) useAuthStore.getState().refreshUser().catch(() => {})
+    if (token)
+      useAuthStore
+        .getState()
+        .refreshUser()
+        .catch(() => {})
   }, [token])
 }
 
 const guard = (perm, element) => <ProtectedRoute perm={perm}>{element}</ProtectedRoute>
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/design-system" element={<DesignSystemPage />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute allowNoRole>
+            <HomeRedirect />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/no-role"
+        element={
+          <ProtectedRoute allowNoRole>
+            <NoRolePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/seafarers" element={guard('seafarer.view', <SeafarerListPage />)} />
+        <Route path="/seafarers/new" element={guard('seafarer.create', <SeafarerFormPage />)} />
+        <Route
+          path="/seafarers/import"
+          element={guard('seafarer.import', <SeafarerImportPage />)}
+        />
+        <Route path="/seafarers/:id" element={guard('seafarer.view', <SeafarerDetailPage />)} />
+        <Route
+          path="/seafarers/:id/edit"
+          element={guard('seafarer.update', <SeafarerFormPage />)}
+        />
+        <Route path="/seafarers/:id/upload" element={guard('seafarer.docs', <UploadPage />)} />
+        <Route path="/seafarers/:id/review" element={guard('seafarer.docs', <ReviewPage />)} />
+        <Route path="/exports" element={guard('export.view', <ExportListPage />)} />
+        <Route path="/exports/new" element={guard('export.create', <PackCreatePage />)} />
+        <Route path="/exports/:packId" element={guard('export.view', <PackDetailPage />)} />
+        <Route
+          path="/training-centers"
+          element={guard('training.view', <TrainingCenterListPage />)}
+        />
+        <Route
+          path="/training-centers/:id"
+          element={guard('training.view', <TrainingCenterDetailPage />)}
+        />
+        <Route path="/courses" element={guard('training.view', <CourseListPage />)} />
+        <Route path="/courses/:id" element={guard('training.view', <CourseDetailPage />)} />
+        <Route path="/vessels" element={guard('vessel.view', <VesselListPage />)} />
+        <Route path="/vessels/new" element={guard('vessel.create', <VesselFormPage />)} />
+        <Route path="/vessels/:id" element={guard('vessel.view', <VesselDetailPage />)} />
+        <Route path="/vessels/:id/edit" element={guard('vessel.update', <VesselFormPage />)} />
+        <Route path="/partners" element={guard('partner.view', <PartnerListPage />)} />
+        <Route path="/partners/new" element={guard('partner.create', <PartnerFormPage />)} />
+        <Route path="/partners/:id" element={guard('partner.view', <PartnerDetailPage />)} />
+        <Route path="/partners/:id/edit" element={guard('partner.update', <PartnerFormPage />)} />
+        <Route path="/voyages" element={guard('voyage.view', <VoyageListPage />)} />
+        <Route path="/voyages/new" element={guard('voyage.create', <VoyageFormPage />)} />
+        <Route path="/voyages/:id" element={guard('voyage.view', <VoyageDetailPage />)} />
+        <Route path="/voyages/:id/edit" element={guard('voyage.update', <VoyageFormPage />)} />
+        <Route path="/contracts" element={guard('contract.view', <ContractListPage />)} />
+        <Route path="/contracts/new" element={guard('contract.create', <ContractFormPage />)} />
+        <Route path="/contracts/:id" element={guard('contract.view', <ContractDetailPage />)} />
+        <Route
+          path="/contracts/:id/edit"
+          element={guard('contract.update', <ContractFormPage />)}
+        />
+        <Route path="/fleet" element={<Navigate to="/vessels" replace />} />
+        <Route path="/fleet/vessels" element={<Navigate to="/vessels" replace />} />
+        <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />
+        <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
+        <Route path="/master-data/:tab" element={guard('catalog.view', <MasterSubPage />)} />
+        <Route path="/messages" element={guard('message.view', <MessagingPage />)} />
+        <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
+        <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
+        <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />
+      </Route>
+
+      <Route path="/403" element={<StandaloneError code={403} />} />
+
+      <Route path="*" element={<StandaloneError code={404} />} />
+    </Routes>
+  )
+}
+
+// Router kiểu "data router" (không dùng <BrowserRouter>) để trang có thay đổi chưa lưu chặn được việc rời trang (useBlocker).
+const router = createBrowserRouter([{ path: '*', element: <AppRoutes /> }])
 
 export default function App() {
   useRefreshAccess()
@@ -72,66 +171,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={viVN} theme={antTheme}>
         <AntApp notification={{ bottom: 96 }}>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/design-system" element={<DesignSystemPage />} />
-              <Route path="/" element={<ProtectedRoute allowNoRole><HomeRedirect /></ProtectedRoute>} />
-              <Route path="/no-role" element={<ProtectedRoute allowNoRole><NoRolePage /></ProtectedRoute>} />
-
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <AdminLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/seafarers" element={guard('seafarer.view', <SeafarerListPage />)} />
-                <Route path="/seafarers/new" element={guard('seafarer.create', <SeafarerFormPage />)} />
-                <Route path="/seafarers/import" element={guard('seafarer.import', <SeafarerImportPage />)} />
-                <Route path="/seafarers/:id" element={guard('seafarer.view', <SeafarerDetailPage />)} />
-                <Route path="/seafarers/:id/edit" element={guard('seafarer.update', <SeafarerFormPage />)} />
-                <Route path="/seafarers/:id/upload" element={guard('seafarer.docs', <UploadPage />)} />
-                <Route path="/seafarers/:id/review" element={guard('seafarer.docs', <ReviewPage />)} />
-                <Route path="/exports" element={guard('export.view', <ExportListPage />)} />
-                <Route path="/exports/new" element={guard('export.create', <PackCreatePage />)} />
-                <Route path="/exports/:packId" element={guard('export.view', <PackDetailPage />)} />
-                <Route path="/training-centers" element={guard('training.view', <TrainingCenterListPage />)} />
-                <Route path="/training-centers/:id" element={guard('training.view', <TrainingCenterDetailPage />)} />
-                <Route path="/courses" element={guard('training.view', <CourseListPage />)} />
-                <Route path="/courses/:id" element={guard('training.view', <CourseDetailPage />)} />
-                <Route path="/vessels" element={guard('vessel.view', <VesselListPage />)} />
-                <Route path="/vessels/new" element={guard('vessel.create', <VesselFormPage />)} />
-                <Route path="/vessels/:id" element={guard('vessel.view', <VesselDetailPage />)} />
-                <Route path="/vessels/:id/edit" element={guard('vessel.update', <VesselFormPage />)} />
-                <Route path="/partners" element={guard('partner.view', <PartnerListPage />)} />
-                <Route path="/partners/new" element={guard('partner.create', <PartnerFormPage />)} />
-                <Route path="/partners/:id" element={guard('partner.view', <PartnerDetailPage />)} />
-                <Route path="/partners/:id/edit" element={guard('partner.update', <PartnerFormPage />)} />
-                <Route path="/voyages" element={guard('voyage.view', <VoyageListPage />)} />
-                <Route path="/voyages/new" element={guard('voyage.create', <VoyageFormPage />)} />
-                <Route path="/voyages/:id" element={guard('voyage.view', <VoyageDetailPage />)} />
-                <Route path="/voyages/:id/edit" element={guard('voyage.update', <VoyageFormPage />)} />
-                <Route path="/contracts" element={guard('contract.view', <ContractListPage />)} />
-                <Route path="/contracts/new" element={guard('contract.create', <ContractFormPage />)} />
-                <Route path="/contracts/:id" element={guard('contract.view', <ContractDetailPage />)} />
-                <Route path="/contracts/:id/edit" element={guard('contract.update', <ContractFormPage />)} />
-                <Route path="/fleet" element={<Navigate to="/vessels" replace />} />
-                <Route path="/fleet/vessels" element={<Navigate to="/vessels" replace />} />
-                <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />
-                <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
-                <Route path="/master-data/:tab" element={guard('catalog.view', <MasterSubPage />)} />
-                <Route path="/messages" element={guard('message.view', <MessagingPage />)} />
-                <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
-                <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
-                <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />
-              </Route>
-
-              <Route path="/403" element={<StandaloneError code={403} />} />
-
-              <Route path="*" element={<StandaloneError code={404} />} />
-            </Routes>
-          </BrowserRouter>
+          <RouterProvider router={router} />
         </AntApp>
       </ConfigProvider>
     </QueryClientProvider>

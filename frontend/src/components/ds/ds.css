@@ -551,3 +551,16 @@
 .ds-card--fixed .ant-table-wrapper .ant-table-body { overflow-y: auto !important; }
 /* Chiều cao dòng lẻ pixel (72.8px) làm làm tròn scrollHeight dư 1px và hiện thanh cuộn thừa: chừa 1px đệm. */
 .ds-card--fixed .ant-table-wrapper .ant-table-body { padding-bottom: 1px; }
+
+/* ---------- Nút quét giấy tờ và dòng tóm tắt AI điền (ScanButton, AutofillBanner) ---------- */
+.ds-scan .ds-scan-icon { color: var(--primary); flex: none; }
+.ds-scan--auto .ds-scan-icon { color: currentColor; }
+.ds-scan-done { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 500; }
+.ds-aibanner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 18px; padding: 10px 12px; border: 1px solid var(--primary); border-radius: var(--radius-md); background: var(--primary-light); font-size: 13px; }
+.ds-aibanner > svg { flex: none; color: var(--primary); }
+.ds-aibanner__text { flex: 1 1 240px; min-width: 0; margin: 0; }
+.ds-aibanner__clear { padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-weight: 500; cursor: pointer; }
+.ds-aibanner__clear:hover { text-decoration: underline; }
+/* Nhãn "AI" nằm trong ô vừa được điền. */
+.ds-aitag { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 6px; background: var(--primary); color: var(--primary-fg, #fff); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+.ds-aitag--warn { background: var(--warning); }

@@ -7,6 +7,7 @@
 .sf-crumb a:hover { color: var(--foreground); }
 .sf-crumb .anticon { font-size: 10px; }
 .sf-crumb [aria-current] { overflow: hidden; color: var(--foreground); text-overflow: ellipsis; white-space: nowrap; }
+.sf-head__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sf-head__title { margin: 6px 0 0; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
 .sf-head__desc { max-width: 70ch; margin: 4px 0 0; color: var(--muted); }
 
@@ -41,7 +42,9 @@
 /* Cột phải: các khối. */
 .sf-sections { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .sf-panel { scroll-margin-top: 88px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
-.sf-panel__head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 24px 0; }
+.sf-panel__head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 20px 24px 0; }
+.sf-panel__text { flex: 1 1 220px; min-width: 0; }
+.sf-panel__scans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .sf-step { display: grid; flex-shrink: 0; place-items: center; width: 28px; height: 28px; border-radius: 999px; background: var(--secondary); font-size: 12px; font-weight: 600; }
 .sf-panel__title { margin: 2px 0 0; font-size: 16px; font-weight: 600; }
 .sf-panel__desc { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
@@ -151,3 +154,16 @@
 .sf-ro-group { display: flex; flex-direction: column; gap: 14px; }
 .sf-ro-group + .sf-ro-group, .sf-items + .sf-ro-group, .sf-grid + .sf-ro-group { margin-top: 20px; }
 .sf-grid > .sf-c12 { grid-column: 1 / -1; }
+
+/* Ô vừa được AI điền: nền navy nhạt, viền navy, nhãn "AI" cuối ô (nhãn là chữ, không chỉ màu). Mất khi sửa ô đó. */
+.sf-ai .ant-form-item-control-input-content { position: relative; }
+.sf-ai .ant-form-item-control-input-content::after { content: 'AI'; position: absolute; top: 50%; right: 12px; display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 6px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; transform: translateY(-50%); pointer-events: none; }
+.sf-ai--check .ant-form-item-control-input-content::after { content: 'AI ?'; background: var(--warning); }
+.sf-ai .ant-form-item-control-input-content:has(.ant-picker, .ant-select)::after { right: 36px; }
+.sf-ai .ant-form-item-control-input-content:has(.sf-seg)::after { top: -22px; right: 0; transform: none; }
+.sf-ai input, .sf-ai .ant-input-number-input { padding-right: 44px; }
+.sf-ai--ok .ant-input, .sf-ai--ok .ant-input-affix-wrapper, .sf-ai--ok .ant-input-number, .sf-ai--ok .ant-picker, .sf-ai--ok .ant-select-selector { border-color: var(--primary) !important; background: var(--primary-light) !important; box-shadow: 0 0 0 3px var(--ring-focus, rgba(0, 51, 102, 0.1)); }
+.sf-ai--check .ant-input, .sf-ai--check .ant-input-affix-wrapper, .sf-ai--check .ant-input-number, .sf-ai--check .ant-picker, .sf-ai--check .ant-select-selector { border-color: var(--warning-border) !important; background: var(--warning-bg) !important; }
+.sf-ai--ok .sf-seg { box-shadow: 0 0 0 1px var(--primary); }
+.sf-aicheck { margin-left: 6px; color: var(--primary); font-size: 12px; font-weight: 600; }
+@media (max-width: 640px) { .sf-panel__scans { margin-left: 40px; } }

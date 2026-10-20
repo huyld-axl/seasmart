@@ -8,6 +8,13 @@ export const documentApi = {
     form.append('file', file)
     return api.post(`/documents/seafarer/${seafarerId}`, form).then((r) => r.data)
   },
+  // Quét nhanh một tệp để điền form (không lưu gì). `kind` đứng trước `file` để máy chủ đọc được khi nhận tệp.
+  scan: (file, kind = 'auto') => {
+    const form = new FormData()
+    form.append('kind', kind)
+    form.append('file', file)
+    return api.post('/documents/scan', form).then((r) => r.data)
+  },
   decide: (id, key, action, value) => api.put(`/documents/${id}/fields/${key}`, value === undefined ? { action } : { action, value }).then((r) => r.data),
   retry: (id) => api.post(`/documents/${id}/retry`, {}).then((r) => r.data),
   remove: (id) => api.delete(`/documents/${id}`).then((r) => r.data),

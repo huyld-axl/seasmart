@@ -13,6 +13,18 @@ const READING_TASKS = {
 const DEFAULT_TASK = { task: 'read', tier: 'small', version: 'read-1' }
 
 const TYPE_NOTES = {
+  national_id: [
+    'Ảnh là căn cước công dân hoặc CCCD gắn chip của Việt Nam, có thể là mặt trước, mặt sau hoặc cả hai.',
+    'Ô "Số" là dãy 12 chữ số: chép chính xác từng ký tự. Quê quán và nơi thường trú chép đầy đủ như trên thẻ. Nơi cấp, ngày cấp thường ở mặt sau hoặc dòng "Ngày, tháng, năm cấp".',
+    'Ô không có trên mặt thẻ đang xem thì UNKNOWN.',
+  ],
+  diploma: [
+    'Ảnh là bằng tốt nghiệp hoặc giấy chứng nhận tốt nghiệp. Trình độ là một trong: Đại học, Cao đẳng, Trung cấp, Cấp 3 (THPT); chọn đúng bậc ghi trên bằng.',
+    'Trường là tên cơ sở đào tạo, chuyên ngành là ngành đào tạo; bằng phổ thông không có chuyên ngành thì UNKNOWN.',
+  ],
+  passport: [
+    'Ảnh là trang thông tin của hộ chiếu. Số hộ chiếu chép chính xác từng ký tự; ngày dạng dd/mm/yyyy (tháng viết bằng chữ như "12 MAR 2022" vẫn đổi sang số).',
+  ],
   seaman_book_info: [
     'Ảnh là trang thông tin của sổ thuyền viên Việt Nam: có chữ in và chữ viết tay, dấu đóng có thể đè lên chữ.',
     'Ô "Số" là số sổ ở đầu trang. Ô "issued" gồm nơi cấp và ngày cấp: đọc cả hai vào một ô như trên giấy.',

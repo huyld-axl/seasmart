@@ -34,6 +34,8 @@ import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
+import ScanButton from '../components/ds/ScanButton'
+import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
 import SlidePanel from '../components/ds/SlidePanel'
 import useToast from '../components/ds/useToast'
@@ -674,6 +676,22 @@ export default function DesignSystemPage() {
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
           </div>
+        </div>
+      </Section>
+
+      <Section id="quet-giay-to" title="Nút quét giấy tờ và dòng AI điền">
+        <div className="dsp-stack">
+          <p className="dsp-note">Nút chính “Tự điền từ giấy tờ” nhận nhiều tệp, AI tự nhận loại. Nút nhỏ “Quét …” nằm ở đầu khối đúng loại giấy. Ô vừa điền có nhãn AI trong ô và dòng tóm tắt đầu khối; chỉ điền ô trống, ô đã có dữ liệu thì hỏi trước khi ghi đè.</p>
+          <div className="ds-toggle-grid">
+            <Demo label="Nút chính"><ScanButton variant="auto" label="Tự điền từ giấy tờ" onPick={() => {}} /></Demo>
+            <Demo label="Nút quét một loại"><ScanButton label="Quét hộ chiếu" onPick={() => {}} /></Demo>
+            <Demo label="Đang đọc"><ScanButton label="Quét hộ chiếu" loading onPick={() => {}} /></Demo>
+            <Demo label="Xong (5 giây)"><ScanButton label="Quét hộ chiếu" doneText="Đã điền 8 ô" /></Demo>
+          </div>
+          <Demo label="Dòng tóm tắt và nhãn trong ô" wide>
+            <AutofillBanner text="Đã điền 3 ô từ hộ chiếu, 1 ô cần kiểm tra." onClear={() => {}} />
+            <p><span className="ds-aitag">AI</span> <span className="ds-aitag ds-aitag--warn">AI ?</span></p>
+          </Demo>
         </div>
       </Section>
 

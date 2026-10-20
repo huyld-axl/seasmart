@@ -1,13 +1,11 @@
-const { ROLES } = require('../constants/roles')
-
 const createUserSchema = {
   body: {
     type: 'object',
-    required: ['email', 'password', 'role'],
+    required: ['email', 'password', 'role_id'],
     properties: {
       email: { type: 'string', format: 'email' },
       password: { type: 'string', minLength: 6 },
-      role: { type: 'string', enum: ROLES },
+      role_id: { type: 'integer', minimum: 1 },
     },
   },
 }
@@ -17,7 +15,7 @@ const updateUserSchema = {
     type: 'object',
     properties: {
       email: { type: 'string', format: 'email' },
-      role: { type: 'string', enum: ROLES },
+      role_id: { type: 'integer', minimum: 1 },
       is_active: { type: 'boolean' },
     },
   },
@@ -27,7 +25,8 @@ const listUsersQuerySchema = {
   querystring: {
     type: 'object',
     properties: {
-      role: { type: 'string', enum: ROLES },
+      // Số id vai trò, hoặc `none` = chưa có vai trò.
+      role_id: { type: 'string', pattern: '^(\\d+|none)$' },
       is_active: { type: 'string', enum: ['true', 'false'] },
       email: { type: 'string' },
       page: { type: 'integer', minimum: 1, default: 1 },

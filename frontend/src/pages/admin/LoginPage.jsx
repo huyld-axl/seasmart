@@ -21,10 +21,8 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     try {
-      const user = await login(email, password)
-      if (user.role === 'seafarer') navigate('/seafarer/profile')
-      else if (user.role === 'training_center') navigate('/courses')
-      else navigate('/seafarers')
+      await login(email, password)
+      navigate('/seafarers')
     } catch (err) {
       const status = err.response?.status
       if (!err.response) setError('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.')

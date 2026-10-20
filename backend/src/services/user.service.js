@@ -135,16 +135,13 @@ async function searchUsers(q) {
   }
   const term = `%${q.trim()}%`
   const [rows] = await pool.query(
-    `SELECT u.id, u.email, u.role,
-            COALESCE(s.full_name, tc.name_vi, u.email) AS display_name
+    `SELECT u.id, u.email, u.role, u.email AS display_name
      FROM "user" u
-     LEFT JOIN seafarer s ON u.linked_entity_type = 'seafarer' AND u.linked_entity_id = s.id AND s.deleted_at IS NULL
-     LEFT JOIN training_center tc ON u.linked_entity_type = 'training_center' AND u.linked_entity_id = tc.id AND tc.deleted_at IS NULL
      WHERE u.deleted_at IS NULL
-       AND (unaccent(u.email::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(tc.name_vi::text) ILIKE unaccent(?))
+       AND unaccent(u.email::text) ILIKE unaccent(?)
      ORDER BY u.email
      LIMIT 20`,
-    [term, term, term]
+    [term]
   )
   return rows.map((r) => ({
     id: r.id,

@@ -8,17 +8,12 @@ const trainingCourseService = {
     status,
     course_type_id,
     search,
-    requestUser,
   }) {
     const offset = (page - 1) * limit
     const where = ['tc.deleted_at IS NULL']
     const params = []
 
-    // training_center chỉ thấy course của mình
-    if (requestUser.role === 'training_center') {
-      where.push('tc.training_center_id = ?')
-      params.push(requestUser.linked_entity_id)
-    } else if (training_center_id) {
+    if (training_center_id) {
       where.push('tc.training_center_id = ?')
       params.push(training_center_id)
     }

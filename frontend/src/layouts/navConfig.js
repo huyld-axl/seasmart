@@ -42,14 +42,8 @@ export const NAV_SECTIONS = [
   },
 ]
 
-// Trung tâm đào tạo chỉ thấy khóa học và tin nhắn của mình.
-export const TRAINING_CENTER_SECTIONS = [
-  { key: 'courses', label: 'Khóa học', icon: 'book', to: '/courses', match: ['/courses'] },
-  { key: 'messages', label: 'Tin nhắn', icon: 'message', to: '/messages', match: ['/messages'] },
-]
-
-export function sectionsFor(role) {
-  return role === 'training_center' ? TRAINING_CENTER_SECTIONS : NAV_SECTIONS
+export function sectionsFor() {
+  return NAV_SECTIONS
 }
 
 const startsWithPath = (pathname, prefix) => pathname === prefix || pathname.startsWith(prefix + '/')

@@ -336,19 +336,13 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
 }
 
 // TASK-B4: Import enrollment hàng loạt — Excel có cột seafarer_code hoặc full_name, rank?, notes?
-async function importEnrollments(courseId, fileBuffer, userId, userRole, linkedEntityId) {
+async function importEnrollments(courseId, fileBuffer) {
   const pool = require('../config/db')
   const [[course]] = await pool.query(
     'SELECT id, max_students, training_center_id FROM training_course WHERE id = ? AND deleted_at IS NULL',
     [courseId]
   )
   if (!course) throw { statusCode: 404, message: 'Khóa học không tồn tại' }
-  if (
-    userRole === 'training_center' &&
-    Number(course.training_center_id) !== Number(linkedEntityId)
-  ) {
-    throw { statusCode: 403, message: 'Chỉ được import vào khóa học của trung tâm mình' }
-  }
 
   const wb = XLSX.read(fileBuffer, { type: 'buffer' })
   const sheet = wb.Sheets[wb.SheetNames[0]]

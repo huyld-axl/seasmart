@@ -33,7 +33,6 @@ async function trainingCourseRoutes(fastify) {
         status,
         course_type_id: parseInt(course_type_id) || null,
         search,
-        requestUser: request.user,
       })
     }
   )
@@ -44,14 +43,8 @@ async function trainingCourseRoutes(fastify) {
     {
       onRequest: [fastify.authenticate],
     },
-    async (request, reply) => {
-      const course = await trainingCourseService.getById(parseInt(request.params.id))
-      if (request.user.role === 'training_center' && course && course.training_center_id != null) {
-        if (Number(course.training_center_id) !== Number(request.user.linked_entity_id)) {
-          return reply.code(403).send({ error: 'Không có quyền xem khóa học này' })
-        }
-      }
-      return course
+    async (request) => {
+      return trainingCourseService.getById(parseInt(request.params.id))
     }
   )
 
@@ -84,7 +77,7 @@ async function trainingCourseRoutes(fastify) {
     },
     async (request, reply) => {
       const { role } = request.user
-      if (!['admin', 'operator', 'training_center'].includes(role)) {
+      if (!['admin', 'operator'].includes(role)) {
         return reply.code(403).send({ error: 'Không có quyền thực hiện' })
       }
       const course = await trainingCourseService.create(request.body, request.user.id)
@@ -100,7 +93,7 @@ async function trainingCourseRoutes(fastify) {
     },
     async (request, reply) => {
       const { role } = request.user
-      if (!['admin', 'operator', 'training_center'].includes(role)) {
+      if (!['admin', 'operator'].includes(role)) {
         return reply.code(403).send({ error: 'Không có quyền thực hiện' })
       }
       return trainingCourseService.update(

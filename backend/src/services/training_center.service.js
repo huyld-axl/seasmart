@@ -51,24 +51,11 @@ const trainingCenterService = {
     const [result] = await pool.query('INSERT INTO training_center SET ?', [insertData])
     const center = await this.getById(result.insertId)
 
-    // Nếu có user_id thì link user với training center
-    if (data.user_id) {
-      await pool.query(
-        'UPDATE "user" SET linked_entity_type = \'training_center\', linked_entity_id = ? WHERE id = ?',
-        [result.insertId, data.user_id]
-      )
-    }
-
     return center
   },
 
-  async update(id, data, updated_by, requestUser) {
-    const center = await this.getById(id)
-
-    // training_center role chỉ được sửa record của chính mình
-    if (requestUser.role === 'training_center' && requestUser.linked_entity_id !== id) {
-      throw { statusCode: 403, message: 'Không có quyền chỉnh sửa trung tâm này' }
-    }
+  async update(id, data, updated_by) {
+    await this.getById(id)
 
     await pool.query(
       'UPDATE training_center SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?',

@@ -7,7 +7,6 @@ import { antTheme } from './theme/tokens'
 
 import ProtectedRoute from './components/common/ProtectedRoute'
 import AdminLayout from './layouts/AdminLayout'
-import SeafarerLayout from './layouts/SeafarerLayout'
 import LoginPage from './pages/admin/LoginPage'
 import SeafarerListPage from './pages/admin/SeafarerListPage'
 import SeafarerDetailPage from './pages/admin/SeafarerDetailPage'
@@ -31,13 +30,6 @@ import ContractListPage from './pages/admin/contracts/ContractListPage'
 import ContractFormPage from './pages/admin/contracts/ContractFormPage'
 import ContractDetailPage from './pages/admin/contracts/ContractDetailPage'
 import MessagingPage from './pages/admin/MessagingPage'
-import SeafarerRegisterPage from './pages/seafarer/RegisterPage'
-import SeafarerVerifyPage from './pages/seafarer/VerifyPage'
-import SeafarerProfilePage from './pages/seafarer/ProfilePage'
-import SeafarerCertificatesPage from './pages/seafarer/CertificatesPage'
-import SeafarerCoursesPage from './pages/seafarer/CoursesPage'
-import SeafarerHistoryPage from './pages/seafarer/HistoryPage'
-import QREnrollPage from './pages/QREnrollPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
@@ -66,7 +58,7 @@ export default function App() {
 
               <Route
                 element={
-                  <ProtectedRoute roles={['admin', 'operator', 'reviewer', 'training_center', 'manning_agent']}>
+                  <ProtectedRoute roles={['admin', 'operator', 'reviewer', 'manning_agent']}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -112,26 +104,6 @@ export default function App() {
               </Route>
 
               <Route path="/403" element={<StandaloneError code={403} />} />
-              <Route path="/tc/*" element={<Navigate to="/courses" replace />} />
-
-              {/* Seafarer public routes */}
-              <Route path="/seafarer/register" element={<SeafarerRegisterPage />} />
-              <Route path="/enroll/:token" element={<QREnrollPage />} />
-
-              {/* Seafarer protected routes */}
-              <Route
-                element={
-                  <ProtectedRoute roles={['seafarer']}>
-                    <SeafarerLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/seafarer/verify" element={<SeafarerVerifyPage />} />
-                <Route path="/seafarer/profile" element={<SeafarerProfilePage />} />
-                <Route path="/seafarer/certificates" element={<SeafarerCertificatesPage />} />
-                <Route path="/seafarer/courses" element={<SeafarerCoursesPage />} />
-                <Route path="/seafarer/history" element={<SeafarerHistoryPage />} />
-              </Route>
 
               <Route path="*" element={<StandaloneError code={404} />} />
             </Routes>

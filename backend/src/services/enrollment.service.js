@@ -135,8 +135,7 @@ const enrollmentService = {
     return { ...rows[0], scores }
   },
 
-  async create(data, created_by, options = {}) {
-    const { userRole, linkedEntityId } = options
+  async create(data, created_by) {
     const conn = await pool.getConnection()
     try {
       await conn.beginTransaction()
@@ -147,12 +146,6 @@ const enrollmentService = {
         [data.course_id]
       )
       if (!course) throw { statusCode: 404, message: 'Không tìm thấy khóa học' }
-
-      if (userRole === 'training_center') {
-        if (Number(course.training_center_id) !== Number(linkedEntityId)) {
-          throw { statusCode: 403, message: 'Chỉ được enroll vào khóa học của trung tâm mình' }
-        }
-      }
 
       const [[enrolled]] = await conn.query(
         `SELECT COUNT(*) as cnt FROM training_enrollment WHERE course_id = ? AND deleted_at IS NULL
@@ -318,18 +311,10 @@ const enrollmentService = {
   },
 
   // TASK-B1: Duyệt đăng ký (chỉ PENDING)
-  async approve(id, userId, notes, userRole, linkedEntityId) {
+  async approve(id, userId, notes) {
     const enrollment = await this.getById(id)
     if (enrollment.status !== 'PENDING') {
       throw { statusCode: 400, message: 'Chỉ duyệt được đăng ký ở trạng thái PENDING' }
-    }
-    if (userRole === 'training_center') {
-      if (Number(enrollment.training_center_id) !== Number(linkedEntityId)) {
-        throw {
-          statusCode: 403,
-          message: 'Chỉ được duyệt đăng ký thuộc khóa học của trung tâm mình',
-        }
-      }
     }
     const [[{ cnt }]] = await pool.query(
       `SELECT COUNT(*) as cnt FROM training_enrollment
@@ -348,12 +333,11 @@ const enrollmentService = {
     return this.getById(id)
   },
 
-  async getTrainingHistory(seafarerId, userRole) {
-    const scoreFields = userRole !== 'training_center' ? ', e.total_score, e.grade' : ''
+  async getTrainingHistory(seafarerId) {
     const [rows] = await pool.query(
       `SELECT e.id, e.enrollment_date, e.status, e.result, e.certificate_issued,
               tc.name as course_name, tc.start_date, tc.end_date,
-              ctr.name_vi as center_name, e.referred_by_center_id${scoreFields}
+              ctr.name_vi as center_name, e.referred_by_center_id, e.total_score, e.grade
        FROM training_enrollment e
        JOIN training_course tc ON tc.id = e.course_id
        JOIN training_center ctr ON ctr.id = tc.training_center_id
@@ -364,21 +348,13 @@ const enrollmentService = {
     return rows
   },
 
-  async reject(id, userId, reason, userRole, linkedEntityId) {
+  async reject(id, userId, reason) {
     if (!reason || !String(reason).trim()) {
       throw { statusCode: 400, message: 'Cần có lý do từ chối' }
     }
     const enrollment = await this.getById(id)
     if (enrollment.status !== 'PENDING') {
       throw { statusCode: 400, message: 'Chỉ từ chối được đăng ký ở trạng thái PENDING' }
-    }
-    if (userRole === 'training_center') {
-      if (Number(enrollment.training_center_id) !== Number(linkedEntityId)) {
-        throw {
-          statusCode: 403,
-          message: 'Chỉ được từ chối đăng ký thuộc khóa học của trung tâm mình',
-        }
-      }
     }
     await pool.query(
       `UPDATE training_enrollment SET status = 'REJECTED', approved_by = ?, approved_at = NOW(),

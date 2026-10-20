@@ -7,34 +7,6 @@ const path = require('path')
 const crypto = require('crypto')
 const config = require('../config')
 
-// TASK-B5: training_center chỉ thấy các field này khi GET /seafarers hoặc GET /seafarers/:id
-const TRAINING_CENTER_ALLOWED_FIELDS = [
-  's.id',
-  's.seafarer_code',
-  's.full_name',
-  's.date_of_birth',
-  's.nationality_id',
-  's.current_rank_id',
-  's.english_level',
-  's.english_score',
-  's.status as current_status',
-  'r.name_vi as rank_name',
-  'r.code as rank_code',
-  'c.name_vi as nationality_name',
-]
-const TRAINING_CENTER_SELECT = TRAINING_CENTER_ALLOWED_FIELDS.join(', ')
-
-function filterCertificateFieldsForTC(rows) {
-  return rows.map((c) => ({
-    id: c.id,
-    certificate_type: c.certificate_type_name || c.certificate_type,
-    certificate_number: c.certificate_number,
-    issued_date: c.issued_date,
-    expiry_date: c.expiry_date,
-    status: c.status,
-  }))
-}
-
 // Whitelist các fields được phép INSERT/UPDATE từ client
 const ALLOWED_FIELDS = [
   'full_name',
@@ -199,7 +171,7 @@ function sniffImage(buffer) {
 }
 
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training, tab }, userRole) {
+  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training, tab }) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
@@ -224,17 +196,13 @@ const seafarerService = {
       where.push('s.status = \'AVAILABLE\'')
     }
 
-    const isTC = userRole === 'training_center'
     // Số đếm của từng tab (màn A1) tính trên bộ lọc hiện tại, trước khi lọc theo tab.
-    let counts = null
-    if (!isTC) {
-      const baseWhere = 'WHERE ' + where.join(' AND ')
-      const countCols = ['COUNT(*) AS all_count', ...TABS.map((key) => `SUM((${TAB_CONDITIONS[key]})::integer) AS ${key}`)].join(', ')
-      const [[row]] = await pool.query(`SELECT ${countCols} FROM seafarer s ${baseWhere}`, params)
-      counts = { all: Number(row.all_count) || 0 }
-      TABS.forEach((key) => { counts[key] = Number(row[key]) || 0 })
-    }
-    if (!isTC && tab && TAB_CONDITIONS[tab]) where.push(TAB_CONDITIONS[tab])
+    const baseWhere = 'WHERE ' + where.join(' AND ')
+    const countCols = ['COUNT(*) AS all_count', ...TABS.map((key) => `SUM((${TAB_CONDITIONS[key]})::integer) AS ${key}`)].join(', ')
+    const [[countRow]] = await pool.query(`SELECT ${countCols} FROM seafarer s ${baseWhere}`, params)
+    const counts = { all: Number(countRow.all_count) || 0 }
+    TABS.forEach((key) => { counts[key] = Number(countRow[key]) || 0 })
+    if (tab && TAB_CONDITIONS[tab]) where.push(TAB_CONDITIONS[tab])
 
     const whereStr = 'WHERE ' + where.join(' AND ')
 
@@ -243,9 +211,7 @@ const seafarerService = {
       params
     )
 
-    const selectFields = isTC
-      ? TRAINING_CENTER_SELECT
-      : `s.id, s.seafarer_code, s.full_name, s.national_id, s.date_of_birth,
+    const selectFields = `s.id, s.seafarer_code, s.full_name, s.national_id, s.date_of_birth,
          s.gender, s.place_of_birth, s.phone_primary, s.email, s.status, s.user_id,
          r.name_vi as rank_name, r.code as rank_code, ${OVERVIEW_FIELDS}`
 
@@ -253,25 +219,18 @@ const seafarerService = {
       `SELECT ${selectFields}
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
-       ${isTC ? 'LEFT JOIN country c ON c.id = s.nationality_id' : ''}
        ${whereStr}
        ORDER BY s.id DESC
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     )
 
-    if (isTC) return { data: rows, total, page, limit }
     return { data: rows.map(shapeRow), total, page, limit, counts }
   },
 
-  async getById(id, userRole) {
-    const isTC = userRole === 'training_center'
-    const selectFields = isTC
-      ? TRAINING_CENTER_SELECT
-      : 's.*, r.name_vi as rank_name, c.name_vi as nationality_name'
-
+  async getById(id) {
     const [rows] = await pool.query(
-      `SELECT ${selectFields}
+      `SELECT s.*, r.name_vi as rank_name, c.name_vi as nationality_name
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
        LEFT JOIN country c ON c.id = s.nationality_id
@@ -281,24 +240,12 @@ const seafarerService = {
     if (!rows[0]) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
 
     let result = rows[0]
-    if (isTC) {
-      const [certs] = await pool.query(
-        `SELECT sc.id, sc.certificate_number, sc.issued_date, sc.expiry_date, sc.status,
-                ct.name_vi as certificate_type_name
-         FROM seafarer_certificate sc
-         LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
-         WHERE sc.seafarer_id = ? AND sc.deleted_at IS NULL ORDER BY sc.expiry_date ASC`,
-        [id]
-      )
-      result.certificates = filterCertificateFieldsForTC(certs)
-    } else {
-      const { photo_path, photo_mime, ...rest } = result
-      const [banks] = await pool.query(
-        'SELECT id, bank_name, account_number, account_holder FROM seafarer_bank_account WHERE seafarer_id = ? ORDER BY sort_order, id',
-        [id]
-      )
-      result = { ...rest, has_photo: Boolean(photo_path), bank_accounts: banks }
-    }
+    const { photo_path, photo_mime, ...rest } = result
+    const [banks] = await pool.query(
+      'SELECT id, bank_name, account_number, account_holder FROM seafarer_bank_account WHERE seafarer_id = ? ORDER BY sort_order, id',
+      [id]
+    )
+    result = { ...rest, has_photo: Boolean(photo_path), bank_accounts: banks }
     return result
   },
 

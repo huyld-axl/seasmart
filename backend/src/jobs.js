@@ -33,19 +33,6 @@ function startJobs(logger) {
     }
   })
 
-  // Job 3 (hourly): cleanup expired OTP records
-  cron.schedule('15 * * * *', async () => {
-    try {
-      const [result] = await pool.query(
-        `DELETE FROM otp_verification
-         WHERE expires_at < NOW() AND used_at IS NULL`
-      )
-      logger.info({ affectedRows: result.affectedRows }, 'Job: expired OTPs cleaned up')
-    } catch (err) {
-      logger.error({ err }, 'Job: failed to cleanup expired OTPs')
-    }
-  })
-
   // Job 4a (daily 8:00 AM): course reminder — 3 ngày trước khi khóa bắt đầu (TASK-C1)
   cron.schedule('0 8 * * *', async () => {
     try {

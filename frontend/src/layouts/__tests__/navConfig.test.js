@@ -10,10 +10,8 @@ describe('navConfig', () => {
     expect(NAV_SECTIONS.map((s) => s.group)).toEqual([1, 1, 1, 1, 2, 2, 3, 3])
   })
 
-  it('trung tâm đào tạo chỉ thấy khóa học và tin nhắn', () => {
-    expect(sectionsFor('training_center').map((s) => s.key)).toEqual(['courses', 'messages'])
+  it('mọi tài khoản đang thấy đủ các mục', () => {
     expect(sectionsFor('operator')).toBe(NAV_SECTIONS)
-    expect(sectionsFor('training_center').some((s) => ['voyages', 'contracts'].includes(s.key))).toBe(false)
   })
 
   it('chọn mục theo tiền tố đường dẫn, không khớp nửa chữ', () => {

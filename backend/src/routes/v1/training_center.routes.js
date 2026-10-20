@@ -65,7 +65,6 @@ async function trainingCenterRoutes(fastify) {
             contact_person: { type: 'string' },
             is_active: { type: 'boolean' },
             notes: { type: 'string' },
-            user_id: { type: 'integer' },
           },
         },
       },
@@ -88,15 +87,10 @@ async function trainingCenterRoutes(fastify) {
     },
     async (request, reply) => {
       const { role } = request.user
-      if (!['admin', 'operator', 'training_center'].includes(role)) {
+      if (!['admin', 'operator'].includes(role)) {
         return reply.code(403).send({ error: 'Không có quyền thực hiện' })
       }
-      return trainingCenterService.update(
-        parseInt(request.params.id),
-        request.body,
-        request.user.id,
-        request.user
-      )
+      return trainingCenterService.update(parseInt(request.params.id), request.body, request.user.id)
     }
   )
 

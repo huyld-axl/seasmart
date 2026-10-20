@@ -4,7 +4,7 @@ const {
   getEnrollmentImportTemplateBuffer,
 } = require('../../services/import.service')
 
-const ADMIN_ROLES = ['admin', 'operator', 'training_center']
+const ADMIN_ROLES = ['admin', 'operator']
 const MAX_LIST_LIMIT = 100
 
 async function enrollmentRoutes(fastify) {
@@ -55,13 +55,7 @@ async function enrollmentRoutes(fastify) {
         if (!courseId) return reply.code(400).send({ error: 'Thiếu course_id' })
         if (!buffer || buffer.length === 0)
           return reply.code(400).send({ error: 'Thiếu file Excel' })
-        const result = await importEnrollments(
-          courseId,
-          buffer,
-          request.user.id,
-          request.user.role,
-          request.user.linked_entity_id
-        )
+        const result = await importEnrollments(courseId, buffer)
         return result
       } catch (e) {
         return reply.code(e.statusCode || 500).send({ error: e.message })
@@ -99,11 +93,7 @@ async function enrollmentRoutes(fastify) {
         status,
         training_center_id: qTcId,
       } = request.query
-      // training_center role: force filter by own TC, ignore client param
-      const training_center_id =
-        request.user.role === 'training_center'
-          ? (request.user.linked_entity_id ?? null)
-          : parseInt(qTcId) || null
+      const training_center_id = parseInt(qTcId) || null
 
       const safePage = Math.max(parseInt(page) || 1, 1)
       const safeLimit = Math.min(parseInt(limit) || 20, MAX_LIST_LIMIT)
@@ -130,7 +120,7 @@ async function enrollmentRoutes(fastify) {
         return reply.code(403).send({ error: 'Không có quyền' })
       }
       const seafarerId = parseInt(request.params.seafarerId)
-      const rows = await enrollmentService.getTrainingHistory(seafarerId, request.user.role)
+      const rows = await enrollmentService.getTrainingHistory(seafarerId)
       return rows
     }
   )
@@ -141,14 +131,8 @@ async function enrollmentRoutes(fastify) {
     {
       onRequest: [fastify.authenticate],
     },
-    async (request, reply) => {
-      const enrollment = await enrollmentService.getById(parseInt(request.params.id))
-      if (request.user.role === 'training_center' && enrollment.training_center_id != null) {
-        if (Number(enrollment.training_center_id) !== Number(request.user.linked_entity_id)) {
-          return reply.code(403).send({ error: 'Không có quyền xem đăng ký này' })
-        }
-      }
-      return enrollment
+    async (request) => {
+      return enrollmentService.getById(parseInt(request.params.id))
     }
   )
 
@@ -176,10 +160,7 @@ async function enrollmentRoutes(fastify) {
       if (!ADMIN_ROLES.includes(request.user.role)) {
         return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
       }
-      const enrollment = await enrollmentService.create(request.body, request.user.id, {
-        userRole: request.user.role,
-        linkedEntityId: request.user.linked_entity_id,
-      })
+      const enrollment = await enrollmentService.create(request.body, request.user.id)
       return reply.code(201).send(enrollment)
     }
   )
@@ -204,9 +185,7 @@ async function enrollmentRoutes(fastify) {
         const out = await enrollmentService.approve(
           parseInt(request.params.id),
           request.user.id,
-          request.body?.notes,
-          request.user.role,
-          request.user.linked_entity_id
+          request.body?.notes
         )
         return out
       } catch (e) {
@@ -236,9 +215,7 @@ async function enrollmentRoutes(fastify) {
         const out = await enrollmentService.reject(
           parseInt(request.params.id),
           request.user.id,
-          request.body?.reason,
-          request.user.role,
-          request.user.linked_entity_id
+          request.body?.reason
         )
         return out
       } catch (e) {

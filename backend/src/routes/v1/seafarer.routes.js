@@ -85,20 +85,19 @@ async function seafarerRoutes(fastify) {
           rank_id: parseInt(rank_id) || null,
           available_for_training: available_for_training || null,
           tab: tab || null,
-        },
-        request.user.role
+        }
       )
     }
   )
 
-  // GET /api/v1/seafarers/:id (TASK-B5: training_center chỉ thấy field được phép + certificates rút gọn)
+  // GET /api/v1/seafarers/:id
   fastify.get(
     '/:id',
     {
       onRequest: [fastify.authenticate],
     },
     async (request) => {
-      return seafarerService.getById(parseInt(request.params.id), request.user.role)
+      return seafarerService.getById(parseInt(request.params.id))
     }
   )
 
@@ -158,9 +157,6 @@ async function seafarerRoutes(fastify) {
   const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 
   fastify.get('/:id/photo', { onRequest: [fastify.authenticate], schema: { params: idParams } }, async (request, reply) => {
-    if (request.user.role === 'training_center') {
-      return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-    }
     const photo = await seafarerService.getPhoto(request.params.id)
     reply.header('Content-Type', photo.mime)
     reply.header('Cache-Control', 'private, no-cache')
@@ -190,10 +186,7 @@ async function seafarerRoutes(fastify) {
       onRequest: [fastify.authenticate],
       schema: { params: { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } } },
     },
-    async (request, reply) => {
-      if (request.user.role === 'training_center') {
-        return reply.code(403).send({ error: 'Không có quyền thực hiện thao tác này' })
-      }
+    async (request) => {
       return seafarerService.revisions(request.params.id)
     }
   )

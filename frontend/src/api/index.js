@@ -25,11 +25,7 @@ async function listAllPages(url, params = {}) {
 
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
-  register: (data) => api.post('/auth/register', data),
-  registerSeafarer: (data) => api.post('/auth/register/seafarer', data),
   me: () => api.get('/auth/me'),
-  requestVerify: () => api.post('/auth/verify/request'),
-  confirmVerify: (data) => api.post('/auth/verify/confirm', data),
 }
 
 export const seafarerApi = {
@@ -96,30 +92,6 @@ export const certificateApi = {
     form.append('file', file)
     return api.post(`/seafarers/${seafarerId}/certificates/${id}/upload`, form)
   },
-}
-
-export const seafarerPortalApi = {
-  getProfile: () => api.get('/portal/seafarer/profile'),
-  updateProfile: (data) => api.put('/portal/seafarer/profile', data),
-  getCertificates: () => api.get('/portal/seafarer/certificates'),
-  getContracts: () => api.get('/portal/seafarer/contracts'),
-  getEnrollments: () => api.get('/portal/seafarer/enrollments'),
-  enroll: (course_id) => api.post('/portal/seafarer/enrollments', { course_id }),
-  cancelEnrollment: (id) => api.delete(`/portal/seafarer/enrollments/${id}`),
-  createCertificate: (data, file) => {
-    if (file) {
-      const form = new FormData()
-      Object.entries(data).forEach(([k, v]) => {
-        if (v != null && v !== '') form.append(k, v)
-      })
-      form.append('file', file)
-      return api.post('/portal/seafarer/certificates', form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-    }
-    return api.post('/portal/seafarer/certificates', data)
-  },
-  deleteCertificate: (id) => api.delete(`/portal/seafarer/certificates/${id}`),
 }
 
 export const lookupApi = {

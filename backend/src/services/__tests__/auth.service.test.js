@@ -10,15 +10,15 @@ describe('Backend Test Setup', () => {
 })
 
 describe('ROLES constant', () => {
-  it('should export all 6 roles', async () => {
+  it('should export the 4 staff roles', async () => {
     const { ROLES } = await import('../../constants/roles')
-    expect(ROLES).toEqual(['admin', 'operator', 'reviewer', 'training_center', 'manning_agent', 'seafarer'])
-    expect(ROLES).toHaveLength(6)
+    expect(ROLES).toEqual(['admin', 'operator', 'reviewer', 'manning_agent'])
   })
 
-  it('should include seafarer role', async () => {
+  it('should not include portal roles', async () => {
     const { ROLES } = await import('../../constants/roles')
-    expect(ROLES).toContain('seafarer')
+    expect(ROLES).not.toContain('seafarer')
+    expect(ROLES).not.toContain('training_center')
   })
 
   it('should include admin role', async () => {

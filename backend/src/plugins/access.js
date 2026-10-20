@@ -60,4 +60,16 @@ function assertInScope(request, module, row, message = 'Không tìm thấy') {
   }
 }
 
-module.exports = { loadAccess, can, scopeOf, ownFilter, assertInScope }
+// Dạng trả cho frontend ở /auth/login và /auth/me.
+function toClientUser(access) {
+  return {
+    id: access.userId,
+    email: access.email,
+    is_active: true,
+    role: access.roleId == null ? null : { id: access.roleId, name: access.roleName, is_system: access.isSystemRole },
+    permissions: [...access.permissions],
+    scopes: access.scopes,
+  }
+}
+
+module.exports = { toClientUser, loadAccess, can, scopeOf, ownFilter, assertInScope }

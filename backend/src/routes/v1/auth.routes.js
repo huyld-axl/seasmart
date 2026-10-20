@@ -1,5 +1,6 @@
 const authService = require('../../services/auth.service')
 const config = require('../../config')
+const { loadAccess, toClientUser } = require('../../plugins/access')
 
 async function authRoutes(fastify) {
   // POST /api/v1/auth/login
@@ -20,11 +21,13 @@ async function authRoutes(fastify) {
     },
     async (request) => {
       const user = await authService.login(request.body)
+      const access = await loadAccess(user.id)
       const token = fastify.jwt.sign(
+        // Tạm giữ `role` trong token cho các route chưa chuyển sang kiểm quyền; bỏ ở Bước 5.
         { id: user.id, email: user.email, role: user.role },
         { expiresIn: config.jwt.expiresIn || '7d' }
       )
-      return { user, token }
+      return { user: toClientUser(access), token }
     }
   )
 
@@ -35,7 +38,7 @@ async function authRoutes(fastify) {
       onRequest: [fastify.authenticate],
     },
     async (request) => {
-      return { user: request.user }
+      return { user: toClientUser(request.access) }
     }
   )
 }

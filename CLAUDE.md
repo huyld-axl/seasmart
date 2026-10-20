@@ -114,6 +114,7 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 | Bật / tắt một thuộc tính có / không (nồi hơi, lạnh, người thân là liên lạc, bảo lãnh) | `ToggleRow` (`components/ds/ToggleRow.jsx`) | Nút dạng chip bấm bật, checkbox, `Switch` đặt lẻ |
 | Chọn **một** trong vài giá trị | Nhóm nút `ChoiceGroup` (cho phép bỏ chọn) hoặc `SegmentedPick` (luôn có một giá trị) | Radio, nhiều `ToggleRow` thay cho một lựa chọn |
 | Chọn từ danh sách dài | `Select` có tìm kiếm | Ô nhập tự do khi đã có danh mục |
+| Tích quyền trong lưới nhiều cột (ma trận vai trò) | `PermissionCheck` (`components/ds/PermissionCheck.jsx`) | `Checkbox` của antd hay `ToggleRow` trong lưới |
 
 ## 4. API Conventions
 

@@ -564,3 +564,14 @@
 /* Nhãn "AI" nằm trong ô vừa được điền. */
 .ds-aitag { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 6px; background: var(--primary); color: var(--primary-fg, #fff); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
 .ds-aitag--warn { background: var(--warning); }
+
+/* ---------- Ô tích quyền trong ma trận vai trò (PermissionCheck) ---------- */
+.pc { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; cursor: pointer; }
+.pc:hover:not(:disabled) { background: rgb(0 51 102 / 0.07); }
+.pc:disabled { cursor: not-allowed; }
+.pc:focus-visible { outline: 2px solid var(--primary); outline-offset: 0; }
+.pc__box { display: grid; place-items: center; width: 20px; height: 20px; border: 1.5px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: #fff; transition: background 0.1s, border-color 0.1s; }
+.pc__box svg { stroke-width: 3; }
+.pc[aria-checked='true'] .pc__box, .pc[aria-checked='mixed'] .pc__box { border-color: var(--primary); background: var(--primary); }
+.pc:disabled .pc__box { opacity: 0.45; }
+.pc.is-changed .pc__box { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary); }

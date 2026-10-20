@@ -34,6 +34,8 @@ import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
+import PermissionCheck from '../components/ds/PermissionCheck'
+import { SegmentedPick } from './admin/fleet/FleetParts'
 import ScanButton from '../components/ds/ScanButton'
 import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
@@ -675,6 +677,20 @@ export default function DesignSystemPage() {
           <div className="ds-toggle-grid">
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
+          </div>
+        </div>
+      </Section>
+
+      <Section id="o-tich-quyen" title="Ô tích quyền trong ma trận">
+        <div className="dsp-stack">
+          <p className="dsp-note">Chỉ dùng trong lưới nhiều cột (ma trận vai trò), mỗi ô một quyền hoặc một mục. Ngoài lưới thì dùng công tắc bật tắt, không dùng Checkbox của antd. Phạm vi dữ liệu trong ô lưới dùng nhóm nút cỡ nhỏ.</p>
+          <div className="ds-toggle-grid">
+            <Demo label="Chưa tích"><PermissionCheck label="Xem" checked={false} onChange={() => {}} /></Demo>
+            <Demo label="Đã tích"><PermissionCheck label="Xem" checked onChange={() => {}} /></Demo>
+            <Demo label="Một phần (cả mục)"><PermissionCheck label="Thuyền viên" checked="mixed" onChange={() => {}} /></Demo>
+            <Demo label="Khoá (Quản trị viên)"><PermissionCheck label="Xem" checked disabled /></Demo>
+            <Demo label="Đã sửa, chưa lưu"><PermissionCheck label="Sửa" checked changed onChange={() => {}} /></Demo>
+            <Demo label="Phạm vi dữ liệu (nhóm nút cỡ nhỏ)"><SegmentedPick size="small" label="Phạm vi" value="all" onChange={() => {}} options={[{ value: 'all', label: 'Tất cả' }, { value: 'own', label: 'Do mình tạo' }]} /></Demo>
           </div>
         </div>
       </Section>

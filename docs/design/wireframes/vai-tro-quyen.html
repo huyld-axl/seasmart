@@ -1,0 +1,744 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Vai trò và quyền</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<style>
+  /* Wireframe Quản trị > Vai trò và quyền. Token chép từ frontend/src/theme/tokens.js, khung app như AdminLayout. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-foreground: #fff; --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --secondary: #e7e8ec; --secondary-hover: #dbdce2;
+    --item-hover: #f4f4f6; --surface-hover: #f8f8fa; --button-hover: #f1f1f3; --ring-focus: rgba(0, 51, 102, 0.1);
+    --neutral: #52525c; --neutral-bg: #f4f4f5; --success: #007a55; --success-bg: #ecfdf5;
+    --warning: #bb4d00; --warning-bg: #fffbeb; --warning-border: #fee685;
+    --error-strong: #c10007; --error-bg: #fef2f2; --error-border: #ffc9c9; --error-text: #e7000b; --danger: #c70036;
+    --table-header: #e9eef5; --chip-bg: #eef3f8;
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+    --elevation-popover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #dfe1e6; color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  svg.i { width: 1em; height: 1em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ===== Thanh wireframe (không thuộc thiết kế) ===== */
+  .wf-bar { position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px; background: #1f1f1f; color: #eee; font-size: 13px; }
+  .wf-bar b { font-weight: 600; color: #fff; }
+  .wf-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .wf-group > span { margin-right: 4px; color: #aaa; }
+  .wf-btn { height: 28px; padding: 0 10px; border: 1px solid #444; border-radius: 6px; background: #2b2b2b; color: #eee; cursor: pointer; }
+  .wf-btn:hover { background: #383838; }
+  .wf-btn[aria-pressed="true"] { border-color: #fff; background: #fff; color: #111; }
+  .wf-notes { margin: 16px; padding: 0; border: 1px solid #c9ccd3; border-radius: 12px; background: #fffef6; }
+  .wf-notes summary { padding: 12px 16px; font-weight: 600; cursor: pointer; }
+  .wf-notes__body { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 8px 32px; padding: 0 16px 16px; }
+  .wf-notes h3 { margin: 4px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #555; }
+  .wf-notes ol { margin: 0; padding-left: 20px; }
+  .wf-notes li { margin: 0 0 6px; }
+  .wf-notes li b { font-weight: 600; }
+  .wf-stage { padding: 0 16px 32px; }
+  .wf-stage--phone { display: grid; place-items: start center; }
+  .wf-frame { overflow: hidden; border: 1px solid #c9ccd3; border-radius: 12px; background: var(--background); }
+  .wf-stage--phone .wf-frame { width: 375px; max-width: 100%; border-radius: 28px; }
+
+  /* ===== Khung app ===== */
+  .app { position: relative; display: flex; height: min(900px, calc(100vh - 80px)); min-height: 640px; }
+  .wf-stage--phone .app { height: 812px; }
+  .sider { display: flex; flex-direction: column; flex-shrink: 0; width: 232px; border-right: 1px solid var(--border); background: var(--surface); }
+  .sider__head { display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 20px; border-bottom: 1px solid var(--border); font-weight: 700; letter-spacing: .02em; color: var(--primary); }
+  .sider__logo { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 13px; }
+  .sider__nav { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; overflow: auto; }
+  .nav-sep { margin: 12px 12px 4px; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .nav-item { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border-radius: 10px; color: rgb(44 44 44 / .7); white-space: nowrap; }
+  .nav-item svg { font-size: 16px; }
+  .nav-item[aria-current="page"] { background: var(--secondary); color: var(--foreground); font-weight: 500; }
+  .main { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+  .topbar { display: flex; flex-shrink: 0; align-items: center; gap: 12px; height: 56px; padding: 0 16px 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .topbar__title { margin: 0; font-size: 16px; font-weight: 600; }
+  .topbar__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; background: #e6edf5; color: #1a4775; font-size: 12px; font-weight: 600; }
+  .tabs { display: flex; flex-shrink: 0; gap: 4px; padding: 0 16px; overflow-x: auto; border-bottom: 1px solid var(--border); background: var(--surface); scrollbar-width: none; }
+  .tab { position: relative; display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; height: 44px; padding: 0 12px; color: var(--muted); white-space: nowrap; }
+  .tab[aria-current="page"] { color: var(--foreground); font-weight: 500; }
+  .tab[aria-current="page"]::after { content: ''; position: absolute; right: 12px; bottom: 0; left: 12px; height: 2px; border-radius: 2px 2px 0 0; background: var(--foreground); }
+  .tab__new { padding: 0 6px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); font-size: 10px; font-weight: 600; }
+  .content { display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 0; padding: 20px 24px 16px; }
+  .burger { display: none; }
+
+  /* ===== Control ===== */
+  .btn { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); font-weight: 500; white-space: nowrap; cursor: pointer; }
+  .btn:hover { background: var(--button-hover); }
+  .btn svg { font-size: 16px; }
+  .btn--primary { border-color: transparent; background: var(--primary); color: #fff; }
+  .btn--primary:hover { background: var(--primary-hover); }
+  .btn--danger { border-color: transparent; background: var(--danger); color: #fff; }
+  .btn--ghost { border-color: transparent; background: transparent; color: var(--muted); }
+  .btn--ghost:hover { background: rgb(44 44 44 / .05); color: var(--foreground); }
+  .btn--sm { min-height: 32px; padding: 0 10px; border-radius: 8px; font-size: 13px; }
+  .btn--icon { width: 32px; padding: 0; }
+  .btn:disabled { cursor: not-allowed; opacity: .45; }
+  .btn:disabled:hover { background: var(--primary); }
+  .input { width: 100%; height: 40px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); outline: none; }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .input--error { border-color: var(--error-text); }
+  textarea.input { height: 72px; padding: 10px 14px; resize: vertical; }
+  select.input { appearance: none; padding-right: 36px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23707070' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px; }
+  .search { position: relative; display: flex; align-items: center; flex: 1 1 220px; max-width: 300px; }
+  .search svg { position: absolute; left: 12px; color: var(--muted); }
+  .search .input { height: 36px; padding-left: 36px; border-radius: 10px; }
+  .field { display: grid; gap: 6px; }
+  .field__label { font-weight: 500; }
+  .field__label i { color: var(--error-text); font-style: normal; }
+  .field__hint { margin: 0; color: var(--muted); font-size: 12px; }
+  .field__err { margin: 0; color: var(--error-text); font-size: 12px; }
+  .chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--chip-bg); color: var(--primary); font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .chip--lock { gap: 4px; background: var(--neutral-bg); color: var(--neutral); }
+  .chip--add { background: var(--success-bg); color: var(--success); }
+  .chip--rm { background: var(--error-bg); color: var(--error-strong); }
+  .muted { color: var(--muted); }
+
+  /* ===== Đầu trang ===== */
+  .page-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 16px; }
+  .page-head h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  .page-head p { max-width: 720px; margin: 4px 0 0; color: var(--muted); }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-left: auto; color: var(--muted); font-size: 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* ===== Ma trận quyền (control mới: PermissionMatrix, ô tích PermissionCheck) ===== */
+  .pm-card { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .pm-scroll { flex: 1; min-height: 0; overflow: auto; }
+  .pm { width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0; }
+  .pm th, .pm td { border-bottom: 1px solid var(--border); }
+  .pm thead th { position: sticky; top: 0; z-index: 3; height: 84px; padding: 8px 12px; border-bottom: 2px solid var(--primary); background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 600; text-align: left; vertical-align: bottom; }
+  .pm thead th + th { border-left: 1px solid var(--border-strong); }
+  .pm .c-perm { position: sticky; left: 0; z-index: 2; width: 360px; min-width: 360px; padding: 0 16px 0 20px; border-right: 1px solid var(--border-strong); background: var(--surface); }
+  .pm thead .c-perm { z-index: 4; background: var(--table-header); }
+  .pm .c-role { width: 176px; min-width: 176px; text-align: center; }
+  .pm .c-fill { width: 100%; min-width: 0; padding: 0; }
+  .pm thead .c-fill { border-left: 0; }
+
+  .rh { display: grid; gap: 4px; text-align: left; }
+  .rh__top { display: flex; align-items: flex-start; gap: 4px; min-width: 0; }
+  .rh__name { display: -webkit-box; overflow: hidden; padding-top: 6px; color: var(--primary); font-size: 13px; font-weight: 600; line-height: 1.3; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+  .rh__menu { margin-left: auto; color: var(--primary); }
+  .rh__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; color: var(--neutral); font-size: 11px; font-weight: 500; }
+  .rh__bar { height: 4px; overflow: hidden; border-radius: 4px; background: rgb(0 51 102 / .12); }
+  .rh__bar i { display: block; height: 100%; background: var(--primary); }
+  .rh--flash { animation: flash 1.6s ease-out 2; }
+  @keyframes flash { 0%, 100% { background: transparent; } 30% { background: #fff6cc; } }
+  .pm thead th.is-locked { background: #e2e6ec; }
+
+  .row-sec td { height: 32px; padding: 0 20px; background: var(--surface-hover); color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .row-sec td.c-perm { background: var(--surface-hover); }
+  .row-mod td { height: 48px; background: var(--surface); }
+  .row-mod .c-perm { padding-left: 8px; }
+  .mod-btn { display: flex; align-items: center; gap: 8px; width: 100%; height: 40px; padding: 0 8px; border: 0; border-radius: 8px; background: none; font-weight: 600; text-align: left; cursor: pointer; }
+  .mod-btn:hover { background: var(--item-hover); }
+  .mod-btn .chev { color: var(--muted); transition: transform .15s; }
+  .mod-btn[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+  .mod-btn .ic { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--chip-bg); color: var(--primary); font-size: 15px; }
+  .mod-btn small { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 400; }
+  .row-perm td { height: 52px; }
+  .row-perm .c-perm { padding-left: 64px; }
+  .perm-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .perm-desc { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+  .perm-root { color: var(--muted); font-size: 11px; }
+  .pm tbody tr:hover td { background: var(--surface-hover); }
+  .pm tbody tr:hover td.c-perm { background: var(--surface-hover); }
+  .pm td.is-locked { background: #f7f8fa; }
+  .pm td.is-changed { background: var(--primary-light) !important; }
+  .pm td.is-hcol { background: #f3f6fa; }
+
+  .pc { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; cursor: pointer; }
+  .pc:hover:not(:disabled) { background: rgb(0 51 102 / .07); }
+  .pc:disabled { cursor: not-allowed; }
+  .pc__box { display: grid; place-items: center; width: 20px; height: 20px; border: 1.5px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: #fff; font-size: 14px; transition: background .1s, border-color .1s; }
+  .pc[aria-checked="true"] .pc__box, .pc[aria-checked="mixed"] .pc__box { border-color: var(--primary); background: var(--primary); }
+  .pc__box svg { stroke-width: 3; }
+  .pc:disabled .pc__box { opacity: .45; }
+  .pc.is-changed .pc__box { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--primary); }
+  .pc--dash { color: var(--border-strong); cursor: default; }
+  .pm-empty { padding: 48px 24px; color: var(--muted); text-align: center; }
+  .pm thead th.c-add { width: 100%; min-width: 180px; border-left: 1px solid var(--border-strong); vertical-align: middle; }
+  .add-col { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border: 1.5px dashed rgb(0 51 102 / .35); border-radius: 10px; background: rgb(255 255 255 / .6); color: var(--primary); font-weight: 500; cursor: pointer; }
+  .add-col:hover { border-color: var(--primary); background: #fff; }
+  .row-mod--scoped td { height: 76px; }
+  .cellstack { display: inline-grid; justify-items: center; gap: 4px; }
+  /* SegmentedPick (FleetParts.jsx, class sf-seg), cỡ nhỏ trong ô ma trận */
+  .sf-seg { display: grid; grid-auto-columns: minmax(0, 1fr); grid-auto-flow: column; gap: 2px; padding: 3px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--foreground) 5%, transparent); }
+  .sf-seg button { min-width: 0; height: 34px; padding: 0 8px; overflow: hidden; border: 0; border-radius: 9px; background: none; color: color-mix(in srgb, var(--foreground) 70%, transparent); text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+  .sf-seg button[aria-pressed='true'] { background: var(--surface); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.04); }
+  .sf-seg--sm { padding: 2px; border-radius: 8px; }
+  .sf-seg--sm button { height: 24px; padding: 0 8px; border-radius: 6px; font-size: 11px; }
+  .sf-seg.is-changed { box-shadow: 0 0 0 2px var(--primary); }
+  .scope-fixed { color: var(--muted); font-size: 11px; }
+  .chip--scope { background: #f1ecfb; color: #5b3a9e; }
+  .pm-hint { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px dashed rgb(0 51 102 / .3); border-radius: var(--radius-md); background: var(--chip-bg); color: var(--primary); }
+  .pm-hint svg { flex-shrink: 0; font-size: 16px; }
+  .pm-hint .btn { margin-left: auto; }
+
+  .pm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+  .pm-foot b { color: var(--foreground); font-weight: 500; }
+
+  /* Thanh lưu dính đáy, giống sf-savebar của form */
+  .savebar { display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 12px 16px 12px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--elevation-popover); }
+  .savebar__msg { display: flex; flex: 1 1 260px; align-items: center; gap: 8px; min-width: 0; color: var(--neutral); }
+  .savebar__msg svg { font-size: 16px; }
+  .savebar__msg--ok svg { color: var(--success); }
+  .savebar__msg b { color: var(--foreground); font-weight: 600; }
+  .savebar__actions { display: flex; gap: 8px; margin-left: auto; }
+
+  /* Menu ⋯ ở đầu cột */
+  .menu { position: fixed; z-index: 60; display: grid; min-width: 220px; padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--elevation-popover); color: var(--foreground); font-size: 14px; font-weight: 400; }
+  .menu__item { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: none; text-align: left; cursor: pointer; }
+  .menu__item:hover { background: var(--item-hover); }
+  .menu__item svg { color: var(--muted); }
+  .menu__item--danger, .menu__item--danger svg { color: var(--danger); }
+  .menu__sep { height: 1px; margin: 4px 0; background: var(--border); }
+  .menu__meta { padding: 8px 12px 4px; color: var(--muted); font-size: 12px; }
+
+  /* Hộp thoại */
+  .scrim { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgb(0 0 0 / .35); }
+  .modal { display: flex; flex-direction: column; width: min(520px, 100%); max-height: 100%; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--elevation-modal); }
+  .modal--wide { width: min(640px, 100%); }
+  .modal__head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 20px 0; }
+  .modal__title { margin: 0; font-size: 18px; font-weight: 600; }
+  .modal__desc { margin: 4px 0 0; color: var(--muted); }
+  .modal__body { display: grid; gap: 16px; padding: 20px; overflow: auto; }
+  .modal__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 20px 20px; }
+  .modal__icon { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); font-size: 20px; }
+  .modal__icon--danger { background: var(--error-bg); color: var(--error-strong); }
+  .diff { border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .diff + .diff { margin-top: -4px; }
+  .diff__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .diff__head b { font-weight: 600; }
+  .diff__head span { color: var(--muted); font-size: 12px; }
+  .diff__rows { display: grid; gap: 6px; padding: 10px 14px; }
+  .diff__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .diff__row > span:first-child { width: 52px; color: var(--muted); font-size: 12px; }
+  .banner { display: flex; gap: 10px; padding: 12px 14px; border: 1px solid var(--warning-border); border-radius: var(--radius-md); background: var(--warning-bg); color: #6b3a00; font-size: 13px; }
+  .banner svg { flex-shrink: 0; margin-top: 2px; color: var(--warning); font-size: 16px; }
+  .banner--info { border-color: #cfdcea; background: var(--chip-bg); color: var(--primary); }
+  .banner--info svg { color: var(--primary); }
+
+  .toast { position: absolute; right: 24px; bottom: 96px; z-index: 70; display: flex; align-items: center; gap: 10px; max-width: 420px; padding: 12px 16px; border-radius: 12px; background: #1f1f1f; color: #fff; box-shadow: var(--elevation-popover); }
+  .toast svg { color: #6ee7b7; font-size: 16px; }
+
+  /* ===== Điện thoại: chọn một vai trò, mỗi quyền là một ToggleRow ===== */
+  .is-phone .sider { display: none; }
+  .is-phone .burger { display: inline-flex; }
+  .is-phone .topbar { padding-left: 8px; }
+  .is-phone .content { gap: 12px; padding: 16px 16px 12px; overflow: auto; }
+  .is-phone .page-head h1 { font-size: 18px; }
+  .is-phone .toast { right: 16px; bottom: 150px; left: 16px; }
+  .mrole { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .mrole__top { display: flex; align-items: center; gap: 8px; }
+  .mrole__top b { font-size: 15px; font-weight: 600; }
+  .mmod { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .mmod__head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-weight: 600; }
+  .mmod__head .ic { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--chip-bg); color: var(--primary); font-size: 15px; }
+  .mmod__head small { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 400; }
+  .mmod__body { display: grid; gap: 8px; padding: 0 12px 12px; }
+  .ds-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 8px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); }
+  .ds-toggle-row.is-changed { border-color: var(--primary); background: var(--primary-light); }
+  .ds-toggle-row__text { display: grid; min-width: 0; }
+  .ds-toggle-row__hint { color: var(--muted); font-size: 12px; line-height: 1.35; }
+  .ds-toggle-row__end { display: inline-flex; flex-shrink: 0; align-items: center; gap: 10px; }
+  .ds-toggle-row__state { color: var(--muted); font-size: 12px; }
+  .sw { position: relative; width: 44px; height: 22px; padding: 0; border: 0; border-radius: 999px; background: rgb(0 0 0 / .25); cursor: pointer; transition: background .15s; }
+  .sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: left .15s; }
+  .sw[aria-checked="true"] { background: var(--primary); }
+  .sw[aria-checked="true"]::after { left: 24px; }
+  .sw:disabled { cursor: not-allowed; opacity: .45; }
+  .is-phone .savebar { position: sticky; bottom: 0; padding: 12px; }
+  .is-phone .savebar__actions { width: 100%; }
+  .is-phone .savebar__actions .btn { flex: 1; }
+</style></head>
+<body>
+
+<div class="wf-bar">
+  <b>Wireframe · Quản trị › Vai trò và quyền</b>
+  <div class="wf-group"><span>Khung</span><button class="wf-btn" data-wf="frame:desk">Máy tính</button><button class="wf-btn" data-wf="frame:phone">Điện thoại</button></div>
+  <div class="wf-group"><span>Dựng nhanh</span>
+    <button class="wf-btn" data-wf="st:reset">Ban đầu (chỉ Quản trị viên)</button>
+    <button class="wf-btn" data-wf="st:samples">Đã tạo 2 vai trò</button>
+    <button class="wf-btn" data-wf="st:changed">Đang có thay đổi</button>
+    <button class="wf-btn" data-wf="st:confirm">Xác nhận lưu</button>
+    <button class="wf-btn" data-wf="st:add">Thêm vai trò</button>
+    <button class="wf-btn" data-wf="st:blocked">Xoá vai trò còn tài khoản</button>
+  </div>
+  <span style="color:#aaa">Mọi ô, nút, menu ⋯ đều bấm được.</span>
+</div>
+
+<details class="wf-notes" open>
+  <summary>Ghi chú (bản 3, đã duyệt 20/10/2026)</summary>
+  <div class="wf-notes__body">
+    <div>
+      <h3>Cách màn hoạt động</h3>
+      <ol>
+        <li><b>Vị trí:</b> Quản trị › tab mới <b>Vai trò và quyền</b>, đặt cạnh Tài khoản.</li>
+        <li><b>Ban đầu chỉ có Quản trị viên.</b> Các vai trò cũ (Crewing Officer, Người duyệt, Manning agent) bỏ hết; quản trị viên tự tạo vai trò mới.</li>
+        <li><b>Hàng là quyền</b>, nhóm theo mục menu (Hồ sơ / Vận hành / Hệ thống), mỗi mục thu gọn được. <b>Cột là vai trò.</b> Ô ở dòng mục để tích hoặc bỏ cả mục cho một vai trò.</li>
+        <li><b>Quản trị viên</b> là cột đầu, khoá: luôn tích đủ, kể cả quyền thêm sau này. Không sửa, không xoá được.</li>
+        <li><b>Phạm vi dữ liệu</b> ở 4 mục có ghi người tạo: Thuyền viên, Bản xuất, Chuyến tàu, Hợp đồng. Mỗi vai trò chọn <b>Tất cả</b> hoặc <b>Do mình tạo</b> ngay dưới ô của dòng mục, áp cho mọi quyền trong mục. Mặc định Tất cả.</li>
+        <li><b>Xem là quyền gốc:</b> tích Thêm / Sửa / Xoá thì tự tích Xem của mục đó; bỏ Xem thì bỏ hết quyền khác của mục. Vai trò không có Xem thì không thấy mục đó trên menu.</li>
+        <li><b>Sửa nhiều ô rồi lưu một lần.</b> Ô đã đổi có viền màu nhấn, đầu cột có chip "Đã sửa n". Nút Lưu chỉ mờ khi chưa đổi gì. Bấm Lưu thì hiện bảng tóm tắt thêm / bỏ quyền, đổi phạm vi, số tài khoản bị ảnh hưởng.</li>
+        <li><b>Thêm vai trò:</b> nút ở đầu trang và ô "+ Thêm vai trò" cuối hàng tiêu đề. Nhập tên, mô tả, chọn vai trò để chép quyền (nếu muốn).</li>
+        <li><b>Menu ⋯ đầu cột:</b> sửa tên, nhân bản, xem tài khoản của vai trò, xoá. Chỉ xoá được khi không còn tài khoản nào dùng.</li>
+        <li><b>Mỗi tài khoản một vai trò</b>, chọn ở form tài khoản. "Sửa vai trò và quyền" chỉ Quản trị viên có.</li>
+        <li><b>Điện thoại:</b> chọn một vai trò, phạm vi là <code>SegmentedPick</code>, mỗi quyền là một <code>ToggleRow</code>.</li>
+        <li><b>Control mới:</b> ô tích của ma trận (<code>PermissionCheck</code>). Thêm vào <code>components/ds</code> và <code>/design-system</code> trước khi dùng.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Đã chốt</h3>
+      <ol>
+        <li><b>Người dùng hệ thống chỉ là nhân viên môi giới.</b> Bỏ cổng thuyền viên (tự đăng ký, OTP, hồ sơ tự phục vụ, đăng ký khoá học bằng QR) và tài khoản đăng nhập của trung tâm đào tạo. Ma trận không có hai loại này.</li>
+        <li>Chỉ giữ Quản trị viên, các vai trò khác tự tạo.</li>
+        <li><b>Tài khoản đang mang vai trò cũ</b> (Crewing Officer, Người duyệt, Manning agent) chuyển sang <b>"Chưa có vai trò"</b>: đăng nhập được nhưng không thấy mục nào, cho tới khi quản trị viên gán vai trò.</li>
+        <li>Làm luôn phạm vi dữ liệu (Tất cả / Do mình tạo).</li>
+        <li>Mỗi tài khoản một vai trò.</li>
+        <li>Chưa thêm quyền mới ngoài 40 quyền đang có.</li>
+      </ol>
+      <p style="margin:8px 0 0;color:#555">Kế hoạch triển khai: <code>docs/mcah-ke-hoach-vai-tro-quyen.md</code></p>
+    </div>
+  </div>
+</details>
+
+<div class="wf-stage" id="stage"></div>
+
+<script>
+const P = {
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
+  ship: '<path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4M12 2v3"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  anchor: '<circle cx="12" cy="5" r="3"/><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/>',
+  file: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/>',
+  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/>',
+  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/>',
+  lock: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  more: '<circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  close: '<path d="M18 6 6 18M6 6l12 12"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  minus: '<path d="M6 12h12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  edit: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+  trash: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  ok: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  collapse: '<path d="m7 20 5-5 5 5M7 4l5 5 5-5"/>',
+  expand: '<path d="m7 15 5 5 5-5M7 9l5-5 5 5"/>',
+}
+const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+
+// ---------- Dữ liệu mẫu: lấy từ các chỗ kiểm quyền đang có trong backend ----------
+// Ban đầu chỉ có Quản trị viên. Các vai trò khác do quản trị viên tự tạo.
+const ROLES0 = [
+  { id: 'admin', name: 'Quản trị viên', desc: 'Luôn có mọi quyền', users: 2, locked: true },
+]
+// Vai trò mẫu cho nút "Đã tạo vài vai trò" (chỉ để xem thử, không phải dữ liệu mặc định)
+const SAMPLE = [
+  { id: 'hoso', name: 'Nhân viên hồ sơ', desc: 'Nhập và cập nhật hồ sơ thuyền viên, làm bộ giấy', users: 4,
+    perms: ['seafarer.view', 'seafarer.create', 'seafarer.import', 'seafarer.update', 'seafarer.docs', 'seafarer.sea', 'partner.view', 'vessel.view', 'export.view', 'export.create', 'export.download', 'voyage.view', 'contract.view', 'catalog.view'],
+    scope: { seafarer: 'own', export: 'own' } },
+  { id: 'ketoan', name: 'Kế toán', desc: 'Theo dõi hợp đồng và thanh toán', users: 1,
+    perms: ['seafarer.view', 'partner.view', 'vessel.view', 'voyage.view', 'contract.view', 'contract.approve'], scope: {} },
+]
+// [mã, tên, mô tả]
+const MODULES = [
+  { sec: 'Hồ sơ', key: 'seafarer', label: 'Thuyền viên', icon: 'users', scoped: true, perms: [
+    ['view', 'Xem danh sách và hồ sơ', '', 'ORM'],
+    ['create', 'Thêm thuyền viên', '', 'O'],
+    ['import', 'Nhập từ Excel', '', 'O'],
+    ['update', 'Sửa hồ sơ', 'Gồm ảnh chân dung, gia quyến, tài khoản ngân hàng', 'O'],
+    ['delete', 'Xoá thuyền viên', '', 'O'],
+    ['docs', 'Tải giấy tờ và đọc bằng AI', 'CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ', 'OR'],
+    ['sea', 'Sửa lịch sử đi tàu', '', 'OR'],
+  ] },
+  { sec: 'Hồ sơ', key: 'partner', label: 'Đối tác', icon: 'building', perms: [
+    ['view', 'Xem danh sách và chi tiết', '', 'ORM'], ['create', 'Thêm đối tác', '', 'O'], ['update', 'Sửa đối tác', '', 'O'], ['delete', 'Xoá đối tác', '', 'O'],
+  ] },
+  { sec: 'Hồ sơ', key: 'vessel', label: 'Tàu', icon: 'ship', perms: [
+    ['view', 'Xem danh sách và chi tiết', '', 'ORM'], ['create', 'Thêm tàu', 'Gồm tra cứu theo số IMO', 'O'], ['update', 'Sửa tàu', '', 'O'], ['delete', 'Xoá tàu', '', 'O'],
+  ] },
+  { sec: 'Hồ sơ', key: 'export', label: 'Bản xuất', icon: 'send', scoped: true, perms: [
+    ['view', 'Xem bộ giấy', '', 'OR'], ['create', 'Tạo và sửa bộ giấy', '', 'O'], ['download', 'Tải bản xuất', 'Word, Excel, PDF', 'OR'],
+  ] },
+  { sec: 'Vận hành', key: 'voyage', label: 'Chuyến tàu', icon: 'anchor', scoped: true, perms: [
+    ['view', 'Xem danh sách và chi tiết', '', 'OR'], ['create', 'Tạo chuyến tàu', '', 'O'], ['update', 'Sửa chuyến tàu', 'Gồm vị trí dự kiến và budget', 'O'], ['delete', 'Xoá chuyến tàu', '', 'O'], ['run', 'Bắt đầu và kết thúc chuyến', 'Ghi ngày, nơi xuống và rời tàu thực tế', 'O'],
+  ] },
+  { sec: 'Vận hành', key: 'contract', label: 'Hợp đồng', icon: 'file', scoped: true, perms: [
+    ['view', 'Xem danh sách và chi tiết', '', 'OR'], ['create', 'Tạo hợp đồng', '', 'O'], ['update', 'Sửa hợp đồng nháp', '', 'O'], ['delete', 'Xoá hợp đồng nháp', '', 'O'], ['submit', 'Gửi duyệt và rút lại', '', 'O'], ['approve', 'Duyệt và từ chối', '', 'O'],
+  ] },
+  { sec: 'Hệ thống', key: 'catalog', label: 'Danh mục', icon: 'database', perms: [
+    ['view', 'Xem danh mục', 'Chứng chỉ, loại tàu, loại hợp đồng, cảng, quốc gia', 'ORM'], ['update', 'Thêm và sửa', '', 'O'], ['delete', 'Xoá', '', ''],
+  ] },
+  { sec: 'Hệ thống', key: 'training', label: 'Đào tạo', icon: 'book', perms: [
+    ['view', 'Xem trung tâm đào tạo và khóa học', '', 'O'], ['update', 'Thêm và sửa', '', 'O'], ['delete', 'Xoá', '', ''],
+  ] },
+  { sec: 'Hệ thống', key: 'message', label: 'Tin nhắn', icon: 'message', perms: [
+    ['view', 'Xem và gửi tin nhắn', '', 'O'],
+  ] },
+  { sec: 'Hệ thống', key: 'account', label: 'Tài khoản', icon: 'user', perms: [
+    ['view', 'Xem danh sách tài khoản', '', ''], ['update', 'Thêm, sửa, khoá tài khoản', 'Gồm đặt lại mật khẩu và đổi vai trò', ''], ['delete', 'Xoá tài khoản', '', ''],
+  ] },
+  { sec: 'Hệ thống', key: 'role', label: 'Vai trò và quyền', icon: 'key', perms: [
+    ['manage', 'Sửa vai trò và quyền', 'Chỉ Quản trị viên, không giao được', '', true],
+  ] },
+]
+MODULES.forEach((m) => { m.perms = m.perms.map(([k, label, desc, , adminOnly]) => ({ id: `${m.key}.${k}`, k, label, desc, adminOnly: !!adminOnly })) })
+const ALL = MODULES.flatMap((m) => m.perms)
+const PERM = Object.fromEntries(ALL.map((p) => [p.id, p]))
+const MOD_OF = Object.fromEntries(MODULES.flatMap((m) => m.perms.map((p) => [p.id, m])))
+const GRANTABLE = ALL.filter((p) => !p.adminOnly)
+const SCOPED = MODULES.filter((m) => m.scoped)
+const SCOPE_LABEL = { all: 'Tất cả', own: 'Do mình tạo' }
+
+// ---------- Trạng thái ----------
+let S
+function reset(withSamples) {
+  const roles = ROLES0.map((r) => ({ ...r })); const saved = { admin: new Set(ALL.map((p) => p.id)) }; const savedScope = { admin: {} }
+  if (withSamples) SAMPLE.forEach((x) => { roles.push({ id: x.id, name: x.name, desc: x.desc, users: x.users }); saved[x.id] = new Set(x.perms); savedScope[x.id] = { ...x.scope } })
+  S = { roles, saved, draft: cloneSets(saved), savedScope, draftScope: cloneScope(savedScope), collapsed: new Set(), q: '', frame: S?.frame || 'desk', phoneRole: roles[roles.length - 1].id, modal: null, menu: null, toast: null, flash: null, hcol: null }
+}
+const cloneSets = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, new Set(v)]))
+const cloneScope = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, { ...v }]))
+const scopeOf = (rid, mkey, src = S.draftScope) => (roleById(rid).locked ? 'all' : src[rid][mkey] || 'all')
+const scopeChanged = (rid, mkey) => !roleById(rid).locked && scopeOf(rid, mkey) !== scopeOf(rid, mkey, S.savedScope)
+const roleById = (id) => S.roles.find((r) => r.id === id)
+const has = (rid, pid) => (roleById(rid).locked ? true : S.draft[rid].has(pid))
+const changedCell = (rid, pid) => !roleById(rid).locked && S.draft[rid].has(pid) !== S.saved[rid].has(pid)
+function changes() {
+  const out = []
+  S.roles.filter((r) => !r.locked).forEach((r) => {
+    const add = ALL.filter((p) => S.draft[r.id].has(p.id) && !S.saved[r.id].has(p.id))
+    const rm = ALL.filter((p) => !S.draft[r.id].has(p.id) && S.saved[r.id].has(p.id))
+    const scope = SCOPED.filter((m) => scopeChanged(r.id, m.key)).map((m) => ({ m, to: scopeOf(r.id, m.key) }))
+    if (add.length || rm.length || scope.length) out.push({ role: r, add, rm, scope })
+  })
+  return out
+}
+const changeCount = () => changes().reduce((n, c) => n + c.add.length + c.rm.length + c.scope.length, 0)
+const roleChangeCount = (rid) => ALL.filter((p) => changedCell(rid, p.id)).length + SCOPED.filter((m) => scopeChanged(rid, m.key)).length
+const roleCount = (rid) => (roleById(rid).locked ? ALL.length : S.draft[rid].size)
+
+function toggle(rid, pid) {
+  const r = roleById(rid); const p = PERM[pid]
+  if (r.locked || p.adminOnly) return
+  const set = S.draft[rid]; const m = MOD_OF[pid]
+  if (set.has(pid)) {
+    set.delete(pid)
+    if (p.k === 'view') {
+      const others = m.perms.filter((x) => x.id !== pid && set.has(x.id))
+      others.forEach((x) => set.delete(x.id))
+      if (others.length) toast(`Bỏ quyền Xem thì bỏ luôn ${others.length} quyền khác của ${m.label} cho ${r.name}.`)
+    }
+  } else {
+    set.add(pid)
+    const view = m.perms.find((x) => x.k === 'view')
+    if (view && view.id !== pid && !set.has(view.id)) { set.add(view.id); toast(`Đã tự tích "${view.label}" của ${m.label}: cần Xem mới làm được việc khác.`) }
+  }
+  render()
+}
+function toggleModule(rid, mkey) {
+  const r = roleById(rid); if (r.locked) return
+  const m = MODULES.find((x) => x.key === mkey); const perms = m.perms.filter((p) => !p.adminOnly)
+  const set = S.draft[rid]; const all = perms.every((p) => set.has(p.id))
+  perms.forEach((p) => (all ? set.delete(p.id) : set.add(p.id)))
+  render()
+}
+
+let toastTimer
+function toast(text) { S.toast = text; clearTimeout(toastTimer); toastTimer = setTimeout(() => { S.toast = null; render() }, 3200) }
+
+// ---------- Vẽ ----------
+const NAV = [
+  [1, 'Thuyền viên', 'users'], [1, 'Đối tác', 'building'], [1, 'Tàu', 'ship'], [1, 'Bản xuất', 'send'],
+  [2, 'Chuyến tàu', 'anchor'], [2, 'Hợp đồng', 'file'], [3, 'Danh mục', 'database'], [3, 'Quản trị', 'shield'],
+]
+const GROUPS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
+function shell(content, overlay) {
+  let g = 0
+  const nav = NAV.map(([grp, label, icon]) => {
+    const sep = grp !== g ? `<div class="nav-sep">${GROUPS[grp]}</div>` : ''; g = grp
+    return `${sep}<div class="nav-item" ${label === 'Quản trị' ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span></div>`
+  }).join('')
+  return `<div class="app ${S.frame === 'phone' ? 'is-phone' : ''}">
+    <aside class="sider"><div class="sider__head"><span class="sider__logo">M</span>MCAH</div><nav class="sider__nav">${nav}</nav></aside>
+    <div class="main">
+      <header class="topbar"><button class="btn btn--ghost btn--icon burger" aria-label="Mở menu">${ic('menu')}</button><h1 class="topbar__title">Quản trị</h1><div class="topbar__right"><span class="avatar">HU</span></div></header>
+      <nav class="tabs" aria-label="Quản trị"><span class="tab">Tài khoản</span><span class="tab" aria-current="page">Vai trò và quyền <span class="tab__new">MỚI</span></span><span class="tab">Trung tâm đào tạo</span><span class="tab">Khóa học</span><span class="tab">Tin nhắn</span></nav>
+      <main class="content">${content}</main>
+    </div>
+    ${S.toast ? `<div class="toast" role="status">${ic('ok')}<span>${esc(S.toast)}</span></div>` : ''}
+    ${overlay || ''}
+  </div>`
+}
+
+function checkBtn({ state, disabled, changed, label, act, title }) {
+  return `<button type="button" class="pc ${changed ? 'is-changed' : ''}" role="checkbox" aria-checked="${state}" aria-label="${esc(label)}" ${disabled ? 'disabled' : ''} ${title ? `title="${esc(title)}"` : ''} ${act}><span class="pc__box">${state === 'true' ? ic('check') : state === 'mixed' ? ic('minus') : ''}</span></button>`
+}
+
+function roleHead(r) {
+  const n = roleCount(r.id); const pct = Math.round((n / ALL.length) * 100)
+  const chg = r.locked ? 0 : roleChangeCount(r.id)
+  return `<th class="c-role ${r.locked ? 'is-locked' : ''}" data-c="${r.id}" scope="col"><div class="rh ${S.flash === r.id ? 'rh--flash' : ''}">
+    <div class="rh__top"><span class="rh__name" title="${esc(r.desc)}">${esc(r.name)}</span>
+      <button class="btn btn--ghost btn--sm btn--icon rh__menu" aria-label="Thao tác với vai trò ${esc(r.name)}" data-act="menu" data-r="${r.id}">${ic('more')}</button></div>
+    <span class="rh__meta"><span>${r.users} tài khoản · ${r.locked ? 'toàn quyền' : `${n}/${ALL.length} quyền`}</span>${r.locked ? `<span class="chip chip--lock" title="Luôn có mọi quyền, kể cả quyền thêm sau này">${ic('lock')}Cố định</span>` : ''}${chg ? `<span class="chip">Đã sửa ${chg}</span>` : ''}</span>
+    <span class="rh__bar"><i style="width:${pct}%"></i></span></div></th>`
+}
+
+function matches(m, p) {
+  if (!S.q) return true
+  const q = S.q.toLowerCase()
+  return m.label.toLowerCase().includes(q) || p.label.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
+}
+
+function matrix() {
+  const roles = S.roles
+  let sec = ''; let rows = ''; let shown = 0
+  MODULES.forEach((m) => {
+    const perms = m.perms.filter((p) => matches(m, p)); if (!perms.length) return
+    shown += perms.length
+    if (m.sec !== sec) { sec = m.sec; rows += `<tr class="row-sec"><td class="c-perm">${sec}</td>${roles.map(() => '<td class="c-role"></td>').join('')}<td class="c-fill"></td></tr>` }
+    const open = S.q || !S.collapsed.has(m.key)
+    const modCells = roles.map((r) => {
+      const gp = m.perms.filter((p) => !p.adminOnly)
+      if (!gp.length) return `<td class="c-role ${r.locked ? 'is-locked' : ''}" data-c="${r.id}">${checkBtn({ state: 'true', disabled: true, label: `${m.label}: ${r.name}` })}</td>`
+      const on = gp.filter((p) => has(r.id, p.id)).length
+      const state = on === 0 ? 'false' : on === gp.length ? 'true' : 'mixed'
+      const chg = gp.some((p) => changedCell(r.id, p.id))
+      const box = checkBtn({ state, disabled: r.locked, changed: chg && !open, label: `Cả mục ${m.label} cho ${r.name}`, act: `data-act="mod" data-r="${r.id}" data-m="${m.key}"`, title: r.locked ? 'Quản trị viên luôn có toàn quyền' : `${on}/${gp.length} quyền. Bấm để ${state === 'true' ? 'bỏ' : 'tích'} cả mục` })
+      if (!m.scoped) return `<td class="c-role ${r.locked ? 'is-locked' : ''}" data-c="${r.id}">${box}</td>`
+      const viewOn = has(r.id, `${m.key}.view`)
+      const sc = r.locked ? '<span class="scope-fixed">Tất cả</span>' : viewOn ? scopeSeg(r.id, m.key, 'sf-seg--sm') : '<span class="scope-fixed">—</span>'
+      return `<td class="c-role ${r.locked ? 'is-locked' : ''}" data-c="${r.id}"><span class="cellstack">${box}${sc}</span></td>`
+    }).join('')
+    const onCount = (r) => m.perms.filter((p) => has(r.id, p.id)).length
+    rows += `<tr class="row-mod ${m.scoped ? 'row-mod--scoped' : ''}"><td class="c-perm"><button class="mod-btn" aria-expanded="${open}" data-act="collapse" data-m="${m.key}"><span class="chev">${ic('down')}</span><span class="ic">${ic(m.icon)}</span><span>${m.label}${m.scoped ? '<span class="perm-desc" style="font-weight:400">Có phạm vi dữ liệu</span>' : ''}</span><small>${m.perms.length} quyền</small></button></td>${modCells}<td class="c-fill"></td></tr>`
+    if (!open) return
+    perms.forEach((p) => {
+      const cells = roles.map((r) => {
+        if (p.adminOnly && !r.locked) return `<td class="c-role is-locked" data-c="${r.id}"><span class="pc pc--dash" title="Chỉ Quản trị viên">—</span></td>`
+        const chg = changedCell(r.id, p.id)
+        return `<td class="c-role ${r.locked ? 'is-locked' : ''} ${chg ? 'is-changed' : ''}" data-c="${r.id}">${checkBtn({ state: String(has(r.id, p.id)), disabled: r.locked, changed: chg, label: `${p.label} (${m.label}) cho ${r.name}`, act: `data-act="cell" data-r="${r.id}" data-p="${p.id}"`, title: r.locked ? 'Quản trị viên luôn có toàn quyền' : chg ? 'Đã sửa, chưa lưu' : '' })}</td>`
+      }).join('')
+      rows += `<tr class="row-perm"><td class="c-perm"><span class="perm-name">${esc(p.label)}${p.k === 'view' && m.perms.length > 1 ? '<span class="perm-root">· quyền gốc của mục</span>' : ''}${p.adminOnly ? `<span class="chip chip--lock">${ic('lock')}Chỉ Quản trị viên</span>` : ''}</span>${p.desc && !p.adminOnly ? `<span class="perm-desc">${esc(p.desc)}</span>` : ''}</td>${cells}<td class="c-fill"></td></tr>`
+    })
+  })
+  const head = `<tr><th class="c-perm" scope="col">Quyền</th>${roles.map(roleHead).join('')}<th class="c-add"><button class="add-col" data-act="add">${ic('plus')}Thêm vai trò</button></th></tr>`
+  const body = shown ? rows : `<tr><td colspan="${roles.length + 2}"><div class="pm-empty">Không có quyền nào khớp "${esc(S.q)}". <button class="btn btn--sm" data-act="clear-q">Xoá tìm kiếm</button></div></td></tr>`
+  return `<section class="pm-card"><div class="pm-scroll" id="pm-scroll"><table class="pm" id="pm"><thead>${head}</thead><tbody>${body}</tbody></table></div>
+    <div class="pm-foot"><span><b>${S.roles.length} vai trò</b> · <b>${ALL.length} quyền</b> trong ${MODULES.length} mục</span><span><b>Phạm vi</b>: Tất cả = mọi bản ghi; Do mình tạo = chỉ bản ghi tài khoản đó tạo ra. Áp cho mọi quyền trong mục.</span></div></section>`
+}
+
+function scopeSeg(rid, mkey, cls = '') {
+  const v = scopeOf(rid, mkey)
+  return `<div class="sf-seg ${cls} ${scopeChanged(rid, mkey) ? 'is-changed' : ''}" role="group" aria-label="Phạm vi ${esc(MODULES.find((m) => m.key === mkey).label)}">${['all', 'own'].map((k) => `<button type="button" aria-pressed="${v === k}" data-act="scope" data-r="${rid}" data-m="${mkey}" data-v="${k}">${SCOPE_LABEL[k]}</button>`).join('')}</div>`
+}
+
+function savebar() {
+  const ch = changes(); const n = changeCount()
+  const msg = n
+    ? `<div class="savebar__msg">${ic('info')}<span><b>${n} thay đổi chưa lưu</b> ở ${ch.map((c) => esc(c.role.name)).join(', ')}</span></div>`
+    : `<div class="savebar__msg savebar__msg--ok">${ic('ok')}<span>Đã lưu. Chưa có thay đổi mới.</span></div>`
+  return `<div class="savebar">${msg}<div class="savebar__actions">${n ? '<button class="btn" data-act="discard">Bỏ thay đổi</button>' : ''}<button class="btn btn--primary" data-act="save" ${n ? '' : 'disabled'}>Lưu thay đổi</button></div></div>`
+}
+
+function desktop() {
+  return `<div class="page-head"><div><h1>Vai trò và quyền</h1><p>Tích ô để cho vai trò làm việc đó. Mục có phạm vi thì chọn thêm xem được tất cả hay chỉ bản ghi do mình tạo. Mỗi tài khoản một vai trò, gán ở tab Tài khoản. Quản trị viên luôn có toàn quyền.</p></div>
+      <button class="btn btn--primary" data-act="add">${ic('plus')}Thêm vai trò</button></div>
+    <div class="toolbar"><label class="search">${ic('search')}<input class="input" id="q" placeholder="Tìm quyền, ví dụ: duyệt" value="${esc(S.q)}" /></label>
+      <button class="btn btn--ghost btn--sm" data-act="collapse-all">${S.collapsed.size === MODULES.length ? `${ic('expand')}Mở tất cả` : `${ic('collapse')}Thu gọn tất cả`}</button>
+      <div class="legend"><span><span class="pc__box" style="background:var(--primary);border-color:var(--primary);color:#fff;font-size:13px">${ic('check')}</span>Có quyền</span><span><span class="pc__box" style="background:var(--primary);border-color:var(--primary);color:#fff;font-size:13px">${ic('minus')}</span>Có một phần mục</span><span><span class="pc__box" style="box-shadow:0 0 0 2px #fff,0 0 0 4px var(--primary)"></span>Đã sửa, chưa lưu</span></div></div>
+    ${S.roles.length === 1 ? `<div class="pm-hint">${ic('info')}<span>Mới có vai trò <b>Quản trị viên</b>. Tạo vai trò cho từng nhóm người dùng, ví dụ nhân viên hồ sơ hay kế toán, rồi tích quyền ở cột mới.</span><button class="btn btn--sm" data-act="add">${ic('plus')}Thêm vai trò</button></div>` : ''}
+    ${matrix()}${savebar()}`
+}
+
+function phone() {
+  const r = roleById(S.phoneRole) || S.roles[0]
+  const opts = S.roles.map((x) => `<option value="${x.id}" ${x.id === r.id ? 'selected' : ''}>${esc(x.name)}${x.locked ? ' (cố định)' : ''}</option>`).join('')
+  const chg = r.locked ? 0 : roleChangeCount(r.id)
+  const mods = MODULES.map((m) => {
+    const on = m.perms.filter((p) => has(r.id, p.id)).length
+    const rows = m.perms.map((p) => {
+      const val = has(r.id, p.id); const dis = r.locked || p.adminOnly; const c = changedCell(r.id, p.id)
+      return `<div class="ds-toggle-row ${c ? 'is-changed' : ''}"><span class="ds-toggle-row__text"><span>${esc(p.label)}${c ? ' <span class="chip">Đã sửa</span>' : ''}</span>${p.desc ? `<span class="ds-toggle-row__hint">${esc(p.desc)}</span>` : ''}</span>
+        <span class="ds-toggle-row__end"><span class="ds-toggle-row__state">${val ? 'Có' : 'Không'}</span><button class="sw" role="switch" aria-checked="${val}" aria-label="${esc(p.label)}" ${dis ? 'disabled' : ''} data-act="cell" data-r="${r.id}" data-p="${p.id}"></button></span></div>`
+    }).join('')
+    const sc = m.scoped && !r.locked && has(r.id, `${m.key}.view`) ? `<label class="field" style="gap:4px"><span class="field__label" style="font-size:12px">Phạm vi dữ liệu</span>${scopeSeg(r.id, m.key)}</label>` : ''
+    return `<section class="mmod"><div class="mmod__head"><span class="ic">${ic(m.icon)}</span>${m.label}<small>${on}/${m.perms.length}</small></div><div class="mmod__body">${sc}${rows}</div></section>`
+  }).join('')
+  return `<div class="page-head"><h1>Vai trò và quyền</h1><button class="btn btn--primary btn--sm" data-act="add">${ic('plus')}Thêm vai trò</button></div>
+    <label class="field"><span class="field__label">Vai trò</span><select class="input" id="prole">${opts}</select></label>
+    <div class="mrole"><div class="mrole__top"><b>${esc(r.name)}</b>${r.locked ? `<span class="chip chip--lock">${ic('lock')}Cố định</span>` : ''}${chg ? `<span class="chip">Đã sửa ${chg}</span>` : ''}<button class="btn btn--ghost btn--sm btn--icon" style="margin-left:auto" aria-label="Thao tác" data-act="menu" data-r="${r.id}">${ic('more')}</button></div>
+      <span class="muted">${esc(r.desc)}</span><span class="rh__meta">${r.users} tài khoản · ${r.locked ? 'toàn quyền' : `${roleCount(r.id)}/${ALL.length} quyền`}</span>
+      ${r.locked ? `<div class="banner banner--info">${ic('lock')}<span>Quản trị viên luôn có toàn quyền, kể cả quyền thêm sau này. Không sửa được.</span></div>` : ''}</div>
+    ${mods}${savebar()}`
+}
+
+function menu() {
+  if (!S.menu) return ''
+  const r = roleById(S.menu.r); const { x, y } = S.menu
+  const items = r.locked
+    ? `<div class="menu__meta">Vai trò cố định</div><button class="menu__item" data-act="users" data-r="${r.id}">${ic('users')}Xem ${r.users} tài khoản</button>`
+    : `<button class="menu__item" data-act="edit" data-r="${r.id}">${ic('edit')}Sửa tên và mô tả</button>
+       <button class="menu__item" data-act="dup" data-r="${r.id}">${ic('copy')}Nhân bản vai trò</button>
+       <button class="menu__item" data-act="users" data-r="${r.id}">${ic('users')}Xem ${r.users} tài khoản</button>
+       <div class="menu__sep"></div><button class="menu__item menu__item--danger" data-act="del" data-r="${r.id}">${ic('trash')}Xoá vai trò</button>`
+  return `<div class="menu" role="menu" style="left:${x}px;top:${y}px">${items}</div>`
+}
+
+function modal() {
+  const M = S.modal; if (!M) return ''
+  const close = `<button class="btn btn--ghost btn--sm btn--icon" style="margin-left:auto" aria-label="Đóng" data-act="close">${ic('close')}</button>`
+  if (M.type === 'form') {
+    const editing = !!M.editId
+    const nameErr = M.tried && !M.name.trim() ? 'Nhập tên vai trò.' : M.tried && S.roles.some((r) => r.id !== M.editId && r.name.trim().toLowerCase() === M.name.trim().toLowerCase()) ? 'Đã có vai trò tên này.' : ''
+    const orig = editing ? roleById(M.editId) : null
+    const unchanged = editing && orig.name === M.name && orig.desc === M.desc
+    const copyOpts = [`<option value="">Không chép, bắt đầu trống</option>`, ...S.roles.map((r) => `<option value="${r.id}" ${M.copy === r.id ? 'selected' : ''}>${esc(r.name)} (${r.locked ? 'toàn quyền' : `${S.saved[r.id].size} quyền`})</option>`)].join('')
+    return `<div class="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="modal__head"><div><h2 class="modal__title" id="mt">${editing ? 'Sửa vai trò' : 'Thêm vai trò'}</h2><p class="modal__desc">${editing ? 'Đổi tên không ảnh hưởng quyền và tài khoản đang dùng.' : 'Tạo xong là lưu ngay. Sau đó tích quyền ở cột mới.'}</p></div>${close}</div>
+      <div class="modal__body">
+        <label class="field"><span class="field__label">Tên vai trò <i>*</i></span><input class="input ${nameErr ? 'input--error' : ''}" id="f-name" value="${esc(M.name)}" placeholder="Ví dụ: Kế toán" />${nameErr ? `<p class="field__err">${nameErr}</p>` : ''}</label>
+        <label class="field"><span class="field__label">Mô tả</span><textarea class="input" id="f-desc" placeholder="Vai trò này làm gì, hiện ở ô chọn vai trò khi tạo tài khoản">${esc(M.desc)}</textarea></label>
+        ${editing ? '' : `<label class="field"><span class="field__label">Chép quyền từ</span><select class="input" id="f-copy">${copyOpts}</select><p class="field__hint">Chép từ vai trò gần giống rồi sửa vài ô sẽ nhanh hơn tích từ đầu.</p></label>`}
+      </div>
+      <div class="modal__foot"><button class="btn" data-act="close">Huỷ</button><button class="btn btn--primary" data-act="form-ok" ${unchanged ? 'disabled' : ''}>${editing ? 'Lưu thay đổi' : 'Thêm vai trò'}</button></div></div></div>`
+  }
+  if (M.type === 'blocked') {
+    const r = roleById(M.r)
+    return `<div class="scrim"><div class="modal" role="alertdialog" aria-modal="true"><div class="modal__head"><span class="modal__icon">${ic('alert')}</span><div><h2 class="modal__title">Chưa xoá được ${esc(r.name)}</h2><p class="modal__desc">Còn <b>${r.users} tài khoản</b> đang dùng vai trò này. Chuyển họ sang vai trò khác ở tab Tài khoản rồi xoá lại.</p></div></div>
+      <div class="modal__foot"><button class="btn" data-act="close">Đóng</button><button class="btn btn--primary" data-act="users" data-r="${r.id}">${ic('users')}Xem ${r.users} tài khoản</button></div></div></div>`
+  }
+  if (M.type === 'del') {
+    const r = roleById(M.r)
+    return `<div class="scrim"><div class="modal" role="alertdialog" aria-modal="true"><div class="modal__head"><span class="modal__icon modal__icon--danger">${ic('trash')}</span><div><h2 class="modal__title">Xoá vai trò ${esc(r.name)}?</h2><p class="modal__desc">Không còn tài khoản nào dùng vai trò này. Xoá rồi không khôi phục được.</p></div></div>
+      <div class="modal__foot"><button class="btn" data-act="close">Huỷ</button><button class="btn btn--danger" data-act="del-ok" data-r="${r.id}">Xoá vai trò</button></div></div></div>`
+  }
+  if (M.type === 'confirm') {
+    const ch = changes(); const users = ch.reduce((n, c) => n + c.role.users, 0)
+    const chips = (list, cls) => list.map((p) => `<span class="chip ${cls}" title="${esc(MOD_OF[p.id].label)}">${esc(MOD_OF[p.id].label)}: ${esc(p.label)}</span>`).join('')
+    const blocks = ch.map((c) => `<div class="diff"><div class="diff__head"><b>${esc(c.role.name)}</b><span>${c.role.users} tài khoản</span></div><div class="diff__rows">
+      ${c.add.length ? `<div class="diff__row"><span>Thêm</span>${chips(c.add, 'chip--add')}</div>` : ''}${c.rm.length ? `<div class="diff__row"><span>Bỏ</span>${chips(c.rm, 'chip--rm')}</div>` : ''}${c.scope.length ? `<div class="diff__row"><span>Phạm vi</span>${c.scope.map((x) => `<span class="chip chip--scope">${esc(x.m.label)}: ${SCOPE_LABEL[x.to]}</span>`).join('')}</div>` : ''}</div></div>`).join('')
+    return `<div class="scrim"><div class="modal modal--wide" role="dialog" aria-modal="true"><div class="modal__head"><div><h2 class="modal__title">Lưu ${changeCount()} thay đổi quyền?</h2><p class="modal__desc">Áp dụng cho ${users} tài khoản. Người đang đăng nhập nhận quyền mới ở lần tải trang tới.</p></div>${close}</div>
+      <div class="modal__body">${blocks}</div>
+      <div class="modal__foot"><button class="btn" data-act="close">Quay lại sửa</button><button class="btn btn--primary" data-act="save-ok">Lưu thay đổi</button></div></div></div>`
+  }
+  return ''
+}
+
+function render() {
+  const sc = document.getElementById('pm-scroll'); const pos = sc ? [sc.scrollLeft, sc.scrollTop] : null
+  const focusQ = document.activeElement?.id === 'q'
+  const stage = document.getElementById('stage')
+  stage.className = `wf-stage ${S.frame === 'phone' ? 'wf-stage--phone' : ''}`
+  stage.innerHTML = `<div class="wf-frame">${shell(S.frame === 'phone' ? phone() : desktop(), modal())}</div>${menu()}`
+  const sc2 = document.getElementById('pm-scroll'); if (sc2 && pos) [sc2.scrollLeft, sc2.scrollTop] = pos
+  if (focusQ) { const q = document.getElementById('q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length) }
+  document.querySelectorAll('[data-wf^="frame:"]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.wf === `frame:${S.frame}`))
+}
+
+// ---------- Sự kiện ----------
+document.addEventListener('click', (e) => {
+  const wf = e.target.closest('[data-wf]')
+  if (wf) return wfAction(wf.dataset.wf)
+  const el = e.target.closest('[data-act]')
+  if (!el) { if (S.menu && !e.target.closest('.menu')) { S.menu = null; render() } return }
+  const { act, r, p, m } = el.dataset
+  if (act !== 'menu') S.menu = null
+  switch (act) {
+    case 'cell': return toggle(r, p)
+    case 'mod': return toggleModule(r, m)
+    case 'scope': S.draftScope[r][m] = el.dataset.v; return render()
+    case 'collapse': S.collapsed.has(m) ? S.collapsed.delete(m) : S.collapsed.add(m); return render()
+    case 'collapse-all': S.collapsed = S.collapsed.size === MODULES.length ? new Set() : new Set(MODULES.map((x) => x.key)); return render()
+    case 'clear-q': S.q = ''; return render()
+    case 'menu': { const b = el.getBoundingClientRect(); S.menu = S.menu?.r === r ? null : { r, x: Math.max(8, Math.min(b.right - 220, innerWidth - 228)), y: b.bottom + 4 }; return render() }
+    case 'add': S.modal = { type: 'form', name: '', desc: '', copy: '' }; return render()
+    case 'edit': { const x = roleById(r); S.modal = { type: 'form', editId: r, name: x.name, desc: x.desc }; return render() }
+    case 'dup': { const x = roleById(r); S.modal = { type: 'form', name: `Bản sao của ${x.name}`, desc: x.desc, copy: r }; return render() }
+    case 'users': S.modal = null; toast(`Sang tab Tài khoản, lọc sẵn vai trò ${roleById(r).name}.`); return render()
+    case 'del': { const x = roleById(r); S.modal = { type: x.users ? 'blocked' : 'del', r }; return render() }
+    case 'del-ok': { const x = roleById(r); S.roles = S.roles.filter((y) => y.id !== r); delete S.saved[r]; delete S.draft[r]; delete S.savedScope[r]; delete S.draftScope[r]; if (S.phoneRole === r) S.phoneRole = 'admin'; S.modal = null; toast(`Đã xoá vai trò ${x.name}.`); return render() }
+    case 'form-ok': return submitForm()
+    case 'close': S.modal = null; return render()
+    case 'discard': S.draft = cloneSets(S.saved); S.draftScope = cloneScope(S.savedScope); toast('Đã bỏ các thay đổi chưa lưu.'); return render()
+    case 'save': S.modal = { type: 'confirm' }; return render()
+    case 'save-ok': { const n = changeCount(); S.saved = cloneSets(S.draft); S.savedScope = cloneScope(S.draftScope); S.modal = null; toast(`Đã lưu ${n} thay đổi quyền.`); return render() }
+  }
+})
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'q') { S.q = e.target.value; render() }
+  if (e.target.id === 'f-name') S.modal.name = e.target.value
+  if (e.target.id === 'f-desc') S.modal.desc = e.target.value
+  if (e.target.id === 'f-name' || e.target.id === 'f-desc') { const btn = document.querySelector('[data-act="form-ok"]'); const o = S.modal.editId && roleById(S.modal.editId); if (btn && o) btn.disabled = o.name === S.modal.name && o.desc === S.modal.desc }
+})
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'f-copy') S.modal.copy = e.target.value
+  if (e.target.id === 'prole') { S.phoneRole = e.target.value; render() }
+})
+document.addEventListener('mouseover', (e) => {
+  const td = e.target.closest('.pm td[data-c], .pm th[data-c]'); const c = td ? td.dataset.c : null
+  if (c !== S.hcol) { S.hcol = c; const st = document.querySelector('#stage > .wf-frame style'); if (st) st.remove(); if (c) document.querySelector('.pm-card')?.insertAdjacentHTML('beforebegin', `<style>.pm td[data-c="${c}"]:not(.is-changed):not(.is-locked){background:#f3f6fa}</style>`) }
+})
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && (S.modal || S.menu)) { S.modal = null; S.menu = null; render() } })
+
+function submitForm() {
+  const M = S.modal; M.tried = true
+  const name = M.name.trim()
+  if (!name || S.roles.some((r) => r.id !== M.editId && r.name.trim().toLowerCase() === name.toLowerCase())) return render()
+  if (M.editId) { Object.assign(roleById(M.editId), { name, desc: M.desc.trim() }); S.modal = null; toast(`Đã lưu vai trò ${name}.`); return render() }
+  const id = `r${Date.now()}`
+  const from = M.copy ? (roleById(M.copy).locked ? GRANTABLE.map((p) => p.id) : [...S.saved[M.copy]]) : []
+  S.roles.push({ id, name, desc: M.desc.trim() || 'Chưa có mô tả', users: 0 })
+  S.saved[id] = new Set(from); S.draft[id] = new Set(from)
+  const copiedScope = M.copy && !roleById(M.copy).locked ? { ...S.savedScope[M.copy] } : {}
+  S.savedScope[id] = copiedScope; S.draftScope[id] = { ...copiedScope }
+  S.modal = null; S.flash = id; S.phoneRole = id
+  toast(`Đã thêm vai trò ${name}${M.copy ? `, chép ${from.length} quyền từ ${roleById(M.copy).name}` : ''}.`)
+  render()
+  const sc = document.getElementById('pm-scroll'); if (sc) sc.scrollLeft = sc.scrollWidth
+  setTimeout(() => { S.flash = null }, 3500)
+}
+
+function wfAction(a) {
+  const [k, v] = a.split(':')
+  if (k === 'frame') { S.frame = v; S.menu = null; return render() }
+  const frame = S.frame; reset(v !== 'reset' && v !== 'add'); S.frame = frame
+  if (v === 'changed' || v === 'confirm') {
+    S.draft.hoso.add('seafarer.delete'); S.draft.hoso.delete('export.download')
+    S.draftScope.ketoan.contract = 'own'; S.draft.ketoan.add('export.view'); S.draft.ketoan.add('export.download')
+    S.collapsed = new Set(['partner', 'vessel', 'voyage', 'catalog', 'training', 'message', 'account', 'role'])
+    S.phoneRole = 'hoso'
+    if (v === 'confirm') S.modal = { type: 'confirm' }
+  }
+  if (v === 'add') S.modal = { type: 'form', name: 'Nhân viên hồ sơ', desc: 'Nhập và cập nhật hồ sơ thuyền viên', copy: '' }
+  if (v === 'blocked') S.modal = { type: 'blocked', r: 'hoso' }
+  render()
+}
+
+// Mở thẳng một trạng thái: #st=changed&frame=phone&notes=0. Khung hẹp thì mặc định xem bản điện thoại.
+const H = new URLSearchParams(location.hash.slice(1))
+reset(false); S.frame = H.get('frame') || (innerWidth < 760 ? 'phone' : 'desk')
+if (H.get('notes') === '0') document.querySelector('.wf-notes').open = false
+if (H.get('st')) wfAction(`st:${H.get('st')}`); else render()
+</script>
+</body></html>

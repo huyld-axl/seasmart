@@ -6,6 +6,7 @@ const multipart = require('@fastify/multipart')
 const staticFiles = require('@fastify/static')
 const rateLimit = require('@fastify/rate-limit')
 const config = require('../config')
+const { loadAccess, can } = require('./access')
 
 module.exports = fp(async function (fastify) {
   // Rate limiting (global default — routes can override)
@@ -49,12 +50,18 @@ module.exports = fp(async function (fastify) {
     prefix: '/public/',
   })
 
-  // Auth decorator
+  // Auth decorator: quyền đọc từ DB mỗi request nên khoá tài khoản và đổi quyền có hiệu lực ngay.
   fastify.decorate('authenticate', async function (request, reply) {
     try {
       await request.jwtVerify()
     } catch (err) {
       return reply.code(401).send({ error: 'Unauthorized' })
     }
+    const access = await loadAccess(request.user.id)
+    if (!access) return reply.code(401).send({ error: 'Unauthorized' })
+    request.access = access
   })
+
+  // Dùng sau authenticate: { onRequest: [fastify.authenticate, fastify.can('voyage.update')] }
+  fastify.decorate('can', can)
 })

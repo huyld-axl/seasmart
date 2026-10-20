@@ -10,8 +10,31 @@ describe('navConfig', () => {
     expect(NAV_SECTIONS.map((s) => s.group)).toEqual([1, 1, 1, 1, 2, 2, 3, 3])
   })
 
-  it('mọi tài khoản đang thấy đủ các mục', () => {
-    expect(sectionsFor('operator')).toBe(NAV_SECTIONS)
+  const keys = (user) => sectionsFor(user).map((s) => s.key)
+  const ALL = NAV_SECTIONS.flatMap((s) => [s.perm, ...(s.tabs || []).map((t) => t.perm)]).filter(Boolean)
+
+  it('đủ quyền thì thấy đủ mục và tab', () => {
+    const sections = sectionsFor({ permissions: ALL })
+    expect(sections.map((s) => s.key)).toEqual(NAV_SECTIONS.map((s) => s.key))
+    expect(sections.at(-1).tabs.map((t) => t.label)).toEqual(['Tài khoản', 'Vai trò và quyền', 'Trung tâm đào tạo', 'Khóa học', 'Tin nhắn'])
+  })
+
+  it('chưa đăng nhập hoặc chưa có quyền nào thì không có mục nào', () => {
+    expect(sectionsFor(null)).toEqual([])
+    expect(sectionsFor({ permissions: [] })).toEqual([])
+  })
+
+  it('chỉ thấy mục có quyền xem', () => {
+    expect(keys({ permissions: ['seafarer.view', 'contract.view'] })).toEqual(['seafarers', 'contracts'])
+  })
+
+  it('mục có tab: lọc tab theo quyền, to trỏ tới tab đầu còn lại, ẩn khi hết tab', () => {
+    const [admin] = sectionsFor({ permissions: ['training.view', 'message.view'] })
+    expect(admin.tabs.map((t) => t.to)).toEqual(['/training-centers', '/courses', '/messages'])
+    expect(admin.to).toBe('/training-centers')
+    expect(sectionsFor({ permissions: ['message.view'] })[0].to).toBe('/messages')
+    expect(keys({ permissions: ['account.view'] })).toEqual(['admin'])
+    expect(keys({ permissions: ['role.manage'] })).toEqual(['admin'])
   })
 
   it('chọn mục theo tiền tố đường dẫn, không khớp nửa chữ', () => {

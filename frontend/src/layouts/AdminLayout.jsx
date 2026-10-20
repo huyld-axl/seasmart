@@ -20,7 +20,6 @@ import NotificationBell from '../components/common/NotificationBell'
 import ErrorBoundary from '../components/common/ErrorBoundary'
 import ProductBrand from '../components/common/ProductBrand'
 import useAuthStore from '../stores/authStore'
-import { ROLE_LABELS } from '../constants/roles'
 import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
 import './AdminLayout.css'
 
@@ -98,13 +97,13 @@ export default function AdminLayout() {
   const screens = useBreakpoint()
   const isMobile = !screens.md
 
-  const sections = sectionsFor(user?.role)
+  const sections = sectionsFor(user)
   const current = activeSection(sections, pathname)
   const currentTab = activeTab(current, pathname)
 
   const userMenu = {
     items: [
-      { key: 'meta', type: 'group', label: `${user?.email || ''} · ${ROLE_LABELS[user?.role] || ''}` },
+      { key: 'meta', type: 'group', label: `${user?.email || ''} · ${user?.role?.name || 'Chưa có vai trò'}` },
       { type: 'divider' },
       { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true },
     ],

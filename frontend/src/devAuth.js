@@ -1,6 +1,6 @@
 // Chỉ dùng ở môi trường dev: cho công cụ chụp, đo giao diện (probe.mjs) mở thẳng route cần đăng nhập
 // bằng `?devToken=<JWT>`. Token vẫn là JWT thật, backend kiểm như thường. Vite bỏ khối này khi build
-// production. File phải được import TRƯỚC App trong main.jsx, vì authStore đọc localStorage lúc nạp module.
+// production. Quyền thật được app lấy lại từ /auth/me khi mở. File phải được import TRƯỚC App trong main.jsx, vì authStore đọc localStorage lúc nạp module.
 if (import.meta.env.DEV) {
   const url = new URL(window.location.href)
   const token = url.searchParams.get('devToken')
@@ -11,9 +11,9 @@ if (import.meta.env.DEV) {
       const user = {
         id: payload.id,
         email: payload.email,
-        role: payload.role,
-        linked_entity_id: payload.linked_entity_id ?? null,
-        linked_entity_type: payload.linked_entity_type ?? null,
+        role: null,
+        permissions: [],
+        scopes: {},
       }
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))

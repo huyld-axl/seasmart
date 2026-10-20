@@ -22,7 +22,7 @@ export default function LoginPage() {
     setError('')
     try {
       await login(email, password)
-      navigate('/seafarers')
+      navigate('/')
     } catch (err) {
       const status = err.response?.status
       if (!err.response) setError('Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.')

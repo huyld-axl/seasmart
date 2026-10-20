@@ -10,8 +10,8 @@ export default function ErrorPage({ code = 404, errorId }) {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const [copied, setCopied] = useState(false)
-  const home = () => navigate('/seafarers')
-  const homeLabel = 'Về trang Thuyền viên'
+  const home = () => navigate('/')
+  const homeLabel = 'Về trang đầu'
 
   async function copy() {
     try { await navigator.clipboard.writeText(errorId); setCopied(true) } catch { setCopied(false) }

@@ -21,7 +21,9 @@ export default function TermsTable({ value, onChange, ownerName, seafarerName, r
   }
 
   return (
-    <div className="ct-table-wrap">
+    <section className="ct-block" aria-label="Kỳ thanh toán">
+      <h3 className="ct-block__title">Kỳ thanh toán <span className="ct-block__unit">chốt sổ, ngày trả tiền</span></h3>
+      <div className="ct-table-wrap">
       <table className="ct-table ct-table--terms">
         <colgroup><col style={{ width: '24%' }} /><col style={{ width: '38%' }} /><col style={{ width: '38%' }} /></colgroup>
         <thead>
@@ -32,7 +34,6 @@ export default function TermsTable({ value, onChange, ownerName, seafarerName, r
           </tr>
         </thead>
         <tbody>
-          <tr className="ct-group"><th colSpan={3} scope="colgroup">Kỳ thanh toán <span className="ct-group__unit">chốt sổ, ngày trả tiền</span></th></tr>
           <tr>
             <th scope="row" className="ct-name">Ngày chốt sổ</th>
             <td>{cell('RECEIVABLE', 'closing')}</td>
@@ -50,6 +51,7 @@ export default function TermsTable({ value, onChange, ownerName, seafarerName, r
           </tr>
         </tbody>
       </table>
-    </div>
+      </div>
+    </section>
   )
 }

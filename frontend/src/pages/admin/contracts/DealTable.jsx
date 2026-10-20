@@ -38,23 +38,28 @@ export default function DealTable({ value = [], onChange, ownerName, seafarerNam
       <MoneyInput value={row[field]} onChange={(v) => update(index, { [field]: v })} aria-label={label} />
     )
 
-  return (
-    <div className="ct-table-wrap">
-      <table className="ct-table">
-        <colgroup><col style={{ width: '24%' }} /><col style={{ width: '38%' }} /><col style={{ width: '38%' }} /></colgroup>
-        <thead>
-          <tr>
-            <th scope="col">Khoản</th>
-            <th scope="col"><SideHead tag="Phải thu" tone="receivable" name={ownerName} /></th>
-            <th scope="col"><SideHead tag="Phải chi" tone="payable" name={seafarerName} /></th>
-          </tr>
-        </thead>
-        {GROUPS.map((group) => {
-          const entries = rows.map((row, index) => ({ row, index })).filter(({ row }) => row.kind === group.kind)
-          const only = entries.map(({ row }) => row)
-          return (
-            <tbody key={group.kind}>
-              <tr className="ct-group"><th colSpan={3} scope="colgroup">{group.title} <span className="ct-group__unit">{group.unit}</span></th></tr>
+  const head = (
+    <thead>
+      <tr>
+        <th scope="col">Khoản</th>
+        <th scope="col"><SideHead tag="Phải thu" tone="receivable" name={ownerName} /></th>
+        <th scope="col"><SideHead tag="Phải chi" tone="payable" name={seafarerName} /></th>
+      </tr>
+    </thead>
+  )
+
+  // Mỗi nhóm một bảng riêng, tên bảng đặt bên ngoài phía trên.
+  return GROUPS.map((group) => {
+    const entries = rows.map((row, index) => ({ row, index })).filter(({ row }) => row.kind === group.kind)
+    const only = entries.map(({ row }) => row)
+    return (
+      <section key={group.kind} className="ct-block" aria-label={group.title}>
+        <h3 className="ct-block__title">{group.title} <span className="ct-block__unit">{group.unit}</span></h3>
+        <div className="ct-table-wrap">
+          <table className="ct-table">
+            <colgroup><col style={{ width: '24%' }} /><col style={{ width: '38%' }} /><col style={{ width: '38%' }} /></colgroup>
+            {head}
+            <tbody>
               {entries.map(({ row, index }) => {
                 const custom = !row.item_code
                 return (
@@ -87,9 +92,9 @@ export default function DealTable({ value = [], onChange, ownerName, seafarerNam
                 <td className="ds-num">{formatUsd(sum(only, 'payable_usd'), { fixed: true })}</td>
               </tr>
             </tbody>
-          )
-        })}
-      </table>
-    </div>
-  )
+          </table>
+        </div>
+      </section>
+    )
+  })
 }

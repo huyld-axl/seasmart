@@ -1,22 +1,23 @@
 /* Màn Hợp đồng: bảng khoản hai cột, kỳ thanh toán, thanh cân đối. Dùng lại khung form (sf-*) và hồ sơ (crew-*). */
 
-.ct-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.ct-table-wrap { overflow-x: auto; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); }
 .ct-table { width: 100%; min-width: 640px; border-collapse: collapse; table-layout: fixed; }
 .ct-table th, .ct-table td { padding: 8px 12px; border-top: 1px solid var(--border); text-align: left; vertical-align: middle; }
-.ct-table thead th { padding: 12px; border-top: 0; background: var(--surface-hover, #f6f7f8); color: var(--muted); font-size: 12px; font-weight: 600; }
-.ct-table td + td, .ct-table thead th + th { border-left: 1px solid var(--border); }
-.ct-side { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--foreground); font-size: 14px; }
+.ct-table thead th { padding: 12px; border-top: 0; background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 500; border-bottom: 2px solid var(--primary); }
+.ct-table td + td { border-left: 1px solid var(--border); }
+.ct-table thead th + th { border-left: 1px solid var(--border-strong); }
+.ct-side { display: flex; align-items: center; gap: 8px; min-width: 0; color: inherit; font-size: 14px; }
 .ct-side__name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .ct-tag { display: inline-flex; flex-shrink: 0; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
 .ct-tag--receivable { background: var(--success-bg); color: var(--success); }
 .ct-tag--payable { background: var(--neutral-bg); color: var(--neutral); }
-.ct-group th { padding: 10px 12px; background: #ececee; font-size: 14px; font-weight: 600; }
+.ct-group th { padding: 10px 12px 10px 15px; background: var(--surface); color: var(--primary); font-size: 14px; font-weight: 600; border-top: 1px solid var(--border-strong); box-shadow: inset 3px 0 0 var(--primary); }
 .ct-group__unit { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
 .ct-name { font-weight: 400; }
 .ct-name__hint { display: block; color: var(--muted); font-size: 12px; }
 .ct-name__edit { display: flex; align-items: center; gap: 4px; }
 .ct-add td { padding: 4px 8px; }
-.ct-total th, .ct-total td { background: var(--surface-hover, #f6f7f8); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.ct-total th, .ct-total td { background: var(--surface); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
 .ct-total th { text-align: left; }
 .ct-total--once th, .ct-total--once td { font-weight: 500; }
 .ct-ro { display: block; text-align: right; font-variant-numeric: tabular-nums; }
@@ -70,3 +71,9 @@
 .ct-card-row__note { color: var(--muted); font-size: 12px; }
 .ct-approve { display: grid; gap: 12px; }
 .ct-approve__note { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--surface-hover, #f6f7f8); color: var(--neutral); }
+
+/* Mỗi nhóm khoản (hằng tháng, một lần, kỳ thanh toán) là một bảng riêng, tên bảng đặt ngoài phía trên. */
+.ct-block { display: grid; gap: 8px; }
+.ct-block__title { margin: 0; color: var(--foreground); font-size: 15px; font-weight: 600; }
+.ct-block__unit { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.ct-block + .ct-block { margin-top: 8px; }

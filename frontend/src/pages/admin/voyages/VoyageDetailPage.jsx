@@ -109,14 +109,8 @@ export default function VoyageDetailPage() {
   const columns = [
     { title: '#', key: 'n', width: 40, render: (_, __, index) => <span className="vd-muted">{index + 1}</span> },
     { title: 'Vị trí', dataIndex: 'rank_name', render: (name) => <span className="vd-rank">{name}</span> },
-    {
-      title: 'Budget dự kiến (USD)',
-      align: 'right',
-      children: [
-        { title: 'Tổng chuyến', dataIndex: 'budget_total_usd', align: 'right', render: (v) => <span className="ds-num">{formatUsd(v)}</span> },
-        { title: 'Mỗi tháng', dataIndex: 'budget_monthly_usd', align: 'right', render: (v) => <span className="ds-num vd-muted">{formatUsd(v)}</span> },
-      ],
-    },
+    { title: 'Budget cả chuyến (USD)', dataIndex: 'budget_total_usd', align: 'right', render: (v) => <span className="ds-num">{formatUsd(v)}</span> },
+    { title: 'Budget/tháng (USD)', dataIndex: 'budget_monthly_usd', align: 'right', render: (v) => <span className="ds-num vd-muted">{formatUsd(v)}</span> },
     {
       title: 'Thuyền viên · hợp đồng',
       key: 'crew',
@@ -257,7 +251,7 @@ export default function VoyageDetailPage() {
           <h2 className="crew-panel__title">Vị trí dự kiến <span className="vd-count">{positions.length}</span></h2>
           {ended ? null : <Button type="text" icon={<PlusOutlined />} onClick={() => navigate(`/voyages/${voyage.id}/edit`)}>Thêm vị trí</Button>}
         </div>
-        <Table rowKey="id" columns={columns} dataSource={positions} pagination={false} scroll={{ x: 'max-content' }} className="vd-table" />
+        <Table rowKey="id" columns={columns} dataSource={positions} pagination={false} scroll={{ x: 'max-content' }} className="vd-table ds-table--tint" />
         <div className="vd-foot">
           <p>Trạng thái thuyền viên đổi khi bấm Bắt đầu chuyến và Kết thúc chuyến, chỉ với người có hợp đồng Hiệu lực.</p>
           <p className="ds-num">Phải thu {formatUsd(summary.receivable_monthly)} · phải chi {formatUsd(summary.payable_monthly)} · chênh lệch {formatUsd(summary.diff_monthly)} USD/tháng</p>

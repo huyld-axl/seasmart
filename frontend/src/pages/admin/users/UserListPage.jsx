@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { App, Button, Input, Pagination, Select } from 'antd'
+import { App, Button, Input, Select } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import UserTable from '../../../components/admin/users/UserTable'
 import UserForm from '../../../components/admin/users/UserForm'
 import useToast from '../../../components/ds/useToast'
 import { EmptyState } from '../../../components/ds/Controls'
+import ListFooter from '../../../components/ds/ListFooter'
+import useListSticky from '../../../components/ds/useListSticky'
 import { ROLES, ROLE_LABELS } from '../../../constants/roles'
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useToggleActive } from '../../../hooks/useUsers'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 20 // mặc định; người dùng đổi ở dòng chân
 const errorText = (error) => error?.response?.data?.message || error?.response?.data?.error || 'Có lỗi, thử lại sau.'
 
 export default function UserListPage() {
@@ -16,6 +18,7 @@ export default function UserListPage() {
   const [panelOpen, setPanelOpen] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const toast = useToast()
+  const tableScroll = useListSticky()
   const { modal } = App.useApp()
 
   const { data, isLoading, isError, refetch } = useUsers(filters)
@@ -79,13 +82,8 @@ export default function UserListPage() {
   } else {
     body = (
       <>
-        <UserTable data={rows} loading={isLoading} onEdit={openPanel} onDelete={confirmDelete} onToggleActive={handleToggle} />
-        <div className="ds-table-foot">
-          <span className="ds-num">{total} tài khoản</span>
-          {total > PAGE_SIZE ? (
-            <Pagination simple current={filters.page} total={total} pageSize={PAGE_SIZE} onChange={(page) => setFilters((current) => ({ ...current, page }))} />
-          ) : null}
-        </div>
+        <UserTable data={rows} loading={isLoading} scroll={tableScroll} onEdit={openPanel} onDelete={confirmDelete} onToggleActive={handleToggle} />
+        <ListFooter total={total} page={filters.page} pageSize={filters.limit} unit="tài khoản" onChange={(page, limit) => setFilters((current) => ({ ...current, page, limit }))} />
       </>
     )
   }
@@ -98,7 +96,7 @@ export default function UserListPage() {
           <p className="ds-page__desc">Ai đăng nhập được vào MCAH và với vai trò gì.</p>
         </div>
       </div>
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
           <Input
             className="ds-toolbar__search"

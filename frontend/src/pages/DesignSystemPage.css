@@ -105,3 +105,6 @@
 [data-demo-state='hover'] .ant-btn-primary { background: var(--primary-hover); }
 [data-demo-state='hover'] .ant-btn-text { background: rgb(44 44 44 / 0.05); color: var(--foreground); }
 [data-demo-state='focus'] .ant-input { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+
+.dsp-notes { margin: 12px 0 0; padding-left: 20px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.dsp-notes code { color: var(--foreground); }

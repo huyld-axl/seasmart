@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Grid, Input, Pagination, Skeleton, Table } from 'antd'
-import { PlusOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Grid, Input, Skeleton, Table } from 'antd'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
@@ -9,8 +9,11 @@ import { initialsOfName } from './fleetView'
 import { FleetTile } from './FleetParts'
 import '../seafarers/SeafarerListPage.css'
 import './fleet.css'
+import RowActions from '../../../components/ds/RowActions'
+import { actionColumn } from '../../../components/ds/actionColumn'
+import useListSticky from '../../../components/ds/useListSticky'
+import ListFooter from '../../../components/ds/ListFooter'
 
-const PAGE_SIZE = 20
 const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
 
@@ -34,9 +37,11 @@ export default function PartnerListPage() {
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const tableScroll = useListSticky()
   const keyword = search.trim()
 
-  const list = useFleetList('ship-owners', shipOwnerApi, { active: TAB_ACTIVE[tab], search: keyword || undefined, page, limit: PAGE_SIZE })
+  const list = useFleetList('ship-owners', shipOwnerApi, { active: TAB_ACTIVE[tab], search: keyword || undefined, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -66,7 +71,7 @@ export default function PartnerListPage() {
     },
     { title: 'Số tàu', dataIndex: 'vessel_count', align: 'right', render: (value) => <span className="ds-num">{value}</span> },
     { title: 'Bộ giấy đã nộp', dataIndex: 'pack_count', align: 'right', responsive: ['md'], render: (value) => <span className="ds-num">{value}</span> },
-    { title: <span className="ds-sr-only">Mở</span>, key: 'open', width: 48, align: 'right', render: () => <RightOutlined className="crew-chevron" /> },
+    actionColumn((row) => <RowActions name={row.company_name} onView={() => open(row)} onEdit={() => navigate(`/partners/${row.id}/edit`)} />),
   ]
 
   let body
@@ -103,7 +108,7 @@ export default function PartnerListPage() {
         dataSource={rows}
         columns={columns}
         pagination={false}
-        scroll={{ x: 'max-content' }}
+        scroll={tableScroll}
         onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
       />
     )
@@ -111,7 +116,7 @@ export default function PartnerListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
           <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
@@ -129,10 +134,7 @@ export default function PartnerListPage() {
         </div>
         {body}
         {rows.length > 0 && (
-          <div className="ds-table-foot">
-            <span className="ds-num">{total} đối tác</span>
-            {total > PAGE_SIZE && <Pagination size="small" current={page} pageSize={PAGE_SIZE} total={total} showSizeChanger={false} onChange={setPage} />}
-          </div>
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="đối tác" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
     </div>

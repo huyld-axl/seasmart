@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Grid, Input, Pagination, Skeleton, Table } from 'antd'
-import { PlusOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Grid, Input, Skeleton, Table } from 'antd'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { vesselApi } from '../../../api/fleetApi'
@@ -10,8 +10,11 @@ import { VESSEL_STATUS_OPTIONS } from './fleetView'
 import { FleetTile } from './FleetParts'
 import '../seafarers/SeafarerListPage.css'
 import './fleet.css'
+import RowActions from '../../../components/ds/RowActions'
+import { actionColumn } from '../../../components/ds/actionColumn'
+import useListSticky from '../../../components/ds/useListSticky'
+import ListFooter from '../../../components/ds/ListFooter'
 
-const PAGE_SIZE = 20
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
 
 function VesselCell({ row }) {
@@ -34,9 +37,11 @@ export default function VesselListPage() {
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const tableScroll = useListSticky()
   const keyword = search.trim()
 
-  const list = useFleetList('vessels', vesselApi, { status: tab === 'all' ? undefined : tab, search: keyword || undefined, page, limit: PAGE_SIZE })
+  const list = useFleetList('vessels', vesselApi, { status: tab === 'all' ? undefined : tab, search: keyword || undefined, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -50,7 +55,7 @@ export default function VesselListPage() {
     { title: 'Chủ tàu', dataIndex: 'ship_owner_name', responsive: ['lg'], render: muted },
     { title: 'GRT', dataIndex: 'gross_tonnage', align: 'right', responsive: ['lg'], render: (value) => <span className="ds-num">{value == null ? '—' : Number(value).toLocaleString('vi-VN')}</span> },
     { title: 'Đang trên tàu', dataIndex: 'crew_on_board', align: 'right', render: (value) => <span className="ds-num">{value}</span> },
-    { title: <span className="ds-sr-only">Mở</span>, key: 'open', width: 48, align: 'right', render: () => <RightOutlined className="crew-chevron" /> },
+    actionColumn((row) => <RowActions name={row.vessel_name} onView={() => open(row)} onEdit={() => navigate(`/vessels/${row.id}/edit`)} />),
   ]
 
   let body
@@ -87,7 +92,7 @@ export default function VesselListPage() {
         dataSource={rows}
         columns={columns}
         pagination={false}
-        scroll={{ x: 'max-content' }}
+        scroll={tableScroll}
         onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
       />
     )
@@ -95,7 +100,7 @@ export default function VesselListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
           <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
@@ -113,10 +118,7 @@ export default function VesselListPage() {
         </div>
         {body}
         {rows.length > 0 && (
-          <div className="ds-table-foot">
-            <span className="ds-num">{total} tàu</span>
-            {total > PAGE_SIZE && <Pagination size="small" current={page} pageSize={PAGE_SIZE} total={total} showSizeChanger={false} onChange={setPage} />}
-          </div>
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="tàu" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
     </div>

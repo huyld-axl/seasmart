@@ -1,12 +1,16 @@
 import { useParams, Navigate } from 'react-router-dom'
 import { useState } from 'react'
-import { App, Table, Button, Dropdown, Form, Input, InputNumber, Select } from 'antd'
-import { PlusOutlined, EditOutlined, DeleteOutlined, MoreOutlined, SearchOutlined } from '@ant-design/icons'
+import { App, Table, Button, Form, Input, InputNumber, Select } from 'antd'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/client'
 import SlidePanel from '../../components/ds/SlidePanel'
 import useToast from '../../components/ds/useToast'
 import { EmptyState } from '../../components/ds/Controls'
+import RowActions from '../../components/ds/RowActions'
+import ListFooter from '../../components/ds/ListFooter'
+import useListSticky from '../../components/ds/useListSticky'
+import { actionColumn } from '../../components/ds/actionColumn'
 
 // ── Generic CRUD hook ──────────────────────────────────────────────────────────
 function useMasterData(resource) {
@@ -56,6 +60,9 @@ function useMasterData(resource) {
 function MasterTable({ resource, columns, formFields, title }) {
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const tableScroll = useListSticky()
   const [form] = Form.useForm()
   const toast = useToast()
   const { modal } = App.useApp()
@@ -64,6 +71,8 @@ function MasterTable({ resource, columns, formFields, title }) {
   const rows = keyword
     ? data.filter((row) => Object.values(row).some((value) => typeof value === 'string' && value.toLowerCase().includes(keyword)))
     : data
+  // Danh mục tải hết một lần; chia trang ngay trên trình duyệt.
+  const pageRows = rows.slice((page - 1) * pageSize, page * pageSize)
 
   function openPanel(row) {
     setEditing(row || {})
@@ -103,28 +112,7 @@ function MasterTable({ resource, columns, formFields, title }) {
     })
   }
 
-  const actionCol = {
-    title: <span className="ds-sr-only">Thao tác</span>,
-    key: 'actions',
-    width: 56,
-    align: 'right',
-    render: (_, row) => (
-      <Dropdown
-        trigger={['click']}
-        placement="bottomRight"
-        menu={{
-          items: [
-            { key: 'edit', icon: <EditOutlined />, label: 'Sửa' },
-            { type: 'divider' },
-            { key: 'delete', icon: <DeleteOutlined />, label: 'Xoá', danger: true },
-          ],
-          onClick: ({ key }) => (key === 'edit' ? openPanel(row) : confirmDelete(row)),
-        }}
-      >
-        <Button type="text" icon={<MoreOutlined />} aria-label="Thao tác" />
-      </Dropdown>
-    ),
-  }
+  const actionCol = actionColumn((row) => <RowActions name={row.name_vi || row.name || row.code} onEdit={() => openPanel(row)} onDelete={() => confirmDelete(row)} />)
 
   let body
   if (isError) {
@@ -138,19 +126,17 @@ function MasterTable({ resource, columns, formFields, title }) {
   } else {
     body = (
       <>
-        <Table rowKey="id" loading={isLoading} dataSource={rows} columns={[...columns, actionCol]} pagination={rows.length > 20 ? { pageSize: 20, showSizeChanger: false, size: 'small' } : false} scroll={{ x: 'max-content' }} onRow={(row) => ({ onDoubleClick: () => openPanel(row) })} />
-        <div className="ds-table-foot">
-          <span className="ds-num">{keyword ? `${rows.length} / ${data.length}` : data.length} {title}</span>
-        </div>
+        <Table rowKey="id" loading={isLoading} dataSource={pageRows} columns={[...columns, actionCol]} pagination={false} scroll={tableScroll} onRow={(row) => ({ onDoubleClick: () => openPanel(row) })} />
+        <ListFooter total={rows.length} page={page} pageSize={pageSize} unit={title} note={keyword ? `lọc từ ${data.length}` : null} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
       </>
     )
   }
 
   return (
     <>
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
-          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => setSearch(event.target.value)} />
+          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => { setPage(1); setSearch(event.target.value) }} />
           <span className="ds-toolbar__end">
             <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
               Thêm {title}

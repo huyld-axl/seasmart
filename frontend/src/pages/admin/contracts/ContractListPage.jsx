@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Grid, Input, Pagination, Select, Skeleton, Table } from 'antd'
-import { RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
+import { SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { shipOwnerApi } from '../../../api/fleetApi'
@@ -11,8 +11,11 @@ import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
 import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
 import './contracts.css'
+import RowActions from '../../../components/ds/RowActions'
+import { actionColumn } from '../../../components/ds/actionColumn'
+import useListSticky from '../../../components/ds/useListSticky'
+import ListFooter from '../../../components/ds/ListFooter'
 
-const PAGE_SIZE = 20
 const TABS = [
   { value: 'all', label: 'Tất cả' },
   { value: 'PENDING', label: 'Chờ duyệt' },
@@ -31,11 +34,13 @@ export default function ContractListPage() {
   const [ownerId, setOwnerId] = useState()
   const [voyageId, setVoyageId] = useState()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const tableScroll = useListSticky()
   const keyword = search.trim()
 
   const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 })
   const voyages = useVoyageList({ limit: 100 })
-  const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, voyage_id: voyageId, page, limit: PAGE_SIZE })
+  const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, voyage_id: voyageId, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -68,11 +73,21 @@ export default function ContractListPage() {
       ),
     },
     { title: 'Bắt đầu → kết thúc', key: 'dates', render: (_, row) => <span className="ds-num">{formatDate(row.start_date)} → {formatDate(row.end_date)}</span> },
-    { title: 'Phải thu/tháng', dataIndex: 'receivable_monthly', align: 'right', responsive: ['lg'], render: (value) => <span className="ds-num">{formatUsd(value)}</span> },
-    { title: 'Phải chi/tháng', dataIndex: 'payable_monthly', align: 'right', responsive: ['lg'], render: (value) => <span className="ds-num">{formatUsd(value)}</span> },
+    {
+      title: 'Thu · chi/tháng',
+      key: 'money',
+      align: 'right',
+      responsive: ['lg'],
+      render: (_, row) => (
+        <span className="ds-cell2">
+          <span className="ds-cell2__main ds-num">{formatUsd(row.receivable_monthly)}</span>
+          <span className="ds-cell2__sub ds-num">chi {formatUsd(row.payable_monthly)}</span>
+        </span>
+      ),
+    },
     { title: 'Chênh lệch', dataIndex: 'diff_monthly', align: 'right', render: (value) => <b className="ds-num">{formatDiff(value)}</b> },
     { title: 'Trạng thái', dataIndex: 'status', render: (value) => <StatusBadge group="contract" value={value} /> },
-    { title: <span className="ds-sr-only">Mở</span>, key: 'open', width: 48, align: 'right', render: () => <RightOutlined className="crew-chevron" /> },
+    actionColumn((row) => <RowActions name={`hợp đồng ${row.contract_number}`} onView={() => open(row)} onEdit={['DRAFT', 'REJECTED'].includes(row.status) ? () => navigate(`/contracts/${row.id}/edit`) : undefined} />),
   ]
 
   let body
@@ -114,7 +129,7 @@ export default function ContractListPage() {
         dataSource={rows}
         columns={columns}
         pagination={false}
-        scroll={{ x: 'max-content' }}
+        scroll={tableScroll}
         onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
       />
     )
@@ -131,7 +146,7 @@ export default function ContractListPage() {
       <div className="ds-toolbar">
         <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
       </div>
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
           <Input
             className="ds-toolbar__search"
@@ -169,11 +184,7 @@ export default function ContractListPage() {
         </div>
         {body}
         {rows.length > 0 && (
-          <div className="ds-table-foot">
-            <span className="ds-num">{total} hợp đồng</span>
-            <span className="vy-foot-unit">USD</span>
-            {total > PAGE_SIZE && <Pagination size="small" current={page} pageSize={PAGE_SIZE} total={total} showSizeChanger={false} onChange={setPage} />}
-          </div>
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="hợp đồng" note="Số tiền tính bằng USD" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
     </div>

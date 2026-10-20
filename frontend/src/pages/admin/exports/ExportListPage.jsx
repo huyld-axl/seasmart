@@ -5,6 +5,10 @@ import { Button, Grid, Input, Modal, Skeleton, Table } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { EmptyState } from '../../../components/ds/Controls'
+import RowActions from '../../../components/ds/RowActions'
+import ListFooter from '../../../components/ds/ListFooter'
+import useListSticky from '../../../components/ds/useListSticky'
+import { actionColumn } from '../../../components/ds/actionColumn'
 import { STAGES, template } from './packModel'
 import { exportApi } from '../../../api/exportApi'
 import { PackDownload } from './DownloadButtons'
@@ -25,6 +29,9 @@ export default function ExportListPage() {
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const tableScroll = useListSticky()
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const userId = useAuthStore((state) => state.user?.id)
   const { data: draft, savedAt, clearDraft } = useExportDraft(userId)
@@ -35,7 +42,9 @@ export default function ExportListPage() {
     queryFn: () => exportApi.list(query),
     placeholderData: (previous) => previous,
   })
-  const rows = data?.data || []
+  const allRows = data?.data || []
+  // Máy chủ trả tối đa 100 bộ một lần; chia trang ngay trên trình duyệt.
+  const rows = allRows.slice((page - 1) * pageSize, page * pageSize)
   const open = (pack) => navigate(`/exports/${pack.id}`)
 
   const columns = [
@@ -51,7 +60,15 @@ export default function ExportListPage() {
     { title: 'Nộp cho', key: 'owner', responsive: ['lg'], render: (_, pack) => <span className="rv-muted">{pack.ship_owner_name || '—'}</span> },
     { title: 'Người tạo', key: 'by', responsive: ['lg'], render: (_, pack) => <span className="rv-muted crew-nowrap">{pack.created_by_email}</span> },
     { title: 'Ngày', key: 'date', responsive: ['lg'], width: 120, render: (_, pack) => <span className="rv-muted ds-num crew-nowrap">{when(pack.created_at)}</span> },
-    { title: <span className="ds-sr-only">Thao tác</span>, key: 'act', align: 'right', render: (_, pack) => <PackDownload pack={pack} size="small" label="Tải về" /> },
+    actionColumn(
+      (pack) => (
+        <span className="ds-row-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <RowActions name={`bộ giấy #${pack.code}`} onView={() => open(pack)} />
+          <PackDownload pack={pack} size="small" label="Tải về" />
+        </span>
+      ),
+      { width: 150 }
+    ),
   ]
 
   let body
@@ -59,9 +76,9 @@ export default function ExportListPage() {
     body = <EmptyState isError title="Không tải được danh sách bộ giấy" description="Mất kết nối tới máy chủ." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
   } else if (isLoading) {
     body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 5 }} /></div>
-  } else if (!rows.length && !search.trim()) {
+  } else if (!allRows.length && !search.trim()) {
     body = <EmptyState title="Chưa có bộ giấy tờ nào" description="Tạo bộ giấy theo giai đoạn: tuyển dụng, lên tàu, rời tàu." action={<Button icon={<PlusOutlined />} onClick={() => navigate('/exports/new')}>Tạo bộ giấy tờ</Button>} />
-  } else if (!rows.length) {
+  } else if (!allRows.length) {
     body = <EmptyState title={`Không có bộ giấy nào khớp "${search.trim()}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
   } else if (isMobile) {
     body = (
@@ -89,7 +106,7 @@ export default function ExportListPage() {
         dataSource={rows}
         columns={columns}
         pagination={false}
-        scroll={{ x: 'max-content' }}
+        scroll={tableScroll}
         onRow={(pack) => ({ onClick: () => open(pack), onKeyDown: (e) => e.key === 'Enter' && open(pack), tabIndex: 0 })}
       />
     )
@@ -123,18 +140,16 @@ export default function ExportListPage() {
         )}
       </Modal>
 
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder="Tìm thuyền viên, mã bộ" aria-label="Tìm bộ giấy tờ" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder="Tìm thuyền viên, mã bộ" aria-label="Tìm bộ giấy tờ" value={search} onChange={(e) => { setPage(1); setSearch(e.target.value) }} />
           <span className="ds-toolbar__end">
             <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/exports/new')}>Tạo bộ giấy tờ</Button>
           </span>
         </div>
         {body}
-        {rows.length > 0 && (
-          <div className="ds-table-foot">
-            <span className="ds-num">{rows.length} bộ</span>
-          </div>
+        {allRows.length > 0 && (
+          <ListFooter total={allRows.length} page={page} pageSize={pageSize} unit="bộ" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
 

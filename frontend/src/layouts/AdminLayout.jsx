@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Dropdown, Drawer, Grid } from 'antd'
 import Icon from '@ant-design/icons'
@@ -21,7 +21,7 @@ import ErrorBoundary from '../components/common/ErrorBoundary'
 import ProductBrand from '../components/common/ProductBrand'
 import useAuthStore from '../stores/authStore'
 import { ROLE_LABELS } from '../constants/roles'
-import { sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
+import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
 import './AdminLayout.css'
 
 const { useBreakpoint } = Grid
@@ -63,19 +63,28 @@ const ICONS = {
 function SideNav({ sections, current, collapsed, onNavigate }) {
   return (
     <nav className="app-shell__nav" aria-label="Điều hướng chính">
-      {sections.map((section) => (
-        <NavLink
-          key={section.key}
-          to={section.to}
-          className="app-shell__nav-item"
-          aria-current={current?.key === section.key ? 'page' : undefined}
-          title={collapsed ? section.label : undefined}
-          onClick={onNavigate}
-        >
-          {ICONS[section.icon]}
-          <span className="app-shell__nav-label">{section.label}</span>
-        </NavLink>
-      ))}
+      {sections.map((section, i) => {
+        const groupStart = section.group != null && section.group !== sections[i - 1]?.group
+        return (
+          <Fragment key={section.key}>
+            {groupStart && (
+              <div className="app-shell__nav-group" aria-hidden="true">
+                <span>{NAV_GROUP_LABELS[section.group]}</span>
+              </div>
+            )}
+            <NavLink
+              to={section.to}
+              className="app-shell__nav-item"
+              aria-current={current?.key === section.key ? 'page' : undefined}
+              title={collapsed ? section.label : undefined}
+              onClick={onNavigate}
+            >
+              {ICONS[section.icon]}
+              <span className="app-shell__nav-label">{section.label}</span>
+            </NavLink>
+          </Fragment>
+        )
+      })}
     </nav>
   )
 }

@@ -22,7 +22,8 @@ export const COLORS = {
   secondary: '#e7e8ec', // mục đang chọn (sidebar, tab, trang), nút phụ
   secondaryHover: '#dbdce2',
   itemHover: '#f4f4f6', // rê mục sidebar, dòng danh sách, dòng bảng
-  surfaceHover: '#f8f8fa', // nền dòng tiêu đề bảng, rê card chọn
+  surfaceHover: '#f8f8fa', // rê card chọn
+  tableHeader: '#e9eef5', // nền dòng tiêu đề mọi bảng: xanh nhạt, chữ navy, vạch navy dưới (chốt 20/10/2026)
   buttonHover: '#f1f1f3', // rê nút viền: chỉ đổi nền (luật chốt #5)
 
   ringFocus: 'rgba(0, 51, 102, 0.1)',
@@ -159,7 +160,7 @@ export const antTheme = {
     Layout: { bodyBg: COLORS.background, headerBg: COLORS.surface, siderBg: COLORS.surface, headerHeight: 56, headerPadding: '0 24px' },
     Tabs: { inkBarColor: COLORS.foreground, itemSelectedColor: COLORS.foreground, itemHoverColor: COLORS.foreground, itemColor: 'rgba(44, 44, 44, 0.7)' },
     Pagination: { itemActiveBg: COLORS.secondary, itemSize: 36 },
-    Table: { headerBg: COLORS.surfaceHover, headerColor: COLORS.neutral, rowHoverBg: COLORS.itemHover, borderColor: COLORS.border, headerSplitColor: 'transparent' },
+    Table: { headerBg: COLORS.tableHeader, headerColor: COLORS.primary, rowHoverBg: COLORS.itemHover, borderColor: COLORS.border, headerSplitColor: 'transparent' },
     Tag: { defaultBg: COLORS.neutralBg, defaultColor: COLORS.neutral },
     Descriptions: { labelColor: COLORS.muted },
     Tooltip: { colorBgSpotlight: COLORS.foreground },

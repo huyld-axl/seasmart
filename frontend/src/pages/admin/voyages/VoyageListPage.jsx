@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Grid, Input, Pagination, Select, Skeleton, Table } from 'antd'
-import { PlusOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { shipOwnerApi } from '../../../api/fleetApi'
@@ -11,8 +11,11 @@ import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
 import { DueTag, FillBar } from './VoyageParts'
 import '../seafarers/SeafarerListPage.css'
 import './voyages.css'
+import RowActions from '../../../components/ds/RowActions'
+import { actionColumn } from '../../../components/ds/actionColumn'
+import useListSticky from '../../../components/ds/useListSticky'
+import ListFooter from '../../../components/ds/ListFooter'
 
-const PAGE_SIZE = 20
 const TABS = [
   { value: 'all', label: 'Tất cả' },
   { value: 'RECRUITING', label: 'Đang tuyển' },
@@ -57,10 +60,12 @@ export default function VoyageListPage() {
   const [search, setSearch] = useState('')
   const [ownerId, setOwnerId] = useState()
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const tableScroll = useListSticky()
   const keyword = search.trim()
 
   const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 })
-  const list = useVoyageList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, page, limit: PAGE_SIZE })
+  const list = useVoyageList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -74,10 +79,20 @@ export default function VoyageListPage() {
     { title: 'Tàu · chủ tàu', key: 'vessel', render: (_, row) => <VesselCell row={row} /> },
     { title: 'Xuống → rời tàu', key: 'dates', render: (_, row) => <DatesCell row={row} /> },
     { title: 'Vị trí', key: 'positions', render: (_, row) => <FillBar done={row.positions_filled} total={row.positions_total} /> },
-    { title: 'Budget dự kiến/tháng', dataIndex: 'budget_monthly_sum', align: 'right', responsive: ['lg'], render: (value) => <span className="ds-num">{formatUsd(value)}</span> },
-    { title: 'Chênh lệch/tháng', dataIndex: 'diff_monthly_sum', align: 'right', responsive: ['lg'], render: (value) => <span className="ds-num">{formatDiff(value)}</span> },
+    {
+      title: 'Budget/tháng',
+      key: 'money',
+      align: 'right',
+      responsive: ['lg'],
+      render: (_, row) => (
+        <span className="ds-cell2">
+          <span className="ds-cell2__main ds-num">{formatUsd(row.budget_monthly_sum)}</span>
+          <span className="ds-cell2__sub ds-num">Chênh {formatDiff(row.diff_monthly_sum)}</span>
+        </span>
+      ),
+    },
     { title: 'Trạng thái', dataIndex: 'display_status', render: (value) => <StatusBadge group="voyage" value={value} /> },
-    { title: <span className="ds-sr-only">Mở</span>, key: 'open', width: 48, align: 'right', render: () => <RightOutlined className="crew-chevron" /> },
+    actionColumn((row) => <RowActions name={`chuyến ${row.code}`} onView={() => open(row)} onEdit={row.status !== 'ENDED' ? () => navigate(`/voyages/${row.id}/edit`) : undefined} />),
   ]
 
   let body
@@ -119,7 +134,7 @@ export default function VoyageListPage() {
         dataSource={rows}
         columns={columns}
         pagination={false}
-        scroll={{ x: 'max-content' }}
+        scroll={tableScroll}
         onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
       />
     )
@@ -132,14 +147,11 @@ export default function VoyageListPage() {
           <h1 className="ds-page__title">Chuyến tàu</h1>
           <p className="ds-page__desc">Mỗi chuyến là một lần đưa người lên một tàu, gồm nhiều vị trí. Hợp đồng tạo từ từng vị trí.</p>
         </div>
-        <div className="ds-page__actions">
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến tàu</Button>
-        </div>
       </div>
       <div className="ds-toolbar">
         <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
       </div>
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
           <Input
             className="ds-toolbar__search"
@@ -162,14 +174,13 @@ export default function VoyageListPage() {
             options={(owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
             onChange={(value) => { setOwnerId(value); setPage(1) }}
           />
+          <span className="ds-toolbar__end">
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến tàu</Button>
+          </span>
         </div>
         {body}
         {rows.length > 0 && (
-          <div className="ds-table-foot">
-            <span className="ds-num">{total} chuyến · ngày dự kiến, trừ chỗ ghi "thực tế"</span>
-            <span className="vy-foot-unit">USD</span>
-            {total > PAGE_SIZE && <Pagination size="small" current={page} pageSize={PAGE_SIZE} total={total} showSizeChanger={false} onChange={setPage} />}
-          </div>
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="chuyến" note={'Ngày dự kiến, trừ chỗ ghi "thực tế" · USD'} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
     </div>

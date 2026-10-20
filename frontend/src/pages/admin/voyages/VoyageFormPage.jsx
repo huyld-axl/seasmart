@@ -207,10 +207,8 @@ function VoyageForm({ voyage }) {
             <div className="vp__head" role="row">
               <span>#</span>
               <span>Chức danh<span className="vp__req">*</span></span>
-              <span className="vp__group">
-                <span>Budget dự kiến (USD)<span className="vp__req">*</span></span>
-                <span className="vp__sub"><span>Tổng chuyến</span><span>Mỗi tháng</span></span>
-              </span>
+              <span>Cả chuyến<span className="vp__req">*</span></span>
+              <span>Mỗi tháng<span className="vp__req">*</span></span>
               <span />
             </div>
             <Form.List name="positions">

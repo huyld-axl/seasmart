@@ -1,39 +1,18 @@
-// Điều hướng của khung app (UI Kit, tab Màn hình): sidebar 4 mục, mục có trang con thì hiện hàng tab dưới topbar.
+// Điều hướng của khung app (UI Kit, tab Màn hình): sidebar 3 nhóm (`group`, ngăn bằng đường kẻ), mục có trang con thì hiện hàng tab dưới topbar.
 // `match`: các tiền tố đường dẫn làm mục sáng lên. `tabs`: trang con của mục.
 
+export const NAV_GROUP_LABELS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
+
 export const NAV_SECTIONS = [
-  {
-    key: 'seafarers',
-    label: 'Thuyền viên',
-    icon: 'team',
-    to: '/seafarers',
-    match: ['/seafarers'],
-  },
-  { key: 'voyages', label: 'Chuyến tàu', icon: 'anchor', to: '/voyages', match: ['/voyages'] },
-  { key: 'contracts', label: 'Hợp đồng', icon: 'file', to: '/contracts', match: ['/contracts'] },
-  {
-    key: 'exports',
-    label: 'Bản xuất',
-    icon: 'send',
-    to: '/exports',
-    match: ['/exports'],
-  },
-  {
-    key: 'vessels',
-    label: 'Tàu',
-    icon: 'ship',
-    to: '/vessels',
-    match: ['/vessels'],
-  },
-  {
-    key: 'ship-owners',
-    label: 'Đối tác',
-    icon: 'building',
-    to: '/partners',
-    match: ['/partners'],
-  },
+  { key: 'seafarers', group: 1, label: 'Thuyền viên', icon: 'team', to: '/seafarers', match: ['/seafarers'] },
+  { key: 'ship-owners', group: 1, label: 'Đối tác', icon: 'building', to: '/partners', match: ['/partners'] },
+  { key: 'vessels', group: 1, label: 'Tàu', icon: 'ship', to: '/vessels', match: ['/vessels'] },
+  { key: 'exports', group: 1, label: 'Bản xuất', icon: 'send', to: '/exports', match: ['/exports'] },
+  { key: 'voyages', group: 2, label: 'Chuyến tàu', icon: 'anchor', to: '/voyages', match: ['/voyages'] },
+  { key: 'contracts', group: 2, label: 'Hợp đồng', icon: 'file', to: '/contracts', match: ['/contracts'] },
   {
     key: 'catalog',
+    group: 3,
     label: 'Danh mục',
     icon: 'database',
     to: '/master-data/cert',
@@ -49,6 +28,7 @@ export const NAV_SECTIONS = [
   },
   {
     key: 'admin',
+    group: 3,
     label: 'Quản trị',
     icon: 'shield',
     to: '/admin/users',

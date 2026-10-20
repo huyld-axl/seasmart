@@ -86,14 +86,6 @@ export const enrollmentApi = {
   addScores: (id, data) => api.post(`/enrollments/${id}/scores`, data),
 }
 
-export const contractApi = {
-  list: (seafarerId) => api.get('/employment-contracts', { params: { seafarer_id: seafarerId } }),
-  getById: (id) => api.get(`/employment-contracts/${id}`),
-  create: (data) => api.post('/employment-contracts', data),
-  update: (id, data) => api.put(`/employment-contracts/${id}`, data),
-  remove: (id) => api.delete(`/employment-contracts/${id}`),
-}
-
 export const certificateApi = {
   list: (seafarerId) => api.get(`/seafarers/${seafarerId}/certificates`),
   create: (seafarerId, data) => api.post(`/seafarers/${seafarerId}/certificates`, data),

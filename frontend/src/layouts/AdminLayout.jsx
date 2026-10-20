@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Dropdown, Drawer, Grid } from 'antd'
 import Icon from '@ant-design/icons'
@@ -14,13 +14,14 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DownOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons'
 import NotificationBell from '../components/common/NotificationBell'
 import ErrorBoundary from '../components/common/ErrorBoundary'
 import ProductBrand from '../components/common/ProductBrand'
 import useAuthStore from '../stores/authStore'
 import { ROLE_LABELS } from '../constants/roles'
-import { sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
+import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
 import './AdminLayout.css'
 
 const { useBreakpoint } = Grid
@@ -38,11 +39,21 @@ const BuildingSvg = () => (
   </svg>
 )
 
+const AnchorSvg = () => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>
+    <path d="M12 22V8" />
+    <path d="M5 12H2a10 10 0 0 0 20 0h-3" />
+    <circle cx="12" cy="5" r="3" />
+  </svg>
+)
+
 const ICONS = {
   team: <TeamOutlined />,
   send: <SendOutlined />,
   database: <DatabaseOutlined />,
   ship: <Icon component={ShipSvg} />,
+  anchor: <Icon component={AnchorSvg} />,
+  file: <FileTextOutlined />,
   building: <Icon component={BuildingSvg} />,
   shield: <SafetyCertificateOutlined />,
   book: <BookOutlined />,
@@ -52,19 +63,28 @@ const ICONS = {
 function SideNav({ sections, current, collapsed, onNavigate }) {
   return (
     <nav className="app-shell__nav" aria-label="Điều hướng chính">
-      {sections.map((section) => (
-        <NavLink
-          key={section.key}
-          to={section.to}
-          className="app-shell__nav-item"
-          aria-current={current?.key === section.key ? 'page' : undefined}
-          title={collapsed ? section.label : undefined}
-          onClick={onNavigate}
-        >
-          {ICONS[section.icon]}
-          <span className="app-shell__nav-label">{section.label}</span>
-        </NavLink>
-      ))}
+      {sections.map((section, i) => {
+        const groupStart = section.group != null && section.group !== sections[i - 1]?.group
+        return (
+          <Fragment key={section.key}>
+            {groupStart && (
+              <div className="app-shell__nav-group" aria-hidden="true">
+                <span>{NAV_GROUP_LABELS[section.group]}</span>
+              </div>
+            )}
+            <NavLink
+              to={section.to}
+              className="app-shell__nav-item"
+              aria-current={current?.key === section.key ? 'page' : undefined}
+              title={collapsed ? section.label : undefined}
+              onClick={onNavigate}
+            >
+              {ICONS[section.icon]}
+              <span className="app-shell__nav-label">{section.label}</span>
+            </NavLink>
+          </Fragment>
+        )
+      })}
     </nav>
   )
 }

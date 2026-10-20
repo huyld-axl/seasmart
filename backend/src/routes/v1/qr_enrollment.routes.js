@@ -198,7 +198,7 @@ async function qrEnrollmentRoutes(fastify) {
           const [res] = await conn.query(
             `INSERT INTO seafarer (full_name, full_name_en, date_of_birth, phone_primary, email,
             national_id, current_rank_id, seaman_book_number, nationality_id, status)
-           VALUES (?,?,?,?,?,?,?,?,?,'TRAINING')`,
+           VALUES (?,?,?,?,?,?,?,?,?,'AVAILABLE')`,
             [
               body.full_name,
               body.full_name_en || null,

@@ -35,7 +35,6 @@ import {
   seafarerApi,
   enrollmentApi,
   certificateApi,
-  contractApi,
   lookupApi,
   courseApi,
 } from '../../api'
@@ -49,7 +48,8 @@ import ProfileSeaService from './seafarers/ProfileSeaService'
 import CertificateTable from '../../components/ds/CertificateTable'
 import { toTableCerts } from './seafarers/certificateView'
 import { documentApi } from '../../api/documentApi'
-import { attentionItems, activeContract, headLine } from './seafarers/profileView'
+import { attentionItems, activeContract, headLine, toProfileContracts } from './seafarers/profileView'
+import { useContractList } from '../../hooks/useVoyages'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
 import ProfileOverview from './seafarers/ProfileOverview'
@@ -64,20 +64,10 @@ const { useBreakpoint } = Grid
 const STATUS_COLOR = {
   AVAILABLE: 'green',
   ON_VESSEL: 'blue',
-  ON_LEAVE: 'orange',
-  TRAINING: 'purple',
-  BLACKLISTED: 'red',
-  RETIRED: 'default',
-  INACTIVE: 'default',
 }
 const STATUS_LABEL = {
-  AVAILABLE: 'Sẵn sàng',
-  ON_VESSEL: 'Đang tàu',
-  ON_LEAVE: 'Nghỉ phép',
-  TRAINING: 'Đang đào tạo',
-  BLACKLISTED: 'Blacklist',
-  RETIRED: 'Đã nghỉ hưu',
-  INACTIVE: 'Không hoạt động',
+  AVAILABLE: 'Ở bờ',
+  ON_VESSEL: 'Đang trên tàu',
 }
 
 
@@ -147,11 +137,7 @@ export default function SeafarerDetailPage() {
     queryFn: () => certificateApi.list(id).then((r) => r.data),
     enabled: !!seafarer,
   })
-  const { data: contracts } = useQuery({
-    queryKey: ['contracts', id],
-    queryFn: () => contractApi.list(id).then((r) => r.data),
-    enabled: !!seafarer,
-  })
+  const { data: contracts } = useContractList({ seafarer_id: Number(id), limit: 100 }, { enabled: !!seafarer })
 
   const deleteMutation = useMutation({
     mutationFn: () => seafarerApi.remove(id),
@@ -194,7 +180,7 @@ export default function SeafarerDetailPage() {
   }
 
   const certList = Array.isArray(certificates) ? certificates : certificates?.data || []
-  const contractList = contracts?.data || []
+  const contractList = toProfileContracts(contracts?.data)
   const attention = attentionItems(seafarer, certList)
   const expired = attention.filter((item) => item.state === 'EXPIRED').length
   const expiring = attention.filter((item) => item.state === 'EXPIRING').length
@@ -519,237 +505,35 @@ function CertificatesSection({ seafarerId }) {
   )
 }
 
-function contractStatus(startDate, endDate) {
-  const now = dayjs()
-  const start = startDate ? dayjs(startDate) : null
-  const end = endDate ? dayjs(endDate) : null
-  if (!start && !end) return { color: 'default', label: '-' }
-  if (end && now.isAfter(end)) return { color: 'default', label: 'Kết thúc' }
-  if (start && now.isBefore(start)) return { color: 'blue', label: 'Sắp bắt đầu' }
-  return { color: 'green', label: 'Đang hiệu lực' }
-}
-
+// Khối "Hợp đồng" chỉ đọc: hợp đồng tạo từ chuyến tàu (xem /voyages), ở đây chỉ liệt kê.
 function ContractsSection({ seafarerId }) {
-  const queryClient = useQueryClient()
-  const [addOpen, setAddOpen] = useState(false)
-  const [editOpen, setEditOpen] = useState(false)
-  const [editingContract, setEditingContract] = useState(null)
-  const [vesselSearch, setVesselSearch] = useState('')
-  const [form] = Form.useForm()
-  const [formEdit] = Form.useForm()
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['contracts', seafarerId],
-    queryFn: () => contractApi.list(seafarerId).then((r) => r.data),
-  })
-
-  const { data: vessels } = useQuery({
-    queryKey: ['vessels-lookup', vesselSearch],
-    queryFn: () => lookupApi.vessels(vesselSearch || undefined).then((r) => r.data),
-    enabled: addOpen || editOpen,
-  })
-
-  const createMutation = useMutation({
-    mutationFn: (values) =>
-      contractApi
-        .create({
-          seafarer_id: Number(seafarerId),
-          vessel_id: values.vessel_id || undefined,
-          start_date: values.start_date?.format?.('YYYY-MM-DD') || values.start_date,
-          end_date: values.end_date?.format?.('YYYY-MM-DD') || values.end_date,
-          salary: values.salary ? Number(values.salary) : undefined,
-          notes: values.notes,
-        })
-        .then((r) => r.data),
-    onSuccess: () => {
-      message.success('Thêm hợp đồng thành công')
-      setAddOpen(false)
-      form.resetFields()
-      queryClient.invalidateQueries({ queryKey: ['contracts', seafarerId] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Thêm hợp đồng thất bại'),
-  })
-
-  const updateMutation = useMutation({
-    mutationFn: ({ id, values }) =>
-      contractApi
-        .update(id, {
-          start_date: values.start_date?.format?.('YYYY-MM-DD') ?? values.start_date,
-          end_date: values.end_date?.format?.('YYYY-MM-DD') ?? values.end_date,
-          salary: values.salary ? Number(values.salary) : undefined,
-          notes: values.notes,
-        })
-        .then((r) => r.data),
-    onSuccess: () => {
-      message.success('Cập nhật hợp đồng thành công')
-      setEditOpen(false)
-      setEditingContract(null)
-      formEdit.resetFields()
-      queryClient.invalidateQueries({ queryKey: ['contracts', seafarerId] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Cập nhật thất bại'),
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (contractId) => contractApi.remove(contractId),
-    onSuccess: () => {
-      message.success('Đã xóa hợp đồng')
-      queryClient.invalidateQueries({ queryKey: ['contracts', seafarerId] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Xóa thất bại'),
-  })
-
-  function openEdit(row) {
-    setEditingContract(row)
-    formEdit.setFieldsValue({
-      start_date: row.start_date ? dayjs(row.start_date) : null,
-      end_date: row.end_date ? dayjs(row.end_date) : null,
-      salary: row.salary,
-      notes: row.notes,
-    })
-    setEditOpen(true)
-  }
-
-  function handleDeleteContract(row) {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc muốn xóa hợp đồng "${row.vessel_name || 'Hợp đồng'}"?`,
-      okText: 'Xóa',
-      okType: 'danger',
-      onOk: () => deleteMutation.mutate(row.id),
-    })
-  }
-
-  const columns = [
-    { title: 'Tên tàu', dataIndex: 'vessel_name', render: (v) => v || '-' },
-    { title: 'Ngày lên tàu', dataIndex: 'start_date', render: (v) => fmt(v) },
-    { title: 'Ngày rời tàu', dataIndex: 'end_date', render: (v) => fmt(v) },
-    { title: 'Lương', dataIndex: 'salary', render: (v) => (v != null ? v.toLocaleString() : '-') },
-    {
-      title: 'Trạng thái',
-      key: 'status',
-      render: (_, r) => {
-        const s = contractStatus(r.start_date, r.end_date)
-        return <Tag color={s.color}>{s.label}</Tag>
-      },
-    },
-    {
-      title: '',
-      width: 100,
-      render: (_, r) => (
-        <Space size="small">
-          <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(r)} />
-          <Button
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDeleteContract(r)}
-          />
-        </Space>
-      ),
-    },
-  ]
-
-  const list = data?.data || []
-
+  const { data, isLoading } = useContractList({ seafarer_id: Number(seafarerId), limit: 100 })
+  const rows = data?.data || []
   return (
-    <Section
-      title="Hợp đồng"
-      noPad
-      extra={<Button icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>Thêm hợp đồng</Button>}
-    >
+    <Section title="Hợp đồng" noPad>
       <Table
         rowKey="id"
-        columns={columns}
-        dataSource={list}
+        size="small"
         loading={isLoading}
-        locale={{ emptyText: <EmptyState title="Chưa có hợp đồng nào" /> }}
+        dataSource={rows}
         pagination={false}
         scroll={{ x: 'max-content' }}
+        locale={{ emptyText: 'Chưa có hợp đồng. Hợp đồng tạo từ chuyến tàu.' }}
+        columns={[
+          { title: 'Số hợp đồng', dataIndex: 'contract_number', render: (value, row) => <Link to={`/contracts/${row.id}`}>{value}</Link> },
+          {
+            title: 'Tàu · chuyến',
+            key: 'vessel',
+            render: (_, row) => (
+              <span>
+                {row.vessel_name} · <Link to={`/voyages/${row.voyage_id}`}>{row.voyage_code}</Link>
+              </span>
+            ),
+          },
+          { title: 'Thời gian', key: 'dates', render: (_, row) => `${fmt(row.start_date)} → ${fmt(row.end_date)}` },
+          { title: 'Trạng thái', dataIndex: 'status', render: (value) => <StatusBadge group="contract" value={value} /> },
+        ]}
       />
-      <Modal
-        title="Thêm hợp đồng"
-        open={addOpen}
-        onCancel={() => {
-          setAddOpen(false)
-          form.resetFields()
-        }}
-        footer={null}
-        width={440}
-      >
-        <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item name="vessel_id" label="Tàu">
-            <Select
-              showSearch
-              allowClear
-              placeholder="Tìm tên tàu..."
-              filterOption={false}
-              onSearch={setVesselSearch}
-              options={(vessels || []).map((v) => ({ value: v.id, label: v.vessel_name }))}
-            />
-          </Form.Item>
-          <Form.Item name="start_date" label="Ngày lên tàu">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="end_date" label="Ngày rời tàu">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="salary" label="Lương">
-            <Input type="number" placeholder="Số" />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <Input.TextArea rows={2} />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button onClick={() => setAddOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-                Thêm
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-      <Modal
-        title="Chỉnh sửa hợp đồng"
-        open={editOpen}
-        onCancel={() => {
-          setEditOpen(false)
-          setEditingContract(null)
-          formEdit.resetFields()
-        }}
-        footer={null}
-        width={440}
-      >
-        <Form
-          form={formEdit}
-          layout="vertical"
-          onFinish={(v) =>
-            editingContract && updateMutation.mutate({ id: editingContract.id, values: v })
-          }
-        >
-          <Form.Item name="start_date" label="Ngày lên tàu">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="end_date" label="Ngày rời tàu">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="salary" label="Lương">
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <Input.TextArea rows={2} />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button onClick={() => setEditOpen(false)}>Hủy</Button>
-              <Button type="primary" htmlType="submit" loading={updateMutation.isPending}>
-                Lưu
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
     </Section>
   )
 }

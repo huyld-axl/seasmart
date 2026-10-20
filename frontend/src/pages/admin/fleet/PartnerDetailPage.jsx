@@ -150,7 +150,7 @@ export default function PartnerDetailPage() {
         <SidePanel title="Đang được dùng ở">
           <ul className="fl-rows">
             <li><span className="fl-rows__main">Tàu thuộc đối tác</span><span className="ds-num">{owner.usage.vessels}</span></li>
-            <li><span className="fl-rows__main">Hợp đồng lao động</span><span className="ds-num">{owner.usage.contracts}</span></li>
+            <li><span className="fl-rows__main">Chuyến tàu</span><span className="ds-num">{owner.usage.voyages}</span></li>
             <li><span className="fl-rows__main">Bộ giấy đã nộp</span><span className="ds-num">{owner.usage.packs}</span></li>
           </ul>
           <p className="fl-note">Đối tác đang được dùng thì không xoá được, chỉ chuyển sang Ngừng hợp tác.</p>

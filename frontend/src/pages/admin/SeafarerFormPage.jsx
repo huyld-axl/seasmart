@@ -24,15 +24,6 @@ const GENDER_OPTIONS = [
   { value: 'F', label: 'Nữ' },
   { value: 'O', label: 'Khác' },
 ]
-const STATUS_OPTIONS = [
-  { value: 'AVAILABLE', label: 'Sẵn sàng' },
-  { value: 'ON_VESSEL', label: 'Đang tàu' },
-  { value: 'ON_LEAVE', label: 'Nghỉ phép' },
-  { value: 'TRAINING', label: 'Đang đào tạo' },
-  { value: 'BLACKLISTED', label: 'Blacklist' },
-  { value: 'RETIRED', label: 'Đã nghỉ hưu' },
-  { value: 'INACTIVE', label: 'Không hoạt động' },
-]
 const EDU_OPTIONS = ['Đại học', 'Cao đẳng', 'Trung cấp', 'Cấp 3'].map((v) => ({ value: v, label: v }))
 const PPE_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'].map((v) => ({ value: v, label: v }))
 const RELATIONSHIPS = ['Vợ', 'Chồng', 'Bố', 'Mẹ', 'Con', 'Anh', 'Chị', 'Em', 'Khác'].map((v) => ({ value: v }))
@@ -47,7 +38,7 @@ const SECTIONS = [
     key: 'general',
     title: 'Thông tin chung',
     desc: 'Ghi theo hộ chiếu hoặc CCCD.',
-    fields: ['full_name', 'full_name_zh', 'full_name_en', 'date_of_birth', 'gender', 'status', 'place_of_origin', 'permanent_address', 'marital_status', 'children_count'],
+    fields: ['full_name', 'full_name_zh', 'full_name_en', 'date_of_birth', 'gender', 'place_of_origin', 'permanent_address', 'marital_status', 'children_count'],
     photo: true,
   },
   {
@@ -260,7 +251,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
 
   const vnId = countries?.find((c) => String(c.code).toUpperCase() === 'VN')?.id
   const initialValues = useMemo(
-    () => (isEdit ? toFormValues(seafarer, contacts) : { gender: 'M', status: 'AVAILABLE', bank_accounts: [{}], contacts: [{ kinds: ['contact'] }] }),
+    () => (isEdit ? toFormValues(seafarer, contacts) : { gender: 'M', bank_accounts: [{}], contacts: [{ kinds: ['contact'] }] }),
     [isEdit, seafarer, contacts]
   )
   const initialPayload = useMemo(() => (isEdit ? toPayload(initialValues) : null), [isEdit, initialValues])
@@ -516,9 +507,6 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <DateField name="date_of_birth" label="Ngày sinh" span={4} />
               <Field name="gender" label="Giới tính" span={4}>
                 <Select options={GENDER_OPTIONS} />
-              </Field>
-              <Field name="status" label="Tình trạng" span={4}>
-                <Select options={STATUS_OPTIONS} />
               </Field>
               <Field name="place_of_origin" label="Nguyên quán" span={8}>
                 <Input placeholder="VD: Xã Hải Thanh, huyện Tĩnh Gia, Thanh Hóa" maxLength={255} />

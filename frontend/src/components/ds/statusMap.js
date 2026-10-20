@@ -58,12 +58,22 @@ export const STATUS = {
   // Khoá theo cột seafarer.status trong DB.
   crew: {
     ON_VESSEL: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
-    AVAILABLE: { label: 'Chờ tàu', tone: 'neutral', mark: 'ring' },
-    ON_LEAVE: { label: 'Nghỉ phép', tone: 'neutral', mark: 'minus' },
-    TRAINING: { label: 'Đang đào tạo', tone: 'neutral', mark: 'calendar' },
-    BLACKLISTED: { label: 'Không tuyển', tone: 'error', mark: 'cross' },
-    RETIRED: { label: 'Đã nghỉ hưu', tone: 'neutral', mark: 'minus' },
-    INACTIVE: { label: 'Ngừng hoạt động', tone: 'neutral', mark: 'minus' },
+    AVAILABLE: { label: 'Ở bờ', tone: 'neutral', mark: 'ring' },
+  },
+  // Chuyến tàu: trạng thái hiển thị (voyage.display_status), tính từ voyage.status và số vị trí có hợp đồng.
+  voyage: {
+    RECRUITING: { label: 'Đang tuyển', tone: 'warning', mark: 'ellipsis' },
+    FULL: { label: 'Đủ người', tone: 'success', mark: 'check' },
+    ONBOARD: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
+    ENDED: { label: 'Đã kết thúc', tone: 'neutral', mark: 'ring' },
+  },
+  // Hợp đồng thuyền viên (seafarer_contract.status).
+  contract: {
+    DRAFT: { label: 'Nháp', tone: 'neutral', mark: 'edit' },
+    PENDING: { label: 'Chờ duyệt', tone: 'warning', mark: 'clock' },
+    REJECTED: { label: 'Bị từ chối', tone: 'error', mark: 'cross' },
+    ACTIVE: { label: 'Hiệu lực', tone: 'success', mark: 'check' },
+    ENDED: { label: 'Hết hạn', tone: 'neutral', mark: 'ring' },
   },
   // Trạng thái tàu (cột vessel.status) và đối tác (ship_owner.is_active).
   vesselStatus: {
@@ -74,7 +84,6 @@ export const STATUS = {
   },
   partner: {
     ACTIVE: { label: 'Đang hợp tác', tone: 'success', mark: 'check' },
-    INACTIVE: { label: 'Ngừng hợp tác', tone: 'neutral', mark: 'minus' },
   },
   cert: {
     VALID: { label: 'Còn hạn', tone: 'success', mark: 'check' },
@@ -100,6 +109,8 @@ export const STATUS_GROUP_LABELS = {
   export: 'Bộ giấy tờ',
   signature: 'Chữ ký',
   crew: 'Tình trạng thuyền viên',
+  voyage: 'Chuyến tàu',
+  contract: 'Hợp đồng',
   vesselStatus: 'Trạng thái tàu',
   partner: 'Tình trạng đối tác',
   cert: 'Hạn giấy tờ',

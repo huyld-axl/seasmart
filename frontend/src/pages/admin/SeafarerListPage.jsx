@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, Dropdown, Grid, Input, Pagination, Skeleton, Table } from 'antd'
+import { App, Button, Dropdown, Grid, Input, Skeleton, Table } from 'antd'
 import {
   DownloadOutlined,
   EllipsisOutlined,
   MoreOutlined,
   PlusOutlined,
-  RightOutlined,
   SearchOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
@@ -17,9 +16,12 @@ import { EmptyState, StatusTabs } from '../../components/ds/Controls'
 import { CREW_TABS, availabilityText } from './seafarers/crewView'
 import CrewPhoto from './seafarers/CrewPhoto'
 import './seafarers/SeafarerListPage.css'
+import RowActions from '../../components/ds/RowActions'
+import { actionColumn } from '../../components/ds/actionColumn'
+import useListSticky from '../../components/ds/useListSticky'
+import ListFooter from '../../components/ds/ListFooter'
 
 const { useBreakpoint } = Grid
-const PAGE_SIZE = 20
 const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 
 function Person({ row }) {
@@ -48,9 +50,11 @@ export default function SeafarerListPage() {
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const tableScroll = useListSticky()
   const [exporting, setExporting] = useState(false)
 
-  const query = { tab: tab === 'all' ? '' : tab, search: search.trim(), page, limit: PAGE_SIZE }
+  const query = { tab: tab === 'all' ? '' : tab, search: search.trim(), page, limit: pageSize }
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['seafarers', query],
     queryFn: () => seafarerApi.list(query).then((res) => res.data),
@@ -96,7 +100,7 @@ export default function SeafarerListPage() {
     { title: 'Hộ chiếu', dataIndex: 'passport_number', width: 130, responsive: ['lg'], render: (value) => (value ? <span className="ds-mono">{value}</span> : '—') },
     { title: 'Tàu đang sign on', key: 'vessel', render: (_, row) => <span className="crew-nowrap">{row.status === 'ON_VESSEL' && row.vessel_name ? row.vessel_name : '—'}</span> },
     { title: 'Tình trạng', key: 'where', render: (_, row) => <span className="crew-nowrap">{availabilityText(row)}</span> },
-    { title: <span className="ds-sr-only">Mở</span>, key: 'open', width: 48, align: 'right', render: () => <RightOutlined className="crew-chevron" /> },
+    actionColumn((row) => <RowActions name={row.full_name} onView={() => open(row)} onEdit={() => navigate(`/seafarers/${row.id}/edit`)} />),
   ]
 
   const keyword = search.trim()
@@ -134,7 +138,7 @@ export default function SeafarerListPage() {
         dataSource={rows}
         columns={columns}
         pagination={false}
-        scroll={{ x: 'max-content' }}
+        scroll={tableScroll}
         onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
       />
     )
@@ -143,7 +147,7 @@ export default function SeafarerListPage() {
   const total = data?.total || 0
   return (
     <div className="ds-page">
-      <div className="ds-card">
+      <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
           <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
@@ -166,12 +170,7 @@ export default function SeafarerListPage() {
         </div>
         {body}
         {rows.length > 0 && (
-          <div className="ds-table-foot">
-            <span className="ds-num">{total} thuyền viên</span>
-            {total > PAGE_SIZE && (
-              <Pagination size="small" current={page} pageSize={PAGE_SIZE} total={total} showSizeChanger={false} onChange={setPage} />
-            )}
-          </div>
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="thuyền viên" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
     </div>

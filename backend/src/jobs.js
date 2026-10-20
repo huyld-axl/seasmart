@@ -18,24 +18,18 @@ function startJobs(logger) {
     }
   })
 
-  // Job 2 (daily 2:05 AM): reconcile seafarer status với contract end dates
-  cron.schedule('5 2 * * *', async () => {
+  // Job 2 (daily 2:10 AM): hợp đồng Hiệu lực đã qua ngày kết thúc chuyển sang Hết hạn.
+  // Trạng thái thuyền viên không đổi ở đây, chỉ đổi theo chuyến (Bắt đầu / Kết thúc chuyến).
+  cron.schedule('10 2 * * *', async () => {
     try {
       const [result] = await pool.query(
-        `UPDATE seafarer s
-         SET status = 'AVAILABLE', updated_at = NOW()
-         WHERE s.status = 'ON_VESSEL'
-           AND s.deleted_at IS NULL
-           AND NOT EXISTS (
-             SELECT 1 FROM employment_contract ec
-             WHERE ec.seafarer_id = s.id
-               AND ec.deleted_at IS NULL
-               AND (ec.actual_end_date IS NULL OR ec.actual_end_date >= CURRENT_DATE)
-           )`
+        `UPDATE seafarer_contract
+         SET status = 'ENDED', updated_at = NOW()
+         WHERE status = 'ACTIVE' AND end_date < CURRENT_DATE AND deleted_at IS NULL`
       )
-      logger.info({ affectedRows: result.affectedRows }, 'Job: seafarer status reconciled')
+      logger.info({ affectedRows: result.affectedRows }, 'Job: seafarer contracts ended')
     } catch (err) {
-      logger.error({ err }, 'Job: failed to reconcile seafarer status')
+      logger.error({ err }, 'Job: failed to end seafarer contracts')
     }
   })
 
@@ -131,9 +125,9 @@ function startJobs(logger) {
       }
       const [contracts] = await pool.query(
         `SELECT ec.id, ec.seafarer_id, s.user_id, ec.end_date
-         FROM employment_contract ec
+         FROM seafarer_contract ec
          JOIN seafarer s ON s.id = ec.seafarer_id AND s.deleted_at IS NULL AND s.user_id IS NOT NULL
-         WHERE ec.deleted_at IS NULL AND ec.end_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day'))`
+         WHERE ec.status = 'ACTIVE' AND ec.deleted_at IS NULL AND ec.end_date BETWEEN CURRENT_DATE AND (CURRENT_DATE + (30 * INTERVAL '1 day'))`
       )
       for (const row of contracts) {
         const dup = await notificationService.hasRecentDuplicate(
@@ -146,7 +140,7 @@ function startJobs(logger) {
           await notificationService.create({
             user_id: row.user_id,
             type: 'CONTRACT_END',
-            ref_table: 'employment_contract',
+            ref_table: 'seafarer_contract',
             ref_id: row.seafarer_id,
             title: 'Hợp đồng sắp kết thúc',
             body: `Hợp đồng kết thúc vào ${row.end_date}.`,

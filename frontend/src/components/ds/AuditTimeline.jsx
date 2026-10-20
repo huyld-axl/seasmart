@@ -1,7 +1,7 @@
-import { CheckOutlined, EditOutlined, FileAddOutlined, SendOutlined } from '@ant-design/icons'
+import { CheckOutlined, CloseOutlined, EditOutlined, FileAddOutlined, RollbackOutlined, SendOutlined } from '@ant-design/icons'
 import './ds.css'
 
-const KIND_ICONS = { edit: EditOutlined, accept: CheckOutlined, upload: FileAddOutlined, export: SendOutlined }
+const KIND_ICONS = { edit: EditOutlined, accept: CheckOutlined, upload: FileAddOutlined, export: SendOutlined, reject: CloseOutlined, withdraw: RollbackOutlined }
 
 // Dòng thời gian audit (components/timeline.md): mới nhất ở trên, mỗi việc một icon trong vòng tròn.
 // item: { id, kind, tone, title, time, detail, before, after, reason, source, actor }

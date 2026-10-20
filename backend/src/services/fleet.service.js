@@ -162,18 +162,18 @@ const fleetService = {
 
   async vesselUsage(pool, id) {
     const [[a]] = await pool.query('SELECT COUNT(*) AS n FROM sea_service WHERE vessel_id = ? AND deleted_at IS NULL', [id])
-    const [[b]] = await pool.query('SELECT COUNT(*) AS n FROM employment_contract WHERE vessel_id = ? AND deleted_at IS NULL', [id])
+    const [[b]] = await pool.query('SELECT COUNT(*) AS n FROM voyage WHERE vessel_id = ? AND deleted_at IS NULL', [id])
     const [[c]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE vessel_id = ? AND deleted_at IS NULL', [id])
-    const usage = { sea_service: Number(a.n), contracts: Number(b.n), documents: Number(c.n) }
-    return { ...usage, total: usage.sea_service + usage.contracts + usage.documents }
+    const usage = { sea_service: Number(a.n), voyages: Number(b.n), documents: Number(c.n) }
+    return { ...usage, total: usage.sea_service + usage.voyages + usage.documents }
   },
 
   async ownerUsage(pool, id) {
     const [[a]] = await pool.query('SELECT COUNT(*) AS n FROM vessel WHERE ship_owner_id = ? AND deleted_at IS NULL', [id])
-    const [[b]] = await pool.query('SELECT COUNT(*) AS n FROM employment_contract WHERE ship_owner_id = ? AND deleted_at IS NULL', [id])
+    const [[b]] = await pool.query('SELECT COUNT(*) AS n FROM voyage WHERE ship_owner_id = ? AND deleted_at IS NULL', [id])
     const [[c]] = await pool.query('SELECT COUNT(*) AS n FROM export_pack WHERE ship_owner_id = ? AND deleted_at IS NULL', [id])
-    const usage = { vessels: Number(a.n), contracts: Number(b.n), packs: Number(c.n) }
-    return { ...usage, total: usage.vessels + usage.contracts + usage.packs }
+    const usage = { vessels: Number(a.n), voyages: Number(b.n), packs: Number(c.n) }
+    return { ...usage, total: usage.vessels + usage.voyages + usage.packs }
   },
 
   async restore(pool, table, id) {
@@ -260,4 +260,4 @@ const fleetService = {
   },
 }
 
-module.exports = { fleetService, pickAllowed, VESSEL_COLUMNS, OWNER_COLUMNS, VESSEL_STATUSES }
+module.exports = { fleetService, pickAllowed, paging, VESSEL_COLUMNS, OWNER_COLUMNS, VESSEL_STATUSES }

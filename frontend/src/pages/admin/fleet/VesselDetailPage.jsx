@@ -173,7 +173,7 @@ export default function VesselDetailPage() {
         <SidePanel title="Đang được dùng ở">
           <ul className="fl-rows">
             <li><span className="fl-rows__main">Chuyến đi tàu đã khớp</span><span className="ds-num">{vessel.usage.sea_service}</span></li>
-            <li><span className="fl-rows__main">Hợp đồng lao động</span><span className="ds-num">{vessel.usage.contracts}</span></li>
+            <li><span className="fl-rows__main">Chuyến tàu</span><span className="ds-num">{vessel.usage.voyages}</span></li>
             <li><span className="fl-rows__main">Giấy tờ thuyền viên gắn với tàu</span><span className="ds-num">{vessel.usage.documents}</span></li>
           </ul>
           <p className="fl-note">Tàu đang được dùng thì không xoá được, chỉ đổi trạng thái (Nằm bờ, Phá dỡ).</p>

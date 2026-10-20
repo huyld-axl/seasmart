@@ -91,7 +91,6 @@ const ALLOWED_FIELDS = [
   'contract_return_date',
   'contract_duration_raw',
   'contract_salary_raw',
-  'status',
   'notes',
 ]
 
@@ -220,9 +219,9 @@ const seafarerService = {
       where.push('s.current_rank_id = ?')
       params.push(rank_id)
     }
-    // TASK-B5: chỉ thuyền viên sẵn sàng cho đào tạo (AVAILABLE hoặc ON_LEAVE)
+    // TASK-B5: chỉ thuyền viên sẵn sàng cho đào tạo (đang ở bờ)
     if (available_for_training === 'true') {
-      where.push('s.status IN (\'AVAILABLE\', \'ON_LEAVE\')')
+      where.push('s.status = \'AVAILABLE\'')
     }
 
     const isTC = userRole === 'training_center'

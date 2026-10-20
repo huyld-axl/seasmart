@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import dayjs from 'dayjs'
-import { expiryState, attentionItems, activeContract, headLine } from '../profileView'
+import { expiryState, attentionItems, activeContract, headLine, toProfileContracts } from '../profileView'
 
 const today = dayjs('2026-10-07')
 
@@ -41,5 +41,20 @@ describe('profileView', () => {
     expect(contract.vessel_name).toBe('MV Lotus Pearl')
     expect(headLine({ rank_name: 'Phó ba', nationality_name: 'Việt Nam' }, contract)).toBe('Phó ba · Việt Nam · MV Lotus Pearl · đến 05/01/2027')
     expect(headLine({ rank_name: 'Phó ba' }, null)).toBe('Phó ba')
+  })
+
+  it('toProfileContracts chỉ giữ hợp đồng Hiệu lực và Hết hạn, Hết hạn coi như đã kết thúc', () => {
+    const rows = [
+      { id: 1, status: 'ACTIVE', vessel_name: 'MV A', start_date: '2026-01-01', end_date: '2026-12-31' },
+      { id: 2, status: 'ENDED', vessel_name: 'MV B', start_date: '2025-01-01', end_date: '2025-06-30' },
+      { id: 3, status: 'DRAFT', vessel_name: 'MV C', start_date: '2026-01-01', end_date: '2026-12-31' },
+      { id: 4, status: 'PENDING' },
+      { id: 5, status: 'REJECTED' },
+    ]
+    const out = toProfileContracts(rows)
+    expect(out.map((c) => c.id)).toEqual([1, 2])
+    expect(out[1].actual_end_date).toBe('2025-06-30')
+    expect(activeContract(out, dayjs('2026-06-01'))?.vessel_name).toBe('MV A')
+    expect(activeContract(out.slice(1), dayjs('2026-06-01'))).toBeNull()
   })
 })

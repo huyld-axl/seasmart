@@ -14,6 +14,7 @@ import {
   UploadOutlined,
 } from '@ant-design/icons'
 import ProductBrand from '../components/common/ProductBrand'
+import MoneyInput from '../components/ds/MoneyInput'
 import StatusBadge from '../components/ds/StatusBadge'
 import { STATUS, STATUS_GROUP_LABELS } from '../components/ds/statusMap'
 import ReviewField from '../components/ds/ReviewField'
@@ -26,6 +27,9 @@ import DocTypeBar from '../components/ds/DocTypeBar'
 import ReviewPager from '../components/ds/ReviewPager'
 import SeaServiceTimeline from '../components/ds/SeaServiceTimeline'
 import CertificateTable from '../components/ds/CertificateTable'
+import RowActions from '../components/ds/RowActions'
+import ListFooter from '../components/ds/ListFooter'
+import { actionColumn } from '../components/ds/actionColumn'
 import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
@@ -219,6 +223,7 @@ const LIST_COLUMNS = [
   },
   { title: 'Tình trạng', key: 'status', width: 160, render: (_, row) => <StatusBadge group="crew" value={row.status} /> },
   { title: 'Tàu / sẵn sàng', dataIndex: 'where', key: 'where' },
+  actionColumn((row) => <RowActions name={row.name} onView={() => {}} onEdit={row.status === 'ON_VESSEL' ? undefined : () => {}} />),
 ]
 
 function Section({ id, title, children }) {
@@ -448,6 +453,9 @@ export default function DesignSystemPage() {
             <Demo label="Ô chọn">
               <Form.Item label="Rank"><Select placeholder="Chọn Rank" options={[{ value: 'AB', label: 'Able Seaman (AB)' }, { value: 'CO', label: 'Chief Officer' }]} /></Form.Item>
             </Demo>
+            <Demo label="Ô tiền">
+              <Form.Item label="Lương cơ bản"><MoneyInput defaultValue={1150} /></Form.Item>
+            </Demo>
             <Demo label="Ô chọn ngày">
               <Form.Item label="Sign off"><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
             </Demo>
@@ -481,11 +489,15 @@ export default function DesignSystemPage() {
               <Button type="primary" icon={<PlusOutlined />}>Thêm thuyền viên</Button>
             </span>
           </div>
-          <Table rowKey="id" dataSource={LIST_ROWS} columns={LIST_COLUMNS} pagination={false} scroll={{ x: 'max-content' }} />
-          <div className="ds-table-foot">
-            <span className="ds-num">{LIST_ROWS.length} thuyền viên</span>
-          </div>
+          <Table rowKey="id" dataSource={LIST_ROWS} columns={LIST_COLUMNS} pagination={false} scroll={{ x: 'max-content', y: 150 }} />
+          <ListFooter total={57} page={1} pageSize={20} unit="thuyền viên" onChange={() => {}} />
         </div>
+        <ul className="dsp-notes">
+          <li>Ba khối riêng cách nhau 12px: toolbar (tab trạng thái, tìm, lọc, nút tạo), bảng, dòng chân <code>ListFooter</code> (Hiển thị a–b / tổng, trang, số dòng/trang).</li>
+          <li>Trang danh sách gắn <code>ds-card ds-card--fixed</code> và <code>{'scroll={useListSticky()}'}</code>: cả khung vừa màn hình, đứng yên; chỉ thân bảng cuộn (ở đây thân bảng cố định 150px để minh hoạ).</li>
+          <li>Đầu bảng: nền xanh nhạt, chữ navy, kẻ dọc giữa các cột, vạch navy dưới (theme Table + ds.css, tự áp mọi bảng).</li>
+          <li>Cột cuối <code>actionColumn</code> + <code>RowActions</code>: nút Xem, Sửa (ẩn khi không được sửa), Xoá tuỳ chọn; dính mép phải. Không dùng mũi tên hay menu ⋯.</li>
+        </ul>
       </Section>
 
       <Section id="hop-thoai" title="Hộp thoại">
@@ -627,6 +639,7 @@ export default function DesignSystemPage() {
           </Demo>
         </div>
       </Section>
+
 
       <Section id="audit" title="Dòng thời gian audit">
         <div className="dsp-box dsp-box--pad"><AuditTimeline items={AUDIT} /></div>

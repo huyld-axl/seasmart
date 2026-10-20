@@ -1,0 +1,94 @@
+/* Màn Chuyến tàu: dùng lại khung danh sách (ds-*) và hồ sơ (crew-*, fl-*); ở đây chỉ thêm phần riêng. */
+
+.vy-due { display: inline-flex; justify-self: start; align-items: center; gap: 4px; height: 22px; margin-top: 4px; padding: 0 8px; border: 1px solid; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.vy-due--warning { border-color: var(--warning-border); background: var(--warning-bg); color: var(--warning); }
+.vy-due--error { border-color: var(--error-border); background: var(--error-bg); color: var(--error-strong); }
+
+.vy-dates { display: grid; gap: 2px; min-width: 120px; font-variant-numeric: tabular-nums; }
+.vy-dates__main { font-weight: 500; }
+.vy-dates__sub { color: var(--muted); }
+.vy-tag { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+
+.vy-fill { display: grid; gap: 2px; min-width: 110px; }
+.vy-fill__row { display: flex; align-items: center; gap: 8px; }
+.vy-fill__bar { display: block; flex: 1; min-width: 48px; }
+.vy-fill__num { font-weight: 500; }
+
+.vy-owner-filter { min-width: 200px; }
+.vy-foot-unit { color: var(--muted); }
+.vy-pos { color: var(--foreground); font-weight: 500; font-variant-numeric: tabular-nums; }
+.vy-fill__bar .ds-progress__bar { display: block; height: 100%; }
+
+/* Form chuyến: bảng vị trí dự kiến, hộp bo góc thụt vào cùng kiểu bảng trong màn hợp đồng. */
+.vp { margin: 4px 0 0; overflow: hidden; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); }
+.vp__head, .vp__row { display: grid; grid-template-columns: 32px minmax(0, 1fr) minmax(0, 190px) minmax(0, 190px) 76px; align-items: center; gap: 0 16px; padding: 8px 16px; }
+
+.vp__head { background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 500; border-bottom: 2px solid var(--primary); }
+.vp__req { margin-left: 2px; color: var(--error-strong); }
+.vp__row { border-bottom: 1px solid var(--border); }
+.vp__row .ant-form-item { margin: 0; }
+.vp__n { color: var(--muted); font-variant-numeric: tabular-nums; }
+.vp__actions { display: flex; justify-content: flex-end; gap: 2px; color: var(--muted); }
+.vp__add { padding: 12px 16px; }
+.vp__total { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin: 0; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+.vp__total b { color: var(--foreground); font-weight: 600; font-variant-numeric: tabular-nums; }
+.vp--changed .vp__head { box-shadow: inset 3px 0 0 var(--primary); }
+
+@media (max-width: 767px) {
+  .vp__head { display: none; }
+  .vp__row { grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1fr); padding: 12px 16px; gap: 8px; align-items: start; }
+  .vp__n { grid-row: 1; padding-top: 6px; }
+  .vp__rank { grid-column: 2 / 4; }
+  .vp__m1 { grid-column: 2; }
+  .vp__m2 { grid-column: 3; }
+  .vp__actions { grid-column: 2 / 4; justify-content: flex-end; }
+}
+
+/* Chi tiết chuyến */
+.vd-muted { color: var(--muted); }
+.vd-facts-panel { display: grid; gap: 16px; }
+.vd-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.vd-fact { display: grid; gap: 2px; margin: 0; }
+.vd-fact > dd { margin: 0; }
+.vd-fact__label { margin: 0; color: var(--muted); font-size: 12px; }
+.vd-fact__value { font-weight: 600; font-variant-numeric: tabular-nums; }
+.vd-fact__sub { color: var(--muted); font-size: 12px; }
+.vd-fact__sub--error { color: var(--error-strong); }
+.vd-owner { padding-top: 16px; border-top: 1px solid var(--border); }
+.vd-owner__text { margin: 2px 0 0; }
+
+.vd-sums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.vd-sum { display: flex; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.vd-sum__icon { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: #e6edf5; color: #4a6a8f; }
+.vd-sum__body { min-width: 0; }
+.vd-sum__body p { margin: 0; }
+.vd-sum__label { color: var(--muted); font-size: 13px; }
+.vd-sum__value b { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.vd-sum__sub { margin-top: 4px !important; color: var(--muted); font-size: 12px; }
+.vd-unit { color: var(--muted); font-size: 12px; }
+
+.vd-count { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.vd-rank { font-weight: 500; }
+.vd-diff .ds-cell2__sub { text-align: right; }
+.vd-foot { display: grid; gap: 4px; padding: 12px 16px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+.vd-foot p { margin: 0; }
+
+@media (max-width: 991px) {
+  .vd-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vd-sums { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Hộp thoại Bắt đầu / Kết thúc chuyến */
+.vt-desc { margin: 4px 0 0; color: var(--muted); font-size: 14px; font-weight: 400; }
+.vt-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.vt-box { margin-top: 4px; border: 1px solid var(--border); border-radius: 12px; }
+.vt-box__head { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 600; }
+.vt-box__count { color: var(--muted); font-weight: 400; }
+.vt-list { margin: 0; padding: 0; list-style: none; }
+.vt-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; border-top: 1px solid var(--border); }
+.vt-list li:first-child { border-top: 0; }
+.vt-list__states { display: flex; flex-shrink: 0; align-items: center; gap: 8px; color: var(--muted); }
+.vt-empty { margin: 0; padding: 12px 16px; color: var(--muted); }
+.vt-warn { margin-top: 16px; }
+.vt-skipped { margin: 4px 0 0; padding-left: 20px; }
+@media (max-width: 575px) { .vt-fields { grid-template-columns: minmax(0, 1fr); } }

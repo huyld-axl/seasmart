@@ -8,9 +8,8 @@ describe('crewView', () => {
     expect(availabilityText({ status: 'ON_VESSEL' })).toBe('Đang trên tàu')
   })
 
-  it('chờ tàu, nghỉ phép, trạng thái khác', () => {
-    expect(availabilityText({ status: 'AVAILABLE' })).toBe('Sẵn sàng')
-    expect(availabilityText({ status: 'ON_LEAVE' })).toBe('Đang nghỉ phép')
+  it('ở bờ và trạng thái khác', () => {
+    expect(availabilityText({ status: 'AVAILABLE' })).toBe('Ở bờ')
     expect(availabilityText({ status: 'RETIRED' })).toBe('—')
   })
 

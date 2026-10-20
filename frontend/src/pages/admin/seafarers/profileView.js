@@ -46,6 +46,21 @@ export function activeContract(contracts = [], today = dayjs()) {
     .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)))[0] || null
 }
 
+// Đổi hợp đồng mới (GET /contracts) về dạng activeContract / readinessRules đang đọc:
+// chỉ hợp đồng Hiệu lực và Hết hạn tính (nháp, chờ duyệt, bị từ chối chưa có hiệu lực); Hết hạn coi như đã kết thúc đúng ngày.
+export function toProfileContracts(rows = []) {
+  return rows
+    .filter((row) => row.status === 'ACTIVE' || row.status === 'ENDED')
+    .map((row) => ({
+      id: row.id,
+      vessel_name: row.vessel_name,
+      start_date: row.start_date,
+      end_date: row.end_date,
+      actual_end_date: row.status === 'ENDED' ? row.end_date : null,
+      status: row.status,
+    }))
+}
+
 // Dòng phụ dưới tên: chức danh · quốc tịch · tàu hoặc tình trạng sẵn sàng.
 export function headLine(seafarer, contract) {
   const parts = [seafarer?.rank_name, seafarer?.nationality_name]

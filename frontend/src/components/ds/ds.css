@@ -349,6 +349,7 @@
 .ds-toast .ant-notification-notice-icon { top: 50%; translate: 0 -50%; font-size: 16px; line-height: 1; }
 .ds-toast--success .ant-notification-notice-icon { color: var(--success); }
 .ds-toast--error .ant-notification-notice-icon { color: var(--error-strong); }
+.ds-toast--info .ant-notification-notice-icon { color: var(--muted); }
 .ds-toast .ant-notification-notice-title, .ds-toast .ant-notification-notice-message { margin: 0 0 0 28px !important; padding: 0 !important; font-size: 14px; }
 .ds-toast .ant-notification-notice-description { display: none; }
 .ds-toast__row { display: flex; align-items: center; gap: 16px; }
@@ -368,16 +369,41 @@
 .ds-card .ant-table-wrapper .ant-table { background: transparent; }
 /* Khung danh sách (M13): thanh công cụ là phần đầu của card, cùng một khung với bảng và dòng chân. */
 .ds-card > .ds-toolbar { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-/* Dòng tiêu đề bảng: nền --surface-hover, chữ nhỏ đậm (màu ở theme Table trong tokens.js). Góc vuông vì nằm giữa khung. */
-.ant-table-wrapper .ant-table-thead > tr > th { font-size: 12px; font-weight: 600; }
+/* Khung danh sách tách 3 khối như ảnh tham khảo (chốt 20/10/2026): thanh công cụ, bảng, dòng chân là ba card riêng cách nhau 12px. */
+.ds-card:has(> .ds-toolbar) { display: flex; flex-direction: column; gap: 12px; overflow: visible; border: 0; border-radius: 0; background: transparent; }
+.ds-card:has(> .ds-toolbar) { min-width: 0; }
+.ds-card:has(> .ds-toolbar) > * { min-width: 0; overflow: clip; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.ds-card:has(> .ds-toolbar) > .ds-toolbar { border-bottom: 1px solid var(--border); }
+.ds-card:has(> .ds-toolbar) > .ds-table-foot { border-top: 1px solid var(--border); }
+/* .ds-card--fixed (trang danh sách): cả khung dính dưới topbar (64 + khe 12) và cao tối đa bằng phần còn lại của màn hình: toolbar, bảng, dòng chân đứng yên,
+   giữ khe 12px; chỉ thân bảng cuộn bên trong (antd scroll.y do useListSticky tính). */
+.ds-card--fixed { position: sticky; top: 76px; max-height: calc(100dvh - 88px); }
+.ds-card:has(> .ds-toolbar) > .ds-toolbar,
+.ds-card:has(> .ds-toolbar) > .ds-table-foot { flex: none; }
+/* Dòng tiêu đề bảng (mọi bảng): nền --table-header, chữ navy (theme Table trong tokens.js), kẻ dọc đủ cao giữa các cột, vạch navy dưới. */
+.ant-table-wrapper .ant-table-thead > tr > th { padding-block: 10px; font-size: 12px; font-weight: 600; border-bottom: 2px solid var(--primary); }
+.ant-table-wrapper .ant-table-thead > tr > th + th { border-inline-start: 1px solid var(--border-strong); }
+.ant-table-wrapper .ant-table-thead > tr > th::before { display: none; }
+/* Cột thao tác: dính mép phải, kẻ trái tách khỏi dữ liệu. */
+.ant-table-wrapper .ds-col-actions { border-inline-start: 1px solid var(--border) !important; }
+.ds-row-actions { display: inline-flex; gap: 4px; }
+.ds-row-actions .ant-btn { color: var(--foreground); }
+.ds-row-actions .ant-btn:hover { color: var(--primary) !important; border-color: var(--primary) !important; }
+.ds-row-actions__slot { width: 24px; }
 .ds-card .ant-table-wrapper .ant-table,
 .ds-card .ant-table-wrapper .ant-table-container,
 .ds-card .ant-table-wrapper .ant-table-content,
 .ds-card .ant-table-wrapper .ant-table-container table,
 .ds-card .ant-table-wrapper .ant-table-thead > tr > th { border-radius: 0 !important; }
+
+/* ds-table--tint: giữ tên class cũ; kiểu đầu bảng nay áp cho mọi bảng ở trên. */
 /* Dòng cuối không kẻ dưới: ngay sau là đường kẻ của dòng chân hoặc mép card. */
 .ds-card .ant-table-wrapper .ant-table-tbody > tr:last-child > td { border-bottom: 0; }
 .ds-table-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--muted); }
+.ds-list-foot__info { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.ds-list-foot__note { font-size: 12px; }
+.ds-list-foot__nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-left: auto; }
+.ds-list-foot__size { display: inline-flex; align-items: center; gap: 8px; color: var(--foreground); }
 .ds-cell2 { display: grid; min-width: 0; }
 .ds-cell2__main { overflow: hidden; color: var(--foreground); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .ds-cell2__sub { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
@@ -513,3 +539,15 @@
 .ds-toggle-row__state { color: var(--muted); font-size: 12px; }
 .ds-toggle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 639px) { .ds-toggle-grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* Ô nhập tiền (MoneyInput): canh phải, đuôi USD, dấu chấm hàng nghìn, dấu phẩy thập phân. */
+.ds-money.ant-input-number { width: 100%; }
+.ds-money .ant-input-number-input { text-align: right; font-variant-numeric: tabular-nums; }
+.ds-money .ant-input-number-suffix { color: var(--muted); font-size: 12px; }
+
+/* Toast ở màn hẹp: nằm trên thanh lưu / thanh cân đối dính đáy (cao hơn khi các nút xuống nhiều hàng). */
+@media (max-width: 575px) { .ant-notification-bottom { bottom: 190px !important; } }
+/* Thân bảng trong khung đứng yên: chỉ hiện thanh cuộn dọc khi thật sự tràn (antd mặc định luôn hiện). */
+.ds-card--fixed .ant-table-wrapper .ant-table-body { overflow-y: auto !important; }
+/* Chiều cao dòng lẻ pixel (72.8px) làm làm tròn scrollHeight dư 1px và hiện thanh cuộn thừa: chừa 1px đệm. */
+.ds-card--fixed .ant-table-wrapper .ant-table-body { padding-bottom: 1px; }

@@ -33,7 +33,6 @@ DELETE FROM seafarer_certificate;
 DELETE FROM seafarer_document;
 DELETE FROM document_upload_page;
 DELETE FROM document_upload;
-DELETE FROM contract_payroll;
 DELETE FROM employment_contract;
 DELETE FROM seafarer_rank_history;
 DELETE FROM seafarer_contact;

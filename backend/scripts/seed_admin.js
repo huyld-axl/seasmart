@@ -22,7 +22,9 @@ async function seed() {
   const confirmation = await ask('Confirm password: ', true)
   if (password.length < 12 || password !== confirmation) throw new Error('Password too short or confirmation does not match')
   const hash = await bcrypt.hash(password, 12)
-  await db.query('INSERT INTO "user" (email, password_hash, role, verification_status) VALUES (?, ?, \'admin\', \'verified\')', [email, hash])
+  const [[admin]] = await db.query('SELECT id FROM "role" WHERE code = \'admin\'')
+  if (!admin) throw new Error('Chưa có vai trò Quản trị viên: chạy npm run migrate trước')
+  await db.query('INSERT INTO "user" (email, password_hash, role_id, verification_status) VALUES (?, ?, ?, \'verified\')', [email, hash, admin.id])
   console.log('Admin account created')
 }
 seed().catch((error) => {

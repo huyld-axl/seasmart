@@ -4,10 +4,6 @@ const { ADMIN_ROLE_CODE } = require('../constants/permissions')
 
 const SALT_ROUNDS = 10
 
-// Cột `user.role` (cũ) còn tới migration 010 và là NOT NULL: ghi giá trị tương ứng để code cũ đọc không lỗi.
-const LEGACY_ROLE_ADMIN = 'admin'
-const LEGACY_ROLE_OTHER = 'reviewer'
-
 const USER_SELECT = `SELECT u.id, u.email, u.is_active, u.role_id, u.created_at, u.updated_at, u.last_login_at,
         r.code AS role_code, r.name AS role_name
  FROM "user" u LEFT JOIN "role" r ON r.id = u.role_id`
@@ -129,9 +125,9 @@ async function createUser(data, actor, db = pool) {
 
   const hash = await bcrypt.hash(password, SALT_ROUNDS)
   const [result] = await db.query(
-    `INSERT INTO "user" (email, password_hash, role, role_id, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, 1, NOW(), NOW())`,
-    [email, hash, role.code === ADMIN_ROLE_CODE ? LEGACY_ROLE_ADMIN : LEGACY_ROLE_OTHER, role.id]
+    `INSERT INTO "user" (email, password_hash, role_id, is_active, created_at, updated_at)
+     VALUES (?, ?, ?, 1, NOW(), NOW())`,
+    [email, hash, role.id]
   )
   return getUserById(result.insertId, db)
 }
@@ -149,8 +145,8 @@ async function updateUser(id, data, actor, db = pool) {
   }
   if (data.role_id !== undefined) {
     const role = await findRole(db, data.role_id)
-    fields.push('role_id = ?', 'role = ?')
-    params.push(role.id, role.code === ADMIN_ROLE_CODE ? LEGACY_ROLE_ADMIN : LEGACY_ROLE_OTHER)
+    fields.push('role_id = ?')
+    params.push(role.id)
   }
   if (fields.length === 0) throw fail(400, 'Không có trường nào để cập nhật')
 

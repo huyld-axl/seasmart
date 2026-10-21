@@ -23,8 +23,8 @@ function fakeDb(users, roles = [{ id: 1, code: 'admin', name: 'Quản trị viê
       return [state.users.filter((u) => u.email === params[0] && !u.deleted_at && u.id !== (params[1] ?? -1)).map((u) => ({ id: u.id }))]
     }
     if (sql.startsWith('INSERT INTO "user"')) {
-      const [email, , role, role_id] = params
-      state.users.push({ id: state.nextId, email, legacyRole: role, role_id, is_active: 1, deleted_at: null })
+      const [email, , role_id] = params
+      state.users.push({ id: state.nextId, email, role_id, is_active: 1, deleted_at: null })
       return [{ insertId: state.nextId++ }]
     }
     if (sql.startsWith('UPDATE "user" SET deleted_at')) {
@@ -66,11 +66,10 @@ describe('tạo tài khoản', () => {
     await expect(userService.createUser({ email: 'n@x', password: 'secret1', role_id: 1 }, actorStaff, db)).rejects.toMatchObject({ statusCode: 403 })
     expect(db.users).toHaveLength(2)
   })
-  it('Quản trị viên tạo được tài khoản vai trò thường, ghi cột role cũ', async () => {
+  it('Quản trị viên tạo được tài khoản vai trò thường', async () => {
     const db = fakeDb([admin()])
     const user = await userService.createUser({ email: 'n@x', password: 'secret1', role_id: 2 }, actorAdmin, db)
     expect(user.role).toEqual({ id: 2, name: 'Nhân viên', is_system: false })
-    expect(db.users.find((u) => u.email === 'n@x').legacyRole).toBe('reviewer')
   })
   it('email trùng thì 400', async () => {
     const db = fakeDb([admin(), staff(10)])

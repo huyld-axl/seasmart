@@ -38,55 +38,6 @@ async function seafarerPortalRoutes(fastify) {
     })
   })
 
-  // GET /api/v1/portal/seafarer/courses — khóa học đang mở đăng ký (TASK-B2)
-  fastify.get('/courses', { onRequest: [onlySeafarer] }, async (request) => {
-    const { page, limit } = request.query
-    return seafarerPortalService.listOpenCourses(request.user.id, {
-      page: parseInt(page) || 1,
-      limit: Math.min(parseInt(limit) || 50, 100),
-    })
-  })
-
-  // GET /api/v1/portal/seafarer/enrollments
-  fastify.get('/enrollments', { onRequest: [onlySeafarer] }, async (request) => {
-    const { page, limit } = request.query
-    return seafarerPortalService.getEnrollments(request.user.id, {
-      page: parseInt(page) || 1,
-      limit: Math.min(parseInt(limit) || 20, 100),
-    })
-  })
-
-  // POST /api/v1/portal/seafarer/enrollments
-  fastify.post(
-    '/enrollments',
-    {
-      onRequest: [onlySeafarer],
-      schema: {
-        body: {
-          type: 'object',
-          required: ['course_id'],
-          properties: {
-            course_id: { type: 'integer' },
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      const result = await seafarerPortalService.enroll(request.user.id, request.body.course_id)
-      return reply.code(201).send(result)
-    }
-  )
-
-  // DELETE /api/v1/portal/seafarer/enrollments/:id
-  fastify.delete('/enrollments/:id', { onRequest: [onlySeafarer] }, async (request, reply) => {
-    try {
-      await seafarerPortalService.cancelEnrollment(request.user.id, parseInt(request.params.id))
-      return reply.code(204).send()
-    } catch (e) {
-      return reply.code(e.statusCode || 500).send({ error: e.message })
-    }
-  })
-
   // POST /api/v1/portal/seafarer/certificates — multipart: fields + optional file, or JSON body
   fastify.post('/certificates', { onRequest: [onlySeafarer] }, async (request, reply) => {
     try {

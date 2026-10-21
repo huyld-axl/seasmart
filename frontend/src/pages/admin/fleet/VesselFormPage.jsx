@@ -80,7 +80,6 @@ function VesselForm({ vessel }) {
   const owners = useQuery({ queryKey: ['fleet', 'owner-options'], queryFn: () => shipOwnerApi.list({ limit: 100 }) })
 
   const ownerRows = owners.data?.data || []
-  const ownerCode = ownerRows.find((row) => row.id === values.ship_owner_id)?.code || (values.ship_owner_id && values.ship_owner_id === vessel?.ship_owner_id ? vessel.ship_owner_code : null)
   const ownerOptions = toOptions(ownerRows, (row) => row.company_name)
   if (vessel?.ship_owner_id && !ownerRows.some((row) => row.id === vessel.ship_owner_id)) {
     ownerOptions.push({ value: vessel.ship_owner_id, label: vessel.ship_owner_name })
@@ -219,11 +218,8 @@ function VesselForm({ vessel }) {
 
         <FormSection index={4} section={SECTIONS[4]} meta={sectionMeta(4)}>
           <div className="sf-grid">
-            <Form.Item name="ship_owner_id" label={label('ship_owner_id', 'Chủ tàu')} className={cn('ship_owner_id', 'sf-c8')} extra={<Link to="/partners/new" target="_blank">Chưa có trong danh sách? Thêm đối tác mới</Link>}>
+            <Form.Item name="ship_owner_id" label={label('ship_owner_id', 'Chủ tàu')} className={cn('ship_owner_id')} extra={<Link to="/partners/new" target="_blank">Chưa có trong danh sách? Thêm đối tác mới</Link>}>
               <Select {...selectProps} loading={owners.isLoading} options={ownerOptions} placeholder="Chọn chủ tàu" />
-            </Form.Item>
-            <Form.Item label="Mã chủ tàu" className="sf-c4 fl-readonly" extra="Tự lấy theo chủ tàu đã chọn.">
-              <Input value={ownerCode || ''} disabled placeholder="—" />
             </Form.Item>
             <Form.Item name="technical_manager" label={label('technical_manager', 'Quản lý kỹ thuật')} className={cn('technical_manager', 'sf-c6')}>
               <Input maxLength={200} placeholder="Công ty quản lý kỹ thuật" />

@@ -23,7 +23,6 @@ export default function LoginPage() {
     try {
       const user = await login(email, password)
       if (user.role === 'seafarer') navigate('/seafarer/profile')
-      else if (user.role === 'training_center') navigate('/courses')
       else navigate('/seafarers')
     } catch (err) {
       const status = err.response?.status

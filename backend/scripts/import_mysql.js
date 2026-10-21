@@ -15,7 +15,7 @@ Object.assign(process.env, env, {
   JWT_SECRET_FILE: path.join(root, 'docker/jwt_secret'),
 })
 const db = require('../src/config/db')
-const references = new Set(['rank', 'certificate_type', 'vessel_type', 'country', 'contract_type', 'course_type', 'port'])
+const references = new Set(['rank', 'certificate_type', 'vessel_type', 'country', 'contract_type', 'port'])
 const identifier = (name) => {
   if (!/^[a-z_][a-z0-9_]*$/.test(name)) throw new Error('Invalid table or column')
   return `"${name}"`

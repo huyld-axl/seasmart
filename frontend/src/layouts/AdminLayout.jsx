@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react'
+import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Dropdown, Drawer, Grid } from 'antd'
 import Icon from '@ant-design/icons'
@@ -8,13 +8,13 @@ import {
   DatabaseOutlined,
   SafetyCertificateOutlined,
   BookOutlined,
-  MessageOutlined,
   LogoutOutlined,
   MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DownOutlined,
   FileTextOutlined,
+  RightOutlined,
 } from '@ant-design/icons'
 import NotificationBell from '../components/common/NotificationBell'
 import ErrorBoundary from '../components/common/ErrorBoundary'
@@ -57,14 +57,53 @@ const ICONS = {
   building: <Icon component={BuildingSvg} />,
   shield: <SafetyCertificateOutlined />,
   book: <BookOutlined />,
-  message: <MessageOutlined />,
 }
 
-function SideNav({ sections, current, collapsed, onNavigate }) {
+const NavItem = forwardRef(function NavItem({ section, active, collapsed, onNavigate, ...rest }, ref) {
+  return (
+    <NavLink
+      ref={ref}
+      {...rest}
+      to={section.to}
+      className={section.tabs ? 'app-shell__nav-item app-shell__nav-item--parent' : 'app-shell__nav-item'}
+      aria-current={section.tabs ? false : active ? 'page' : undefined}
+      aria-expanded={section.tabs && !collapsed ? active : undefined}
+      data-active={active || undefined}
+      title={collapsed && !section.tabs ? section.label : undefined}
+      onClick={onNavigate}
+    >
+      {ICONS[section.icon]}
+      <span className="app-shell__nav-label">{section.label}</span>
+      {section.tabs && <RightOutlined className="app-shell__nav-chev" />}
+    </NavLink>
+  )
+})
+
+// Mục có trang con (Danh mục, Quản trị): trang con là menu con thụt vào dưới mục cha, chỉ mở ở phân hệ đang xem.
+// Sidebar thu gọn thì rê vào icon để hiện danh sách trang con.
+function SideNav({ sections, current, currentTab, collapsed, onNavigate }) {
+  const navigate = useNavigate()
   return (
     <nav className="app-shell__nav" aria-label="Điều hướng chính">
       {sections.map((section, i) => {
         const groupStart = section.group != null && section.group !== sections[i - 1]?.group
+        const active = current?.key === section.key
+        let item = <NavItem section={section} active={active} collapsed={collapsed} onNavigate={onNavigate} />
+        if (section.tabs && collapsed) {
+          item = (
+            <Dropdown
+              placement="bottomLeft"
+              align={{ points: ['tl', 'tr'], offset: [8, 0] }}
+              menu={{
+                items: [{ key: 'title', type: 'group', label: section.label, children: section.tabs.map((tab) => ({ key: tab.to, label: tab.label })) }],
+                selectedKeys: active && currentTab ? [currentTab.to] : [],
+                onClick: ({ key }) => navigate(key),
+              }}
+            >
+              {item}
+            </Dropdown>
+          )
+        }
         return (
           <Fragment key={section.key}>
             {groupStart && (
@@ -72,16 +111,22 @@ function SideNav({ sections, current, collapsed, onNavigate }) {
                 <span>{NAV_GROUP_LABELS[section.group]}</span>
               </div>
             )}
-            <NavLink
-              to={section.to}
-              className="app-shell__nav-item"
-              aria-current={current?.key === section.key ? 'page' : undefined}
-              title={collapsed ? section.label : undefined}
-              onClick={onNavigate}
-            >
-              {ICONS[section.icon]}
-              <span className="app-shell__nav-label">{section.label}</span>
-            </NavLink>
+            {item}
+            {section.tabs && active && !collapsed && (
+              <div className="app-shell__subnav" role="group" aria-label={section.label}>
+                {section.tabs.map((tab) => (
+                  <NavLink
+                    key={tab.to}
+                    to={tab.to}
+                    className="app-shell__nav-item app-shell__nav-item--sub"
+                    aria-current={currentTab?.to === tab.to ? 'page' : undefined}
+                    onClick={onNavigate}
+                  >
+                    <span className="app-shell__nav-label">{tab.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
           </Fragment>
         )
       })}
@@ -123,7 +168,7 @@ export default function AdminLayout() {
           <div className="app-shell__brand">
             <ProductBrand collapsed={collapsed} />
           </div>
-          <SideNav sections={sections} current={current} collapsed={collapsed} />
+          <SideNav sections={sections} current={current} currentTab={currentTab} collapsed={collapsed} />
         </aside>
       )}
 
@@ -137,7 +182,15 @@ export default function AdminLayout() {
           >
             {isMobile ? <MenuOutlined /> : collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           </button>
-          <h1 className="app-shell__title">{current?.label || 'MCAH'}</h1>
+          <h1 className="app-shell__title">
+            {currentTab ? (
+              <>
+                <span className="app-shell__title-parent">{current.label} /</span> {currentTab.label}
+              </>
+            ) : (
+              current?.label || 'MCAH'
+            )}
+          </h1>
 
           <div className="app-shell__right">
             <NotificationBell />
@@ -150,21 +203,6 @@ export default function AdminLayout() {
             </Dropdown>
           </div>
         </header>
-
-        {current?.tabs && (
-          <nav className="app-shell__tabs" aria-label={current.label}>
-            {current.tabs.map((tab) => (
-              <NavLink
-                key={tab.to}
-                to={tab.to}
-                className="app-shell__tab"
-                aria-current={currentTab?.to === tab.to ? 'page' : undefined}
-              >
-                {tab.label}
-              </NavLink>
-            ))}
-          </nav>
-        )}
 
         <main className="app-shell__content">
           <ErrorBoundary resetKey={pathname}>
@@ -182,7 +220,7 @@ export default function AdminLayout() {
         rootClassName="app-shell__drawer"
         title={<ProductBrand />}
       >
-        <SideNav sections={sections} current={current} onNavigate={() => setDrawerOpen(false)} />
+        <SideNav sections={sections} current={current} currentTab={currentTab} onNavigate={() => setDrawerOpen(false)} />
       </Drawer>
     </div>
   )

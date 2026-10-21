@@ -97,7 +97,6 @@ export function vesselSections(v, { linkOwner } = {}) {
       title: 'Quản lý',
       fields: [
         ['Chủ tàu', v.ship_owner_name ? (linkOwner ? linkOwner(v) : v.ship_owner_name) : null, 8],
-        ['Mã chủ tàu', v.ship_owner_code, 4, 'mono', 'skip'],
         ['Quản lý kỹ thuật', v.technical_manager, 6],
         ['Quản lý thương mại', v.commercial_manager, 6],
       ],
@@ -114,7 +113,6 @@ export function partnerSections(o) {
       fields: [
         ['Tên công ty', o.company_name, 6],
         ['Tên tiếng Anh', o.company_name_en, 6],
-        ['Mã', o.code, 4, 'mono'],
         ['Mã số thuế', o.tax_id, 4],
         ['Quốc gia', o.country_name, 4],
         ['Tình trạng', Number(o.is_active) === 1 ? 'Đang hợp tác' : 'Ngừng hợp tác', 12, 'always'],
@@ -186,7 +184,7 @@ export function vesselToPayload(values) {
   return payload
 }
 
-export const PARTNER_TEXT_FIELDS = ['code', 'company_name', 'company_name_en', 'tax_id', 'address', 'phone', 'fax', 'email', 'website', 'contact_person', 'contact_phone', 'contact_email', 'notes']
+export const PARTNER_TEXT_FIELDS = ['company_name', 'company_name_en', 'tax_id', 'address', 'phone', 'fax', 'email', 'website', 'contact_person', 'contact_phone', 'contact_email', 'notes']
 
 export function partnerToFormValues(owner) {
   const values = { is_active: 1 }
@@ -200,7 +198,6 @@ export function partnerToFormValues(owner) {
 export function partnerToPayload(values) {
   const payload = {}
   for (const key of PARTNER_TEXT_FIELDS) payload[key] = cleanText(values[key])
-  payload.code = payload.code ? payload.code.toUpperCase() : payload.code
   payload.country_id = filled(values.country_id) ? values.country_id : null
   payload.is_active = values.is_active === 0 ? 0 : 1
   return payload

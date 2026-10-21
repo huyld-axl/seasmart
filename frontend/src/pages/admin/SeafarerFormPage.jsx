@@ -5,9 +5,13 @@ import { AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Sele
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi } from '../../api'
+import { documentApi } from '../../api/documentApi'
+import ScanButton from '../../components/ds/ScanButton'
+import AutofillBanner from '../../components/ds/AutofillBanner'
 import { FIELD_LABELS } from './seafarers/fieldLabels'
 import { ChoiceGroup, KindToggles, PhotoField, PhotoFrame } from './seafarers/SeafarerFormParts'
 import { photoProblem } from './seafarers/photoRules'
+import { SCAN_BUTTONS, SOURCE_NAMES, matchCountry, mergeScans, sectionSummaries, summaryText } from './seafarers/scanView'
 import './seafarers/SeafarerForm.css'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
@@ -40,6 +44,7 @@ const SECTIONS = [
     desc: 'Ghi theo hộ chiếu hoặc CCCD.',
     fields: ['full_name', 'full_name_zh', 'full_name_en', 'date_of_birth', 'gender', 'place_of_origin', 'permanent_address', 'marital_status', 'children_count'],
     photo: true,
+    scans: ['cccd', 'passport'],
   },
   {
     key: 'identity',
@@ -49,6 +54,7 @@ const SECTIONS = [
       'passport_number', 'passport_issued_date', 'passport_expiry', 'place_of_birth', 'nationality_id',
       'national_id', 'national_id_issued_date', 'national_id_issued_place', 'seaman_book_number',
     ],
+    scans: ['passport', 'cccd', 'seaman_book'],
   },
   {
     key: 'physical',
@@ -77,6 +83,7 @@ const SECTIONS = [
     key: 'education',
     title: 'Học vấn',
     fields: ['education_level', 'education_school', 'education_major', 'english_level'],
+    scans: ['diploma'],
   },
   { key: 'notes', title: 'Ghi chú', fields: ['notes'] },
 ]
@@ -156,10 +163,13 @@ function sectionStats(section, values, hasPhoto) {
 }
 
 const ChangedContext = createContext(new Set())
+// Ô vừa được AI điền và chưa bị sửa: { [tên ô]: { state: 'ok' | 'check', source } }.
+const AiMarksContext = createContext({})
 
 // Form.Item đặt trong lưới 12 cột; ở màn sửa, trường đã đổi có viền màu nhấn và chip "Đã sửa".
 function Field({ name, label, span, required, children, ...rest }) {
   const changed = useContext(ChangedContext).has(name)
+  const ai = useContext(AiMarksContext)[name]
   return (
     <Form.Item
       name={name}
@@ -168,9 +178,10 @@ function Field({ name, label, span, required, children, ...rest }) {
           {label}
           {required ? <span className="sf-req" aria-hidden>*</span> : null}
           {changed ? <span className="sf-chip">Đã sửa</span> : null}
+          {ai?.state === 'check' ? <span className="sf-aicheck">cần kiểm tra</span> : null}
         </>
       }
-      className={[span ? `sf-c${span}` : '', changed ? 'sf-changed' : ''].filter(Boolean).join(' ') || undefined}
+      className={[span ? `sf-c${span}` : '', changed ? 'sf-changed' : '', ai ? `sf-ai sf-ai--${ai.state}` : ''].filter(Boolean).join(' ') || undefined}
       {...rest}
     >
       {children}
@@ -186,18 +197,39 @@ function DateField(props) {
   )
 }
 
+const ScanContext = createContext({ busy: null, done: null, run: () => {}, summaries: [], clear: () => {} })
+
 function Section({ index, section, stats, children }) {
+  const scan = useContext(ScanContext)
+  const summary = scan.summaries.find((row) => row.key === section.key)
   return (
     <section className="sf-panel" id={`sf-${section.key}`} aria-labelledby={`sf-${section.key}-title`}>
       <div className="sf-panel__head">
         <span className="sf-step">{index + 1}</span>
-        <div>
+        <div className="sf-panel__text">
           <h3 className="sf-panel__title" id={`sf-${section.key}-title`}>{section.title}</h3>
           {section.desc ? <p className="sf-panel__desc">{section.desc}</p> : null}
         </div>
+        {section.scans ? (
+          <div className="sf-panel__scans">
+            {section.scans.map((kind) => (
+              <ScanButton
+                key={kind}
+                label={SCAN_BUTTONS[kind]}
+                loading={scan.busy === `${section.key}:${kind}`}
+                disabled={Boolean(scan.busy)}
+                doneText={scan.done?.id === `${section.key}:${kind}` ? scan.done.text : undefined}
+                onPick={(files) => scan.run(kind, files, `${section.key}:${kind}`)}
+              />
+            ))}
+          </div>
+        ) : null}
         <span className="sf-panel__meta">{stats.label}</span>
       </div>
-      <div className="sf-panel__body">{children}</div>
+      <div className="sf-panel__body">
+        {summary ? <AutofillBanner text={summaryText(summary)} onClear={scan.clear} /> : null}
+        {children}
+      </div>
     </section>
   )
 }
@@ -286,6 +318,92 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   const photoSrc = photoFile ? pickedPhoto : photoRemoved ? null : savedPhoto
   const hasPhoto = Boolean(photoSrc)
   const photoChanged = Boolean(photoFile) || (photoRemoved && Boolean(seafarer?.has_photo))
+
+  // Quét giấy tờ: AI đọc tệp rồi điền vào ô còn trống; ô vừa điền được đánh dấu tới khi người dùng sửa ô đó.
+  const [marks, setMarks] = useState({})
+  const [scanBusy, setScanBusy] = useState(null)
+  const [scanDone, setScanDone] = useState(null)
+  const doneTimer = useRef(null)
+  useEffect(() => () => clearTimeout(doneTimer.current), [])
+  const summaries = useMemo(() => sectionSummaries(marks, SECTIONS), [marks])
+
+  const applyScan = (entries) => {
+    const rows = entries
+      .map((item) => {
+        if (item.field === 'nationality') {
+          const nid = matchCountry(item.value, countries)
+          return nid ? { ...item, field: 'nationality_id', value: nid } : null
+        }
+        return { ...item, value: DATE_FIELDS.includes(item.field) ? dayjs(item.value) : item.value }
+      })
+      .filter(Boolean)
+    const isEmpty = (field) => {
+      const current = form.getFieldValue(field)
+      return !isFilled(current) || (!isEdit && !form.isFieldTouched(field) && !marks[field])
+    }
+    const same = (a, b) => (dayjs.isDayjs(a) && dayjs.isDayjs(b) ? a.isSame(b, 'day') : a === b)
+    const todo = rows.filter((row) => !same(form.getFieldValue(row.field), row.value))
+    const free = todo.filter((row) => isEmpty(row.field))
+    const clash = todo.filter((row) => !isEmpty(row.field))
+    const write = (list) => {
+      if (!list.length) {
+        message.info('Các ô đọc được đã có dữ liệu giống giấy tờ, không đổi gì.')
+        return 0
+      }
+      for (const row of list) form.setFieldValue(row.field, row.value)
+      const name = form.getFieldValue('full_name')
+      if (list.some((row) => row.field === 'full_name')) {
+        const en = form.getFieldValue('full_name_en')
+        if (!en || en === englishName(prevNameRef.current)) form.setFieldValue('full_name_en', englishName(name) || null)
+        prevNameRef.current = name || ''
+      }
+      setMarks((current) => ({ ...current, ...Object.fromEntries(list.map((row) => [row.field, { state: row.state, source: row.source }])) }))
+      const first = SECTIONS.flatMap((sec) => sec.fields).find((field) => list.some((row) => row.field === field))
+      if (first) setTimeout(() => form.scrollToField(first, { behavior: 'smooth', block: 'center' }), 50)
+      return list.length
+    }
+    return new Promise((resolve) => {
+      if (!clash.length) return resolve(write(free))
+      Modal.confirm({
+        title: 'Ghi đè các ô đã có dữ liệu?',
+        content: `${clash.length} ô đã có dữ liệu và khác với giấy tờ: ${clash.map((row) => FIELD_LABELS[row.field] || row.field).join(', ')}.`,
+        okText: 'Ghi đè',
+        cancelText: 'Giữ nguyên',
+        onOk: () => resolve(write([...free, ...clash])),
+        onCancel: () => resolve(write(free)),
+      })
+    })
+  }
+
+  const runScan = async (kind, files, id) => {
+    setScanBusy(id)
+    try {
+      const results = []
+      for (const file of files) results.push(await documentApi.scan(file, kind === 'auto' ? 'auto' : kind))
+      const skipped = results.flatMap((r) => r.skipped || [])
+      if (skipped.length) message.info([...new Set(skipped.map((item) => item.reason))].join(' '), 6)
+      const entries = mergeScans(results)
+      if (!entries.length) {
+        if (!skipped.length) message.warning('Không đọc được ô nào từ giấy này. Thử ảnh rõ hơn hoặc nhập tay.')
+        return
+      }
+      const count = await applyScan(entries)
+      if (count) {
+        setScanDone({ id, text: `Đã điền ${count} ô` })
+        clearTimeout(doneTimer.current)
+        doneTimer.current = setTimeout(() => setScanDone(null), 5000)
+      }
+    } catch (err) {
+      message.error(err.response?.data?.error || err.response?.data?.message || 'Không đọc được giấy tờ. Thử lại sau.')
+    } finally {
+      setScanBusy(null)
+    }
+  }
+  const scanContext = useMemo(
+    () => ({ busy: scanBusy, done: scanDone, run: runScan, summaries, clear: () => setMarks({}) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [scanBusy, scanDone, summaries, marks, countries]
+  )
 
   // Trường đã đổi so với lúc mở (màn sửa).
   const changedKeys = useMemo(() => {
@@ -387,6 +505,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   // Tên tiếng Anh tự điền theo họ tên, tới khi người dùng tự sửa.
   const onValuesChange = (changed, all) => {
     if (changed.social_insurance_joined === 0) form.setFieldValue('social_insurance_number', null)
+    // Sửa ô nào thì đánh dấu AI của ô đó mất.
+    if (Object.keys(changed).some((key) => marks[key])) {
+      setMarks((current) => Object.fromEntries(Object.entries(current).filter(([key]) => !(key in changed))))
+    }
     if (!('full_name' in changed)) return
     const current = all.full_name_en || ''
     if (!current || current === englishName(prevNameRef.current)) {
@@ -407,6 +529,8 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
 
   return (
     <ChangedContext.Provider value={changedSet}>
+     <AiMarksContext.Provider value={marks}>
+     <ScanContext.Provider value={scanContext}>
       <div className="sf-head">
         <div>
           <nav className="sf-crumb" aria-label="Vị trí">
@@ -425,15 +549,25 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           <h2 className="sf-head__title">{isEdit ? 'Chỉnh sửa hồ sơ' : 'Thêm thuyền viên mới'}</h2>
           {isEdit ? null : (
             <p className="sf-head__desc">
-              Chỉ cần họ và tên để tạo hồ sơ. Các mục khác điền sau, hoặc để AI đọc từ giấy tờ khi tải lên.
+              Chỉ cần họ và tên để tạo hồ sơ. Các mục khác điền sau, hoặc bấm “Tự điền từ giấy tờ” để AI đọc CCCD, hộ chiếu, sổ thuyền viên, bằng cấp.
             </p>
           )}
         </div>
-        {isEdit ? (
-          <Button danger icon={<DeleteOutlined />} onClick={handleDeleteClick} loading={deleteMutation.isPending}>
-            Xóa thuyền viên
-          </Button>
-        ) : null}
+        <div className="sf-head__actions">
+          <ScanButton
+            variant="auto"
+            label="Tự điền từ giấy tờ"
+            loading={scanBusy === 'auto'}
+            disabled={Boolean(scanBusy)}
+            doneText={scanDone?.id === 'auto' ? scanDone.text : undefined}
+            onPick={(files) => runScan('auto', files, 'auto')}
+          />
+          {isEdit ? (
+            <Button danger icon={<DeleteOutlined />} onClick={handleDeleteClick} loading={deleteMutation.isPending}>
+              Xóa thuyền viên
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="sf-layout">
@@ -806,6 +940,8 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           </div>
         </Form>
       </div>
+     </ScanContext.Provider>
+     </AiMarksContext.Provider>
     </ChangedContext.Provider>
   )
 }

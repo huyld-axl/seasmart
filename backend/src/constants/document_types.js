@@ -50,6 +50,33 @@ const DOC_TYPES = {
       f('sex', 'Giới tính', 'Sex', { half: true }),
       f('issuedOn', 'Ngày cấp', 'Date of issue', { half: true, date: true, target: 'passport_issued_date' }),
       f('valid', 'Có giá trị đến', 'Date of expiry', { half: true, date: true }),
+      f('pob', 'Nơi sinh', 'Place of birth', { half: true, optional: true }),
+      f('nat', 'Quốc tịch', 'Nationality', { half: true, optional: true }),
+    ],
+  },
+  // Căn cước công dân: chỉ dùng cho nút quét ở form thêm thuyền viên (không đi qua duyệt giấy).
+  national_id: {
+    label: 'Căn cước công dân',
+    title: ['CĂN CƯỚC CÔNG DÂN', 'Citizen Identity Card'],
+    fields: [
+      f('no', 'Số', 'No.'),
+      f('name', 'Họ và tên', 'Full name'),
+      f('dob', 'Ngày sinh', 'Date of birth', { half: true, date: true }),
+      f('sex', 'Giới tính', 'Sex', { half: true }),
+      f('origin', 'Quê quán', 'Place of origin', { optional: true }),
+      f('residence', 'Nơi thường trú', 'Place of residence', { optional: true }),
+      f('issuedOn', 'Ngày cấp', 'Date of issue', { half: true, date: true, optional: true }),
+      f('issuedPlace', 'Nơi cấp', 'Place of issue', { half: true, optional: true }),
+    ],
+  },
+  // Bằng tốt nghiệp phổ thông / trung cấp / cao đẳng / đại học: chỉ dùng cho nút quét ở form.
+  diploma: {
+    label: 'Bằng tốt nghiệp',
+    title: ['BẰNG TỐT NGHIỆP', 'Diploma'],
+    fields: [
+      f('level', 'Trình độ', 'Level'),
+      f('school', 'Trường', 'Institution'),
+      f('major', 'Chuyên ngành', 'Major', { optional: true }),
     ],
   },
   certificate: {

@@ -1,4 +1,4 @@
-// Điều hướng của khung app (UI Kit, tab Màn hình): sidebar 3 nhóm (`group`, ngăn bằng đường kẻ), mục có trang con thì hiện hàng tab dưới topbar.
+// Điều hướng của khung app (UI Kit, tab Màn hình): sidebar 3 nhóm (`group`, ngăn bằng đường kẻ), mục có trang con thì trang con hiện thành menu con thụt vào dưới mục cha.
 // `match`: các tiền tố đường dẫn làm mục sáng lên. `tabs`: trang con của mục.
 
 export const NAV_GROUP_LABELS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
@@ -21,7 +21,6 @@ export const NAV_SECTIONS = [
       { to: '/master-data/cert', label: 'Chứng chỉ' },
       { to: '/master-data/vessel', label: 'Loại tàu' },
       { to: '/master-data/contract', label: 'Loại hợp đồng' },
-      { to: '/master-data/course', label: 'Loại khóa học' },
       { to: '/master-data/port', label: 'Cảng biển' },
       { to: '/master-data/country', label: 'Quốc gia' },
     ],
@@ -32,24 +31,13 @@ export const NAV_SECTIONS = [
     label: 'Quản trị',
     icon: 'shield',
     to: '/admin/users',
-    match: ['/admin', '/training-centers', '/courses', '/messages'],
-    tabs: [
-      { to: '/admin/users', label: 'Tài khoản' },
-      { to: '/training-centers', label: 'Trung tâm đào tạo' },
-      { to: '/courses', label: 'Khóa học' },
-      { to: '/messages', label: 'Tin nhắn' },
-    ],
+    match: ['/admin'],
   },
 ]
 
-// Trung tâm đào tạo chỉ thấy khóa học và tin nhắn của mình.
-export const TRAINING_CENTER_SECTIONS = [
-  { key: 'courses', label: 'Khóa học', icon: 'book', to: '/courses', match: ['/courses'] },
-  { key: 'messages', label: 'Tin nhắn', icon: 'message', to: '/messages', match: ['/messages'] },
-]
-
-export function sectionsFor(role) {
-  return role === 'training_center' ? TRAINING_CENTER_SECTIONS : NAV_SECTIONS
+// Người dùng đều là môi giới: mọi vai trò thấy cùng một sidebar.
+export function sectionsFor() {
+  return NAV_SECTIONS
 }
 
 const startsWithPath = (pathname, prefix) => pathname === prefix || pathname.startsWith(prefix + '/')

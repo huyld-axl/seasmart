@@ -16,6 +16,8 @@
 .fl-tile .anticon { font-size: 18px; }
 .fl-tile--lg { width: 64px; height: 64px; border-radius: 16px; font-size: 20px; }
 .fl-tile--lg .anticon { font-size: 30px; }
+.fl-tile--img { overflow: hidden; background: #fff; border: 1px solid var(--border); }
+.fl-tile--img img { width: 100%; height: 100%; object-fit: contain; }
 .fl-who { display: flex; align-items: center; gap: 12px; min-width: 240px; }
 .fl-pill { display: inline-flex; justify-self: start; align-items: center; height: 22px; margin-top: 4px; padding: 0 8px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral); font-size: 12px; font-weight: 500; white-space: nowrap; }
 

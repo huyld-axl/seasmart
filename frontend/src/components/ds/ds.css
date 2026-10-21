@@ -342,7 +342,7 @@
 .ds-panel__heading { min-width: 0; }
 .ds-panel__title { margin: 0; font-size: 18px; font-weight: 600; line-height: 28px; }
 .ds-panel__desc { margin: 2px 0 0; color: var(--muted); font-size: 14px; font-weight: 400; text-wrap: pretty; }
-.ds-panel__foot { display: flex; justify-content: flex-end; gap: 8px; }
+.ds-panel__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
 /* ---------- Toast ---------- */
 .ds-toast.ant-notification-notice { width: auto; max-width: min(440px, calc(100vw - 32px)); padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-popover); }
@@ -386,10 +386,11 @@
 .ant-table-wrapper .ant-table-thead > tr > th::before { display: none; }
 /* Cột thao tác: dính mép phải, kẻ trái tách khỏi dữ liệu. */
 .ant-table-wrapper .ds-col-actions { border-inline-start: 1px solid var(--border) !important; }
-.ds-row-actions { display: inline-flex; gap: 4px; }
-.ds-row-actions .ant-btn { color: var(--foreground); }
-.ds-row-actions .ant-btn:hover { color: var(--primary) !important; border-color: var(--primary) !important; }
-.ds-row-actions__slot { width: 24px; }
+.ds-row-actions { display: inline-flex; align-items: center; gap: 2px; }
+.ds-row-actions .ant-btn { width: 28px; height: 28px; padding: 0; color: var(--muted); }
+.ds-row-actions .ant-btn:not(.ant-btn-dangerous):hover { background: var(--item-hover) !important; color: var(--primary) !important; }
+.ds-row-actions .ant-btn-dangerous { color: var(--ant-color-error, #d92d20); }
+.ds-row-actions__slot { width: 28px; }
 .ds-card .ant-table-wrapper .ant-table,
 .ds-card .ant-table-wrapper .ant-table-container,
 .ds-card .ant-table-wrapper .ant-table-content,
@@ -551,3 +552,26 @@
 .ds-card--fixed .ant-table-wrapper .ant-table-body { overflow-y: auto !important; }
 /* Chiều cao dòng lẻ pixel (72.8px) làm làm tròn scrollHeight dư 1px và hiện thanh cuộn thừa: chừa 1px đệm. */
 .ds-card--fixed .ant-table-wrapper .ant-table-body { padding-bottom: 1px; }
+
+/* ---------- Nút quét giấy tờ và dòng tóm tắt AI điền (ScanButton, AutofillBanner) ---------- */
+.ds-scan .ds-scan-icon { color: var(--primary); flex: none; }
+.ds-scan--auto .ds-scan-icon { color: currentColor; }
+.ds-scan-done { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 500; }
+.ds-aibanner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 18px; padding: 10px 12px; border: 1px solid var(--primary); border-radius: var(--radius-md); background: var(--primary-light); font-size: 13px; }
+.ds-aibanner > svg { flex: none; color: var(--primary); }
+.ds-aibanner__text { flex: 1 1 240px; min-width: 0; margin: 0; }
+.ds-aibanner__clear { padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-weight: 500; cursor: pointer; }
+.ds-aibanner__clear:hover { text-decoration: underline; }
+/* Nhãn "AI" nằm trong ô vừa được điền. */
+.ds-aitag { display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 6px; background: var(--primary); color: var(--primary-fg, #fff); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+.ds-aitag--warn { background: var(--warning); }
+
+/* Ô logo công ty (LogoField) */
+.ds-logo { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 14px; border: 1px dashed var(--border-strong); border-radius: var(--radius-md); background: var(--surface-hover); }
+.ds-logo.is-dragging { border-color: var(--primary); background: var(--primary-light); }
+.ds-logo__frame { display: grid; flex-shrink: 0; place-items: center; width: 72px; height: 72px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); font-size: 12px; }
+.ds-logo__frame img { width: 100%; height: 100%; object-fit: contain; }
+.ds-logo__text { display: grid; flex: 1; gap: 2px; min-width: 200px; font-size: 13px; color: var(--muted); }
+.ds-logo__text b { color: var(--foreground); font-weight: 600; }
+.ds-logo__error { color: var(--danger, #c0392b); }
+.ds-logo__actions { display: flex; gap: 8px; }

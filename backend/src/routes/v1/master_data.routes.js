@@ -32,7 +32,6 @@ const TABLE_COLUMNS = {
   vessel_type: ['code', 'name_vi', 'name_en'],
   country: ['code', 'name_vi', 'name_en'],
   contract_type: ['code', 'name_vi', 'name_en'],
-  course_type: ['code', 'name_vi', 'name_en', 'certificate_type_id'],
 }
 
 function getAllowedCols(table, body) {
@@ -232,7 +231,6 @@ async function masterDataRoutes(fastify) {
   fastify.register(makeCrud('vessel_type', 'name_vi'), { prefix: '/vessel-types' })
   fastify.register(makeCrud('country', 'name_vi'), { prefix: '/countries' })
   fastify.register(makeCrud('contract_type', 'name_vi'), { prefix: '/contract-types' })
-  fastify.register(makeCrud('course_type', 'name_vi'), { prefix: '/course-types' })
   fastify.register(portRoutes, { prefix: '/ports' })
 }
 

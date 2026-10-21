@@ -16,18 +16,7 @@ function adminOnly(fastify) {
   }
 }
 
-function authRequired(fastify) {
-  return { onRequest: [fastify.authenticate] }
-}
-
 async function usersRoutes(fastify) {
-  // GET /api/v1/users/search?q=... — for messaging user picker (all roles)
-  fastify.get('/search', authRequired(fastify), async (request) => {
-    const q = request.query.q || ''
-    const list = await userService.searchUsers(q)
-    return { data: list }
-  })
-
   // GET /api/v1/users
   fastify.get(
     '/',

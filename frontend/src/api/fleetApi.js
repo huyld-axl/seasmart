@@ -17,3 +17,14 @@ export const vesselApi = {
   service: (id) => api.get(`/admin/master/vessels/${id}/service`).then((r) => r.data),
 }
 export const shipOwnerApi = crud('ship-owners')
+
+// Logo công ty đối tác: ảnh cần token nên lấy dạng blob, tải lên bằng multipart field "file".
+export const shipOwnerLogoApi = {
+  get: (id) => api.get(`/admin/master/ship-owners/${id}/logo`, { responseType: 'blob' }).then((r) => r.data),
+  upload: (id, file) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post(`/admin/master/ship-owners/${id}/logo`, form).then((r) => r.data)
+  },
+  remove: (id) => api.delete(`/admin/master/ship-owners/${id}/logo`).then((r) => r.data),
+}

@@ -1,5 +1,6 @@
 const { documentService } = require('../../services/document.service')
 const documentReader = require('../../services/document_reader.service')
+const documentScan = require('../../services/document_scan.service')
 const ai = require('../../services/ai')
 const { MAX_FILE_BYTES } = require('../../constants/document_types')
 
@@ -24,6 +25,14 @@ async function documentRoutes(fastify) {
     uploads: await documentService.listUploads(request.params.seafarerId),
     data: await documentService.list(request.params.seafarerId),
   }))
+
+  // Quét nhanh một tệp để điền form: multipart gồm `file` và `kind` (auto | cccd | passport | seaman_book | diploma). Không lưu gì.
+  fastify.post('/scan', guard, async (request) => {
+    const part = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })
+    if (!part) throw { statusCode: 400, message: 'Chưa chọn tệp' }
+    const kind = part.fields?.kind?.value || 'auto'
+    return documentScan.scan(part, kind)
+  })
 
   fastify.post('/seafarer/:seafarerId', { ...guard, schema: { params: seafarerParams } }, async (request, reply) => {
     const file = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })

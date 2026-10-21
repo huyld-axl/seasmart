@@ -386,10 +386,11 @@
 .ant-table-wrapper .ant-table-thead > tr > th::before { display: none; }
 /* Cột thao tác: dính mép phải, kẻ trái tách khỏi dữ liệu. */
 .ant-table-wrapper .ds-col-actions { border-inline-start: 1px solid var(--border) !important; }
-.ds-row-actions { display: inline-flex; gap: 4px; }
-.ds-row-actions .ant-btn { color: var(--foreground); }
-.ds-row-actions .ant-btn:hover { color: var(--primary) !important; border-color: var(--primary) !important; }
-.ds-row-actions__slot { width: 24px; }
+.ds-row-actions { display: inline-flex; align-items: center; gap: 2px; }
+.ds-row-actions .ant-btn { width: 28px; height: 28px; padding: 0; color: var(--muted); }
+.ds-row-actions .ant-btn:not(.ant-btn-dangerous):hover { background: var(--item-hover) !important; color: var(--primary) !important; }
+.ds-row-actions .ant-btn-dangerous { color: var(--ant-color-error, #d92d20); }
+.ds-row-actions__slot { width: 28px; }
 .ds-card .ant-table-wrapper .ant-table,
 .ds-card .ant-table-wrapper .ant-table-container,
 .ds-card .ant-table-wrapper .ant-table-content,

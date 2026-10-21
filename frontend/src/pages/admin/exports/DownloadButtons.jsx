@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { Button, Dropdown } from 'antd'
+import { Button, Dropdown, Tooltip } from 'antd'
 import { DownloadOutlined, DownOutlined, FileExcelOutlined, FilePdfOutlined, FolderOutlined } from '@ant-design/icons'
 import { exportApi } from '../../../api/exportApi'
 import useToast from '../../../components/ds/useToast'
@@ -17,7 +17,8 @@ function useDownload(request, fallbackName) {
 }
 
 // Tải cả bộ thành một thư mục (.zip): PDF, Excel, hoặc cả hai.
-export function PackDownload({ pack, type = 'default', size, disabled, label = 'Tải cả bộ' }) {
+// `iconOnly`: nút vuông chỉ có biểu tượng, cùng kiểu với RowActions (dùng trong cột Thao tác).
+export function PackDownload({ pack, type = 'default', size, disabled, label = 'Tải cả bộ', iconOnly }) {
   const download = useDownload((format, gridlines) => exportApi.download(pack.id, format, gridlines), () => `${pack.code}.zip`)
   const items = [
     { key: 'all', icon: <FolderOutlined />, label: 'PDF và Excel' },
@@ -27,9 +28,15 @@ export function PackDownload({ pack, type = 'default', size, disabled, label = '
   return (
     <span onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()} role="presentation">
       <Dropdown trigger={['click']} placement="bottomRight" disabled={disabled || download.isPending} menu={{ items, onClick: ({ key }) => download.mutate(key) }}>
-        <Button type={type} size={size} icon={<DownloadOutlined />} loading={download.isPending} aria-label={`${label} ${pack.code} của ${pack.seafarer_name}`}>
-          {download.isPending ? 'Đang tạo file…' : label} {!download.isPending && <DownOutlined aria-hidden />}
-        </Button>
+        {iconOnly ? (
+          <Tooltip title={download.isPending ? 'Đang tạo file…' : label}>
+            <Button type="text" size="small" icon={<DownloadOutlined />} loading={download.isPending} aria-label={`${label} ${pack.code} của ${pack.seafarer_name}`} />
+          </Tooltip>
+        ) : (
+          <Button type={type} size={size} icon={<DownloadOutlined />} loading={download.isPending} aria-label={`${label} ${pack.code} của ${pack.seafarer_name}`}>
+            {download.isPending ? 'Đang tạo file…' : label} {!download.isPending && <DownOutlined aria-hidden />}
+          </Button>
+        )}
       </Dropdown>
     </span>
   )

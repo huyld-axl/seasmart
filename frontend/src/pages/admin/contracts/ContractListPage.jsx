@@ -139,17 +139,9 @@ export default function ContractListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-page__head">
-        <div>
-          <h1 className="ds-page__title">Hợp đồng</h1>
-          <p className="ds-page__desc">Hợp đồng tạo từ vị trí của chuyến tàu. Nháp và bị từ chối thì sửa được; chờ duyệt và hiệu lực thì khoá.</p>
-        </div>
-      </div>
-      <div className="ds-toolbar">
-        <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
-      </div>
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
+          <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear

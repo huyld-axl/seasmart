@@ -35,9 +35,13 @@
 
 .app-shell__nav {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 4px;
+  min-height: 0;
   padding: 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 
 .app-shell__nav-item {
@@ -96,15 +100,54 @@
 }
 
 .app-shell__nav-item:focus-visible,
-.app-shell__tab:focus-visible,
 .app-shell__icon-btn:focus-visible,
 .app-shell__user:focus-visible {
   outline: 2px solid var(--ring-focus, var(--primary));
   outline-offset: 2px;
 }
 
-.app-shell__sider--collapsed .app-shell__nav-label {
+.app-shell__sider--collapsed .app-shell__nav-label,
+.app-shell__sider--collapsed .app-shell__nav-chev {
   display: none;
+}
+
+/* Mục cha có trang con: không tô nền (nền chỉ dành cho trang đang xem), chữ đậm khi đang ở phân hệ đó. */
+.app-shell__nav-item--parent[data-active] {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.app-shell__sider--collapsed .app-shell__nav-item--parent[data-active] {
+  background: var(--secondary);
+}
+
+.app-shell__nav-chev {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px !important;
+  transition: transform 0.15s;
+}
+
+.app-shell__nav-item--parent[aria-expanded='true'] .app-shell__nav-chev {
+  transform: rotate(90deg);
+}
+
+.app-shell__subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: -2px 0 4px 20px;
+  padding-left: 9px;
+  border-left: 1px solid var(--border);
+}
+
+.app-shell__nav-item--sub {
+  height: 36px;
+}
+
+.app-shell__title-parent {
+  color: var(--muted);
+  font-weight: 400;
 }
 
 .app-shell__main {
@@ -207,50 +250,6 @@
 .app-shell__user-caret {
   color: var(--muted);
   font-size: 12px;
-}
-
-/* Trang con của mục Danh mục, Quản trị: hàng tab gạch chân dưới topbar. */
-.app-shell__tabs {
-  display: flex;
-  gap: 4px;
-  padding: 0 16px;
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  scrollbar-width: none;
-}
-
-.app-shell__tab {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  height: 44px;
-  padding: 0 12px;
-  color: var(--muted);
-  font-size: 14px;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.app-shell__tab:hover {
-  color: var(--foreground);
-}
-
-.app-shell__tab[aria-current='page'] {
-  color: var(--foreground);
-  font-weight: 500;
-}
-
-.app-shell__tab[aria-current='page']::after {
-  content: '';
-  position: absolute;
-  right: 12px;
-  bottom: 0;
-  left: 12px;
-  height: 2px;
-  border-radius: 2px 2px 0 0;
-  background: var(--foreground);
 }
 
 .app-shell__content {

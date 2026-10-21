@@ -1,4 +1,4 @@
-// Điều hướng của khung app (UI Kit, tab Màn hình): sidebar 3 nhóm (`group`, ngăn bằng đường kẻ), mục có trang con thì hiện hàng tab dưới topbar.
+// Điều hướng của khung app (UI Kit, tab Màn hình): sidebar 3 nhóm (`group`, ngăn bằng đường kẻ), mục có trang con thì trang con hiện thành menu con thụt vào dưới mục cha.
 // `match`: các tiền tố đường dẫn làm mục sáng lên. `tabs`: trang con của mục.
 
 export const NAV_GROUP_LABELS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
@@ -22,7 +22,6 @@ export const NAV_SECTIONS = [
       { to: '/master-data/cert', label: 'Chứng chỉ', perm: 'catalog.view' },
       { to: '/master-data/vessel', label: 'Loại tàu', perm: 'catalog.view' },
       { to: '/master-data/contract', label: 'Loại hợp đồng', perm: 'catalog.view' },
-      { to: '/master-data/course', label: 'Loại khóa học', perm: 'catalog.view' },
       { to: '/master-data/port', label: 'Cảng biển', perm: 'catalog.view' },
       { to: '/master-data/country', label: 'Quốc gia', perm: 'catalog.view' },
     ],
@@ -33,13 +32,10 @@ export const NAV_SECTIONS = [
     label: 'Quản trị',
     icon: 'shield',
     to: '/admin/users',
-    match: ['/admin', '/training-centers', '/courses', '/messages'],
+    match: ['/admin'],
     tabs: [
       { to: '/admin/users', label: 'Tài khoản', perm: 'account.view' },
       { to: '/admin/roles', label: 'Vai trò và quyền', perm: 'role.manage' },
-      { to: '/training-centers', label: 'Trung tâm đào tạo', perm: 'training.view' },
-      { to: '/courses', label: 'Khóa học', perm: 'training.view' },
-      { to: '/messages', label: 'Tin nhắn', perm: 'message.view' },
     ],
   },
 ]

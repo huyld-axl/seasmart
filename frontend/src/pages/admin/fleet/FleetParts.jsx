@@ -15,10 +15,10 @@ export const ShipSvg = () => (
 )
 
 // Ô đầu dòng: tàu là hình tàu, đối tác là hai chữ đầu của tên.
-export function FleetTile({ text, large }) {
+export function FleetTile({ text, large, src }) {
   return (
-    <span className={`fl-tile${large ? ' fl-tile--lg' : ''}`} aria-hidden="true">
-      {text || <Icon component={ShipSvg} />}
+    <span className={`fl-tile${large ? ' fl-tile--lg' : ''}${src ? ' fl-tile--img' : ''}`} aria-hidden="true">
+      {src ? <img src={src} alt="" /> : text || <Icon component={ShipSvg} />}
     </span>
   )
 }

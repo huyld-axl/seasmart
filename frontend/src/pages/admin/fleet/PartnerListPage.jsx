@@ -4,7 +4,7 @@ import { Button, Grid, Input, Skeleton, Table } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { shipOwnerApi } from '../../../api/fleetApi'
-import { useFleetList } from '../../../hooks/useFleet'
+import { useFleetList, usePartnerLogo } from '../../../hooks/useFleet'
 import { useCan } from '../../../hooks/usePermission'
 import { initialsOfName } from './fleetView'
 import { FleetTile } from './FleetParts'
@@ -19,12 +19,12 @@ const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
 
 function PartnerCell({ row }) {
+  const logo = usePartnerLogo(row)
   return (
     <span className="fl-who">
-      <FleetTile text={initialsOfName(row.company_name)} />
+      <FleetTile text={initialsOfName(row.company_name)} src={logo} />
       <span className="ds-cell2">
         <span className="ds-cell2__main">{row.company_name}</span>
-        <span className="ds-cell2__sub ds-mono">{row.code}</span>
         {Number(row.is_active) === 0 ? <span className="fl-pill">Ngừng hợp tác</span> : null}
       </span>
     </span>

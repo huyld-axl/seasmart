@@ -36,6 +36,7 @@ import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
 import PermissionCheck from '../components/ds/PermissionCheck'
 import { SegmentedPick } from './admin/fleet/FleetParts'
+import LogoField from '../components/ds/LogoField'
 import ScanButton from '../components/ds/ScanButton'
 import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
@@ -176,7 +177,7 @@ const NAV_ITEMS = [
   { key: 'documents', icon: <FileTextOutlined />, label: 'Tài liệu' },
   { key: 'seafarers', icon: <TeamOutlined />, label: 'Thuyền viên' },
   { key: 'exports', icon: <SendOutlined />, label: 'Bản xuất' },
-  { key: 'catalog', icon: <DatabaseOutlined />, label: 'Danh mục' },
+  { key: 'catalog', icon: <DatabaseOutlined />, label: 'Danh mục', children: [{ key: 'cert', label: 'Chứng chỉ' }, { key: 'vessel-type', label: 'Loại tàu' }, { key: 'port', label: 'Cảng biển' }] },
   { key: 'admin', icon: <SafetyCertificateOutlined />, label: 'Quản trị' },
 ]
 
@@ -696,6 +697,16 @@ export default function DesignSystemPage() {
         </div>
       </Section>
 
+      <Section id="logo-cong-ty" title="Ô logo công ty">
+        <div className="dsp-stack">
+          <p className="dsp-note">Kéo thả hoặc bấm chọn một ảnh logo JPG / PNG, tối đa 2 MB. Logo chỉ tải lên khi bấm lưu form.</p>
+          <div className="ds-toggle-grid">
+            <Demo label="Chưa có logo"><LogoField onPick={() => {}} /></Demo>
+            <Demo label="Lỗi"><LogoField error="Logo lớn hơn 2 MB, chọn ảnh nhỏ hơn" onPick={() => {}} /></Demo>
+          </div>
+        </div>
+      </Section>
+
       <Section id="quet-giay-to" title="Nút quét giấy tờ và dòng AI điền">
         <div className="dsp-stack">
           <p className="dsp-note">Nút chính “Tự điền từ giấy tờ” nhận nhiều tệp, AI tự nhận loại. Nút nhỏ “Quét …” nằm ở đầu khối đúng loại giấy. Ô vừa điền có nhãn AI trong ô và dòng tóm tắt đầu khối; chỉ điền ô trống, ô đã có dữ liệu thì hỏi trước khi ghi đè.</p>
@@ -754,7 +765,7 @@ export default function DesignSystemPage() {
       <Section id="sidebar" title="Mục sidebar">
         <div className="dsp-sidebar">
           <div className="dsp-sidebar__head"><ProductBrand /></div>
-          <Menu mode="inline" selectedKeys={['seafarers']} items={NAV_ITEMS} />
+          <Menu mode="inline" selectedKeys={['cert']} defaultOpenKeys={['catalog']} items={NAV_ITEMS} />
         </div>
       </Section>
 

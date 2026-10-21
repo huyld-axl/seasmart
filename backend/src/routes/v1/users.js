@@ -10,12 +10,6 @@ function guard(fastify, perm) {
 }
 
 async function usersRoutes(fastify) {
-  // GET /api/v1/users/search?q=... — ô chọn người nhận tin nhắn
-  fastify.get('/search', guard(fastify, 'message.view'), async (request) => {
-    const list = await userService.searchUsers(request.query.q || '')
-    return { data: list }
-  })
-
   // GET /api/v1/users
   fastify.get('/', { ...guard(fastify, 'account.view'), schema: listUsersQuerySchema }, async (request) => {
     const { role_id, is_active, email, page, limit } = request.query

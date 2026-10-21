@@ -29,8 +29,6 @@ function getNavigatePath(item) {
     case 'MEDICAL_EXPIRY':
     case 'CONTRACT_END':
       return `/seafarers/${item.ref_id}`
-    case 'ENROLLMENT_RESULT':
-      return `/courses/${item.ref_id}`
     default:
       return `/seafarers/${item.ref_id}`
   }

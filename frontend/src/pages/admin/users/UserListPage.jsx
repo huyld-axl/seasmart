@@ -154,12 +154,6 @@ export default function UserListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-page__head">
-        <div>
-          <h1 className="ds-page__title">Tài khoản</h1>
-          <p className="ds-page__desc">Ai đăng nhập được vào MCAH và với vai trò gì.</p>
-        </div>
-      </div>
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
           <Input

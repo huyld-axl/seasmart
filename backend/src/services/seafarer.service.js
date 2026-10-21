@@ -171,7 +171,7 @@ function sniffImage(buffer) {
 }
 
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, available_for_training, tab, ownerId }) {
+  async list({ page = 1, limit = 20, search, status, rank_id, tab, ownerId }) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
@@ -194,10 +194,6 @@ const seafarerService = {
     if (rank_id) {
       where.push('s.current_rank_id = ?')
       params.push(rank_id)
-    }
-    // TASK-B5: chỉ thuyền viên sẵn sàng cho đào tạo (đang ở bờ)
-    if (available_for_training === 'true') {
-      where.push('s.status = \'AVAILABLE\'')
     }
 
     // Số đếm của từng tab (màn A1) tính trên bộ lọc hiện tại, trước khi lọc theo tab.

@@ -15,10 +15,6 @@ import SeafarerListPage from './pages/admin/SeafarerListPage'
 import SeafarerDetailPage from './pages/admin/SeafarerDetailPage'
 import SeafarerImportPage from './pages/admin/SeafarerImportPage'
 import SeafarerFormPage from './pages/admin/SeafarerFormPage'
-import TrainingCenterListPage from './pages/admin/TrainingCenterListPage'
-import TrainingCenterDetailPage from './pages/admin/TrainingCenterDetailPage'
-import CourseListPage from './pages/admin/CourseListPage'
-import CourseDetailPage from './pages/admin/CourseDetailPage'
 import MasterSubPage from './pages/admin/MasterSubPage'
 import VesselListPage from './pages/admin/fleet/VesselListPage'
 import VesselDetailPage from './pages/admin/fleet/VesselDetailPage'
@@ -32,7 +28,6 @@ import VoyageDetailPage from './pages/admin/voyages/VoyageDetailPage'
 import ContractListPage from './pages/admin/contracts/ContractListPage'
 import ContractFormPage from './pages/admin/contracts/ContractFormPage'
 import ContractDetailPage from './pages/admin/contracts/ContractDetailPage'
-import MessagingPage from './pages/admin/MessagingPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
@@ -115,16 +110,6 @@ function AppRoutes() {
         <Route path="/exports" element={guard('export.view', <ExportListPage />)} />
         <Route path="/exports/new" element={guard('export.create', <PackCreatePage />)} />
         <Route path="/exports/:packId" element={guard('export.view', <PackDetailPage />)} />
-        <Route
-          path="/training-centers"
-          element={guard('training.view', <TrainingCenterListPage />)}
-        />
-        <Route
-          path="/training-centers/:id"
-          element={guard('training.view', <TrainingCenterDetailPage />)}
-        />
-        <Route path="/courses" element={guard('training.view', <CourseListPage />)} />
-        <Route path="/courses/:id" element={guard('training.view', <CourseDetailPage />)} />
         <Route path="/vessels" element={guard('vessel.view', <VesselListPage />)} />
         <Route path="/vessels/new" element={guard('vessel.create', <VesselFormPage />)} />
         <Route path="/vessels/:id" element={guard('vessel.view', <VesselDetailPage />)} />
@@ -149,7 +134,6 @@ function AppRoutes() {
         <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />
         <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
         <Route path="/master-data/:tab" element={guard('catalog.view', <MasterSubPage />)} />
-        <Route path="/messages" element={guard('message.view', <MessagingPage />)} />
         <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
         <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
         <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />

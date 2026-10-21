@@ -144,17 +144,9 @@ export default function VoyageListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-page__head">
-        <div>
-          <h1 className="ds-page__title">Chuyến tàu</h1>
-          <p className="ds-page__desc">Mỗi chuyến là một lần đưa người lên một tàu, gồm nhiều vị trí. Hợp đồng tạo từ từng vị trí.</p>
-        </div>
-      </div>
-      <div className="ds-toolbar">
-        <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
-      </div>
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
+          <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear

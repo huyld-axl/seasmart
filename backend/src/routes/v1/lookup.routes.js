@@ -9,7 +9,6 @@ const TABLE_CACHE_KEY = {
   vessel_type: 'vessel_types',
   country: 'countries',
   contract_type: 'contract_types',
-  course_type: 'course_types',
   port: 'ports',
 }
 
@@ -43,15 +42,6 @@ async function lookupRoutes(fastify) {
     return getCached('certificate_types', async () => {
       const [rows] = await pool.query(
         'SELECT id, code, name_vi, name_en FROM certificate_type ORDER BY name_vi'
-      )
-      return rows
-    })
-  })
-
-  fastify.get('/course-types', async () => {
-    return getCached('course_types', async () => {
-      const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en FROM course_type ORDER BY name_vi'
       )
       return rows
     })

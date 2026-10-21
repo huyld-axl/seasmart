@@ -17,8 +17,6 @@ const PERMISSION_MODULES = [
   { key: 'voyage', group: 'Vận hành', label: 'Chuyến tàu', scoped: true, permissions: [['view', 'Xem danh sách và chi tiết'], ['create', 'Tạo chuyến tàu'], ['update', 'Sửa chuyến tàu', 'Gồm vị trí dự kiến và budget'], ['delete', 'Xoá chuyến tàu'], ['run', 'Bắt đầu và kết thúc chuyến']] },
   { key: 'contract', group: 'Vận hành', label: 'Hợp đồng', scoped: true, permissions: [['view', 'Xem danh sách và chi tiết'], ['create', 'Tạo hợp đồng'], ['update', 'Sửa hợp đồng nháp'], ['delete', 'Xoá hợp đồng nháp'], ['submit', 'Gửi duyệt và rút lại'], ['approve', 'Duyệt và từ chối']] },
   { key: 'catalog', group: 'Hệ thống', label: 'Danh mục', permissions: [['view', 'Xem danh mục', 'Chứng chỉ, loại tàu, loại hợp đồng, cảng, quốc gia'], ['update', 'Thêm và sửa'], ['delete', 'Xoá']] },
-  { key: 'training', group: 'Hệ thống', label: 'Đào tạo', permissions: [['view', 'Xem trung tâm đào tạo và khóa học'], ['update', 'Thêm và sửa', 'Gồm ghi danh, danh sách chờ'], ['delete', 'Xoá']] },
-  { key: 'message', group: 'Hệ thống', label: 'Tin nhắn', permissions: [['view', 'Xem và gửi tin nhắn']] },
   { key: 'account', group: 'Hệ thống', label: 'Tài khoản', permissions: [['view', 'Xem danh sách tài khoản'], ['update', 'Thêm, sửa, khoá tài khoản', 'Gồm đặt lại mật khẩu và đổi vai trò'], ['delete', 'Xoá tài khoản']] },
   { key: 'role', group: 'Hệ thống', label: 'Vai trò và quyền', permissions: [['manage', 'Sửa vai trò và quyền', 'Chỉ Quản trị viên', { adminOnly: true }]] },
 ]

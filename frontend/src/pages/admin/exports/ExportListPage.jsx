@@ -64,12 +64,13 @@ export default function ExportListPage() {
     { title: 'Ngày', key: 'date', responsive: ['lg'], width: 120, render: (_, pack) => <span className="rv-muted ds-num crew-nowrap">{when(pack.created_at)}</span> },
     actionColumn(
       (pack) => (
-        <span className="ds-row-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-          <RowActions name={`bộ giấy #${pack.code}`} onView={() => open(pack)} />
-          <PackDownload pack={pack} size="small" label="Tải về" />
+        <span onClick={(e) => e.stopPropagation()} role="presentation">
+          <RowActions name={`bộ giấy #${pack.code}`} onView={() => open(pack)} reserveEdit={false}>
+            <PackDownload pack={pack} iconOnly label="Tải về" />
+          </RowActions>
         </span>
       ),
-      { width: 150 }
+      { buttons: 2 }
     ),
   ]
 
@@ -93,7 +94,7 @@ export default function ExportListPage() {
                 <span className="ds-cell2__sub">{stageOf(pack)} · {pack.docs.length} giấy · #{pack.code}{pack.ship_owner_name ? ` · Nộp cho ${pack.ship_owner_name}` : ''} · {when(pack.created_at)}</span>
               </span>
               <span className="ex-row__end">
-                <PackDownload pack={pack} size="small" label="Tải về" />
+                <PackDownload pack={pack} iconOnly label="Tải về" />
               </span>
             </div>
           </li>

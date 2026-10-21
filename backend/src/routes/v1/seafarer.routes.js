@@ -73,14 +73,13 @@ async function seafarerRoutes(fastify) {
             search: { type: 'string' },
             status: { type: 'string' },
             rank_id: { type: 'integer' },
-            available_for_training: { type: 'string' },
             tab: { type: 'string', enum: ['all', 'onboard', 'standby', 'review', 'expiring'] },
           },
         },
       },
     },
     async (request) => {
-      const { page, limit, search, status, rank_id, available_for_training, tab } = request.query
+      const { page, limit, search, status, rank_id, tab } = request.query
       const safePage = Math.max(parseInt(page) || 1, 1)
       const safeLimit = Math.min(parseInt(limit) || 20, MAX_LIST_LIMIT)
       return seafarerService.list(
@@ -90,7 +89,6 @@ async function seafarerRoutes(fastify) {
           search,
           status,
           rank_id: parseInt(rank_id) || null,
-          available_for_training: available_for_training || null,
           tab: tab || null,
           ownerId: ownerIdFor(request, 'seafarer'),
         }

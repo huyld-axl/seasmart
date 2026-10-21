@@ -178,18 +178,6 @@ async function toggleActive(id, actor, db = pool) {
   return getUserById(id, db)
 }
 
-async function searchUsers(q, db = pool) {
-  if (!q || typeof q !== 'string' || q.trim().length === 0) return []
-  const term = `%${q.trim()}%`
-  const [rows] = await db.query(
-    `SELECT u.id, u.email FROM "user" u
-     WHERE u.deleted_at IS NULL AND unaccent(u.email::text) ILIKE unaccent(?)
-     ORDER BY u.email LIMIT 20`,
-    [term]
-  )
-  return rows.map((r) => ({ id: r.id, email: r.email, display_name: r.email }))
-}
-
 module.exports = {
   listUsers,
   getUserById,
@@ -197,6 +185,5 @@ module.exports = {
   updateUser,
   softDeleteUser,
   toggleActive,
-  searchUsers,
   assertCanChange,
 }

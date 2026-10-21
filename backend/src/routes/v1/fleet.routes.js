@@ -1,3 +1,5 @@
+const fs = require('fs')
+const config = require('../../config')
 const pool = require('../../config/db')
 const { fleetService, VESSEL_STATUSES } = require('../../services/fleet.service')
 
@@ -52,7 +54,6 @@ const vesselBody = {
 const ownerBody = {
   type: 'object',
   properties: {
-    code: { type: 'string', minLength: 1, maxLength: 30 },
     company_name: { type: 'string', minLength: 1, maxLength: 200 },
     company_name_en: nullableText(200),
     country_id: nullableInt,
@@ -111,8 +112,24 @@ async function fleetRoutes(fastify) {
       perm: 'partner',
       list: (db, query) => fleetService.listOwners(db, query),
       get: (db, id) => fleetService.getOwnerDetail(db, id),
-      create: { schema: ownerBody, required: ['code', 'company_name'], fn: (db, body) => fleetService.createOwner(db, body) },
+      create: { schema: ownerBody, required: ['company_name'], fn: (db, body) => fleetService.createOwner(db, body) },
       update: { schema: ownerBody, fn: (db, id, body) => fleetService.updateOwner(db, id, body) },
+      extra: (app, { read, idParams: params }) => {
+        const write = { onRequest: [app.authenticate, app.can('partner.update')] }
+        // Logo công ty: GET trả ảnh, POST (multipart, field "file") thay logo, DELETE gỡ logo.
+        app.get('/:id/logo', { ...read, schema: { params } }, async (request, reply) => {
+          const logo = await fleetService.getOwnerLogo(pool, request.params.id)
+          reply.header('Content-Type', logo.mime)
+          reply.header('Cache-Control', 'private, no-cache')
+          return reply.send(fs.createReadStream(logo.path))
+        })
+        app.post('/:id/logo', { ...write, schema: { params } }, async (request) => {
+          const file = await request.file({ limits: { fileSize: config.upload.maxFileSize, files: 1 } })
+          if (!file) throw { statusCode: 400, message: 'Chưa chọn logo' }
+          return fleetService.saveOwnerLogo(pool, request.params.id, file)
+        })
+        app.delete('/:id/logo', { ...write, schema: { params } }, async (request) => fleetService.removeOwnerLogo(pool, request.params.id))
+      },
     }),
     { prefix: '/ship-owners' }
   )

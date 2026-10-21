@@ -4,12 +4,12 @@
 export const NAV_GROUP_LABELS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
 
 export const NAV_SECTIONS = [
-  { key: 'seafarers', group: 1, label: 'Thuyền viên', icon: 'team', to: '/seafarers', match: ['/seafarers'] },
-  { key: 'ship-owners', group: 1, label: 'Đối tác', icon: 'building', to: '/partners', match: ['/partners'] },
-  { key: 'vessels', group: 1, label: 'Tàu', icon: 'ship', to: '/vessels', match: ['/vessels'] },
-  { key: 'exports', group: 1, label: 'Bản xuất', icon: 'send', to: '/exports', match: ['/exports'] },
-  { key: 'voyages', group: 2, label: 'Chuyến tàu', icon: 'anchor', to: '/voyages', match: ['/voyages'] },
-  { key: 'contracts', group: 2, label: 'Hợp đồng', icon: 'file', to: '/contracts', match: ['/contracts'] },
+  { key: 'seafarers', group: 1, label: 'Thuyền viên', icon: 'team', to: '/seafarers', match: ['/seafarers'], perm: 'seafarer.view' },
+  { key: 'ship-owners', group: 1, label: 'Đối tác', icon: 'building', to: '/partners', match: ['/partners'], perm: 'partner.view' },
+  { key: 'vessels', group: 1, label: 'Tàu', icon: 'ship', to: '/vessels', match: ['/vessels'], perm: 'vessel.view' },
+  { key: 'exports', group: 1, label: 'Bản xuất', icon: 'send', to: '/exports', match: ['/exports'], perm: 'export.view' },
+  { key: 'voyages', group: 2, label: 'Chuyến tàu', icon: 'anchor', to: '/voyages', match: ['/voyages'], perm: 'voyage.view' },
+  { key: 'contracts', group: 2, label: 'Hợp đồng', icon: 'file', to: '/contracts', match: ['/contracts'], perm: 'contract.view' },
   {
     key: 'catalog',
     group: 3,
@@ -17,12 +17,13 @@ export const NAV_SECTIONS = [
     icon: 'database',
     to: '/master-data/cert',
     match: ['/master-data'],
+    perm: 'catalog.view',
     tabs: [
-      { to: '/master-data/cert', label: 'Chứng chỉ' },
-      { to: '/master-data/vessel', label: 'Loại tàu' },
-      { to: '/master-data/contract', label: 'Loại hợp đồng' },
-      { to: '/master-data/port', label: 'Cảng biển' },
-      { to: '/master-data/country', label: 'Quốc gia' },
+      { to: '/master-data/cert', label: 'Chứng chỉ', perm: 'catalog.view' },
+      { to: '/master-data/vessel', label: 'Loại tàu', perm: 'catalog.view' },
+      { to: '/master-data/contract', label: 'Loại hợp đồng', perm: 'catalog.view' },
+      { to: '/master-data/port', label: 'Cảng biển', perm: 'catalog.view' },
+      { to: '/master-data/country', label: 'Quốc gia', perm: 'catalog.view' },
     ],
   },
   {
@@ -32,12 +33,23 @@ export const NAV_SECTIONS = [
     icon: 'shield',
     to: '/admin/users',
     match: ['/admin'],
+    tabs: [
+      { to: '/admin/users', label: 'Tài khoản', perm: 'account.view' },
+      { to: '/admin/roles', label: 'Vai trò và quyền', perm: 'role.manage' },
+    ],
   },
 ]
 
-// Người dùng đều là môi giới: mọi vai trò thấy cùng một sidebar.
-export function sectionsFor() {
-  return NAV_SECTIONS
+// Mục và tab người dùng được xem. Mục có tab thì ẩn khi không còn tab nào, `to` trỏ tới tab đầu tiên còn lại.
+export function sectionsFor(user) {
+  const has = (perm) => !perm || (user?.permissions || []).includes(perm)
+  return NAV_SECTIONS.flatMap((section) => {
+    if (section.tabs) {
+      const tabs = section.tabs.filter((tab) => has(tab.perm))
+      return tabs.length && has(section.perm) ? [{ ...section, tabs, to: tabs[0].to }] : []
+    }
+    return has(section.perm) ? [section] : []
+  })
 }
 
 const startsWithPath = (pathname, prefix) => pathname === prefix || pathname.startsWith(prefix + '/')

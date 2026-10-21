@@ -135,7 +135,7 @@ function VoyageForm({ voyage }) {
         navigate(`/voyages/${row.id}`)
       }
     } catch (error) {
-      toast.error(apiErrorText(error, 'Không lưu được. Thử lại sau.'))
+      toast.error(isEdit ? 'Không lưu được chuyến' : 'Không tạo được chuyến', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 

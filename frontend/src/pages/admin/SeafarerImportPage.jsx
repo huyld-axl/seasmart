@@ -1,24 +1,26 @@
 import { useState } from 'react'
-import { Button, Upload, Table, Alert, Progress, message, Space } from 'antd'
+import { Button, Upload, Table, Alert, Progress, Space } from 'antd'
+import useToast from '../../components/ds/useToast'
 import { UploadOutlined, DownloadOutlined, ArrowLeftOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { seafarerApi } from '../../api'
 
 export default function SeafarerImportPage() {
   const navigate = useNavigate()
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [fileList, setFileList] = useState([])
 
   const handleImport = async () => {
-    if (!fileList[0]) return message.warning('Chọn file Excel trước')
+    if (!fileList[0]) return toast.warning('Chưa chọn file Excel', { description: 'Chọn file rồi bấm nhập lại.' })
     setLoading(true)
     setResult(null)
     try {
       const res = await seafarerApi.importFile(fileList[0].originFileObj)
       setResult(res.data)
       setFileList([])
-      message.success(`Import thành công ${res.data.success} thuyền viên`)
+      toast.success(`Đã nhập ${res.data.success} thuyền viên`)
     } catch (err) {
       setResult({ error: err.response?.data?.error || 'Import thất bại' })
       setFileList([])
@@ -38,7 +40,7 @@ export default function SeafarerImportPage() {
       a.click()
       URL.revokeObjectURL(url)
     } catch (err) {
-      message.error(err.response?.data?.error || 'Tải file mẫu thất bại')
+      toast.error('Không tải được file mẫu', { description: err.response?.data?.error })
     } finally {
       setLoading(false)
     }

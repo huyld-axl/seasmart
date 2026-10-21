@@ -14,7 +14,6 @@ import {
   Select,
   Checkbox,
   DatePicker,
-  message,
   Space,
   App,
   Dropdown,
@@ -50,6 +49,7 @@ import { attentionItems, activeContract, headLine, toProfileContracts } from './
 import { useContractList } from '../../hooks/useVoyages'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
+import { useCan } from '../../hooks/usePermission'
 import ProfileOverview from './seafarers/ProfileOverview'
 import ProfileHistory from './seafarers/ProfileHistory'
 import ProfileExports from './seafarers/ProfileExports'
@@ -79,7 +79,7 @@ const PROFILE_TABS = [
   { value: 'history', label: 'Lịch sử' },
 ]
 
-function AttentionSection({ items, reviewTo }) {
+function AttentionSection({ items, reviewTo, canReview }) {
   return (
     <Section title="Cần chú ý">
       {items.length ? (
@@ -92,7 +92,7 @@ function AttentionSection({ items, reviewTo }) {
                 <StatusBadge group="cert" value={item.state} />
               )}
               <span>{item.text}</span>
-              {item.kind === 'review' && <Link to={reviewTo}>Mở màn duyệt</Link>}
+              {item.kind === 'review' && canReview && <Link to={reviewTo}>Mở màn duyệt</Link>}
             </li>
           ))}
         </ul>
@@ -107,9 +107,11 @@ export default function SeafarerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const toast = useToast()
   const { modal } = App.useApp()
   const [tab, setTab] = useState('overview')
   const pageRef = useRef(null)
+  const can = useCan()
 
   const { data: seafarer, isLoading, isError, refetch } = useQuery({
     queryKey: ['seafarer', id],
@@ -134,16 +136,16 @@ export default function SeafarerDetailPage() {
     queryFn: () => certificateApi.list(id).then((r) => r.data),
     enabled: !!seafarer,
   })
-  const { data: contracts } = useContractList({ seafarer_id: Number(id), limit: 100 }, { enabled: !!seafarer })
+  const { data: contracts } = useContractList({ seafarer_id: Number(id), limit: 100 }, { enabled: !!seafarer && can('contract.view') })
 
   const deleteMutation = useMutation({
     mutationFn: () => seafarerApi.remove(id),
     onSuccess: () => {
-      message.success('Đã xóa thuyền viên')
+      toast.success(`Đã xoá thuyền viên ${seafarer?.full_name || ''}`.trim())
       queryClient.invalidateQueries({ queryKey: ['seafarers'] })
       navigate('/seafarers')
     },
-    onError: (e) => message.error(e.response?.data?.error || 'Xóa thất bại'),
+    onError: (e) => toast.error('Không xoá được thuyền viên', { description: e.response?.data?.error }),
   })
 
   function handleDelete() {
@@ -184,11 +186,12 @@ export default function SeafarerDetailPage() {
   const rules = readinessRules({ seafarer, certificates: certList, contracts: contractList, pendingReview: certList.filter((c) => c.status === 'PENDING').length })
   const readiness = readinessLevel(rules)
   const failing = rules.filter((rule) => rule.result !== 'PASS')
+  // [nhãn, hành động, quyền cần có]
   const RULE_ACTIONS = {
-    edit: ['Sửa hồ sơ', () => navigate(`/seafarers/${id}/edit`)],
+    edit: ['Sửa hồ sơ', () => navigate(`/seafarers/${id}/edit`), 'seafarer.update'],
     service: ['Xem đi tàu', () => setTab('service')],
-    review: ['Duyệt', () => navigate(`/seafarers/${id}/review`)],
-    upload: ['Tải giấy tờ lên', () => dropFiles()],
+    review: ['Duyệt', () => navigate(`/seafarers/${id}/review`), 'seafarer.docs'],
+    upload: ['Tải giấy tờ lên', () => dropFiles(), 'seafarer.docs'],
   }
   const READINESS_TEXT = {
     BLOCKED: `Chưa xuất được: ${failing.filter((r) => r.result === 'FAIL').length} điều kiện không đạt.`,
@@ -197,15 +200,18 @@ export default function SeafarerDetailPage() {
   }
   const createPack = () => navigate(`/exports/new?seafarer=${id}`)
   const dropFiles = () => navigate(`/seafarers/${id}/upload`)
+  const moreItems = [
+    ...(can('seafarer.update') ? [{ key: 'edit', icon: <EditOutlined />, label: 'Sửa thông tin' }] : []),
+    ...(can('seafarer.update') && can('seafarer.delete') ? [{ type: 'divider' }] : []),
+    ...(can('seafarer.delete') ? [{ key: 'delete', icon: <DeleteOutlined />, label: 'Xoá thuyền viên', danger: true }] : []),
+  ]
   const moreMenu = {
-    items: [
-      { key: 'edit', icon: <EditOutlined />, label: 'Sửa thông tin' },
-      { type: 'divider' },
-      { key: 'delete', icon: <DeleteOutlined />, label: 'Xoá thuyền viên', danger: true },
-    ],
+    items: moreItems,
     onClick: ({ key }) => (key === 'edit' ? navigate(`/seafarers/${id}/edit`) : handleDelete()),
   }
-  const tabs = PROFILE_TABS.map((item) => ({
+  // Tab Đã xuất cần export.view; phần Hợp đồng ở tab Đi tàu cần contract.view.
+  const TAB_PERM = { exports: 'export.view' }
+  const tabs = PROFILE_TABS.filter((item) => !TAB_PERM[item.value] || can(TAB_PERM[item.value])).map((item) => ({
     ...item,
     count: item.value === 'docs' ? certList.length : null,
   }))
@@ -213,7 +219,7 @@ export default function SeafarerDetailPage() {
   const bodies = {
     overview: (
       <>
-        <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} />
+        <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} canReview={can('seafarer.docs')} />
         <ProfileOverview seafarer={seafarer} seafarerId={id} />
         <WorkSection s={seafarer} />
       </>
@@ -224,7 +230,7 @@ export default function SeafarerDetailPage() {
     service: (
       <>
         <ProfileSeaService seafarerId={id} />
-        <ContractsSection seafarerId={id} />
+        {can('contract.view') ? <ContractsSection seafarerId={id} /> : null}
       </>
     ),
     exports: (
@@ -260,11 +266,15 @@ export default function SeafarerDetailPage() {
           </div>
         </div>
         <div className="crew-head__actions">
-          <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
-            <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending} />
-          </Dropdown>
-          <Button icon={<SendOutlined />} disabled={readiness === 'BLOCKED'} title={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra bên dưới' : undefined} onClick={createPack}>Tạo bộ giấy</Button>
-          <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Tải giấy tờ lên</Button>
+          {moreItems.length > 0 && (
+            <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
+              <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending} />
+            </Dropdown>
+          )}
+          {can('export.create') && (
+            <Button icon={<SendOutlined />} disabled={readiness === 'BLOCKED'} title={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra bên dưới' : undefined} onClick={createPack}>Tạo bộ giấy</Button>
+          )}
+          {can('seafarer.docs') && <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Tải giấy tờ lên</Button>}
         </div>
       </div>
 
@@ -280,13 +290,13 @@ export default function SeafarerDetailPage() {
                     <span>{rule.title}</span>
                     {rule.reason && <span className="rule__reason">{rule.reason}</span>}
                   </span>
-                  {rule.action && <Button size="small" onClick={RULE_ACTIONS[rule.action][1]}>{RULE_ACTIONS[rule.action][0]}</Button>}
+                  {rule.action && (!RULE_ACTIONS[rule.action][2] || can(RULE_ACTIONS[rule.action][2])) && <Button size="small" onClick={RULE_ACTIONS[rule.action][1]}>{RULE_ACTIONS[rule.action][0]}</Button>}
                 </li>
               ))}
             </ul>
           )}
         </div>
-        {readiness === 'READY_IN_SCOPE' && <div className="ds-banner__action"><Button onClick={createPack}>Tạo bộ giấy</Button></div>}
+        {readiness === 'READY_IN_SCOPE' && can('export.create') && <div className="ds-banner__action"><Button onClick={createPack}>Tạo bộ giấy</Button></div>}
       </div>
 
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
@@ -353,10 +363,11 @@ function WorkSection({ s }) {
 
 function CertificatesSection({ seafarerId }) {
   const queryClient = useQueryClient()
+  const toast = useToast()
+  const can = useCan()
   const [editing, setEditing] = useState(null) // null | 'new' | dòng chứng chỉ
   const [certFile, setCertFile] = useState(null)
   const [form] = Form.useForm()
-  const toast = useToast()
 
   const { data, isLoading } = useQuery({
     queryKey: ['certificates', seafarerId],
@@ -374,7 +385,7 @@ function CertificatesSection({ seafarerId }) {
     close()
     queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
   }
-  const failed = (text) => (e) => toast.error(e.response?.data?.error || text)
+  const failed = (text) => (e) => toast.error(text, { description: e.response?.data?.error || 'Thử lại sau ít phút.' })
 
   const saveMutation = useMutation({
     mutationFn: async ({ row, values }) => {
@@ -428,7 +439,7 @@ function CertificatesSection({ seafarerId }) {
   }
 
   async function openSource(cert) {
-    if (!cert.uploadId) return toast.error('Chứng chỉ này không còn bản gốc.')
+    if (!cert.uploadId) return toast.error('Chứng chỉ này không còn bản gốc')
     try {
       const blob = await documentApi.uploadFile(cert.uploadId)
       window.open(URL.createObjectURL(blob), '_blank', 'noopener')
@@ -442,7 +453,7 @@ function CertificatesSection({ seafarerId }) {
   const noExpiry = Form.useWatch('no_expiry', form)
 
   return (
-    <Section title={<>Chứng chỉ {rows.length ? <span className="ds-num">{rows.length}</span> : null}</>} noPad extra={<Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setEditing('new') }}>Thêm chứng chỉ</Button>}>
+    <Section title={<>Chứng chỉ {rows.length ? <span className="ds-num">{rows.length}</span> : null}</>} noPad extra={can('seafarer.update') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setEditing('new') }}>Thêm chứng chỉ</Button> : null}>
       {isLoading ? (
         <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
       ) : rows.length === 0 ? (
@@ -450,7 +461,7 @@ function CertificatesSection({ seafarerId }) {
       ) : (
         <CertificateTable
           certs={toTableCerts(rows)}
-          onEdit={(cert) => startEdit(cert.raw)}
+          onEdit={can('seafarer.update') ? (cert) => startEdit(cert.raw) : undefined}
           onOpenSource={openSource}
         />
       )}

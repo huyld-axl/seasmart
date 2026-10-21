@@ -13,7 +13,7 @@
 
 - **Backend:** Fastify 5 + PostgreSQL 17 (pg pool)
 - **Frontend:** React 19 + Ant Design 6 + React Query 5 + Zustand 5 + Vite 8
-- **Auth:** JWT (`@fastify/jwt`), 5 roles: `admin`, `operator`, `training_center`, `manning_agent`, `seafarer`
+- **Auth:** JWT (`@fastify/jwt`). Người dùng chỉ là nhân viên môi giới. Vai trò và quyền lưu trong DB, kiểm bằng `fastify.can('<mục>.<việc>')`; danh mục quyền ở `backend/src/constants/permissions.js`
 - **Database:** PostgreSQL migrations in `backend/migrations/postgres/`; legacy MySQL SQL files are archival.
 
 ## 2. Architecture
@@ -114,6 +114,7 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 | Bật / tắt một thuộc tính có / không (nồi hơi, lạnh, người thân là liên lạc, bảo lãnh) | `ToggleRow` (`components/ds/ToggleRow.jsx`) | Nút dạng chip bấm bật, checkbox, `Switch` đặt lẻ |
 | Chọn **một** trong vài giá trị | Nhóm nút `ChoiceGroup` (cho phép bỏ chọn) hoặc `SegmentedPick` (luôn có một giá trị) | Radio, nhiều `ToggleRow` thay cho một lựa chọn |
 | Chọn từ danh sách dài | `Select` có tìm kiếm | Ô nhập tự do khi đã có danh mục |
+| Tích quyền trong lưới nhiều cột (ma trận vai trò) | `PermissionCheck` (`components/ds/PermissionCheck.jsx`) | `Checkbox` của antd hay `ToggleRow` trong lưới |
 
 ## 4. API Conventions
 
@@ -141,7 +142,7 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 - Passwords: bcrypt with salt rounds 10
 - Input whitelisting: `pickAllowed()` pattern to strip unexpected fields
 - Rate limiting on auth routes (`@fastify/rate-limit`)
-- JWT tokens for authentication, role-based middleware for authorization
+- JWT tokens for authentication; quyền đọc từ DB mỗi request (`fastify.can`), không tin vai trò trong token
 - **No raw SQL interpolation** — always `pool.query('... WHERE id = ?', [id])`
 - File uploads: validate MIME type and size before processing
 
@@ -152,7 +153,7 @@ Before merging any code, verify:
 - [ ] No hardcoded secrets or credentials
 - [ ] SQL uses parameterized queries (no string interpolation)
 - [ ] Input validated via JSON Schema or `pickAllowed` whitelist
-- [ ] Protected routes have `onRequest: [fastify.authenticate]` + role check
+- [ ] Protected routes have `onRequest: [fastify.authenticate, fastify.can('<mục>.<việc>')]`; mục có phạm vi dữ liệu thì lọc / kiểm bằng `utils/scope.js`
 - [ ] Errors thrown with `{ statusCode, message }` format
 - [ ] No `console.log` left in production code (warnings OK in dev)
 - [ ] Vietnamese UI text consistent with existing patterns

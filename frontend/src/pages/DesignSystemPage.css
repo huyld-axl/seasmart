@@ -29,6 +29,8 @@
 .dsp-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 16px; }
 .dsp-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; }
 .dsp-stack { display: grid; gap: 12px; }
+.dsp-toasts { justify-items: start; align-items: start; padding: 20px; border-radius: var(--radius-lg); background: var(--background); }
+.dsp-rules { display: grid; gap: 4px; padding-left: 18px; }
 .dsp-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 
 .dsp-box { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }

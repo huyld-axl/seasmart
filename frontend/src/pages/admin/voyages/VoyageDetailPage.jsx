@@ -7,6 +7,7 @@ import { EmptyState } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { useVoyage, useVoyageMutations } from '../../../hooks/useVoyages'
+import { useCan } from '../../../hooks/usePermission'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
 import { Crumb, FleetTile } from '../fleet/FleetParts'
@@ -44,6 +45,7 @@ function SumCard({ icon, label, children, sub }) {
 }
 
 export default function VoyageDetailPage() {
+  const can = useCan()
   const { id } = useParams()
   const navigate = useNavigate()
   const { modal } = App.useApp()
@@ -75,7 +77,7 @@ export default function VoyageDetailPage() {
   const planning = voyage.status === 'PLANNING'
   const onboard = voyage.status === 'ONBOARD'
   const ended = voyage.status === 'ENDED'
-  const canDelete = planning && summary.contracts_total === 0
+  const canDelete = planning && summary.contracts_total === 0 && can('voyage.delete')
   const late = voyage.due?.kind === 'LATE' ? voyage.due : null
   const pendingPeople = onboard ? positions.filter((p) => p.contract && NOT_EFFECTIVE.includes(p.contract.status)) : []
   const byStatus = summary.contracts_by_status
@@ -95,7 +97,7 @@ export default function VoyageDetailPage() {
           toast.success(`Đã xoá chuyến ${voyage.code}`)
           navigate('/voyages')
         } catch (error) {
-          toast.error(apiErrorText(error, 'Không xoá được'))
+          toast.error(`Không xoá được chuyến ${voyage.code}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
         }
       },
     })
@@ -148,8 +150,8 @@ export default function VoyageDetailPage() {
       align: 'right',
       render: (_, row) =>
         row.contract ? (
-          <Button type="link" onClick={() => navigate(`/contracts/${row.contract.id}`)}>Mở hợp đồng</Button>
-        ) : ended ? null : (
+          can('contract.view') ? <Button type="link" onClick={() => navigate(`/contracts/${row.contract.id}`)}>Mở hợp đồng</Button> : null
+        ) : ended || !can('contract.create') ? null : (
           <Button type="link" onClick={() => navigate(`/contracts/new?positionId=${row.id}&voyageId=${voyage.id}`)}>Tạo hợp đồng</Button>
         ),
     },
@@ -180,9 +182,9 @@ export default function VoyageDetailPage() {
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending} />
             </Dropdown>
           ) : null}
-          <Button icon={<EditOutlined />} onClick={() => navigate(`/voyages/${voyage.id}/edit`)}>Sửa chuyến</Button>
-          {planning ? <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => setTransition('start')}>Bắt đầu chuyến</Button> : null}
-          {onboard ? <Button type="primary" icon={<StopOutlined />} onClick={() => setTransition('end')}>Kết thúc chuyến</Button> : null}
+          {can('voyage.update') ? <Button icon={<EditOutlined />} onClick={() => navigate(`/voyages/${voyage.id}/edit`)}>Sửa chuyến</Button> : null}
+          {planning && can('voyage.run') ? <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => setTransition('start')}>Bắt đầu chuyến</Button> : null}
+          {onboard && can('voyage.run') ? <Button type="primary" icon={<StopOutlined />} onClick={() => setTransition('end')}>Kết thúc chuyến</Button> : null}
         </div>
       </div>
 
@@ -249,7 +251,7 @@ export default function VoyageDetailPage() {
       <section className="crew-panel">
         <div className="crew-panel__head">
           <h2 className="crew-panel__title">Vị trí dự kiến <span className="vd-count">{positions.length}</span></h2>
-          {ended ? null : <Button type="text" icon={<PlusOutlined />} onClick={() => navigate(`/voyages/${voyage.id}/edit`)}>Thêm vị trí</Button>}
+          {ended || !can('voyage.update') ? null : <Button type="text" icon={<PlusOutlined />} onClick={() => navigate(`/voyages/${voyage.id}/edit`)}>Thêm vị trí</Button>}
         </div>
         <Table rowKey="id" columns={columns} dataSource={positions} pagination={false} scroll={{ x: 'max-content' }} className="vd-table ds-table--tint" />
         <div className="vd-foot">

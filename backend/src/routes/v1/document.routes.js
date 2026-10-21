@@ -4,27 +4,26 @@ const documentScan = require('../../services/document_scan.service')
 const ai = require('../../services/ai')
 const { MAX_FILE_BYTES } = require('../../constants/document_types')
 
-const ROLES = ['admin', 'operator', 'reviewer']
-
-const requireRole = (roles) => async (request, reply) => {
-  if (!roles.includes(request.user?.role)) return reply.code(403).send({ error: 'Không có quyền' })
-}
+const { assertSeafarerInScope, assertChildInScope, assertDocumentsInScope } = require('../../utils/scope')
 const fs = require('fs')
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 const seafarerParams = { type: 'object', required: ['seafarerId'], properties: { seafarerId: { type: 'integer', minimum: 1 } } }
 
 // Giấy tờ AI đọc (A3): /api/v1/documents
 async function documentRoutes(fastify) {
-  const guard = { onRequest: [fastify.authenticate, requireRole(ROLES)] }
+  const guard = { onRequest: [fastify.authenticate, fastify.can('seafarer.view', 'seafarer.docs')] }
 
-  fastify.get('/status', guard, async () => ({ ai_configured: documentReader.isConfigured(), ai: ai.describe() }))
+  fastify.get('/status', { onRequest: [fastify.authenticate] }, async () => ({ ai_configured: documentReader.isConfigured(), ai: ai.describe() }))
 
-  fastify.get('/seafarer/:seafarerId', { ...guard, schema: { params: seafarerParams } }, async (request) => ({
-    ai_configured: documentReader.isConfigured(),
-    ai: ai.describe(),
-    uploads: await documentService.listUploads(request.params.seafarerId),
-    data: await documentService.list(request.params.seafarerId),
-  }))
+  fastify.get('/seafarer/:seafarerId', { ...guard, schema: { params: seafarerParams } }, async (request) => {
+    await assertSeafarerInScope(request, request.params.seafarerId)
+    return {
+      ai_configured: documentReader.isConfigured(),
+      ai: ai.describe(),
+      uploads: await documentService.listUploads(request.params.seafarerId),
+      data: await documentService.list(request.params.seafarerId),
+    }
+  })
 
   // Quét nhanh một tệp để điền form: multipart gồm `file` và `kind` (auto | cccd | passport | seaman_book | diploma). Không lưu gì.
   fastify.post('/scan', guard, async (request) => {
@@ -35,6 +34,7 @@ async function documentRoutes(fastify) {
   })
 
   fastify.post('/seafarer/:seafarerId', { ...guard, schema: { params: seafarerParams } }, async (request, reply) => {
+    await assertSeafarerInScope(request, request.params.seafarerId)
     const file = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })
     if (!file) throw { statusCode: 400, message: 'Chưa chọn tệp' }
     const upload = await documentService.upload(request.params.seafarerId, file, request.user.id)
@@ -42,6 +42,7 @@ async function documentRoutes(fastify) {
   })
 
   fastify.get('/uploads/:id/file', { ...guard, schema: { params: idParams } }, async (request, reply) => {
+    await assertChildInScope(request, 'upload', request.params.id)
     const upload = await documentService.uploadFile(request.params.id)
     reply.header('Content-Type', upload.mime_type)
     reply.header('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(upload.file_name)}`)
@@ -55,6 +56,7 @@ async function documentRoutes(fastify) {
       querystring: { type: 'object', properties: { size: { type: 'string', enum: ['thumb', 'full'], default: 'full' } } },
     },
   }, async (request, reply) => {
+    await assertChildInScope(request, 'upload', request.params.id)
     const file = await documentService.pageImage(request.params.id, request.params.pageNo, request.query.size)
     reply.header('Content-Type', 'image/jpeg')
     reply.header('Cache-Control', 'private, max-age=3600')
@@ -88,14 +90,25 @@ async function documentRoutes(fastify) {
         },
       },
     },
-  }, async (request) => documentService.regroup(request.params.id, request.body.parts))
+  }, async (request) => {
+    await assertChildInScope(request, 'upload', request.params.id)
+    return documentService.regroup(request.params.id, request.body.parts)
+  })
 
-  fastify.post('/uploads/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => documentService.retryUpload(request.params.id))
+  fastify.post('/uploads/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => {
+    await assertChildInScope(request, 'upload', request.params.id)
+    return documentService.retryUpload(request.params.id)
+  })
 
-  fastify.delete('/uploads/:id', { ...guard, schema: { params: idParams } }, async (request) => documentService.removeUpload(request.params.id))
+  fastify.delete('/uploads/:id', { ...guard, schema: { params: idParams } }, async (request) => {
+    await assertChildInScope(request, 'upload', request.params.id)
+    return documentService.removeUpload(request.params.id)
+  })
 
-  fastify.post('/seafarer/:seafarerId/publish', { ...guard, schema: { params: seafarerParams } }, async (request) =>
-    documentService.publish(request.params.seafarerId, request.user.id))
+  fastify.post('/seafarer/:seafarerId/publish', { ...guard, schema: { params: seafarerParams } }, async (request) => {
+    await assertSeafarerInScope(request, request.params.seafarerId)
+    return documentService.publish(request.params.seafarerId, request.user.id)
+  })
 
   fastify.post('/certificates/confirm', {
     ...guard,
@@ -107,11 +120,18 @@ async function documentRoutes(fastify) {
         properties: { ids: { type: 'array', minItems: 1, maxItems: 100, uniqueItems: true, items: { type: 'integer', minimum: 1 } } },
       },
     },
-  }, async (request) => documentService.confirmCertificates(request.body.ids, request.user.id))
+  }, async (request) => {
+    await assertDocumentsInScope(request, request.body.ids)
+    return documentService.confirmCertificates(request.body.ids, request.user.id)
+  })
 
-  fastify.get('/:id', { ...guard, schema: { params: idParams } }, async (request) => documentService.get(request.params.id))
+  fastify.get('/:id', { ...guard, schema: { params: idParams } }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.get(request.params.id)
+  })
 
   fastify.get('/:id/file', { ...guard, schema: { params: idParams } }, async (request, reply) => {
+    await assertChildInScope(request, 'document', request.params.id)
     const doc = await documentService.fileOf(request.params.id)
     reply.header('Content-Type', doc.mime_type)
     reply.header('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(doc.file_name)}`)
@@ -132,7 +152,10 @@ async function documentRoutes(fastify) {
         },
       },
     },
-  }, async (request) => documentService.decide(request.params.id, request.params.key, request.body.action, request.body.value, request.user.id))
+  }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.decide(request.params.id, request.params.key, request.body.action, request.body.value, request.user.id)
+  })
 
   fastify.put('/:id/type', {
     ...guard,
@@ -140,10 +163,15 @@ async function documentRoutes(fastify) {
       params: idParams,
       body: { type: 'object', required: ['docType'], additionalProperties: false, properties: { docType: { type: 'string', maxLength: 40 } } },
     },
-  }, async (request) => documentService.retype(request.params.id, request.body.docType))
+  }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.retype(request.params.id, request.body.docType)
+  })
 
-  fastify.post('/:id/accept-clear', { ...guard, schema: { params: idParams } }, async (request) =>
-    documentService.acceptClear(request.params.id, request.user.id))
+  fastify.post('/:id/accept-clear', { ...guard, schema: { params: idParams } }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.acceptClear(request.params.id, request.user.id)
+  })
 
   fastify.put('/:id/vessel', {
     ...guard,
@@ -158,14 +186,25 @@ async function documentRoutes(fastify) {
         },
       },
     },
-  }, async (request) => documentService.setVessel(request.params.id, request.body))
+  }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.setVessel(request.params.id, request.body)
+  })
 
-  fastify.post('/:id/confirm-owner', { ...guard, schema: { params: idParams } }, async (request) =>
-    documentService.confirmOwner(request.params.id, request.user.id))
+  fastify.post('/:id/confirm-owner', { ...guard, schema: { params: idParams } }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.confirmOwner(request.params.id, request.user.id)
+  })
 
-  fastify.post('/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => documentService.retry(request.params.id))
+  fastify.post('/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.retry(request.params.id)
+  })
 
-  fastify.delete('/:id', { ...guard, schema: { params: idParams } }, async (request) => documentService.remove(request.params.id))
+  fastify.delete('/:id', { ...guard, schema: { params: idParams } }, async (request) => {
+    await assertChildInScope(request, 'document', request.params.id)
+    return documentService.remove(request.params.id)
+  })
 }
 
 module.exports = documentRoutes

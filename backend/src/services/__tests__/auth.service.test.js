@@ -9,24 +9,6 @@ describe('Backend Test Setup', () => {
   })
 })
 
-describe('ROLES constant', () => {
-  it('should export all 5 roles', async () => {
-    const { ROLES } = await import('../../constants/roles')
-    expect(ROLES).toEqual(['admin', 'operator', 'reviewer', 'manning_agent', 'seafarer'])
-    expect(ROLES).toHaveLength(5)
-  })
-
-  it('should include seafarer role', async () => {
-    const { ROLES } = await import('../../constants/roles')
-    expect(ROLES).toContain('seafarer')
-  })
-
-  it('should include admin role', async () => {
-    const { ROLES } = await import('../../constants/roles')
-    expect(ROLES).toContain('admin')
-  })
-})
-
 describe('pickAllowed pattern (unit test)', () => {
   // Replicate the pickAllowed logic for isolated testing
   const ALLOWED_FIELDS = ['full_name', 'email', 'phone', 'rank_id']

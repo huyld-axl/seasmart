@@ -13,6 +13,7 @@ import { STAGES, template } from './packModel'
 import { exportApi } from '../../../api/exportApi'
 import { PackDownload } from './DownloadButtons'
 import useAuthStore from '../../../stores/authStore'
+import { useCan } from '../../../hooks/usePermission'
 import useExportDraft from './useExportDraft'
 import { hasDraft } from './exportDraft'
 import '../seafarers/SeafarerListPage.css'
@@ -34,6 +35,7 @@ export default function ExportListPage() {
   const tableScroll = useListSticky()
   const [confirmDiscard, setConfirmDiscard] = useState(false)
   const userId = useAuthStore((state) => state.user?.id)
+  const can = useCan()
   const { data: draft, savedAt, clearDraft } = useExportDraft(userId)
 
   const query = { search: search.trim() || undefined, limit: 100 }
@@ -78,7 +80,7 @@ export default function ExportListPage() {
   } else if (isLoading) {
     body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 5 }} /></div>
   } else if (!allRows.length && !search.trim()) {
-    body = <EmptyState title="Chưa có bộ giấy tờ nào" description="Tạo bộ giấy theo giai đoạn: tuyển dụng, lên tàu, rời tàu." action={<Button icon={<PlusOutlined />} onClick={() => navigate('/exports/new')}>Tạo bộ giấy tờ</Button>} />
+    body = <EmptyState title="Chưa có bộ giấy tờ nào" description="Tạo bộ giấy theo giai đoạn: tuyển dụng, lên tàu, rời tàu." action={can('export.create') ? <Button icon={<PlusOutlined />} onClick={() => navigate('/exports/new')}>Tạo bộ giấy tờ</Button> : undefined} />
   } else if (!allRows.length) {
     body = <EmptyState title={`Không có bộ giấy nào khớp "${search.trim()}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
   } else if (isMobile) {
@@ -144,9 +146,11 @@ export default function ExportListPage() {
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
           <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder="Tìm thuyền viên, mã bộ" aria-label="Tìm bộ giấy tờ" value={search} onChange={(e) => { setPage(1); setSearch(e.target.value) }} />
-          <span className="ds-toolbar__end">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/exports/new')}>Tạo bộ giấy tờ</Button>
-          </span>
+          {can('export.create') ? (
+            <span className="ds-toolbar__end">
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/exports/new')}>Tạo bộ giấy tờ</Button>
+            </span>
+          ) : null}
         </div>
         {body}
         {allRows.length > 0 && (

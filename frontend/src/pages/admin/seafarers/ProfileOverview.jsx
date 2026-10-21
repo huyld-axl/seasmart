@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import { seafarerApi } from '../../../api'
 import ZaloButton from '../../../components/common/ZaloButton'
 import StatusBadge from '../../../components/ds/StatusBadge'
+import { useCan } from '../../../hooks/usePermission'
 import './SeafarerForm.css'
 
 const date = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : null)
@@ -167,6 +168,7 @@ function Panel({ index, section }) {
 
 // Màn xem hồ sơ: bố cục giống form sửa (ảnh + mục lục bên trái, các khối bên phải) nhưng chỉ đọc.
 export default function ProfileOverview({ seafarer, seafarerId }) {
+  const can = useCan()
   const [active, setActive] = useState('general')
   const { data: contacts, isLoading } = useQuery({
     queryKey: ['seafarer-contacts', seafarerId],
@@ -210,7 +212,7 @@ export default function ProfileOverview({ seafarer, seafarerId }) {
       <div className="sf-sections">
         {isLoading ? <Skeleton active paragraph={{ rows: 6 }} /> : sections.map((s, i) => <Panel key={s.key} index={i} section={s} />)}
         <div>
-          <Link to={`/seafarers/${seafarerId}/edit`}><Button icon={<EditOutlined />}>Sửa hồ sơ</Button></Link>
+          {can('seafarer.update') && <Link to={`/seafarers/${seafarerId}/edit`}><Button icon={<EditOutlined />}>Sửa hồ sơ</Button></Link>}
         </div>
       </div>
     </div>

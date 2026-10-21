@@ -1,8 +1,11 @@
 const pool = require('../../config/db')
 const { seafarerContractService } = require('../../services/seafarer_contract.service')
 const {
-  CONTRACT_STATUSES, VOYAGE_EDITOR_ROLES, CLOSING_DAYS, PAY_DAYS, PAY_MONTH_OFFSETS, HOLIDAY_RULES,
+  CONTRACT_STATUSES, CLOSING_DAYS, PAY_DAYS, PAY_MONTH_OFFSETS, HOLIDAY_RULES,
 } = require('../../constants/voyage_contract')
+const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
+
+const NOT_FOUND = 'Không tìm thấy hợp đồng'
 
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 const id = { type: 'integer', minimum: 1 }
@@ -59,29 +62,34 @@ const updateBody = { type: 'object', required: ['seafarer_id', 'start_date', 'en
 const rejectBody = { type: 'object', required: ['reason'], properties: { reason: { type: 'string', minLength: 1, maxLength: 1000 } } }
 const approveBody = { type: 'object', properties: { move_onboard: { type: 'boolean' } } }
 
-async function requireEditor(request, reply) {
-  if (!VOYAGE_EDITOR_ROLES.includes(request.user?.role)) {
-    return reply.code(403).send({ error: 'Không có quyền' })
-  }
-}
-
 async function seafarerContractRoutes(fastify) {
-  // Hợp đồng chứa số phải thu nội bộ: đọc cũng chỉ cho vai trò nội bộ.
-  const read = { onRequest: [fastify.authenticate, requireEditor] }
-  const write = { onRequest: [fastify.authenticate, requireEditor] }
+  const can = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`contract.${action}`)] })
+  const inScope = (request) => assertRecordInScope(request, 'contract', request.params.id, NOT_FOUND)
 
-  fastify.get('/', { ...read, schema: { querystring: listQuery } }, async (request) => seafarerContractService.list(pool, request.query))
-  fastify.get('/:id', { ...read, schema: { params: idParams } }, async (request) => seafarerContractService.get(pool, request.params.id))
-  fastify.post('/', { ...write, schema: { body: createBody } }, async (request, reply) => {
+  fastify.get('/', { ...can('view'), schema: { querystring: listQuery } }, async (request) =>
+    seafarerContractService.list(pool, { ...request.query, ownerId: ownerIdFor(request, 'contract') }))
+  fastify.get('/:id', { ...can('view'), schema: { params: idParams } }, async (request) => {
+    await inScope(request)
+    return seafarerContractService.get(pool, request.params.id)
+  })
+  fastify.post('/', { ...can('create'), schema: { body: createBody } }, async (request, reply) => {
     const row = await seafarerContractService.create(pool, request.body, request.user.id)
     return reply.code(201).send(row)
   })
-  fastify.put('/:id', { ...write, schema: { params: idParams, body: updateBody } }, async (request) =>
-    seafarerContractService.update(pool, request.params.id, request.body, request.user.id))
-  fastify.delete('/:id', { ...write, schema: { params: idParams } }, async (request) => seafarerContractService.softDelete(pool, request.params.id))
+  fastify.put('/:id', { ...can('update'), schema: { params: idParams, body: updateBody } }, async (request) => {
+    await inScope(request)
+    return seafarerContractService.update(pool, request.params.id, request.body, request.user.id)
+  })
+  fastify.delete('/:id', { ...can('delete'), schema: { params: idParams } }, async (request) => {
+    await inScope(request)
+    return seafarerContractService.softDelete(pool, request.params.id)
+  })
+  const transitionPerm = { submit: 'submit', withdraw: 'submit', reject: 'approve', approve: 'approve' }
   for (const [action, schema] of [['submit', {}], ['withdraw', {}], ['reject', { body: rejectBody }], ['approve', { body: approveBody }]]) {
-    fastify.post(`/:id/${action}`, { ...write, schema: { params: idParams, ...schema } }, async (request) =>
-      seafarerContractService.transition(pool, request.params.id, action, request.body || {}, request.user.id))
+    fastify.post(`/:id/${action}`, { ...can(transitionPerm[action]), schema: { params: idParams, ...schema } }, async (request) => {
+      await inScope(request)
+      return seafarerContractService.transition(pool, request.params.id, action, request.body || {}, request.user.id)
+    })
   }
 }
 

@@ -16,7 +16,7 @@ describe.skipIf(!enabled)('PostgreSQL repository integration', () => {
   beforeEach(async () => {
     connection = await db.getConnection()
     await connection.beginTransaction()
-    await connection.query('INSERT INTO "user" (id, email, password_hash, role) VALUES (?, ?, ?, ?)', [userId, 'postgres-runtime@example.invalid', 'fixture', 'admin'])
+    await connection.query('INSERT INTO "user" (id, email, password_hash) VALUES (?, ?, ?)', [userId, 'postgres-runtime@example.invalid', 'fixture'])
     const [[country]] = await connection.query('SELECT id FROM country WHERE code = ?', ['VN'])
     const [insert] = await connection.query('INSERT INTO seafarer SET ?', [{ full_name: 'Test PostgreSQL', date_of_birth: '1990-01-01', nationality_id: country.id }])
     seafarerId = insert.insertId
@@ -44,7 +44,7 @@ describe.skipIf(!enabled)('PostgreSQL repository integration', () => {
     await connection.query('UPDATE "user" SET is_active = 1 - is_active WHERE id = ?', [userId])
     const [[user]] = await connection.query('SELECT is_active FROM "user" WHERE id = ?', [userId])
     expect(user.is_active).toBe(1)
-    await expect(connection.query('INSERT INTO "user" (email, password_hash, role) VALUES (?, ?, ?)', ['POSTGRES-RUNTIME@EXAMPLE.INVALID', 'fixture', 'admin'])).rejects.toMatchObject({ code: '23505' })
+    await expect(connection.query('INSERT INTO "user" (email, password_hash) VALUES (?, ?)', ['POSTGRES-RUNTIME@EXAMPLE.INVALID', 'fixture'])).rejects.toMatchObject({ code: '23505' })
   })
 
   it('allows re-upload after soft delete while rejecting active duplicates', async () => {

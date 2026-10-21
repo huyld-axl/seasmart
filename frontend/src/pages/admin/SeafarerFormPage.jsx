@@ -1,18 +1,20 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin, message } from 'antd'
+import { AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin } from 'antd'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi } from '../../api'
 import { documentApi } from '../../api/documentApi'
 import ScanButton from '../../components/ds/ScanButton'
+import { useCan } from '../../hooks/usePermission'
 import AutofillBanner from '../../components/ds/AutofillBanner'
 import { FIELD_LABELS } from './seafarers/fieldLabels'
 import { ChoiceGroup, KindToggles, PhotoField, PhotoFrame } from './seafarers/SeafarerFormParts'
 import { photoProblem } from './seafarers/photoRules'
 import { SCAN_BUTTONS, SOURCE_NAMES, matchCountry, mergeScans, sectionSummaries, summaryText } from './seafarers/scanView'
 import './seafarers/SeafarerForm.css'
+import useToast from '../../components/ds/useToast'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
 const DATE_FIELDS = ['date_of_birth', 'passport_issued_date', 'passport_expiry', 'national_id_issued_date']
@@ -201,6 +203,7 @@ const ScanContext = createContext({ busy: null, done: null, run: () => {}, summa
 
 function Section({ index, section, stats, children }) {
   const scan = useContext(ScanContext)
+  const can = useCan()
   const summary = scan.summaries.find((row) => row.key === section.key)
   return (
     <section className="sf-panel" id={`sf-${section.key}`} aria-labelledby={`sf-${section.key}-title`}>
@@ -210,7 +213,7 @@ function Section({ index, section, stats, children }) {
           <h3 className="sf-panel__title" id={`sf-${section.key}-title`}>{section.title}</h3>
           {section.desc ? <p className="sf-panel__desc">{section.desc}</p> : null}
         </div>
-        {section.scans ? (
+        {section.scans && can('seafarer.docs') ? (
           <div className="sf-panel__scans">
             {section.scans.map((kind) => (
               <ScanButton
@@ -272,9 +275,11 @@ export default function SeafarerFormPage() {
 }
 
 function SeafarerForm({ id, seafarer, contacts, countries }) {
+  const can = useCan()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const toast = useToast()
   const [form] = Form.useForm()
   const watched = Form.useWatch((all) => all, form)
   const againRef = useRef(false)
@@ -347,7 +352,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     const clash = todo.filter((row) => !isEmpty(row.field))
     const write = (list) => {
       if (!list.length) {
-        message.info('Các ô đọc được đã có dữ liệu giống giấy tờ, không đổi gì.')
+        toast.info('Không có ô nào cần điền', { description: 'Các ô đọc được đã có dữ liệu giống giấy tờ.' })
         return 0
       }
       for (const row of list) form.setFieldValue(row.field, row.value)
@@ -381,10 +386,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
       const results = []
       for (const file of files) results.push(await documentApi.scan(file, kind === 'auto' ? 'auto' : kind))
       const skipped = results.flatMap((r) => r.skipped || [])
-      if (skipped.length) message.info([...new Set(skipped.map((item) => item.reason))].join(' '), 6)
+      if (skipped.length) toast.warning('Bỏ qua một số giấy', { description: [...new Set(skipped.map((item) => item.reason))].join(' ') })
       const entries = mergeScans(results)
       if (!entries.length) {
-        if (!skipped.length) message.warning('Không đọc được ô nào từ giấy này. Thử ảnh rõ hơn hoặc nhập tay.')
+        if (!skipped.length) toast.warning('Không đọc được ô nào từ giấy này', { description: 'Thử ảnh rõ hơn hoặc nhập tay.' })
         return
       }
       const count = await applyScan(entries)
@@ -394,7 +399,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         doneTimer.current = setTimeout(() => setScanDone(null), 5000)
       }
     } catch (err) {
-      message.error(err.response?.data?.error || err.response?.data?.message || 'Không đọc được giấy tờ. Thử lại sau.')
+      toast.error('Không đọc được giấy tờ', { description: err.response?.data?.error || err.response?.data?.message || 'Thử lại sau ít phút.' })
     } finally {
       setScanBusy(null)
     }
@@ -471,24 +476,24 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
       queryClient.invalidateQueries({ queryKey: ['seafarer'] })
       queryClient.invalidateQueries({ queryKey: ['seafarer-contacts'] })
       queryClient.invalidateQueries({ queryKey: ['seafarer-photo'] })
-      if (photoError) message.warning(`Đã lưu hồ sơ. ${photoError}`)
-      else message.success(isEdit ? 'Đã lưu thay đổi' : `Đã tạo hồ sơ ${saved.full_name}`)
+      if (photoError) toast.warning(`Đã lưu hồ sơ ${saved.full_name}`, { description: photoError })
+      else toast.success(isEdit ? `Đã lưu hồ sơ ${saved.full_name}` : `Đã tạo hồ sơ ${saved.full_name}`)
       if (again) resetForNext()
       else navigate(`/seafarers/${saved.id}`)
     },
     onError: (err) => {
-      message.error(err.response?.data?.error || err.response?.data?.message || 'Có lỗi xảy ra')
+      toast.error(isEdit ? 'Không lưu được hồ sơ' : 'Không tạo được hồ sơ', { description: err.response?.data?.error || err.response?.data?.message })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: () => seafarerApi.remove(id),
     onSuccess: () => {
-      message.success('Đã xóa thuyền viên')
+      toast.success(`Đã xoá thuyền viên ${seafarer?.full_name || ''}`.trim())
       queryClient.invalidateQueries({ queryKey: ['seafarers'] })
       navigate('/seafarers')
     },
-    onError: (err) => message.error(err.response?.data?.error || 'Xóa thất bại'),
+    onError: (err) => toast.error('Không xoá được thuyền viên', { description: err.response?.data?.error }),
   })
 
   function handleDeleteClick() {
@@ -554,15 +559,17 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           )}
         </div>
         <div className="sf-head__actions">
-          <ScanButton
-            variant="auto"
-            label="Tự điền từ giấy tờ"
-            loading={scanBusy === 'auto'}
-            disabled={Boolean(scanBusy)}
-            doneText={scanDone?.id === 'auto' ? scanDone.text : undefined}
-            onPick={(files) => runScan('auto', files, 'auto')}
-          />
-          {isEdit ? (
+          {can('seafarer.docs') ? (
+            <ScanButton
+              variant="auto"
+              label="Tự điền từ giấy tờ"
+              loading={scanBusy === 'auto'}
+              disabled={Boolean(scanBusy)}
+              doneText={scanDone?.id === 'auto' ? scanDone.text : undefined}
+              onPick={(files) => runScan('auto', files, 'auto')}
+            />
+          ) : null}
+          {isEdit && can('seafarer.delete') ? (
             <Button danger icon={<DeleteOutlined />} onClick={handleDeleteClick} loading={deleteMutation.isPending}>
               Xóa thuyền viên
             </Button>

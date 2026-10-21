@@ -10,6 +10,7 @@ import useToast from '../../../components/ds/useToast'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { exportApi } from '../../../api/exportApi'
 import { useFleetItem, useFleetMutations, usePartnerLogo } from '../../../hooks/useFleet'
+import { useCan } from '../../../hooks/usePermission'
 import { initialsOfName, partnerSections } from './fleetView'
 import { Crumb, FleetTile, ReadPanel, SidePanel } from './FleetParts'
 import '../seafarers/SeafarerListPage.css'
@@ -18,6 +19,7 @@ const when = (value) => (dayjs(value).isSame(dayjs(), 'day') ? `${dayjs(value).f
 const packCode = (id) => `B${String(id).padStart(4, '0')}`
 
 export default function PartnerDetailPage() {
+  const can = useCan()
   const { id } = useParams()
   const navigate = useNavigate()
   const { modal } = App.useApp()
@@ -59,9 +61,9 @@ export default function PartnerDetailPage() {
   async function toggleActive() {
     try {
       await save.mutateAsync({ id: owner.id, is_active: active ? 0 : 1 })
-      toast.success(active ? `${owner.company_name} đã chuyển sang Ngừng hợp tác` : `${owner.company_name} đã hợp tác trở lại`)
+      toast.success(active ? `Đã chuyển ${owner.company_name} sang Ngừng hợp tác` : `Đã chuyển ${owner.company_name} về Đang hợp tác`)
     } catch (error) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Không đổi được tình trạng')
+      toast.error(`Không đổi được tình trạng ${owner.company_name}`, { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
     }
   }
 
@@ -77,31 +79,36 @@ export default function PartnerDetailPage() {
           await remove.mutateAsync(owner.id)
           toast.success(`Đã xoá ${owner.company_name}`, {
             actionLabel: 'Hoàn tác',
-            onAction: () => restore.mutate(owner.id, { onError: (error) => toast.error(error?.response?.data?.error || 'Không hoàn tác được') }),
+            onAction: () => restore.mutate(owner.id, { onError: (error) => toast.error(`Không khôi phục được ${owner.company_name}`, { description: error?.response?.data?.error || 'Thử lại sau ít phút.' }) }),
           })
           navigate('/partners')
         } catch (error) {
-          toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Không xoá được')
+          toast.error(`Không xoá được ${owner.company_name}`, { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
         }
       },
     })
   }
 
+  const moreItems = [
+    ...(can('partner.update')
+      ? [
+          active
+            ? { key: 'toggle', icon: <PauseCircleOutlined />, label: 'Ngừng hợp tác' }
+            : { key: 'toggle', icon: <PlayCircleOutlined />, label: 'Hợp tác trở lại' },
+        ]
+      : []),
+    ...(can('partner.update') && can('partner.delete') ? [{ type: 'divider' }] : []),
+    ...(can('partner.delete') ? [{ key: 'delete', icon: <DeleteOutlined />, label: inUse ? 'Xoá (đối tác đang được dùng)' : 'Xoá đối tác', danger: true, disabled: inUse }] : []),
+  ]
   const moreMenu = {
-    items: [
-      active
-        ? { key: 'toggle', icon: <PauseCircleOutlined />, label: 'Ngừng hợp tác' }
-        : { key: 'toggle', icon: <PlayCircleOutlined />, label: 'Hợp tác trở lại' },
-      { type: 'divider' },
-      { key: 'delete', icon: <DeleteOutlined />, label: inUse ? 'Xoá (đối tác đang được dùng)' : 'Xoá đối tác', danger: true, disabled: inUse },
-    ],
+    items: moreItems,
     onClick: ({ key }) => (key === 'delete' ? handleDelete() : toggleActive()),
   }
 
   const tabs = [
     { value: 'overview', label: 'Tổng quan' },
     { value: 'vessels', label: 'Tàu', count: owner.vessels.length },
-    { value: 'packs', label: 'Bộ giấy đã nộp', count: Number(owner.pack_count) },
+    ...(can('export.view') ? [{ value: 'packs', label: 'Bộ giấy đã nộp', count: Number(owner.pack_count) }] : []),
   ]
   const descParts = [owner.country_name].filter(Boolean)
 
@@ -128,9 +135,10 @@ export default function PartnerDetailPage() {
         {sections.map((section) => <ReadPanel key={section.key} section={section} />)}
       </div>
       <div style={{ display: 'grid', gap: 16 }}>
-        <SidePanel title="Đội tàu" action={<Button size="small" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button>}>
+        <SidePanel title="Đội tàu" action={can('vessel.create') ? <Button size="small" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button> : null}>
           {vesselList}
         </SidePanel>
+        {can('export.view') && (
         <SidePanel title="Bộ giấy đã nộp gần đây" action={owner.recent_packs.length ? <Button size="small" type="text" onClick={() => setTab('packs')}>Xem tất cả <RightOutlined /></Button> : null}>
           {owner.recent_packs.length ? (
             <ul className="fl-rows">
@@ -148,6 +156,7 @@ export default function PartnerDetailPage() {
             <p className="crew-muted">Chưa nộp bộ giấy nào cho đối tác này.</p>
           )}
         </SidePanel>
+        )}
         <SidePanel title="Đang được dùng ở">
           <ul className="fl-rows">
             <li><span className="fl-rows__main">Tàu thuộc đối tác</span><span className="ds-num">{owner.usage.vessels}</span></li>
@@ -201,13 +210,17 @@ export default function PartnerDetailPage() {
           </div>
         </div>
         <div className="crew-head__actions">
-          <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
-            <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending || save.isPending} />
-          </Dropdown>
-          <Button icon={<EditOutlined />} onClick={() => navigate(`/partners/${owner.id}/edit`)}>Sửa thông tin</Button>
-          <Button type="primary" icon={<SendOutlined />} disabled={!active} title={active ? undefined : 'Đối tác đã ngừng hợp tác'} onClick={() => navigate(`/exports/new?owner=${owner.id}`)}>
-            Tạo bộ giấy nộp đối tác
-          </Button>
+          {moreItems.length > 0 && (
+            <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
+              <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending || save.isPending} />
+            </Dropdown>
+          )}
+          {can('partner.update') && <Button icon={<EditOutlined />} onClick={() => navigate(`/partners/${owner.id}/edit`)}>Sửa thông tin</Button>}
+          {can('export.create') && (
+            <Button type="primary" icon={<SendOutlined />} disabled={!active} title={active ? undefined : 'Đối tác đã ngừng hợp tác'} onClick={() => navigate(`/exports/new?owner=${owner.id}`)}>
+              Tạo bộ giấy nộp đối tác
+            </Button>
+          )}
         </div>
       </div>
 

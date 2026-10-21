@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Skeleton, Tooltip } from 'antd'
 import { EditOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import useAuthStore from '../../../stores/authStore'
+import { useCan } from '../../../hooks/usePermission'
 import { exportApi } from '../../../api/exportApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
@@ -19,7 +19,7 @@ import './exports.css'
 // Sửa trực tiếp trên giấy qua draft, bấm Lưu mới ghi.
 export default function PackDetailPage() {
   const { packId } = useParams()
-  const user = useAuthStore((state) => state.user)
+  const can = useCan()
   const toast = useToast()
   const qc = useQueryClient()
   const [picked, setPicked] = useState(null)
@@ -31,9 +31,9 @@ export default function PackDetailPage() {
     onSuccess: (data) => {
       setDraft(null)
       qc.setQueryData(['export', packId], data)
-      toast.success('Đã lưu thay đổi')
+      toast.success(`Đã lưu bộ giấy #${pack.code}`)
     },
-    onError: (e) => toast.error(e.response?.data?.error || 'Không lưu được. Thử lại sau.'),
+    onError: (e) => toast.error('Không lưu được bộ giấy', { description: e.response?.data?.error || 'Thử lại sau ít phút.' }),
   })
 
   if (isLoading) return <div className="ds-page"><Skeleton active paragraph={{ rows: 8 }} /></div>
@@ -44,7 +44,7 @@ export default function PackDetailPage() {
   }
 
   const doc = template(picked && pack.docs.includes(picked) ? picked : pack.docs[0])
-  const mayEdit = ['admin', 'operator'].includes(user?.role)
+  const mayEdit = can('export.create')
   const shown = draft || { inputs: pack.inputs, edits: pack.edits || {} }
   const saveFirst = draft ? 'Lưu hoặc huỷ thay đổi trước khi tải' : ''
 

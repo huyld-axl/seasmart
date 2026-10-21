@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Card, Row, Col, Spin, Typography, message } from 'antd'
+import { Button, Card, Row, Col, Spin, Typography } from 'antd'
+import { toast } from '../ds/useToast'
 import { DownloadOutlined, FileExcelOutlined } from '@ant-design/icons'
 import { seafarerApi } from '../../api'
 
@@ -42,9 +43,9 @@ export default function FormExportTab({ seafarerId, seafarerName }) {
       a.download = `${label} - ${seafarerName}.xlsx`
       a.click()
       URL.revokeObjectURL(url)
-      message.success(`Đã tải: ${label}`)
+      toast.success(`Đã tải ${label}`)
     } catch {
-      // error handled by axios interceptor
+      toast.error(`Không tải được ${label}`, { description: 'Thử lại sau ít phút.' })
     } finally {
       setLoading((prev) => ({ ...prev, [formKey]: false }))
     }

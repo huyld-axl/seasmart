@@ -8,7 +8,7 @@ async function importRoutes(fastify) {
   fastify.post(
     '/excel',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.import')],
     },
     async (request, reply) => {
       const data = await request.file()
@@ -73,7 +73,7 @@ async function importRoutes(fastify) {
   fastify.post(
     '/excel/sample',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.import')],
     },
     async (request) => {
       const samplePath = path.resolve(__dirname, '../../../../sample data/HD - Hong.xlsx')
@@ -85,7 +85,7 @@ async function importRoutes(fastify) {
   fastify.get(
     '/excel/template',
     {
-      onRequest: [fastify.authenticate],
+      onRequest: [fastify.authenticate, fastify.can('seafarer.import')],
     },
     async (req, reply) => {
       return reply.sendFile('templates/seafarer_template.xlsx')

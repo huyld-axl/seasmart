@@ -174,9 +174,10 @@ async function renderDocs({ row, keys, wantPdf, gridlines }) {
 const exportPackService = {
   templates: () => PACK_TEMPLATES.map(({ formKey, ...rest }) => ({ ...rest, has_file: !!formKey })),
 
-  async list(pool, { search, seafarer_id: seafarerId, ship_owner_id: shipOwnerId, page = 1, limit = 50 }) {
+  async list(pool, { search, seafarer_id: seafarerId, ship_owner_id: shipOwnerId, page = 1, limit = 50, ownerId = null }) {
     const where = ['p.deleted_at IS NULL']
     const params = []
+    if (ownerId) { where.push('p.created_by = ?'); params.push(ownerId) }
     if (seafarerId) { where.push('p.seafarer_id = ?'); params.push(seafarerId) }
     if (shipOwnerId) { where.push('p.ship_owner_id = ?'); params.push(shipOwnerId) }
     if (search) {

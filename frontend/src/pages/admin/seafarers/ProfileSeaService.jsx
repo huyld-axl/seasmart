@@ -8,6 +8,7 @@ import { documentApi } from '../../../api/documentApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import SeaServiceTimeline from '../../../components/ds/SeaServiceTimeline'
 import useToast from '../../../components/ds/useToast'
+import { useCan } from '../../../hooks/usePermission'
 import { toTimelineTrips } from './seaServiceView'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
@@ -17,6 +18,7 @@ const DATE_FORMAT = 'DD/MM/YYYY'
 export default function ProfileSeaService({ seafarerId }) {
   const qc = useQueryClient()
   const toast = useToast()
+  const canEdit = useCan()('seafarer.sea')
   const [editing, setEditing] = useState(null) // null | 'new' | chuyến
   const [deleting, setDeleting] = useState(null)
   const [reason, setReason] = useState('')
@@ -24,7 +26,7 @@ export default function ProfileSeaService({ seafarerId }) {
   const queryKey = ['sea-services', String(seafarerId)]
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey, queryFn: () => seaServiceApi.list(seafarerId) })
-  const fail = (e) => toast.error(e.response?.data?.error || 'Không thực hiện được. Thử lại sau.')
+  const fail = (e) => toast.error('Không cập nhật được lịch sử đi tàu', { description: e.response?.data?.error || 'Thử lại sau ít phút.' })
   const done = (text) => () => { toast.success(text); qc.invalidateQueries({ queryKey }); setEditing(null); setDeleting(null); setReason('') }
 
   const save = useMutation({
@@ -52,7 +54,7 @@ export default function ProfileSeaService({ seafarerId }) {
     const docId = trip.raw.document_id
     try {
       const doc = docId ? await documentApi.get(docId) : null
-      if (!doc?.upload_id) return toast.error('Chuyến này không còn bản gốc.')
+      if (!doc?.upload_id) return toast.error('Chuyến này không còn bản gốc')
       const blob = await documentApi.uploadFile(doc.upload_id)
       window.open(URL.createObjectURL(blob), '_blank', 'noopener')
     } catch (e) {
@@ -83,9 +85,9 @@ export default function ProfileSeaService({ seafarerId }) {
   if (isLoading) body = <Skeleton active paragraph={{ rows: 4 }} />
   else if (isError) body = <EmptyState isError title="Không tải được các chuyến đi tàu" description="Mất kết nối với máy chủ. Dữ liệu đã lưu không bị mất." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
   else if (!trips.length) {
-    body = <EmptyState title="Chưa có chuyến đi tàu nào" description="Tải sổ thuyền viên lên, mỗi trang bố trí chức danh thành một chuyến. Hoặc nhập tay từng chuyến." action={<Button type="primary" icon={<PlusOutlined />} onClick={startNew}>Thêm chuyến</Button>} />
+    body = <EmptyState title="Chưa có chuyến đi tàu nào" description="Tải sổ thuyền viên lên, mỗi trang bố trí chức danh thành một chuyến. Hoặc nhập tay từng chuyến." action={canEdit ? <Button type="primary" icon={<PlusOutlined />} onClick={startNew}>Thêm chuyến</Button> : undefined} />
   } else {
-    body = <SeaServiceTimeline trips={trips} onEdit={(trip) => startEdit(trip)} onDelete={(trip) => setDeleting(trip.raw)} onOpenSource={openSource} />
+    body = <SeaServiceTimeline trips={trips} onEdit={canEdit ? (trip) => startEdit(trip) : undefined} onDelete={canEdit ? (trip) => setDeleting(trip.raw) : undefined} onOpenSource={openSource} />
   }
 
   return (
@@ -95,7 +97,7 @@ export default function ProfileSeaService({ seafarerId }) {
           <h2 className="crew-panel__title">Chuyến đi tàu {trips.length ? <span className="ds-num">{trips.length}</span> : null}</h2>
           <p className="ds-field__reason" style={{ margin: 0 }}>Mới nhất trước. Chuyến lấy từ sổ thuyền viên hoặc nhập tay.</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={startNew}>Thêm chuyến</Button>
+        {canEdit ? <Button type="primary" icon={<PlusOutlined />} onClick={startNew}>Thêm chuyến</Button> : null}
       </div>
       <div className="crew-panel__body">{body}</div>
 

@@ -171,11 +171,15 @@ function sniffImage(buffer) {
 }
 
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, tab }) {
+  async list({ page = 1, limit = 20, search, status, rank_id, tab, ownerId }) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
 
+    if (ownerId) {
+      where.push('s.created_by = ?')
+      params.push(ownerId)
+    }
     if (search) {
       where.push(
         '(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seaman_book_number::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))'
@@ -191,12 +195,13 @@ const seafarerService = {
       where.push('s.current_rank_id = ?')
       params.push(rank_id)
     }
+
     // Số đếm của từng tab (màn A1) tính trên bộ lọc hiện tại, trước khi lọc theo tab.
     const baseWhere = 'WHERE ' + where.join(' AND ')
     const countCols = ['COUNT(*) AS all_count', ...TABS.map((key) => `SUM((${TAB_CONDITIONS[key]})::integer) AS ${key}`)].join(', ')
-    const [[row]] = await pool.query(`SELECT ${countCols} FROM seafarer s ${baseWhere}`, params)
-    const counts = { all: Number(row.all_count) || 0 }
-    TABS.forEach((key) => { counts[key] = Number(row[key]) || 0 })
+    const [[countRow]] = await pool.query(`SELECT ${countCols} FROM seafarer s ${baseWhere}`, params)
+    const counts = { all: Number(countRow.all_count) || 0 }
+    TABS.forEach((key) => { counts[key] = Number(countRow[key]) || 0 })
     if (tab && TAB_CONDITIONS[tab]) where.push(TAB_CONDITIONS[tab])
 
     const whereStr = 'WHERE ' + where.join(' AND ')
@@ -224,10 +229,8 @@ const seafarerService = {
   },
 
   async getById(id) {
-    const selectFields = 's.*, r.name_vi as rank_name, c.name_vi as nationality_name'
-
     const [rows] = await pool.query(
-      `SELECT ${selectFields}
+      `SELECT s.*, r.name_vi as rank_name, c.name_vi as nationality_name
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
        LEFT JOIN country c ON c.id = s.nationality_id
@@ -437,9 +440,14 @@ const seafarerService = {
     return { success: true }
   },
 
-  async exportExcel({ search, status, rank_id }) {
+  async exportExcel({ search, status, rank_id, ownerId }) {
     const where = ['s.deleted_at IS NULL']
     const params = []
+
+    if (ownerId) {
+      where.push('s.created_by = ?')
+      params.push(ownerId)
+    }
 
     if (search) {
       where.push('(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))')

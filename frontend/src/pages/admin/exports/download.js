@@ -12,7 +12,7 @@ export function saveBlob(res, fallbackName) {
 }
 
 // Câu lỗi của một lần tải file: máy chủ trả JSON nhưng axios đang đọc dạng blob.
-export async function downloadError(error, fallback = 'Không tải được file. Thử lại sau.') {
+export async function downloadError(error, fallback = 'Thử lại sau ít phút.') {
   try {
     return JSON.parse(await error.response.data.text()).error || fallback
   } catch {

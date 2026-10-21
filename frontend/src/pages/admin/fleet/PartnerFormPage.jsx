@@ -79,7 +79,7 @@ function PartnerForm({ owner }) {
         logoFailed = errorText(error, 'Không lưu được logo')
       }
       queryClient.invalidateQueries({ queryKey: ['fleet'] })
-      if (logoFailed) toast.error(`Đã lưu ${row.company_name}. ${logoFailed}`)
+      if (logoFailed) toast.warning(`Đã lưu ${row.company_name}`, { description: logoFailed })
       else toast.success(isEdit ? `Đã lưu ${row.company_name}` : `Đã thêm ${row.company_name}`)
       if (againRef.current) {
         form.resetFields()
@@ -92,7 +92,7 @@ function PartnerForm({ owner }) {
         navigate(`/partners/${row.id}`)
       }
     } catch (error) {
-      toast.error(errorText(error, 'Không lưu được. Thử lại sau.'))
+      toast.error(isEdit ? 'Không lưu được đối tác' : 'Không thêm được đối tác', { description: errorText(error, 'Thử lại sau ít phút.') })
     }
   }
 

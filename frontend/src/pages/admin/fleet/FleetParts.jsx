@@ -144,9 +144,10 @@ export function FormSection({ index, section, meta, children }) {
 }
 
 // Chọn một giá trị, luôn có một giá trị được chọn (khác ChoiceGroup: không bỏ chọn được).
-export function SegmentedPick({ value, onChange, options, label }) {
+// `size="small"` cho ô hẹp (ma trận vai trò).
+export function SegmentedPick({ value, onChange, options, label, size, className = '' }) {
   return (
-    <div className="sf-seg" role="group" aria-label={label}>
+    <div className={`${size === 'small' ? 'sf-seg sf-seg--sm' : 'sf-seg'} ${className}`.trim()} role="group" aria-label={label}>
       {options.map((option) => (
         <button key={String(option.value)} type="button" aria-pressed={value === option.value} onClick={() => onChange?.(option.value)}>
           {option.label}

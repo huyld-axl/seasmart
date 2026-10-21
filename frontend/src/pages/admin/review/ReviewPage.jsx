@@ -61,7 +61,7 @@ export default function ReviewPage() {
     refetchInterval: (query) => (query.state.data?.data.some((doc) => doc.status === 'READING') ? 3000 : false),
   })
 
-  const fail = (e) => toast.error(e.response?.data?.error || 'Không thực hiện được. Thử lại sau.')
+  const fail = (e) => toast.error('Không cập nhật được giấy', { description: e.response?.data?.error || 'Thử lại sau ít phút.' })
   const putDoc = (updated) => qc.setQueryData(queryKey, (old) => old && { ...old, data: old.data.map((doc) => (doc.id === updated.id ? updated : doc)) })
   const refresh = () => qc.invalidateQueries({ queryKey })
 
@@ -146,7 +146,7 @@ export default function ReviewPage() {
       putDoc(updated)
       const next = nextToReview(docs.map((item) => (item.id === updated.id ? updated : item)), doc.id)
       if (next) go(next)
-      else toast.success('Đã duyệt hết. Bấm "Đưa vào hồ sơ" để hoàn tất.')
+      else toast.success('Đã duyệt hết giấy', { description: 'Bấm "Đưa vào hồ sơ" để hoàn tất.' })
     } catch (e) {
       fail(e)
     }
@@ -157,12 +157,12 @@ export default function ReviewPage() {
       const res = await documentApi.confirmCertificates([doc.id])
       refresh()
       if (res.blocked.length) {
-        toast.error(res.blocked[0].reason)
+        toast.warning('Chưa đưa được chứng chỉ vào hồ sơ', { description: res.blocked[0].reason })
         return
       }
       const next = nextToReview(docs.map((item) => (item.id === doc.id ? { ...item, status: 'COMPLETED' } : item)), doc.id)
       if (next) go(next)
-      else toast.success('Đã duyệt hết. Bấm "Đưa vào hồ sơ" để hoàn tất.')
+      else toast.success('Đã duyệt hết giấy', { description: 'Bấm "Đưa vào hồ sơ" để hoàn tất.' })
     } catch (e) {
       fail(e)
     }
@@ -344,7 +344,7 @@ export default function ReviewPage() {
           onPick={(vessel) => {
             setVessel.mutate({ docId: doc.id, vesselId: vessel.id })
             setMatching(false)
-            toast.success(`Đã đối chiếu: ${vessel.vessel_name}${vessel.imo_number ? ` · IMO ${vessel.imo_number}` : ''}`)
+            toast.success(`Đã đối chiếu với ${vessel.vessel_name}${vessel.imo_number ? ` · IMO ${vessel.imo_number}` : ''}`)
           }}
         />
       )}

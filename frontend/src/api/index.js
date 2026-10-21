@@ -7,22 +7,6 @@ function cleanListParams(params = {}) {
   )
 }
 
-async function listAllPages(url, params = {}) {
-  const rows = []
-  let total = 0
-  let page = 1
-  do {
-    const { data } = await api.get(url, {
-      params: { ...cleanListParams(params), page, limit: 100 },
-    })
-    rows.push(...data.data)
-    total = Number(data.total)
-    if (data.data.length === 0) break
-    page += 1
-  } while (rows.length < total)
-  return { data: rows, total }
-}
-
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
   register: (data) => api.post('/auth/register', data),
@@ -59,33 +43,6 @@ export const seafarerApi = {
     api.get(`/seafarers/${id}/export-form/${formKey}`, { responseType: 'blob' }),
 }
 
-export const trainingCenterApi = {
-  list: (params) => api.get('/training-centers', { params: cleanListParams(params) }),
-  listAll: (params) => listAllPages('/training-centers', params),
-  getById: (id) => api.get(`/training-centers/${id}`),
-  create: (data) => api.post('/training-centers', data),
-  update: (id, data) => api.put(`/training-centers/${id}`, data),
-  remove: (id) => api.delete(`/training-centers/${id}`),
-}
-
-export const courseApi = {
-  list: (params) => api.get('/training-courses', { params: cleanListParams(params) }),
-  listAll: (params) => listAllPages('/training-courses', params),
-  getById: (id) => api.get(`/training-courses/${id}`),
-  create: (data) => api.post('/training-courses', data),
-  update: (id, data) => api.put(`/training-courses/${id}`, data),
-  remove: (id) => api.delete(`/training-courses/${id}`),
-}
-
-export const enrollmentApi = {
-  list: (params) => api.get('/enrollments', { params: cleanListParams(params) }),
-  listAll: (params) => listAllPages('/enrollments', params),
-  getById: (id) => api.get(`/enrollments/${id}`),
-  create: (data) => api.post('/enrollments', data),
-  update: (id, data) => api.put(`/enrollments/${id}`, data),
-  addScores: (id, data) => api.post(`/enrollments/${id}/scores`, data),
-}
-
 export const certificateApi = {
   list: (seafarerId) => api.get(`/seafarers/${seafarerId}/certificates`),
   create: (seafarerId, data) => api.post(`/seafarers/${seafarerId}/certificates`, data),
@@ -103,9 +60,6 @@ export const seafarerPortalApi = {
   updateProfile: (data) => api.put('/portal/seafarer/profile', data),
   getCertificates: () => api.get('/portal/seafarer/certificates'),
   getContracts: () => api.get('/portal/seafarer/contracts'),
-  getEnrollments: () => api.get('/portal/seafarer/enrollments'),
-  enroll: (course_id) => api.post('/portal/seafarer/enrollments', { course_id }),
-  cancelEnrollment: (id) => api.delete(`/portal/seafarer/enrollments/${id}`),
   createCertificate: (data, file) => {
     if (file) {
       const form = new FormData()
@@ -125,7 +79,6 @@ export const seafarerPortalApi = {
 export const lookupApi = {
   ranks: () => api.get('/lookup/ranks'),
   certificateTypes: () => api.get('/lookup/certificate-types'),
-  courseTypes: () => api.get('/lookup/course-types'),
   countries: () => api.get('/lookup/countries'),
   vesselTypes: () => api.get('/lookup/vessel-types'),
   ports: () => api.get('/lookup/ports'),

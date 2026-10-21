@@ -13,10 +13,6 @@ import SeafarerListPage from './pages/admin/SeafarerListPage'
 import SeafarerDetailPage from './pages/admin/SeafarerDetailPage'
 import SeafarerImportPage from './pages/admin/SeafarerImportPage'
 import SeafarerFormPage from './pages/admin/SeafarerFormPage'
-import TrainingCenterListPage from './pages/admin/TrainingCenterListPage'
-import TrainingCenterDetailPage from './pages/admin/TrainingCenterDetailPage'
-import CourseListPage from './pages/admin/CourseListPage'
-import CourseDetailPage from './pages/admin/CourseDetailPage'
 import MasterSubPage from './pages/admin/MasterSubPage'
 import VesselListPage from './pages/admin/fleet/VesselListPage'
 import VesselDetailPage from './pages/admin/fleet/VesselDetailPage'
@@ -30,14 +26,11 @@ import VoyageDetailPage from './pages/admin/voyages/VoyageDetailPage'
 import ContractListPage from './pages/admin/contracts/ContractListPage'
 import ContractFormPage from './pages/admin/contracts/ContractFormPage'
 import ContractDetailPage from './pages/admin/contracts/ContractDetailPage'
-import MessagingPage from './pages/admin/MessagingPage'
 import SeafarerRegisterPage from './pages/seafarer/RegisterPage'
 import SeafarerVerifyPage from './pages/seafarer/VerifyPage'
 import SeafarerProfilePage from './pages/seafarer/ProfilePage'
 import SeafarerCertificatesPage from './pages/seafarer/CertificatesPage'
-import SeafarerCoursesPage from './pages/seafarer/CoursesPage'
 import SeafarerHistoryPage from './pages/seafarer/HistoryPage'
-import QREnrollPage from './pages/QREnrollPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
@@ -66,7 +59,7 @@ export default function App() {
 
               <Route
                 element={
-                  <ProtectedRoute roles={['admin', 'operator', 'reviewer', 'training_center', 'manning_agent']}>
+                  <ProtectedRoute roles={['admin', 'operator', 'reviewer', 'manning_agent']}>
                     <AdminLayout />
                   </ProtectedRoute>
                 }
@@ -81,10 +74,6 @@ export default function App() {
                 <Route path="/exports" element={<ExportListPage />} />
                 <Route path="/exports/new" element={<PackCreatePage />} />
                 <Route path="/exports/:packId" element={<PackDetailPage />} />
-                <Route path="/training-centers" element={<TrainingCenterListPage />} />
-                <Route path="/training-centers/:id" element={<TrainingCenterDetailPage />} />
-                <Route path="/courses" element={<CourseListPage />} />
-                <Route path="/courses/:id" element={<CourseDetailPage />} />
                 <Route path="/vessels" element={<VesselListPage />} />
                 <Route path="/vessels/new" element={<VesselFormPage />} />
                 <Route path="/vessels/:id" element={<VesselDetailPage />} />
@@ -106,17 +95,15 @@ export default function App() {
                 <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />
                 <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
                 <Route path="/master-data/:tab" element={<MasterSubPage />} />
-                <Route path="/messages" element={<MessagingPage />} />
                 <Route path="/admin/users" element={<UserListPage />} />
                 <Route path="/admin/users/:id" element={<UserDetailPage />} />
               </Route>
 
               <Route path="/403" element={<StandaloneError code={403} />} />
-              <Route path="/tc/*" element={<Navigate to="/courses" replace />} />
+              <Route path="/tc/*" element={<Navigate to="/seafarers" replace />} />
 
               {/* Seafarer public routes */}
               <Route path="/seafarer/register" element={<SeafarerRegisterPage />} />
-              <Route path="/enroll/:token" element={<QREnrollPage />} />
 
               {/* Seafarer protected routes */}
               <Route
@@ -129,7 +116,6 @@ export default function App() {
                 <Route path="/seafarer/verify" element={<SeafarerVerifyPage />} />
                 <Route path="/seafarer/profile" element={<SeafarerProfilePage />} />
                 <Route path="/seafarer/certificates" element={<SeafarerCertificatesPage />} />
-                <Route path="/seafarer/courses" element={<SeafarerCoursesPage />} />
                 <Route path="/seafarer/history" element={<SeafarerHistoryPage />} />
               </Route>
 

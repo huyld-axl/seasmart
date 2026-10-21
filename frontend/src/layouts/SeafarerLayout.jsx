@@ -4,7 +4,6 @@ import { Layout, Menu, Avatar, Dropdown, Drawer, Grid } from 'antd'
 import {
   UserOutlined,
   SafetyCertificateOutlined,
-  BookOutlined,
   HistoryOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -18,7 +17,6 @@ const { Header, Content } = Layout
 const menuItems = [
   { key: '/seafarer/profile', icon: <UserOutlined />, label: 'Hồ sơ' },
   { key: '/seafarer/certificates', icon: <SafetyCertificateOutlined />, label: 'Chứng chỉ' },
-  { key: '/seafarer/courses', icon: <BookOutlined />, label: 'Khóa học' },
   { key: '/seafarer/history', icon: <HistoryOutlined />, label: 'Lịch sử' },
 ]
 

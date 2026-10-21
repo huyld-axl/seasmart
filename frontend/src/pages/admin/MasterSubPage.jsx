@@ -1,6 +1,6 @@
 import { useParams, Navigate } from 'react-router-dom'
-import { useState } from 'react'
-import { App, Table, Button, Form, Input, InputNumber, Select } from 'antd'
+import { Children, cloneElement, isValidElement, useState } from 'react'
+import { App, Table, Button, Form, Grid, Input, InputNumber, Select, Skeleton } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/client'
@@ -11,6 +11,25 @@ import RowActions from '../../components/ds/RowActions'
 import ListFooter from '../../components/ds/ListFooter'
 import useListSticky from '../../components/ds/useListSticky'
 import { actionColumn } from '../../components/ds/actionColumn'
+import ToggleRow from '../../components/ds/ToggleRow'
+import changedLabel from './fleet/changedLabel'
+import './seafarers/SeafarerListPage.css'
+import './seafarers/SeafarerForm.css'
+
+const isBlank = (value) => value == null || value === ''
+const sameValue = (a, b) => (isBlank(a) && isBlank(b)) || String(a) === String(b)
+
+// Dòng trên mobile: tên làm dòng chính, mã và tên phụ làm dòng dưới.
+function MobileRow({ row }) {
+  const main = row.name_vi || row.name || row.code
+  const sub = [row.code || row.un_locode, row.name_en || row.country_name].filter((v) => v && v !== main).join(' · ')
+  return (
+    <span className="ds-cell2">
+      <span className="ds-cell2__main">{main}</span>
+      {sub ? <span className="ds-cell2__sub">{sub}</span> : null}
+    </span>
+  )
+}
 
 // ── Generic CRUD hook ──────────────────────────────────────────────────────────
 function useMasterData(resource) {
@@ -64,6 +83,8 @@ function MasterTable({ resource, columns, formFields, title }) {
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const [form] = Form.useForm()
+  const [changed, setChanged] = useState(new Set())
+  const isMobile = !Grid.useBreakpoint().md
   const toast = useToast()
   const { modal } = App.useApp()
   const { data, isLoading, isError, refetch, create, update, remove } = useMasterData(resource)
@@ -76,21 +97,45 @@ function MasterTable({ resource, columns, formFields, title }) {
 
   function openPanel(row) {
     setEditing(row || {})
+    setChanged(new Set())
     form.resetFields()
     if (row) form.setFieldsValue(row)
   }
 
-  async function submit() {
-    const values = await form.validateFields()
+  // Sửa: so từng trường với giá trị gốc để đánh dấu "Đã sửa" và bật nút lưu.
+  function trackChanges() {
+    if (!editing?.id) return
+    const values = form.getFieldsValue()
+    setChanged(new Set(Object.keys(values).filter((name) => !sameValue(values[name], editing[name]))))
+  }
+
+  async function submit({ addAnother = false } = {}) {
+    let values
+    try {
+      values = await form.validateFields()
+    } catch {
+      form.scrollToField(form.getFieldsError().find((field) => field.errors.length)?.name, { block: 'center' })
+      return
+    }
     try {
       if (editing?.id) await update.mutateAsync({ id: editing.id, ...values })
       else await create.mutateAsync(values)
       toast.success(editing?.id ? `Đã lưu ${title}` : `Đã thêm ${title}`)
-      setEditing(null)
+      if (addAnother) form.resetFields()
+      else setEditing(null)
     } catch (error) {
       toast.error(error?.response?.data?.error || 'Không lưu được. Thử lại sau.')
     }
   }
+
+  // Gắn chip "Đã sửa" và viền nhấn cho các trường đã đổi, không bắt từng tab tự làm.
+  const fields = Children.map(isValidElement(formFields) ? formFields.props.children : formFields, (item) => {
+    if (!isValidElement(item) || !item.props.name || !changed.has(item.props.name)) return item
+    return cloneElement(item, {
+      className: [item.props.className, 'sf-changed'].filter(Boolean).join(' '),
+      ...(item.props.label ? { label: changedLabel(item.props.label, true) } : {}),
+    })
+  })
 
   function confirmDelete(row) {
     const name = row.name_vi || row.name || row.code
@@ -117,16 +162,38 @@ function MasterTable({ resource, columns, formFields, title }) {
   let body
   if (isError) {
     body = <EmptyState isError title={`Không tải được danh sách ${title}`} description="Mất kết nối tới máy chủ." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
-  } else if (!isLoading && !rows.length) {
+  } else if (isLoading) {
+    body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
+  } else if (!rows.length) {
     body = keyword ? (
       <EmptyState title={`Không có ${title} nào khớp "${search}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
     ) : (
-      <EmptyState title={`Chưa có ${title} nào`} action={<Button icon={<PlusOutlined />} onClick={() => openPanel(null)}>Thêm {title}</Button>} />
+      <EmptyState title={`Chưa có ${title} nào`} action={<Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>Thêm {title}</Button>} />
     )
   } else {
     body = (
       <>
-        <Table rowKey="id" loading={isLoading} dataSource={pageRows} columns={[...columns, actionCol]} pagination={false} scroll={tableScroll} onRow={(row) => ({ onDoubleClick: () => openPanel(row) })} />
+        {isMobile ? (
+          <ul className="crew-list">
+            {pageRows.map((row) => (
+              <li key={row.id}>
+                <button type="button" className="crew-list__row" onClick={() => openPanel(row)}>
+                  <MobileRow row={row} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <Table
+            rowKey="id"
+            className="crew-table"
+            dataSource={pageRows}
+            columns={[...columns, actionCol]}
+            pagination={false}
+            scroll={tableScroll}
+            onRow={(row) => ({ onClick: () => openPanel(row), onKeyDown: (event) => event.key === 'Enter' && openPanel(row), tabIndex: 0 })}
+          />
+        )}
         <ListFooter total={rows.length} page={page} pageSize={pageSize} unit={title} note={keyword ? `lọc từ ${data.length}` : null} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
       </>
     )
@@ -152,15 +219,27 @@ function MasterTable({ resource, columns, formFields, title }) {
         onClose={() => setEditing(null)}
         footer={
           <>
+            {editing?.id && changed.size > 0 ? <span style={{ marginRight: 'auto', color: 'var(--muted)' }}>{changed.size} thay đổi</span> : null}
             <Button onClick={() => setEditing(null)}>Huỷ</Button>
-            <Button type="primary" loading={create.isPending || update.isPending} onClick={submit}>
-              {editing?.id ? 'Lưu' : `Thêm ${title}`}
-            </Button>
+            {editing?.id ? (
+              <Button type="primary" disabled={!changed.size} loading={update.isPending} onClick={() => submit()}>
+                Lưu thay đổi
+              </Button>
+            ) : (
+              <>
+                <Button loading={create.isPending} onClick={() => submit({ addAnother: true })}>
+                  Lưu & thêm khác
+                </Button>
+                <Button type="primary" loading={create.isPending} onClick={() => submit()}>
+                  Thêm {title}
+                </Button>
+              </>
+            )}
           </>
         }
       >
-        <Form form={form} layout="vertical" onFinish={submit}>
-          {formFields}
+        <Form form={form} layout="vertical" onFinish={() => submit()} onValuesChange={trackChanges}>
+          {fields}
         </Form>
       </SlidePanel>
     </>
@@ -208,13 +287,8 @@ function CertificateTypeTab() {
           <Form.Item name="validity_years" label="Hiệu lực (năm, để trống = vĩnh viễn)">
             <InputNumber min={1} max={99} style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="is_stcw" label="Loại STCW" initialValue={1}>
-            <Select
-              options={[
-                { value: 1, label: 'STCW' },
-                { value: 0, label: 'Không phải STCW' },
-              ]}
-            />
+          <Form.Item name="is_stcw" initialValue={1} normalize={(value) => (value ? 1 : 0)}>
+            <ToggleRow label="Chứng chỉ STCW" />
           </Form.Item>
         </>
       }
@@ -303,54 +377,6 @@ function ContractTypeTab() {
   )
 }
 
-function CourseTypeTab() {
-  const { data: certTypes } = useQuery({
-    queryKey: ['lookup', 'certificate-types'],
-    queryFn: () => api.get('/lookup/certificate-types').then((r) => r.data),
-  })
-  const certOptions = (certTypes || []).map((c) => ({
-    value: c.id,
-    label: `${c.code} - ${c.name_vi}`,
-  }))
-
-  return (
-    <MasterTable
-      resource="course-types"
-      title="loại khóa học"
-      columns={[
-        { title: 'Mã', dataIndex: 'code', width: 180 },
-        { title: 'Tên tiếng Việt', dataIndex: 'name_vi' },
-        { title: 'Số ngày', dataIndex: 'duration_days', width: 90 },
-      ]}
-      formFields={
-        <>
-          <Form.Item name="code" label="Mã" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="name_en" label="Tên tiếng Anh">
-            <Input />
-          </Form.Item>
-          <Form.Item name="certificate_type_id" label="Chứng chỉ liên kết">
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              options={certOptions}
-              placeholder="Chọn chứng chỉ"
-            />
-          </Form.Item>
-          <Form.Item name="duration_days" label="Số ngày học">
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-        </>
-      }
-    />
-  )
-}
-
 function PortTab() {
   const { data: countries } = useQuery({
     queryKey: ['lookup', 'countries'],
@@ -399,7 +425,6 @@ const TAB_MAP = {
   vessel: { component: VesselTypeTab, title: 'Loại tàu' },
   country: { component: CountryTab, title: 'Quốc gia' },
   contract: { component: ContractTypeTab, title: 'Loại hợp đồng' },
-  course: { component: CourseTypeTab, title: 'Loại khóa học' },
   port: { component: PortTab, title: 'Cảng biển' },
 }
 

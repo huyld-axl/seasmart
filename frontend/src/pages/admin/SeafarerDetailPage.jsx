@@ -33,10 +33,8 @@ import {
 } from '@ant-design/icons'
 import {
   seafarerApi,
-  enrollmentApi,
   certificateApi,
   lookupApi,
-  courseApi,
 } from '../../api'
 import ZaloButton from '../../components/common/ZaloButton'
 import FormExportTab from '../../components/seafarer/FormExportTab'
@@ -77,7 +75,6 @@ const PROFILE_TABS = [
   { value: 'overview', label: 'Tổng quan' },
   { value: 'docs', label: 'Chứng chỉ' },
   { value: 'service', label: 'Đi tàu' },
-  { value: 'training', label: 'Đào tạo' },
   { value: 'exports', label: 'Đã xuất' },
   { value: 'history', label: 'Lịch sử' },
 ]
@@ -230,7 +227,6 @@ export default function SeafarerDetailPage() {
         <ContractsSection seafarerId={id} />
       </>
     ),
-    training: <EnrollmentsSection seafarerId={id} />,
     exports: (
       <>
         <ProfileExports seafarerId={Number(id)} canCreate={readiness !== 'BLOCKED'} blockedReason={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra phía trên' : undefined} />
@@ -534,130 +530,6 @@ function ContractsSection({ seafarerId }) {
           { title: 'Trạng thái', dataIndex: 'status', render: (value) => <StatusBadge group="contract" value={value} /> },
         ]}
       />
-    </Section>
-  )
-}
-
-function EnrollmentsSection({ seafarerId }) {
-  const queryClient = useQueryClient()
-  const [addOpen, setAddOpen] = useState(false)
-  const [form] = Form.useForm()
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['enrollments', { seafarer_id: seafarerId }],
-    queryFn: () => enrollmentApi.list({ seafarer_id: seafarerId }).then((r) => r.data),
-  })
-
-  const { data: courses } = useQuery({
-    queryKey: ['courses-all'],
-    queryFn: () => courseApi.listAll(),
-    enabled: addOpen,
-  })
-
-  const createMutation = useMutation({
-    mutationFn: (values) =>
-      enrollmentApi.create({
-        seafarer_id: Number(seafarerId),
-        course_id: values.course_id,
-        enrollment_date: values.enrollment_date?.format?.('YYYY-MM-DD') || undefined,
-        notes: values.notes,
-      }),
-    onSuccess: () => {
-      message.success('Đăng ký khóa học thành công')
-      setAddOpen(false)
-      form.resetFields()
-      queryClient.invalidateQueries({ queryKey: ['enrollments', { seafarer_id: seafarerId }] })
-    },
-    onError: (e) => message.error(e.response?.data?.error || 'Đăng ký thất bại'),
-  })
-
-  const columns = [
-    { title: 'Khóa học', dataIndex: 'course_name' },
-    { title: 'Mã khóa', dataIndex: 'course_code' },
-    { title: 'Ngày đăng ký', dataIndex: 'enrollment_date', render: (v) => fmt(v) },
-    {
-      title: 'Trạng thái',
-      dataIndex: 'status',
-      render: (v) =>
-        v ? (
-          <Tag color={v === 'APPROVED' ? 'green' : v === 'REJECTED' ? 'red' : 'blue'}>{v}</Tag>
-        ) : (
-          '-'
-        ),
-    },
-    { title: 'Điểm', dataIndex: 'total_score' },
-    { title: 'Xếp loại', dataIndex: 'grade' },
-    {
-      title: 'Kết quả',
-      dataIndex: 'result',
-      render: (v) => (v ? <Tag color={v === 'PASS' ? 'green' : 'red'}>{v}</Tag> : '-'),
-    },
-  ]
-
-  return (
-    <Section
-      title="Đào tạo"
-      noPad
-      extra={<Button icon={<PlusOutlined />} onClick={() => setAddOpen(true)}>Thêm đăng ký</Button>}
-    >
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={data?.data || []}
-        loading={isLoading}
-        locale={{ emptyText: <EmptyState title="Chưa đăng ký khoá học nào" /> }}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-      />
-      <Modal
-        title="Đăng ký khóa học"
-        open={addOpen}
-        onCancel={() => {
-          setAddOpen(false)
-          form.resetFields()
-        }}
-        footer={null}
-        width={440}
-      >
-        <Form form={form} layout="vertical" onFinish={(v) => createMutation.mutate(v)}>
-          <Form.Item
-            name="course_id"
-            label="Khóa học"
-            rules={[{ required: true, message: 'Chọn khóa học' }]}
-          >
-            <Select
-              showSearch
-              placeholder="Chọn khóa học"
-              filterOption={(input, opt) => opt.label.toLowerCase().includes(input.toLowerCase())}
-              options={(courses?.data || []).map((c) => ({
-                value: c.id,
-                label: `${c.name}${c.code ? ` (${c.code})` : ''}`,
-              }))}
-            />
-          </Form.Item>
-          <Form.Item name="enrollment_date" label="Ngày đăng ký">
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
-          </Form.Item>
-          <Form.Item name="notes" label="Ghi chú">
-            <Input.TextArea rows={2} />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button
-                onClick={() => {
-                  setAddOpen(false)
-                  form.resetFields()
-                }}
-              >
-                Hủy
-              </Button>
-              <Button type="primary" htmlType="submit" loading={createMutation.isPending}>
-                Đăng ký
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
     </Section>
   )
 }

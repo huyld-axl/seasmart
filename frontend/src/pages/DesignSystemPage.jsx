@@ -175,7 +175,7 @@ const NAV_ITEMS = [
   { key: 'documents', icon: <FileTextOutlined />, label: 'Tài liệu' },
   { key: 'seafarers', icon: <TeamOutlined />, label: 'Thuyền viên' },
   { key: 'exports', icon: <SendOutlined />, label: 'Bản xuất' },
-  { key: 'catalog', icon: <DatabaseOutlined />, label: 'Danh mục' },
+  { key: 'catalog', icon: <DatabaseOutlined />, label: 'Danh mục', children: [{ key: 'cert', label: 'Chứng chỉ' }, { key: 'vessel-type', label: 'Loại tàu' }, { key: 'port', label: 'Cảng biển' }] },
   { key: 'admin', icon: <SafetyCertificateOutlined />, label: 'Quản trị' },
 ]
 
@@ -748,7 +748,7 @@ export default function DesignSystemPage() {
       <Section id="sidebar" title="Mục sidebar">
         <div className="dsp-sidebar">
           <div className="dsp-sidebar__head"><ProductBrand /></div>
-          <Menu mode="inline" selectedKeys={['seafarers']} items={NAV_ITEMS} />
+          <Menu mode="inline" selectedKeys={['cert']} defaultOpenKeys={['catalog']} items={NAV_ITEMS} />
         </div>
       </Section>
 

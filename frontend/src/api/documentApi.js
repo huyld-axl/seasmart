@@ -13,7 +13,8 @@ export const documentApi = {
     const form = new FormData()
     form.append('kind', kind)
     form.append('file', file)
-    return api.post('/documents/scan', form).then((r) => r.data)
+    // Máy chủ đọc bằng AI ngay trong lời gọi (phân loại rồi đọc từng loại), lâu hơn mức 15 giây mặc định của client.
+    return api.post('/documents/scan', form, { timeout: 180000 }).then((r) => r.data)
   },
   decide: (id, key, action, value) => api.put(`/documents/${id}/fields/${key}`, value === undefined ? { action } : { action, value }).then((r) => r.data),
   retry: (id) => api.post(`/documents/${id}/retry`, {}).then((r) => r.data),

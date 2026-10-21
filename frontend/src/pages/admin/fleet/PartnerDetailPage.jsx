@@ -9,7 +9,7 @@ import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { exportApi } from '../../../api/exportApi'
-import { useFleetItem, useFleetMutations } from '../../../hooks/useFleet'
+import { useFleetItem, useFleetMutations, usePartnerLogo } from '../../../hooks/useFleet'
 import { initialsOfName, partnerSections } from './fleetView'
 import { Crumb, FleetTile, ReadPanel, SidePanel } from './FleetParts'
 import '../seafarers/SeafarerListPage.css'
@@ -31,6 +31,7 @@ export default function PartnerDetailPage() {
     enabled: tab === 'packs',
   })
   const { save, remove, restore } = useFleetMutations(shipOwnerApi)
+  const logo = usePartnerLogo(owner)
 
   if (isLoading) {
     return (
@@ -102,7 +103,7 @@ export default function PartnerDetailPage() {
     { value: 'vessels', label: 'Tàu', count: owner.vessels.length },
     { value: 'packs', label: 'Bộ giấy đã nộp', count: Number(owner.pack_count) },
   ]
-  const descParts = [owner.code, owner.country_name].filter(Boolean)
+  const descParts = [owner.country_name].filter(Boolean)
 
   const vesselList = owner.vessels.length ? (
     <ul className="fl-rows">
@@ -189,7 +190,7 @@ export default function PartnerDetailPage() {
 
       <div className="crew-head">
         <div className="crew-head__person">
-          <FleetTile large text={initialsOfName(owner.company_name)} />
+          <FleetTile large text={initialsOfName(owner.company_name)} src={logo} />
           <div className="crew-head__text">
             <h1 className="crew-head__title">{owner.company_name}</h1>
             {descParts.length ? <p className="crew-head__desc">{descParts.join(' · ')}</p> : null}

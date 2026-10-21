@@ -34,6 +34,7 @@ import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
+import LogoField from '../components/ds/LogoField'
 import ScanButton from '../components/ds/ScanButton'
 import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
@@ -675,6 +676,16 @@ export default function DesignSystemPage() {
           <div className="ds-toggle-grid">
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
+          </div>
+        </div>
+      </Section>
+
+      <Section id="logo-cong-ty" title="Ô logo công ty">
+        <div className="dsp-stack">
+          <p className="dsp-note">Kéo thả hoặc bấm chọn một ảnh logo JPG / PNG, tối đa 2 MB. Logo chỉ tải lên khi bấm lưu form.</p>
+          <div className="ds-toggle-grid">
+            <Demo label="Chưa có logo"><LogoField onPick={() => {}} /></Demo>
+            <Demo label="Lỗi"><LogoField error="Logo lớn hơn 2 MB, chọn ảnh nhỏ hơn" onPick={() => {}} /></Demo>
           </div>
         </div>
       </Section>

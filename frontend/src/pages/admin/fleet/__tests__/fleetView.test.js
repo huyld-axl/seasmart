@@ -23,7 +23,6 @@ const vessel = {
   has_boiler: 0,
   has_refrigeration: 1,
   ship_owner_name: 'Wisdom Marine Lines',
-  ship_owner_code: 'WISDOM',
 }
 
 describe('fleetView', () => {
@@ -38,10 +37,10 @@ describe('fleetView', () => {
     ])
   })
 
-  it('đủ 28 trường của tàu, không trùng', () => {
+  it('đủ 27 trường của tàu, không trùng', () => {
     const labels = vesselSections(vessel).flatMap((s) => s.fields.map((f) => f[0]))
-    expect(labels).toHaveLength(28)
-    expect(new Set(labels).size).toBe(28)
+    expect(labels).toHaveLength(27)
+    expect(new Set(labels).size).toBe(27)
   })
 
   it('định dạng số và đơn vị', () => {
@@ -51,7 +50,6 @@ describe('fleetView', () => {
     expect(fields['Nồi hơi']).toBe('Không')
     expect(fields['Lạnh (Refrigeration)']).toBe('Có')
     expect(fields['Trạng thái']).toBe('Hoạt động')
-    expect(fields['Mã chủ tàu']).toBe('WISDOM')
   })
 
   it('đếm trường đã điền, bỏ qua cờ luôn có giá trị', () => {
@@ -60,7 +58,7 @@ describe('fleetView', () => {
   })
 
   it('đối tác: tình trạng theo is_active', () => {
-    const owner = { company_name: 'HTK', code: 'HTK', is_active: 0 }
+    const owner = { company_name: 'HTK', is_active: 0 }
     const company = partnerSections(owner).find((s) => s.key === 'company')
     expect(company.fields.find((f) => f[0] === 'Tình trạng')[1]).toBe('Ngừng hợp tác')
   })
@@ -94,8 +92,8 @@ describe('fleetView', () => {
   })
 
   it('payload đối tác: mã viết hoa, trạng thái mặc định 1', () => {
-    expect(partnerToPayload({ code: 'htk', company_name: 'HTK', country_id: '' })).toMatchObject({ code: 'HTK', country_id: null, is_active: 1 })
-    expect(partnerToPayload({ code: 'x', company_name: 'X', is_active: 0 }).is_active).toBe(0)
+    expect(partnerToPayload({ company_name: 'HTK', country_id: '' })).toMatchObject({ country_id: null, is_active: 1 })
+    expect(partnerToPayload({ company_name: 'X', is_active: 0 }).is_active).toBe(0)
   })
 
   it('tìm các khóa đã đổi', () => {

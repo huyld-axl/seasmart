@@ -414,12 +414,6 @@ export default function MasterSubPage() {
   const Component = entry.component
   return (
     <div className="ds-page">
-      <div className="ds-page__head">
-        <div>
-          <h1 className="ds-page__title">{entry.title}</h1>
-          {entry.description ? <p className="ds-page__desc">{entry.description}</p> : null}
-        </div>
-      </div>
       <Component key={tab} />
     </div>
   )

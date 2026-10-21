@@ -7,6 +7,12 @@ const idParams = { type: 'object', required: ['id'], properties: { id: { type: '
 async function roleRoutes(fastify) {
   const guard = { onRequest: [fastify.authenticate, fastify.can('role.manage')] }
 
+  // GET /api/v1/roles/options — tên và mô tả vai trò cho ô chọn ở màn Tài khoản (người có account.view, không cần role.manage)
+  fastify.get('/options', { onRequest: [fastify.authenticate, fastify.can('account.view')] }, async () => {
+    const roles = await roleService.list(pool)
+    return { data: roles.map(({ id, name, description, is_system }) => ({ id, name, description, is_system })) }
+  })
+
   // GET /api/v1/roles/catalog — danh mục quyền để vẽ ma trận
   fastify.get('/catalog', guard, async () => catalogForClient())
 

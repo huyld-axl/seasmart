@@ -5,6 +5,7 @@ import { exportApi } from '../../../api/exportApi'
 import useToast from '../../../components/ds/useToast'
 import useExportPrefsStore from '../../../stores/exportPrefsStore'
 import { downloadError, saveBlob } from './download'
+import { useCan } from '../../../hooks/usePermission'
 
 // File tải về theo tuỳ chọn "Hiện đường lưới" ở khung xem trước.
 function useDownload(request, fallbackName) {
@@ -18,12 +19,14 @@ function useDownload(request, fallbackName) {
 
 // Tải cả bộ thành một thư mục (.zip): PDF, Excel, hoặc cả hai.
 export function PackDownload({ pack, type = 'default', size, disabled, label = 'Tải cả bộ' }) {
+  const canDownload = useCan()('export.download')
   const download = useDownload((format, gridlines) => exportApi.download(pack.id, format, gridlines), () => `${pack.code}.zip`)
   const items = [
     { key: 'all', icon: <FolderOutlined />, label: 'PDF và Excel' },
     { key: 'pdf', icon: <FilePdfOutlined />, label: 'Chỉ PDF' },
     { key: 'xlsx', icon: <FileExcelOutlined />, label: 'Chỉ Excel' },
   ]
+  if (!canDownload) return null
   return (
     <span onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()} role="presentation">
       <Dropdown trigger={['click']} placement="bottomRight" disabled={disabled || download.isPending} menu={{ items, onClick: ({ key }) => download.mutate(key) }}>
@@ -37,8 +40,10 @@ export function PackDownload({ pack, type = 'default', size, disabled, label = '
 
 // Tải riêng một giấy: PDF hoặc Excel.
 export function DocDownload({ pack, docKey, docName, disabled }) {
+  const canDownload = useCan()('export.download')
   const download = useDownload((format, gridlines) => exportApi.downloadDoc(pack.id, docKey, format, gridlines), (format) => `${docName}.${format}`)
   const busy = (format) => download.isPending && download.variables === format
+  if (!canDownload) return null
   return (
     <>
       <Button icon={<FilePdfOutlined />} disabled={disabled || download.isPending} loading={busy('pdf')} aria-label={`Tải ${docName} dạng PDF`} onClick={() => download.mutate('pdf')}>PDF</Button>

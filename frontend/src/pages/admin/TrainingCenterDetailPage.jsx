@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useCan } from '../../hooks/usePermission'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
@@ -31,6 +32,7 @@ const STATUS_LABEL = {
 }
 
 export default function TrainingCenterDetailPage() {
+  const can = useCan()
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -246,17 +248,21 @@ export default function TrainingCenterDetailPage() {
         <Tag color={center.is_active ? 'green' : 'default'}>
           {center.is_active ? 'Hoạt động' : 'Tạm dừng'}
         </Tag>
-        <Button icon={<EditOutlined />} onClick={() => setEditOpen(true)}>
-          Chỉnh sửa
-        </Button>
-        <Button
-          danger
-          icon={<DeleteOutlined />}
-          onClick={handleDeleteClick}
-          loading={deleteMutation.isPending}
-        >
-          Xóa
-        </Button>
+        {can('training.update') && (
+          <Button icon={<EditOutlined />} onClick={() => setEditOpen(true)}>
+            Chỉnh sửa
+          </Button>
+        )}
+        {can('training.delete') && (
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={handleDeleteClick}
+            loading={deleteMutation.isPending}
+          >
+            Xóa
+          </Button>
+        )}
       </div>
 
       <Modal

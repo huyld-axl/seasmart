@@ -410,6 +410,7 @@
 .ds-num { font-variant-numeric: tabular-nums; }
 .ds-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
 .ds-role { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.ds-role--none { background: var(--warning-bg); color: var(--warning); }
 .ds-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
 @media (max-width: 639px) { .ds-form-row { grid-template-columns: minmax(0, 1fr); } }
 

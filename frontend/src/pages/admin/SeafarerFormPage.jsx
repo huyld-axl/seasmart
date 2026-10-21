@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import { seafarerApi, lookupApi } from '../../api'
 import { documentApi } from '../../api/documentApi'
 import ScanButton from '../../components/ds/ScanButton'
+import { useCan } from '../../hooks/usePermission'
 import AutofillBanner from '../../components/ds/AutofillBanner'
 import { FIELD_LABELS } from './seafarers/fieldLabels'
 import { ChoiceGroup, KindToggles, PhotoField, PhotoFrame } from './seafarers/SeafarerFormParts'
@@ -201,6 +202,7 @@ const ScanContext = createContext({ busy: null, done: null, run: () => {}, summa
 
 function Section({ index, section, stats, children }) {
   const scan = useContext(ScanContext)
+  const can = useCan()
   const summary = scan.summaries.find((row) => row.key === section.key)
   return (
     <section className="sf-panel" id={`sf-${section.key}`} aria-labelledby={`sf-${section.key}-title`}>
@@ -210,7 +212,7 @@ function Section({ index, section, stats, children }) {
           <h3 className="sf-panel__title" id={`sf-${section.key}-title`}>{section.title}</h3>
           {section.desc ? <p className="sf-panel__desc">{section.desc}</p> : null}
         </div>
-        {section.scans ? (
+        {section.scans && can('seafarer.docs') ? (
           <div className="sf-panel__scans">
             {section.scans.map((kind) => (
               <ScanButton
@@ -272,6 +274,7 @@ export default function SeafarerFormPage() {
 }
 
 function SeafarerForm({ id, seafarer, contacts, countries }) {
+  const can = useCan()
   const isEdit = Boolean(id)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -554,15 +557,17 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           )}
         </div>
         <div className="sf-head__actions">
-          <ScanButton
-            variant="auto"
-            label="Tự điền từ giấy tờ"
-            loading={scanBusy === 'auto'}
-            disabled={Boolean(scanBusy)}
-            doneText={scanDone?.id === 'auto' ? scanDone.text : undefined}
-            onPick={(files) => runScan('auto', files, 'auto')}
-          />
-          {isEdit ? (
+          {can('seafarer.docs') ? (
+            <ScanButton
+              variant="auto"
+              label="Tự điền từ giấy tờ"
+              loading={scanBusy === 'auto'}
+              disabled={Boolean(scanBusy)}
+              doneText={scanDone?.id === 'auto' ? scanDone.text : undefined}
+              onPick={(files) => runScan('auto', files, 'auto')}
+            />
+          ) : null}
+          {isEdit && can('seafarer.delete') ? (
             <Button danger icon={<DeleteOutlined />} onClick={handleDeleteClick} loading={deleteMutation.isPending}>
               Xóa thuyền viên
             </Button>

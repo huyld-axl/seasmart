@@ -20,6 +20,7 @@ import RowActions from '../../components/ds/RowActions'
 import { actionColumn } from '../../components/ds/actionColumn'
 import useListSticky from '../../components/ds/useListSticky'
 import ListFooter from '../../components/ds/ListFooter'
+import { useCan } from '../../hooks/usePermission'
 
 const { useBreakpoint } = Grid
 const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
@@ -44,6 +45,7 @@ function Person({ row }) {
 
 export default function SeafarerListPage() {
   const navigate = useNavigate()
+  const can = useCan()
   const { message } = App.useApp()
   const screens = useBreakpoint()
   const isMobile = !screens.md
@@ -87,7 +89,7 @@ export default function SeafarerListPage() {
 
   const moreMenu = {
     items: [
-      { key: 'import', icon: <UploadOutlined />, label: 'Nhập từ Excel' },
+      ...(can('seafarer.import') ? [{ key: 'import', icon: <UploadOutlined />, label: 'Nhập từ Excel' }] : []),
       { key: 'export', icon: <DownloadOutlined />, label: exporting ? 'Đang xuất…' : 'Xuất ra Excel', disabled: exporting },
     ],
     onClick: ({ key }) => (key === 'import' ? navigate('/seafarers/import') : handleExport()),
@@ -100,7 +102,7 @@ export default function SeafarerListPage() {
     { title: 'Hộ chiếu', dataIndex: 'passport_number', width: 130, responsive: ['lg'], render: (value) => (value ? <span className="ds-mono">{value}</span> : '—') },
     { title: 'Tàu đang sign on', key: 'vessel', render: (_, row) => <span className="crew-nowrap">{row.status === 'ON_VESSEL' && row.vessel_name ? row.vessel_name : '—'}</span> },
     { title: 'Tình trạng', key: 'where', render: (_, row) => <span className="crew-nowrap">{availabilityText(row)}</span> },
-    actionColumn((row) => <RowActions name={row.full_name} onView={() => open(row)} onEdit={() => navigate(`/seafarers/${row.id}/edit`)} />),
+    actionColumn((row) => <RowActions name={row.full_name} onView={() => open(row)} onEdit={can('seafarer.update') ? () => navigate(`/seafarers/${row.id}/edit`) : undefined} />),
   ]
 
   const keyword = search.trim()
@@ -114,7 +116,7 @@ export default function SeafarerListPage() {
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có thuyền viên nào trong mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
-    body = <EmptyState title="Chưa có thuyền viên nào" description="Thêm thuyền viên đầu tiên, hoặc nhập cả danh sách từ Excel." action={<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>Thêm thuyền viên</Button>} />
+    body = <EmptyState title="Chưa có thuyền viên nào" description="Thêm thuyền viên đầu tiên, hoặc nhập cả danh sách từ Excel." action={can('seafarer.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>Thêm thuyền viên</Button> : undefined} />
   } else if (isMobile) {
     body = (
       <ul className="crew-list">
@@ -163,9 +165,11 @@ export default function SeafarerListPage() {
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Nhập, xuất Excel" />
             </Dropdown>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
-              Thêm thuyền viên
-            </Button>
+            {can('seafarer.create') ? (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
+                Thêm thuyền viên
+              </Button>
+            ) : null}
           </span>
         </div>
         {body}

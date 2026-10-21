@@ -15,6 +15,7 @@ import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
+import { useCan } from '../../../hooks/usePermission'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
@@ -27,6 +28,7 @@ const TABS = [
 
 // Danh sách hợp đồng: không có nút tạo, hợp đồng tạo từ vị trí của chuyến tàu.
 export default function ContractListPage() {
+  const can = useCan()
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
   const [tab, setTab] = useState('all')
@@ -38,8 +40,8 @@ export default function ContractListPage() {
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
-  const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 })
-  const voyages = useVoyageList({ limit: 100 })
+  const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: can('partner.view') })
+  const voyages = useVoyageList({ limit: 100 }, { enabled: can('voyage.view') })
   const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, voyage_id: voyageId, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
@@ -87,7 +89,7 @@ export default function ContractListPage() {
     },
     { title: 'Chênh lệch', dataIndex: 'diff_monthly', align: 'right', render: (value) => <b className="ds-num">{formatDiff(value)}</b> },
     { title: 'Trạng thái', dataIndex: 'status', render: (value) => <StatusBadge group="contract" value={value} /> },
-    actionColumn((row) => <RowActions name={`hợp đồng ${row.contract_number}`} onView={() => open(row)} onEdit={['DRAFT', 'REJECTED'].includes(row.status) ? () => navigate(`/contracts/${row.id}/edit`) : undefined} />),
+    actionColumn((row) => <RowActions name={`hợp đồng ${row.contract_number}`} onView={() => open(row)} onEdit={['DRAFT', 'REJECTED'].includes(row.status) && can('contract.update') ? () => navigate(`/contracts/${row.id}/edit`) : undefined} />),
   ]
 
   let body
@@ -100,7 +102,7 @@ export default function ContractListPage() {
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có hợp đồng nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
-    body = <EmptyState title="Chưa có hợp đồng nào" description="Mở một chuyến tàu, bấm Tạo hợp đồng ở dòng vị trí còn trống." action={<Button type="primary" onClick={() => navigate('/voyages')}>Xem chuyến tàu</Button>} />
+    body = <EmptyState title="Chưa có hợp đồng nào" description="Mở một chuyến tàu, bấm Tạo hợp đồng ở dòng vị trí còn trống." action={can('voyage.view') ? <Button type="primary" onClick={() => navigate('/voyages')}>Xem chuyến tàu</Button> : undefined} />
   } else if (isMobile) {
     body = (
       <ul className="crew-list">
@@ -157,6 +159,7 @@ export default function ContractListPage() {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
+          {can('partner.view') ? (
           <Select
             className="vy-owner-filter"
             allowClear
@@ -169,6 +172,8 @@ export default function ContractListPage() {
             options={(owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
             onChange={(value) => { setOwnerId(value); setPage(1) }}
           />
+          ) : null}
+          {can('voyage.view') ? (
           <Select
             className="vy-owner-filter"
             allowClear
@@ -181,6 +186,7 @@ export default function ContractListPage() {
             options={(voyages.data?.data || []).map((v) => ({ value: v.id, label: `${v.code} · ${v.vessel_name}` }))}
             onChange={(value) => { setVoyageId(value); setPage(1) }}
           />
+          ) : null}
         </div>
         {body}
         {rows.length > 0 && (

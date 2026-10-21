@@ -7,10 +7,12 @@ import RoleBadge from '../../../components/admin/users/RoleBadge'
 import UserForm from '../../../components/admin/users/UserForm'
 import DescriptionList from '../../../components/ds/DescriptionList'
 import useToast from '../../../components/ds/useToast'
+import useAccountRights from '../../../hooks/useAccountRights'
 import { EmptyState } from '../../../components/ds/Controls'
 
 const formatDateTime = (value) => (value ? new Date(value).toLocaleString('vi-VN') : null)
-const errorText = (error) => error?.response?.data?.message || error?.response?.data?.error || 'Có lỗi, thử lại sau.'
+const errorText = (error) =>
+  error?.response?.data?.message || error?.response?.data?.error || 'Có lỗi, thử lại sau.'
 
 export default function UserDetailPage() {
   const { id } = useParams()
@@ -22,9 +24,16 @@ export default function UserDetailPage() {
   const toggleActive = useToggleActive()
   const deleteUser = useDeleteUser()
   const [panelOpen, setPanelOpen] = useState(false)
+  const rights = useAccountRights()
 
   if (isLoading) return <Spin style={{ display: 'block', margin: '80px auto' }} />
-  if (!user) return <EmptyState title="Không tìm thấy tài khoản" action={<Button onClick={() => navigate('/admin/users')}>Về danh sách tài khoản</Button>} />
+  if (!user)
+    return (
+      <EmptyState
+        title="Không tìm thấy tài khoản"
+        action={<Button onClick={() => navigate('/admin/users')}>Về danh sách tài khoản</Button>}
+      />
+    )
 
   const confirmDelete = () =>
     modal.confirm({
@@ -47,30 +56,38 @@ export default function UserDetailPage() {
   return (
     <div className="ds-page" style={{ maxWidth: 720 }}>
       <nav aria-label="Đường dẫn" style={{ color: 'var(--muted)' }}>
-        <Link to="/admin/users" style={{ color: 'var(--muted)' }}>Tài khoản</Link>
+        <Link to="/admin/users" style={{ color: 'var(--muted)' }}>
+          Tài khoản
+        </Link>
       </nav>
       <div className="ds-page__head">
         <div>
           <h1 className="ds-page__title">{user.email}</h1>
           <p className="ds-page__desc" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <RoleBadge role={user.role} /> {user.is_active ? 'Được phép đăng nhập' : 'Đã khoá đăng nhập'}
+            <RoleBadge role={user.role} />{' '}
+            {user.is_active ? 'Được phép đăng nhập' : 'Đã khoá đăng nhập'}
           </p>
         </div>
         <div className="ds-page__actions">
-          <Button
-            loading={toggleActive.isPending}
-            onClick={() =>
-              toggleActive.mutate(id, {
-                onSuccess: () => toast.success(user.is_active ? 'Đã khoá đăng nhập' : 'Đã mở lại đăng nhập'),
-                onError: (error) => toast.error(errorText(error)),
-              })
-            }
-          >
-            {user.is_active ? 'Khoá đăng nhập' : 'Mở lại đăng nhập'}
-          </Button>
-          <Button type="primary" icon={<EditOutlined />} onClick={() => setPanelOpen(true)}>
-            Sửa
-          </Button>
+          {rights.canToggle(user) ? (
+            <Button
+              loading={toggleActive.isPending}
+              onClick={() =>
+                toggleActive.mutate(id, {
+                  onSuccess: () =>
+                    toast.success(user.is_active ? 'Đã khoá đăng nhập' : 'Đã mở lại đăng nhập'),
+                  onError: (error) => toast.error(errorText(error)),
+                })
+              }
+            >
+              {user.is_active ? 'Khoá đăng nhập' : 'Mở lại đăng nhập'}
+            </Button>
+          ) : null}
+          {rights.canEdit(user) ? (
+            <Button type="primary" icon={<EditOutlined />} onClick={() => setPanelOpen(true)}>
+              Sửa
+            </Button>
+          ) : null}
         </div>
       </div>
       <div className="ds-card" style={{ padding: 20 }}>
@@ -83,11 +100,13 @@ export default function UserDetailPage() {
           ]}
         />
       </div>
-      <div>
-        <Button danger onClick={confirmDelete}>
-          Xoá tài khoản
-        </Button>
-      </div>
+      {rights.canRemove(user) ? (
+        <div>
+          <Button danger onClick={confirmDelete}>
+            Xoá tài khoản
+          </Button>
+        </div>
+      ) : null}
       <UserForm
         open={panelOpen}
         onClose={() => setPanelOpen(false)}

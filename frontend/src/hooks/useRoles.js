@@ -5,6 +5,11 @@ export function useRoles(options = {}) {
   return useQuery({ queryKey: ['roles'], queryFn: roleApi.list, ...options })
 }
 
+// Ô chọn vai trò ở màn Tài khoản.
+export function useRoleOptions(options = {}) {
+  return useQuery({ queryKey: ['roles', 'options'], queryFn: roleApi.options, ...options })
+}
+
 // Danh mục quyền gần như không đổi trong một phiên.
 export function useRoleCatalog() {
   return useQuery({ queryKey: ['roles', 'catalog'], queryFn: roleApi.catalog, staleTime: Infinity })

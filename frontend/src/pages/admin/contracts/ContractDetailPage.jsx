@@ -8,6 +8,7 @@ import { EmptyState } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { useContract, useContractMutations } from '../../../hooks/useVoyages'
+import { useCan } from '../../../hooks/usePermission'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatDateTime } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
@@ -41,6 +42,7 @@ function Field({ label, children, span }) {
 }
 
 export default function ContractDetailPage() {
+  const can = useCan()
   const { id } = useParams()
   const navigate = useNavigate()
   const { modal } = App.useApp()
@@ -104,7 +106,7 @@ export default function ContractDetailPage() {
   }
 
   const edit = <Button key="edit" icon={<EditOutlined />} onClick={() => navigate(`/contracts/${contract.id}/edit`)}>Sửa hợp đồng</Button>
-  const actions = {
+  const allActions = {
     DRAFT: [
       <Dropdown key="more" menu={{ items: [{ key: 'delete', icon: <DeleteOutlined />, label: 'Xoá hợp đồng', danger: true }], onClick: handleDelete }} trigger={['click']} placement="bottomRight">
         <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
@@ -128,6 +130,9 @@ export default function ContractDetailPage() {
     ],
     ENDED: [],
   }[status]
+  // Nút nào cần quyền nào (xem, ẩn nút khi thiếu quyền).
+  const ACTION_PERM = { more: 'contract.delete', edit: 'contract.update', submit: 'contract.submit', withdraw: 'contract.submit', reject: 'contract.approve', approve: 'contract.approve' }
+  const actions = allActions.filter((button) => !ACTION_PERM[button.key] || can(ACTION_PERM[button.key]))
 
   let banner = null
   if (status === 'PENDING') {

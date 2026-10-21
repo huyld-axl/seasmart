@@ -71,8 +71,9 @@ async function exportPackRoutes(fastify) {
     },
   }, async (request, reply) => reply.code(201).send(await exportPackService.create(pool, request.body, request.user)))
 
+  // Xem trước chỉ dựng ra nội dung, không ghi gì; màn chi tiết bộ giấy (export.view) cũng dùng.
   fastify.post('/preview', {
-    ...write,
+    ...read,
     schema: {
       body: {
         type: 'object',

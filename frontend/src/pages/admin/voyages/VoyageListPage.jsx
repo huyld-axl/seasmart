@@ -7,6 +7,7 @@ import StatusBadge from '../../../components/ds/StatusBadge'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
 import { useVoyageList } from '../../../hooks/useVoyages'
+import { useCan } from '../../../hooks/usePermission'
 import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
 import { DueTag, FillBar } from './VoyageParts'
 import '../seafarers/SeafarerListPage.css'
@@ -54,6 +55,7 @@ function VesselCell({ row }) {
 
 // Danh sách chuyến tàu: cùng khuôn với danh sách đối tác (PartnerListPage).
 export default function VoyageListPage() {
+  const can = useCan()
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
   const [tab, setTab] = useState('all')
@@ -64,7 +66,7 @@ export default function VoyageListPage() {
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
-  const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 })
+  const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: can('partner.view') })
   const list = useVoyageList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
@@ -92,7 +94,7 @@ export default function VoyageListPage() {
       ),
     },
     { title: 'Trạng thái', dataIndex: 'display_status', render: (value) => <StatusBadge group="voyage" value={value} /> },
-    actionColumn((row) => <RowActions name={`chuyến ${row.code}`} onView={() => open(row)} onEdit={row.status !== 'ENDED' ? () => navigate(`/voyages/${row.id}/edit`) : undefined} />),
+    actionColumn((row) => <RowActions name={`chuyến ${row.code}`} onView={() => open(row)} onEdit={row.status !== 'ENDED' && can('voyage.update') ? () => navigate(`/voyages/${row.id}/edit`) : undefined} />),
   ]
 
   let body
@@ -105,7 +107,7 @@ export default function VoyageListPage() {
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có chuyến nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
-    body = <EmptyState title="Chưa có chuyến tàu nào" description="Tạo chuyến để chọn tàu, các vị trí cần người và budget; hợp đồng tạo từ từng vị trí." action={<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến tàu</Button>} />
+    body = <EmptyState title="Chưa có chuyến tàu nào" description="Tạo chuyến để chọn tàu, các vị trí cần người và budget; hợp đồng tạo từ từng vị trí." action={can('voyage.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến tàu</Button> : undefined} />
   } else if (isMobile) {
     body = (
       <ul className="crew-list">
@@ -162,6 +164,7 @@ export default function VoyageListPage() {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
+          {can('partner.view') ? (
           <Select
             className="vy-owner-filter"
             allowClear
@@ -174,9 +177,12 @@ export default function VoyageListPage() {
             options={(owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
             onChange={(value) => { setOwnerId(value); setPage(1) }}
           />
-          <span className="ds-toolbar__end">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến tàu</Button>
-          </span>
+          ) : null}
+          {can('voyage.create') ? (
+            <span className="ds-toolbar__end">
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến tàu</Button>
+            </span>
+          ) : null}
         </div>
         {body}
         {rows.length > 0 && (

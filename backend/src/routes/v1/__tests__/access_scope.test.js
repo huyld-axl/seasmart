@@ -50,6 +50,7 @@ beforeAll(async () => {
   await app.register(require('../master_data.routes'), { prefix: '/admin/master' })
   await app.register(require('../fleet.routes'), { prefix: '/admin/master' })
   await app.register(require('../users'), { prefix: '/users' })
+  await app.register(require('../role.routes'), { prefix: '/roles' })
   await app.ready()
 })
 beforeEach(() => {
@@ -78,6 +79,7 @@ describe('thiếu quyền thì 403', () => {
     ['POST', '/contracts/1/approve', 'contract.approve', {}],
     ['POST', '/contracts/1/submit', 'contract.submit', {}],
     ['GET', '/exports', 'export.view'],
+    ['POST', '/exports/preview', 'export.view', { template_key: 'x' }],
     ['GET', '/exports/1/download', 'export.download'],
     ['GET', '/admin/master/certificate-types', 'catalog.view'],
     ['DELETE', '/admin/master/certificate-types/1', 'catalog.delete'],
@@ -85,6 +87,9 @@ describe('thiếu quyền thì 403', () => {
     ['DELETE', '/admin/master/ship-owners/1', 'partner.delete'],
     ['GET', '/users', 'account.view'],
     ['DELETE', '/users/9', 'account.delete'],
+    ['GET', '/roles/options', 'account.view'],
+    ['GET', '/roles', 'role.manage'],
+    ['PUT', '/roles/permissions', 'role.manage', { roles: [] }],
   ]
   for (const [method, url, perm, payload] of cases) {
     it(`${method} ${url} cần ${perm}`, async () => {
@@ -206,5 +211,14 @@ describe('dữ liệu con theo phạm vi của thuyền viên cha', () => {
 describe('/documents/status chỉ cần đăng nhập', () => {
   it('không quyền nào vẫn qua được kiểm quyền (không 401/403)', async () => {
     expect([401, 403]).not.toContain((await get('/documents/status', as([]))).statusCode)
+  })
+})
+
+describe('/roles/options cho người quản lý tài khoản', () => {
+  it('có account.view mà không có role.manage vẫn đọc được tên vai trò, không lộ quyền', async () => {
+    rules = [['FROM "role" r', () => [[{ id: 1, code: 'admin', name: 'Quản trị viên', description: null, scopes: {}, user_count: 1 }]]]]
+    const res = await get('/roles/options', as(['account.view']))
+    expect(res.statusCode).toBe(200)
+    expect(JSON.parse(res.body).data).toEqual([{ id: 1, name: 'Quản trị viên', description: null, is_system: true }])
   })
 })

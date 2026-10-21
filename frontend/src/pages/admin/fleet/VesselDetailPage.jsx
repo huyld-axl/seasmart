@@ -9,6 +9,7 @@ import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { vesselApi } from '../../../api/fleetApi'
 import { useFleetItem, useFleetMutations } from '../../../hooks/useFleet'
+import { useCan } from '../../../hooks/usePermission'
 import { VESSEL_STATUS_OPTIONS, vesselSections, filled } from './fleetView'
 import { Crumb, FleetTile, ReadPanel, SidePanel } from './FleetParts'
 import '../seafarers/SeafarerListPage.css'
@@ -43,6 +44,7 @@ function PeopleTable({ rows, showStatus, loading }) {
 }
 
 export default function VesselDetailPage() {
+  const can = useCan()
   const { id } = useParams()
   const navigate = useNavigate()
   const { modal } = App.useApp()
@@ -111,17 +113,22 @@ export default function VesselDetailPage() {
     })
   }
 
+  const moreItems = [
+    ...(can('vessel.update')
+      ? [
+          {
+            key: 'status',
+            icon: <SwapOutlined />,
+            label: 'Đổi trạng thái',
+            children: VESSEL_STATUS_OPTIONS.map((option) => ({ key: `status:${option.value}`, label: option.label, disabled: option.value === vessel.status })),
+          },
+        ]
+      : []),
+    ...(can('vessel.update') && can('vessel.delete') ? [{ type: 'divider' }] : []),
+    ...(can('vessel.delete') ? [{ key: 'delete', icon: <DeleteOutlined />, label: inUse ? 'Xoá (tàu đang được dùng)' : 'Xoá tàu', danger: true, disabled: inUse }] : []),
+  ]
   const moreMenu = {
-    items: [
-      {
-        key: 'status',
-        icon: <SwapOutlined />,
-        label: 'Đổi trạng thái',
-        children: VESSEL_STATUS_OPTIONS.map((option) => ({ key: `status:${option.value}`, label: option.label, disabled: option.value === vessel.status })),
-      },
-      { type: 'divider' },
-      { key: 'delete', icon: <DeleteOutlined />, label: inUse ? 'Xoá (tàu đang được dùng)' : 'Xoá tàu', danger: true, disabled: inUse },
-    ],
+    items: moreItems,
     onClick: ({ key }) => (key === 'delete' ? handleDelete() : changeStatus(key.replace('status:', ''))),
   }
 
@@ -206,10 +213,12 @@ export default function VesselDetailPage() {
           </div>
         </div>
         <div className="crew-head__actions">
-          <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
-            <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending || save.isPending} />
-          </Dropdown>
-          <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/vessels/${vessel.id}/edit`)}>Sửa thông tin</Button>
+          {moreItems.length > 0 && (
+            <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
+              <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending || save.isPending} />
+            </Dropdown>
+          )}
+          {can('vessel.update') && <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/vessels/${vessel.id}/edit`)}>Sửa thông tin</Button>}
         </div>
       </div>
 

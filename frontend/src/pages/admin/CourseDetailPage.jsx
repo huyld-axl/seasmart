@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
+import { useCan } from '../../hooks/usePermission'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -34,6 +35,7 @@ const STATUS_LABEL = {
 }
 
 export default function CourseDetailPage() {
+  const can = useCan()
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -210,16 +212,18 @@ export default function CourseDetailPage() {
           <Tag color={STATUS_COLOR[course.status]}>
             {STATUS_LABEL[course.status] || course.status}
           </Tag>
-          <Button icon={<EditOutlined />} onClick={handleEdit} />
-          <Popconfirm
-            title="Xóa khóa học này?"
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-            onConfirm={handleDelete}
-          >
-            <Button icon={<DeleteOutlined />} danger />
-          </Popconfirm>
+          {can('training.update') && <Button icon={<EditOutlined />} onClick={handleEdit} />}
+          {can('training.delete') && (
+            <Popconfirm
+              title="Xóa khóa học này?"
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+              onConfirm={handleDelete}
+            >
+              <Button icon={<DeleteOutlined />} danger />
+            </Popconfirm>
+          )}
         </div>
         <div style={sectionStyle}>
           <div style={sectionHeaderStyle}>Thông tin</div>
@@ -255,20 +259,24 @@ export default function CourseDetailPage() {
           {STATUS_LABEL[course.status] || course.status}
         </Tag>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <Button icon={<EditOutlined />} onClick={handleEdit}>
-            Sửa
-          </Button>
-          <Popconfirm
-            title="Xóa khóa học này?"
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-            onConfirm={handleDelete}
-          >
-            <Button icon={<DeleteOutlined />} danger>
-              Xóa
+          {can('training.update') && (
+            <Button icon={<EditOutlined />} onClick={handleEdit}>
+              Sửa
             </Button>
-          </Popconfirm>
+          )}
+          {can('training.delete') && (
+            <Popconfirm
+              title="Xóa khóa học này?"
+              okText="Xóa"
+              cancelText="Hủy"
+              okButtonProps={{ danger: true }}
+              onConfirm={handleDelete}
+            >
+              <Button icon={<DeleteOutlined />} danger>
+                Xóa
+              </Button>
+            </Popconfirm>
+          )}
         </div>
       </div>
 

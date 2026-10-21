@@ -18,6 +18,7 @@ import {
 } from 'antd'
 import { PlusOutlined, SearchOutlined, RightOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { useCan } from '../../hooks/usePermission'
 
 import { courseApi, trainingCenterApi, lookupApi } from '../../api'
 import dayjs from 'dayjs'
@@ -33,6 +34,7 @@ const STATUS_LABEL = {
 }
 
 export default function CourseListPage() {
+  const can = useCan()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const screens = useBreakpoint()
@@ -132,9 +134,11 @@ export default function CourseListPage() {
         }}
       >
         <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Khóa học</span>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
-          Thêm mới
-        </Button>
+        {can('training.update') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+            Thêm mới
+          </Button>
+        )}
       </div>
 
       <div className="ds-card">

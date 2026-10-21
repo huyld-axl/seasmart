@@ -23,11 +23,13 @@ import {
   DeleteOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
+import { useCan } from '../../hooks/usePermission'
 import { trainingCenterApi } from '../../api'
 
 const { useBreakpoint } = Grid
 
 export default function TrainingCenterListPage() {
+  const can = useCan()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [filters, setFilters] = useState({ search: '', is_active: '', page: 1, limit: 20 })
@@ -107,12 +109,16 @@ export default function TrainingCenterListPage() {
           <Button size="small" onClick={() => navigate(`/training-centers/${r.id}`)}>
             Chi tiết
           </Button>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/training-centers/${r.id}`)}
-          />
-          <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r)} />
+          {can('training.update') && (
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/training-centers/${r.id}`)}
+            />
+          )}
+          {can('training.delete') && (
+            <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(r)} />
+          )}
         </Space>
       ),
     },
@@ -131,9 +137,11 @@ export default function TrainingCenterListPage() {
         }}
       >
         <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--foreground)' }}>Trung tâm đào tạo</span>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-          Thêm mới
-        </Button>
+        {can('training.update') && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+            Thêm mới
+          </Button>
+        )}
       </div>
 
       <Modal

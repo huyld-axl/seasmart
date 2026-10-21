@@ -11,6 +11,7 @@ import RowActions from '../../components/ds/RowActions'
 import ListFooter from '../../components/ds/ListFooter'
 import useListSticky from '../../components/ds/useListSticky'
 import { actionColumn } from '../../components/ds/actionColumn'
+import { useCan } from '../../hooks/usePermission'
 
 // ── Generic CRUD hook ──────────────────────────────────────────────────────────
 function useMasterData(resource) {
@@ -58,6 +59,8 @@ function useMasterData(resource) {
 
 // ── Bảng danh mục: khuôn danh sách của skill (bảng trong card, form trong panel trượt) ──────────
 function MasterTable({ resource, columns, formFields, title }) {
+  const can = useCan()
+  const canEdit = can('catalog.update')
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -112,7 +115,7 @@ function MasterTable({ resource, columns, formFields, title }) {
     })
   }
 
-  const actionCol = actionColumn((row) => <RowActions name={row.name_vi || row.name || row.code} onEdit={() => openPanel(row)} onDelete={() => confirmDelete(row)} />)
+  const actionCol = actionColumn((row) => <RowActions name={row.name_vi || row.name || row.code} onEdit={canEdit ? () => openPanel(row) : undefined} onDelete={can('catalog.delete') ? () => confirmDelete(row) : undefined} />)
 
   let body
   if (isError) {
@@ -121,12 +124,12 @@ function MasterTable({ resource, columns, formFields, title }) {
     body = keyword ? (
       <EmptyState title={`Không có ${title} nào khớp "${search}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
     ) : (
-      <EmptyState title={`Chưa có ${title} nào`} action={<Button icon={<PlusOutlined />} onClick={() => openPanel(null)}>Thêm {title}</Button>} />
+      <EmptyState title={`Chưa có ${title} nào`} action={canEdit ? <Button icon={<PlusOutlined />} onClick={() => openPanel(null)}>Thêm {title}</Button> : undefined} />
     )
   } else {
     body = (
       <>
-        <Table rowKey="id" loading={isLoading} dataSource={pageRows} columns={[...columns, actionCol]} pagination={false} scroll={tableScroll} onRow={(row) => ({ onDoubleClick: () => openPanel(row) })} />
+        <Table rowKey="id" loading={isLoading} dataSource={pageRows} columns={[...columns, actionCol]} pagination={false} scroll={tableScroll} onRow={(row) => ({ onDoubleClick: () => canEdit && openPanel(row) })} />
         <ListFooter total={rows.length} page={page} pageSize={pageSize} unit={title} note={keyword ? `lọc từ ${data.length}` : null} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
       </>
     )
@@ -137,11 +140,13 @@ function MasterTable({ resource, columns, formFields, title }) {
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
           <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => { setPage(1); setSearch(event.target.value) }} />
-          <span className="ds-toolbar__end">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-              Thêm {title}
-            </Button>
-          </span>
+          {canEdit ? (
+            <span className="ds-toolbar__end">
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
+                Thêm {title}
+              </Button>
+            </span>
+          ) : null}
         </div>
         {body}
       </div>

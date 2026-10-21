@@ -6,6 +6,7 @@ import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { vesselApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
+import { useCan } from '../../../hooks/usePermission'
 import { VESSEL_STATUS_OPTIONS } from './fleetView'
 import { FleetTile } from './FleetParts'
 import '../seafarers/SeafarerListPage.css'
@@ -33,6 +34,7 @@ function VesselCell({ row }) {
 // Danh sách tàu: cùng khuôn với danh sách thuyền viên. Bấm cả dòng để mở chi tiết.
 export default function VesselListPage() {
   const navigate = useNavigate()
+  const can = useCan()
   const isMobile = !Grid.useBreakpoint().md
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
@@ -55,7 +57,7 @@ export default function VesselListPage() {
     { title: 'Chủ tàu', dataIndex: 'ship_owner_name', responsive: ['lg'], render: muted },
     { title: 'GRT', dataIndex: 'gross_tonnage', align: 'right', responsive: ['lg'], render: (value) => <span className="ds-num">{value == null ? '—' : Number(value).toLocaleString('vi-VN')}</span> },
     { title: 'Đang trên tàu', dataIndex: 'crew_on_board', align: 'right', render: (value) => <span className="ds-num">{value}</span> },
-    actionColumn((row) => <RowActions name={row.vessel_name} onView={() => open(row)} onEdit={() => navigate(`/vessels/${row.id}/edit`)} />),
+    actionColumn((row) => <RowActions name={row.vessel_name} onView={() => open(row)} onEdit={can('vessel.update') ? () => navigate(`/vessels/${row.id}/edit`) : undefined} />),
   ]
 
   let body
@@ -68,7 +70,7 @@ export default function VesselListPage() {
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có tàu nào ở trạng thái này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
-    body = <EmptyState title="Chưa có tàu nào" description="Thêm tàu để dùng khi đối chiếu sea service và tạo bộ giấy." action={<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button>} />
+    body = <EmptyState title="Chưa có tàu nào" description="Thêm tàu để dùng khi đối chiếu sea service và tạo bộ giấy." action={can('vessel.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button> : undefined} />
   } else if (isMobile) {
     body = (
       <ul className="crew-list">
@@ -112,9 +114,11 @@ export default function VesselListPage() {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
-          <span className="ds-toolbar__end">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button>
-          </span>
+          {can('vessel.create') ? (
+            <span className="ds-toolbar__end">
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button>
+            </span>
+          ) : null}
         </div>
         {body}
         {rows.length > 0 && (

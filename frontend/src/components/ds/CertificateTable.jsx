@@ -10,7 +10,8 @@ export default function CertificateTable({ certs = [], onEdit, onOpenSource }) {
   const source = (cert) => (cert.manual
     ? <span className="ds-ctable__note">Nhập tay</span>
     : <button type="button" className="ds-link" onClick={() => onOpenSource?.(cert)}>Xem bản gốc</button>)
-  const edit = (cert) => <Button type="text" size="small" icon={<EditOutlined />} aria-label={`Sửa ${cert.name}`} onClick={() => onEdit?.(cert)} />
+  // Nút Sửa chỉ hiện khi truyền `onEdit` (theo quyền).
+  const edit = (cert) => (onEdit ? <Button type="text" size="small" icon={<EditOutlined />} aria-label={`Sửa ${cert.name}`} onClick={() => onEdit(cert)} /> : null)
 
   return (
     <div className="ds-ctable">

@@ -6,10 +6,12 @@ import dayjs from 'dayjs'
 import { exportApi } from '../../../api/exportApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import { template } from '../exports/packModel'
+import { useCan } from '../../../hooks/usePermission'
 
 // Tab Đã xuất của hồ sơ: các bộ giấy đã tạo cho người này.
 export default function ProfileExports({ seafarerId, canCreate, blockedReason }) {
   const navigate = useNavigate()
+  const can = useCan()
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['exports', { seafarer_id: seafarerId }],
     queryFn: () => exportApi.list({ seafarer_id: seafarerId, limit: 50 }),
@@ -38,7 +40,7 @@ export default function ProfileExports({ seafarerId, canCreate, blockedReason })
     <section className="crew-panel">
       <div className="crew-panel__head">
         <h2 className="crew-panel__title">Bộ giấy đã xuất</h2>
-        {create}
+        {can('export.create') ? create : null}
       </div>
       <div className="crew-panel__body">{body}</div>
     </section>

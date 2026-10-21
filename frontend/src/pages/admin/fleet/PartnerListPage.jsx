@@ -5,6 +5,7 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
+import { useCan } from '../../../hooks/usePermission'
 import { initialsOfName } from './fleetView'
 import { FleetTile } from './FleetParts'
 import '../seafarers/SeafarerListPage.css'
@@ -33,6 +34,7 @@ function PartnerCell({ row }) {
 // Danh sách đối tác (chủ tàu): cùng khuôn với danh sách tàu.
 export default function PartnerListPage() {
   const navigate = useNavigate()
+  const can = useCan()
   const isMobile = !Grid.useBreakpoint().md
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
@@ -71,7 +73,7 @@ export default function PartnerListPage() {
     },
     { title: 'Số tàu', dataIndex: 'vessel_count', align: 'right', render: (value) => <span className="ds-num">{value}</span> },
     { title: 'Bộ giấy đã nộp', dataIndex: 'pack_count', align: 'right', responsive: ['md'], render: (value) => <span className="ds-num">{value}</span> },
-    actionColumn((row) => <RowActions name={row.company_name} onView={() => open(row)} onEdit={() => navigate(`/partners/${row.id}/edit`)} />),
+    actionColumn((row) => <RowActions name={row.company_name} onView={() => open(row)} onEdit={can('partner.update') ? () => navigate(`/partners/${row.id}/edit`) : undefined} />),
   ]
 
   let body
@@ -84,7 +86,7 @@ export default function PartnerListPage() {
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có đối tác nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
-    body = <EmptyState title="Chưa có đối tác nào" description="Thêm chủ tàu đối tác để chọn ở mục “Nộp cho” của bộ giấy và gắn với tàu." action={<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button>} />
+    body = <EmptyState title="Chưa có đối tác nào" description="Thêm chủ tàu đối tác để chọn ở mục “Nộp cho” của bộ giấy và gắn với tàu." action={can('partner.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button> : undefined} />
   } else if (isMobile) {
     body = (
       <ul className="crew-list">
@@ -128,9 +130,11 @@ export default function PartnerListPage() {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
-          <span className="ds-toolbar__end">
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button>
-          </span>
+          {can('partner.create') ? (
+            <span className="ds-toolbar__end">
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button>
+            </span>
+          ) : null}
         </div>
         {body}
         {rows.length > 0 && (

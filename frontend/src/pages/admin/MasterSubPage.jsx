@@ -127,7 +127,7 @@ function MasterTable({ resource, columns, formFields, title }) {
       if (addAnother) form.resetFields()
       else setEditing(null)
     } catch (error) {
-      toast.error(error?.response?.data?.error || 'Không lưu được. Thử lại sau.')
+      toast.error(editing?.id ? `Không lưu được ${title}` : `Không thêm được ${title}`, { description: error?.response?.data?.error || 'Thử lại sau ít phút.' })
     }
   }
 
@@ -154,7 +154,7 @@ function MasterTable({ resource, columns, formFields, title }) {
           await remove.mutateAsync(row.id)
           toast.success(`Đã xoá ${title} "${name}"`)
         } catch (error) {
-          toast.error(error?.response?.data?.error || 'Không xoá được')
+          toast.error(`Không xoá được ${title} "${name}"`, { description: error?.response?.data?.error || 'Thử lại sau ít phút.' })
         }
       },
     })

@@ -14,7 +14,6 @@ import {
   Select,
   Checkbox,
   DatePicker,
-  message,
   Space,
   App,
   Dropdown,
@@ -108,6 +107,7 @@ export default function SeafarerDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const toast = useToast()
   const { modal } = App.useApp()
   const [tab, setTab] = useState('overview')
   const pageRef = useRef(null)
@@ -141,11 +141,11 @@ export default function SeafarerDetailPage() {
   const deleteMutation = useMutation({
     mutationFn: () => seafarerApi.remove(id),
     onSuccess: () => {
-      message.success('Đã xóa thuyền viên')
+      toast.success(`Đã xoá thuyền viên ${seafarer?.full_name || ''}`.trim())
       queryClient.invalidateQueries({ queryKey: ['seafarers'] })
       navigate('/seafarers')
     },
-    onError: (e) => message.error(e.response?.data?.error || 'Xóa thất bại'),
+    onError: (e) => toast.error('Không xoá được thuyền viên', { description: e.response?.data?.error }),
   })
 
   function handleDelete() {
@@ -363,11 +363,11 @@ function WorkSection({ s }) {
 
 function CertificatesSection({ seafarerId }) {
   const queryClient = useQueryClient()
+  const toast = useToast()
   const can = useCan()
   const [editing, setEditing] = useState(null) // null | 'new' | dòng chứng chỉ
   const [certFile, setCertFile] = useState(null)
   const [form] = Form.useForm()
-  const toast = useToast()
 
   const { data, isLoading } = useQuery({
     queryKey: ['certificates', seafarerId],
@@ -385,7 +385,7 @@ function CertificatesSection({ seafarerId }) {
     close()
     queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
   }
-  const failed = (text) => (e) => toast.error(e.response?.data?.error || text)
+  const failed = (text) => (e) => toast.error(text, { description: e.response?.data?.error || 'Thử lại sau ít phút.' })
 
   const saveMutation = useMutation({
     mutationFn: async ({ row, values }) => {
@@ -439,7 +439,7 @@ function CertificatesSection({ seafarerId }) {
   }
 
   async function openSource(cert) {
-    if (!cert.uploadId) return toast.error('Chứng chỉ này không còn bản gốc.')
+    if (!cert.uploadId) return toast.error('Chứng chỉ này không còn bản gốc')
     try {
       const blob = await documentApi.uploadFile(cert.uploadId)
       window.open(URL.createObjectURL(blob), '_blank', 'noopener')

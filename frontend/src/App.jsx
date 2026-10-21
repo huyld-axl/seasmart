@@ -39,6 +39,7 @@ import PackDetailPage from './pages/admin/exports/PackDetailPage'
 import StandaloneError from './pages/errors/StandaloneError'
 import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
+import ToastHost from './components/ds/ToastHost'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30000 } },
@@ -154,7 +155,8 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={viVN} theme={antTheme}>
-        <AntApp notification={{ bottom: 96 }}>
+        <AntApp notification={{ bottom: 96, maxCount: 3, stack: false }}>
+          <ToastHost />
           <RouterProvider router={router} />
         </AntApp>
       </ConfigProvider>

@@ -213,7 +213,7 @@ export default function PackCreatePage() {
         setPeople(people.filter((id) => !done.has(String(id))))
         qc.invalidateQueries({ queryKey: ['exports'] })
       }
-      toast.error(`${e.response?.data?.error || 'Không tạo được bộ giấy'}${created.length ? `. Đã tạo ${created.length}/${seafarers.length} bộ trước khi lỗi.` : ''}`)
+      toast.error(created.length ? `Mới tạo được ${created.length}/${seafarers.length} bộ giấy` : 'Không tạo được bộ giấy', { description: e.response?.data?.error || 'Thử lại sau ít phút.' })
     } finally {
       setSubmitting(false)
     }

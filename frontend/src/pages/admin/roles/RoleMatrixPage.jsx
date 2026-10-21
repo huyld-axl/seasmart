@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useBlocker, useNavigate } from 'react-router-dom'
 import { App, Button, Input, Skeleton } from 'antd'
-import { CheckCircleFilled, InfoCircleOutlined } from '@ant-design/icons'
+import {
+  CheckCircleFilled,
+  ExpandAltOutlined,
+  InfoCircleOutlined,
+  PlusOutlined,
+  SearchOutlined,
+  ShrinkOutlined,
+} from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import useMediaQuery from '../../../hooks/useMediaQuery'
@@ -112,11 +119,11 @@ export default function RoleMatrixPage() {
     update(roleId, () => result.draftRole)
     if (result.autoAdded) {
       const view = module.permissions.find((p) => p.code === result.autoAdded)
-      toast.info(`Đã tự tích "${view.name}" của ${module.label}: cần Xem mới làm được việc khác.`)
+      toast.info(`Đã tự tích "${view.name}"`, { description: `Cần quyền Xem của ${module.label} mới làm được việc khác.` })
     } else if (result.autoRemoved.length) {
-      toast.info(
-        `Bỏ quyền Xem thì bỏ luôn ${result.autoRemoved.length} quyền khác của ${module.label} cho ${role.name}.`
-      )
+      toast.info(`Đã bỏ luôn ${result.autoRemoved.length} quyền khác của ${module.label}`, {
+        description: `Không có quyền Xem thì ${role.name} không làm được các việc này.`,
+      })
     }
   }
   const onModule = (roleId, module) => update(roleId, (d) => toggleModule(d, module))
@@ -132,7 +139,7 @@ export default function RoleMatrixPage() {
 
   const discard = () => {
     setDraft(buildDraft(roles))
-    toast.info('Đã bỏ các thay đổi chưa lưu.')
+    toast.info('Đã bỏ các thay đổi chưa lưu')
   }
 
   async function confirmSave() {
@@ -140,10 +147,10 @@ export default function RoleMatrixPage() {
       const saved = await save.mutateAsync(toSavePayload(modules, changes, draft))
       setDraft(buildDraft(saved))
       setSaveOpen(false)
-      toast.success(`Đã lưu ${count} thay đổi quyền.`)
+      toast.success(`Đã lưu ${count} thay đổi quyền`)
     } catch (error) {
       setSaveOpen(false)
-      toast.error(apiErrorText(error, 'Không lưu được quyền. Thử lại sau.'))
+      toast.error('Không lưu được thay đổi quyền', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 
@@ -151,10 +158,10 @@ export default function RoleMatrixPage() {
     try {
       await remove.mutateAsync(role.id)
       setDeleting(null)
-      toast.success(`Đã xoá vai trò ${role.name}.`)
+      toast.success(`Đã xoá vai trò ${role.name}`)
     } catch (error) {
       setDeleting(null)
-      toast.error(apiErrorText(error, 'Không xoá được vai trò. Thử lại sau.'))
+      toast.error(`Không xoá được vai trò ${role.name}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 
@@ -194,6 +201,41 @@ export default function RoleMatrixPage() {
     }
   }
 
+  const ready =
+    Boolean(modules) && !rolesQuery.isLoading && !rolesQuery.isError && !catalogQuery.isError
+  const addButton = (
+    <Button type="primary" icon={<PlusOutlined />} onClick={() => setForm({ mode: 'add' })}>
+      Thêm vai trò
+    </Button>
+  )
+  // Toolbar trong card, cùng khuôn các màn danh sách: tìm, thu gọn, nút chính ở cuối.
+  const toolbar = (
+    <div className="ds-toolbar">
+      {ready && !isPhone ? (
+        <>
+          <Input
+            className="ds-toolbar__search"
+            allowClear
+            prefix={<SearchOutlined />}
+            placeholder="Tìm quyền, ví dụ: duyệt"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="Tìm quyền"
+          />
+          <Button
+            icon={allCollapsed ? <ExpandAltOutlined /> : <ShrinkOutlined />}
+            onClick={() =>
+              setCollapsed(allCollapsed ? new Set() : new Set(modules.map((m) => m.key)))
+            }
+          >
+            {allCollapsed ? 'Mở tất cả' : 'Thu gọn tất cả'}
+          </Button>
+        </>
+      ) : null}
+      <span className="ds-toolbar__end">{addButton}</span>
+    </div>
+  )
+
   let body
   if (catalogQuery.isError || rolesQuery.isError) {
     body = (
@@ -215,7 +257,8 @@ export default function RoleMatrixPage() {
     )
   } else if (!modules || rolesQuery.isLoading) {
     body = (
-      <section className="rm-card" aria-busy="true">
+      <section className="ds-card rm-card" aria-busy="true">
+        {toolbar}
         <div style={{ padding: 20 }}>
           <Skeleton active paragraph={{ rows: 8 }} />
         </div>
@@ -224,23 +267,9 @@ export default function RoleMatrixPage() {
   } else {
     body = (
       <>
-        {roles.length === 1 && !isPhone ? (
-          <div className="rm-hint">
-            <RoleIcon name="info" />
-            <span>
-              Mới có vai trò <b>Quản trị viên</b>. Tạo vai trò cho từng nhóm người dùng, ví dụ nhân
-              viên hồ sơ hay kế toán, rồi tích quyền ở cột mới.
-            </span>
-            <Button
-              size="small"
-              icon={<RoleIcon name="plus" />}
-              onClick={() => setForm({ mode: 'add' })}
-            >
-              Thêm vai trò
-            </Button>
-          </div>
-        ) : null}
         {isPhone ? (
+          <>
+          {toolbar}
           <RolePhoneView
             modules={modules}
             roles={roles}
@@ -252,6 +281,7 @@ export default function RoleMatrixPage() {
             onScope={onScope}
             menuFor={menuFor}
           />
+          </>
         ) : (
           <PermissionMatrix
             modules={modules}
@@ -267,7 +297,7 @@ export default function RoleMatrixPage() {
             onModule={onModule}
             onScope={onScope}
             onCollapse={onCollapse}
-            onAdd={() => setForm({ mode: 'add' })}
+            toolbar={toolbar}
             onClearQuery={() => setQuery('')}
           />
         )}
@@ -296,70 +326,8 @@ export default function RoleMatrixPage() {
     )
   }
 
-  const ready =
-    Boolean(modules) && !rolesQuery.isLoading && !rolesQuery.isError && !catalogQuery.isError
   return (
-    <div className="rm-page">
-      <div className="rm-head">
-        <div>
-          <h1>Vai trò và quyền</h1>
-          {isPhone ? null : (
-            <p>
-              Tích ô để cho vai trò làm việc đó. Mục có phạm vi thì chọn thêm xem được tất cả hay
-              chỉ bản ghi do mình tạo. Mỗi tài khoản một vai trò, gán ở tab Tài khoản. Quản trị viên
-              luôn có toàn quyền.
-            </p>
-          )}
-        </div>
-        <Button
-          type="primary"
-          size={isPhone ? 'small' : 'middle'}
-          icon={<RoleIcon name="plus" />}
-          onClick={() => setForm({ mode: 'add' })}
-        >
-          Thêm vai trò
-        </Button>
-      </div>
-      {ready && !isPhone ? (
-        <div className="rm-toolbar">
-          <Input
-            className="rm-search"
-            prefix={<RoleIcon name="search" />}
-            placeholder="Tìm quyền, ví dụ: duyệt"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            aria-label="Tìm quyền"
-          />
-          <Button
-            type="text"
-            size="small"
-            icon={<RoleIcon name={allCollapsed ? 'expand' : 'collapse'} />}
-            onClick={() =>
-              setCollapsed(allCollapsed ? new Set() : new Set(modules.map((m) => m.key)))
-            }
-          >
-            {allCollapsed ? 'Mở tất cả' : 'Thu gọn tất cả'}
-          </Button>
-          <div className="rm-legend">
-            <span>
-              <span className="pc__box pc__box--on">
-                <RoleIcon name="check" />
-              </span>
-              Có quyền
-            </span>
-            <span>
-              <span className="pc__box pc__box--on">
-                <RoleIcon name="minus" />
-              </span>
-              Có một phần mục
-            </span>
-            <span>
-              <span className="pc__box pc__box--changed" />
-              Đã sửa, chưa lưu
-            </span>
-          </div>
-        </div>
-      ) : null}
+    <div className="ds-page rm-page">
       {body}
       <RoleSaveModal
         open={saveOpen}

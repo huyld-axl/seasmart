@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { Button, Dropdown } from 'antd'
 import PermissionCheck from '../../../components/ds/PermissionCheck'
 import { SegmentedPick } from '../fleet/FleetParts'
@@ -19,6 +20,8 @@ const SCOPE_OPTIONS = [
   { value: 'own', label: SCOPE_LABEL.own },
 ]
 
+// Đầu cột vai trò: hai dòng cố định (tên + menu, rồi số tài khoản và số quyền). Mọi phần đổi theo nháp
+// nằm trong ô có bề rộng cố định, nên tích quyền không làm đầu cột xê dịch.
 function RoleHead({ role, draftRole, modules, total, flash, menu }) {
   const locked = role.is_system
   const count = locked ? total : draftRole.perms.size
@@ -26,37 +29,28 @@ function RoleHead({ role, draftRole, modules, total, flash, menu }) {
   return (
     <th scope="col" className={locked ? 'rm-c-role is-locked' : 'rm-c-role'} data-c={role.id}>
       <div className={flash ? 'rm-rh rm-rh--flash' : 'rm-rh'}>
-        <div className="rm-rh__top">
-          <span className="rm-rh__name" title={role.description || undefined}>
-            {role.name}
-          </span>
-          <Dropdown menu={menu} trigger={['click']} placement="bottomRight">
-            <button
-              type="button"
-              className="rm-rh__menu"
-              aria-label={`Thao tác với vai trò ${role.name}`}
-            >
-              <RoleIcon name="more" />
-            </button>
-          </Dropdown>
-        </div>
-        <span className="rm-rh__meta">
-          <span>
-            {role.user_count} tài khoản · {locked ? 'toàn quyền' : `${count}/${total} quyền`}
-          </span>
+        <span className="rm-rh__name" title={role.description || role.name}>
           {locked ? (
-            <span
-              className="rm-chip rm-chip--lock"
-              title="Luôn có mọi quyền, kể cả quyền thêm sau này"
-            >
+            <span className="rm-rh__lock" title="Luôn có mọi quyền, kể cả quyền thêm sau này">
               <RoleIcon name="lock" />
-              Cố định
             </span>
           ) : null}
-          {changes ? <span className="rm-chip">Đã sửa {changes}</span> : null}
+          <span className="rm-rh__text">{role.name}</span>
         </span>
-        <span className="rm-rh__bar">
-          <i style={{ width: `${Math.round((count / total) * 100)}%` }} />
+        <Dropdown menu={menu} trigger={['click']} placement="bottomRight">
+          <button type="button" className="rm-rh__menu" aria-label={`Thao tác với vai trò ${role.name}`}>
+            <RoleIcon name="more" />
+          </button>
+        </Dropdown>
+        <span className="rm-rh__meta">
+          {role.user_count} tài khoản · {count}/{total}
+        </span>
+        <span className="rm-rh__changed" aria-live="polite">
+          {changes ? (
+            <span className="rm-rh__dot" title={`${changes} thay đổi chưa lưu`}>
+              {changes}
+            </span>
+          ) : null}
         </span>
       </div>
     </th>
@@ -78,9 +72,10 @@ export default function PermissionMatrix({
   onModule,
   onScope,
   onCollapse,
-  onAdd,
+  toolbar,
   onClearQuery,
 }) {
+  const headRef = useRef(null)
   const has = (role, code) => (role.is_system ? true : draft[role.id]?.perms.has(code))
 
   // Rê vào một ô thì cả cột sáng nhẹ (gắn class trực tiếp, không dựng lại bảng).
@@ -272,59 +267,93 @@ export default function PermissionMatrix({
     }
   }
 
+  // Cùng bề rộng cột cho bảng đầu và bảng thân, để hai bảng thẳng cột khi tách.
+  const cols = (
+    <colgroup>
+      <col className="rm-col-perm" />
+      {roles.map((role) => (
+        <col key={role.id} className="rm-col-role" />
+      ))}
+      <col />
+    </colgroup>
+  )
+  // Cuộn ngang thân bảng thì kéo theo hàng tiêu đề.
+  const syncHead = (event) => {
+    if (headRef.current) headRef.current.scrollLeft = event.currentTarget.scrollLeft
+  }
+
   return (
-    <section className="rm-card">
-      <div className="rm-scroll" ref={scrollRef}>
-        <table className="rm-table" onMouseOver={highlight} onMouseLeave={clearHighlight}>
-          <thead>
-            <tr>
-              <th scope="col" className="rm-c-perm">
-                Quyền
-              </th>
-              {roles.map((role) => (
-                <RoleHead
-                  key={role.id}
-                  role={role}
-                  draftRole={draft[role.id]}
-                  modules={modules}
-                  total={total}
-                  flash={flashId === role.id}
-                  menu={menuFor(role)}
-                />
-              ))}
-              <th className="rm-c-add">
-                <button type="button" className="rm-add-col" onClick={onAdd}>
-                  <RoleIcon name="plus" />
-                  Thêm vai trò
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown ? (
-              rows
-            ) : (
+    <section className="ds-card rm-card">
+      {toolbar}
+      {/* Như bảng antd của các màn danh sách: hàng tiêu đề đứng yên, chỉ thân bảng cuộn. */}
+      <div className="rm-grid">
+        <div className="rm-head-scroll" ref={headRef}>
+          <table className="rm-table rm-table--head">
+            {cols}
+            <thead>
               <tr>
-                <td colSpan={roles.length + 2}>
-                  <div className="rm-empty">
-                    Không có quyền nào khớp &quot;{query}&quot;.{' '}
-                    <Button size="small" onClick={onClearQuery}>
-                      Xoá tìm kiếm
-                    </Button>
-                  </div>
-                </td>
+                <th scope="col" className="rm-c-perm">
+                  Quyền
+                </th>
+                {roles.map((role) => (
+                  <RoleHead
+                    key={role.id}
+                    role={role}
+                    draftRole={draft[role.id]}
+                    modules={modules}
+                    total={total}
+                    flash={flashId === role.id}
+                    menu={menuFor(role)}
+                  />
+                ))}
+                <th className="rm-c-fill" aria-hidden="true" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+          </table>
+        </div>
+        <div className="rm-scroll" ref={scrollRef} onScroll={syncHead}>
+          <table className="rm-table" onMouseOver={highlight} onMouseLeave={clearHighlight}>
+            {cols}
+            <tbody>
+              {shown ? (
+                rows
+              ) : (
+                <tr>
+                  <td colSpan={roles.length + 2}>
+                    <div className="rm-empty">
+                      Không có quyền nào khớp &quot;{query}&quot;.{' '}
+                      <Button size="small" onClick={onClearQuery}>
+                        Xoá tìm kiếm
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div className="rm-foot">
-        <span>
-          <b>{roles.length} vai trò</b> · <b>{total} quyền</b> trong {modules.length} mục
+      <div className="ds-table-foot rm-foot">
+        <span className="ds-num">
+          {roles.length} vai trò · {total} quyền trong {modules.length} mục
         </span>
-        <span>
-          <b>Phạm vi</b>: Tất cả = mọi bản ghi; Do mình tạo = chỉ bản ghi tài khoản đó tạo ra. Áp
-          cho mọi quyền trong mục.
+        <span className="rm-legend">
+          <span>
+            <span className="pc__box pc__box--on">
+              <RoleIcon name="check" />
+            </span>
+            Có quyền
+          </span>
+          <span>
+            <span className="pc__box pc__box--on">
+              <RoleIcon name="minus" />
+            </span>
+            Có một phần mục
+          </span>
+          <span>
+            <span className="pc__box pc__box--changed" />
+            Đã sửa, chưa lưu
+          </span>
         </span>
       </div>
     </section>

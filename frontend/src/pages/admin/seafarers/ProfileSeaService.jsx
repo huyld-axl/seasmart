@@ -26,7 +26,7 @@ export default function ProfileSeaService({ seafarerId }) {
   const queryKey = ['sea-services', String(seafarerId)]
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey, queryFn: () => seaServiceApi.list(seafarerId) })
-  const fail = (e) => toast.error(e.response?.data?.error || 'Không thực hiện được. Thử lại sau.')
+  const fail = (e) => toast.error('Không cập nhật được lịch sử đi tàu', { description: e.response?.data?.error || 'Thử lại sau ít phút.' })
   const done = (text) => () => { toast.success(text); qc.invalidateQueries({ queryKey }); setEditing(null); setDeleting(null); setReason('') }
 
   const save = useMutation({
@@ -54,7 +54,7 @@ export default function ProfileSeaService({ seafarerId }) {
     const docId = trip.raw.document_id
     try {
       const doc = docId ? await documentApi.get(docId) : null
-      if (!doc?.upload_id) return toast.error('Chuyến này không còn bản gốc.')
+      if (!doc?.upload_id) return toast.error('Chuyến này không còn bản gốc')
       const blob = await documentApi.uploadFile(doc.upload_id)
       window.open(URL.createObjectURL(blob), '_blank', 'noopener')
     } catch (e) {

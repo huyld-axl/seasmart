@@ -61,9 +61,9 @@ export default function PartnerDetailPage() {
   async function toggleActive() {
     try {
       await save.mutateAsync({ id: owner.id, is_active: active ? 0 : 1 })
-      toast.success(active ? `${owner.company_name} đã chuyển sang Ngừng hợp tác` : `${owner.company_name} đã hợp tác trở lại`)
+      toast.success(active ? `Đã chuyển ${owner.company_name} sang Ngừng hợp tác` : `Đã chuyển ${owner.company_name} về Đang hợp tác`)
     } catch (error) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Không đổi được tình trạng')
+      toast.error(`Không đổi được tình trạng ${owner.company_name}`, { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
     }
   }
 
@@ -79,11 +79,11 @@ export default function PartnerDetailPage() {
           await remove.mutateAsync(owner.id)
           toast.success(`Đã xoá ${owner.company_name}`, {
             actionLabel: 'Hoàn tác',
-            onAction: () => restore.mutate(owner.id, { onError: (error) => toast.error(error?.response?.data?.error || 'Không hoàn tác được') }),
+            onAction: () => restore.mutate(owner.id, { onError: (error) => toast.error(`Không khôi phục được ${owner.company_name}`, { description: error?.response?.data?.error || 'Thử lại sau ít phút.' }) }),
           })
           navigate('/partners')
         } catch (error) {
-          toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Không xoá được')
+          toast.error(`Không xoá được ${owner.company_name}`, { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
         }
       },
     })

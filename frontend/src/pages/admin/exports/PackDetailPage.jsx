@@ -31,9 +31,9 @@ export default function PackDetailPage() {
     onSuccess: (data) => {
       setDraft(null)
       qc.setQueryData(['export', packId], data)
-      toast.success('Đã lưu thay đổi')
+      toast.success(`Đã lưu bộ giấy #${pack.code}`)
     },
-    onError: (e) => toast.error(e.response?.data?.error || 'Không lưu được. Thử lại sau.'),
+    onError: (e) => toast.error('Không lưu được bộ giấy', { description: e.response?.data?.error || 'Thử lại sau ít phút.' }),
   })
 
   if (isLoading) return <div className="ds-page"><Skeleton active paragraph={{ rows: 8 }} /></div>

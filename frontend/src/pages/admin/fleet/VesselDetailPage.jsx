@@ -87,7 +87,7 @@ export default function VesselDetailPage() {
       await save.mutateAsync({ id: vessel.id, status })
       toast.success(`Đã chuyển ${vessel.vessel_name} sang ${VESSEL_STATUS_OPTIONS.find((o) => o.value === status).label}`)
     } catch (error) {
-      toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Không đổi được trạng thái')
+      toast.error(`Không đổi được trạng thái ${vessel.vessel_name}`, { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
     }
   }
 
@@ -103,11 +103,11 @@ export default function VesselDetailPage() {
           await remove.mutateAsync(vessel.id)
           toast.success(`Đã xoá ${vessel.vessel_name}`, {
             actionLabel: 'Hoàn tác',
-            onAction: () => restore.mutate(vessel.id, { onError: (error) => toast.error(error?.response?.data?.error || 'Không hoàn tác được') }),
+            onAction: () => restore.mutate(vessel.id, { onError: (error) => toast.error(`Không khôi phục được ${vessel.vessel_name}`, { description: error?.response?.data?.error || 'Thử lại sau ít phút.' }) }),
           })
           navigate('/vessels')
         } catch (error) {
-          toast.error(error?.response?.data?.error || error?.response?.data?.message || 'Không xoá được')
+          toast.error(`Không xoá được ${vessel.vessel_name}`, { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
         }
       },
     })

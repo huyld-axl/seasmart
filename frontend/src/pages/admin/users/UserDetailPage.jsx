@@ -12,7 +12,7 @@ import { EmptyState } from '../../../components/ds/Controls'
 
 const formatDateTime = (value) => (value ? new Date(value).toLocaleString('vi-VN') : null)
 const errorText = (error) =>
-  error?.response?.data?.message || error?.response?.data?.error || 'Có lỗi, thử lại sau.'
+  error?.response?.data?.message || error?.response?.data?.error || 'Thử lại sau ít phút.'
 
 export default function UserDetailPage() {
   const { id } = useParams()
@@ -49,7 +49,7 @@ export default function UserDetailPage() {
             toast.success(`Đã xoá ${user.email}`)
             navigate('/admin/users')
           },
-          (error) => toast.error(errorText(error))
+          (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) })
         ),
     })
 
@@ -75,8 +75,8 @@ export default function UserDetailPage() {
               onClick={() =>
                 toggleActive.mutate(id, {
                   onSuccess: () =>
-                    toast.success(user.is_active ? 'Đã khoá đăng nhập' : 'Đã mở lại đăng nhập'),
-                  onError: (error) => toast.error(errorText(error)),
+                    toast.success(user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`),
+                  onError: (error) => toast.error(user.is_active ? `Không khoá được ${user.email}` : `Không mở lại được ${user.email}`, { description: errorText(error) }),
                 })
               }
             >
@@ -115,10 +115,10 @@ export default function UserDetailPage() {
             { id, data: values },
             {
               onSuccess: () => {
-                toast.success('Đã lưu')
+                toast.success(`Đã lưu ${user.email}`)
                 setPanelOpen(false)
               },
-              onError: (error) => toast.error(errorText(error)),
+              onError: (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) }),
             }
           )
         }

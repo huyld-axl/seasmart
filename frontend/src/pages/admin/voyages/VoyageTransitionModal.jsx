@@ -42,7 +42,7 @@ export default function VoyageTransitionModal({ kind, voyage, open, onClose }) {
         : `Đã kết thúc chuyến ${voyage.code} · ${moved.length} người chuyển sang Ở bờ`)
       onClose()
     } catch (error) {
-      toast.error(apiErrorText(error, 'Không lưu được. Thử lại sau.'))
+      toast.error(isStart ? `Không bắt đầu được chuyến ${voyage.code}` : `Không kết thúc được chuyến ${voyage.code}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 

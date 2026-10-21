@@ -82,7 +82,7 @@ export default function ContractDetailPage() {
       await mutation.mutateAsync(id)
       toast.success(message)
     } catch (error) {
-      toast.error(apiErrorText(error, 'Không thực hiện được. Thử lại sau.'))
+      toast.error(`Không cập nhật được hợp đồng ${number}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 
@@ -99,7 +99,7 @@ export default function ContractDetailPage() {
           toast.success(`Đã xoá hợp đồng ${number}`)
           navigate(`/voyages/${voyage.id}`)
         } catch (error) {
-          toast.error(apiErrorText(error, 'Không xoá được'))
+          toast.error(`Không xoá được hợp đồng ${number}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
         }
       },
     })
@@ -124,7 +124,7 @@ export default function ContractDetailPage() {
       <Button key="submit" type="primary" icon={<SendOutlined />} loading={submit.isPending} onClick={() => run(submit, contract.id, `Đã gửi xin duyệt lại hợp đồng ${number}`)}>Xin duyệt lại</Button>,
     ],
     ACTIVE: [
-      <Button key="print" icon={<PrinterOutlined />} onClick={() => toast.info('Chưa có mẫu hợp đồng MLC. Nút này để nhắc, chưa in được.')}>
+      <Button key="print" icon={<PrinterOutlined />} onClick={() => toast.info('Chưa in được hợp đồng', { description: 'Chưa có mẫu hợp đồng MLC.' })}>
         In hợp đồng <span className="ct-soon">Chưa chạy</span>
       </Button>,
     ],

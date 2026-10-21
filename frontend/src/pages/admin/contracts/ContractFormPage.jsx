@@ -67,7 +67,7 @@ function ContractForm({ contract, ctx, initial }) {
       toast.success(isEdit ? `Đã lưu hợp đồng ${row.contract.contract_number}` : `Đã tạo hợp đồng ${row.contract.contract_number}`)
       navigate(`/contracts/${row.contract.id}`)
     } catch (error) {
-      toast.error(apiErrorText(error, 'Không lưu được. Thử lại sau.'))
+      toast.error(isEdit ? 'Không lưu được hợp đồng' : 'Không tạo được hợp đồng', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 

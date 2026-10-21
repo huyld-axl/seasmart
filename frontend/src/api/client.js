@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { message } from 'antd'
+import { toast } from '../components/ds/useToast'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
@@ -21,11 +21,10 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       window.location.href = '/login'
-    } else if (err.config?.responseType !== 'blob') {
-      // Tải file (blob): câu lỗi nằm trong blob, nơi gọi tự đọc và báo.
-      const msg =
-        err.response?.data?.error || err.response?.data?.message || err.message || 'Có lỗi xảy ra'
-      message.error(msg)
+    } else if (!err.response) {
+      // Chỉ báo chung khi mất kết nối (không có phản hồi); nhiều request cùng hỏng vẫn chỉ một toast.
+      // Lỗi máy chủ trả về thì nơi gọi tự báo bằng câu có tên việc, để mỗi lỗi chỉ một toast.
+      toast.offline()
     }
     return Promise.reject(err)
   }

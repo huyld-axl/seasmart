@@ -97,7 +97,7 @@ export default function VoyageDetailPage() {
           toast.success(`Đã xoá chuyến ${voyage.code}`)
           navigate('/voyages')
         } catch (error) {
-          toast.error(apiErrorText(error, 'Không xoá được'))
+          toast.error(`Không xoá được chuyến ${voyage.code}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
         }
       },
     })

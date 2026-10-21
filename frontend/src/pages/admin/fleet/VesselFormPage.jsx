@@ -105,7 +105,7 @@ function VesselForm({ vessel }) {
         navigate(`/vessels/${row.id}`)
       }
     } catch (error) {
-      toast.error(errorText(error, 'Không lưu được. Thử lại sau.'))
+      toast.error(isEdit ? 'Không lưu được tàu' : 'Không thêm được tàu', { description: errorText(error, 'Thử lại sau ít phút.') })
     }
   }
 

@@ -7,6 +7,7 @@ import { notificationApi } from '../../api'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/vi'
+import { toast } from '../ds/useToast'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
@@ -58,6 +59,7 @@ export default function NotificationBell() {
       queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
       queryClient.invalidateQueries({ queryKey: ['notifications-list'] })
     },
+    onError: () => toast.error('Không đánh dấu đã đọc được', { description: 'Thử lại sau ít phút.' }),
   })
 
   const markAllReadMutation = useMutation({
@@ -66,6 +68,7 @@ export default function NotificationBell() {
       queryClient.invalidateQueries({ queryKey: ['notifications-unread-count'] })
       queryClient.invalidateQueries({ queryKey: ['notifications-list'] })
     },
+    onError: () => toast.error('Không đánh dấu đã đọc hết được', { description: 'Thử lại sau ít phút.' }),
   })
 
   function handleItemClick(item) {

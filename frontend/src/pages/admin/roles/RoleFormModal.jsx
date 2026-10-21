@@ -45,7 +45,7 @@ export default function RoleFormModal({ open, mode, role, initial, roles, onClos
     try {
       if (editing) {
         await update.mutateAsync({ id: role.id, data: { name, description } })
-        toast.success(`Đã lưu vai trò ${name}.`)
+        toast.success(`Đã lưu vai trò ${name}`)
         onClose()
         return
       }
@@ -53,13 +53,17 @@ export default function RoleFormModal({ open, mode, role, initial, roles, onClos
       const created = await create.mutateAsync({ name, description, copy_from_role_id: copyId })
       const source = copyId ? roles.find((r) => r.id === copyId) : null
       toast.success(
-        `Đã thêm vai trò ${name}${source ? `, chép ${source.is_system ? created.permissions.length : source.permissions.length} quyền từ ${source.name}` : ''}.`
+        `Đã thêm vai trò ${name}${source ? `, chép ${source.is_system ? created.permissions.length : source.permissions.length} quyền từ ${source.name}` : ''}`
       )
       onClose()
       onCreated?.(created)
     } catch (error) {
       if (error?.response?.status === 409)
         form.setFields([{ name: 'name', errors: [apiErrorText(error, 'Đã có vai trò tên này.')] }])
+      else
+        toast.error(editing ? 'Không lưu được vai trò' : 'Không thêm được vai trò', {
+          description: apiErrorText(error, "+D+"),
+        })
     }
   }
 

@@ -20,7 +20,7 @@ import {
 
 const PAGE_SIZE = 20 // mặc định; người dùng đổi ở dòng chân
 const errorText = (error) =>
-  error?.response?.data?.message || error?.response?.data?.error || 'Có lỗi, thử lại sau.'
+  error?.response?.data?.message || error?.response?.data?.error || 'Thử lại sau ít phút.'
 
 export default function UserListPage() {
   // `?role_id=` (từ menu "Xem N tài khoản" ở màn Vai trò và quyền) lọc sẵn theo vai trò; `none` = chưa có vai trò.
@@ -64,7 +64,7 @@ export default function UserListPage() {
         toast.success(text)
         setPanelOpen(false)
       },
-      onError: (error) => toast.error(errorText(error)),
+      onError: (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) }),
     })
     if (editTarget)
       updateUser.mutate({ id: editTarget.id, data: values }, done(`Đã lưu ${values.email}`))
@@ -82,7 +82,7 @@ export default function UserListPage() {
       onOk: () =>
         deleteUser.mutateAsync(user.id).then(
           () => toast.success(`Đã xoá ${user.email}`),
-          (error) => toast.error(errorText(error))
+          (error) => toast.error(`Không xoá được ${user.email}`, { description: errorText(error) })
         ),
     })
 
@@ -90,7 +90,7 @@ export default function UserListPage() {
     toggleActive.mutate(user.id, {
       onSuccess: () =>
         toast.success(user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`),
-      onError: (error) => toast.error(errorText(error)),
+      onError: (error) => toast.error(user.is_active ? `Không khoá được ${user.email}` : `Không mở lại được ${user.email}`, { description: errorText(error) }),
     })
 
   let body

@@ -42,6 +42,7 @@ import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
 import SlidePanel from '../components/ds/SlidePanel'
 import useToast from '../components/ds/useToast'
+import ToastContent from '../components/ds/ToastContent'
 import { EmptyState, FilterChips, ListRow, ProgressBar, SaveStatus, StatusTabs } from '../components/ds/Controls'
 import { COLORS, ELEVATION, RADIUS } from '../theme/tokens'
 import './DesignSystemPage.css'
@@ -281,12 +282,27 @@ function OverlayDemos() {
           </Form>
         </SlidePanel>
       </Demo>
-      <Demo label="Toast: xong việc, có Hoàn tác, lỗi">
-        <div className="dsp-inline">
-          <Button onClick={() => toast.success('Đã lưu MV Lotus Pearl')}>Toast xong việc</Button>
-          <Button onClick={() => toast.success('Đã xoá MV Lotus Pearl', { actionLabel: 'Hoàn tác', onAction: () => toast.success('Đã khôi phục MV Lotus Pearl') })}>Toast có Hoàn tác</Button>
-          <Button onClick={() => toast.error('Không lưu được. Mất kết nối mạng.')}>Toast lỗi</Button>
+      <Demo label="Toast: bốn loại (useToast). Nền trắng, chỉ icon mang màu; [icon] [chữ, mô tả] [hành động] [✕]" wide>
+        <div className="dsp-grid-2 dsp-toasts">
+          <ToastContent static kind="success" title="Đã lưu MV Lotus Pearl" />
+          <ToastContent static kind="success" title="Đã xoá chuyến VN-2611" actionLabel="Hoàn tác" onAction={() => {}} />
+          <ToastContent static kind="info" title={'Đã tự tích "Xem danh sách và hồ sơ"'} description="Cần quyền Xem của Thuyền viên mới làm được việc khác." />
+          <ToastContent static kind="warning" title="Đã lưu đối tác Pacific Ocean" description="Chưa tải được logo. Thử tải lại ở trang sửa." onClose={() => {}} />
+          <ToastContent static kind="error" title="Không lưu được hợp đồng HĐ-0412" description="Mất kết nối tới máy chủ." actionLabel="Thử lại" onAction={() => {}} onClose={() => {}} />
         </div>
+        <div className="dsp-inline">
+          <Button onClick={() => toast.success('Đã lưu MV Lotus Pearl')}>Xong việc</Button>
+          <Button onClick={() => toast.success('Đã xoá MV Lotus Pearl', { actionLabel: 'Hoàn tác', onAction: () => toast.success('Đã khôi phục MV Lotus Pearl') })}>Có Hoàn tác</Button>
+          <Button onClick={() => toast.info('Đã bỏ các thay đổi chưa lưu')}>Thông tin</Button>
+          <Button onClick={() => toast.warning('Đã lưu hồ sơ Nguyễn Văn An', { description: 'Chưa tải được ảnh chân dung. Thử lại ở trang sửa.' })}>Cảnh báo</Button>
+          <Button onClick={() => toast.error('Không lưu được hồ sơ', { description: 'Mất kết nối tới máy chủ.' })}>Lỗi</Button>
+        </div>
+        <ul className="dsp-note dsp-rules">
+          <li>Xong việc tự tắt sau 4 giây (có Hoàn tác thì 8), thông tin 6, cảnh báo 8 và có nút đóng; lỗi không tự tắt, có nút đóng.</li>
+          <li>Tối đa 3 toast; cùng một câu thì thay toast cũ. Góc dưới phải, giữa đáy ở màn hẹp, luôn trên thanh lưu.</li>
+          <li>Chữ: xong việc &quot;Đã + việc + tên&quot;, lỗi &quot;Không + việc + được + tên&quot;; câu một dòng không chấm cuối, lý do và cách sửa ở dòng mô tả.</li>
+          <li>Lỗi máy chủ do nơi gọi báo; api/client.js chỉ báo mất kết nối, một toast cho mọi request hỏng cùng lúc.</li>
+        </ul>
       </Demo>
       <Demo label="Thanh bước" wide>
         <Steps

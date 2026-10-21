@@ -21,6 +21,7 @@ import { actionColumn } from '../../components/ds/actionColumn'
 import useListSticky from '../../components/ds/useListSticky'
 import ListFooter from '../../components/ds/ListFooter'
 import { useCan } from '../../hooks/usePermission'
+import useToast from '../../components/ds/useToast'
 
 const { useBreakpoint } = Grid
 const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
@@ -46,7 +47,7 @@ function Person({ row }) {
 export default function SeafarerListPage() {
   const navigate = useNavigate()
   const can = useCan()
-  const { message } = App.useApp()
+  const toast = useToast()
   const screens = useBreakpoint()
   const isMobile = !screens.md
   const [tab, setTab] = useState('all')
@@ -81,7 +82,7 @@ export default function SeafarerListPage() {
       link.click()
       URL.revokeObjectURL(url)
     } catch {
-      message.error('Không xuất được file Excel. Thử lại sau.')
+      toast.error('Không xuất được file Excel', { description: 'Thử lại sau ít phút.' })
     } finally {
       setExporting(false)
     }

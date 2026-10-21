@@ -13,7 +13,7 @@ function useDownload(request, fallbackName) {
   const gridlines = useExportPrefsStore((state) => state.gridlines)
   return useMutation({
     mutationFn: (format) => request(format, gridlines).then((res) => saveBlob(res, fallbackName(format))),
-    onError: async (error) => toast.error(await downloadError(error)),
+    onError: async (error) => toast.error('Không tải được file', { description: await downloadError(error, 'Thử lại sau ít phút.') }),
   })
 }
 

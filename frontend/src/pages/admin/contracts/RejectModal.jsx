@@ -16,7 +16,7 @@ export default function RejectModal({ contract, open, onClose }) {
       toast.success(`Đã từ chối hợp đồng ${number}`)
       onClose()
     } catch (error) {
-      toast.error(apiErrorText(error, 'Không từ chối được. Thử lại sau.'))
+      toast.error(`Không từ chối được hợp đồng ${number}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 

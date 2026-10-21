@@ -8,12 +8,12 @@
   display: grid;
   gap: 12px;
 }
-/* Máy tính: cả trang vừa khung nhìn (dưới topbar + tab, trừ lề 24), khung ma trận co giãn, thanh lưu nằm ngay dưới. */
+/* Máy tính: cả trang vừa khung nhìn (dưới topbar 64, trừ lề trên dưới 24), khung ma trận co giãn, thanh lưu nằm ngay dưới. */
 @media (min-width: 640px) {
   .rm-page {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - 157px);
+    height: calc(100dvh - 112px);
     min-height: 640px;
   }
   .rm-page > * {
@@ -23,34 +23,6 @@
     flex: 1 1 auto;
     max-height: none;
   }
-}
-.rm-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px 16px;
-}
-.rm-head h1 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  line-height: 28px;
-}
-.rm-head p {
-  max-width: 720px;
-  margin: 4px 0 0;
-  color: var(--muted);
-}
-.rm-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
-}
-.rm-search {
-  flex: 1 1 220px;
-  max-width: 300px;
 }
 .rm-legend {
   display: flex;
@@ -80,41 +52,39 @@
     0 0 0 4px var(--primary);
 }
 
-.rm-hint {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: 1px dashed rgb(0 51 102 / 0.3);
-  border-radius: var(--radius-md);
-  background: #eef3f8;
-  color: var(--primary);
-}
-.rm-hint .rm-i {
-  font-size: 16px;
-}
-.rm-hint .ant-btn {
-  margin-left: auto;
-}
-
 /* Khung ma trận: cuộn cả hai chiều trong khung, đầu bảng và cột quyền dính. */
 .rm-card {
   display: flex;
   flex-direction: column;
   min-height: 360px;
+}
+/* Khối bảng (card giữa): hàng tiêu đề đứng yên, thân bảng cuộn; thanh cuộn cùng kiểu thân bảng antd ở các màn danh sách. */
+.ds-card:has(> .ds-toolbar) > .rm-grid {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.rm-head-scroll {
+  flex: none;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
 }
 .rm-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  scrollbar-color: var(--muted) var(--border);
+}
+.rm-col-perm {
+  width: 360px;
+}
+.rm-col-role {
+  width: 176px;
 }
 .rm-table {
   width: max-content;
   min-width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -123,18 +93,15 @@
   border-bottom: 1px solid var(--border);
 }
 .rm-table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 3;
-  height: 84px;
-  padding: 8px 12px;
+  height: 56px;
+  padding: 6px 8px 6px 12px;
   border-bottom: 2px solid var(--primary);
   background: var(--table-header);
   color: var(--primary);
   font-size: 12px;
   font-weight: 600;
   text-align: left;
-  vertical-align: bottom;
+  vertical-align: middle;
 }
 .rm-table thead th + th {
   border-left: 1px solid var(--border-strong);
@@ -159,66 +126,48 @@
   text-align: center;
 }
 .rm-c-fill {
-  width: 100%;
   min-width: 0;
   padding: 0;
 }
 .rm-table thead .rm-c-fill {
   border-left: 0;
 }
-.rm-table thead th.rm-c-add {
-  width: 100%;
-  min-width: 180px;
-  border-left: 1px solid var(--border-strong);
-  vertical-align: middle;
-}
-.rm-add-col {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 40px;
-  padding: 0 14px;
-  border: 1.5px dashed rgb(0 51 102 / 0.35);
-  border-radius: 10px;
-  background: rgb(255 255 255 / 0.6);
-  color: var(--primary);
-  font-weight: 500;
-  cursor: pointer;
-}
-.rm-add-col:hover {
-  border-color: var(--primary);
-  background: #fff;
-}
-
 .rm-rh {
   display: grid;
-  gap: 4px;
+  grid-template-columns: minmax(0, 1fr) 20px 28px;
+  grid-template-rows: 20px 16px;
+  align-items: center;
+  column-gap: 4px;
   text-align: left;
 }
-.rm-rh__top {
+.rm-rh__name {
   display: flex;
-  align-items: flex-start;
+  grid-column: 1;
+  align-items: center;
   gap: 4px;
   min-width: 0;
-}
-.rm-rh__name {
-  display: -webkit-box;
-  overflow: hidden;
-  padding-top: 6px;
   color: var(--primary);
   font-size: 13px;
   font-weight: 600;
-  line-height: 1.3;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+}
+.rm-rh__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rm-rh__lock {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--neutral);
+  font-size: 12px;
 }
 .rm-rh__menu {
   display: inline-grid;
-  flex-shrink: 0;
+  grid-column: 3;
+  grid-row: 1 / 3;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  margin-left: auto;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border: 0;
   border-radius: 8px;
@@ -230,24 +179,34 @@
   background: rgb(0 51 102 / 0.08);
 }
 .rm-rh__meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
+  grid-column: 1 / 3;
+  overflow: hidden;
   color: var(--neutral);
   font-size: 11px;
   font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.rm-rh__bar {
-  height: 4px;
-  overflow: hidden;
-  border-radius: 4px;
-  background: rgb(0 51 102 / 0.12);
+/* Ô số thay đổi chưa lưu, bề rộng cố định: hiện hay ẩn không đẩy chữ bên cạnh. */
+.rm-rh__changed {
+  display: grid;
+  grid-column: 2;
+  grid-row: 1;
+  place-items: center;
 }
-.rm-rh__bar i {
-  display: block;
-  height: 100%;
+.rm-rh__dot {
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
   background: var(--primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .rm-rh--flash {
   animation: rm-flash 1.6s ease-out 2;
@@ -304,6 +263,9 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.rm-table td.rm-c-fill {
+  padding: 0;
 }
 .rm-row-sec td.rm-c-perm {
   background: var(--surface-hover);
@@ -425,20 +387,8 @@
 }
 
 .rm-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 16px;
-  padding: 10px 20px;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
   font-size: 12px;
 }
-.rm-foot b {
-  color: var(--foreground);
-  font-weight: 500;
-}
-
 /* Hộp thoại. */
 .rm-modal-title {
   font-size: 18px;
@@ -509,11 +459,6 @@
   font-size: 12px;
 }
 
-@media (max-width: 639px) {
-  .rm-head h1 {
-    font-size: 18px;
-  }
-}
 
 /* Điện thoại: chọn một vai trò, mỗi mục một khối. */
 .rm-phone {

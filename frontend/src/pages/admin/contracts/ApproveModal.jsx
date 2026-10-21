@@ -23,7 +23,7 @@ export default function ApproveModal({ contract, open, onClose }) {
       toast.success(result.moved ? `Đã duyệt hợp đồng ${number} · ${seafarer.full_name} chuyển sang Đang trên tàu` : `Đã duyệt hợp đồng ${number}`)
       onClose()
     } catch (error) {
-      toast.error(apiErrorText(error, 'Không duyệt được. Thử lại sau.'))
+      toast.error(`Không duyệt được hợp đồng ${number}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 

@@ -25,7 +25,7 @@ export default function CrewDropzone({ seafarerId, firstName, onReview }) {
   const aiConfigured = data?.ai_configured !== false
   const setLocal = (key, patch) => setLocals((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)))
   const dropLocal = (key) => setLocals((current) => current.filter((item) => item.key !== key))
-  const fail = (e) => toast.error(e.response?.data?.error || 'Không thực hiện được. Thử lại sau.')
+  const fail = (e) => toast.error('Không cập nhật được tệp', { description: e.response?.data?.error || 'Thử lại sau ít phút.' })
 
   const removeUpload = useMutation({
     mutationFn: (uploadId) => documentApi.removeUpload(uploadId),
@@ -87,7 +87,7 @@ export default function CrewDropzone({ seafarerId, firstName, onReview }) {
         onReview={onReview}
         onRetry={(file) => (file.localKey ? send(localByKey.get(file.localKey)) : retryUpload.mutate(file.uploadId))}
         onRemove={(file) => (file.localKey ? dropLocal(file.localKey) : removeUpload.mutate(file.uploadId))}
-        onOpenDuplicate={() => toast.success('Tệp này đã có trong hồ sơ, xem ở danh sách bên dưới.')}
+        onOpenDuplicate={() => toast.info('Tệp này đã có trong hồ sơ', { description: 'Xem ở danh sách bên dưới.' })}
       />
     </>
   )

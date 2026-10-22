@@ -30,4 +30,8 @@ export const DEFAULT_TERMS = {
 }
 
 export const DUE_SOON_DAYS = 3
+
+// Yêu cầu thanh toán: trạng thái lưu và trạng thái hiển thị (tính ở máy chủ).
+export const BILL_STATUSES = ['OPEN', 'SENT', 'PAID']
+export const BILL_DISPLAY_STATUSES = ['UPCOMING', 'TO_SEND', 'SENT', 'OVERDUE', 'PAID']
 export const VOYAGE_EDITOR_ROLES = ['admin', 'operator']

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
-const { monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus } = require('../voyage_math')
+const { monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, splitPeriods, dueDate, billDisplayStatus } = require('../voyage_math')
 
 describe('monthsBetween', () => {
   it('đúng các ví dụ của kế hoạch', () => {
@@ -68,5 +68,39 @@ describe('contractBalance', () => {
     const b = contractBalance({ items: [item('MONTHLY', 1000, 1200)], budgetMonthly: 1900, contractMonths: 2 })
     expect(b.diffMonthly).toBe(-200)
     expect(b.diffOk).toBe(false)
+  })
+})
+
+describe('splitPeriods', () => {
+  const ranges = (start, end, closingDay) => splitPeriods({ start, end, closingDay }).map((p) => `${p.start}..${p.end}`)
+  it('chia theo ngày chốt sổ, kỳ đầu và kỳ cuối có thể lẻ', () => {
+    expect(ranges('2026-03-12', '2026-06-11', 25)).toEqual(['2026-03-12..2026-03-25', '2026-03-26..2026-04-25', '2026-04-26..2026-05-25', '2026-05-26..2026-06-11'])
+    expect(ranges('2026-03-26', '2026-06-25', 25)).toHaveLength(3)
+    expect(ranges('2026-03-25', '2026-04-30', 25)).toEqual(['2026-03-25..2026-03-25', '2026-03-26..2026-04-25', '2026-04-26..2026-04-30'])
+    expect(ranges('2026-04-01', '2026-04-30', 31)).toEqual(['2026-04-01..2026-04-30'])
+    expect(ranges('2026-04-05', '2026-04-20', 31)).toEqual(['2026-04-05..2026-04-20'])
+    expect(ranges('2027-02-01', '2027-03-10', 31)).toEqual(['2027-02-01..2027-02-28', '2027-03-01..2027-03-10'])
+  })
+})
+
+describe('dueDate', () => {
+  it('ngày trả của tháng sau, dời qua cuối tuần, không xét ngày lễ', () => {
+    expect(dueDate({ periodEnd: '2026-03-25', payDay: 10, payMonthOffset: 1, holidayRule: 'AFTER' })).toBe('2026-04-10')
+    expect(dueDate({ periodEnd: '2026-04-25', payDay: 10, payMonthOffset: 1, holidayRule: 'AFTER' })).toBe('2026-05-11')
+    expect(dueDate({ periodEnd: '2027-01-31', payDay: 31, payMonthOffset: 1, holidayRule: 'AFTER' })).toBe('2027-03-01')
+    expect(dueDate({ periodEnd: '2027-01-31', payDay: 31, payMonthOffset: 1, holidayRule: 'BEFORE' })).toBe('2027-02-26')
+    expect(dueDate({ periodEnd: '2026-03-30', payDay: 30, payMonthOffset: 1, holidayRule: 'AFTER' })).toBe('2026-04-30')
+    expect(dueDate({ periodEnd: '2026-03-30', payDay: 1, payMonthOffset: 2, holidayRule: 'BEFORE' })).toBe('2026-05-01')
+  })
+})
+
+describe('billDisplayStatus', () => {
+  it('tính từ trạng thái lưu và hôm nay', () => {
+    const base = { periodEnd: '2026-10-31', dueDate: '2026-11-10' }
+    expect(billDisplayStatus({ ...base, status: 'OPEN', today: '2026-10-21' })).toBe('UPCOMING')
+    expect(billDisplayStatus({ ...base, status: 'OPEN', today: '2026-10-31' })).toBe('TO_SEND')
+    expect(billDisplayStatus({ ...base, status: 'SENT', today: '2026-11-10' })).toBe('SENT')
+    expect(billDisplayStatus({ ...base, status: 'SENT', today: '2026-11-11' })).toBe('OVERDUE')
+    expect(billDisplayStatus({ ...base, status: 'PAID', today: '2026-12-01' })).toBe('PAID')
   })
 })

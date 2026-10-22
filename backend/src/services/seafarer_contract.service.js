@@ -7,6 +7,7 @@ const {
   CLOSING_DAYS, PAY_DAYS, PAY_MONTH_OFFSETS, HOLIDAY_RULES,
 } = require('../constants/voyage_contract')
 const { displayStatus } = require('../utils/voyage_math')
+const { contractBillService } = require('./contract_bill.service')
 
 const CONTRACT_COLUMNS = ['start_date', 'end_date', 'notes']
 const MAX_ITEMS = 40
@@ -341,6 +342,8 @@ const seafarerContractService = {
       if (action === 'reject') fields.last_reject_reason = reason
       await conn.query('UPDATE seafarer_contract SET ? WHERE id = ?', [fields, id])
       await writeLog(conn, id, rule.log, userId, action === 'reject' ? reason : null)
+      // Duyệt là sinh đủ yêu cầu thanh toán bên phải thu, cùng transaction: lỗi thì không duyệt.
+      if (action === 'approve') await contractBillService.generateForContract(conn, id, 'RECEIVABLE', userId)
       if (action === 'approve' && extra.move_onboard === true && current.voyage_status === 'ONBOARD') {
         await conn.query('UPDATE seafarer SET status = ? WHERE id = ?', ['ON_VESSEL', current.seafarer_id])
         moved = true

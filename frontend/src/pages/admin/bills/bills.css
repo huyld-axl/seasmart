@@ -1,0 +1,37 @@
+/* Màn yêu cầu thanh toán: chỉ phần riêng, còn lại dùng class của hợp đồng (contracts.css) và ds.css. */
+.bl-nowrap { white-space: nowrap; }
+
+/* Bảng tiền hai cột: không cần bề rộng tối thiểu 640px như bảng ba cột của hợp đồng. */
+.ct-table.ct-table--two { min-width: 0; }
+.bl-amount { display: flex; align-items: center; gap: 8px; }
+.bl-amount .ds-money { flex: 1; min-width: 0; }
+.sf-changed .ct-name__edit .ant-input { border-color: var(--primary) !important; background: var(--primary-light) !important; }
+.bl-negative { color: var(--error-text); }
+.bl-bar-msg { flex: 0 1 auto; margin: 0; }
+
+/* Lịch các kỳ ở cột phải màn chi tiết: một tháng, chuyển bằng ‹ ›. */
+.bl-cal-cur { display: grid; gap: 6px; margin: 0 0 14px; padding: 10px 12px; border-radius: 12px; background: var(--primary-light); font-size: 13px; }
+.bl-cal-cur div { display: flex; justify-content: space-between; gap: 8px; }
+.bl-cal-cur dt { color: var(--muted); }
+.bl-cal-cur dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bl-month-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.bl-month-head h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.bl-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 4px; }
+.bl-wd { padding-bottom: 4px; color: var(--muted); font-size: 11px; text-align: center; }
+.bl-day { position: relative; display: grid; place-items: center; height: 32px; padding: 0; border: 0; background: none; color: var(--foreground); font: inherit; font-size: 12px; font-variant-numeric: tabular-nums; }
+button.bl-day { cursor: pointer; }
+.bl-day.is-off { color: var(--muted); }
+.bl-day.is-odd { background: #eef2f7; }
+.bl-day.is-even { background: #f6f1e7; }
+.bl-day.is-cur { background: color-mix(in srgb, var(--primary) 16%, white); color: var(--primary); font-weight: 600; }
+.bl-day.is-start, .bl-day.is-rowstart { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.bl-day.is-end, .bl-day.is-rowend { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+.bl-day.is-start, .bl-day.is-end { font-weight: 600; }
+.bl-day.is-start::before { content: attr(data-n); position: absolute; top: -6px; left: -2px; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 10px; font-weight: 600; line-height: 15px; text-align: center; }
+button.bl-day:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.bl-due { --bl-due: var(--border-strong); position: relative; display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid var(--bl-due); border-radius: 50%; background: var(--surface); color: var(--foreground); font-weight: 600; }
+.bl-due[data-status='PAID'] { --bl-due: var(--success); color: var(--success); }
+.bl-due[data-status='TO_SEND'] { --bl-due: var(--warning); color: var(--warning); }
+.bl-due[data-status='SENT'] { --bl-due: var(--neutral); color: var(--neutral); }
+.bl-due[data-status='OVERDUE'] { --bl-due: var(--error-text); background: var(--error-text); color: #fff; }
+.bl-due::after { content: 'H' attr(data-n); position: absolute; right: -6px; bottom: -6px; padding: 0 3px; border-radius: 6px; background: var(--surface); color: var(--muted); font-size: 10px; font-weight: 500; line-height: 13px; box-shadow: 0 0 0 1px var(--border); }

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { voyageApi, seafarerContractApi } from '../api/voyageApi'
+import { voyageApi, seafarerContractApi, billApi } from '../api/voyageApi'
 
 export function useVoyageList(params, options = {}) {
   return useQuery({
@@ -39,7 +39,7 @@ export function useContract(id) {
 function useRefresh() {
   const queryClient = useQueryClient()
   return () => {
-    for (const key of ['voyages', 'contracts', 'seafarers'])
+    for (const key of ['voyages', 'contracts', 'seafarers', 'bills'])
       queryClient.invalidateQueries({ queryKey: [key] })
   }
 }
@@ -79,5 +79,31 @@ export function useContractMutations() {
       mutationFn: ({ id, ...body }) => seafarerContractApi.reject(id, body),
       ...options,
     }),
+  }
+}
+
+export function useBillList(params, options = {}) {
+  return useQuery({
+    queryKey: ['bills', 'list', params],
+    queryFn: () => billApi.list(params),
+    placeholderData: (previous) => previous,
+    ...options,
+  })
+}
+
+export function useBill(id) {
+  return useQuery({
+    queryKey: ['bills', 'item', id],
+    queryFn: () => billApi.get(id),
+    enabled: !!id,
+  })
+}
+
+export function useBillMutations() {
+  const queryClient = useQueryClient()
+  const options = { onSuccess: () => queryClient.invalidateQueries({ queryKey: ['bills'] }) }
+  return {
+    save: useMutation({ mutationFn: ({ id, ...body }) => billApi.update(id, body), ...options }),
+    move: useMutation({ mutationFn: ({ id, action, ...body }) => billApi.move(id, action, body), ...options }),
   }
 }

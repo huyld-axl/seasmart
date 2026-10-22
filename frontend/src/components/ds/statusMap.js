@@ -75,6 +75,14 @@ export const STATUS = {
     ACTIVE: { label: 'Hiệu lực', tone: 'success', mark: 'check' },
     ENDED: { label: 'Hết hạn', tone: 'neutral', mark: 'ring' },
   },
+  // Yêu cầu thanh toán: display_status do máy chủ tính từ ngày chốt sổ và hạn thanh toán.
+  bill: {
+    UPCOMING: { label: 'Chưa đến kỳ', tone: 'neutral', mark: 'ring' },
+    TO_SEND: { label: 'Cần gửi', tone: 'warning', mark: 'send' },
+    SENT: { label: 'Đã gửi', tone: 'neutral', mark: 'ring-dot' },
+    OVERDUE: { label: 'Quá hạn', tone: 'error', mark: 'clock' },
+    PAID: { label: 'Đã thu', tone: 'success', mark: 'check' },
+  },
   // Trạng thái tàu (cột vessel.status) và đối tác (ship_owner.is_active).
   vesselStatus: {
     ACTIVE: { label: 'Hoạt động', tone: 'success', mark: 'check' },
@@ -111,6 +119,7 @@ export const STATUS_GROUP_LABELS = {
   crew: 'Tình trạng thuyền viên',
   voyage: 'Chuyến tàu',
   contract: 'Hợp đồng',
+  bill: 'Yêu cầu thanh toán',
   vesselStatus: 'Trạng thái tàu',
   partner: 'Tình trạng đối tác',
   cert: 'Hạn giấy tờ',

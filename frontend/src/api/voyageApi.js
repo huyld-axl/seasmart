@@ -11,6 +11,14 @@ export const voyageApi = {
   end: (id, body) => api.post(`/voyages/${id}/end`, body).then((r) => r.data),
 }
 
+// Yêu cầu thanh toán (bill phải thu) sinh khi duyệt hợp đồng.
+export const billApi = {
+  list: (params) => api.get('/bills', { params }).then((r) => r.data),
+  get: (id) => api.get(`/bills/${id}`).then((r) => r.data),
+  update: (id, data) => api.put(`/bills/${id}`, data).then((r) => r.data),
+  move: (id, action, body) => api.post(`/bills/${id}/${action}`, body || {}).then((r) => r.data),
+}
+
 // Hợp đồng thuyền viên. Tên khác contractApi cũ (employment-contracts) để không đụng nhau.
 export const seafarerContractApi = {
   list: (params) => api.get('/contracts', { params }).then((r) => r.data),

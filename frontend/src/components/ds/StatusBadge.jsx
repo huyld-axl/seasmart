@@ -8,6 +8,7 @@ import {
   LockOutlined,
   MinusCircleOutlined,
   QuestionCircleOutlined,
+  SendOutlined,
   SwapOutlined,
   SyncOutlined,
 } from '@ant-design/icons'
@@ -26,10 +27,12 @@ const MARK_ICONS = {
   minus: MinusCircleOutlined,
   overlap: SwapOutlined,
   refresh: SyncOutlined,
+  send: SendOutlined,
 }
 
 // Badge trạng thái (M7): pill nền nhạt, dấu đầu + chữ cùng tông. Một hình cho mọi bề mặt (D2).
-export default function StatusBadge({ group, value, title }) {
+// `label`: thay nhãn mặc định khi cần kèm số (vd. "Quá hạn 9 ngày").
+export default function StatusBadge({ group, value, title, label }) {
   const status = STATUS[group]?.[value]
   if (!status) return null
 
@@ -41,7 +44,7 @@ export default function StatusBadge({ group, value, title }) {
       ) : (
         <span className={`ds-badge__dot ds-badge__dot--${status.mark}`} aria-hidden />
       )}
-      {status.label}
+      {label || status.label}
     </span>
   )
 }

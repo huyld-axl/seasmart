@@ -95,6 +95,8 @@ describe('seafarer_contract.service', () => {
   const transitionPool = (status, voyageStatus = 'PLANNING') =>
     fakePool([
       ['FOR UPDATE OF c', () => [[{ status, seafarer_id: 2, voyage_status: voyageStatus }]]],
+      // Bill đã có thì bước sinh bill khi duyệt bỏ qua (chi tiết sinh bill test ở contract_bill.test.js).
+      ['SELECT 1 FROM contract_bill WHERE contract_id', () => [[{ '?column?': 1 }]]],
       ...detailRoutes(),
     ])
 
@@ -113,6 +115,15 @@ describe('seafarer_contract.service', () => {
       expect(update.params[0].status).toBe(to)
       expect(logActions(pool)).toEqual([log])
     }
+  })
+
+  it('duyệt thì gọi sinh yêu cầu thanh toán bên phải thu, các thao tác khác thì không', async () => {
+    const approved = transitionPool('PENDING')
+    await service.transition(approved, 9, 'approve', {}, 5)
+    expect(approved.calls.find((c) => c.sql.startsWith('SELECT 1 FROM contract_bill')).params).toEqual([9, 'RECEIVABLE'])
+    const submitted = transitionPool('DRAFT')
+    await service.transition(submitted, 9, 'submit', {}, 5)
+    expect(submitted.calls.some((c) => c.sql.includes('contract_bill'))).toBe(false)
   })
 
   it('chuyển trạng thái sai thì 409 nêu trạng thái hiện tại, không ghi gì', async () => {

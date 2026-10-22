@@ -4,6 +4,7 @@ import { Dropdown, Drawer, Grid } from 'antd'
 import Icon from '@ant-design/icons'
 import {
   TeamOutlined,
+  AccountBookOutlined,
   SendOutlined,
   DatabaseOutlined,
   SafetyCertificateOutlined,
@@ -53,6 +54,7 @@ const ICONS = {
   ship: <Icon component={ShipSvg} />,
   anchor: <Icon component={AnchorSvg} />,
   file: <FileTextOutlined />,
+  bill: <AccountBookOutlined />,
   building: <Icon component={BuildingSvg} />,
   shield: <SafetyCertificateOutlined />,
   book: <BookOutlined />,

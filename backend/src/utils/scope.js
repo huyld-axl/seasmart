@@ -7,6 +7,7 @@ const SCOPED_TABLES = {
   export: 'export_pack',
   voyage: 'voyage',
   contract: 'seafarer_contract',
+  bill: 'contract_bill',
 }
 
 // id tài khoản khi phạm vi là 'own', ngược lại null. Dùng để truyền xuống service lọc danh sách.

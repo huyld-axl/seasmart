@@ -88,4 +88,49 @@ function displayStatus({ status, positionsTotal, positionsFilled }) {
   return positionsTotal > 0 && positionsFilled >= positionsTotal ? 'FULL' : 'RECRUITING'
 }
 
-module.exports = { parseDate, addMonths, monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, round2 }
+
+// ---------- Yêu cầu thanh toán ----------
+const isoOf = (ms) => new Date(ms).toISOString().slice(0, 10)
+const dayMs = ({ y, m, d }) => Date.UTC(y, m, d)
+
+// Ngày chốt sổ `closingDay` của tháng (y, m); 31 hoặc lớn hơn số ngày của tháng = ngày cuối tháng.
+function closingOf(y, m, closingDay) {
+  return addMonths({ y, m, d: closingDay }, 0)
+}
+
+// Chia [start, end] thành các kỳ theo ngày chốt sổ. Kỳ đầu bắt đầu đúng ngày bắt đầu,
+// kỳ sau bắt đầu ngay sau ngày chốt của kỳ trước, kỳ cuối kết thúc đúng ngày kết thúc. Trả [{ start, end }] dạng YYYY-MM-DD.
+function splitPeriods({ start, end, closingDay }) {
+  const endMs = dayMs(parseDate(end))
+  let cur = dayMs(parseDate(start))
+  if (endMs < cur) throw { statusCode: 400, message: 'Ngày kết thúc phải sau hoặc bằng ngày bắt đầu' }
+  const out = []
+  while (cur <= endMs) {
+    const c = parseDate(isoOf(cur))
+    let close = closingOf(c.y, c.m, closingDay)
+    if (close < cur) close = addMonths({ y: c.y, m: c.m, d: closingDay }, 1)
+    const periodEnd = Math.min(close, endMs)
+    out.push({ start: isoOf(cur), end: isoOf(periodEnd) })
+    cur = periodEnd + DAY_MS
+  }
+  return out
+}
+
+// Hạn thanh toán: ngày `payDay` của tháng (tháng chốt + payMonthOffset), gặp thứ 7, CN thì lùi (BEFORE) hoặc tiến (AFTER)
+// tới ngày thường gần nhất. Không xét ngày lễ: cần dời thì người vận hành sửa hạn trên bill.
+function dueDate({ periodEnd, payDay, payMonthOffset, holidayRule }) {
+  const p = parseDate(periodEnd)
+  let t = addMonths({ y: p.y, m: p.m, d: payDay }, payMonthOffset)
+  const off = (ms) => [0, 6].includes(new Date(ms).getUTCDay())
+  while (off(t)) t += holidayRule === 'BEFORE' ? -DAY_MS : DAY_MS
+  return isoOf(t)
+}
+
+// Trạng thái hiển thị của bill. today, periodEnd, dueDate dạng YYYY-MM-DD.
+function billDisplayStatus({ status, periodEnd, dueDate: due, today }) {
+  if (status === 'PAID') return 'PAID'
+  if (status === 'SENT') return today > due ? 'OVERDUE' : 'SENT'
+  return today < periodEnd ? 'UPCOMING' : 'TO_SEND'
+}
+
+module.exports = { splitPeriods, dueDate, billDisplayStatus, parseDate, addMonths, monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, round2 }

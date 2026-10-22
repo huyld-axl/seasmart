@@ -28,6 +28,9 @@ import VoyageDetailPage from './pages/admin/voyages/VoyageDetailPage'
 import ContractListPage from './pages/admin/contracts/ContractListPage'
 import ContractFormPage from './pages/admin/contracts/ContractFormPage'
 import ContractDetailPage from './pages/admin/contracts/ContractDetailPage'
+import BillListPage from './pages/admin/bills/BillListPage'
+import BillDetailPage from './pages/admin/bills/BillDetailPage'
+import BillFormPage from './pages/admin/bills/BillFormPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
@@ -130,6 +133,9 @@ function AppRoutes() {
           path="/contracts/:id/edit"
           element={guard('contract.update', <ContractFormPage />)}
         />
+        <Route path="/bills" element={guard('bill.view', <BillListPage />)} />
+        <Route path="/bills/:id" element={guard('bill.view', <BillDetailPage />)} />
+        <Route path="/bills/:id/edit" element={guard('bill.update', <BillFormPage />)} />
         <Route path="/fleet" element={<Navigate to="/vessels" replace />} />
         <Route path="/fleet/vessels" element={<Navigate to="/vessels" replace />} />
         <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />

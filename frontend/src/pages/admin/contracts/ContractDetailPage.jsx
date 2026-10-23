@@ -156,12 +156,17 @@ export default function ContractDetailPage() {
 
   return (
     <div className="ds-page crew-profile">
-      <Crumb items={[{ label: 'Hợp đồng', to: '/contracts' }, { label: number }]} />
+      <Crumb items={[
+        { label: 'Tàu', to: '/vessels' },
+        ...(voyage.vessel_id ? [{ label: voyage.vessel_name, to: `/vessels/${voyage.vessel_id}` }] : []),
+        { label: voyage.code, to: `/voyages/${voyage.id}` },
+        { label: number },
+      ]} />
 
       <div className="crew-head">
         <div className="crew-head__text">
           <h1 className="crew-head__title">{number} · {seafarer.full_name}</h1>
-          <p className="crew-head__desc">{position.rank_name} · {voyage.vessel_name} · chuyến <Link to={`/voyages/${voyage.id}`}>{voyage.code}</Link></p>
+          <p className="crew-head__desc">{position.rank_name} · {voyage.vessel_id ? <Link to={`/vessels/${voyage.vessel_id}`}>{voyage.vessel_name}</Link> : voyage.vessel_name} · chuyến <Link to={`/voyages/${voyage.id}`}>{voyage.code}</Link></p>
           <div className="crew-head__badges"><StatusBadge group="contract" value={status} /></div>
         </div>
         <div className="crew-head__actions">{actions}</div>

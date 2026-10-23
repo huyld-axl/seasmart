@@ -59,7 +59,14 @@ function BillForm({ data }) {
   return (
     <div className="ds-page">
       <div>
-        <Crumb items={[{ label: 'Yêu cầu thanh toán', to: '/bills' }, { label: bill.code, to: back }, { label: 'Sửa' }]} />
+        <Crumb items={[
+          { label: 'Tàu', to: '/vessels' },
+          { label: bill.vessel.vessel_name, to: `/vessels/${bill.vessel.id}` },
+          { label: bill.voyage.code, to: `/voyages/${bill.voyage.id}` },
+          { label: bill.contract.contract_number, to: `/contracts/${bill.contract.id}` },
+          { label: bill.code, to: back },
+          { label: 'Sửa' },
+        ]} />
         <h1 className="sf-head__title">Sửa yêu cầu thanh toán {bill.code}</h1>
         <p className="sf-head__desc">Kỳ {bill.seq}/{bill.periods} · {formatDate(bill.period_start)} → {formatDate(bill.period_end)} · {bill.contract.contract_number} · {bill.ship_owner.company_name}</p>
       </div>

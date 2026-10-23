@@ -436,10 +436,9 @@ const seafarerService = {
   },
 
   // Sửa hồ sơ trên một kết nối cho trước (để gói chung transaction với việc khác):
-  // ghi lịch sử sửa kèm lý do, bộ giấy đang chờ thì chuyển STALE. Trả về các trường đã đổi.
+  // ghi lịch sử sửa (lý do không bắt buộc), bộ giấy đang chờ thì chuyển STALE. Trả về các trường đã đổi.
   async applyUpdate(db, id, data, updated_by, reason) {
-    const text = String(reason || '').trim()
-    if (!text) throw { statusCode: 400, message: 'Ghi lý do sửa hồ sơ' }
+    const text = String(reason || '').trim() || 'Cập nhật hồ sơ'
     const [[before]] = await db.query('SELECT * FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
     if (!before) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     const { rank_name, nationality_name, ...rest } = data

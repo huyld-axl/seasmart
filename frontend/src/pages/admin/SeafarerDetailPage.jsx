@@ -59,7 +59,8 @@ import { useContractList } from '../../hooks/useVoyages'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
 import { useCan } from '../../hooks/usePermission'
-import ProfileOverview from './seafarers/ProfileOverview'
+import { BackButton } from './fleet/FleetParts'
+import ProfileOverview, { NoteBox } from './seafarers/ProfileOverview'
 import ProfileHistory from './seafarers/ProfileHistory'
 import ProfileExports from './seafarers/ProfileExports'
 import CrewPhoto from './seafarers/CrewPhoto'
@@ -80,7 +81,7 @@ const STATUS_LABEL = {
 
 
 
-const NOW_LABEL = { next: 'Chuyến sắp tới', last: 'Chuyến gần nhất' }
+const NOW_LABEL = { current: 'Chuyến', next: 'Chuyến sắp tới', last: 'Chuyến gần nhất' }
 
 const PROFILE_TABS = [
   { value: 'overview', label: 'Tổng quan' },
@@ -204,7 +205,6 @@ export default function SeafarerDetailPage() {
   const liveCerts = certList.filter((c) => !replaced.has(c.id))
   const attention = attentionItems(seafarer, liveCerts)
   const expired = attention.filter((item) => item.state === 'EXPIRED').length
-  const expiring = attention.filter((item) => item.state === 'EXPIRING').length
   const rules = readinessRules({ seafarer, contracts: contractList, pendingReview: certList.filter((c) => c.status === 'PENDING').length })
   const readiness = readinessLevel(rules)
   const failing = rules.filter((rule) => rule.result !== 'PASS')
@@ -267,6 +267,7 @@ export default function SeafarerDetailPage() {
   return (
     <div className="ds-page crew-profile" ref={pageRef}>
       <nav className="crew-crumb" aria-label="Đường dẫn">
+        <BackButton />
         <Link to="/seafarers">Thuyền viên</Link>
         <RightOutlined aria-hidden />
         <span aria-current="page">{seafarer.full_name}</span>
@@ -285,15 +286,18 @@ export default function SeafarerDetailPage() {
               <h1 className="crew-head__title">{seafarer.full_name}</h1>
               <StatusBadge group="crew" value={seafarer.status} />
               {expired > 0 && <span className="crew-docs crew-docs--error">{expired} giấy tờ hết hạn</span>}
-              {!expired && expiring > 0 && <span className="crew-docs crew-docs--warning">{expiring} sắp hết hạn</span>}
             </div>
             <p className="crew-head__desc">{headLine(seafarer) || seafarer.seafarer_code}</p>
             <dl className="crew-head__meta">
               {nowVoyage && (
                 <>
-                  <dt>{NOW_LABEL[nowVoyage.kind] || 'Tàu'}</dt>
+                  <dt>Tàu</dt>
                   <dd>
-                    <Link to={`/voyages/${nowVoyage.row.voyage_id}`}>{nowVoyage.row.vessel_name}</Link>
+                    {can('vessel.view') && nowVoyage.row.vessel_id ? <Link to={`/vessels/${nowVoyage.row.vessel_id}`}>{nowVoyage.row.vessel_name}</Link> : nowVoyage.row.vessel_name}
+                  </dd>
+                  <dt>{NOW_LABEL[nowVoyage.kind]}</dt>
+                  <dd>
+                    <Link to={`/voyages/${nowVoyage.row.voyage_id}`}>{nowVoyage.row.voyage_code}</Link>
                     {nowVoyage.row.rank_name && nowVoyage.row.rank_name !== seafarer.rank_name ? ` · ${nowVoyage.row.rank_name}` : ''}
                     {nowVoyage.kind === 'current' ? ` · đến ${fmt(nowVoyage.row.end_date)}` : ` · ${fmt(nowVoyage.row.start_date)} → ${fmt(nowVoyage.row.end_date)}`}
                   </dd>
@@ -314,6 +318,7 @@ export default function SeafarerDetailPage() {
             </dl>
           </div>
         </div>
+        <NoteBox seafarer={seafarer} seafarerId={id} className="sf-note--head" />
         <div className="crew-head__actions">
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
@@ -675,6 +680,7 @@ function CertificatesSection({ seafarerId, dismissed, onDismiss, onRestore }) {
 
 // Khối "Hợp đồng" chỉ đọc: hợp đồng tạo từ chuyến tàu (xem /voyages), ở đây chỉ liệt kê.
 function ContractsSection({ seafarerId }) {
+  const can = useCan()
   const { data, isLoading } = useContractList({ seafarer_id: Number(seafarerId), limit: 100 })
   const rows = data?.data || []
   return (
@@ -694,7 +700,7 @@ function ContractsSection({ seafarerId }) {
             key: 'vessel',
             render: (_, row) => (
               <span>
-                {row.vessel_name} · <Link to={`/voyages/${row.voyage_id}`}>{row.voyage_code}</Link>
+                {can('vessel.view') && row.vessel_id ? <Link to={`/vessels/${row.vessel_id}`}>{row.vessel_name}</Link> : row.vessel_name} · <Link to={`/voyages/${row.voyage_id}`}>{row.voyage_code}</Link>
               </span>
             ),
           },

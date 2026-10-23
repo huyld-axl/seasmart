@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
-import Icon, { RightOutlined } from '@ant-design/icons'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import Icon, { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { filled, countFilled } from './fleetView'
 import useScrollSpy from './useScrollSpy'
 import '../seafarers/SeafarerForm.css'
@@ -23,11 +23,25 @@ export function FleetTile({ text, large, src }) {
   )
 }
 
+// Quay lại màn vừa đi qua. Mở thẳng bằng link thì không có lịch sử trong app: ẩn nút, breadcrumb đã dẫn về danh sách.
+export function BackButton() {
+  const navigate = useNavigate()
+  const { key } = useLocation()
+  if (key === 'default') return null
+  return (
+    <button type="button" className="crew-crumb__back" onClick={() => navigate(-1)}>
+      <LeftOutlined aria-hidden />Quay lại
+    </button>
+  )
+}
+
+// Breadcrumb theo cấu trúc dữ liệu (chủ tàu › tàu › chuyến › hợp đồng), không theo đường người dùng vừa đi.
 export function Crumb({ items }) {
   return (
     <nav className="crew-crumb" aria-label="Đường dẫn">
+      <BackButton />
       {items.map((item, index) => (
-        <span key={item.label} style={{ display: 'contents' }}>
+        <span key={`${index}-${item.label}`} style={{ display: 'contents' }}>
           {index > 0 ? <RightOutlined aria-hidden /> : null}
           {item.to ? <Link to={item.to}>{item.label}</Link> : <span aria-current="page">{item.label}</span>}
         </span>

@@ -4,6 +4,8 @@
 .crew-crumb a { color: var(--muted); }
 .crew-crumb a:hover { color: var(--foreground); }
 .crew-crumb .anticon { font-size: 10px; }
+.crew-crumb__back { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; padding: 0 10px 0 0; border: 0; border-right: 1px solid var(--border); background: none; color: var(--muted); font: inherit; cursor: pointer; }
+.crew-crumb__back:hover { color: var(--foreground); text-decoration: underline; text-underline-offset: 3px; }
 .crew-crumb [aria-current] { overflow: hidden; color: var(--foreground); text-overflow: ellipsis; white-space: nowrap; }
 
 .crew-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 16px; }

@@ -72,3 +72,10 @@ body {
 .ant-menu-light .ant-menu-item-selected {
   font-weight: 500;
 }
+
+/* Link trong nội dung: rê chuột vào thì gạch chân để biết bấm được. Nút (.ant-btn) và thẻ có class riêng tự lo kiểu của chúng. */
+.app-shell__main a:not([class]):hover,
+.app-shell__main a.ds-mono:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

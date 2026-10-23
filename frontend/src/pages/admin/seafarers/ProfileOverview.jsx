@@ -170,7 +170,7 @@ function Panel({ index, section }) {
 }
 
 // Ghi chú sửa ngay tại màn xem; lưu qua PUT hồ sơ với lý do cố định.
-function NoteBox({ seafarer, seafarerId }) {
+export function NoteBox({ seafarer, seafarerId, className = '' }) {
   const can = useCan()
   const toast = useToast()
   const queryClient = useQueryClient()
@@ -190,7 +190,7 @@ function NoteBox({ seafarer, seafarerId }) {
   const start = () => { setDraft(seafarer.notes || ''); setEditing(true) }
   if (!filled(seafarer.notes) && !editing && !canEdit) return null
   return (
-    <div className="sf-note" role="note">
+    <div className={`sf-note ${className}`.trim()} role="note">
       <div className="sf-note__head">
         <span className="sf-note__title">Ghi chú</span>
         {canEdit && !editing && <Button type="link" size="small" onClick={start}>{filled(seafarer.notes) ? 'Sửa' : 'Thêm'}</Button>}
@@ -253,7 +253,6 @@ export default function ProfileOverview({ seafarer, seafarerId }) {
             </a>
           ))}
         </nav>
-        <NoteBox seafarer={seafarer} seafarerId={seafarerId} />
       </aside>
       <div className="sf-sections">
         {isLoading ? <Skeleton active paragraph={{ rows: 6 }} /> : sections.map((s, i) => <Panel key={s.key} index={i} section={s} />)}

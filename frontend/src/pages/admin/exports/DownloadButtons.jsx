@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { Button, Dropdown, Tooltip } from 'antd'
-import { DownloadOutlined, DownOutlined, FileExcelOutlined, FilePdfOutlined, FolderOutlined } from '@ant-design/icons'
+import { DownOutlined, FileExcelOutlined, FilePdfOutlined, FolderOutlined } from '@ant-design/icons'
+import { DownloadIcon } from '../../../components/ds/TransferIcons'
 import { exportApi } from '../../../api/exportApi'
 import useToast from '../../../components/ds/useToast'
 import useExportPrefsStore from '../../../stores/exportPrefsStore'
@@ -33,10 +34,10 @@ export function PackDownload({ pack, type = 'default', size, disabled, label = '
       <Dropdown trigger={['click']} placement="bottomRight" disabled={disabled || download.isPending} menu={{ items, onClick: ({ key }) => download.mutate(key) }}>
         {iconOnly ? (
           <Tooltip title={download.isPending ? 'Đang tạo file…' : label}>
-            <Button type="text" size="small" icon={<DownloadOutlined />} loading={download.isPending} aria-label={`${label} ${pack.code} của ${pack.seafarer_name}`} />
+            <Button type="text" size="small" icon={<DownloadIcon />} loading={download.isPending} aria-label={`${label} ${pack.code} của ${pack.seafarer_name}`} />
           </Tooltip>
         ) : (
-          <Button type={type} size={size} icon={<DownloadOutlined />} loading={download.isPending} aria-label={`${label} ${pack.code} của ${pack.seafarer_name}`}>
+          <Button type={type} size={size} icon={<DownloadIcon />} loading={download.isPending} aria-label={`${label} ${pack.code} của ${pack.seafarer_name}`}>
             {download.isPending ? 'Đang tạo file…' : label} {!download.isPending && <DownOutlined aria-hidden />}
           </Button>
         )}

@@ -87,3 +87,48 @@ describe('fleet.service', () => {
     expect(result.total).toBe(7)
   })
 })
+
+describe('fleet.service: người liên hệ của đối tác', () => {
+  const ownerRow = [[{ id: 5, company_name: 'ACME', contacts: [] }]]
+  const body = (contacts) => ({ company_name: 'ACME', contacts })
+  function txPool() {
+    const calls = []
+    const conn = {
+      async beginTransaction() {},
+      async commit() {},
+      async rollback() {},
+      release() {},
+      async query(sql, params = []) {
+        calls.push({ sql, params })
+        return sql.startsWith('INSERT INTO ship_owner (') ? [{ insertId: 5 }] : [[]]
+      },
+    }
+    return { calls, async getConnection() { return conn }, async query(sql) { return sql.includes('FROM ship_owner o') ? [[{ id: 5, company_name: 'ACME', contacts: [] }]] : ownerRow } }
+  }
+  const contactInserts = (pool) => pool.calls.filter((call) => call.sql.startsWith('INSERT INTO ship_owner_contact'))
+
+  it('người đầu tiên là liên hệ chính khi không ai được chọn', async () => {
+    const pool = txPool()
+    await fleetService.createOwner(pool, body([{ name: 'An' }, { name: 'Bình' }]))
+    expect(contactInserts(pool).map((call) => call.params[5])).toEqual([1, 0])
+  })
+
+  it('giữ đúng một liên hệ chính theo lựa chọn và bỏ dòng trống', async () => {
+    const pool = txPool()
+    await fleetService.createOwner(pool, body([{ name: 'An' }, { name: '' }, { name: 'Bình', is_primary: true }, { name: 'Chi', is_primary: true }]))
+    const inserts = contactInserts(pool)
+    expect(inserts.map((call) => call.params[1])).toEqual(['An', 'Bình', 'Chi'])
+    expect(inserts.map((call) => call.params[5])).toEqual([0, 1, 0])
+  })
+
+  it('từ chối người liên hệ không có họ tên', async () => {
+    await expect(fleetService.createOwner(txPool(), body([{ phone: '0901' }]))).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('sửa chỉ danh sách liên hệ thì không cập nhật cột đối tác', async () => {
+    const pool = txPool()
+    await fleetService.updateOwner(pool, 5, { contacts: [{ name: 'An' }] })
+    expect(pool.calls.some((call) => call.sql.startsWith('UPDATE ship_owner'))).toBe(false)
+    expect(pool.calls.some((call) => call.sql.startsWith('DELETE FROM ship_owner_contact'))).toBe(true)
+  })
+})

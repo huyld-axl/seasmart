@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Card, Row, Col, Spin, Typography } from 'antd'
 import { toast } from '../ds/useToast'
-import { DownloadOutlined, FileExcelOutlined } from '@ant-design/icons'
+import { FileExcelOutlined } from '@ant-design/icons'
+import { DownloadIcon } from '../ds/TransferIcons'
 import { seafarerApi } from '../../api'
 
 const { Text } = Typography
@@ -76,7 +77,7 @@ export default function FormExportTab({ seafarerId, seafarerName }) {
                   <Button
                     type="primary"
                     size="small"
-                    icon={<DownloadOutlined />}
+                    icon={<DownloadIcon />}
                     loading={loading[key]}
                     onClick={() => handleDownload(key, label)}
                     style={{ width: '100%' }}

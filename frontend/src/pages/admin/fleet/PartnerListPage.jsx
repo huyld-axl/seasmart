@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Grid, Input, Skeleton, Table } from 'antd'
@@ -56,20 +57,22 @@ export default function PartnerListPage() {
 
   const columns = [
     { title: 'Đối tác', key: 'partner', render: (_, row) => <PartnerCell row={row} /> },
-    { title: 'Quốc gia', dataIndex: 'country_name', responsive: ['md'], render: muted },
+    { title: 'Quốc gia', key: 'country', responsive: ['md'], render: (_, row) => muted(row.country_name ? withFlag(row.country_code, row.country_name) : null) },
     {
       title: 'Người liên hệ',
       key: 'contact',
       responsive: ['lg'],
-      render: (_, row) =>
-        row.contact_person ? (
+      render: (_, row) => {
+        const primary = row.contacts?.[0]
+        if (!primary) return <span style={{ color: 'var(--muted)' }}>Chưa có</span>
+        const more = row.contacts.length - 1
+        return (
           <span className="ds-cell2">
-            <span>{row.contact_person}</span>
-            <span className="ds-cell2__sub">{row.contact_phone || row.contact_email}</span>
+            <span>{primary.name}{more > 0 ? <span style={{ color: 'var(--muted)' }}> +{more}</span> : null}</span>
+            <span className="ds-cell2__sub">{primary.phone || primary.email}</span>
           </span>
-        ) : (
-          <span style={{ color: 'var(--muted)' }}>Chưa có</span>
-        ),
+        )
+      },
     },
     { title: 'Số tàu', dataIndex: 'vessel_count', align: 'right', render: (value) => <span className="ds-num">{value}</span> },
     { title: 'Bộ giấy đã nộp', dataIndex: 'pack_count', align: 'right', responsive: ['md'], render: (value) => <span className="ds-num">{value}</span> },
@@ -95,7 +98,7 @@ export default function PartnerListPage() {
             <button type="button" className="crew-list__row" onClick={() => open(row)}>
               <PartnerCell row={row} />
               <span className="crew-list__meta">
-                <span className="ds-cell2__sub">{[row.country_name, `${row.vessel_count} tàu`].filter(Boolean).join(' · ')}</span>
+                <span className="ds-cell2__sub">{[row.country_name && withFlag(row.country_code, row.country_name), `${row.vessel_count} tàu`].filter(Boolean).join(' · ')}</span>
               </span>
             </button>
           </li>

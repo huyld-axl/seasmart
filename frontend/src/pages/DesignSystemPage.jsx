@@ -1,18 +1,7 @@
 import { useState } from 'react'
-import { Button, Card, DatePicker, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Steps, Table, Tabs, Tooltip } from 'antd'
-import {
-  DeleteOutlined,
-  FileTextOutlined,
-  DatabaseOutlined,
-  MoreOutlined,
-  PlusOutlined,
-  ReloadOutlined,
-  SafetyCertificateOutlined,
-  SearchOutlined,
-  SendOutlined,
-  TeamOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
+import { Button, Card, DatePicker, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Space, Steps, Table, Tabs, Tooltip } from 'antd'
+import { DeleteOutlined, FileTextOutlined, DatabaseOutlined, MoreOutlined, PlusOutlined, ReloadOutlined, SafetyCertificateOutlined, SearchOutlined, SendOutlined, TeamOutlined } from '@ant-design/icons'
+import { DownloadIcon, UploadIcon } from '../components/ds/TransferIcons'
 import ProductBrand from '../components/common/ProductBrand'
 import MoneyInput from '../components/ds/MoneyInput'
 import StatusBadge from '../components/ds/StatusBadge'
@@ -34,6 +23,7 @@ import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
+import PrimaryMark from '../components/ds/PrimaryMark'
 import CopyButton from '../components/ds/CopyButton'
 import { EmailActions, PhoneActions } from '../components/ds/ContactActions'
 import PermissionCheck from '../components/ds/PermissionCheck'
@@ -423,7 +413,8 @@ export default function DesignSystemPage() {
           <Demo label="Viền · mặc định · thường"><Button>Lưu nháp</Button></Demo>
           <Demo label="Viền · rê" state="hover"><Button>Lưu nháp</Button></Demo>
           <Demo label="Viền · khoá"><Button disabled>Lưu nháp</Button></Demo>
-          <Demo label="Viền · có icon"><Button icon={<UploadOutlined />}>Tải tài liệu lên</Button></Demo>
+          <Demo label="Viền · có icon"><Button icon={<UploadIcon />}>Tải tài liệu lên</Button></Demo>
+          <Demo label="Icon tải lên / tải xuống"><Space><Button icon={<UploadIcon />}>Tải lên</Button><Button icon={<DownloadIcon />}>Tải xuống</Button></Space></Demo>
         </div>
         <div className="dsp-states">
           <Demo label="Chính · thường"><Button type="primary">Công bố hồ sơ</Button></Demo>
@@ -551,7 +542,7 @@ export default function DesignSystemPage() {
       <Section id="rong" title="Trạng thái rỗng, lỗi, đang tải">
         <div className="dsp-grid-3">
           <Demo label="Rỗng">
-            <div className="dsp-box"><EmptyState title="Chưa có tài liệu nào" description="Tải sổ thuyền viên lên để AI đề xuất dữ liệu." action={<Button icon={<UploadOutlined />}>Tải tài liệu lên</Button>} /></div>
+            <div className="dsp-box"><EmptyState title="Chưa có tài liệu nào" description="Tải sổ thuyền viên lên để AI đề xuất dữ liệu." action={<Button icon={<UploadIcon />}>Tải tài liệu lên</Button>} /></div>
           </Demo>
           <Demo label="Lỗi tải">
             <div className="dsp-box"><EmptyState isError title="Không tải được danh sách tài liệu" description="Mất kết nối tới máy chủ." action={<Button icon={<ReloadOutlined />}>Thử lại</Button>} /></div>
@@ -697,6 +688,7 @@ export default function DesignSystemPage() {
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
             <Demo label="Đã sửa, chưa lưu"><ToggleRow label="Nồi hơi" value changed onChange={() => {}} /></Demo>
+            <Demo label="Liên hệ chính (PrimaryMark): chọn một trong nhiều dòng"><Space><PrimaryMark value onChange={() => {}} /><PrimaryMark value={false} onChange={() => {}} /></Space></Demo>
           </div>
         </div>
       </Section>

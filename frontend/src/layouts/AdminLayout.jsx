@@ -62,7 +62,7 @@ const ICONS = {
   book: <BookOutlined />,
 }
 
-const NavItem = forwardRef(function NavItem({ section, active, collapsed, onNavigate, ...rest }, ref) {
+const NavItem = forwardRef(function NavItem({ section, active, expanded, collapsed, onNavigate, onToggle, ...rest }, ref) {
   return (
     <NavLink
       ref={ref}
@@ -70,10 +70,15 @@ const NavItem = forwardRef(function NavItem({ section, active, collapsed, onNavi
       to={section.to}
       className={section.tabs ? 'app-shell__nav-item app-shell__nav-item--parent' : 'app-shell__nav-item'}
       aria-current={section.tabs ? false : active ? 'page' : undefined}
-      aria-expanded={section.tabs && !collapsed ? active : undefined}
+      aria-expanded={section.tabs && !collapsed ? expanded : undefined}
       data-active={active || undefined}
       title={collapsed && !section.tabs ? section.label : undefined}
-      onClick={onNavigate}
+      onClick={(e) => {
+        if (section.tabs && !collapsed) {
+          e.preventDefault()
+          onToggle()
+        } else onNavigate?.(e)
+      }}
     >
       {ICONS[section.icon]}
       <span className="app-shell__nav-label">{section.label}</span>
@@ -82,16 +87,27 @@ const NavItem = forwardRef(function NavItem({ section, active, collapsed, onNavi
   )
 })
 
-// Mục có trang con (Danh mục, Quản trị): trang con là menu con thụt vào dưới mục cha, chỉ mở ở phân hệ đang xem.
+// Mục có trang con (Danh mục, Quản trị): bấm vào mục cha chỉ mở / đóng menu con thụt vào, không tự chuyển trang. Mặc định mở ở phân hệ đang xem.
 // Sidebar thu gọn thì rê vào icon để hiện danh sách trang con.
 function SideNav({ sections, current, currentTab, collapsed, onNavigate }) {
   const navigate = useNavigate()
+  const [toggled, setToggled] = useState({})
   return (
     <nav className="app-shell__nav" aria-label="Điều hướng chính">
       {sections.map((section, i) => {
         const groupStart = section.group != null && section.group !== sections[i - 1]?.group
         const active = current?.key === section.key
-        let item = <NavItem section={section} active={active} collapsed={collapsed} onNavigate={onNavigate} />
+        const expanded = toggled[section.key] ?? active
+        let item = (
+          <NavItem
+            section={section}
+            active={active}
+            expanded={expanded}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+            onToggle={() => setToggled({ ...toggled, [section.key]: !expanded })}
+          />
+        )
         if (section.tabs && collapsed) {
           item = (
             <Dropdown
@@ -115,7 +131,7 @@ function SideNav({ sections, current, currentTab, collapsed, onNavigate }) {
               </div>
             )}
             {item}
-            {section.tabs && active && !collapsed && (
+            {section.tabs && expanded && !collapsed && (
               <div className="app-shell__subnav" role="group" aria-label={section.label}>
                 {section.tabs.map((tab) => (
                   <NavLink

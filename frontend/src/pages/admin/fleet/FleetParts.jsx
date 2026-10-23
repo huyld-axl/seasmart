@@ -15,10 +15,20 @@ export const ShipSvg = () => (
 )
 
 // Ô đầu dòng: tàu là hình tàu, đối tác là hai chữ đầu của tên.
-export function FleetTile({ text, large, src }) {
+export function FleetTile({ text, large, src, onClick, actionLabel }) {
+  const className = `fl-tile${large ? ' fl-tile--lg' : ''}${src ? ' fl-tile--img' : ''}`
+  const content = src ? <img src={src} alt="" /> : text || <Icon component={ShipSvg} />
+  // Có onClick thì ô là nút bấm được (bấm ảnh logo để chọn ảnh mới), cùng kiểu ảnh chân dung ở form thuyền viên.
+  if (onClick) {
+    return (
+      <button type="button" className={`${className} fl-tile--action`} aria-label={actionLabel} title="Bấm để chọn logo" onClick={onClick}>
+        {content}
+      </button>
+    )
+  }
   return (
-    <span className={`fl-tile${large ? ' fl-tile--lg' : ''}${src ? ' fl-tile--img' : ''}`} aria-hidden="true">
-      {src ? <img src={src} alt="" /> : text || <Icon component={ShipSvg} />}
+    <span className={className} aria-hidden="true">
+      {content}
     </span>
   )
 }
@@ -69,7 +79,7 @@ export function ReadPanel({ section }) {
     <section className="crew-panel">
       <div className="crew-panel__head">
         <h2 className="crew-panel__title">{section.title}</h2>
-        {section.fields.length > 1 ? <span className="sf-panel__meta" style={{ paddingTop: 0 }}>{done}/{total}</span> : null}
+        {total > 0 && section.fields.length > 1 ? <span className="sf-panel__meta" style={{ paddingTop: 0 }}>{done}/{total}</span> : null}
       </div>
       <div className="crew-panel__body">
         <dl className="sf-grid">
@@ -113,7 +123,7 @@ export function FormHead({ crumbs, title, description }) {
   )
 }
 
-export function FormAside({ tile, name, sub, done, total, sections, stats, active, onGo }) {
+export function FormAside({ tile, name, sub, note, done, total, sections, stats, active, onGo }) {
   const percent = total ? Math.round((done / total) * 100) : 0
   return (
     <aside className="sf-aside" aria-label="Tóm tắt">
@@ -122,6 +132,7 @@ export function FormAside({ tile, name, sub, done, total, sections, stats, activ
         <div className="sf-who__text">
           <p className="sf-who__name">{name}</p>
           {sub ? <p className="sf-who__sub">{sub}</p> : null}
+          {note ? <p className="sf-who__sub">{note}</p> : null}
         </div>
       </div>
       <div className="sf-progress">
@@ -141,15 +152,17 @@ export function FormAside({ tile, name, sub, done, total, sections, stats, activ
   )
 }
 
-export function FormSection({ index, section, meta, children }) {
+// `action`: nút đặt ở đầu khối, cạnh số mục đã điền (ví dụ nút Quét danh thiếp).
+export function FormSection({ index, section, meta, action, children }) {
   return (
     <section className="sf-panel" id={`sf-${section.key}`} aria-labelledby={`sf-${section.key}-title`}>
       <div className="sf-panel__head">
         <span className="sf-step">{index + 1}</span>
-        <div>
+        <div className="sf-panel__text">
           <h2 className="sf-panel__title" id={`sf-${section.key}-title`}>{section.title}</h2>
           {section.desc ? <p className="sf-panel__desc">{section.desc}</p> : null}
         </div>
+        {action ? <div className="sf-panel__scans">{action}</div> : null}
         <span className="sf-panel__meta">{meta}</span>
       </div>
       <div className="sf-panel__body">{children}</div>
@@ -172,7 +185,7 @@ export function SegmentedPick({ value, onChange, options, label, size, className
 }
 
 // Khung form: tiêu đề, cột tóm tắt + mục lục bên trái, `children` (thường là <Form className="sf-sections">) bên phải.
-export function FormFrame({ crumbs, title, description, tile, name, sub, sections, stats, done, total, children }) {
+export function FormFrame({ crumbs, title, description, tile, name, sub, note, sections, stats, done, total, children }) {
   const [active, setActive] = useScrollSpy(sections.map((section) => section.key))
   const goTo = (key) => (event) => {
     event.preventDefault()
@@ -183,7 +196,7 @@ export function FormFrame({ crumbs, title, description, tile, name, sub, section
     <div className="ds-page">
       <FormHead crumbs={crumbs} title={title} description={description} />
       <div className="sf-layout">
-        <FormAside tile={tile} name={name} sub={sub} done={done} total={total} sections={sections} stats={stats} active={active} onGo={goTo} />
+        <FormAside tile={tile} name={name} sub={sub} note={note} done={done} total={total} sections={sections} stats={stats} active={active} onGo={goTo} />
         {children}
       </div>
     </div>

@@ -18,23 +18,8 @@ import {
   Dropdown,
   Skeleton,
 } from 'antd'
-import {
-  ArrowLeftOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  CloseOutlined,
-  DownOutlined,
-  ScanOutlined,
-  DownloadOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
-  EditOutlined,
-  EllipsisOutlined,
-  MoreOutlined,
-  RightOutlined,
-  SendOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
+import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, CloseOutlined, DownOutlined, ScanOutlined, PauseCircleOutlined, PlayCircleOutlined, EditOutlined, EllipsisOutlined, MoreOutlined, RightOutlined, SendOutlined } from '@ant-design/icons'
+import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import {
   seafarerApi,
   certificateApi,
@@ -278,7 +263,7 @@ export default function SeafarerDetailPage() {
           <div className="crew-head__photo">
             <CrewPhoto size="xl" src={photo} />
             {photo && (
-              <Button size="small" className="crew-head__download" icon={<DownloadOutlined />} href={photo} download={`${seafarer.seafarer_code || seafarer.id} - ${seafarer.full_name}.${photo.startsWith('data:image/png') ? 'png' : 'jpg'}`}>Tải ảnh</Button>
+              <Button size="small" className="crew-head__download" icon={<DownloadIcon />} href={photo} download={`${seafarer.seafarer_code || seafarer.id} - ${seafarer.full_name}.${photo.startsWith('data:image/png') ? 'png' : 'jpg'}`}>Tải ảnh</Button>
             )}
           </div>
           <div className="crew-head__text">
@@ -326,7 +311,7 @@ export default function SeafarerDetailPage() {
             </Dropdown>
           )}
           {can('seafarer.update') && <Button icon={<EditOutlined />} onClick={() => navigate(`/seafarers/${id}/edit`)}>Sửa thông tin</Button>}
-          {can('seafarer.docs') && <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Tải giấy tờ lên</Button>}
+          {can('seafarer.docs') && <Button type="primary" icon={<UploadIcon />} onClick={dropFiles}>Tải giấy tờ lên</Button>}
         </div>
       </div>
 

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Button, Upload, Table, Alert, Progress, Space } from 'antd'
 import useToast from '../../components/ds/useToast'
-import { UploadOutlined, DownloadOutlined, ArrowLeftOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined } from '@ant-design/icons'
+import { UploadIcon, DownloadIcon } from '../../components/ds/TransferIcons'
 import { useNavigate } from 'react-router-dom'
 import { seafarerApi } from '../../api'
 
@@ -79,7 +80,7 @@ export default function SeafarerImportPage() {
           beforeUpload={() => false}
           onChange={({ fileList }) => setFileList(fileList)}
         >
-          <Button icon={<UploadOutlined />}>Chọn file Excel</Button>
+          <Button icon={<UploadIcon />}>Chọn file Excel</Button>
         </Upload>
 
         <Space style={{ marginTop: 16 }}>

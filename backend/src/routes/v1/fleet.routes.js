@@ -2,6 +2,8 @@ const fs = require('fs')
 const config = require('../../config')
 const pool = require('../../config/db')
 const { fleetService, VESSEL_STATUSES } = require('../../services/fleet.service')
+const businessCardScan = require('../../services/business_card_scan.service')
+const { MAX_FILE_BYTES } = require('../../constants/document_types')
 
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 const listQuery = {
@@ -63,9 +65,14 @@ const ownerBody = {
     fax: nullableText(30),
     email: nullableText(150),
     website: nullableText(200),
-    contact_person: nullableText(150),
-    contact_phone: nullableText(30),
-    contact_email: nullableText(150),
+    contacts: {
+      type: 'array',
+      maxItems: 20,
+      items: {
+        type: 'object',
+        properties: { name: nullableText(150), position: nullableText(100), phone: nullableText(30), email: nullableText(150), is_primary: { type: 'boolean' } },
+      },
+    },
     is_active: flag,
     notes: nullableText(2000),
   },
@@ -127,6 +134,16 @@ async function fleetRoutes(fastify) {
           const file = await request.file({ limits: { fileSize: config.upload.maxFileSize, files: 1 } })
           if (!file) throw { statusCode: 400, message: 'Chưa chọn logo' }
           return fleetService.saveOwnerLogo(pool, request.params.id, file)
+        })
+        // Quét danh thiếp để điền form (chưa có :id, không lưu gì): multipart field "file".
+        const canWrite = async (request, reply) => {
+          const have = request.access?.permissions
+          if (!have || !(have.has('partner.create') || have.has('partner.update'))) return reply.code(403).send({ error: 'Không có quyền' })
+        }
+        app.post('/scan-card', { onRequest: [app.authenticate, canWrite] }, async (request) => {
+          const part = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })
+          if (!part) throw { statusCode: 400, message: 'Chưa chọn danh thiếp' }
+          return businessCardScan.scan(part)
         })
         app.delete('/:id/logo', { ...write, schema: { params } }, async (request) => fleetService.removeOwnerLogo(pool, request.params.id))
       },

@@ -6,6 +6,8 @@ import {
   vesselToFormValues,
   vesselToPayload,
   partnerToPayload,
+  partnerToFormValues,
+  cleanContactList,
   changedKeys,
   initialsOfName,
 } from '../fleetView'
@@ -106,5 +108,33 @@ describe('fleetView', () => {
     expect(initialsOfName('HTK SIMEX Co. Ltd')).toBe('HS')
     expect(initialsOfName('VIMARU')).toBe('VI')
     expect(initialsOfName('')).toBe('?')
+  })
+})
+
+describe('người liên hệ của đối tác', () => {
+  it('bỏ dòng trống và luôn có đúng một liên hệ chính', () => {
+    const list = cleanContactList([{ name: ' An ', phone: '' }, { name: '', position: '' }, { name: 'Bình', is_primary: true }, { name: 'Chi', is_primary: true }])
+    expect(list.map((c) => c.name)).toEqual(['An', 'Bình', 'Chi'])
+    expect(list.map((c) => c.is_primary)).toEqual([false, true, false])
+  })
+
+  it('người đầu tiên là liên hệ chính khi chưa chọn ai', () => {
+    expect(cleanContactList([{ name: 'An' }, { name: 'Bình' }]).map((c) => c.is_primary)).toEqual([true, false])
+    expect(cleanContactList(undefined)).toEqual([])
+  })
+
+  it('đổi người liên hệ tính là đã sửa, giữ nguyên thì không', () => {
+    const owner = { id: 1, company_name: 'ACME', contacts: [{ name: 'An', phone: '1', is_primary: true }] }
+    const initial = partnerToFormValues(owner)
+    expect(changedKeys(initial, { ...initial }, partnerToPayload)).toEqual([])
+    expect(changedKeys(initial, { ...initial, contacts: [{ ...initial.contacts[0], phone: '2' }] }, partnerToPayload)).toEqual(['contacts'])
+  })
+
+  it('màn chi tiết liệt kê từng người, ghi rõ ai là liên hệ chính', () => {
+    const person = partnerSections({ contacts: [{ name: 'An', position: 'GĐ', phone: '1', is_primary: true }, { name: 'Bình', is_primary: false }] }).find((x) => x.key === 'person')
+    expect(person.items.map((item) => item.title)).toEqual(['Người liên hệ 1', 'Người liên hệ 2'])
+    expect(person.items[0].tags).toEqual(['Liên hệ chính'])
+    expect(person.items[1].tags).toEqual([])
+    expect(person.items[0].fields.find((f) => f[0] === 'Chức vụ')[1]).toBe('GĐ')
   })
 })

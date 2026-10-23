@@ -2,14 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Dropdown, Grid, Input, Skeleton, Table } from 'antd'
-import {
-  DownloadOutlined,
-  EllipsisOutlined,
-  MoreOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
+import { EllipsisOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import { seafarerApi } from '../../api'
 import api from '../../api/client'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
@@ -96,8 +90,8 @@ export default function SeafarerListPage() {
 
   const moreMenu = {
     items: [
-      ...(can('seafarer.import') ? [{ key: 'import', icon: <UploadOutlined />, label: 'Nhập từ Excel' }] : []),
-      { key: 'export', icon: <DownloadOutlined />, label: exporting ? 'Đang xuất…' : 'Xuất ra Excel', disabled: exporting },
+      ...(can('seafarer.import') ? [{ key: 'import', icon: <UploadIcon />, label: 'Nhập từ Excel' }] : []),
+      { key: 'export', icon: <DownloadIcon />, label: exporting ? 'Đang xuất…' : 'Xuất ra Excel', disabled: exporting },
     ],
     onClick: ({ key }) => (key === 'import' ? navigate('/seafarers/import') : handleExport()),
   }

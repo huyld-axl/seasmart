@@ -635,3 +635,10 @@
 .ds-copy:hover { background: var(--secondary); color: var(--foreground); }
 .ds-copy:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .ds-copy.is-done { color: var(--success, #2e7d32); }
+
+/* Đánh dấu mục chính trong danh sách (PrimaryMark) */
+.ds-primary-mark { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; cursor: pointer; }
+.ds-primary-mark:hover { background: var(--surface-hover, var(--secondary)); color: var(--foreground); }
+.ds-primary-mark.is-primary { border-color: var(--primary); background: var(--primary-light); color: var(--primary); cursor: default; font-weight: 500; }
+.ds-primary-mark.is-primary .anticon { color: #d99a00; }
+.ds-primary-mark:focus-visible { outline: 2px solid var(--ring-focus, var(--primary)); outline-offset: 2px; }

@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const config = require('../config')
+const { withTransaction } = require('../utils/transaction')
 
 const MAX_LIST_LIMIT = 100
 
@@ -16,8 +17,9 @@ const VESSEL_COLUMNS = [
 ]
 const OWNER_COLUMNS = [
   'company_name', 'company_name_en', 'country_id', 'tax_id', 'address', 'phone', 'fax', 'email', 'website',
-  'contact_person', 'contact_phone', 'contact_email', 'is_active', 'notes',
+  'is_active', 'notes',
 ]
+const CONTACT_MAX = 20
 const LOGO_MAX_BYTES = 2 * 1024 * 1024
 const VESSEL_STATUSES = ['ACTIVE', 'LAID_UP', 'UNDER_CONSTRUCTION', 'SCRAPPED']
 
@@ -33,6 +35,28 @@ function paging(query) {
   const page = Math.max(1, Number.parseInt(query.page, 10) || 1)
   const limit = Math.min(MAX_LIST_LIMIT, Math.max(1, Number.parseInt(query.limit, 10) || 20))
   return { page, limit, offset: (page - 1) * limit }
+}
+
+// Người liên hệ gửi từ form: bỏ dòng trống, tối đa CONTACT_MAX người, đúng một người chính (mặc định người đầu tiên) nếu có người.
+function cleanContacts(list) {
+  const text = (value, max) => (typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null)
+  const rows = (Array.isArray(list) ? list : [])
+    .map((item) => ({ name: text(item?.name, 150), position: text(item?.position, 100), phone: text(item?.phone, 30), email: text(item?.email, 150), is_primary: Boolean(item?.is_primary) }))
+    .filter((item) => item.name || item.position || item.phone || item.email)
+  if (rows.some((item) => !item.name)) throw { statusCode: 400, message: 'Người liên hệ cần có họ tên' }
+  if (rows.length > CONTACT_MAX) throw { statusCode: 400, message: `Tối đa ${CONTACT_MAX} người liên hệ` }
+  const primary = rows.findIndex((item) => item.is_primary)
+  return rows.map((item, index) => ({ ...item, is_primary: index === (primary === -1 ? 0 : primary) }))
+}
+
+async function replaceContacts(conn, ownerId, contacts) {
+  await conn.query('DELETE FROM ship_owner_contact WHERE ship_owner_id = ?', [ownerId])
+  for (const [index, item] of contacts.entries()) {
+    await conn.query(
+      'INSERT INTO ship_owner_contact (ship_owner_id, name, position, phone, email, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [ownerId, item.name, item.position, item.phone, item.email, item.is_primary ? 1 : 0, index]
+    )
+  }
 }
 
 function validateVessel(data) {
@@ -66,9 +90,11 @@ const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_num
   LEFT JOIN port p ON p.id = v.port_of_registry_id
   LEFT JOIN ship_owner o ON o.id = v.ship_owner_id`
 
-const OWNER_SELECT = `SELECT o.id, o.company_name, o.company_name_en, o.country_id, c.name_vi AS country_name,
+const OWNER_SELECT = `SELECT o.id, o.company_name, o.company_name_en, o.country_id, c.name_vi AS country_name, c.code AS country_code,
     o.tax_id, o.address, o.phone, o.fax, o.email, o.website,
-    o.contact_person, o.contact_phone, o.contact_email, o.is_active, o.notes, o.updated_at,
+    o.is_active, o.notes, o.updated_at,
+    (SELECT COALESCE(json_agg(json_build_object('id', ct.id, 'name', ct.name, 'position', ct.position, 'phone', ct.phone, 'email', ct.email, 'is_primary', ct.is_primary = 1)
+       ORDER BY ct.is_primary DESC, ct.sort_order, ct.id), '[]'::json) FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id) AS contacts,
     (o.logo_path IS NOT NULL) AS has_logo,
     (SELECT COUNT(*) FROM vessel v WHERE v.ship_owner_id = o.id AND v.deleted_at IS NULL) AS vessel_count,
     (SELECT COUNT(*) FROM export_pack ep WHERE ep.ship_owner_id = o.id AND ep.deleted_at IS NULL) AS pack_count
@@ -202,8 +228,8 @@ const fleetService = {
     const params = []
     let search = ''
     if (query.search) {
-      search = ' AND (unaccent(o.company_name::text) ILIKE unaccent(?) OR unaccent(COALESCE(o.contact_person, \'\')::text) ILIKE unaccent(?))'
-      params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)
+      search = ' AND (unaccent(o.company_name::text) ILIKE unaccent(?) OR EXISTS (SELECT 1 FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id AND unaccent(ct.name::text) ILIKE unaccent(?)))'
+      params.push(`%${query.search}%`, `%${query.search}%`)
     }
     const active = query.active === '1' ? 1 : query.active === '0' ? 0 : null
     const [rows] = await pool.query(
@@ -248,26 +274,37 @@ const fleetService = {
   async createOwner(pool, body) {
     const data = pickAllowed(body, OWNER_COLUMNS)
     if (!data.company_name) throw { statusCode: 400, message: 'Thiếu tên đối tác' }
+    const contacts = cleanContacts(body.contacts)
     const cols = Object.keys(data)
-    const [result] = await duplicateGuard(
-      pool.query(`INSERT INTO ship_owner (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`, Object.values(data)),
-      'Đối tác đã tồn tại'
-    )
-    return this.getOwner(pool, result.insertId)
+    const id = await withTransaction(pool, async (conn) => {
+      const [result] = await duplicateGuard(
+        conn.query(`INSERT INTO ship_owner (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`, Object.values(data)),
+        'Đối tác đã tồn tại'
+      )
+      await replaceContacts(conn, result.insertId, contacts)
+      return result.insertId
+    })
+    return this.getOwner(pool, id)
   },
 
   async updateOwner(pool, id, body) {
     const data = pickAllowed(body, OWNER_COLUMNS)
-    if (!Object.keys(data).length) throw { statusCode: 400, message: 'Không có dữ liệu hợp lệ' }
+    const contacts = body?.contacts === undefined ? null : cleanContacts(body.contacts)
+    if (!Object.keys(data).length && !contacts) throw { statusCode: 400, message: 'Không có dữ liệu hợp lệ' }
     if ('company_name' in data && !data.company_name) {
       throw { statusCode: 400, message: 'Thiếu tên đối tác' }
     }
     await this.getOwner(pool, id)
     const cols = Object.keys(data)
-    await duplicateGuard(
-      pool.query(`UPDATE ship_owner SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
-      'Mã đối tác đã tồn tại'
-    )
+    await withTransaction(pool, async (conn) => {
+      if (cols.length) {
+        await duplicateGuard(
+          conn.query(`UPDATE ship_owner SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
+          'Mã đối tác đã tồn tại'
+        )
+      }
+      if (contacts) await replaceContacts(conn, id, contacts)
+    })
     return this.getOwner(pool, id)
   },
 

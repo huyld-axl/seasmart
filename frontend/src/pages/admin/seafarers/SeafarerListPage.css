@@ -77,3 +77,11 @@
 .crew-filterbar__age { display: flex; align-items: center; gap: 6px; }
 .crew-filterbar__age .ant-input-number { width: 84px; }
 .crew-filterbar__clear { margin-left: auto; }
+
+/* Nút Bộ lọc: chữ thường, mũi tên nhỏ mờ xoay khi mở, cùng kiểu mũi tên của menu và ô chọn */
+.crew-filter-btn { padding-inline: 12px; font-size: 14px; font-weight: 400; color: var(--muted); }
+.crew-filter-btn:hover { color: var(--foreground); }
+.crew-filter-btn .anticon { font-size: 14px; }
+.crew-filter-btn .anticon:first-child { color: var(--muted); }
+.crew-filter-btn__chev { margin-left: 2px; color: var(--muted); font-size: 10px !important; transition: transform 0.15s; }
+.crew-filter-btn[aria-expanded='true'] .crew-filter-btn__chev { transform: rotate(180deg); }

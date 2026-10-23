@@ -7,23 +7,27 @@ import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import { lookupApi } from '../../../api'
 import { shipOwnerApi, shipOwnerLogoApi } from '../../../api/fleetApi'
+import { ListItem } from '../seafarers/SeafarerFormParts'
 import LogoField from '../../../components/ds/LogoField'
+import PrimaryMark from '../../../components/ds/PrimaryMark'
+import ScanButton from '../../../components/ds/ScanButton'
+import { withFlag } from '../../../utils/flag'
 import { logoProblem } from '../../../components/ds/logoRules'
 import { readAsDataUrl, useFleetItem, useFleetMutations, usePartnerLogo } from '../../../hooks/useFleet'
-import { PARTNER_STATUS_OPTIONS, partnerToFormValues, partnerToPayload, changedKeys, filled, initialsOfName } from './fleetView'
+import { EMPTY_CONTACT, PARTNER_STATUS_OPTIONS, cleanContactList, partnerToFormValues, partnerToPayload, changedKeys, filled, initialsOfName } from './fleetView'
 import { FleetTile, FormFrame, FormSection, SegmentedPick } from './FleetParts'
 import changedLabel from './changedLabel'
 
 const SECTIONS = [
   { key: 'company', title: 'Công ty', desc: 'Tên đối tác hiện ở mục “Nộp cho” của bộ giấy và trên danh sách tàu.', fields: ['company_name', 'company_name_en', 'tax_id', 'country_id', 'logo'] },
   { key: 'contact', title: 'Liên hệ công ty', fields: ['address', 'phone', 'fax', 'email', 'website'] },
-  { key: 'person', title: 'Người liên hệ', desc: 'Người nhận bộ giấy tờ phía đối tác.', fields: ['contact_person', 'contact_phone', 'contact_email'] },
+  { key: 'person', title: 'Người liên hệ', desc: 'Có thể thêm nhiều người. Liên hệ chính là người nhận bộ giấy tờ phía đối tác.', fields: ['contacts'] },
   { key: 'notes', title: 'Ghi chú', fields: ['notes'] },
 ]
 const FIELD_LABELS = {
   company_name: 'Tên công ty', company_name_en: 'Tên tiếng Anh', tax_id: 'Mã số thuế', country_id: 'Quốc gia', is_active: 'Tình trạng', logo: 'Logo',
   address: 'Địa chỉ', phone: 'Điện thoại', fax: 'Fax', email: 'Email', website: 'Website',
-  contact_person: 'Họ tên người liên hệ', contact_phone: 'Điện thoại người liên hệ', contact_email: 'Email người liên hệ', notes: 'Ghi chú',
+  contacts: 'Người liên hệ', notes: 'Ghi chú',
 }
 const errorText = (error, fallback) => error?.response?.data?.error || error?.response?.data?.message || fallback
 const emailRule = { type: 'email', message: 'Email phải có dạng ten@congty.com' }
@@ -58,11 +62,55 @@ function PartnerForm({ owner }) {
     readAsDataUrl(file).then(setPickedLogo)
   }
 
+  const logoInput = useRef(null)
+  const [scanning, setScanning] = useState(null)
+
+  // Quét danh thiếp. Ở khối Công ty: điền ô công ty đang trống (không ghi đè dữ liệu đã nhập) và thêm người trên danh thiếp.
+  // Ở khối Người liên hệ (contactOnly): chỉ thêm người trên danh thiếp, mỗi danh thiếp một người.
+  async function scanCard([file], { contactOnly = false } = {}) {
+    setScanning(contactOnly ? 'person' : 'company')
+    try {
+      const { company, contact } = await shipOwnerApi.scanCard(file)
+      const current = form.getFieldsValue(true)
+      const patch = {}
+      let kept = 0
+      if (!contactOnly) {
+        for (const [key, value] of Object.entries(company)) {
+          if (filled(current[key]?.trim?.() ?? current[key])) kept += 1
+          else patch[key] = value
+        }
+      }
+      let filledCount = Object.keys(patch).length
+      const contacts = current.contacts || []
+      const known = contact && contacts.some((c) => c?.name?.trim().toLowerCase() === contact.name.toLowerCase())
+      if (contactOnly && !contact) {
+        toast.warning('Danh thiếp không có tên người liên hệ', { description: 'Nhập tay hoặc thử danh thiếp khác.' })
+        return
+      }
+      if (contact && !known) {
+        patch.contacts = [...contacts, { ...EMPTY_CONTACT, ...Object.fromEntries(Object.entries(contact).map(([k, v]) => [k, v ?? ''])), is_primary: !cleanContactList(contacts).length }]
+        filledCount += 1
+      }
+      form.setFieldsValue(patch)
+      if (contactOnly && known) toast.info(`${contact.name} đã có trong danh sách`)
+      else toast.success(contactOnly ? `Đã thêm ${contact.name}` : `Đã điền ${filledCount} mục từ danh thiếp`, { description: kept ? `${kept} ô đã có dữ liệu nên giữ nguyên. Kiểm tra lại rồi lưu.` : 'Kiểm tra lại rồi lưu.' })
+    } catch (error) {
+      toast.error('Không đọc được danh thiếp', { description: errorText(error, 'Thử lại sau ít phút.') })
+    } finally {
+      setScanning(null)
+    }
+  }
+
   const changed = new Set(isEdit ? changedKeys(initial, values, partnerToPayload) : [])
   if (isEdit && logoChanged) changed.add('logo')
   const cn = (name, base) => [base, changed.has(name) && 'sf-changed'].filter(Boolean).join(' ') || undefined
   const label = (name, text) => changedLabel(text, changed.has(name))
-  const stats = SECTIONS.map((section) => section.fields.filter((name) => (name === 'logo' ? Boolean(logoSrc) : filled(typeof values[name] === 'string' ? values[name].trim() : values[name]))).length)
+  const isFilled = (name) => {
+    if (name === 'logo') return Boolean(logoSrc)
+    if (name === 'contacts') return cleanContactList(values.contacts).length > 0
+    return filled(typeof values[name] === 'string' ? values[name].trim() : values[name])
+  }
+  const stats = SECTIONS.map((section) => section.fields.filter(isFilled).length)
   const metas = SECTIONS.map((section, index) => `${stats[index]}/${section.fields.length}`)
   const total = SECTIONS.reduce((sum, section) => sum + section.fields.length, 0)
   const ready = filled(values.company_name?.trim?.())
@@ -100,17 +148,34 @@ function PartnerForm({ owner }) {
     <FormFrame
       crumbs={isEdit ? [{ label: 'Đối tác', to: '/partners' }, { label: owner.company_name, to: `/partners/${owner.id}` }, { label: 'Sửa' }] : [{ label: 'Đối tác', to: '/partners' }, { label: 'Thêm đối tác' }]}
       title={isEdit ? 'Sửa đối tác' : 'Thêm đối tác'}
-      description="Chủ tàu đối tác: dùng để gắn với tàu và chọn ở mục “Nộp cho” khi tạo bộ giấy."
-      tile={<FleetTile large text={initialsOfName(values.company_name || '')} src={logoSrc} />}
+      tile={
+        <>
+          <FleetTile large text={initialsOfName(values.company_name || '')} src={logoSrc} onClick={() => logoInput.current?.click()} actionLabel={logoSrc ? 'Đổi logo' : 'Chọn logo'} />
+          <input
+            ref={logoInput}
+            type="file"
+            accept="image/jpeg,image/png"
+            className="ds-sr-only"
+            tabIndex={-1}
+            aria-hidden="true"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              e.target.value = ''
+              if (file) chooseLogo(file)
+            }}
+          />
+        </>
+      }
       name={values.company_name || (isEdit ? owner.company_name : 'Đối tác mới')}
-      sub={[countries.data?.find((c) => c.id === values.country_id)?.name_vi].filter(Boolean).join(' · ')}
+      sub={withFlag(countries.data?.find((c) => c.id === values.country_id)?.code, countries.data?.find((c) => c.id === values.country_id)?.name_vi)}
+      note={logoSrc ? null : 'Chưa có logo'}
       sections={SECTIONS}
       stats={metas}
       done={stats.reduce((sum, count) => sum + count, 0)}
       total={total}
     >
       <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
-        <FormSection index={0} section={SECTIONS[0]} meta={metas[0]}>
+        <FormSection index={0} section={SECTIONS[0]} meta={metas[0]} action={<ScanButton label="Quét danh thiếp" loading={scanning === 'company'} disabled={Boolean(scanning)} onPick={scanCard} accept=".jpg,.jpeg,.png,.pdf" />}>
           <div className="sf-grid">
             <div className={cn('logo', 'sf-field')}>
               <div className="ant-form-item-label"><label>{label('logo', 'Logo công ty')}</label></div>
@@ -126,7 +191,7 @@ function PartnerForm({ owner }) {
               <Input maxLength={50} inputMode="numeric" />
             </Form.Item>
             <Form.Item name="country_id" className={cn('country_id', 'sf-c6')} label={label('country_id', 'Quốc gia')}>
-              <Select allowClear showSearch optionFilterProp="label" loading={countries.isLoading} options={(countries.data || []).map((row) => ({ value: row.id, label: row.name_vi }))} placeholder="Chọn quốc gia" />
+              <Select allowClear showSearch optionFilterProp="label" loading={countries.isLoading} options={(countries.data || []).map((row) => ({ value: row.id, label: withFlag(row.code, row.name_vi) }))} placeholder="Chọn quốc gia" />
             </Form.Item>
             <Form.Item
               name="is_active"
@@ -159,18 +224,44 @@ function PartnerForm({ owner }) {
           </div>
         </FormSection>
 
-        <FormSection index={2} section={SECTIONS[2]} meta={metas[2]}>
-          <div className="sf-grid">
-            <Form.Item name="contact_person" className={cn('contact_person', 'sf-c4')} label={label('contact_person', 'Họ tên')}>
-              <Input maxLength={150} />
-            </Form.Item>
-            <Form.Item name="contact_phone" className={cn('contact_phone', 'sf-c4')} label={label('contact_phone', 'Điện thoại')}>
-              <Input maxLength={30} inputMode="tel" />
-            </Form.Item>
-            <Form.Item name="contact_email" className={cn('contact_email', 'sf-c4')} label={label('contact_email', 'Email')} rules={[emailRule]}>
-              <Input maxLength={150} inputMode="email" />
-            </Form.Item>
-          </div>
+        <FormSection index={2} section={SECTIONS[2]} meta={metas[2]} action={<ScanButton label="Quét danh thiếp" loading={scanning === 'person'} disabled={Boolean(scanning)} onPick={(files) => scanCard(files, { contactOnly: true })} accept=".jpg,.jpeg,.png,.pdf" />}>
+          <Form.List name="contacts">
+            {(fields, { add, remove }) => (
+              <div className="sf-items">
+                {fields.map((field, position) => {
+                  const primary = Boolean(values.contacts?.[field.name]?.is_primary)
+                  const setPrimary = () => form.setFieldValue('contacts', (form.getFieldValue('contacts') || []).map((c, i) => ({ ...c, is_primary: i === field.name })))
+                  const removeRow = () => {
+                    const rest = (form.getFieldValue('contacts') || []).filter((_, i) => i !== field.name)
+                    remove(field.name)
+                    if (primary && rest.length) form.setFieldValue('contacts', rest.map((c, i) => ({ ...c, is_primary: i === 0 })))
+                  }
+                  return (
+                    <ListItem key={field.key} title={`Người liên hệ ${position + 1}`} removeLabel={`Xoá người liên hệ ${position + 1}`} onRemove={removeRow} actions={<PrimaryMark value={primary} onChange={setPrimary} />}>
+                      {/* Đăng ký ô liên hệ chính vào form để giá trị có mặt khi lưu và khi so sánh thay đổi; PrimaryMark điều khiển nó. */}
+                      <Form.Item name={[field.name, 'is_primary']} hidden noStyle><Input type="hidden" /></Form.Item>
+                      <Form.Item name={[field.name, 'name']} className="sf-c4" label="Họ tên" rules={[{ required: true, whitespace: true, message: 'Nhập họ tên người liên hệ' }]}>
+                        <Input maxLength={150} />
+                      </Form.Item>
+                      <Form.Item name={[field.name, 'position']} className="sf-c4" label="Chức vụ">
+                        <Input maxLength={100} />
+                      </Form.Item>
+                      <Form.Item name={[field.name, 'phone']} className="sf-c4" label="Điện thoại">
+                        <Input maxLength={30} inputMode="tel" />
+                      </Form.Item>
+                      <Form.Item name={[field.name, 'email']} label="Email" rules={[emailRule]}>
+                        <Input maxLength={150} inputMode="email" />
+                      </Form.Item>
+                    </ListItem>
+                  )
+                })}
+                <button type="button" className="sf-add" disabled={fields.length >= 20} onClick={() => add({ ...EMPTY_CONTACT, is_primary: fields.length === 0 })}>
+                  <PlusOutlined aria-hidden />
+                  Thêm người liên hệ
+                </button>
+              </div>
+            )}
+          </Form.List>
         </FormSection>
 
         <FormSection index={3} section={SECTIONS[3]} meta={metas[3]}>

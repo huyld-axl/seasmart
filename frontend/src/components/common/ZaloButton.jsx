@@ -1,20 +1,21 @@
+import { chatHref } from '../../utils/chatQr'
 import { Tooltip } from 'antd'
 import '../ds/ds.css'
 
-export default function ZaloButton({ phone, size = 16 }) {
+export default function ZaloButton({ phone, size = 22 }) {
   if (!phone) return null
-  const clean = phone.replace(/\D/g, '')
   return (
     <Tooltip title={`Nhắn Zalo: ${phone}`}>
       <a
-        href={`https://zalo.me/${clean}`}
+        href={chatHref('zalo', phone)}
         target="_blank"
         rel="noopener noreferrer"
         className="ds-copy"
+        aria-label={`Nhắn Zalo: ${phone}`}
         onClick={(e) => e.stopPropagation()}
       >
         <img
-          src="https://page.widget.zalo.me/static/images/2.0/Logo.svg"
+          src="/images/contact/zalo.svg"
           alt="Zalo"
           style={{ width: size, height: size, borderRadius: 4 }}
         />

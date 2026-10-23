@@ -11,6 +11,7 @@ import { ListItem } from '../seafarers/SeafarerFormParts'
 import LogoField from '../../../components/ds/LogoField'
 import PrimaryMark from '../../../components/ds/PrimaryMark'
 import ScanButton from '../../../components/ds/ScanButton'
+import ZaloInput from '../../../components/ds/ZaloInput'
 import QrScanButton from '../../../components/ds/QrScanButton'
 import { isLink, parseChatQr } from '../../../utils/chatQr'
 import { withFlag } from '../../../utils/flag'
@@ -22,17 +23,17 @@ import changedLabel from './changedLabel'
 
 const SECTIONS = [
   { key: 'company', title: 'Công ty', desc: 'Tên đối tác hiện ở mục “Nộp cho” của bộ giấy và trên danh sách tàu.', fields: ['company_name', 'company_name_en', 'tax_id', 'country_id', 'logo'] },
-  { key: 'contact', title: 'Liên hệ công ty', fields: ['address', 'phone', 'fax', 'email', 'website'] },
+  { key: 'contact', title: 'Liên hệ công ty', fields: ['address', 'phone', 'zalo', 'fax', 'email', 'website'] },
   { key: 'person', title: 'Người liên hệ', desc: 'Có thể thêm nhiều người. Liên hệ chính là người nhận bộ giấy tờ phía đối tác.', fields: ['contacts'] },
   { key: 'notes', title: 'Ghi chú', fields: ['notes'] },
 ]
 const FIELD_LABELS = {
   company_name: 'Tên công ty', company_name_en: 'Tên tiếng Anh', tax_id: 'Mã số thuế', country_id: 'Quốc gia', is_active: 'Tình trạng', logo: 'Logo',
-  address: 'Địa chỉ', phone: 'Điện thoại', fax: 'Fax', email: 'Email', website: 'Website',
+  address: 'Địa chỉ', phone: 'Điện thoại', zalo: 'Zalo', fax: 'Fax', email: 'Email', website: 'Website',
   contacts: 'Người liên hệ', notes: 'Ghi chú',
 }
-const QR_FIELD = { whatsapp: 'whatsapp', line: 'line_id', wechat: 'wechat_id', zalo: 'phone' }
-const QR_LABEL = { whatsapp: 'WhatsApp', line: 'LINE', wechat: 'WeChat', zalo: 'số điện thoại (Zalo)' }
+const QR_FIELD = { whatsapp: 'whatsapp', line: 'line_id', wechat: 'wechat_id', zalo: 'zalo' }
+const QR_LABEL = { whatsapp: 'WhatsApp', line: 'LINE', wechat: 'WeChat', zalo: 'Zalo' }
 const errorText = (error, fallback) => error?.response?.data?.error || error?.response?.data?.message || fallback
 const emailRule = { type: 'email', message: 'Email phải có dạng ten@congty.com' }
 
@@ -183,7 +184,7 @@ function PartnerForm({ owner }) {
         </>
       }
       name={values.company_name || (isEdit ? owner.company_name : 'Đối tác mới')}
-      sub={withFlag(countries.data?.find((c) => c.id === values.country_id)?.code, countries.data?.find((c) => c.id === values.country_id)?.name_vi)}
+      sub={withFlag(countries.data?.find((c) => c.id === values.country_id)?.code, countries.data?.find((c) => c.id === values.country_id)?.name_vi, countries.data?.find((c) => c.id === values.country_id)?.flag_emoji)}
       note={logoSrc ? null : 'Chưa có logo'}
       sections={SECTIONS}
       stats={metas}
@@ -207,7 +208,7 @@ function PartnerForm({ owner }) {
               <Input maxLength={50} inputMode="numeric" />
             </Form.Item>
             <Form.Item name="country_id" className={cn('country_id', 'sf-c6')} label={label('country_id', 'Quốc gia')}>
-              <Select allowClear showSearch optionFilterProp="label" loading={countries.isLoading} options={(countries.data || []).map((row) => ({ value: row.id, label: withFlag(row.code, row.name_vi) }))} placeholder="Chọn quốc gia" />
+              <Select allowClear showSearch optionFilterProp="label" loading={countries.isLoading} options={(countries.data || []).map((row) => ({ value: row.id, label: withFlag(row.code, row.name_vi || row.name_en, row.flag_emoji) }))} placeholder="Chọn quốc gia" />
             </Form.Item>
             <Form.Item
               name="is_active"
@@ -227,6 +228,9 @@ function PartnerForm({ owner }) {
             </Form.Item>
             <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')}>
               <Input maxLength={30} inputMode="tel" />
+            </Form.Item>
+            <Form.Item name="zalo" className={cn('zalo', 'sf-c4')} label="Zalo công ty">
+              <ZaloInput phoneName="phone" />
             </Form.Item>
             <Form.Item name="fax" className={cn('fax', 'sf-c4')} label={label('fax', 'Fax')}>
               <Input maxLength={30} inputMode="tel" />
@@ -267,6 +271,9 @@ function PartnerForm({ owner }) {
                       </Form.Item>
                       <Form.Item name={[field.name, 'email']} label="Email" rules={[emailRule]}>
                         <Input maxLength={150} inputMode="email" />
+                      </Form.Item>
+                      <Form.Item name={[field.name, 'zalo']} className="sf-c4" label="Zalo">
+                        <ZaloInput phoneName={['contacts', field.name, 'phone']} suffix={qrButton(field.name)} />
                       </Form.Item>
                       <Form.Item name={[field.name, 'whatsapp']} className="sf-c4" label="WhatsApp">
                         <Input maxLength={300} placeholder="+65 9123 4567" suffix={qrButton(field.name)} />

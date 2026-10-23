@@ -2,6 +2,7 @@ const { isValidImo } = require('../utils/imo')
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
+const sharp = require('sharp')
 const config = require('../config')
 const { withTransaction } = require('../utils/transaction')
 
@@ -16,11 +17,26 @@ const VESSEL_COLUMNS = [
   'ship_owner_id', 'technical_manager', 'commercial_manager', 'notes',
 ]
 const OWNER_COLUMNS = [
-  'company_name', 'company_name_en', 'country_id', 'tax_id', 'address', 'phone', 'fax', 'email', 'website',
+  'company_name', 'company_name_en', 'country_id', 'tax_id', 'address', 'phone', 'zalo', 'fax', 'email', 'website',
   'is_active', 'notes',
 ]
 const CONTACT_MAX = 20
 const LOGO_MAX_BYTES = 2 * 1024 * 1024
+const logoThumbPath = (file) => path.join(path.dirname(file), `thumb_${path.basename(file, path.extname(file))}.webp`)
+const pendingLogoThumbs = new Map()
+async function ensureLogoThumb(file) {
+  const target = logoThumbPath(file)
+  if (pendingLogoThumbs.has(file)) return pendingLogoThumbs.get(file)
+  if (fs.existsSync(target)) return target
+  if (!pendingLogoThumbs.has(file)) {
+    pendingLogoThumbs.set(file, sharp(file).rotate().resize(96, 96, { fit: 'inside', withoutEnlargement: true }).webp({ quality: 80 }).toFile(target).then(() => target).catch((error) => { fs.rmSync(target, { force: true }); throw error }).finally(() => pendingLogoThumbs.delete(file)))
+  }
+  return pendingLogoThumbs.get(file)
+}
+function removeLogoFiles(file) {
+  fs.rmSync(file, { force: true })
+  fs.rmSync(logoThumbPath(file), { force: true })
+}
 const VESSEL_STATUSES = ['ACTIVE', 'LAID_UP', 'UNDER_CONSTRUCTION', 'SCRAPPED']
 
 function pickAllowed(data, allowed) {
@@ -42,10 +58,10 @@ function cleanContacts(list) {
   const text = (value, max) => (typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null)
   const rows = (Array.isArray(list) ? list : [])
     .map((item) => ({
-      name: text(item?.name, 150), position: text(item?.position, 100), phone: text(item?.phone, 30), email: text(item?.email, 150),
+      name: text(item?.name, 150), position: text(item?.position, 100), phone: text(item?.phone, 30), zalo: text(item?.zalo, 300), email: text(item?.email, 150),
       whatsapp: text(item?.whatsapp, 300), line_id: text(item?.line_id, 300), wechat_id: text(item?.wechat_id, 300), is_primary: Boolean(item?.is_primary),
     }))
-    .filter((item) => item.name || item.position || item.phone || item.email || item.whatsapp || item.line_id || item.wechat_id)
+    .filter((item) => item.name || item.position || item.phone || item.zalo || item.email || item.whatsapp || item.line_id || item.wechat_id)
   if (rows.some((item) => !item.name)) throw { statusCode: 400, message: 'Người liên hệ cần có họ tên' }
   if (rows.length > CONTACT_MAX) throw { statusCode: 400, message: `Tối đa ${CONTACT_MAX} người liên hệ` }
   const primary = rows.findIndex((item) => item.is_primary)
@@ -56,8 +72,8 @@ async function replaceContacts(conn, ownerId, contacts) {
   await conn.query('DELETE FROM ship_owner_contact WHERE ship_owner_id = ?', [ownerId])
   for (const [index, item] of contacts.entries()) {
     await conn.query(
-      'INSERT INTO ship_owner_contact (ship_owner_id, name, position, phone, email, whatsapp, line_id, wechat_id, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [ownerId, item.name, item.position, item.phone, item.email, item.whatsapp, item.line_id, item.wechat_id, item.is_primary ? 1 : 0, index]
+      'INSERT INTO ship_owner_contact (ship_owner_id, name, position, phone, zalo, email, whatsapp, line_id, wechat_id, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [ownerId, item.name, item.position, item.phone, item.zalo, item.email, item.whatsapp, item.line_id, item.wechat_id, item.is_primary ? 1 : 0, index]
     )
   }
 }
@@ -80,7 +96,7 @@ async function duplicateGuard(promise, message) {
 const ON_BOARD = 'ss.deleted_at IS NULL AND ss.sign_off_date IS NULL AND ss.sign_on_date IS NOT NULL'
 
 const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_number, v.call_sign, v.mmsi,
-    v.vessel_type_id, vt.name_vi AS vessel_type_name, v.flag_country_id, c.name_vi AS flag_name,
+    v.vessel_type_id, vt.name_vi AS vessel_type_name, v.flag_country_id, COALESCE(c.name_vi, c.name_en) AS flag_name, c.code AS flag_code, c.flag_emoji AS flag_emoji,
     v.year_built, v.port_of_registry_id, p.name AS port_of_registry_name, v.classification_society, v.status, v.class_status,
     v.gross_tonnage, v.net_tonnage, v.deadweight, v.length_overall, v.passenger_capacity, v.crew_capacity,
     v.engine_power_kw, v.engine_type, v.dp_class, v.has_boiler, v.has_refrigeration,
@@ -93,10 +109,10 @@ const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_num
   LEFT JOIN port p ON p.id = v.port_of_registry_id
   LEFT JOIN ship_owner o ON o.id = v.ship_owner_id`
 
-const OWNER_SELECT = `SELECT o.id, o.company_name, o.company_name_en, o.country_id, c.name_vi AS country_name, c.code AS country_code,
-    o.tax_id, o.address, o.phone, o.fax, o.email, o.website,
-    o.is_active, o.notes, o.updated_at,
-    (SELECT COALESCE(json_agg(json_build_object('id', ct.id, 'name', ct.name, 'position', ct.position, 'phone', ct.phone, 'email', ct.email, 'whatsapp', ct.whatsapp, 'line_id', ct.line_id, 'wechat_id', ct.wechat_id, 'is_primary', ct.is_primary = 1)
+const OWNER_SELECT = `SELECT o.id, o.company_name, o.company_name_en, o.country_id, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji,
+    o.tax_id, o.address, o.phone, o.zalo, o.fax, o.email, o.website,
+    o.is_active, o.notes, o.updated_at, o.logo_updated_at,
+    (SELECT COALESCE(json_agg(json_build_object('id', ct.id, 'name', ct.name, 'position', ct.position, 'phone', ct.phone, 'zalo', ct.zalo, 'email', ct.email, 'whatsapp', ct.whatsapp, 'line_id', ct.line_id, 'wechat_id', ct.wechat_id, 'is_primary', ct.is_primary = 1)
        ORDER BY ct.is_primary DESC, ct.sort_order, ct.id), '[]'::json) FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id) AS contacts,
     (o.logo_path IS NOT NULL) AS has_logo,
     (SELECT COUNT(*) FROM vessel v WHERE v.ship_owner_id = o.id AND v.deleted_at IS NULL) AS vessel_count,
@@ -234,6 +250,24 @@ const fleetService = {
       search = ' AND (unaccent(o.company_name::text) ILIKE unaccent(?) OR EXISTS (SELECT 1 FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id AND unaccent(ct.name::text) ILIKE unaccent(?)))'
       params.push(`%${query.search}%`, `%${query.search}%`)
     }
+    if (Number.isInteger(Number(query.country_id)) && Number(query.country_id) > 0) {
+      search += ' AND o.country_id = ?'
+      params.push(Number(query.country_id))
+    }
+    const present = (column) => `NULLIF(BTRIM(${column}), '') IS NOT NULL`
+    for (const missing of new Set(String(query.missing || '').split(','))) {
+      if (missing === 'primary') search += ' AND NOT EXISTS (SELECT 1 FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id AND ct.is_primary = 1)'
+      if (missing === 'phone' || missing === 'email') {
+        search += ` AND NOT (${present(`o.${missing}`)}) AND NOT EXISTS (SELECT 1 FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id AND ${present(`ct.${missing}`)})`
+      }
+    }
+    const channelColumns = { zalo: 'zalo', whatsapp: 'whatsapp', line: 'line_id', wechat: 'wechat_id' }
+    for (const channel of new Set(String(query.channels || '').split(','))) {
+      const column = channelColumns[channel]
+      if (!column) continue
+      const contactHasChannel = `EXISTS (SELECT 1 FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id AND ${present(`ct.${column}`)})`
+      search += channel === 'zalo' ? ` AND (${present('o.zalo')} OR ${contactHasChannel})` : ` AND ${contactHasChannel}`
+    }
     const active = query.active === '1' ? 1 : query.active === '0' ? 0 : null
     const [rows] = await pool.query(
       `${OWNER_SELECT} WHERE o.deleted_at IS NULL${search}${active == null ? '' : ' AND o.is_active = ?'} ORDER BY o.company_name LIMIT ? OFFSET ?`,
@@ -274,6 +308,73 @@ const fleetService = {
     return { ...owner, vessels, recent_packs: packs, usage }
   },
 
+  async listOwnerVessels(pool, ownerId) {
+    await this.getOwner(pool, ownerId)
+    const [rows] = await pool.query(`
+      SELECT v.id, v.vessel_name, v.imo_number, v.status, vt.name_vi AS vessel_type_name,
+             COALESCE(c.name_vi, c.name_en) AS flag_name, c.code AS flag_code, c.flag_emoji AS flag_emoji, v.ship_owner_id, o.company_name AS current_owner_name,
+             (v.ship_owner_id = ?) IS TRUE AS is_current,
+             h.started_at, h.ended_at
+      FROM vessel v
+      LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
+      LEFT JOIN country c ON c.id = v.flag_country_id
+      LEFT JOIN ship_owner o ON o.id = v.ship_owner_id
+      LEFT JOIN LATERAL (
+        SELECT started_at, ended_at FROM vessel_ownership
+        WHERE vessel_id = v.id AND ship_owner_id = ?
+        ORDER BY ended_at DESC NULLS FIRST, id DESC LIMIT 1
+      ) h ON TRUE
+      WHERE v.deleted_at IS NULL AND (v.ship_owner_id = ? OR EXISTS (
+        SELECT 1 FROM vessel_ownership vh WHERE vh.vessel_id = v.id AND vh.ship_owner_id = ?
+      ))
+      ORDER BY is_current DESC, v.vessel_name`, [ownerId, ownerId, ownerId, ownerId])
+    return { data: rows }
+  },
+
+  async linkOwnerVessel(pool, ownerId, body) {
+    await withTransaction(pool, async (conn) => {
+      const [[owner]] = await conn.query('SELECT id, is_active FROM ship_owner WHERE id = ? AND deleted_at IS NULL FOR SHARE', [ownerId])
+      if (!owner) throw { statusCode: 404, message: 'Không tìm thấy đối tác' }
+      if (Number(owner.is_active) !== 1) throw { statusCode: 409, message: 'Đối tác đã ngừng hợp tác' }
+      const [[vessel]] = await conn.query('SELECT id, ship_owner_id FROM vessel WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [body.vessel_id])
+      if (!vessel) throw { statusCode: 404, message: 'Không tìm thấy tàu' }
+      if (vessel.ship_owner_id === ownerId) return
+      if (vessel.ship_owner_id !== body.expected_owner_id) throw { statusCode: 409, message: 'Chủ tàu đã thay đổi. Hãy tải lại danh sách và chọn lại tàu.' }
+      await conn.query('UPDATE vessel SET ship_owner_id = ? WHERE id = ?', [ownerId, vessel.id])
+    })
+    return { success: true }
+  },
+
+  async listOwnerVesselCrew(pool, ownerId, vesselId, createdBy = null) {
+    await this.getOwner(pool, ownerId)
+    const [[vessel]] = await pool.query(`SELECT v.id FROM vessel v WHERE v.id = ? AND v.deleted_at IS NULL
+      AND (v.ship_owner_id = ? OR EXISTS (SELECT 1 FROM vessel_ownership h WHERE h.vessel_id = v.id AND h.ship_owner_id = ?))`, [vesselId, ownerId, ownerId])
+    if (!vessel) throw { statusCode: 404, message: 'Không tìm thấy tàu liên kết' }
+    const [rows] = await pool.query(`WITH active_assignments AS (
+      SELECT DISTINCT ON (ec.seafarer_id) ec.seafarer_id, vy.vessel_id,
+        r.name_vi AS rank_name, GREATEST(vy.actual_embark_date, ec.start_date) AS sign_on_date
+      FROM seafarer_contract ec
+      JOIN voyage_position vp ON vp.id = ec.voyage_position_id
+      JOIN voyage vy ON vy.id = vp.voyage_id AND vy.deleted_at IS NULL
+      LEFT JOIN "rank" r ON r.id = vp.rank_id
+      WHERE ec.status = 'ACTIVE' AND ec.deleted_at IS NULL AND vy.status = 'ONBOARD'
+      ORDER BY ec.seafarer_id, ec.start_date DESC, ec.id DESC
+    ), current_crew AS (
+      SELECT seafarer_id, rank_name, sign_on_date FROM active_assignments WHERE vessel_id = ?
+      UNION ALL
+      (SELECT DISTINCT ON (ss.seafarer_id) ss.seafarer_id, COALESCE(r.name_vi, ss.rank_raw), ss.sign_on_date
+      FROM sea_service ss LEFT JOIN "rank" r ON r.id = ss.rank_id
+      WHERE ss.vessel_id = ? AND ss.deleted_at IS NULL AND ss.sign_on_date <= CURRENT_DATE
+        AND (ss.sign_off_date IS NULL OR ss.sign_off_date > CURRENT_DATE)
+        AND NOT EXISTS (SELECT 1 FROM active_assignments aa WHERE aa.seafarer_id = ss.seafarer_id)
+      ORDER BY ss.seafarer_id, ss.sign_on_date DESC, ss.id DESC)
+    )
+    SELECT s.id, s.full_name, s.seafarer_code, cc.rank_name, cc.sign_on_date
+    FROM current_crew cc JOIN seafarer s ON s.id = cc.seafarer_id AND s.deleted_at IS NULL
+    ${createdBy !== null ? 'WHERE s.created_by = ?' : ''}`, [vesselId, vesselId, ...(createdBy !== null ? [createdBy] : [])])
+    return { data: rows.sort((a, b) => a.full_name.localeCompare(b.full_name, 'vi')) }
+  },
+
   async createOwner(pool, body) {
     const data = pickAllowed(body, OWNER_COLUMNS)
     if (!data.company_name) throw { statusCode: 400, message: 'Thiếu tên đối tác' }
@@ -306,7 +407,10 @@ const fleetService = {
           'Mã đối tác đã tồn tại'
         )
       }
-      if (contacts) await replaceContacts(conn, id, contacts)
+      if (contacts) {
+        await replaceContacts(conn, id, contacts)
+        if (!cols.length) await conn.query('UPDATE ship_owner SET updated_at = NOW() WHERE id = ?', [id])
+      }
     })
     return this.getOwner(pool, id)
   },
@@ -324,26 +428,28 @@ const fleetService = {
     const storagePath = path.join(dir, `${id}_${Date.now()}_${crypto.randomBytes(6).toString('hex')}${mime === 'image/png' ? '.png' : '.jpg'}`)
     fs.writeFileSync(storagePath, buffer)
     try {
-      await pool.query('UPDATE ship_owner SET logo_path = ?, logo_mime = ? WHERE id = ?', [storagePath, mime, id])
+      await ensureLogoThumb(storagePath)
+      await pool.query('UPDATE ship_owner SET logo_path = ?, logo_mime = ?, logo_updated_at = NOW() WHERE id = ?', [storagePath, mime, id])
     } catch (err) {
-      fs.rmSync(storagePath, { force: true })
+      removeLogoFiles(storagePath)
       throw err
     }
-    if (row.logo_path) fs.rmSync(row.logo_path, { force: true })
+    if (row.logo_path) removeLogoFiles(row.logo_path)
     return this.getOwner(pool, id)
   },
 
-  async getOwnerLogo(pool, id) {
+  async getOwnerLogo(pool, id, size = 'full') {
     const [[row]] = await pool.query('SELECT logo_path, logo_mime FROM ship_owner WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row?.logo_path || !fs.existsSync(row.logo_path)) throw { statusCode: 404, message: 'Chưa có logo' }
+    if (size === 'thumb') return { path: await ensureLogoThumb(row.logo_path), mime: 'image/webp' }
     return { path: row.logo_path, mime: row.logo_mime }
   },
 
   async removeOwnerLogo(pool, id) {
     const [[row]] = await pool.query('SELECT logo_path FROM ship_owner WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy đối tác' }
-    await pool.query('UPDATE ship_owner SET logo_path = NULL, logo_mime = NULL WHERE id = ?', [id])
-    if (row.logo_path) fs.rmSync(row.logo_path, { force: true })
+    await pool.query('UPDATE ship_owner SET logo_path = NULL, logo_mime = NULL, logo_updated_at = NOW() WHERE id = ?', [id])
+    if (row.logo_path) removeLogoFiles(row.logo_path)
     return this.getOwner(pool, id)
   },
 }

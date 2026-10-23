@@ -35,7 +35,7 @@ export function parseChatQr(text) {
   if (host === 'zalo.me') {
     const digits = path.slice(1).replace(/\D/g, '')
     if (digits.length >= 8 && /^\+?\d+$/.test(path.slice(1))) return { channel: 'zalo', value: path.slice(1) }
-    return null
+    return { channel: 'zalo', value: raw }
   }
   return null
 }
@@ -45,6 +45,7 @@ export function chatHref(channel, value) {
   const v = String(value || '').trim()
   if (!v) return null
   if (isLink(v)) return v
+  if (channel === 'zalo') return `https://zalo.me/${v.replace(/\D/g, '')}`
   if (channel === 'whatsapp') return `https://wa.me/${v.replace(/\D/g, '')}`
   if (channel === 'line') return `https://line.me/ti/p/~${encodeURIComponent(v)}`
   return null

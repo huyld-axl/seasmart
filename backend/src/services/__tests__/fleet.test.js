@@ -71,6 +71,22 @@ describe('fleet.service', () => {
     expect(rowsCall.params).toContain('LAID_UP')
   })
 
+  it('lọc quốc gia cho cả dữ liệu, số tab và phân trang đối tác', async () => {
+    const pool = fakePool([
+      ['GROUP BY o.is_active', () => [[{ is_active: 1, n: '4' }, { is_active: 0, n: '2' }]]],
+      ['ORDER BY o.company_name', () => [[{ id: 1, company_name: 'Singapore partner' }]]],
+    ])
+    const result = await fleetService.listOwners(pool, { country_id: 7, active: '1', page: 2, limit: 2 })
+    expect(result.counts).toEqual({ all: 6, active: 4, inactive: 2 })
+    expect(result.total).toBe(4)
+    const rows = pool.calls.find((call) => call.sql.includes('ORDER BY o.company_name'))
+    const counts = pool.calls.find((call) => call.sql.includes('GROUP BY o.is_active'))
+    expect(rows.sql).toContain('o.country_id = ?')
+    expect(rows.params).toEqual([7, 1, 2, 2])
+    expect(counts.sql).toContain('o.country_id = ?')
+    expect(counts.params).toEqual([7])
+  })
+
   it('lọc trạng thái lạ bị bỏ qua, không đưa vào SQL', async () => {
     const pool = fakePool([['GROUP BY v.status', () => [[]]], ['ORDER BY v.vessel_name', () => [[]]]])
     await fleetService.listVessels(pool, { status: "ACTIVE' OR 1=1" })
@@ -110,7 +126,7 @@ describe('fleet.service: người liên hệ của đối tác', () => {
   it('người đầu tiên là liên hệ chính khi không ai được chọn', async () => {
     const pool = txPool()
     await fleetService.createOwner(pool, body([{ name: 'An' }, { name: 'Bình' }]))
-    expect(contactInserts(pool).map((call) => call.params[8])).toEqual([1, 0])
+    expect(contactInserts(pool).map((call) => call.params[9])).toEqual([1, 0])
   })
 
   it('giữ đúng một liên hệ chính theo lựa chọn và bỏ dòng trống', async () => {
@@ -118,23 +134,31 @@ describe('fleet.service: người liên hệ của đối tác', () => {
     await fleetService.createOwner(pool, body([{ name: 'An' }, { name: '' }, { name: 'Bình', is_primary: true }, { name: 'Chi', is_primary: true }]))
     const inserts = contactInserts(pool)
     expect(inserts.map((call) => call.params[1])).toEqual(['An', 'Bình', 'Chi'])
-    expect(inserts.map((call) => call.params[8])).toEqual([0, 1, 0])
+    expect(inserts.map((call) => call.params[9])).toEqual([0, 1, 0])
   })
 
   it('lưu kênh chat WhatsApp, LINE, WeChat của người liên hệ', async () => {
     const pool = txPool()
     await fleetService.createOwner(pool, body([{ name: 'An', whatsapp: ' +65 9123 ', line_id: 'an.line', wechat_id: 'an_wx' }]))
-    expect(contactInserts(pool)[0].params.slice(3, 8)).toEqual([null, null, '+65 9123', 'an.line', 'an_wx'])
+    expect(contactInserts(pool)[0].params.slice(3, 9)).toEqual([null, null, null, '+65 9123', 'an.line', 'an_wx'])
   })
 
-  it('từ chối người liên hệ không có họ tên', async () => {
+  it('lưu Zalo độc lập và không suy ra từ số điện thoại', async () => {
+    const pool = txPool()
+    await fleetService.createOwner(pool, body([{ name: 'An', phone: '0901000000', zalo: '0902000000' }, { name: 'Bình', phone: '0903000000' }]))
+    const inserts = contactInserts(pool)
+    expect(inserts[0].params.slice(3, 5)).toEqual(['0901000000', '0902000000'])
+    expect(inserts[1].params.slice(3, 5)).toEqual(['0903000000', null])
+  })
+
+  it('từ chối người liên hệ không có họ tên' , async () => {
     await expect(fleetService.createOwner(txPool(), body([{ phone: '0901' }]))).rejects.toMatchObject({ statusCode: 400 })
   })
 
-  it('sửa chỉ danh sách liên hệ thì không cập nhật cột đối tác', async () => {
+  it('sửa danh sách liên hệ cập nhật thời gian chỉnh sửa đối tác', async () => {
     const pool = txPool()
     await fleetService.updateOwner(pool, 5, { contacts: [{ name: 'An' }] })
-    expect(pool.calls.some((call) => call.sql.startsWith('UPDATE ship_owner'))).toBe(false)
+    expect(pool.calls.filter((call) => call.sql.startsWith('UPDATE ship_owner')).map((call) => call.sql)).toEqual(['UPDATE ship_owner SET updated_at = NOW() WHERE id = ?'])
     expect(pool.calls.some((call) => call.sql.startsWith('DELETE FROM ship_owner_contact'))).toBe(true)
   })
 })

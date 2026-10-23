@@ -1,3 +1,4 @@
+import { flagEmoji, withFlag } from '../../utils/flag'
 import { useParams, Navigate } from 'react-router-dom'
 import { Children, cloneElement, isValidElement, useState } from 'react'
 import { App, Table, Button, Form, Grid, Input, InputNumber, Select, Skeleton } from 'antd'
@@ -21,9 +22,10 @@ const isBlank = (value) => value == null || value === ''
 const sameValue = (a, b) => (isBlank(a) && isBlank(b)) || String(a) === String(b)
 
 // Dòng trên mobile: tên làm dòng chính, mã và tên phụ làm dòng dưới.
-function MobileRow({ row }) {
-  const main = row.name_vi || row.name || row.code
-  const sub = [row.code || row.un_locode, row.name_en || row.country_name].filter((v) => v && v !== main).join(' · ')
+function MobileRow({ row, resource }) {
+  const rawName = row.name_vi || row.name || row.code
+  const main = resource === 'countries' ? withFlag(row.code, rawName, row.flag_emoji) : rawName
+  const sub = [row.code || row.un_locode, row.name_en || (row.country_name ? withFlag(row.country_code, row.country_name, row.country_flag_emoji) : null)].filter((v) => v && v !== main).join(' · ')
   return (
     <span className="ds-cell2">
       <span className="ds-cell2__main">{main}</span>
@@ -56,6 +58,13 @@ function useMasterData(resource) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: key })
       qc.invalidateQueries({ queryKey: ['lookup'] })
+      if (resource === 'countries') {
+        qc.invalidateQueries({ queryKey: ['fleet'] })
+        qc.invalidateQueries({ queryKey: ['master', 'ports'] })
+        qc.invalidateQueries({ queryKey: ['vessel-match'] })
+        qc.invalidateQueries({ queryKey: ['seafarer'] })
+        qc.invalidateQueries({ queryKey: ['seafarers'] })
+      }
     },
   })
   const update = useMutation({
@@ -63,6 +72,13 @@ function useMasterData(resource) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: key })
       qc.invalidateQueries({ queryKey: ['lookup'] })
+      if (resource === 'countries') {
+        qc.invalidateQueries({ queryKey: ['fleet'] })
+        qc.invalidateQueries({ queryKey: ['master', 'ports'] })
+        qc.invalidateQueries({ queryKey: ['vessel-match'] })
+        qc.invalidateQueries({ queryKey: ['seafarer'] })
+        qc.invalidateQueries({ queryKey: ['seafarers'] })
+      }
     },
   })
   const remove = useMutation({
@@ -70,6 +86,13 @@ function useMasterData(resource) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: key })
       qc.invalidateQueries({ queryKey: ['lookup'] })
+      if (resource === 'countries') {
+        qc.invalidateQueries({ queryKey: ['fleet'] })
+        qc.invalidateQueries({ queryKey: ['master', 'ports'] })
+        qc.invalidateQueries({ queryKey: ['vessel-match'] })
+        qc.invalidateQueries({ queryKey: ['seafarer'] })
+        qc.invalidateQueries({ queryKey: ['seafarers'] })
+      }
     },
   })
 
@@ -182,10 +205,10 @@ function MasterTable({ resource, columns, formFields, title }) {
               <li key={row.id}>
                 {canEdit ? (
                   <button type="button" className="crew-list__row" onClick={() => openPanel(row)}>
-                    <MobileRow row={row} />
+                    <MobileRow row={row} resource={resource} />
                   </button>
                 ) : (
-                  <span className="crew-list__row"><MobileRow row={row} /></span>
+                  <span className="crew-list__row"><MobileRow row={row} resource={resource} /></span>
                 )}
               </li>
             ))}
@@ -339,13 +362,19 @@ function CountryTab() {
       title="quốc gia"
       columns={[
         { title: 'Mã ISO', dataIndex: 'code', width: 80 },
-        { title: 'Tên tiếng Việt', dataIndex: 'name_vi' },
-        { title: 'Tên tiếng Anh', dataIndex: 'name_en' },
+        { title: 'Tên tiếng Việt', dataIndex: 'name_vi', render: (value, row) => withFlag(row.code, value || row.name_en, row.flag_emoji) },
+        { title: 'Tên tiếng Anh', dataIndex: 'name_en', render: (value, row) => value ? withFlag(row.code, value, row.flag_emoji) : '—' },
       ]}
       formFields={
         <>
-          <Form.Item name="code" label="Mã ISO (2 ký tự)" rules={[{ required: true, max: 2 }]}>
+          <Form.Item name="code" label="Mã ISO (2 ký tự)" rules={[{ required: true, pattern: /^[A-Za-z]{2}$/, message: 'Nhập mã ISO gồm 2 chữ cái' }]}>
             <Input maxLength={2} style={{ textTransform: 'uppercase' }} />
+          </Form.Item>
+          <Form.Item name="flag_emoji" label="Cờ emoji" extra="Để trống để tự tạo cờ theo mã ISO. Nhập một emoji cờ để thay thế." rules={[{ validator: (_, value) => !value?.trim() || /^[\u{1F1E6}-\u{1F1FF}]{2}$/u.test(value.trim()) ? Promise.resolve() : Promise.reject(new Error('Nhập một emoji cờ quốc gia, ví dụ 🇻🇳')) }]}>
+            <Input placeholder="Ví dụ: 🇻🇳" maxLength={32} allowClear />
+          </Form.Item>
+          <Form.Item noStyle shouldUpdate={(before, after) => before.code !== after.code || before.flag_emoji !== after.flag_emoji}>
+            {({ getFieldValue }) => <p>Cờ hiển thị: <span style={{ fontSize: 24 }}>{getFieldValue('flag_emoji')?.trim() || flagEmoji(getFieldValue('code')) || '—'}</span></p>}
           </Form.Item>
           <Form.Item name="name_en" label="Tên tiếng Anh" rules={[{ required: true }]}>
             <Input />
@@ -393,7 +422,7 @@ function PortTab() {
   })
   const countryOptions = (countries || []).map((c) => ({
     value: c.id,
-    label: `${c.code} - ${c.name_vi}`,
+    label: withFlag(c.code, `${c.code} - ${c.name_vi || c.name_en}`, c.flag_emoji),
   }))
 
   return (
@@ -403,7 +432,7 @@ function PortTab() {
       columns={[
         { title: 'UN/LOCODE', dataIndex: 'un_locode', width: 110 },
         { title: 'Tên cảng', dataIndex: 'name' },
-        { title: 'Quốc gia', dataIndex: 'country_name', width: 140 },
+        { title: 'Quốc gia', dataIndex: 'country_name', width: 140, render: (value, row) => value ? withFlag(row.country_code, value, row.country_flag_emoji) : '—' },
       ]}
       formFields={
         <>

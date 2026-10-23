@@ -63,7 +63,7 @@ export function vesselSections(v, { linkOwner } = {}) {
       title: 'Đăng ký và phân loại',
       fields: [
         ['Loại tàu', v.vessel_type_name, 4],
-        ['Cờ quốc gia', v.flag_name, 4],
+        ['Cờ quốc gia', v.flag_name ? withFlag(v.flag_code, v.flag_name, v.flag_emoji) : null, 4],
         ['Năm đóng', v.year_built, 4],
         ['Cảng đăng ký', v.port_of_registry_name, 6],
         ['Tổ chức đăng kiểm', v.classification_society, 6],
@@ -113,7 +113,7 @@ export function partnerSections(o, render = {}) {
   const phone = render.phone || ((v) => v)
   const mail = render.mail || ((v) => v)
   const link = render.link || ((v) => v)
-  const chat = { whatsapp: (v) => v, line: (v) => v, wechat: (v) => v, ...render.chat }
+  const chat = { zalo: (v) => v, whatsapp: (v) => v, line: (v) => v, wechat: (v) => v, ...render.chat }
   return [
     {
       key: 'company',
@@ -121,9 +121,9 @@ export function partnerSections(o, render = {}) {
       fields: [
         ['Tên công ty', o.company_name, 6],
         ['Tên tiếng Anh', o.company_name_en, 6],
-        ['Mã số thuế', o.tax_id, 4],
-        ['Quốc gia', o.country_name ? withFlag(o.country_code, o.country_name) : null, 4],
-        ['Tình trạng', Number(o.is_active) === 1 ? 'Đang hợp tác' : 'Ngừng hợp tác', 4],
+        ['Mã số thuế', render.tax ? render.tax(o.tax_id) : o.tax_id, 4],
+        ['Quốc gia', o.country_name ? withFlag(o.country_code, o.country_name, o.country_flag_emoji) : null, 4],
+        ['Tình trạng', render.status ? render.status(o.is_active) : Number(o.is_active) === 1 ? 'Đang hợp tác' : 'Ngừng hợp tác', 4],
       ],
     },
     {
@@ -132,7 +132,8 @@ export function partnerSections(o, render = {}) {
       fields: [
         ['Địa chỉ', o.address, 12],
         ['Điện thoại', phone(o.phone), 4],
-        ['Fax', o.fax, 4],
+        ['Zalo', chat.zalo(o.zalo), 4],
+        ['Fax', render.fax ? render.fax(o.fax) : o.fax, 4],
         ['Email', mail(o.email), 4],
         ['Website', link(o.website), 12],
       ],
@@ -149,6 +150,7 @@ export function partnerSections(o, render = {}) {
           ['Họ tên', c.name, 4],
           ['Chức vụ', c.position, 4],
           ['Điện thoại', phone(c.phone), 4],
+          ['Zalo', chat.zalo(c.zalo), 4],
           ['Email', mail(c.email), 12],
           ['WhatsApp', chat.whatsapp(c.whatsapp), 4],
           ['LINE', chat.line(c.line_id), 4],
@@ -157,16 +159,7 @@ export function partnerSections(o, render = {}) {
         actions: render.quick ? render.quick(c) : null,
       })),
     },
-    {
-      key: 'usage',
-      title: 'Đang được dùng ở',
-      fields: [
-        ['Tàu thuộc đối tác', o.usage?.vessels ?? 0, 4],
-        ['Chuyến tàu', o.usage?.voyages ?? 0, 4],
-        ['Bộ giấy đã nộp', o.usage?.packs ?? 0, 4],
-      ],
-      footnote: 'Đối tác đang được dùng thì không xoá được, chỉ chuyển sang Ngừng hợp tác.',
-    },
+
   ]
 }
 
@@ -212,15 +205,15 @@ export function vesselToPayload(values) {
   return payload
 }
 
-export const PARTNER_TEXT_FIELDS = ['company_name', 'company_name_en', 'tax_id', 'address', 'phone', 'fax', 'email', 'website', 'notes']
-export const EMPTY_CONTACT = { name: '', position: '', phone: '', email: '', whatsapp: '', line_id: '', wechat_id: '', is_primary: false }
+export const PARTNER_TEXT_FIELDS = ['company_name', 'company_name_en', 'tax_id', 'address', 'phone', 'zalo', 'fax', 'email', 'website', 'notes']
+export const EMPTY_CONTACT = { name: '', position: '', phone: '', zalo: '', email: '', whatsapp: '', line_id: '', wechat_id: '', is_primary: false }
 
 export function partnerToFormValues(owner) {
   const values = { is_active: 1, contacts: [] }
   if (!owner) return values
   for (const key of PARTNER_TEXT_FIELDS) values[key] = owner[key] ?? null
   values.country_id = owner.country_id ?? null
-  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', email: c.email ?? '', whatsapp: c.whatsapp ?? '', line_id: c.line_id ?? '', wechat_id: c.wechat_id ?? '', is_primary: !!c.is_primary }))
+  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', zalo: c.zalo ?? '', email: c.email ?? '', whatsapp: c.whatsapp ?? '', line_id: c.line_id ?? '', wechat_id: c.wechat_id ?? '', is_primary: !!c.is_primary }))
   values.is_active = Number(owner.is_active) === 0 ? 0 : 1
   return values
 }
@@ -228,8 +221,8 @@ export function partnerToFormValues(owner) {
 // Bỏ dòng trống, cắt khoảng trắng, đúng một liên hệ chính (mặc định người đầu tiên).
 export function cleanContactList(list) {
   const rows = (list || [])
-    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), email: cleanText(c?.email), whatsapp: cleanText(c?.whatsapp), line_id: cleanText(c?.line_id), wechat_id: cleanText(c?.wechat_id), is_primary: !!c?.is_primary }))
-    .filter((c) => c.name || c.position || c.phone || c.email || c.whatsapp || c.line_id || c.wechat_id)
+    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), zalo: cleanText(c?.zalo), email: cleanText(c?.email), whatsapp: cleanText(c?.whatsapp), line_id: cleanText(c?.line_id), wechat_id: cleanText(c?.wechat_id), is_primary: !!c?.is_primary }))
+    .filter((c) => c.name || c.position || c.phone || c.zalo || c.email || c.whatsapp || c.line_id || c.wechat_id)
   const primary = rows.findIndex((c) => c.is_primary)
   return rows.map((c, index) => ({ ...c, is_primary: index === (primary === -1 ? 0 : primary) }))
 }

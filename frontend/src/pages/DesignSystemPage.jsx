@@ -152,7 +152,7 @@ const DETAILS = [
   { label: 'Họ tên', value: 'Nguyễn Thị Hồng Nhung Phương Anh' },
   { label: 'Ngày sinh', value: '02/11/1995' },
   { label: 'Rank', value: 'Able Seaman (AB)' },
-  { label: 'Quốc tịch', value: 'Việt Nam' },
+  { label: 'Quốc tịch', value: '🇻🇳 Việt Nam' },
   { label: 'Hộ chiếu', value: 'D0000002' },
   { label: 'Số điện thoại', value: '' },
 ]

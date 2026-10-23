@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, DatePicker, Form, Modal, Select } from 'antd'
@@ -78,7 +79,7 @@ export default function VoyageTransitionModal({ kind, voyage, open, onClose }) {
             <DatePicker format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name={portName} label={isStart ? 'Nơi xuống tàu' : 'Nơi rời tàu'} rules={[{ required: true, message: 'Chọn cảng' }]} extra="Mặc định: nơi đã nhập ở chuyến">
-            <Select showSearch optionFilterProp="label" loading={ports.isLoading} options={(ports.data || []).map((p) => ({ value: p.id, label: p.name }))} placeholder="Chọn cảng" />
+            <Select showSearch optionFilterProp="label" loading={ports.isLoading} options={(ports.data || []).map((p) => ({ value: p.id, label: p.country_name ? `${p.name} (${withFlag(p.country_code, p.country_name, p.country_flag_emoji)})` : p.name }))} placeholder="Chọn cảng" />
           </Form.Item>
         </div>
       </Form>

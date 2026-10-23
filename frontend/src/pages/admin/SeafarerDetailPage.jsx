@@ -26,7 +26,6 @@ import {
   certificateTypeApi,
   lookupApi,
 } from '../../api'
-import ZaloButton from '../../components/common/ZaloButton'
 import FormExportTab from '../../components/seafarer/FormExportTab'
 import dayjs from 'dayjs'
 import StatusBadge from '../../components/ds/StatusBadge'
@@ -38,7 +37,7 @@ import { expiryAlerts, supersededIds, toTableCerts } from './seafarers/certifica
 import { documentApi } from '../../api/documentApi'
 import Banner from '../../components/ds/Banner'
 import ScanButton from '../../components/ds/ScanButton'
-import { EmailActions, PhoneActions } from '../../components/ds/ContactActions'
+import { ZaloActions, EmailActions, PhoneActions } from '../../components/ds/ContactActions'
 import { attentionItems, headLine, toProfileContracts, voyageNow } from './seafarers/profileView'
 import { useContractList } from '../../hooks/useVoyages'
 import { readinessLevel, readinessRules } from './exports/packModel'
@@ -294,6 +293,7 @@ export default function SeafarerDetailPage() {
                   <dd>{seafarer.phone_primary}<PhoneActions phone={seafarer.phone_primary} /></dd>
                 </>
               )}
+              {seafarer.zalo && <><dt>Zalo</dt><dd>{seafarer.zalo}<ZaloActions value={seafarer.zalo} /></dd></>}
               {seafarer.email && (
                 <>
                   <dt>Email</dt>

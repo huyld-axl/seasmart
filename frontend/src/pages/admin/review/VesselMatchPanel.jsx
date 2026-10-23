@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Input, Skeleton } from 'antd'
@@ -64,7 +65,7 @@ export default function VesselMatchPanel({ open, paper, context, onClose, onPick
             </span>
             <span className="vp-card__facts">
               <span>{vessel.gross_tonnage ? `${Number(vessel.gross_tonnage)} GT` : 'GT —'} <Mark value={match.gt} /></span>
-              <span>Cờ {vessel.flag_name || '—'} <Mark value={match.flag} /></span>
+              <span>Cờ {vessel.flag_name ? withFlag(vessel.flag_code, vessel.flag_name, vessel.flag_emoji) : '—'} <Mark value={match.flag} /></span>
               <span>{vessel.ship_owner_name || 'Chủ tàu —'} <Mark value={match.owner} /></span>
             </span>
           </label>

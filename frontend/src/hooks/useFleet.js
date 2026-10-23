@@ -45,12 +45,14 @@ export function readAsDataUrl(blob) {
 }
 
 // Logo đối tác dạng data URL (ảnh cần token nên không gắn thẳng vào <img src>). Trả undefined khi chưa có logo.
-export function usePartnerLogo(owner) {
+export function usePartnerLogo(owner, size = 'full') {
   const { data } = useQuery({
-    queryKey: ['fleet', 'logo', owner?.id, owner?.updated_at],
-    queryFn: () => shipOwnerLogoApi.get(owner.id).then(readAsDataUrl),
+    queryKey: ['fleet', 'logo', owner?.id, owner?.logo_updated_at, size],
+    queryFn: () => shipOwnerLogoApi.get(owner.id, size).then(readAsDataUrl),
     enabled: !!owner?.id && !!owner?.has_logo,
     staleTime: Infinity,
+    gcTime: 30 * 60 * 1000,
+    retry: false,
   })
   return owner?.has_logo ? data : undefined
 }

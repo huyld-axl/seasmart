@@ -5,6 +5,6 @@ export function flagEmoji(code) {
 }
 
 // "🇻🇳 Việt Nam": cờ bên trái tên nước, thiếu cờ thì chỉ có tên.
-export function withFlag(code, name) {
-  return [flagEmoji(code), name].filter(Boolean).join(' ')
+export function withFlag(code, name, emoji) {
+  return [String(emoji || '').trim() || flagEmoji(code), name].filter(Boolean).join(' ')
 }

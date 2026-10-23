@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -137,7 +138,7 @@ export default function VesselDetailPage() {
     { value: 'crew', label: 'Thuyền viên', count: onBoard.length },
     { value: 'service', label: 'Đi tàu', count: serviceRows.length },
   ]
-  const description = [vessel.vessel_type_name, vessel.flag_name && `Cờ ${vessel.flag_name}`].filter(Boolean).join(' · ')
+  const description = [vessel.vessel_type_name, vessel.flag_name && `Cờ ${withFlag(vessel.flag_code, vessel.flag_name, vessel.flag_emoji)}`].filter(Boolean).join(' · ')
 
   const attention = missing.length ? (
     <ul className="fl-attn">

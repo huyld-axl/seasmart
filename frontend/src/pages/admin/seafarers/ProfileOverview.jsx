@@ -1,8 +1,9 @@
+import { withFlag } from '../../../utils/flag'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { seafarerApi } from '../../../api'
 import CopyButton from '../../../components/ds/CopyButton'
-import { EmailActions, PhoneActions } from '../../../components/ds/ContactActions'
+import { ZaloActions, EmailActions, PhoneActions } from '../../../components/ds/ContactActions'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { useCan } from '../../../hooks/usePermission'
@@ -15,9 +16,9 @@ const GENDER = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 const YES_NO = { 1: 'Có', 0: 'Không' }
 
 // Cùng các khối, cùng thứ tự và tên với form thêm / sửa hồ sơ. Mỗi trường: [nhãn, giá trị, độ rộng].
-const copyable = (v) => (filled(v) ? <span>{v}<CopyButton value={v} /></span> : null)
-const phone = (v) => (v ? <span>{v}<PhoneActions phone={v} /></span> : null)
-const mail = (v) => (v ? <span>{v}<EmailActions email={v} /></span> : null)
+const copyable = (v) => (filled(v) ? <span className="ds-contact-value">{v}<CopyButton value={v} /></span> : null)
+const phone = (v) => (v ? <span className="ds-contact-value">{v}<PhoneActions phone={v} /></span> : null)
+const mail = (v) => (v ? <span className="ds-contact-value">{v}<EmailActions email={v} /></span> : null)
 
 function buildSections(s, contacts) {
   const banks = s.bank_accounts?.length
@@ -46,7 +47,7 @@ function buildSections(s, contacts) {
       key: 'identity',
       title: 'Giấy tờ tùy thân',
       groups: [
-        { sub: 'Hộ chiếu', fields: [['Số hộ chiếu', copyable(s.passport_number), 4], ['Ngày cấp', date(s.passport_issued_date), 4], ['Ngày hết hạn', date(s.passport_expiry), 4], ['Nơi sinh', s.place_of_birth, 6], ['Quốc tịch', s.nationality_name, 6]] },
+        { sub: 'Hộ chiếu', fields: [['Số hộ chiếu', copyable(s.passport_number), 4], ['Ngày cấp', date(s.passport_issued_date), 4], ['Ngày hết hạn', date(s.passport_expiry), 4], ['Nơi sinh', s.place_of_birth, 6], ['Quốc tịch', s.nationality_name ? withFlag(s.nationality_code, s.nationality_name, s.nationality_flag_emoji) : null, 6]] },
         { sub: 'Căn cước công dân', fields: [['Số CCCD', copyable(s.national_id), 4], ['Ngày cấp', date(s.national_id_issued_date), 4], ['Nơi cấp', s.national_id_issued_place, 4]] },
         { sub: 'Sổ thuyền viên', fields: [['Số sổ thuyền viên', copyable(s.seaman_book_number), 4]] },
       ],
@@ -69,6 +70,7 @@ function buildSections(s, contacts) {
       title: 'Liên hệ',
       fields: [
         ['Số điện thoại', phone(s.phone_primary), 6],
+        ['Zalo', s.zalo ? <span className="ds-contact-value">{s.zalo}<ZaloActions value={s.zalo} /></span> : null, 6],
         ['Email', mail(s.email), 6],
       ],
     },
@@ -93,6 +95,7 @@ function buildSections(s, contacts) {
           ['Họ tên', c.full_name, 4],
           ['Quan hệ', c.relationship, 4],
           ['Số điện thoại', phone(c.phone_primary), 4],
+          ['Zalo', c.zalo ? <span className="ds-contact-value">{c.zalo}<ZaloActions value={c.zalo} /></span> : null, 4],
           ['Số CCCD', copyable(c.guarantor_id_number), 4],
           ['Ngày cấp CCCD', date(c.guarantor_id_issued_date), 4],
           ['Nơi cấp CCCD', c.guarantor_id_issued_place, 4],

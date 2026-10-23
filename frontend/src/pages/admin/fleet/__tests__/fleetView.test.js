@@ -147,3 +147,20 @@ describe('người liên hệ của đối tác', () => {
     expect(person.items[0].fields.filter((f) => ['WhatsApp', 'LINE', 'WeChat'].includes(f[0])).map((f) => f[1])).toEqual(['+65 9', 'an', 'an_wx'])
   })
 })
+
+
+it('Zalo tách khỏi điện thoại khi nạp, lưu và so sánh form', () => {
+  const owner = { company_name: 'ACME', phone: '0901', zalo: 'https://zalo.me/company', contacts: [{ name: 'An', phone: '0902', zalo: '0903', is_primary: true }] }
+  const initial = partnerToFormValues(owner)
+  expect(partnerToPayload(initial)).toMatchObject({ phone: '0901', zalo: 'https://zalo.me/company', contacts: [{ phone: '0902', zalo: '0903' }] })
+  expect(changedKeys(initial, { ...initial, zalo: '0904' }, partnerToPayload)).toEqual(['zalo'])
+  expect(partnerToFormValues({ phone: '0901' }).zalo).toBeNull()
+})
+
+
+it('hiển thị cờ trước quốc gia đối tác và quốc kỳ tàu', () => {
+  const partner = partnerSections({ country_code: 'SG', country_name: 'Singapore', country_flag_emoji: '🇸🇬' })
+  expect(partner.find((s) => s.key === 'company').fields.find((f) => f[0] === 'Quốc gia')[1]).toBe('🇸🇬 Singapore')
+  const sections = vesselSections({ flag_code: 'VN', flag_name: 'Việt Nam', flag_emoji: '🇻🇳' })
+  expect(sections.find((s) => s.key === 'reg').fields.find((f) => f[0] === 'Cờ quốc gia')[1]).toBe('🇻🇳 Việt Nam')
+})

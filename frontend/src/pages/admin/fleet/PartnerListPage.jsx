@@ -1,8 +1,12 @@
+import dayjs from 'dayjs'
 import { withFlag } from '../../../utils/flag'
+import { useQuery } from '@tanstack/react-query'
+import { lookupApi } from '../../../api'
+import StatusBadge from '../../../components/ds/StatusBadge'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Grid, Input, Skeleton, Table } from 'antd'
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Badge, Button, Grid, Input, Select, Skeleton, Table } from 'antd'
+import { DownOutlined, FilterOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList, usePartnerLogo } from '../../../hooks/useFleet'
@@ -20,13 +24,12 @@ const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
 
 function PartnerCell({ row }) {
-  const logo = usePartnerLogo(row)
+  const logo = usePartnerLogo(row, 'thumb')
   return (
     <span className="fl-who">
       <FleetTile text={initialsOfName(row.company_name)} src={logo} />
       <span className="ds-cell2">
         <span className="ds-cell2__main">{row.company_name}</span>
-        {Number(row.is_active) === 0 ? <span className="fl-pill">Ngừng hợp tác</span> : null}
       </span>
     </span>
   )
@@ -39,12 +42,19 @@ export default function PartnerListPage() {
   const isMobile = !Grid.useBreakpoint().md
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [countryId, setCountryId] = useState(undefined)
+  const [missing, setMissing] = useState([])
+  const [channels, setChannels] = useState([])
+  const filterCount = Number(Boolean(countryId)) + Number(missing.length > 0) + Number(channels.length > 0)
+  const clearFilters = () => { setCountryId(undefined); setMissing([]); setChannels([]); setPage(1) }
+  const countries = useQuery({ queryKey: ['lookup', 'countries'], queryFn: () => lookupApi.countries().then((r) => r.data), enabled: filtersOpen })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
-  const list = useFleetList('ship-owners', shipOwnerApi, { active: TAB_ACTIVE[tab], search: keyword || undefined, page, limit: pageSize })
+  const list = useFleetList('ship-owners', shipOwnerApi, { country_id: countryId, missing: missing.length ? missing.join(',') : undefined, channels: channels.length ? channels.join(',') : undefined, active: TAB_ACTIVE[tab], search: keyword || undefined, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -57,25 +67,25 @@ export default function PartnerListPage() {
 
   const columns = [
     { title: 'Đối tác', key: 'partner', render: (_, row) => <PartnerCell row={row} /> },
-    { title: 'Quốc gia', key: 'country', responsive: ['md'], render: (_, row) => muted(row.country_name ? withFlag(row.country_code, row.country_name) : null) },
+    { title: 'Quốc gia', key: 'country', responsive: ['md'], render: (_, row) => muted(row.country_name ? withFlag(row.country_code, row.country_name, row.country_flag_emoji) : null) },
     {
-      title: 'Người liên hệ',
+      title: 'Liên hệ chính',
       key: 'contact',
       responsive: ['lg'],
       render: (_, row) => {
-        const primary = row.contacts?.[0]
+        const primary = row.contacts?.find((contact) => Number(contact.is_primary) === 1) || row.contacts?.[0]
         if (!primary) return <span style={{ color: 'var(--muted)' }}>Chưa có</span>
-        const more = row.contacts.length - 1
         return (
           <span className="ds-cell2">
-            <span>{primary.name}{more > 0 ? <span style={{ color: 'var(--muted)' }}> +{more}</span> : null}</span>
+            <span>{primary.name}</span>
+            <span className="ds-cell2__sub">{primary.position}</span>
             <span className="ds-cell2__sub">{primary.phone || primary.email}</span>
           </span>
         )
       },
     },
-    { title: 'Số tàu', dataIndex: 'vessel_count', align: 'right', render: (value) => <span className="ds-num">{value}</span> },
-    { title: 'Bộ giấy đã nộp', dataIndex: 'pack_count', align: 'right', responsive: ['md'], render: (value) => <span className="ds-num">{value}</span> },
+    { title: 'Trạng thái', key: 'status', render: (_, row) => <StatusBadge group="partner" value={Number(row.is_active) === 1 ? 'ACTIVE' : 'INACTIVE'} /> },
+    { title: 'Cập nhật gần nhất', key: 'updated', responsive: ['lg'], render: (_, row) => row.updated_at ? <span className="ds-num">{dayjs(row.updated_at).format('DD/MM/YYYY HH:mm')}</span> : muted(null) },
     actionColumn((row) => <RowActions name={row.company_name} onView={() => open(row)} onEdit={can('partner.update') ? () => navigate(`/partners/${row.id}/edit`) : undefined} />),
   ]
 
@@ -84,8 +94,10 @@ export default function PartnerListPage() {
     body = <EmptyState isError title="Không tải được danh sách đối tác" description="Mất kết nối tới máy chủ." action={<Button onClick={() => list.refetch()}>Thử lại</Button>} />
   } else if (list.isLoading) {
     body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
+  } else if (!rows.length && filterCount) {
+    body = <EmptyState title="Không có đối tác nào khớp bộ lọc" action={<Button onClick={clearFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && keyword) {
-    body = <EmptyState title={`Không có đối tác nào khớp "${keyword}"`} description="Thử tìm bằng tên, mã đối tác hoặc người liên hệ." action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
+    body = <EmptyState title={`Không có đối tác nào khớp "${keyword}"`} description="Thử tìm bằng tên đối tác hoặc người liên hệ." action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có đối tác nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
@@ -98,7 +110,8 @@ export default function PartnerListPage() {
             <button type="button" className="crew-list__row" onClick={() => open(row)}>
               <PartnerCell row={row} />
               <span className="crew-list__meta">
-                <span className="ds-cell2__sub">{[row.country_name && withFlag(row.country_code, row.country_name), `${row.vessel_count} tàu`].filter(Boolean).join(' · ')}</span>
+                <StatusBadge group="partner" value={Number(row.is_active) === 1 ? 'ACTIVE' : 'INACTIVE'} />
+                <span className="ds-cell2__sub">{[row.country_name && withFlag(row.country_code, row.country_name, row.country_flag_emoji)].filter(Boolean).join(' · ')}</span>
               </span>
             </button>
           </li>
@@ -123,22 +136,39 @@ export default function PartnerListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear
             prefix={<SearchOutlined />}
-            placeholder="Tìm tên, mã đối tác, người liên hệ"
+            placeholder="Tìm tên đối tác, người liên hệ"
             aria-label="Tìm đối tác"
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
-          {can('partner.create') ? (
-            <span className="ds-toolbar__end">
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button>
-            </span>
-          ) : null}
+          <span className="ds-toolbar__end">
+            <Badge count={filterCount} size="small" offset={[-4, 4]}>
+              <Button className="crew-filter-btn" icon={<FilterOutlined />} aria-expanded={filtersOpen} aria-controls="partner-filter-bar" onClick={() => setFiltersOpen((open) => !open)}>Bộ lọc <DownOutlined className="crew-filter-btn__chev" /></Button>
+            </Badge>
+            {can('partner.create') && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button>}
+          </span>
         </div>
+        {filtersOpen && <div className="crew-filterbar" id="partner-filter-bar">
+          <label className="crew-filterbar__field crew-filterbar__field--wide">
+            <span>Quốc gia</span>
+            <Select aria-label="Lọc theo quốc gia" allowClear showSearch optionFilterProp="label" placeholder="Tất cả quốc gia" loading={countries.isLoading} value={countryId} onChange={(value) => { setCountryId(value); setPage(1) }} options={(countries.data || []).map((country) => ({ value: country.id, label: withFlag(country.code, country.name_vi || country.name_en, country.flag_emoji) }))} />
+          </label>
+          {countries.isError && <Button onClick={() => countries.refetch()}>Tải lại quốc gia</Button>}
+          <label className="crew-filterbar__field crew-filterbar__field--wide" title="Kiểm tra điện thoại/email của công ty và tất cả người liên hệ; kết quả phải thiếu đủ các mục đã chọn.">
+            <span>Thông tin còn thiếu</span>
+            <Select aria-label="Lọc thông tin còn thiếu" mode="multiple" allowClear maxTagCount="responsive" placeholder="Chọn thông tin còn thiếu" value={missing} onChange={(value) => { setMissing(value); setPage(1) }} options={[{ value: 'primary', label: 'Chưa có liên hệ chính' }, { value: 'phone', label: 'Thiếu điện thoại liên hệ' }, { value: 'email', label: 'Thiếu email liên hệ' }]} />
+          </label>
+          <label className="crew-filterbar__field crew-filterbar__field--wide" title="Có đủ các kênh đã chọn, ở công ty hoặc người liên hệ.">
+            <span>Kênh liên hệ đang có</span>
+            <Select aria-label="Lọc kênh liên hệ" mode="multiple" allowClear maxTagCount="responsive" placeholder="Có đủ các kênh đã chọn" value={channels} onChange={(value) => { setChannels(value); setPage(1) }} options={[{ value: 'zalo', label: 'Zalo' }, { value: 'whatsapp', label: 'WhatsApp' }, { value: 'line', label: 'LINE' }, { value: 'wechat', label: 'WeChat' }]} />
+          </label>
+          <Button className="crew-filterbar__clear" disabled={!filterCount} onClick={clearFilters}>Xoá bộ lọc</Button>
+        </div>}
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="đối tác" onChange={(next, size) => { setPage(next); setPageSize(size) }} />

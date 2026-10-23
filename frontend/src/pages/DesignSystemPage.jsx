@@ -24,6 +24,8 @@ import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
 import PrimaryMark from '../components/ds/PrimaryMark'
+import QrScanButton from '../components/ds/QrScanButton'
+import { QuickContact } from '../components/ds/ContactActions'
 import CopyButton from '../components/ds/CopyButton'
 import { EmailActions, PhoneActions } from '../components/ds/ContactActions'
 import PermissionCheck from '../components/ds/PermissionCheck'
@@ -688,6 +690,8 @@ export default function DesignSystemPage() {
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
             <Demo label="Đã sửa, chưa lưu"><ToggleRow label="Nồi hơi" value changed onChange={() => {}} /></Demo>
+            <Demo label="Quét mã QR cuối ô nhập (QrScanButton)"><Input style={{ maxWidth: 280 }} placeholder="WhatsApp, LINE, WeChat" suffix={<QrScanButton onText={() => {}} />} /></Demo>
+            <Demo label="Liên hệ nhanh (QuickContact): chỉ hiện kênh người đó có"><QuickContact phone="+65 9123 4567" email="an@congty.com" whatsapp="+65 9123 4567" line="an.tan" wechat="an_tan" /></Demo>
             <Demo label="Liên hệ chính (PrimaryMark): chọn một trong nhiều dòng"><Space><PrimaryMark value onChange={() => {}} /><PrimaryMark value={false} onChange={() => {}} /></Space></Demo>
           </div>
         </div>

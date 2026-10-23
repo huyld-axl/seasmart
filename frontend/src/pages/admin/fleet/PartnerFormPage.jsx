@@ -11,6 +11,8 @@ import { ListItem } from '../seafarers/SeafarerFormParts'
 import LogoField from '../../../components/ds/LogoField'
 import PrimaryMark from '../../../components/ds/PrimaryMark'
 import ScanButton from '../../../components/ds/ScanButton'
+import QrScanButton from '../../../components/ds/QrScanButton'
+import { isLink, parseChatQr } from '../../../utils/chatQr'
 import { withFlag } from '../../../utils/flag'
 import { logoProblem } from '../../../components/ds/logoRules'
 import { readAsDataUrl, useFleetItem, useFleetMutations, usePartnerLogo } from '../../../hooks/useFleet'
@@ -29,6 +31,8 @@ const FIELD_LABELS = {
   address: 'Địa chỉ', phone: 'Điện thoại', fax: 'Fax', email: 'Email', website: 'Website',
   contacts: 'Người liên hệ', notes: 'Ghi chú',
 }
+const QR_FIELD = { whatsapp: 'whatsapp', line: 'line_id', wechat: 'wechat_id', zalo: 'phone' }
+const QR_LABEL = { whatsapp: 'WhatsApp', line: 'LINE', wechat: 'WeChat', zalo: 'số điện thoại (Zalo)' }
 const errorText = (error, fallback) => error?.response?.data?.error || error?.response?.data?.message || fallback
 const emailRule = { type: 'email', message: 'Email phải có dạng ten@congty.com' }
 
@@ -100,6 +104,18 @@ function PartnerForm({ owner }) {
       setScanning(null)
     }
   }
+
+  // Quét mã QR kết bạn: tự nhận kênh (WhatsApp, LINE, WeChat, Zalo) và điền đúng ô của người đó, dù bấm nút ở ô nào.
+  function applyQr(index, text) {
+    const hit = parseChatQr(text)
+    if (!hit) {
+      toast.warning('Mã QR này không phải của WhatsApp, LINE, WeChat hay Zalo', { description: 'Chọn ảnh mã kết bạn của người liên hệ.' })
+      return
+    }
+    form.setFieldValue(['contacts', index, QR_FIELD[hit.channel]], hit.value)
+    toast.success(`Đã điền ${QR_LABEL[hit.channel]}`, { description: isLink(hit.value) ? 'Mã QR chỉ chứa đường dẫn kết bạn nên lưu đường dẫn.' : hit.value })
+  }
+  const qrButton = (index) => <QrScanButton onText={(text) => applyQr(index, text)} onFail={() => toast.warning('Không đọc được mã QR', { description: 'Chọn ảnh rõ nét, có đủ cả mã.' })} />
 
   const changed = new Set(isEdit ? changedKeys(initial, values, partnerToPayload) : [])
   if (isEdit && logoChanged) changed.add('logo')
@@ -251,6 +267,15 @@ function PartnerForm({ owner }) {
                       </Form.Item>
                       <Form.Item name={[field.name, 'email']} label="Email" rules={[emailRule]}>
                         <Input maxLength={150} inputMode="email" />
+                      </Form.Item>
+                      <Form.Item name={[field.name, 'whatsapp']} className="sf-c4" label="WhatsApp">
+                        <Input maxLength={300} placeholder="+65 9123 4567" suffix={qrButton(field.name)} />
+                      </Form.Item>
+                      <Form.Item name={[field.name, 'line_id']} className="sf-c4" label="LINE ID">
+                        <Input maxLength={300} suffix={qrButton(field.name)} />
+                      </Form.Item>
+                      <Form.Item name={[field.name, 'wechat_id']} className="sf-c4" label="WeChat ID">
+                        <Input maxLength={300} suffix={qrButton(field.name)} />
                       </Form.Item>
                     </ListItem>
                   )

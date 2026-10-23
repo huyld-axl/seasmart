@@ -37,6 +37,7 @@ export function Panel({ index, section }) {
                   <div className="sf-item__head">
                     <h4 className="sf-item__title">{item.title}</h4>
                     {item.tags?.map((tag) => <Tag key={tag} color={tag === 'Bảo lãnh' ? 'orange' : 'blue'}>{tag}</Tag>)}
+                    {item.actions ? <span style={{ marginLeft: 'auto' }}>{item.actions}</span> : null}
                   </div>
                   <div className="sf-item__body"><Grid fields={item.fields} /></div>
                 </div>

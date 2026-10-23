@@ -642,3 +642,13 @@
 .ds-primary-mark.is-primary { border-color: var(--primary); background: var(--primary-light); color: var(--primary); cursor: default; font-weight: 500; }
 .ds-primary-mark.is-primary .anticon { color: #d99a00; }
 .ds-primary-mark:focus-visible { outline: 2px solid var(--ring-focus, var(--primary)); outline-offset: 2px; }
+
+/* Hàng nút liên hệ nhanh (QuickContact): nút vuông, kênh nào có mới hiện */
+.ds-quick { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.ds-quick .ds-copy { width: 32px; height: 32px; margin-left: 0; border: 1px solid var(--border-strong); background: var(--surface); font-size: 16px; }
+.ds-quick .ds-copy:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+.ds-quick .ds-copy img { width: 16px; height: 16px; }
+
+/* Nút quét mã QR cuối ô nhập (QrScanButton) */
+.ds-qr { width: 28px; height: 28px; margin-left: 0; font-size: 16px; }
+.ds-qr:disabled { cursor: progress; }

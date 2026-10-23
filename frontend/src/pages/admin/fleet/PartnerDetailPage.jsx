@@ -15,7 +15,7 @@ import { useCan } from '../../../hooks/usePermission'
 import { initialsOfName, partnerSections } from './fleetView'
 import { Crumb, FleetTile } from './FleetParts'
 import { ReadLayout, NotePanel } from '../seafarers/ReadSections'
-import { EmailActions, PhoneActions } from '../../../components/ds/ContactActions'
+import { EmailActions, LineActions, PhoneActions, QuickContact, WeChatActions, WhatsAppActions } from '../../../components/ds/ContactActions'
 import '../seafarers/SeafarerListPage.css'
 
 const when = (value) => (dayjs(value).isSame(dayjs(), 'day') ? `${dayjs(value).format('HH:mm')} hôm nay` : dayjs(value).format('DD/MM/YYYY'))
@@ -64,6 +64,12 @@ export default function PartnerDetailPage() {
   const sections = partnerSections(owner, {
     phone: (v) => (v ? <span>{v}<PhoneActions phone={v} /></span> : null),
     mail: (v) => (v ? <span>{v}<EmailActions email={v} /></span> : null),
+    chat: {
+      whatsapp: (v) => (v ? <span>{v}<WhatsAppActions number={v} /></span> : null),
+      line: (v) => (v ? <span>{v}<LineActions id={v} /></span> : null),
+      wechat: (v) => (v ? <span>{v}<WeChatActions id={v} /></span> : null),
+    },
+    quick: (c) => <QuickContact phone={c.phone} email={c.email} whatsapp={c.whatsapp} line={c.line_id} wechat={c.wechat_id} />,
     link: (v) => (v ? <a href={/^https?:\/\//i.test(v) ? v : `https://${v}`} target="_blank" rel="noreferrer">{v}</a> : null),
   })
 
@@ -208,6 +214,10 @@ export default function PartnerDetailPage() {
                   <dd>{headEmail}<EmailActions email={headEmail} /></dd>
                 </>
               )}
+              <dt>Liên hệ nhanh</dt>
+              <dd>
+                <QuickContact phone={headPhone} email={headEmail} whatsapp={primary?.whatsapp} line={primary?.line_id} wechat={primary?.wechat_id} />
+              </dd>
               <dt>Tàu</dt>
               <dd>{owner.vessels.length} tàu</dd>
             </dl>

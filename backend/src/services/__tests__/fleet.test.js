@@ -110,7 +110,7 @@ describe('fleet.service: người liên hệ của đối tác', () => {
   it('người đầu tiên là liên hệ chính khi không ai được chọn', async () => {
     const pool = txPool()
     await fleetService.createOwner(pool, body([{ name: 'An' }, { name: 'Bình' }]))
-    expect(contactInserts(pool).map((call) => call.params[5])).toEqual([1, 0])
+    expect(contactInserts(pool).map((call) => call.params[8])).toEqual([1, 0])
   })
 
   it('giữ đúng một liên hệ chính theo lựa chọn và bỏ dòng trống', async () => {
@@ -118,7 +118,13 @@ describe('fleet.service: người liên hệ của đối tác', () => {
     await fleetService.createOwner(pool, body([{ name: 'An' }, { name: '' }, { name: 'Bình', is_primary: true }, { name: 'Chi', is_primary: true }]))
     const inserts = contactInserts(pool)
     expect(inserts.map((call) => call.params[1])).toEqual(['An', 'Bình', 'Chi'])
-    expect(inserts.map((call) => call.params[5])).toEqual([0, 1, 0])
+    expect(inserts.map((call) => call.params[8])).toEqual([0, 1, 0])
+  })
+
+  it('lưu kênh chat WhatsApp, LINE, WeChat của người liên hệ', async () => {
+    const pool = txPool()
+    await fleetService.createOwner(pool, body([{ name: 'An', whatsapp: ' +65 9123 ', line_id: 'an.line', wechat_id: 'an_wx' }]))
+    expect(contactInserts(pool)[0].params.slice(3, 8)).toEqual([null, null, '+65 9123', 'an.line', 'an_wx'])
   })
 
   it('từ chối người liên hệ không có họ tên', async () => {

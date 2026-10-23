@@ -137,4 +137,13 @@ describe('người liên hệ của đối tác', () => {
     expect(person.items[1].tags).toEqual([])
     expect(person.items[0].fields.find((f) => f[0] === 'Chức vụ')[1]).toBe('GĐ')
   })
+
+  it('kênh chat WhatsApp, LINE, WeChat đi theo người liên hệ và là một phần của so sánh thay đổi', () => {
+    const owner = { id: 1, company_name: 'ACME', contacts: [{ name: 'An', whatsapp: '+65 9', line_id: 'an', wechat_id: 'an_wx', is_primary: true }] }
+    const initial = partnerToFormValues(owner)
+    expect(partnerToPayload(initial).contacts[0]).toMatchObject({ whatsapp: '+65 9', line_id: 'an', wechat_id: 'an_wx' })
+    expect(changedKeys(initial, { ...initial, contacts: [{ ...initial.contacts[0], wechat_id: 'khac' }] }, partnerToPayload)).toEqual(['contacts'])
+    const person = partnerSections(owner).find((x) => x.key === 'person')
+    expect(person.items[0].fields.filter((f) => ['WhatsApp', 'LINE', 'WeChat'].includes(f[0])).map((f) => f[1])).toEqual(['+65 9', 'an', 'an_wx'])
+  })
 })

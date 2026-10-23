@@ -4,6 +4,7 @@ const { withTransaction } = require('../utils/transaction')
 const XLSX = require('xlsx')
 const fs = require('fs')
 const path = require('path')
+const sharp = require('sharp')
 const crypto = require('crypto')
 const config = require('../config')
 
@@ -163,6 +164,15 @@ async function syncRows(db, table, seafarerId, rows, fields, extra = () => ({}))
   return existing
 }
 
+// Ảnh nhỏ (thumbnail) cho danh sách: cạnh file ảnh gốc, tên thumb_<tên gốc>.jpg. Giữ nguyên tỉ lệ ảnh gốc (ảnh 4x6, tức 2:3), không cắt. Thiếu thì tạo lúc cần.
+const THUMB = { width: 120, height: 180 }
+const thumbPathOf = (photoPath) => path.join(path.dirname(photoPath), `thumb_${path.basename(photoPath, path.extname(photoPath))}.jpg`)
+async function makeThumb(photoPath) {
+  const thumbPath = thumbPathOf(photoPath)
+  await sharp(photoPath).rotate().resize(THUMB.width, THUMB.height, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 80 }).toFile(thumbPath)
+  return thumbPath
+}
+
 // Ảnh chân dung: chỉ JPG/PNG, nhận theo magic bytes, không tin MIME trình duyệt gửi.
 function sniffImage(buffer) {
   if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return 'image/jpeg'
@@ -170,8 +180,17 @@ function sniffImage(buffer) {
   return null
 }
 
+// Sắp xếp danh sách. Tên theo kiểu người Việt: theo tên (chữ cuối), rồi họ và tên đệm; bỏ dấu để chữ có dấu không đứng cuối.
+const GIVEN = 'unaccent(lower(regexp_replace(s.full_name, \'^.*\\s\', \'\')))'
+const FULL = 'unaccent(lower(s.full_name))'
+const SORTS = {
+  newest: 's.id DESC',
+  name_asc: `${GIVEN} ASC, ${FULL} ASC, s.id ASC`,
+  name_desc: `${GIVEN} DESC, ${FULL} DESC, s.id DESC`,
+}
+
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, tab, ownerId }) {
+  async list({ page = 1, limit = 20, search, status, rank_id, tab, ownerId, rankIds = [], vesselIds = [], certTypeIds = [], ageMin = null, ageMax = null, sort = null }) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
@@ -196,6 +215,37 @@ const seafarerService = {
       params.push(rank_id)
     }
 
+    // Bộ lọc nâng cao. Chức danh: hiện tại, từng đi tàu (sea_service) hoặc có hợp đồng ở vị trí đó.
+    if (rankIds.length) {
+      where.push(`(s.current_rank_id IN (?)
+        OR EXISTS (SELECT 1 FROM sea_service ss WHERE ss.seafarer_id = s.id AND ss.deleted_at IS NULL AND ss.rank_id IN (?))
+        OR EXISTS (SELECT 1 FROM seafarer_contract ec JOIN voyage_position vp ON vp.id = ec.voyage_position_id
+                   WHERE ec.seafarer_id = s.id AND ec.deleted_at IS NULL AND ec.status IN ('ACTIVE', 'ENDED') AND vp.rank_id IN (?)))`)
+      params.push(rankIds, rankIds, rankIds)
+    }
+    // Tàu đã từng đi: lịch sử đi tàu đã khớp tàu hoặc hợp đồng của chuyến tàu đó.
+    if (vesselIds.length) {
+      where.push(`(EXISTS (SELECT 1 FROM sea_service ss WHERE ss.seafarer_id = s.id AND ss.deleted_at IS NULL AND ss.vessel_id IN (?))
+        OR EXISTS (SELECT 1 FROM seafarer_contract ec JOIN voyage_position vp ON vp.id = ec.voyage_position_id JOIN voyage vy ON vy.id = vp.voyage_id
+                   WHERE ec.seafarer_id = s.id AND ec.deleted_at IS NULL AND ec.status IN ('ACTIVE', 'ENDED') AND vy.vessel_id IN (?)))`)
+      params.push(vesselIds, vesselIds)
+    }
+    // Tuổi tính từ ngày sinh; thiếu ngày sinh thì loại khi có lọc tuổi.
+    if (ageMin !== null) {
+      where.push('(s.date_of_birth IS NOT NULL AND DATE_PART(\'year\', AGE(CURRENT_DATE, s.date_of_birth)) >= ?)')
+      params.push(ageMin)
+    }
+    if (ageMax !== null) {
+      where.push('(s.date_of_birth IS NOT NULL AND DATE_PART(\'year\', AGE(CURRENT_DATE, s.date_of_birth)) <= ?)')
+      params.push(ageMax)
+    }
+    // Chứng chỉ: phải có đủ mọi loại đã chọn, còn hiệu lực (không thời hạn hoặc chưa quá hạn) — gồm cả sắp hết hạn.
+    for (const typeId of certTypeIds) {
+      where.push(`EXISTS (SELECT 1 FROM seafarer_certificate sc WHERE sc.seafarer_id = s.id AND sc.deleted_at IS NULL AND sc.status <> 'REVOKED'
+        AND sc.certificate_type_id = ? AND (sc.no_expiry = 1 OR sc.expiry_date IS NULL OR sc.expiry_date >= CURRENT_DATE))`)
+      params.push(typeId)
+    }
+
     // Số đếm của từng tab (màn A1) tính trên bộ lọc hiện tại, trước khi lọc theo tab.
     const baseWhere = 'WHERE ' + where.join(' AND ')
     const countCols = ['COUNT(*) AS all_count', ...TABS.map((key) => `SUM((${TAB_CONDITIONS[key]})::integer) AS ${key}`)].join(', ')
@@ -213,6 +263,7 @@ const seafarerService = {
 
     const selectFields = `s.id, s.seafarer_code, s.full_name, s.national_id, s.date_of_birth,
          s.gender, s.place_of_birth, s.phone_primary, s.email, s.status, s.user_id,
+         s.photo_updated_at, (s.photo_path IS NOT NULL) AS has_photo,
          r.name_vi as rank_name, r.code as rank_code, ${OVERVIEW_FIELDS}`
 
     const [rows] = await pool.query(
@@ -220,7 +271,7 @@ const seafarerService = {
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
        ${whereStr}
-       ORDER BY s.id DESC
+       ORDER BY ${SORTS[sort] || SORTS.newest}
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     )
@@ -305,6 +356,7 @@ const seafarerService = {
     fs.mkdirSync(dir, { recursive: true })
     const storagePath = path.join(dir, `${id}_${Date.now()}_${crypto.randomBytes(6).toString('hex')}${mime === 'image/png' ? '.png' : '.jpg'}`)
     fs.writeFileSync(storagePath, buffer)
+    await makeThumb(storagePath).catch(() => {})
     try {
       await pool.query('UPDATE seafarer SET photo_path = ?, photo_mime = ?, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [
         storagePath,
@@ -314,23 +366,66 @@ const seafarerService = {
       ])
     } catch (err) {
       fs.rmSync(storagePath, { force: true })
+      fs.rmSync(thumbPathOf(storagePath), { force: true })
       throw err
     }
-    if (row.photo_path) fs.rmSync(row.photo_path, { force: true })
+    if (row.photo_path) {
+      fs.rmSync(row.photo_path, { force: true })
+      fs.rmSync(thumbPathOf(row.photo_path), { force: true })
+    }
     return { has_photo: true }
   },
 
-  async getPhoto(id) {
+  async getPhoto(id, size = 'full') {
     const [[row]] = await pool.query('SELECT photo_path, photo_mime FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row?.photo_path || !fs.existsSync(row.photo_path)) throw { statusCode: 404, message: 'Chưa có ảnh chân dung' }
+    if (size === 'thumb') {
+      const thumbPath = thumbPathOf(row.photo_path)
+      return { path: fs.existsSync(thumbPath) ? thumbPath : await makeThumb(row.photo_path), mime: 'image/jpeg' }
+    }
     return { path: row.photo_path, mime: row.photo_mime }
+  },
+
+  // Tạm ngưng (INACTIVE) hoặc kích hoạt lại (AVAILABLE). Chỉ tạm ngưng khi đang ở bờ và không còn hợp đồng chưa kết thúc,
+  // để không chen vào luồng chuyến tàu và hợp đồng (các luồng đó đặt ON_VESSEL / AVAILABLE).
+  async setActive(id, active, updated_by) {
+    await withTransaction(pool, async (db) => {
+      const [[row]] = await db.query('SELECT status FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+      if (!row) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
+      if (active) {
+        if (row.status !== 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang hoạt động' }
+      } else {
+        if (row.status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đã tạm ngưng' }
+        if (row.status === 'ON_VESSEL') throw { statusCode: 409, message: 'Thuyền viên đang trên tàu, kết thúc chuyến trước khi tạm ngưng' }
+        const [open] = await db.query(
+          `SELECT c.contract_number FROM seafarer_contract c
+           JOIN voyage_position p ON p.id = c.voyage_position_id JOIN voyage v ON v.id = p.voyage_id
+           WHERE c.seafarer_id = ? AND c.deleted_at IS NULL AND c.status IN ('DRAFT', 'PENDING', 'ACTIVE') AND v.status <> 'ENDED' LIMIT 1`,
+          [id]
+        )
+        if (open.length) throw { statusCode: 409, message: `Còn hợp đồng chưa kết thúc (${open[0].contract_number}), xử lý trước khi tạm ngưng` }
+      }
+      const next = active ? 'AVAILABLE' : 'INACTIVE'
+      await db.query('UPDATE seafarer SET status = ?, updated_by = ? WHERE id = ?', [next, updated_by, id])
+      const label = { AVAILABLE: 'Ở bờ', INACTIVE: 'Tạm ngưng' }
+      await db.query('INSERT INTO seafarer_revision (seafarer_id, changed_by, reason, changes) VALUES (?, ?, ?, ?)', [
+        id,
+        updated_by,
+        active ? 'Kích hoạt lại thuyền viên' : 'Tạm ngưng thuyền viên',
+        JSON.stringify({ status: [label[row.status] || row.status, label[next]] }),
+      ])
+    })
+    return this.getById(id)
   },
 
   async removePhoto(id, updated_by) {
     const [[row]] = await pool.query('SELECT photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     await pool.query('UPDATE seafarer SET photo_path = NULL, photo_mime = NULL, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [updated_by, id])
-    if (row.photo_path) fs.rmSync(row.photo_path, { force: true })
+    if (row.photo_path) {
+      fs.rmSync(row.photo_path, { force: true })
+      fs.rmSync(thumbPathOf(row.photo_path), { force: true })
+    }
     return { has_photo: false }
   },
 
@@ -341,10 +436,9 @@ const seafarerService = {
   },
 
   // Sửa hồ sơ trên một kết nối cho trước (để gói chung transaction với việc khác):
-  // ghi lịch sử sửa kèm lý do, bộ giấy đang chờ thì chuyển STALE. Trả về các trường đã đổi.
+  // ghi lịch sử sửa (lý do không bắt buộc), bộ giấy đang chờ thì chuyển STALE. Trả về các trường đã đổi.
   async applyUpdate(db, id, data, updated_by, reason) {
-    const text = String(reason || '').trim()
-    if (!text) throw { statusCode: 400, message: 'Ghi lý do sửa hồ sơ' }
+    const text = String(reason || '').trim() || 'Cập nhật hồ sơ'
     const [[before]] = await db.query('SELECT * FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
     if (!before) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     const { rank_name, nationality_name, ...rest } = data

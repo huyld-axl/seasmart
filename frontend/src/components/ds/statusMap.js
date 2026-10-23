@@ -58,7 +58,8 @@ export const STATUS = {
   // Khoá theo cột seafarer.status trong DB.
   crew: {
     ON_VESSEL: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
-    AVAILABLE: { label: 'Ở bờ', tone: 'neutral', mark: 'ring' },
+    AVAILABLE: { label: 'Ở bờ', tone: 'info', mark: 'ring' },
+    INACTIVE: { label: 'Tạm ngưng', tone: 'neutral', mark: 'minus' },
   },
   // Chuyến tàu: trạng thái hiển thị (voyage.display_status), tính từ voyage.status và số vị trí có hợp đồng.
   voyage: {
@@ -94,10 +95,11 @@ export const STATUS = {
     ACTIVE: { label: 'Đang hợp tác', tone: 'success', mark: 'check' },
   },
   cert: {
-    VALID: { label: 'Còn hạn', tone: 'success', mark: 'check' },
+    VALID: { label: 'Hiệu lực', tone: 'success', mark: 'check' },
     EXPIRING: { label: 'Sắp hết hạn', tone: 'warning', mark: 'clock' },
     EXPIRED: { label: 'Hết hạn', tone: 'error', mark: 'cross' },
-    NO_EXPIRY: { label: 'Không thời hạn', tone: 'neutral', mark: 'ring' },
+    NO_EXPIRY: { label: 'Hiệu lực', tone: 'success', mark: 'check' },
+    REPLACED: { label: 'Đã cập nhật', tone: 'neutral', mark: 'ring' },
   },
   // Tệp ở màn tải giấy tờ lên: người dùng chỉ cần biết đang xử lý hay xong (T1)
   upload: {

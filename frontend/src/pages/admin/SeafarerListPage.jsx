@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Dropdown, Grid, Input, Skeleton, Table } from 'antd'
 import {
@@ -13,8 +13,11 @@ import {
 import { seafarerApi } from '../../api'
 import api from '../../api/client'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
-import { CREW_TABS, availabilityText } from './seafarers/crewView'
-import CrewPhoto from './seafarers/CrewPhoto'
+import { CREW_TABS, vesselNow } from './seafarers/crewView'
+import StatusBadge from '../../components/ds/StatusBadge'
+import CrewThumb from './seafarers/CrewThumb'
+import { CrewFilterBar, CrewFilterButton } from './seafarers/CrewFilters'
+import { EMPTY_FILTERS, filterCount, filterParams } from './seafarers/crewFilters'
 import './seafarers/SeafarerListPage.css'
 import RowActions from '../../components/ds/RowActions'
 import { actionColumn } from '../../components/ds/actionColumn'
@@ -29,7 +32,7 @@ const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 function Person({ row }) {
   return (
     <span className="crew-person">
-      <CrewPhoto />
+      <CrewThumb id={row.id} hasPhoto={row.has_photo} version={row.photo_updated_at} />
       <span className="ds-cell2">
         <span className="ds-cell2__main">{row.full_name}</span>
         <span className="ds-cell2__sub">{row.rank_name || 'Chưa có chức danh'}</span>
@@ -52,12 +55,15 @@ export default function SeafarerListPage() {
   const isMobile = !screens.md
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
+  const [sort, setSort] = useState('newest') // newest | name_asc | name_desc
+  const [filters, setFilters] = useState(EMPTY_FILTERS)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const [exporting, setExporting] = useState(false)
 
-  const query = { tab: tab === 'all' ? '' : tab, search: search.trim(), page, limit: pageSize }
+  const query = { tab: tab === 'all' ? '' : tab, search: search.trim(), page, limit: pageSize, sort: sort === 'newest' ? '' : sort, ...filterParams(filters) }
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['seafarers', query],
     queryFn: () => seafarerApi.list(query).then((res) => res.data),
@@ -97,12 +103,33 @@ export default function SeafarerListPage() {
   }
 
   const columns = [
-    { title: 'Thuyền viên', key: 'person', render: (_, row) => <Person row={row} /> },
+    {
+      title: 'Thuyền viên',
+      key: 'person',
+      sorter: true,
+      sortOrder: sort === 'name_asc' ? 'ascend' : sort === 'name_desc' ? 'descend' : null,
+      sortDirections: ['ascend', 'descend', 'ascend'],
+      render: (_, row) => <Person row={row} />,
+    },
     { title: 'Giới tính', key: 'gender', width: 100, responsive: ['lg'], render: (_, row) => GENDER_LABELS[row.gender] || '—' },
     { title: 'Nơi sinh', dataIndex: 'place_of_birth', responsive: ['lg'], render: (value) => value || '—' },
     { title: 'Hộ chiếu', dataIndex: 'passport_number', width: 130, responsive: ['lg'], render: (value) => (value ? <span className="ds-mono">{value}</span> : '—') },
-    { title: 'Tàu đang sign on', key: 'vessel', render: (_, row) => <span className="crew-nowrap">{row.status === 'ON_VESSEL' && row.vessel_name ? row.vessel_name : '—'}</span> },
-    { title: 'Tình trạng', key: 'where', render: (_, row) => <span className="crew-nowrap">{availabilityText(row)}</span> },
+    { title: 'Tình trạng', key: 'where', render: (_, row) => <StatusBadge group="crew" value={row.status} /> },
+    {
+      title: 'Tàu đang sign on',
+      key: 'vessel',
+      render: (_, row) => {
+        const now = vesselNow(row)
+        return now ? (
+          <span className="ds-cell2">
+            <span className="ds-cell2__main crew-nowrap">
+              {now.vesselId && can('vessel.view') ? <Link to={`/vessels/${now.vesselId}`} onClick={(event) => event.stopPropagation()}>{now.vessel}</Link> : now.vessel}
+            </span>
+            {now.until ? <span className="ds-cell2__sub">{now.until}</span> : null}
+          </span>
+        ) : '—'
+      },
+    },
     actionColumn((row) => <RowActions name={row.full_name} onView={() => open(row)} onEdit={can('seafarer.update') ? () => navigate(`/seafarers/${row.id}/edit`) : undefined} />),
   ]
 
@@ -112,6 +139,8 @@ export default function SeafarerListPage() {
     body = <EmptyState isError title="Không tải được danh sách thuyền viên" description="Mất kết nối tới máy chủ." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
   } else if (isLoading) {
     body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
+  } else if (!rows.length && filterCount(filters)) {
+    body = <EmptyState title="Không có thuyền viên nào khớp bộ lọc" action={<Button onClick={() => setFilters(EMPTY_FILTERS)}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && keyword) {
     body = <EmptyState title={`Không có thuyền viên nào khớp "${keyword}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
   } else if (!rows.length && tab !== 'all') {
@@ -126,7 +155,8 @@ export default function SeafarerListPage() {
             <button type="button" className="crew-list__row" onClick={() => open(row)}>
               <Person row={row} />
               <span className="crew-list__meta">
-                <span className="ds-cell2__sub">{availabilityText(row)}</span>
+                <StatusBadge group="crew" value={row.status} />
+                {vesselNow(row) ? <span className="ds-cell2__sub">{vesselNow(row).vessel}</span> : null}
               </span>
             </button>
           </li>
@@ -142,6 +172,7 @@ export default function SeafarerListPage() {
         columns={columns}
         pagination={false}
         scroll={tableScroll}
+        onChange={(_, __, sorter) => { setSort(sorter?.order === 'ascend' ? 'name_asc' : sorter?.order === 'descend' ? 'name_desc' : 'newest'); setPage(1) }}
         onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
       />
     )
@@ -152,7 +183,7 @@ export default function SeafarerListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -163,6 +194,7 @@ export default function SeafarerListPage() {
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
           <span className="ds-toolbar__end">
+            <CrewFilterButton value={filters} open={filtersOpen} onToggle={() => setFiltersOpen((open) => !open)} />
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Nhập, xuất Excel" />
             </Dropdown>
@@ -173,6 +205,7 @@ export default function SeafarerListPage() {
             ) : null}
           </span>
         </div>
+        {filtersOpen ? <CrewFilterBar value={filters} onChange={(next) => { setFilters(next); setPage(1) }} /> : null}
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="thuyền viên" onChange={(next, size) => { setPage(next); setPageSize(size) }} />

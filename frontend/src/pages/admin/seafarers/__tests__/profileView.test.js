@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest'
 import dayjs from 'dayjs'
-import { expiryState, attentionItems, activeContract, headLine, toProfileContracts } from '../profileView'
+import { expiryState, attentionItems, activeContract, headLine, toProfileContracts, voyageNow } from '../profileView'
 
 const today = dayjs('2026-10-07')
 
 describe('profileView', () => {
-  it('hạn giấy tờ: hết hạn, trong 90 ngày, còn hạn', () => {
+  it('hạn giấy tờ: hết hạn, trong 60 ngày, còn hạn', () => {
     expect(expiryState('2026-10-06', today)).toBe('EXPIRED')
     expect(expiryState('2026-10-07', today)).toBe('EXPIRING')
-    expect(expiryState('2027-01-05', today)).toBe('EXPIRING')
-    expect(expiryState('2027-01-06', today)).toBe('VALID')
+    expect(expiryState('2026-12-06', today)).toBe('EXPIRING')
+    expect(expiryState('2026-12-07', today)).toBe('VALID')
     expect(expiryState(null, today)).toBeNull()
   })
 
@@ -39,7 +39,7 @@ describe('profileView', () => {
       { start_date: '2026-06-05', vessel_name: 'MV Lotus Pearl', end_date: '2027-01-05' },
     ], today)
     expect(contract.vessel_name).toBe('MV Lotus Pearl')
-    expect(headLine({ rank_name: 'Phó ba', nationality_name: 'Việt Nam' }, contract)).toBe('Phó ba · Việt Nam · MV Lotus Pearl · đến 05/01/2027')
+    expect(headLine({ rank_name: 'Phó ba', nationality_name: 'Việt Nam' }, contract)).toBe('Phó ba · MV Lotus Pearl · đến 05/01/2027')
     expect(headLine({ rank_name: 'Phó ba' }, null)).toBe('Phó ba')
   })
 
@@ -56,5 +56,29 @@ describe('profileView', () => {
     expect(out[1].actual_end_date).toBe('2025-06-30')
     expect(activeContract(out, dayjs('2026-06-01'))?.vessel_name).toBe('MV A')
     expect(activeContract(out.slice(1), dayjs('2026-06-01'))).toBeNull()
+  })
+})
+
+describe('voyageNow', () => {
+  const rows = [
+    { id: 1, status: 'ENDED', voyage_status: 'ENDED', start_date: '2026-03-03', end_date: '2026-08-30', vessel_name: 'A' },
+    { id: 2, status: 'ACTIVE', voyage_status: 'ONBOARD', start_date: '2026-09-17', end_date: '2027-06-15', vessel_name: 'B' },
+    { id: 3, status: 'ACTIVE', voyage_status: 'PLANNING', start_date: '2026-12-01', end_date: '2027-06-01', vessel_name: 'C' },
+    { id: 4, status: 'PENDING', voyage_status: 'PLANNING', start_date: '2026-11-01', end_date: '2027-05-01', vessel_name: 'D' },
+  ]
+
+  it('đang trên tàu chỉ khi trạng thái ON_VESSEL và chuyến đã bắt đầu', () => {
+    expect(voyageNow(rows, 'ON_VESSEL')).toMatchObject({ kind: 'current', row: { id: 2 } })
+  })
+
+  it('ở bờ thì ra chuyến sắp tới (hợp đồng Hiệu lực chưa lên tàu, sớm nhất), bỏ hợp đồng chưa hiệu lực', () => {
+    expect(voyageNow(rows, 'AVAILABLE')).toMatchObject({ kind: 'next', row: { id: 2 } })
+    expect(voyageNow(rows.filter((r) => r.id !== 2), 'AVAILABLE')).toMatchObject({ kind: 'next', row: { id: 3 } })
+  })
+
+  it('hết chuyến sắp tới thì ra chuyến gần nhất; chuyến đã kết thúc không tính là đang chạy', () => {
+    expect(voyageNow([rows[0]], 'AVAILABLE')).toMatchObject({ kind: 'last', row: { id: 1 } })
+    expect(voyageNow([{ ...rows[1], voyage_status: 'ENDED' }], 'AVAILABLE')).toMatchObject({ kind: 'last' })
+    expect(voyageNow([], 'AVAILABLE')).toBeNull()
   })
 })

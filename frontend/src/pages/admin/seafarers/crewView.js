@@ -5,22 +5,17 @@ import dayjs from 'dayjs'
 export const CREW_TABS = [
   { value: 'all', label: 'Tất cả' },
   { value: 'onboard', label: 'Đang trên tàu' },
-  { value: 'standby', label: 'Chờ tàu' },
-  { value: 'review', label: 'Chờ duyệt' },
-  { value: 'expiring', label: 'Sắp hết hạn' },
+  { value: 'standby', label: 'Ở bờ' },
+  { value: 'inactive', label: 'Tạm ngưng' },
 ]
 
 const fmt = (date) => (date ? dayjs(date).format('DD/MM/YYYY') : null)
 
-// Cột "Tàu / sẵn sàng".
-export function availabilityText(row) {
-  if (row.status === 'ON_VESSEL') {
-    const end = fmt(row.contract_end)
-    if (!row.vessel_name) return 'Đang trên tàu'
-    return end ? `${row.vessel_name} · đến ${end}` : row.vessel_name
-  }
-  if (row.status === 'AVAILABLE') return 'Ở bờ'
-  return '—'
+// Cột "Tàu đang sign on": tên tàu và hạn hợp đồng của chuyến đang đi; chỉ khi trạng thái là Đang trên tàu.
+export function vesselNow(row) {
+  if (row.status !== 'ON_VESSEL' || !row.vessel_name) return null
+  const end = fmt(row.contract_end)
+  return { vessel: row.vessel_name, vesselId: row.vessel_id ?? null, until: end ? `đến ${end}` : null }
 }
 
 // Cột "Giấy tờ": hết hạn trước, rồi sắp hết hạn, còn lại là còn hạn.

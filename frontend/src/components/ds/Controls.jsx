@@ -5,11 +5,11 @@ import './ds.css'
 // Các control nhỏ dùng chung (components/small-controls.md, charts.md, loading.md, empty-state.md, list-row.md).
 
 // Tab trạng thái trên bảng, variant `boxed`: đang chọn nền --secondary, mọi tab luôn có viền trong suốt.
-// Dưới sm hàng tab thành nút dropdown có nhãn "Trạng thái:" (luật chốt #7, layouts/app.md "Bảng dữ liệu").
-export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:' }) {
+// `compact`: luôn là nút dropdown, cho thanh công cụ ít chỗ (danh sách thuyền viên). Dưới sm hàng tab thành nút dropdown có nhãn "Trạng thái:" (luật chốt #7, layouts/app.md "Bảng dữ liệu").
+export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:', compact = false }) {
   return (
     <>
-      <div className="ds-tabs-boxed" role="tablist">
+      <div className="ds-tabs-boxed" role="tablist" hidden={compact}>
       {tabs.map((tab) => (
         <button
           key={tab.value}
@@ -25,7 +25,7 @@ export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái
       ))}
       </div>
       <Select
-        className="ds-tabs-select"
+        className={compact ? 'ds-tabs-select ds-tabs-select--always' : 'ds-tabs-select'}
         prefix={<span className="ds-tabs-select__prefix">{mobileLabel}</span>}
         value={value}
         onChange={onChange}

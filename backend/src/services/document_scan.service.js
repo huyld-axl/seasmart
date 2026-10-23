@@ -1,5 +1,6 @@
 // Quét nhanh giấy tờ ở form thêm / sửa thuyền viên: nhận một tệp, AI nhận loại và đọc, trả giá trị để điền vào các ô của form.
 // Không lưu tệp, không tạo giấy trong hồ sơ: người dùng xem và sửa trên form rồi mới lưu.
+const pool = require('../config/db')
 const documentReader = require('./document_reader.service')
 const documentPages = require('./document_pages.service')
 const ai = require('./ai')
@@ -9,14 +10,15 @@ const { normalizeDate } = require('../utils/normalize')
 const MAX_SCAN_PAGES = 8
 
 // kind của nút bấm → loại giấy. auto: để AI tự nhận loại từng trang.
-const KIND_TYPES = { cccd: 'national_id', passport: 'passport', seaman_book: 'seaman_book_info', diploma: 'diploma' }
+const KIND_TYPES = { cccd: 'national_id', passport: 'passport', seaman_book: 'seaman_book_info', diploma: 'diploma', certificate: 'certificate' }
 const KINDS = ['auto', ...Object.keys(KIND_TYPES)]
 const SCAN_TYPES = ['national_id', 'passport', 'seaman_book_info', 'seaman_book_duty', 'certificate', 'diploma', 'other']
 // Thứ tự ưu tiên khi hai giấy cùng có một ô (họ tên, ngày sinh...): giấy trên thắng.
 const PRIORITY = ['national_id', 'passport', 'seaman_book_info', 'diploma']
+// Chứng chỉ không điền vào form hồ sơ: chỉ nút quét ở hộp Thêm chứng chỉ mới nhận.
 const SKIP_REASONS = {
   seaman_book_duty: 'Trang bố trí chức danh là chuyến đi tàu, tải lên ở hồ sơ thuyền viên để duyệt.',
-  certificate: 'Chứng chỉ tải lên ở hồ sơ thuyền viên sau khi tạo để AI đọc và duyệt.',
+  certificate: 'Chứng chỉ thêm ở tab Chứng chỉ của hồ sơ thuyền viên sau khi tạo (nút Quét chứng chỉ).',
   other: 'Không nhận ra là loại giấy dùng để điền form.',
 }
 
@@ -51,6 +53,13 @@ const MAPPINGS = {
   },
   seaman_book_info: {
     no: { field: 'seaman_book_number', transform: (v) => v.replace(/\s+/g, ' ').trim() },
+  },
+  certificate: {
+    typeCode: { field: 'certificate_type_code' },
+    no: { field: 'certificate_number' },
+    issuedOn: { field: 'issued_date', date: true },
+    valid: { field: 'expiry_date', date: true },
+    noExpiry: { field: 'no_expiry', transform: (v) => (v === 'true' ? 'true' : null) },
   },
   diploma: {
     level: { field: 'education_level', transform: educationLevel },
@@ -196,7 +205,8 @@ const documentScan = {
         if (kind === 'auto') skipped.push({ type, reason: SKIP_REASONS[type] || SKIP_REASONS.other })
         continue
       }
-      const read = await documentReader.read(images, [], {}, type)
+      const certificateTypes = type === 'certificate' ? (await pool.query('SELECT code, name_vi FROM certificate_type'))[0] : []
+      const read = await documentReader.read(images, certificateTypes, {}, type)
       perType.push({ type, label: DOC_TYPES[type].label, fields: toFormFields(type, read.fields) })
     }
     if (kind !== 'auto' && !perType.length) {

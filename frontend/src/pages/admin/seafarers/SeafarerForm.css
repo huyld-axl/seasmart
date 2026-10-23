@@ -31,6 +31,17 @@
 .sf-bar { height: 6px; overflow: hidden; border-radius: 999px; background: var(--secondary); }
 .sf-bar span { display: block; height: 100%; border-radius: 999px; background: var(--primary); transition: width 0.2s; }
 
+.sf-note { padding: 12px 16px 16px; border-top: 1px solid var(--border); font-size: 13px; }
+.sf-note__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+/* Ghi chú ở đầu hồ sơ: không khung, cùng kiểu nhãn + giá trị với khối thông tin cơ bản, chỉ ngăn bằng một đường mảnh bên trái. */
+.sf-note--head { flex: 1 1 280px; max-width: 480px; padding: 0 0 0 16px; border: 0; border-left: 1px solid var(--border); background: none; }
+.sf-note--head .sf-note__head { justify-content: flex-start; gap: 8px; margin-bottom: 2px; }
+.sf-note--head .sf-note__title { font-size: 13px; font-weight: 400; }
+.sf-note--head .sf-note__body { max-height: 112px; font-size: 14px; }
+.sf-note--head .ant-btn-link { height: auto; padding: 0; font-size: 13px; }
+.sf-note__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.sf-note__title { color: var(--muted); font-size: 12px; font-weight: 600; }
+.sf-note__body { max-height: 30vh; overflow-y: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 .sf-toc { display: flex; flex-direction: column; gap: 2px; padding: 8px; border-top: 1px solid var(--border); }
 .sf-toc a { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: 10px; color: color-mix(in srgb, var(--foreground) 75%, transparent); }
 .sf-toc a:hover { background: var(--item-hover); color: var(--foreground); }
@@ -116,8 +127,6 @@
 .sf-savebar__count { display: flex; flex: 0 1 220px; flex-direction: column; gap: 2px; min-width: 0; }
 .sf-savebar__count b { font-weight: 600; }
 .sf-savebar__count span { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
-.sf-savebar__reason { flex: 1 1 280px; min-width: 0; }
-.sf-savebar__reason .ant-form-item { margin: 0; }
 .sf-savebar__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .sf-savebar__note { display: flex; flex-basis: 100%; align-items: center; gap: 8px; margin: 0; color: var(--warning); font-size: 12px; }
 

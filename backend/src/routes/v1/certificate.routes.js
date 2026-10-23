@@ -1,3 +1,4 @@
+const fs = require('fs')
 const certificateService = require('../../services/certificate.service')
 const { assertSeafarerInScope } = require('../../utils/scope')
 
@@ -82,6 +83,21 @@ async function certificateRoutes(fastify) {
         parseInt(request.params.seafarerId),
         request.user.id
       )
+    }
+  )
+
+  // GET /api/v1/seafarers/:seafarerId/certificates/:id/file — tải file chứng chỉ nhập tay
+  fastify.get(
+    '/:id/file',
+    {
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
+    },
+    async (request, reply) => {
+      await assertSeafarerInScope(request, parseInt(request.params.seafarerId))
+      const file = await certificateService.manualFile(parseInt(request.params.id), parseInt(request.params.seafarerId))
+      reply.header('Content-Type', file.mime)
+      reply.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`)
+      return reply.send(fs.createReadStream(file.path))
     }
   )
 

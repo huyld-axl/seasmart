@@ -73,13 +73,21 @@ async function seafarerRoutes(fastify) {
             search: { type: 'string' },
             status: { type: 'string' },
             rank_id: { type: 'integer' },
-            tab: { type: 'string', enum: ['all', 'onboard', 'standby', 'review', 'expiring'] },
+            tab: { type: 'string', enum: ['all', 'onboard', 'standby', 'inactive'] },
+            sort: { type: 'string', enum: ['newest', 'name_asc', 'name_desc'] },
+            // Bộ lọc nâng cao: danh sách id cách nhau bằng dấu phẩy.
+            rank_ids: { type: 'string', pattern: '^[0-9,]*$' },
+            vessel_ids: { type: 'string', pattern: '^[0-9,]*$' },
+            certificate_type_ids: { type: 'string', pattern: '^[0-9,]*$' },
+            age_min: { type: 'integer', minimum: 0, maximum: 120 },
+            age_max: { type: 'integer', minimum: 0, maximum: 120 },
           },
         },
       },
     },
     async (request) => {
-      const { page, limit, search, status, rank_id, tab } = request.query
+      const { page, limit, search, status, rank_id, tab, age_min, age_max } = request.query
+      const ids = (text) => [...new Set((text || '').split(',').map((n) => parseInt(n)).filter((n) => n > 0))].slice(0, 50)
       const safePage = Math.max(parseInt(page) || 1, 1)
       const safeLimit = Math.min(parseInt(limit) || 20, MAX_LIST_LIMIT)
       return seafarerService.list(
@@ -91,6 +99,12 @@ async function seafarerRoutes(fastify) {
           rank_id: parseInt(rank_id) || null,
           tab: tab || null,
           ownerId: ownerIdFor(request, 'seafarer'),
+          rankIds: ids(request.query.rank_ids),
+          vesselIds: ids(request.query.vessel_ids),
+          certTypeIds: ids(request.query.certificate_type_ids),
+          ageMin: age_min ?? null,
+          ageMax: age_max ?? null,
+          sort: request.query.sort || null,
         }
       )
     }
@@ -159,9 +173,12 @@ async function seafarerRoutes(fastify) {
   // Ảnh chân dung 4x6: GET trả ảnh, POST (multipart, field "file") thay ảnh, DELETE gỡ ảnh.
   const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 
-  fastify.get('/:id/photo', { onRequest: [fastify.authenticate, fastify.can('seafarer.view')], schema: { params: idParams } }, async (request, reply) => {
+  fastify.get('/:id/photo', {
+    onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
+    schema: { params: idParams, querystring: { type: 'object', properties: { size: { type: 'string', enum: ['thumb', 'full'], default: 'full' } } } },
+  }, async (request, reply) => {
     await assertSeafarerInScope(request, request.params.id)
-    const photo = await seafarerService.getPhoto(request.params.id)
+    const photo = await seafarerService.getPhoto(request.params.id, request.query.size)
     reply.header('Content-Type', photo.mime)
     reply.header('Cache-Control', 'private, no-cache')
     return reply.send(fs.createReadStream(photo.path))
@@ -178,6 +195,14 @@ async function seafarerRoutes(fastify) {
     await assertSeafarerInScope(request, request.params.id)
     return seafarerService.removePhoto(request.params.id, request.user.id)
   })
+
+  // Tạm ngưng / kích hoạt lại thuyền viên (INACTIVE <-> AVAILABLE).
+  for (const [path, active] of [['deactivate', false], ['activate', true]]) {
+    fastify.post(`/:id/${path}`, { onRequest: [fastify.authenticate, fastify.can('seafarer.update')], schema: { params: idParams } }, async (request) => {
+      await assertSeafarerInScope(request, request.params.id)
+      return seafarerService.setActive(request.params.id, active, request.user.id)
+    })
+  }
 
   // GET /api/v1/seafarers/:id/revisions — lịch sử sửa hồ sơ
   fastify.get(

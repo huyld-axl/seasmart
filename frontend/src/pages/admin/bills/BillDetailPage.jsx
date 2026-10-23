@@ -159,7 +159,13 @@ export default function BillDetailPage() {
 
   return (
     <div className="ds-page crew-profile">
-      <Crumb items={[{ label: 'Yêu cầu thanh toán', to: '/bills' }, { label: bill.code }]} />
+      <Crumb items={[
+        { label: 'Tàu', to: '/vessels' },
+        { label: bill.vessel.vessel_name, to: `/vessels/${bill.vessel.id}` },
+        { label: bill.voyage.code, to: `/voyages/${bill.voyage.id}` },
+        { label: bill.contract.contract_number, to: `/contracts/${bill.contract.id}` },
+        { label: bill.code },
+      ]} />
 
       <div className="crew-head">
         <div className="crew-head__text">

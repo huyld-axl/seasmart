@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { NAV_SECTIONS, sectionsFor, activeSection, activeTab, initialsOf } from '../navConfig'
 
 describe('navConfig', () => {
-  it('sidebar có đúng 9 mục theo thứ tự đã chốt, chia 3 nhóm', () => {
-    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Thuyền viên', 'Đối tác', 'Tàu', 'Bản xuất', 'Chuyến tàu', 'Hợp đồng', 'Yêu cầu thanh toán', 'Danh mục', 'Quản trị'])
+  it('sidebar có đúng 10 mục theo thứ tự đã chốt, chia 3 nhóm', () => {
+    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Tổng quan', 'Thuyền viên', 'Đối tác', 'Tàu', 'Bản xuất', 'Chuyến tàu', 'Hợp đồng', 'Yêu cầu thanh toán', 'Danh mục', 'Quản trị'])
   })
 
   it('3 nhóm: hồ sơ, vận hành, hệ thống', () => {
-    expect(NAV_SECTIONS.map((s) => s.group)).toEqual([1, 1, 1, 1, 2, 2, 2, 3, 3])
+    expect(NAV_SECTIONS.map((s) => s.group)).toEqual([1, 1, 1, 1, 1, 2, 2, 2, 3, 3])
   })
 
   const keys = (user) => sectionsFor(user).map((s) => s.key)
@@ -25,7 +25,7 @@ describe('navConfig', () => {
   })
 
   it('chỉ thấy mục có quyền xem', () => {
-    expect(keys({ permissions: ['seafarer.view', 'contract.view'] })).toEqual(['seafarers', 'contracts'])
+    expect(keys({ permissions: ['seafarer.view', 'contract.view'] })).toEqual(['dashboard', 'seafarers', 'contracts'])
   })
 
   it('mục có tab: lọc tab theo quyền, to trỏ tới tab đầu còn lại, ẩn khi hết tab', () => {

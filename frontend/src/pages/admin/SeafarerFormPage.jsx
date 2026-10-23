@@ -486,27 +486,6 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     },
   })
 
-  const deleteMutation = useMutation({
-    mutationFn: () => seafarerApi.remove(id),
-    onSuccess: () => {
-      toast.success(`Đã xoá thuyền viên ${seafarer?.full_name || ''}`.trim())
-      queryClient.invalidateQueries({ queryKey: ['seafarers'] })
-      navigate('/seafarers')
-    },
-    onError: (err) => toast.error('Không xoá được thuyền viên', { description: err.response?.data?.error }),
-  })
-
-  function handleDeleteClick() {
-    Modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc muốn xóa thuyền viên "${seafarer?.full_name}"? Hành động này không thể hoàn tác.`,
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: () => deleteMutation.mutate(),
-    })
-  }
-
   // Tên tiếng Anh tự điền theo họ tên, tới khi người dùng tự sửa.
   const onValuesChange = (changed, all) => {
     if (changed.social_insurance_joined === 0) form.setFieldValue('social_insurance_number', null)
@@ -524,7 +503,6 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
 
   const onFinish = (formValues) => {
     const payload = toPayload(formValues)
-    if (isEdit) payload.reason = formValues.reason
     mutation.mutate({ payload, again: againRef.current })
   }
 
@@ -552,11 +530,6 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
             )}
           </nav>
           <h2 className="sf-head__title">{isEdit ? 'Chỉnh sửa hồ sơ' : 'Thêm thuyền viên mới'}</h2>
-          {isEdit ? null : (
-            <p className="sf-head__desc">
-              Chỉ cần họ và tên để tạo hồ sơ. Các mục khác điền sau, hoặc bấm “Tự điền từ giấy tờ” để AI đọc CCCD, hộ chiếu, sổ thuyền viên, bằng cấp.
-            </p>
-          )}
         </div>
         <div className="sf-head__actions">
           {can('seafarer.docs') ? (
@@ -568,11 +541,6 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               doneText={scanDone?.id === 'auto' ? scanDone.text : undefined}
               onPick={(files) => runScan('auto', files, 'auto')}
             />
-          ) : null}
-          {isEdit && can('seafarer.delete') ? (
-            <Button danger icon={<DeleteOutlined />} onClick={handleDeleteClick} loading={deleteMutation.isPending}>
-              Xóa thuyền viên
-            </Button>
           ) : null}
         </div>
       </div>
@@ -642,7 +610,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="full_name_zh" label="Tên tiếng Trung" span={4}>
                 <Input placeholder="VD: 阮文安" maxLength={150} />
               </Field>
-              <Field name="full_name_en" label="Tên tiếng Anh" span={4} extra="Tự điền từ họ tên. Sửa được.">
+              <Field name="full_name_en" label="Tên tiếng Anh" span={4}>
                 <Input placeholder="NGUYEN VAN A" maxLength={150} />
               </Field>
               <DateField name="date_of_birth" label="Ngày sinh" span={4} />
@@ -893,14 +861,6 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                   <b>{changeLabels.length ? `${changeLabels.length} thay đổi` : 'Chưa có thay đổi'}</b>
                   {changeLabels.length ? <span title={changeLabels.join(', ')}>{changeLabels.join(', ')}</span> : null}
                 </div>
-                <div className="sf-savebar__reason">
-                  <Form.Item
-                    name="reason"
-                    rules={[{ required: changedKeys.length > 0, whitespace: true, message: 'Ghi lý do sửa, ví dụ: cập nhật hộ chiếu mới' }]}
-                  >
-                    <Input maxLength={500} placeholder="Lý do sửa, ví dụ: cập nhật hộ chiếu mới" aria-label="Lý do sửa" />
-                  </Form.Item>
-                </div>
               </>
             ) : (
               <div className={`sf-savebar__msg${isFilled(values.full_name) ? ' sf-savebar__msg--ok' : ''}`}>
@@ -941,7 +901,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
             {isEdit && changedKeys.length ? (
               <p className="sf-savebar__note">
                 <WarningOutlined aria-hidden />
-                Lý do ghi vào lịch sử hồ sơ. Bộ giấy chưa ký xong của người này sẽ chuyển sang Cần làm lại.
+                Mỗi lần sửa được ghi vào lịch sử hồ sơ. Bộ giấy chưa ký xong của người này sẽ chuyển sang Cần làm lại.
               </p>
             ) : null}
           </div>

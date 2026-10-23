@@ -104,13 +104,16 @@ describe('SeaServiceTimeline', () => {
 })
 
 describe('CertificateTable và ReviewPager', () => {
-  it('chứng chỉ nhập tay ghi Nhập tay, hết hạn có nhãn Hết hạn', () => {
+  it('chứng chỉ nhập tay không ghi chữ Nhập tay, hết hạn có nhãn Hết hạn', () => {
     render(<CertificateTable certs={[
-      { id: '1', name: 'AFF', number: 'A1', issuedOn: '01/01/2020', expiresOn: '01/01/2025', status: 'EXPIRED' },
-      { id: '2', name: 'MFA', number: 'M1', issuedOn: '01/01/2021', expiresOn: '', status: 'NO_EXPIRY', manual: true },
-    ]} />)
+      { id: '1', name: 'AFF', number: 'A1', issuedOn: '01/01/2020', expiresOn: '01/01/2025', status: 'EXPIRED', alert: 'expired', daysLeft: -12, canRenew: true },
+      { id: '2', name: 'MFA', number: 'M1', issuedOn: '01/01/2021', expiresOn: '', noExpiry: true, status: 'NO_EXPIRY', manual: true },
+    ]} onRenew={() => {}} onDismiss={() => {}} />)
     expect(screen.getAllByText('Hết hạn').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Nhập tay').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Quá hạn 12 ngày').length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: 'Tắt cảnh báo AFF' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: 'Cập nhật AFF' }).length).toBeGreaterThan(0)
+    expect(screen.queryByText('Nhập tay')).toBeNull()
     expect(screen.getAllByText('Không thời hạn').length).toBeGreaterThan(0)
   })
 

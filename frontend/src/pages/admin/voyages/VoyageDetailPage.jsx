@@ -159,13 +159,13 @@ export default function VoyageDetailPage() {
 
   return (
     <div className="ds-page crew-profile">
-      <Crumb items={[{ label: 'Chuyến tàu', to: '/voyages' }, { label: voyage.code }]} />
+      <Crumb items={[{ label: 'Tàu', to: '/vessels' }, ...(voyage.vessel_id ? [{ label: voyage.vessel_name, to: `/vessels/${voyage.vessel_id}` }] : []), { label: voyage.code }]} />
 
       <div className="crew-head">
         <div className="crew-head__person">
           <FleetTile large />
           <div className="crew-head__text">
-            <h1 className="crew-head__title">{voyage.vessel_name} · {voyage.code}</h1>
+            <h1 className="crew-head__title">{voyage.vessel_id ? <Link to={`/vessels/${voyage.vessel_id}`}>{voyage.vessel_name}</Link> : voyage.vessel_name} · {voyage.code}</h1>
             <p className="crew-head__desc">
               {voyage.ship_owner_name}
               {voyage.embark_port_name || voyage.disembark_port_name ? ` · ${voyage.embark_port_name || '—'} → ${voyage.disembark_port_name || '—'}` : ''}

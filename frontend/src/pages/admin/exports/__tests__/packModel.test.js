@@ -43,13 +43,13 @@ describe('kiểm tra sẵn sàng', () => {
     expect(overlappingContracts([{ start_date: '2025-01-01', end_date: '2025-08-01' }, { start_date: '2025-07-01' }], today)).toHaveLength(1)
   })
 
-  it('đủ hết là sẵn sàng; chờ duyệt là cần xem lại; thiếu hay hết hạn là bị chặn', () => {
+  it('đủ hết là sẵn sàng; chờ duyệt là cần xem lại; thiếu thông tin là bị chặn, giấy tờ hết hạn không chặn', () => {
     expect(readinessLevel(readinessRules({ seafarer: ok, today }))).toBe('READY_IN_SCOPE')
     expect(readinessLevel(readinessRules({ seafarer: ok, pendingReview: 2, today }))).toBe('NEEDS_REVIEW')
     const blocked = readinessRules({ seafarer: { ...ok, seaman_book_number: null, passport_expiry: '2025-01-01' }, today })
     expect(readinessLevel(blocked)).toBe('BLOCKED')
     expect(blocked[0].reason).toBe('Còn thiếu: Số sổ thuyền viên')
-    expect(blocked[3].reason).toBe('Hộ chiếu hết hạn 01/01/2025')
+    expect(blocked).toHaveLength(3)
   })
 })
 

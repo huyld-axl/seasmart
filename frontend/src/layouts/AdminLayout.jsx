@@ -3,6 +3,7 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Dropdown, Drawer, Grid } from 'antd'
 import Icon from '@ant-design/icons'
 import {
+  DashboardOutlined,
   TeamOutlined,
   AccountBookOutlined,
   SendOutlined,
@@ -48,6 +49,7 @@ const AnchorSvg = () => (
 )
 
 const ICONS = {
+  dashboard: <DashboardOutlined />,
   team: <TeamOutlined />,
   send: <SendOutlined />,
   database: <DatabaseOutlined />,

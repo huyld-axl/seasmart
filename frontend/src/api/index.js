@@ -18,10 +18,12 @@ export const seafarerApi = {
   create: (data) => api.post('/seafarers', data),
   update: (id, data) => api.put(`/seafarers/${id}`, data),
   remove: (id) => api.delete(`/seafarers/${id}`),
+  deactivate: (id) => api.post(`/seafarers/${id}/deactivate`),
+  activate: (id) => api.post(`/seafarers/${id}/activate`),
   getContacts: (id) => api.get(`/seafarers/${id}/contacts`),
   createContact: (id, data) => api.post(`/seafarers/${id}/contacts`, data),
   deleteContact: (id, contactId) => api.delete(`/seafarers/${id}/contacts/${contactId}`),
-  getPhoto: (id) => api.get(`/seafarers/${id}/photo`, { responseType: 'blob' }).then((r) => r.data),
+  getPhoto: (id, size) => api.get(`/seafarers/${id}/photo`, { params: size ? { size } : undefined, responseType: 'blob' }).then((r) => r.data),
   uploadPhoto: (id, file) => {
     const form = new FormData()
     form.append('file', file)
@@ -44,11 +46,17 @@ export const certificateApi = {
   create: (seafarerId, data) => api.post(`/seafarers/${seafarerId}/certificates`, data),
   update: (seafarerId, id, data) => api.put(`/seafarers/${seafarerId}/certificates/${id}`, data),
   remove: (seafarerId, id) => api.delete(`/seafarers/${seafarerId}/certificates/${id}`),
+  file: (seafarerId, id) => api.get(`/seafarers/${seafarerId}/certificates/${id}/file`, { responseType: 'blob' }).then((r) => r.data),
   upload: (seafarerId, id, file) => {
     const form = new FormData()
     form.append('file', file)
     return api.post(`/seafarers/${seafarerId}/certificates/${id}/upload`, form)
   },
+}
+
+// Tạo nhanh loại chứng chỉ trong danh mục (cần quyền catalog.update).
+export const certificateTypeApi = {
+  create: (data) => api.post('/admin/master/certificate-types', data).then((r) => r.data),
 }
 
 export const lookupApi = {
@@ -58,4 +66,9 @@ export const lookupApi = {
   vesselTypes: () => api.get('/lookup/vessel-types'),
   ports: () => api.get('/lookup/ports'),
   vessels: (search) => api.get('/lookup/vessels', search ? { params: { search } } : {}),
+}
+
+// Màn Tổng quan: số liệu gộp của mọi thuyền viên trong phạm vi người dùng.
+export const dashboardApi = {
+  certificateAlerts: () => api.get('/dashboard/certificate-alerts').then((r) => r.data),
 }

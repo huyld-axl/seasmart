@@ -16,7 +16,7 @@ export default function ProfileHistory({ seafarerId }) {
   })
   if (isLoading) return <div className="crew-panel crew-panel__body"><Skeleton active /></div>
   if (isError) return <EmptyState isError title="Không tải được lịch sử" action={<Button onClick={() => refetch()}>Thử lại</Button>} />
-  if (!data.length) return <EmptyState title="Chưa có lần sửa nào" description="Mỗi lần sửa hồ sơ sẽ ghi lại ở đây, kèm lý do." />
+  if (!data.length) return <EmptyState title="Chưa có lần sửa nào" description="Mỗi lần sửa hồ sơ sẽ ghi lại ở đây." />
   return (
     <section className="crew-panel">
       <div className="crew-panel__head"><h2 className="crew-panel__title">Lịch sử chỉnh sửa</h2></div>

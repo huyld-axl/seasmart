@@ -31,7 +31,7 @@ const CONTRACT_SELECT = `SELECT c.id, c.contract_number, c.status, c.voyage_posi
     s.full_name AS seafarer_name, s.seafarer_code, s.status AS seafarer_status,
     p.sort_order AS position_sort_order, p.budget_total_usd, p.budget_monthly_usd, r.name_vi AS rank_name,
     v.id AS voyage_id, v.code AS voyage_code, v.status AS voyage_status, v.actual_embark_date AS voyage_actual_embark_date,
-    ves.vessel_name, o.company_name AS ship_owner_name, v.ship_owner_id,
+    v.vessel_id, ves.vessel_name, o.company_name AS ship_owner_name, v.ship_owner_id,
     (SELECT COUNT(*) FROM voyage_position vp WHERE vp.voyage_id = v.id AND vp.deleted_at IS NULL) AS positions_total,
     (SELECT COUNT(*) FROM voyage_position vp WHERE vp.voyage_id = v.id AND vp.deleted_at IS NULL
        AND EXISTS (SELECT 1 FROM seafarer_contract c2 WHERE c2.voyage_position_id = vp.id AND c2.deleted_at IS NULL)) AS positions_filled,
@@ -128,6 +128,8 @@ function summaryRow(row) {
     rank_name: row.rank_name,
     voyage_id: row.voyage_id,
     voyage_code: row.voyage_code,
+    voyage_status: row.voyage_status,
+    vessel_id: row.vessel_id,
     vessel_name: row.vessel_name,
     ship_owner_name: row.ship_owner_name,
     start_date: row.start_date,
@@ -234,6 +236,7 @@ const seafarerContractService = {
         code: row.voyage_code,
         status: row.voyage_status,
         display_status: displayStatus({ status: row.voyage_status, positionsTotal, positionsFilled }),
+        vessel_id: row.vessel_id,
         vessel_name: row.vessel_name,
         ship_owner_id: row.ship_owner_id,
         ship_owner_name: row.ship_owner_name,
@@ -263,8 +266,9 @@ const seafarerContractService = {
       if (position.voyage_status === 'ENDED') throw { statusCode: 409, message: 'Chuyến đã kết thúc, không tạo thêm hợp đồng' }
       const [taken] = await conn.query('SELECT 1 FROM seafarer_contract WHERE voyage_position_id = ? AND deleted_at IS NULL', [body.voyage_position_id])
       if (taken.length) throw { statusCode: 409, message: 'Vị trí này đã có hợp đồng' }
-      const [[seafarer]] = await conn.query('SELECT id FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
+      const [[seafarer]] = await conn.query('SELECT id, status FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
       if (!seafarer) throw { statusCode: 400, message: 'Không tìm thấy thuyền viên' }
+      if (seafarer.status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng, kích hoạt lại trước khi tạo hợp đồng' }
       await assertNoOverlap(conn, { seafarerId: body.seafarer_id, startDate: data.start_date, endDate: data.end_date })
       const contractNumber = await nextCode(conn, 'CONTRACT', new Date().getUTCFullYear(), 'HĐ', 4)
       const [result] = await conn.query('INSERT INTO seafarer_contract SET ?', [{
@@ -295,8 +299,9 @@ const seafarerContractService = {
       const [[current]] = await conn.query('SELECT id, status FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
       if (!current) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
       if (!EDITABLE_CONTRACT_STATUSES.includes(current.status)) throw { statusCode: 409, message: 'Hợp đồng đang khoá, không sửa được' }
-      const [[seafarer]] = await conn.query('SELECT id FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
+      const [[seafarer]] = await conn.query('SELECT id, status FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
       if (!seafarer) throw { statusCode: 400, message: 'Không tìm thấy thuyền viên' }
+      if (seafarer.status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng, kích hoạt lại trước khi xếp vào hợp đồng' }
       await assertNoOverlap(conn, { seafarerId: body.seafarer_id, startDate: data.start_date, endDate: data.end_date, excludeId: id })
       await conn.query('UPDATE seafarer_contract SET ? WHERE id = ?', [{ ...data, seafarer_id: body.seafarer_id, updated_by: userId ?? null }, id])
       await conn.query('DELETE FROM contract_item WHERE contract_id = ?', [id])

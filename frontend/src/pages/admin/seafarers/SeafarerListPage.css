@@ -4,12 +4,12 @@
 
 .crew-person { display: flex; align-items: center; gap: 12px; min-width: 220px; }
 
-/* Khung ảnh thuyền viên theo ảnh thẻ 3x4: chữ nhật đứng, góc nhọn. Chưa có ảnh thì hiện hình người mặc định. */
+/* Khung ảnh thuyền viên theo ảnh 4x6 (tỉ lệ 2:3): chữ nhật đứng, góc nhọn. Cùng tỉ lệ và cách cắt (cover, giữa) với khung ảnh ở hồ sơ. Chưa có ảnh thì hiện hình người mặc định. */
 .crew-avatar {
   display: block;
   flex-shrink: 0;
-  width: 30px;
-  height: 40px;
+  width: 32px;
+  height: 48px;
   overflow: hidden;
   background: #e6edf5;
 }
@@ -67,3 +67,13 @@
 .crew-list__row:hover { background: var(--item-hover); }
 .crew-list__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-left: 42px; }
 .crew-list .crew-person { min-width: 0; }
+
+/* Bộ lọc nâng cao: hàng mở rộng ngay dưới thanh công cụ, cùng khung card */
+.crew-filterbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface-hover); }
+.crew-filterbar__field { display: grid; flex: 0 1 160px; gap: 4px; min-width: 140px; }
+.crew-filterbar__field--wide { flex: 1 1 220px; }
+.crew-filterbar__field > span { color: var(--muted); font-size: 12px; }
+.crew-filterbar__field--age { flex: 0 0 auto; min-width: 0; }
+.crew-filterbar__age { display: flex; align-items: center; gap: 6px; }
+.crew-filterbar__age .ant-input-number { width: 84px; }
+.crew-filterbar__clear { margin-left: auto; }

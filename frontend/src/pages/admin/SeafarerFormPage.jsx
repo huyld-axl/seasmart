@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin } from 'antd'
+import { AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi } from '../../api'
@@ -10,7 +10,7 @@ import ScanButton from '../../components/ds/ScanButton'
 import { useCan } from '../../hooks/usePermission'
 import AutofillBanner from '../../components/ds/AutofillBanner'
 import { FIELD_LABELS } from './seafarers/fieldLabels'
-import { ChoiceGroup, KindToggles, PhotoField, PhotoFrame } from './seafarers/SeafarerFormParts'
+import { ChoiceGroup, KindToggles, ListItem, PhotoField, PhotoFrame } from './seafarers/SeafarerFormParts'
 import { photoProblem } from './seafarers/photoRules'
 import { SCAN_BUTTONS, SOURCE_NAMES, matchCountry, mergeScans, sectionSummaries, summaryText } from './seafarers/scanView'
 import './seafarers/SeafarerForm.css'
@@ -234,18 +234,6 @@ function Section({ index, section, stats, children }) {
         {children}
       </div>
     </section>
-  )
-}
-
-function ListItem({ title, onRemove, removeLabel, children }) {
-  return (
-    <div className="sf-item">
-      <div className="sf-item__head">
-        <h4 className="sf-item__title">{title}</h4>
-        <Button type="text" icon={<DeleteOutlined />} aria-label={removeLabel} onClick={onRemove} />
-      </div>
-      <div className="sf-item__body sf-grid">{children}</div>
-    </div>
   )
 }
 
@@ -858,7 +846,14 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
             {isEdit ? (
               <>
                 <div className="sf-savebar__count">
-                  <b>{changeLabels.length ? `${changeLabels.length} thay đổi` : 'Chưa có thay đổi'}</b>
+                  <b>
+                    {changeLabels.length ? `${changeLabels.length} thay đổi` : 'Chưa có thay đổi'}
+                    {changedKeys.length ? (
+                      <Tooltip title="Mỗi lần sửa được ghi vào lịch sử hồ sơ. Bộ giấy chưa ký xong của người này sẽ chuyển sang Cần làm lại.">
+                        <WarningOutlined className="sf-savebar__warn" aria-label="Lưu ý khi sửa hồ sơ" />
+                      </Tooltip>
+                    ) : null}
+                  </b>
                   {changeLabels.length ? <span title={changeLabels.join(', ')}>{changeLabels.join(', ')}</span> : null}
                 </div>
               </>
@@ -898,12 +893,6 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                 {isEdit ? 'Lưu thay đổi' : 'Tạo thuyền viên'}
               </Button>
             </div>
-            {isEdit && changedKeys.length ? (
-              <p className="sf-savebar__note">
-                <WarningOutlined aria-hidden />
-                Mỗi lần sửa được ghi vào lịch sử hồ sơ. Bộ giấy chưa ký xong của người này sẽ chuyển sang Cần làm lại.
-              </p>
-            ) : null}
           </div>
         </Form>
       </div>

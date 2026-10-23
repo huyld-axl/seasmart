@@ -243,7 +243,9 @@ async function getOwnerByVessel(vesselName) {
 // Chủ tàu chọn ở ô "Nộp cho" của bộ giấy.
 async function getOwnerById(shipOwnerId) {
   const [[row]] = await pool.query(
-    'SELECT company_name, contact_person, address FROM ship_owner WHERE id = ? AND deleted_at IS NULL',
+    `SELECT o.company_name, o.address,
+            (SELECT ct.name FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id ORDER BY ct.is_primary DESC, ct.sort_order, ct.id LIMIT 1) AS contact_person
+     FROM ship_owner o WHERE o.id = ? AND o.deleted_at IS NULL`,
     [shipOwnerId]
   )
   if (!row) return null

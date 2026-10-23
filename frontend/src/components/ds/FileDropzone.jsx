@@ -1,5 +1,6 @@
 import { Button } from 'antd'
-import { CheckOutlined, CloseOutlined, FileTextOutlined, UploadOutlined } from '@ant-design/icons'
+import { CheckOutlined, CloseOutlined, FileTextOutlined } from '@ant-design/icons'
+import { UploadIcon } from './TransferIcons'
 import './ds.css'
 
 // Khung kéo thả + danh sách tệp (components/file-upload.md). Logic tải lên để handler rỗng.
@@ -12,7 +13,7 @@ export default function FileDropzone({ files = [], onSelect, onRetry, onRemove, 
         <span className="ds-drop__title">Kéo thả sổ thuyền viên vào đây</span>
         <span className="ds-drop__hint">PDF, JPG hoặc PNG. Tối đa 25 MB và 50 trang mỗi tệp</span>
         <span className="ds-drop__button">
-          <UploadOutlined aria-hidden />
+          <UploadIcon aria-hidden />
           Chọn tệp
         </span>
       </label>

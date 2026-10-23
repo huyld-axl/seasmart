@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -12,11 +13,12 @@ import { exportApi } from '../../../api/exportApi'
 import { useFleetItem, useFleetMutations, usePartnerLogo } from '../../../hooks/useFleet'
 import { useCan } from '../../../hooks/usePermission'
 import { initialsOfName, partnerSections } from './fleetView'
-import { Crumb, FleetTile, ReadPanel, SidePanel } from './FleetParts'
+import { Crumb, FleetTile } from './FleetParts'
+import { ReadLayout, NotePanel } from '../seafarers/ReadSections'
+import { EmailActions, PhoneActions } from '../../../components/ds/ContactActions'
 import '../seafarers/SeafarerListPage.css'
 
 const when = (value) => (dayjs(value).isSame(dayjs(), 'day') ? `${dayjs(value).format('HH:mm')} hôm nay` : dayjs(value).format('DD/MM/YYYY'))
-const packCode = (id) => `B${String(id).padStart(4, '0')}`
 
 export default function PartnerDetailPage() {
   const can = useCan()
@@ -56,7 +58,14 @@ export default function PartnerDetailPage() {
 
   const active = Number(owner.is_active) === 1
   const inUse = owner.usage?.total > 0
-  const sections = partnerSections(owner)
+  const primary = owner.contacts?.[0]
+  const headPhone = primary?.phone || owner.phone
+  const headEmail = primary?.email || owner.email
+  const sections = partnerSections(owner, {
+    phone: (v) => (v ? <span>{v}<PhoneActions phone={v} /></span> : null),
+    mail: (v) => (v ? <span>{v}<EmailActions email={v} /></span> : null),
+    link: (v) => (v ? <a href={/^https?:\/\//i.test(v) ? v : `https://${v}`} target="_blank" rel="noreferrer">{v}</a> : null),
+  })
 
   async function toggleActive() {
     try {
@@ -64,6 +73,16 @@ export default function PartnerDetailPage() {
       toast.success(active ? `Đã chuyển ${owner.company_name} sang Ngừng hợp tác` : `Đã chuyển ${owner.company_name} về Đang hợp tác`)
     } catch (error) {
       toast.error(`Không đổi được tình trạng ${owner.company_name}`, { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
+    }
+  }
+
+  async function saveNotes(notes) {
+    try {
+      await save.mutateAsync({ id: owner.id, notes })
+      toast.success('Đã lưu ghi chú')
+    } catch (error) {
+      toast.error('Không lưu được ghi chú', { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
+      throw error
     }
   }
 
@@ -110,7 +129,7 @@ export default function PartnerDetailPage() {
     { value: 'vessels', label: 'Tàu', count: owner.vessels.length },
     ...(can('export.view') ? [{ value: 'packs', label: 'Bộ giấy đã nộp', count: Number(owner.pack_count) }] : []),
   ]
-  const descParts = [owner.country_name].filter(Boolean)
+  const descParts = [owner.country_name && withFlag(owner.country_code, owner.country_name)].filter(Boolean)
 
   const vesselList = owner.vessels.length ? (
     <ul className="fl-rows">
@@ -129,45 +148,7 @@ export default function PartnerDetailPage() {
     <p className="crew-muted">Chưa có tàu nào thuộc đối tác này.</p>
   )
 
-  const overview = (
-    <div className="crew-two-col">
-      <div style={{ display: 'grid', gap: 16 }}>
-        {sections.map((section) => <ReadPanel key={section.key} section={section} />)}
-      </div>
-      <div style={{ display: 'grid', gap: 16 }}>
-        <SidePanel title="Đội tàu" action={can('vessel.create') ? <Button size="small" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button> : null}>
-          {vesselList}
-        </SidePanel>
-        {can('export.view') && (
-        <SidePanel title="Bộ giấy đã nộp gần đây" action={owner.recent_packs.length ? <Button size="small" type="text" onClick={() => setTab('packs')}>Xem tất cả <RightOutlined /></Button> : null}>
-          {owner.recent_packs.length ? (
-            <ul className="fl-rows">
-              {owner.recent_packs.map((pack) => (
-                <li key={pack.id}>
-                  <span className="fl-rows__main">
-                    <Link to={`/exports/${pack.id}`}>{pack.seafarer_name}</Link>
-                    <span className="ds-cell2__sub">{pack.title} · #{packCode(pack.id)}</span>
-                  </span>
-                  <span className="fl-rows__end">{when(pack.created_at)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="crew-muted">Chưa nộp bộ giấy nào cho đối tác này.</p>
-          )}
-        </SidePanel>
-        )}
-        <SidePanel title="Đang được dùng ở">
-          <ul className="fl-rows">
-            <li><span className="fl-rows__main">Tàu thuộc đối tác</span><span className="ds-num">{owner.usage.vessels}</span></li>
-            <li><span className="fl-rows__main">Chuyến tàu</span><span className="ds-num">{owner.usage.voyages}</span></li>
-            <li><span className="fl-rows__main">Bộ giấy đã nộp</span><span className="ds-num">{owner.usage.packs}</span></li>
-          </ul>
-          <p className="fl-note">Đối tác đang được dùng thì không xoá được, chỉ chuyển sang Ngừng hợp tác.</p>
-        </SidePanel>
-      </div>
-    </div>
-  )
+  const overview = <ReadLayout sections={sections} label="đối tác" />
 
   const vesselsTab = (
     <section className="crew-panel crew-panel__body">{vesselList}</section>
@@ -199,16 +180,40 @@ export default function PartnerDetailPage() {
 
       <div className="crew-head">
         <div className="crew-head__person">
-          <FleetTile large text={initialsOfName(owner.company_name)} src={logo} />
+          <div className="crew-head__photo crew-head__photo--logo">
+            <FleetTile large text={initialsOfName(owner.company_name)} src={logo} />
+          </div>
           <div className="crew-head__text">
-            <h1 className="crew-head__title">{owner.company_name}</h1>
-            {descParts.length ? <p className="crew-head__desc">{descParts.join(' · ')}</p> : null}
-            <div className="crew-head__badges">
+            <div className="crew-head__titlerow">
+              <h1 className="crew-head__title">{owner.company_name}</h1>
               <StatusBadge group="partner" value={active ? 'ACTIVE' : 'INACTIVE'} />
-              <span className="fl-head-meta">{owner.vessels.length} tàu</span>
             </div>
+            {descParts.length ? <p className="crew-head__desc">{descParts.join(' · ')}</p> : null}
+            <dl className="crew-head__meta">
+              {primary && (
+                <>
+                  <dt>Liên hệ chính</dt>
+                  <dd>{[primary.name, primary.position].filter(Boolean).join(' · ')}</dd>
+                </>
+              )}
+              {headPhone && (
+                <>
+                  <dt>Điện thoại</dt>
+                  <dd>{headPhone}<PhoneActions phone={headPhone} /></dd>
+                </>
+              )}
+              {headEmail && (
+                <>
+                  <dt>Email</dt>
+                  <dd>{headEmail}<EmailActions email={headEmail} /></dd>
+                </>
+              )}
+              <dt>Tàu</dt>
+              <dd>{owner.vessels.length} tàu</dd>
+            </dl>
           </div>
         </div>
+        <NotePanel notes={owner.notes} canEdit={can('partner.update')} saving={save.isPending} onSave={saveNotes} className="sf-note--head" />
         <div className="crew-head__actions">
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">

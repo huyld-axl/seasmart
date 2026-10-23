@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Badge, Button, InputNumber, Select } from 'antd'
-import { DownOutlined, FilterOutlined, UpOutlined } from '@ant-design/icons'
+import { DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { lookupApi } from '../../../api'
 import { EMPTY_FILTERS, filterCount } from './crewFilters'
 
@@ -9,8 +9,8 @@ import { EMPTY_FILTERS, filterCount } from './crewFilters'
 export function CrewFilterButton({ value, open, onToggle }) {
   return (
     <Badge count={filterCount(value)} size="small" offset={[-4, 4]}>
-      <Button icon={<FilterOutlined />} aria-expanded={open} aria-controls="crew-filter-bar" onClick={onToggle}>
-        Bộ lọc {open ? <UpOutlined /> : <DownOutlined />}
+      <Button className="crew-filter-btn" icon={<FilterOutlined />} aria-expanded={open} aria-controls="crew-filter-bar" onClick={onToggle}>
+        Bộ lọc <DownOutlined className="crew-filter-btn__chev" />
       </Button>
     </Badge>
   )

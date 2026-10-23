@@ -38,3 +38,12 @@
 .fl-readonly .ant-input[disabled] { color: var(--neutral); background: var(--surface-hover); }
 .fl-count { margin: 0; color: var(--muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
 .fl-unit-hint { margin-left: 8px; color: var(--muted); font-size: 12px; font-weight: 400; }
+
+/* Ô logo bấm được (form đối tác): cùng kiểu ảnh chân dung ở form thuyền viên, rê vào hiện viền nhấn */
+.fl-tile--action { padding: 0; border: 0; cursor: pointer; font-family: inherit; }
+.fl-tile--action.fl-tile--img { border: 1px solid var(--border); }
+.fl-tile--action:hover { box-shadow: 0 0 0 2px var(--primary); }
+
+/* Logo ở đầu màn chi tiết đối tác: cùng chỗ với ảnh chân dung ở hồ sơ thuyền viên, khung vuông */
+.crew-head__photo--logo { width: 120px; height: 120px; }
+.crew-head__photo--logo .fl-tile { width: 100%; height: 100%; border-radius: 16px; font-size: 32px; }

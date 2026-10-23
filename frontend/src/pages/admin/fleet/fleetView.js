@@ -1,3 +1,5 @@
+import { withFlag } from '../../../utils/flag'
+
 // Dữ liệu hiển thị của màn Tàu và Đối tác: nhãn, lựa chọn, các khối của form và của màn chi tiết.
 // Mỗi khối: [nhãn, giá trị, độ rộng trên lưới 12 cột]. Cùng thứ tự khối ở form, màn chi tiết và mục lục.
 
@@ -105,7 +107,12 @@ export function vesselSections(v, { linkOwner } = {}) {
   ]
 }
 
-export function partnerSections(o) {
+// Các khối của màn chi tiết đối tác, cùng thứ tự và tên với form. Dạng dùng chung với màn thuyền viên (ReadSections):
+// khối { key, title, fields | items, unit }; trường [nhãn, giá trị, độ rộng 12 cột]. `render` đổi chữ thành nút gọi / gửi mail / liên kết.
+export function partnerSections(o, render = {}) {
+  const phone = render.phone || ((v) => v)
+  const mail = render.mail || ((v) => v)
+  const link = render.link || ((v) => v)
   return [
     {
       key: 'company',
@@ -114,8 +121,8 @@ export function partnerSections(o) {
         ['Tên công ty', o.company_name, 6],
         ['Tên tiếng Anh', o.company_name_en, 6],
         ['Mã số thuế', o.tax_id, 4],
-        ['Quốc gia', o.country_name, 4],
-        ['Tình trạng', Number(o.is_active) === 1 ? 'Đang hợp tác' : 'Ngừng hợp tác', 12, 'always'],
+        ['Quốc gia', o.country_name ? withFlag(o.country_code, o.country_name) : null, 4],
+        ['Tình trạng', Number(o.is_active) === 1 ? 'Đang hợp tác' : 'Ngừng hợp tác', 4],
       ],
     },
     {
@@ -123,22 +130,38 @@ export function partnerSections(o) {
       title: 'Liên hệ công ty',
       fields: [
         ['Địa chỉ', o.address, 12],
-        ['Điện thoại', o.phone, 4],
+        ['Điện thoại', phone(o.phone), 4],
         ['Fax', o.fax, 4],
-        ['Email', o.email, 4],
-        ['Website', o.website, 12],
+        ['Email', mail(o.email), 4],
+        ['Website', link(o.website), 12],
       ],
     },
     {
       key: 'person',
       title: 'Người liên hệ',
-      fields: [
-        ['Họ tên', o.contact_person, 4],
-        ['Điện thoại', o.contact_phone, 4],
-        ['Email', o.contact_email, 4],
-      ],
+      unit: 'người',
+      itemsEmpty: 'Chưa có người liên hệ.',
+      items: (o.contacts || []).map((c, i) => ({
+        title: `Người liên hệ ${i + 1}`,
+        tags: c.is_primary ? ['Liên hệ chính'] : [],
+        fields: [
+          ['Họ tên', c.name, 4],
+          ['Chức vụ', c.position, 4],
+          ['Điện thoại', phone(c.phone), 4],
+          ['Email', mail(c.email), 12],
+        ],
+      })),
     },
-    { key: 'notes', title: 'Ghi chú', fields: [['Ghi chú', o.notes, 12]] },
+    {
+      key: 'usage',
+      title: 'Đang được dùng ở',
+      fields: [
+        ['Tàu thuộc đối tác', o.usage?.vessels ?? 0, 4],
+        ['Chuyến tàu', o.usage?.voyages ?? 0, 4],
+        ['Bộ giấy đã nộp', o.usage?.packs ?? 0, 4],
+      ],
+      footnote: 'Đối tác đang được dùng thì không xoá được, chỉ chuyển sang Ngừng hợp tác.',
+    },
   ]
 }
 
@@ -184,15 +207,26 @@ export function vesselToPayload(values) {
   return payload
 }
 
-export const PARTNER_TEXT_FIELDS = ['company_name', 'company_name_en', 'tax_id', 'address', 'phone', 'fax', 'email', 'website', 'contact_person', 'contact_phone', 'contact_email', 'notes']
+export const PARTNER_TEXT_FIELDS = ['company_name', 'company_name_en', 'tax_id', 'address', 'phone', 'fax', 'email', 'website', 'notes']
+export const EMPTY_CONTACT = { name: '', position: '', phone: '', email: '', is_primary: false }
 
 export function partnerToFormValues(owner) {
-  const values = { is_active: 1 }
+  const values = { is_active: 1, contacts: [] }
   if (!owner) return values
   for (const key of PARTNER_TEXT_FIELDS) values[key] = owner[key] ?? null
   values.country_id = owner.country_id ?? null
+  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', email: c.email ?? '', is_primary: !!c.is_primary }))
   values.is_active = Number(owner.is_active) === 0 ? 0 : 1
   return values
+}
+
+// Bỏ dòng trống, cắt khoảng trắng, đúng một liên hệ chính (mặc định người đầu tiên).
+export function cleanContactList(list) {
+  const rows = (list || [])
+    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), email: cleanText(c?.email), is_primary: !!c?.is_primary }))
+    .filter((c) => c.name || c.position || c.phone || c.email)
+  const primary = rows.findIndex((c) => c.is_primary)
+  return rows.map((c, index) => ({ ...c, is_primary: index === (primary === -1 ? 0 : primary) }))
 }
 
 export function partnerToPayload(values) {
@@ -200,6 +234,7 @@ export function partnerToPayload(values) {
   for (const key of PARTNER_TEXT_FIELDS) payload[key] = cleanText(values[key])
   payload.country_id = filled(values.country_id) ? values.country_id : null
   payload.is_active = values.is_active === 0 ? 0 : 1
+  payload.contacts = cleanContactList(values.contacts)
   return payload
 }
 
@@ -207,5 +242,5 @@ export function partnerToPayload(values) {
 export function changedKeys(initial, current, toPayload) {
   const before = toPayload(initial)
   const after = toPayload(current)
-  return Object.keys(after).filter((key) => before[key] !== after[key])
+  return Object.keys(after).filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key]))
 }

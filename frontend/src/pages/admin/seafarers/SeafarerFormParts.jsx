@@ -1,8 +1,26 @@
 import { useState } from 'react'
 import { Button } from 'antd'
-import { DeleteOutlined, UploadOutlined } from '@ant-design/icons'
+import { DeleteOutlined } from '@ant-design/icons'
+import { UploadIcon } from '../../../components/ds/TransferIcons'
 import ToggleRow from '../../../components/ds/ToggleRow'
 
+
+// Một dòng trong danh sách nhiều mục (người thân, tài khoản, liên hệ đối tác): khung có thanh tiêu đề, nút xoá, thân là lưới 12 cột.
+// `actions`: nút đặt cạnh nút xoá ở thanh tiêu đề (ví dụ nút chọn liên hệ chính).
+export function ListItem({ title, onRemove, removeLabel, actions, children }) {
+  return (
+    <div className="sf-item">
+      <div className="sf-item__head">
+        <h4 className="sf-item__title">{title}</h4>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {actions}
+          <Button type="text" icon={<DeleteOutlined />} aria-label={removeLabel} onClick={onRemove} />
+        </span>
+      </div>
+      <div className="sf-item__body sf-grid">{children}</div>
+    </div>
+  )
+}
 
 // Hình người mặc định khi chưa có ảnh, khung đứng 4x6.
 export function PhotoFrame({ src, onClick }) {
@@ -87,7 +105,7 @@ export function PhotoField({ src, error, onChoose, onDropFile, onRemove }) {
             Gỡ ảnh
           </Button>
         ) : null}
-        <Button icon={<UploadOutlined />} onClick={onChoose}>
+        <Button icon={<UploadIcon />} onClick={onChoose}>
           {src ? 'Đổi ảnh' : 'Chọn ảnh'}
         </Button>
       </div>

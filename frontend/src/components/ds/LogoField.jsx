@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { Button } from 'antd'
-import { DeleteOutlined, UploadOutlined } from '@ant-design/icons'
+import { DeleteOutlined } from '@ant-design/icons'
+import { UploadIcon } from './TransferIcons'
 import './ds.css'
 
 // Ô logo công ty: kéo thả hoặc bấm "Chọn logo". `src` là ảnh đang hiện (đã có hoặc vừa chọn).
@@ -31,7 +32,7 @@ export default function LogoField({ src, error, onPick, onRemove }) {
       </div>
       <div className="ds-logo__actions">
         {src ? <Button icon={<DeleteOutlined />} onClick={onRemove}>Gỡ logo</Button> : null}
-        <Button icon={<UploadOutlined />} onClick={() => inputRef.current?.click()}>{src ? 'Đổi logo' : 'Chọn logo'}</Button>
+        <Button icon={<UploadIcon />} onClick={() => inputRef.current?.click()}>{src ? 'Đổi logo' : 'Chọn logo'}</Button>
       </div>
       <input
         ref={inputRef}

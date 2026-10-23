@@ -1,17 +1,6 @@
 import { Button } from 'antd'
-import {
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined,
-  FileAddOutlined,
-  FileExclamationOutlined,
-  FileImageOutlined,
-  FilePdfOutlined,
-  LoadingOutlined,
-  ReloadOutlined,
-  RightOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
+import { ClockCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined, FileAddOutlined, FileExclamationOutlined, FileImageOutlined, FilePdfOutlined, LoadingOutlined, ReloadOutlined, RightOutlined } from '@ant-design/icons'
+import { UploadIcon } from './TransferIcons'
 import StatusBadge from './StatusBadge'
 import './ds.css'
 
@@ -45,7 +34,7 @@ export default function UploadPanel({
             : 'PDF, JPG hoặc PNG, tối đa 25 MB mỗi tệp, thả một lần nhiều tệp cũng được. AI tự nhận loại giấy và đọc, bạn duyệt sau.'}
         </span>
       </span>
-      <span className="ds-drop__button"><UploadOutlined aria-hidden />Chọn tệp</span>
+      <span className="ds-drop__button"><UploadIcon aria-hidden />Chọn tệp</span>
     </label>
   )
 

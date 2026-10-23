@@ -124,10 +124,11 @@
 .sf-savebar__msg { display: flex; flex: 1 1 260px; align-items: center; gap: 8px; min-width: 0; color: var(--neutral); }
 .sf-savebar__msg .anticon { font-size: 16px; }
 .sf-savebar__msg--ok .anticon { color: var(--success); }
-.sf-savebar__count { display: flex; flex: 0 1 220px; flex-direction: column; gap: 2px; min-width: 0; }
+.sf-savebar__count { display: flex; flex: 0 1 220px; flex-direction: column; gap: 2px; min-width: 0; min-height: 42px; justify-content: center; }
 .sf-savebar__count b { font-weight: 600; }
 .sf-savebar__count span { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .sf-savebar__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.sf-savebar__warn { margin-left: 6px; color: var(--warning); cursor: help; }
 .sf-savebar__note { display: flex; flex-basis: 100%; align-items: center; gap: 8px; margin: 0; color: var(--warning); font-size: 12px; }
 
 /* Màn hẹp: mục lục thành hàng chip cuộn ngang ở trên, lưới co lại. */

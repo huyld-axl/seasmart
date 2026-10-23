@@ -16,7 +16,15 @@ export const vesselApi = {
   // Các chuyến đi tàu đã khớp với tàu (đang trên tàu là chuyến chưa có ngày rời).
   service: (id) => api.get(`/admin/master/vessels/${id}/service`).then((r) => r.data),
 }
-export const shipOwnerApi = crud('ship-owners')
+export const shipOwnerApi = {
+  ...crud('ship-owners'),
+  // Quét danh thiếp để điền form (không lưu gì). AI đọc ngay trong lời gọi nên cho thời gian chờ dài.
+  scanCard: (file) => {
+    const form = new FormData()
+    form.append('file', file)
+    return api.post('/admin/master/ship-owners/scan-card', form, { timeout: 120000 }).then((r) => r.data)
+  },
+}
 
 // Logo công ty đối tác: ảnh cần token nên lấy dạng blob, tải lên bằng multipart field "file".
 export const shipOwnerLogoApi = {

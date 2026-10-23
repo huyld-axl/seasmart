@@ -70,7 +70,7 @@ const ownerBody = {
       maxItems: 20,
       items: {
         type: 'object',
-        properties: { name: nullableText(150), position: nullableText(100), phone: nullableText(30), email: nullableText(150), is_primary: { type: 'boolean' } },
+        properties: { name: nullableText(150), position: nullableText(100), phone: nullableText(30), email: nullableText(150), whatsapp: nullableText(300), line_id: nullableText(300), wechat_id: nullableText(300), is_primary: { type: 'boolean' } },
       },
     },
     is_active: flag,

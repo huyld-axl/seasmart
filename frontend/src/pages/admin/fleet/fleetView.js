@@ -113,6 +113,7 @@ export function partnerSections(o, render = {}) {
   const phone = render.phone || ((v) => v)
   const mail = render.mail || ((v) => v)
   const link = render.link || ((v) => v)
+  const chat = { whatsapp: (v) => v, line: (v) => v, wechat: (v) => v, ...render.chat }
   return [
     {
       key: 'company',
@@ -149,7 +150,11 @@ export function partnerSections(o, render = {}) {
           ['Chức vụ', c.position, 4],
           ['Điện thoại', phone(c.phone), 4],
           ['Email', mail(c.email), 12],
+          ['WhatsApp', chat.whatsapp(c.whatsapp), 4],
+          ['LINE', chat.line(c.line_id), 4],
+          ['WeChat', chat.wechat(c.wechat_id), 4],
         ],
+        actions: render.quick ? render.quick(c) : null,
       })),
     },
     {
@@ -208,14 +213,14 @@ export function vesselToPayload(values) {
 }
 
 export const PARTNER_TEXT_FIELDS = ['company_name', 'company_name_en', 'tax_id', 'address', 'phone', 'fax', 'email', 'website', 'notes']
-export const EMPTY_CONTACT = { name: '', position: '', phone: '', email: '', is_primary: false }
+export const EMPTY_CONTACT = { name: '', position: '', phone: '', email: '', whatsapp: '', line_id: '', wechat_id: '', is_primary: false }
 
 export function partnerToFormValues(owner) {
   const values = { is_active: 1, contacts: [] }
   if (!owner) return values
   for (const key of PARTNER_TEXT_FIELDS) values[key] = owner[key] ?? null
   values.country_id = owner.country_id ?? null
-  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', email: c.email ?? '', is_primary: !!c.is_primary }))
+  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', email: c.email ?? '', whatsapp: c.whatsapp ?? '', line_id: c.line_id ?? '', wechat_id: c.wechat_id ?? '', is_primary: !!c.is_primary }))
   values.is_active = Number(owner.is_active) === 0 ? 0 : 1
   return values
 }
@@ -223,8 +228,8 @@ export function partnerToFormValues(owner) {
 // Bỏ dòng trống, cắt khoảng trắng, đúng một liên hệ chính (mặc định người đầu tiên).
 export function cleanContactList(list) {
   const rows = (list || [])
-    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), email: cleanText(c?.email), is_primary: !!c?.is_primary }))
-    .filter((c) => c.name || c.position || c.phone || c.email)
+    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), email: cleanText(c?.email), whatsapp: cleanText(c?.whatsapp), line_id: cleanText(c?.line_id), wechat_id: cleanText(c?.wechat_id), is_primary: !!c?.is_primary }))
+    .filter((c) => c.name || c.position || c.phone || c.email || c.whatsapp || c.line_id || c.wechat_id)
   const primary = rows.findIndex((c) => c.is_primary)
   return rows.map((c, index) => ({ ...c, is_primary: index === (primary === -1 ? 0 : primary) }))
 }

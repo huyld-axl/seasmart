@@ -41,8 +41,11 @@ function paging(query) {
 function cleanContacts(list) {
   const text = (value, max) => (typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : null)
   const rows = (Array.isArray(list) ? list : [])
-    .map((item) => ({ name: text(item?.name, 150), position: text(item?.position, 100), phone: text(item?.phone, 30), email: text(item?.email, 150), is_primary: Boolean(item?.is_primary) }))
-    .filter((item) => item.name || item.position || item.phone || item.email)
+    .map((item) => ({
+      name: text(item?.name, 150), position: text(item?.position, 100), phone: text(item?.phone, 30), email: text(item?.email, 150),
+      whatsapp: text(item?.whatsapp, 300), line_id: text(item?.line_id, 300), wechat_id: text(item?.wechat_id, 300), is_primary: Boolean(item?.is_primary),
+    }))
+    .filter((item) => item.name || item.position || item.phone || item.email || item.whatsapp || item.line_id || item.wechat_id)
   if (rows.some((item) => !item.name)) throw { statusCode: 400, message: 'Người liên hệ cần có họ tên' }
   if (rows.length > CONTACT_MAX) throw { statusCode: 400, message: `Tối đa ${CONTACT_MAX} người liên hệ` }
   const primary = rows.findIndex((item) => item.is_primary)
@@ -53,8 +56,8 @@ async function replaceContacts(conn, ownerId, contacts) {
   await conn.query('DELETE FROM ship_owner_contact WHERE ship_owner_id = ?', [ownerId])
   for (const [index, item] of contacts.entries()) {
     await conn.query(
-      'INSERT INTO ship_owner_contact (ship_owner_id, name, position, phone, email, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [ownerId, item.name, item.position, item.phone, item.email, item.is_primary ? 1 : 0, index]
+      'INSERT INTO ship_owner_contact (ship_owner_id, name, position, phone, email, whatsapp, line_id, wechat_id, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [ownerId, item.name, item.position, item.phone, item.email, item.whatsapp, item.line_id, item.wechat_id, item.is_primary ? 1 : 0, index]
     )
   }
 }
@@ -93,7 +96,7 @@ const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_num
 const OWNER_SELECT = `SELECT o.id, o.company_name, o.company_name_en, o.country_id, c.name_vi AS country_name, c.code AS country_code,
     o.tax_id, o.address, o.phone, o.fax, o.email, o.website,
     o.is_active, o.notes, o.updated_at,
-    (SELECT COALESCE(json_agg(json_build_object('id', ct.id, 'name', ct.name, 'position', ct.position, 'phone', ct.phone, 'email', ct.email, 'is_primary', ct.is_primary = 1)
+    (SELECT COALESCE(json_agg(json_build_object('id', ct.id, 'name', ct.name, 'position', ct.position, 'phone', ct.phone, 'email', ct.email, 'whatsapp', ct.whatsapp, 'line_id', ct.line_id, 'wechat_id', ct.wechat_id, 'is_primary', ct.is_primary = 1)
        ORDER BY ct.is_primary DESC, ct.sort_order, ct.id), '[]'::json) FROM ship_owner_contact ct WHERE ct.ship_owner_id = o.id) AS contacts,
     (o.logo_path IS NOT NULL) AS has_logo,
     (SELECT COUNT(*) FROM vessel v WHERE v.ship_owner_id = o.id AND v.deleted_at IS NULL) AS vessel_count,

@@ -143,8 +143,8 @@ export function partnerSections(o, render = {}) {
       title: 'Người liên hệ',
       unit: 'người',
       itemsEmpty: 'Chưa có người liên hệ.',
-      items: (o.contacts || []).map((c, i) => ({
-        title: `Người liên hệ ${i + 1}`,
+      items: (o.contacts || []).map((c) => ({
+        title: c.name || 'Người liên hệ',
         tags: c.is_primary ? ['Liên hệ chính'] : [],
         fields: [
           ['Họ tên', c.name, 4],

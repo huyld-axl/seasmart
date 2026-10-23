@@ -25,15 +25,16 @@ export function Panel({ index, section }) {
       <div className="sf-panel__head">
         <span className="sf-step">{index + 1}</span>
         <div><h3 className="sf-panel__title" id={`sf-${section.key}-title`}>{section.title}</h3></div>
-        <span className="sf-panel__meta">{countFilled(section)}</span>
+        {(!section.content || section.countLabel !== undefined) && <span className="sf-panel__meta">{countFilled(section)}</span>}
       </div>
       <div className="sf-panel__body">
+        {section.content}
         {section.fields ? <Grid fields={section.fields} /> : null}
         {section.items ? (
           section.items.length ? (
             <div className="sf-items">
-              {section.items.map((item) => (
-                <div className="sf-item" key={item.title}>
+              {section.items.map((item, index) => (
+                <div className="sf-item" key={item.id || index}>
                   <div className="sf-item__head">
                     <h4 className="sf-item__title">{item.title}</h4>
                     {item.tags?.map((tag) => <Tag key={tag} color={tag === 'Bảo lãnh' ? 'orange' : 'blue'}>{tag}</Tag>)}

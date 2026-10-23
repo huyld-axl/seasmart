@@ -77,8 +77,8 @@ function buildSections(s, contacts) {
     {
       key: 'bank',
       title: 'Ngân hàng & BHXH',
-      items: banks.map((b, i) => ({
-        title: `Tài khoản ${i + 1}`,
+      items: banks.map((b) => ({
+        title: b.bank_name || b.account_holder || 'Tài khoản ngân hàng',
         fields: [['Tên ngân hàng', b.bank_name, 4], ['Số tài khoản', copyable(b.account_number), 4], ['Tên chủ tài khoản', b.account_holder, 4]],
       })),
       unit: 'tài khoản',
@@ -88,8 +88,8 @@ function buildSections(s, contacts) {
     {
       key: 'family',
       title: 'Gia quyến',
-      items: (contacts || []).map((c, i) => ({
-        title: `Người thân ${i + 1}`,
+      items: (contacts || []).map((c) => ({
+        title: c.full_name || 'Người thân',
         tags: [c.is_emergency_contact ? 'Liên lạc' : null, c.is_guarantor ? 'Bảo lãnh' : null].filter(Boolean),
         fields: [
           ['Họ tên', c.full_name, 4],

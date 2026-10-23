@@ -1,18 +1,18 @@
+import ProfileHistory from '../seafarers/ProfileHistory'
 import PartnerVessels from './PartnerVessels'
 import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, Dropdown, Skeleton, Table } from 'antd'
+import { useNavigate, useParams } from 'react-router-dom'
+import { App, Button, Dropdown, Skeleton } from 'antd'
 import { DeleteOutlined, EditOutlined, MoreOutlined, PauseCircleOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import CopyButton from '../../../components/ds/CopyButton'
 import { DownloadIcon } from '../../../components/ds/TransferIcons'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { shipOwnerApi } from '../../../api/fleetApi'
-import { exportApi } from '../../../api/exportApi'
+import BillListPage from '../bills/BillListPage'
 import { useFleetItem, useFleetMutations, usePartnerLogo } from '../../../hooks/useFleet'
 import { useCan } from '../../../hooks/usePermission'
 import { initialsOfName, partnerSections } from './fleetView'
@@ -20,8 +20,6 @@ import { Crumb, FleetTile } from './FleetParts'
 import { ReadLayout, NotePanel } from '../seafarers/ReadSections'
 import { ZaloActions, EmailActions, LineActions, PhoneActions, QuickContact, WeChatActions, WhatsAppActions } from '../../../components/ds/ContactActions'
 import '../seafarers/SeafarerListPage.css'
-
-const when = (value) => (dayjs(value).isSame(dayjs(), 'day') ? `${dayjs(value).format('HH:mm')} hôm nay` : dayjs(value).format('DD/MM/YYYY'))
 
 export default function PartnerDetailPage() {
   const can = useCan()
@@ -32,11 +30,7 @@ export default function PartnerDetailPage() {
   const [tab, setTab] = useState('overview')
 
   const { data: owner, isLoading, isError, refetch } = useFleetItem('ship-owners', shipOwnerApi, id)
-  const packs = useQuery({
-    queryKey: ['exports', { ship_owner_id: Number(id) }],
-    queryFn: () => exportApi.list({ ship_owner_id: Number(id), limit: 50 }),
-    enabled: tab === 'packs',
-  })
+  const vessels = useQuery({ queryKey: ['fleet', 'owner-vessels', owner?.id], queryFn: () => shipOwnerApi.vessels(owner.id), enabled: Boolean(owner) && can('vessel.view') })
   const { save, remove, restore } = useFleetMutations(shipOwnerApi)
   const logo = usePartnerLogo(owner)
 
@@ -137,34 +131,14 @@ export default function PartnerDetailPage() {
 
   const tabs = [
     { value: 'overview', label: 'Tổng quan' },
-    { value: 'vessels', label: 'Tàu' },
-    ...(can('export.view') ? [{ value: 'packs', label: 'Bộ giấy đã nộp', count: Number(owner.pack_count) }] : []),
+    ...(can('bill.view') ? [{ value: 'bills', label: 'Yêu cầu thanh toán' }] : []),
+    { value: 'history', label: 'Lịch sử' },
   ]
   const descParts = [owner.country_name && withFlag(owner.country_code, owner.country_name, owner.country_flag_emoji)].filter(Boolean)
 
-  const overview = <ReadLayout sections={sections} label="đối tác" />
+  const overview = <ReadLayout sections={[...sections, { key: 'vessels', title: 'Tàu sở hữu', countLabel: !can('vessel.view') ? '—' : vessels.isError ? '—' : vessels.data ? `${vessels.data.data.length} tàu` : '…', content: <PartnerVessels owner={owner} /> }]} label="đối tác" />
 
-  const vesselsTab = <PartnerVessels owner={owner} />
 
-  const packsTab = (
-    <section className="crew-panel">
-      <Table
-        rowKey="id"
-        loading={packs.isLoading}
-        dataSource={packs.data?.data || []}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-        locale={{ emptyText: <EmptyState isError={packs.isError} title={packs.isError ? 'Không tải được danh sách bộ giấy' : 'Chưa nộp bộ giấy nào cho đối tác này'} /> }}
-        onRow={(pack) => ({ onClick: () => navigate(`/exports/${pack.id}`), style: { cursor: 'pointer' } })}
-        columns={[
-          { title: 'Thuyền viên', dataIndex: 'seafarer_name' },
-          { title: 'Bộ giấy', key: 'title', render: (_, pack) => <span className="rv-muted">{pack.title} · {pack.docs.length} giấy · #{pack.code}</span> },
-          { title: 'Người tạo', dataIndex: 'created_by_email', responsive: ['lg'] },
-          { title: 'Ngày', dataIndex: 'created_at', render: (value) => <span className="ds-num">{when(value)}</span> },
-        ]}
-      />
-    </section>
-  )
 
   return (
     <div className="ds-page crew-profile partner-profile">
@@ -224,8 +198,8 @@ export default function PartnerDetailPage() {
 
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
       {tab === 'overview' && overview}
-      {tab === 'vessels' && vesselsTab}
-      {tab === 'packs' && packsTab}
+      {tab === 'history' && <ProfileHistory partnerId={id} />}
+      {tab === 'bills' && can('bill.view') && <BillListPage shipOwnerId={owner.id} />}
     </div>
   )
 }

@@ -469,14 +469,14 @@ const seafarerService = {
     return changes
   },
 
-  async revisions(id) {
+  async revisions(id, { limit = 20, offset = 0 } = {}) {
     const [rows] = await pool.query(
       `SELECT r.id, r.reason, r.changes, r.created_at, u.email AS changed_by_email
        FROM seafarer_revision r LEFT JOIN "user" u ON u.id = r.changed_by
-       WHERE r.seafarer_id = ? ORDER BY r.created_at DESC, r.id DESC LIMIT 100`,
-      [id]
+       WHERE r.seafarer_id = ? ORDER BY r.created_at DESC, r.id DESC LIMIT ? OFFSET ?`,
+      [id, limit + 1, offset]
     )
-    return rows.map((row) => ({ ...row, changes: typeof row.changes === 'string' ? JSON.parse(row.changes) : row.changes }))
+    return { data: rows.slice(0, limit).map((row) => ({ ...row, changes: typeof row.changes === 'string' ? JSON.parse(row.changes) : row.changes })), nextOffset: rows.length > limit ? offset + limit : null }
   },
 
   async softDelete(id, updated_by) {

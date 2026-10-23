@@ -116,6 +116,7 @@ describe('fleet.service: người liên hệ của đối tác', () => {
       release() {},
       async query(sql, params = []) {
         calls.push({ sql, params })
+        if (sql.includes('FROM ship_owner o')) return ownerRow
         return sql.startsWith('INSERT INTO ship_owner (') ? [{ insertId: 5 }] : [[]]
       },
     }

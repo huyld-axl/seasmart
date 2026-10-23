@@ -42,17 +42,15 @@ it('mở bộ lọc quốc gia và truyền tham số về API', async () => {
   expect(useFleetList.mock.calls.at(-1)[2].country_id).toBeUndefined()
 })
 
-it('lọc nhiều mục còn thiếu, kênh liên hệ và xóa toàn bộ bộ lọc', async () => {
+it('lọc nhiều kênh liên hệ và xóa toàn bộ bộ lọc', async () => {
   show()
   fireEvent.click(screen.getByRole('button', { name: /Bộ lọc/ }))
-  const missing = screen.getByLabelText('Lọc thông tin còn thiếu')
-  missing.options[1].selected = true
-  fireEvent.change(missing)
+  expect(screen.queryByLabelText('Lọc thông tin còn thiếu')).toBeNull()
   const channels = screen.getByLabelText('Lọc kênh liên hệ')
   channels.options[1].selected = true
   channels.options[2].selected = true
   fireEvent.change(channels)
-  expect(useFleetList.mock.calls.at(-1)[2]).toMatchObject({ missing: 'primary', channels: 'zalo,whatsapp', page: 1 })
+  expect(useFleetList.mock.calls.at(-1)[2]).toMatchObject({ channels: 'zalo,whatsapp', page: 1 })
   fireEvent.click(screen.getByRole('button', { name: 'Xoá bộ lọc' }))
-  expect(useFleetList.mock.calls.at(-1)[2]).toMatchObject({ missing: undefined, channels: undefined, country_id: undefined })
+  expect(useFleetList.mock.calls.at(-1)[2]).toMatchObject({ channels: undefined, country_id: undefined })
 })

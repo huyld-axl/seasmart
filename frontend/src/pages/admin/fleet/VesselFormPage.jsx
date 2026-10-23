@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -120,7 +121,7 @@ function VesselForm({ vessel }) {
       description="Thông tin tàu dùng để đối chiếu chuyến đi tàu và điền vùng SERVICE RECORDS khi xuất CV."
       tile={<FleetTile large />}
       name={values.vessel_name || (isEdit ? vessel.vessel_name : 'Tàu mới')}
-      sub={[types.data?.find((t) => t.id === values.vessel_type_id)?.name_vi, countries.data?.find((c) => c.id === values.flag_country_id)?.name_vi].filter(Boolean).join(' · ')}
+      sub={[types.data?.find((t) => t.id === values.vessel_type_id)?.name_vi, ((country) => country ? withFlag(country.code, country.name_vi || country.name_en, country.flag_emoji) : null)(countries.data?.find((c) => c.id === values.flag_country_id))].filter(Boolean).join(' · ')}
       sections={SECTIONS}
       stats={SECTIONS.map((_, index) => sectionMeta(index))}
       done={done}
@@ -153,13 +154,13 @@ function VesselForm({ vessel }) {
               <Select {...selectProps} loading={types.isLoading} options={toOptions(types.data, (row) => row.name_vi)} placeholder="Chọn loại tàu" />
             </Form.Item>
             <Form.Item name="flag_country_id" label={label('flag_country_id', 'Cờ quốc gia')} className={cn('flag_country_id', 'sf-c4')} extra="Lấy từ danh mục Quốc gia.">
-              <Select {...selectProps} loading={countries.isLoading} options={toOptions(countries.data, (row) => row.name_vi)} placeholder="Chọn quốc gia" />
+              <Select {...selectProps} loading={countries.isLoading} options={toOptions(countries.data, (row) => withFlag(row.code, row.name_vi || row.name_en, row.flag_emoji))} placeholder="Chọn quốc gia" />
             </Form.Item>
             <Form.Item name="year_built" label={label('year_built', 'Năm đóng')} className={cn('year_built', 'sf-c4')}>
               <InputNumber min={1900} max={2100} precision={0} controls={false} style={{ width: '100%' }} placeholder="2016" />
             </Form.Item>
             <Form.Item name="port_of_registry_id" label={label('port_of_registry_id', 'Cảng đăng ký')} className={cn('port_of_registry_id', 'sf-c6')}>
-              <Select {...selectProps} loading={ports.isLoading} options={toOptions(ports.data, (row) => `${row.name}${row.country_name ? ` (${row.country_name})` : ''}`)} placeholder="Chọn cảng" />
+              <Select {...selectProps} loading={ports.isLoading} options={toOptions(ports.data, (row) => `${row.name}${row.country_name ? ` (${withFlag(row.country_code, row.country_name, row.country_flag_emoji)})` : ''}`)} placeholder="Chọn cảng" />
             </Form.Item>
             <Form.Item name="classification_society" label={label('classification_society', 'Tổ chức đăng kiểm')} className={cn('classification_society', 'sf-c6')}>
               <Input maxLength={50} placeholder="Ví dụ ClassNK" />

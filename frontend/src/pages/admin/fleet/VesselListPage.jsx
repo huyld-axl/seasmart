@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Grid, Input, Skeleton, Table } from 'antd'
@@ -53,7 +54,7 @@ export default function VesselListPage() {
   const columns = [
     { title: 'Tàu', key: 'vessel', render: (_, row) => <VesselCell row={row} /> },
     { title: 'IMO', dataIndex: 'imo_number', render: (value) => (value ? <span className="ds-mono">{value}</span> : <span style={{ color: 'var(--muted)' }}>Không có IMO</span>) },
-    { title: 'Cờ', dataIndex: 'flag_name', responsive: ['lg'], render: muted },
+    { title: 'Cờ', dataIndex: 'flag_name', responsive: ['lg'], render: (value, row) => muted(value ? withFlag(row.flag_code, value, row.flag_emoji) : null) },
     { title: 'Chủ tàu', dataIndex: 'ship_owner_name', responsive: ['lg'], render: muted },
     { title: 'GRT', dataIndex: 'gross_tonnage', align: 'right', responsive: ['lg'], render: (value) => <span className="ds-num">{value == null ? '—' : Number(value).toLocaleString('vi-VN')}</span> },
     { title: 'Đang trên tàu', dataIndex: 'crew_on_board', align: 'right', render: (value) => <span className="ds-num">{value}</span> },
@@ -79,7 +80,7 @@ export default function VesselListPage() {
             <button type="button" className="crew-list__row" onClick={() => open(row)}>
               <VesselCell row={row} />
               <span className="crew-list__meta">
-                <span className="ds-cell2__sub">{[row.imo_number ? `IMO ${row.imo_number}` : 'Không có IMO', row.ship_owner_name].filter(Boolean).join(' · ')}</span>
+                <span className="ds-cell2__sub">{[row.imo_number ? `IMO ${row.imo_number}` : 'Không có IMO', row.flag_name && withFlag(row.flag_code, row.flag_name, row.flag_emoji), row.ship_owner_name].filter(Boolean).join(' · ')}</span>
               </span>
             </button>
           </li>

@@ -3,6 +3,7 @@ const config = require('../../config')
 const pool = require('../../config/db')
 const { fleetService, VESSEL_STATUSES } = require('../../services/fleet.service')
 const businessCardScan = require('../../services/business_card_scan.service')
+const { ownerIdFor } = require('../../utils/scope')
 const { MAX_FILE_BYTES } = require('../../constants/document_types')
 
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
@@ -12,6 +13,9 @@ const listQuery = {
     search: { type: 'string', maxLength: 100 },
     status: { type: 'string', enum: VESSEL_STATUSES },
     active: { type: 'string', enum: ['0', '1'] },
+    country_id: { type: 'integer', minimum: 1 },
+    missing: { type: 'string', pattern: '^(primary|phone|email)(,(primary|phone|email))*$' },
+    channels: { type: 'string', pattern: '^(zalo|whatsapp|line|wechat)(,(zalo|whatsapp|line|wechat))*$' },
     page: { type: 'integer', minimum: 1 },
     limit: { type: 'integer', minimum: 1, maximum: 100 },
   },
@@ -61,7 +65,7 @@ const ownerBody = {
     country_id: nullableInt,
     tax_id: nullableText(50),
     address: nullableText(500),
-    phone: nullableText(30),
+    phone: nullableText(30), zalo: nullableText(300),
     fax: nullableText(30),
     email: nullableText(150),
     website: nullableText(200),
@@ -70,7 +74,7 @@ const ownerBody = {
       maxItems: 20,
       items: {
         type: 'object',
-        properties: { name: nullableText(150), position: nullableText(100), phone: nullableText(30), email: nullableText(150), whatsapp: nullableText(300), line_id: nullableText(300), wechat_id: nullableText(300), is_primary: { type: 'boolean' } },
+        properties: { name: nullableText(150), position: nullableText(100), phone: nullableText(30), zalo: nullableText(300), email: nullableText(150), whatsapp: nullableText(300), line_id: nullableText(300), wechat_id: nullableText(300), is_primary: { type: 'boolean' } },
       },
     },
     is_active: flag,
@@ -123,9 +127,18 @@ async function fleetRoutes(fastify) {
       update: { schema: ownerBody, fn: (db, id, body) => fleetService.updateOwner(db, id, body) },
       extra: (app, { read, idParams: params }) => {
         const write = { onRequest: [app.authenticate, app.can('partner.update')] }
+        app.get('/:id/vessels', { onRequest: [app.authenticate, app.can('partner.view'), app.can('vessel.view')], schema: { params } }, async (request) => fleetService.listOwnerVessels(pool, request.params.id))
+        app.post('/:id/vessels', {
+          onRequest: [app.authenticate, app.can('partner.update'), app.can('vessel.view'), app.can('vessel.update')],
+          schema: { params, body: { type: 'object', required: ['vessel_id', 'expected_owner_id'], additionalProperties: false, properties: { vessel_id: { type: 'integer', minimum: 1 }, expected_owner_id: nullableInt } } },
+        }, async (request) => fleetService.linkOwnerVessel(pool, request.params.id, request.body))
+        app.get('/:id/vessels/:vesselId/crew', {
+          onRequest: [app.authenticate, app.can('partner.view'), app.can('vessel.view'), app.can('seafarer.view')],
+          schema: { params: { type: 'object', required: ['id', 'vesselId'], properties: { id: { type: 'integer', minimum: 1 }, vesselId: { type: 'integer', minimum: 1 } } } },
+        }, async (request) => fleetService.listOwnerVesselCrew(pool, request.params.id, request.params.vesselId, ownerIdFor(request, 'seafarer')))
         // Logo công ty: GET trả ảnh, POST (multipart, field "file") thay logo, DELETE gỡ logo.
-        app.get('/:id/logo', { ...read, schema: { params } }, async (request, reply) => {
-          const logo = await fleetService.getOwnerLogo(pool, request.params.id)
+        app.get('/:id/logo', { ...read, schema: { params, querystring: { type: 'object', properties: { size: { type: 'string', enum: ['thumb', 'full'], default: 'full' } } } } }, async (request, reply) => {
+          const logo = await fleetService.getOwnerLogo(pool, request.params.id, request.query.size)
           reply.header('Content-Type', logo.mime)
           reply.header('Cache-Control', 'private, no-cache')
           return reply.send(fs.createReadStream(logo.path))

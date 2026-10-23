@@ -15,6 +15,7 @@ const TABLE_CACHE_KEY = {
 function invalidateCache(table) {
   const key = TABLE_CACHE_KEY[table]
   if (key) delete cache[key]
+  if (table === 'country') delete cache.ports
 }
 
 async function getCached(key, queryFn) {
@@ -50,7 +51,7 @@ async function lookupRoutes(fastify) {
   fastify.get('/countries', async () => {
     return getCached('countries', async () => {
       const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en FROM country ORDER BY name_vi'
+        'SELECT id, code, name_vi, name_en, flag_emoji FROM country ORDER BY name_vi'
       )
       return rows
     })
@@ -96,7 +97,7 @@ async function lookupRoutes(fastify) {
     if (search || country_id) {
       // dynamic query — skip cache
       let sql =
-        'SELECT p.id, p.un_locode, p.name, p.country_id, c.code AS country_code, c.name_vi AS country_name FROM port p JOIN country c ON c.id = p.country_id WHERE 1=1'
+        'SELECT p.id, p.un_locode, p.name, p.country_id, c.code AS country_code, c.flag_emoji AS country_flag_emoji, COALESCE(c.name_vi, c.name_en) AS country_name FROM port p JOIN country c ON c.id = p.country_id WHERE 1=1'
       const params = []
       if (country_id) {
         sql += ' AND p.country_id = ?'
@@ -112,7 +113,7 @@ async function lookupRoutes(fastify) {
     }
     return getCached('ports', async () => {
       const [rows] = await pool.query(
-        'SELECT p.id, p.un_locode, p.name, p.country_id, c.code AS country_code, c.name_vi AS country_name FROM port p JOIN country c ON c.id = p.country_id ORDER BY p.name'
+        'SELECT p.id, p.un_locode, p.name, p.country_id, c.code AS country_code, c.flag_emoji AS country_flag_emoji, COALESCE(c.name_vi, c.name_en) AS country_name FROM port p JOIN country c ON c.id = p.country_id ORDER BY p.name'
       )
       return rows
     })

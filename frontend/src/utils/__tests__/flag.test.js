@@ -16,3 +16,11 @@ describe('flag', () => {
     expect(withFlag(null, 'Nhật Bản')).toBe('Nhật Bản')
   })
 })
+
+
+it('cờ tùy chỉnh được ưu tiên và xóa cờ sẽ quay lại ISO', () => {
+  expect(withFlag('VN', 'Việt Nam', '🇻🇳')).toBe('🇻🇳 Việt Nam')
+  expect(withFlag('VN', 'Tên mẫu', '🇸🇬')).toBe('🇸🇬 Tên mẫu')
+  expect(withFlag('VN', 'Việt Nam', '')).toBe('🇻🇳 Việt Nam')
+  expect(withFlag('VN', 'Việt Nam', null)).toBe('🇻🇳 Việt Nam')
+})

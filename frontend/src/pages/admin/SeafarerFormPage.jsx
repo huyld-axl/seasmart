@@ -6,6 +6,8 @@ import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, Ri
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi } from '../../api'
 import { documentApi } from '../../api/documentApi'
+import { withFlag } from '../../utils/flag'
+import ZaloInput from '../../components/ds/ZaloInput'
 import ScanButton from '../../components/ds/ScanButton'
 import { useCan } from '../../hooks/usePermission'
 import AutofillBanner from '../../components/ds/AutofillBanner'
@@ -64,7 +66,7 @@ const SECTIONS = [
     desc: 'Dùng khi khám sức khỏe và đặt đồ bảo hộ.',
     fields: ['height_cm', 'weight_kg', 'blood_type', 'shoe_size', 'ppe_size', 'shirt_size', 'pants_size'],
   },
-  { key: 'contact', title: 'Liên hệ', fields: ['phone_primary', 'email'] },
+  { key: 'contact', title: 'Liên hệ', fields: ['phone_primary', 'zalo', 'email'] },
   {
     key: 'bank',
     title: 'Ngân hàng & BHXH',
@@ -91,7 +93,7 @@ const SECTIONS = [
 ]
 const FORM_FIELDS = SECTIONS.flatMap((s) => s.fields)
 const BANK_KEYS = ['bank_name', 'account_number', 'account_holder']
-const CONTACT_KEYS = ['full_name', 'relationship', 'phone_primary', 'guarantor_id_number', 'guarantor_id_issued_date', 'guarantor_id_issued_place', 'address']
+const CONTACT_KEYS = ['full_name', 'relationship', 'phone_primary', 'zalo', 'guarantor_id_number', 'guarantor_id_issued_date', 'guarantor_id_issued_place', 'address']
 
 const isFilled = (v) => v !== undefined && v !== null && !(typeof v === 'string' && !v.trim())
 const rowFilled = (row, keys) => Boolean(row) && keys.some((k) => isFilled(row[k]))
@@ -125,6 +127,7 @@ function toFormValues(seafarer, contacts) {
         full_name: c.full_name,
         relationship: c.relationship || null,
         phone_primary: c.phone_primary,
+        zalo: c.zalo,
         guarantor_id_number: c.guarantor_id_number,
         guarantor_id_issued_date: toDay(c.guarantor_id_issued_date),
         guarantor_id_issued_place: c.guarantor_id_issued_place,
@@ -252,7 +255,7 @@ export default function SeafarerFormPage() {
     enabled: isEdit,
   })
   const { data: countries } = useQuery({
-    queryKey: ['countries'],
+    queryKey: ['lookup', 'countries'],
     queryFn: () => lookupApi.countries().then((r) => r.data),
   })
 
@@ -654,7 +657,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                   showSearch
                   placeholder="Chọn quốc tịch"
                   optionFilterProp="label"
-                  options={(countries || []).map((c) => ({ value: c.id, label: c.name_vi || c.name_en }))}
+                  options={(countries || []).map((c) => ({ value: c.id, label: withFlag(c.code, c.name_vi || c.name_en, c.flag_emoji) }))}
                 />
               </Field>
               <div className="sf-sub">Căn cước công dân</div>
@@ -702,6 +705,9 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
             <div className="sf-grid">
               <Field name="phone_primary" label="Số điện thoại" span={6} extra="Dùng để gửi link ký qua SMS.">
                 <Input type="tel" placeholder="0901 234 567" maxLength={20} />
+              </Field>
+              <Field name="zalo" label="Zalo" span={6}>
+                <ZaloInput phoneName="phone_primary" />
               </Field>
               <Field name="email" label="Email" span={6} rules={[{ type: 'email', message: 'Email chưa đúng dạng' }]}>
                 <Input type="email" placeholder="ten@email.com" />
@@ -777,6 +783,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                       <Form.Item name={[name, 'relationship']} label="Quan hệ" className="sf-c4">
                         <AutoComplete options={RELATIONSHIPS} placeholder="Chọn hoặc nhập" />
                       </Form.Item>
+                      <Form.Item name={[name, 'zalo']} label="Zalo" className="sf-c4"><ZaloInput phoneName={['contacts', name, 'phone_primary']} /></Form.Item>
                       <Form.Item name={[name, 'phone_primary']} label="Số điện thoại" className="sf-c4">
                         <Input type="tel" maxLength={20} />
                       </Form.Item>

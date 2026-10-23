@@ -1,11 +1,14 @@
+import PartnerVessels from './PartnerVessels'
 import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Dropdown, Skeleton, Table } from 'antd'
-import { DeleteOutlined, EditOutlined, MoreOutlined, PauseCircleOutlined, PlayCircleOutlined, PlusOutlined, RightOutlined, SendOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, MoreOutlined, PauseCircleOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
+import CopyButton from '../../../components/ds/CopyButton'
+import { DownloadIcon } from '../../../components/ds/TransferIcons'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { shipOwnerApi } from '../../../api/fleetApi'
@@ -15,7 +18,7 @@ import { useCan } from '../../../hooks/usePermission'
 import { initialsOfName, partnerSections } from './fleetView'
 import { Crumb, FleetTile } from './FleetParts'
 import { ReadLayout, NotePanel } from '../seafarers/ReadSections'
-import { EmailActions, LineActions, PhoneActions, QuickContact, WeChatActions, WhatsAppActions } from '../../../components/ds/ContactActions'
+import { ZaloActions, EmailActions, LineActions, PhoneActions, QuickContact, WeChatActions, WhatsAppActions } from '../../../components/ds/ContactActions'
 import '../seafarers/SeafarerListPage.css'
 
 const when = (value) => (dayjs(value).isSame(dayjs(), 'day') ? `${dayjs(value).format('HH:mm')} hôm nay` : dayjs(value).format('DD/MM/YYYY'))
@@ -58,19 +61,21 @@ export default function PartnerDetailPage() {
 
   const active = Number(owner.is_active) === 1
   const inUse = owner.usage?.total > 0
-  const primary = owner.contacts?.[0]
-  const headPhone = primary?.phone || owner.phone
-  const headEmail = primary?.email || owner.email
+  const primary = owner.contacts?.find((contact) => Number(contact.is_primary) === 1) || owner.contacts?.[0]
   const sections = partnerSections(owner, {
-    phone: (v) => (v ? <span>{v}<PhoneActions phone={v} /></span> : null),
-    mail: (v) => (v ? <span>{v}<EmailActions email={v} /></span> : null),
+    tax: (value) => value ? <span className="ds-contact-value">{value}<CopyButton value={value} label="Sao chép mã số thuế" /></span> : null,
+    status: (value) => <StatusBadge group="partner" value={Number(value) === 1 ? 'ACTIVE' : 'INACTIVE'} />,
+    fax: (value) => value ? <span className="ds-contact-value">{value}<CopyButton value={value} label="Sao chép số fax" /></span> : null,
+    phone: (v) => (v ? <span className="ds-contact-value">{v}<PhoneActions phone={v} /></span> : null),
+    mail: (v) => (v ? <span className="ds-contact-value">{v}<EmailActions email={v} /></span> : null),
     chat: {
-      whatsapp: (v) => (v ? <span>{v}<WhatsAppActions number={v} /></span> : null),
-      line: (v) => (v ? <span>{v}<LineActions id={v} /></span> : null),
-      wechat: (v) => (v ? <span>{v}<WeChatActions id={v} /></span> : null),
+      zalo: (v) => v ? <span className="ds-contact-value">{v}<ZaloActions value={v} /></span> : null,
+      whatsapp: (v) => (v ? <span className="ds-contact-value">{v}<WhatsAppActions number={v} /></span> : null),
+      line: (v) => (v ? <span className="ds-contact-value">{v}<LineActions id={v} /></span> : null),
+      wechat: (v) => (v ? <span className="ds-contact-value">{v}<WeChatActions id={v} /></span> : null),
     },
-    quick: (c) => <QuickContact phone={c.phone} email={c.email} whatsapp={c.whatsapp} line={c.line_id} wechat={c.wechat_id} />,
-    link: (v) => (v ? <a href={/^https?:\/\//i.test(v) ? v : `https://${v}`} target="_blank" rel="noreferrer">{v}</a> : null),
+    quick: (c) => <QuickContact zalo={c.zalo} phone={c.phone} email={c.email} whatsapp={c.whatsapp} line={c.line_id} wechat={c.wechat_id} />,
+    link: (v) => (v ? <span className="ds-contact-value"><a href={/^https?:\/\//i.test(v) ? v : `https://${v}`} target="_blank" rel="noreferrer">{v}</a><CopyButton value={v} label="Sao chép website" /></span> : null),
   })
 
   async function toggleActive() {
@@ -132,33 +137,14 @@ export default function PartnerDetailPage() {
 
   const tabs = [
     { value: 'overview', label: 'Tổng quan' },
-    { value: 'vessels', label: 'Tàu', count: owner.vessels.length },
+    { value: 'vessels', label: 'Tàu' },
     ...(can('export.view') ? [{ value: 'packs', label: 'Bộ giấy đã nộp', count: Number(owner.pack_count) }] : []),
   ]
-  const descParts = [owner.country_name && withFlag(owner.country_code, owner.country_name)].filter(Boolean)
-
-  const vesselList = owner.vessels.length ? (
-    <ul className="fl-rows">
-      {owner.vessels.map((vessel) => (
-        <li key={vessel.id}>
-          <FleetTile />
-          <span className="fl-rows__main">
-            <Link to={`/vessels/${vessel.id}`}>{vessel.vessel_name}</Link>
-            <span className="ds-cell2__sub">{[vessel.vessel_type_name, vessel.imo_number && `IMO ${vessel.imo_number}`].filter(Boolean).join(' · ') || 'Chưa có loại tàu'}</span>
-          </span>
-          <span className="fl-rows__end">{Number(vessel.crew_on_board)} trên tàu</span>
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p className="crew-muted">Chưa có tàu nào thuộc đối tác này.</p>
-  )
+  const descParts = [owner.country_name && withFlag(owner.country_code, owner.country_name, owner.country_flag_emoji)].filter(Boolean)
 
   const overview = <ReadLayout sections={sections} label="đối tác" />
 
-  const vesselsTab = (
-    <section className="crew-panel crew-panel__body">{vesselList}</section>
-  )
+  const vesselsTab = <PartnerVessels owner={owner} />
 
   const packsTab = (
     <section className="crew-panel">
@@ -181,13 +167,14 @@ export default function PartnerDetailPage() {
   )
 
   return (
-    <div className="ds-page crew-profile">
+    <div className="ds-page crew-profile partner-profile">
       <Crumb items={[{ label: 'Đối tác', to: '/partners' }, { label: owner.company_name }]} />
 
       <div className="crew-head">
         <div className="crew-head__person">
           <div className="crew-head__photo crew-head__photo--logo">
             <FleetTile large text={initialsOfName(owner.company_name)} src={logo} />
+            {logo && <Button size="small" className="crew-head__download" icon={<DownloadIcon />} href={logo} download={`${owner.company_name} - logo.${logo.split(';')[0].split('/')[1]?.replace('jpeg', 'jpg').replace('svg+xml', 'svg') || 'png'}`}>Tải logo</Button>}
           </div>
           <div className="crew-head__text">
             <div className="crew-head__titlerow">
@@ -196,31 +183,27 @@ export default function PartnerDetailPage() {
             </div>
             {descParts.length ? <p className="crew-head__desc">{descParts.join(' · ')}</p> : null}
             <dl className="crew-head__meta">
-              {primary && (
+              {owner.phone && (
                 <>
-                  <dt>Liên hệ chính</dt>
-                  <dd>{[primary.name, primary.position].filter(Boolean).join(' · ')}</dd>
+                  <dt>Điện thoại công ty</dt>
+                  <dd>{owner.phone}<PhoneActions phone={owner.phone} /></dd>
                 </>
               )}
-              {headPhone && (
+              {owner.zalo && <><dt>Zalo công ty</dt><dd>{owner.zalo}<ZaloActions value={owner.zalo} /></dd></>}
+              {owner.email && (
                 <>
-                  <dt>Điện thoại</dt>
-                  <dd>{headPhone}<PhoneActions phone={headPhone} /></dd>
+                  <dt>Email công ty</dt>
+                  <dd>{owner.email}<EmailActions email={owner.email} /></dd>
                 </>
               )}
-              {headEmail && (
-                <>
-                  <dt>Email</dt>
-                  <dd>{headEmail}<EmailActions email={headEmail} /></dd>
-                </>
-              )}
-              <dt>Liên hệ nhanh</dt>
-              <dd>
-                <QuickContact phone={headPhone} email={headEmail} whatsapp={primary?.whatsapp} line={primary?.line_id} wechat={primary?.wechat_id} />
-              </dd>
-              <dt>Tàu</dt>
-              <dd>{owner.vessels.length} tàu</dd>
             </dl>
+            {primary && (
+              <section className="partner-primary" aria-label="Người liên hệ chính">
+                <h2>Người liên hệ chính</h2>
+                <p className="partner-primary__identity"><span>{primary.name}</span>{primary.position && <span className="crew-muted">{primary.position}</span>}</p>
+                <QuickContact zalo={primary.zalo} phone={primary.phone} email={primary.email} whatsapp={primary.whatsapp} line={primary.line_id} wechat={primary.wechat_id} />
+              </section>
+            )}
           </div>
         </div>
         <NotePanel notes={owner.notes} canEdit={can('partner.update')} saving={save.isPending} onSave={saveNotes} className="sf-note--head" />

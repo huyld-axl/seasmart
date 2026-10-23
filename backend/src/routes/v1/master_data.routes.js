@@ -30,7 +30,7 @@ const listQuerySchema = {
 const TABLE_COLUMNS = {
   certificate_type: ['code', 'name_vi', 'name_en', 'validity_years', 'is_stcw', 'notes'],
   vessel_type: ['code', 'name_vi', 'name_en'],
-  country: ['code', 'name_vi', 'name_en'],
+  country: ['code', 'name_vi', 'name_en', 'flag_emoji'],
   contract_type: ['code', 'name_vi', 'name_en'],
 }
 
@@ -39,6 +39,18 @@ function getAllowedCols(table, body) {
   return Object.keys(body).filter(
     (k) => allowed.includes(k) && k !== 'id' && k !== 'created_at' && k !== 'updated_at'
   )
+}
+
+function normalizeCountry(body) {
+  if ('code' in body) {
+    if (typeof body.code !== 'string' || !/^[A-Za-z]{2}$/.test(body.code.trim())) throw { statusCode: 400, message: 'Mã ISO phải gồm 2 chữ cái' }
+    body.code = body.code.trim().toUpperCase()
+  }
+  if ('flag_emoji' in body) {
+    const value = body.flag_emoji == null ? '' : String(body.flag_emoji).trim()
+    if (value && !/^[\u{1F1E6}-\u{1F1FF}]{2}$/u.test(value)) throw { statusCode: 400, message: 'Nhập một emoji cờ quốc gia hợp lệ' }
+    body.flag_emoji = value || null
+  }
 }
 
 // Generic CRUD factory for simple lookup tables
@@ -91,6 +103,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     // CREATE
     fastify.post('/', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
+      if (table === 'country') normalizeCountry(body)
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
       const sql = `INSERT INTO "${table}" (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`
@@ -108,6 +121,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     // UPDATE
     fastify.put('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
+      if (table === 'country') normalizeCountry(body)
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
       const sql = `UPDATE "${table}" SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ?`
@@ -139,7 +153,7 @@ async function portRoutes(fastify) {
     async (request) => {
       const { search } = request.query
       const { limit, offset } = parsePaging(request.query, { defaultLimit: 50 })
-      let sql = `SELECT p.*, c.name_vi AS country_name, c.code AS country_code
+      let sql = `SELECT p.*, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji
                FROM "port" p
                LEFT JOIN "country" c ON c.id = p.country_id
                WHERE 1=1`
@@ -166,7 +180,7 @@ async function portRoutes(fastify) {
   // GET ONE
   fastify.get('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.view')] }, async (request, reply) => {
     const [[row]] = await pool.query(
-      'SELECT p.*, c.name_vi AS country_name FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
+      'SELECT p.*, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [parseInt(request.params.id)]
     )
     if (!row) return reply.code(404).send({ error: 'Không tìm thấy' })
@@ -181,7 +195,7 @@ async function portRoutes(fastify) {
       [name, un_locode || null, country_id]
     )
     const [[created]] = await pool.query(
-      'SELECT p.*, c.name_vi AS country_name FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
+      'SELECT p.*, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [res.insertId]
     )
     return reply.code(201).send(created)
@@ -197,7 +211,7 @@ async function portRoutes(fastify) {
       parseInt(request.params.id),
     ])
     const [[updated]] = await pool.query(
-      'SELECT p.*, c.name_vi AS country_name FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
+      'SELECT p.*, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [parseInt(request.params.id)]
     )
     return updated

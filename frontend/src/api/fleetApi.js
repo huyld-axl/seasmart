@@ -18,6 +18,9 @@ export const vesselApi = {
 }
 export const shipOwnerApi = {
   ...crud('ship-owners'),
+  vessels: (id) => api.get(`/admin/master/ship-owners/${id}/vessels`).then((r) => r.data),
+  linkVessel: (id, data) => api.post(`/admin/master/ship-owners/${id}/vessels`, data).then((r) => r.data),
+  vesselCrew: (id, vesselId) => api.get(`/admin/master/ship-owners/${id}/vessels/${vesselId}/crew`).then((r) => r.data),
   // Quét danh thiếp để điền form (không lưu gì). AI đọc ngay trong lời gọi nên cho thời gian chờ dài.
   scanCard: (file) => {
     const form = new FormData()
@@ -28,7 +31,7 @@ export const shipOwnerApi = {
 
 // Logo công ty đối tác: ảnh cần token nên lấy dạng blob, tải lên bằng multipart field "file".
 export const shipOwnerLogoApi = {
-  get: (id) => api.get(`/admin/master/ship-owners/${id}/logo`, { responseType: 'blob' }).then((r) => r.data),
+  get: (id, size = 'full') => api.get(`/admin/master/ship-owners/${id}/logo`, { params: { size }, responseType: 'blob' }).then((r) => r.data),
   upload: (id, file) => {
     const form = new FormData()
     form.append('file', file)

@@ -1,3 +1,4 @@
+import { withFlag } from '../../../utils/flag'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -63,7 +64,7 @@ function VoyageForm({ voyage }) {
   if (voyage && !vesselRows.some((row) => row.id === voyage.vessel_id)) vesselOptions.unshift({ value: voyage.vessel_id, label: voyage.vessel_name })
   const ownerOptions = (owners.data?.data || []).map((row) => ({ value: row.id, label: row.company_name }))
   if (voyage && !ownerOptions.some((o) => o.value === voyage.ship_owner_id)) ownerOptions.push({ value: voyage.ship_owner_id, label: voyage.ship_owner_name })
-  const portOptions = (ports.data || []).map((row) => ({ value: row.id, label: row.name }))
+  const portOptions = (ports.data || []).map((row) => ({ value: row.id, label: row.country_name ? `${row.name} (${withFlag(row.country_code, row.country_name, row.country_flag_emoji)})` : row.name }))
   const rankOptions = (ranks.data || []).map((row) => ({ value: row.id, label: row.name_en ? `${row.name_vi} (${row.name_en})` : row.name_vi }))
 
   const months = safeMonths(values.planned_embark_date, values.planned_disembark_date)

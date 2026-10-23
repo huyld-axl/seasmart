@@ -41,3 +41,10 @@ describe('chatHref', () => {
     expect(chatHref('line', '')).toBeNull()
   })
 })
+
+
+it('Zalo hỗ trợ số riêng và link kết bạn QR', () => {
+  expect(chatHref('zalo', '0902 123 456')).toBe('https://zalo.me/0902123456')
+  expect(chatHref('zalo', 'https://zalo.me/qr/abc')).toBe('https://zalo.me/qr/abc')
+  expect(parseChatQr('https://zalo.me/qr/abc')).toEqual({ channel: 'zalo', value: 'https://zalo.me/qr/abc' })
+})

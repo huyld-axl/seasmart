@@ -29,6 +29,7 @@ const ALLOWED_FIELDS = [
   'current_rank_id',
   'rank_name_vi',
   'phone_primary',
+  'zalo',
   'phone_secondary',
   'email',
   'permanent_address',
@@ -102,6 +103,7 @@ const CONTACT_FIELDS = [
   'full_name',
   'relationship',
   'phone_primary',
+  'zalo',
   'guarantor_id_number',
   'guarantor_id_issued_date',
   'guarantor_id_issued_place',
@@ -281,7 +283,7 @@ const seafarerService = {
 
   async getById(id) {
     const [rows] = await pool.query(
-      `SELECT s.*, r.name_vi as rank_name, c.name_vi as nationality_name
+      `SELECT s.*, r.name_vi as rank_name, COALESCE(c.name_vi, c.name_en) as nationality_name, c.code AS nationality_code, c.flag_emoji AS nationality_flag_emoji
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
        LEFT JOIN country c ON c.id = s.nationality_id
@@ -441,7 +443,7 @@ const seafarerService = {
     const text = String(reason || '').trim() || 'Cập nhật hồ sơ'
     const [[before]] = await db.query('SELECT * FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
     if (!before) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
-    const { rank_name, nationality_name, ...rest } = data
+    const { rank_name, nationality_name, nationality_code, nationality_flag_emoji, ...rest } = data
     const safeData = pickAllowed(rest)
     const hasLists = Array.isArray(data.bank_accounts) || Array.isArray(data.contacts)
     if (Object.keys(safeData).length === 0 && !hasLists) {
@@ -503,6 +505,7 @@ const seafarerService = {
       'date_of_birth',
       'national_id',
       'phone_primary',
+      'zalo',
       'phone_secondary',
       'email',
       'address',

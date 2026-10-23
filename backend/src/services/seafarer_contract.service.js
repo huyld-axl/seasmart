@@ -128,6 +128,7 @@ function summaryRow(row) {
     rank_name: row.rank_name,
     voyage_id: row.voyage_id,
     voyage_code: row.voyage_code,
+    voyage_status: row.voyage_status,
     vessel_name: row.vessel_name,
     ship_owner_name: row.ship_owner_name,
     start_date: row.start_date,
@@ -263,8 +264,9 @@ const seafarerContractService = {
       if (position.voyage_status === 'ENDED') throw { statusCode: 409, message: 'Chuyến đã kết thúc, không tạo thêm hợp đồng' }
       const [taken] = await conn.query('SELECT 1 FROM seafarer_contract WHERE voyage_position_id = ? AND deleted_at IS NULL', [body.voyage_position_id])
       if (taken.length) throw { statusCode: 409, message: 'Vị trí này đã có hợp đồng' }
-      const [[seafarer]] = await conn.query('SELECT id FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
+      const [[seafarer]] = await conn.query('SELECT id, status FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
       if (!seafarer) throw { statusCode: 400, message: 'Không tìm thấy thuyền viên' }
+      if (seafarer.status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng, kích hoạt lại trước khi tạo hợp đồng' }
       await assertNoOverlap(conn, { seafarerId: body.seafarer_id, startDate: data.start_date, endDate: data.end_date })
       const contractNumber = await nextCode(conn, 'CONTRACT', new Date().getUTCFullYear(), 'HĐ', 4)
       const [result] = await conn.query('INSERT INTO seafarer_contract SET ?', [{
@@ -295,8 +297,9 @@ const seafarerContractService = {
       const [[current]] = await conn.query('SELECT id, status FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
       if (!current) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
       if (!EDITABLE_CONTRACT_STATUSES.includes(current.status)) throw { statusCode: 409, message: 'Hợp đồng đang khoá, không sửa được' }
-      const [[seafarer]] = await conn.query('SELECT id FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
+      const [[seafarer]] = await conn.query('SELECT id, status FROM seafarer WHERE id = ? AND deleted_at IS NULL', [body.seafarer_id])
       if (!seafarer) throw { statusCode: 400, message: 'Không tìm thấy thuyền viên' }
+      if (seafarer.status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng, kích hoạt lại trước khi xếp vào hợp đồng' }
       await assertNoOverlap(conn, { seafarerId: body.seafarer_id, startDate: data.start_date, endDate: data.end_date, excludeId: id })
       await conn.query('UPDATE seafarer_contract SET ? WHERE id = ?', [{ ...data, seafarer_id: body.seafarer_id, updated_by: userId ?? null }, id])
       await conn.query('DELETE FROM contract_item WHERE contract_id = ?', [id])

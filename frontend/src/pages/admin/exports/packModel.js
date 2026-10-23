@@ -66,15 +66,9 @@ export function overlappingContracts(contracts = [], today = dayjs()) {
 }
 
 // Mỗi điều kiện: { title, result: PASS | FAIL | UNKNOWN, reason, action }
-export function readinessRules({ seafarer, certificates = [], contracts = [], pendingReview = 0, today = dayjs() }) {
+export function readinessRules({ seafarer, contracts = [], pendingReview = 0, today = dayjs() }) {
   const missing = KEY_FIELDS.filter(([key]) => !seafarer?.[key]).map(([, label]) => label)
   const overlaps = overlappingContracts(contracts, today)
-  const expired = [
-    ['Hộ chiếu', seafarer?.passport_expiry],
-    ['Sổ thuyền viên', seafarer?.seaman_book_expiry],
-    ['Giấy khám sức khỏe', seafarer?.medical_cert_expiry],
-    ...certificates.filter((c) => c.status !== 'REVOKED').map((c) => [c.certificate_type_name || 'Chứng chỉ', c.expiry_date]),
-  ].filter(([, date]) => date && dayjs(date).isBefore(today, 'day'))
   return [
     {
       title: `Thông tin cá nhân đủ ${KEY_FIELDS.length} trường trọng yếu`,
@@ -93,12 +87,6 @@ export function readinessRules({ seafarer, certificates = [], contracts = [], pe
       result: pendingReview ? 'UNKNOWN' : 'PASS',
       reason: pendingReview ? `${pendingReview} giấy tờ chờ duyệt` : null,
       action: pendingReview ? 'review' : null,
-    },
-    {
-      title: 'Giấy tờ bắt buộc còn hạn',
-      result: expired.length ? 'FAIL' : 'PASS',
-      reason: expired.length ? expired.map(([name, date]) => `${name} hết hạn ${dayjs(date).format('DD/MM/YYYY')}`).join(' · ') : null,
-      action: expired.length ? 'upload' : null,
     },
   ]
 }

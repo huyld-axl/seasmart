@@ -77,8 +77,8 @@ describe('tab Chứng chỉ', () => {
     expect(expiryStatusOf({ no_expiry: 1, expiry_date: null }, now)).toBe('NO_EXPIRY')
     expect(expiryStatusOf({ no_expiry: 0, expiry_date: '2026-10-12' }, now)).toBe('EXPIRED')
     expect(expiryStatusOf({ no_expiry: 0, expiry_date: '2026-10-13' }, now)).toBe('EXPIRING')
-    expect(expiryStatusOf({ no_expiry: 0, expiry_date: '2027-01-11' }, now)).toBe('EXPIRING')
-    expect(expiryStatusOf({ no_expiry: 0, expiry_date: '2027-01-12' }, now)).toBe('VALID')
+    expect(expiryStatusOf({ no_expiry: 0, expiry_date: '2026-12-12' }, now)).toBe('EXPIRING')
+    expect(expiryStatusOf({ no_expiry: 0, expiry_date: '2026-12-13' }, now)).toBe('VALID')
     // Driver MySQL trả Date: không được rơi về VALID khi đã hết hạn.
     expect(expiryStatusOf({ no_expiry: 0, expiry_date: new Date(2025, 6, 1) }, now)).toBe('EXPIRED')
     expect(expiryStatusOf({ no_expiry: 0, expiry_date: new Date(2028, 4, 14) }, now)).toBe('VALID')

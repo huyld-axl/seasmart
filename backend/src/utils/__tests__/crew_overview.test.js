@@ -24,8 +24,8 @@ describe('crew_overview', () => {
     expect(row.national_id).toBe('001')
   })
 
-  it('có điều kiện cho đủ 4 tab, không nhận giá trị lạ', () => {
-    expect(TABS).toEqual(['onboard', 'standby', 'review', 'expiring'])
+  it('có điều kiện cho đủ 3 tab, không nhận giá trị lạ', () => {
+    expect(TABS).toEqual(['onboard', 'standby', 'inactive'])
     expect(TAB_CONDITIONS['1 OR 1=1']).toBeUndefined()
   })
 })

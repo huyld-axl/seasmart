@@ -7,7 +7,6 @@ import {
   Tag,
   Table,
   Spin,
-  Grid,
   Modal,
   Form,
   Input,
@@ -23,6 +22,12 @@ import {
   ArrowLeftOutlined,
   PlusOutlined,
   DeleteOutlined,
+  CloseOutlined,
+  DownOutlined,
+  ScanOutlined,
+  DownloadOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined,
   EditOutlined,
   EllipsisOutlined,
   MoreOutlined,
@@ -33,6 +38,7 @@ import {
 import {
   seafarerApi,
   certificateApi,
+  certificateTypeApi,
   lookupApi,
 } from '../../api'
 import ZaloButton from '../../components/common/ZaloButton'
@@ -43,9 +49,12 @@ import useToast from '../../components/ds/useToast'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
 import ProfileSeaService from './seafarers/ProfileSeaService'
 import CertificateTable from '../../components/ds/CertificateTable'
-import { toTableCerts } from './seafarers/certificateView'
+import { expiryAlerts, supersededIds, toTableCerts } from './seafarers/certificateView'
 import { documentApi } from '../../api/documentApi'
-import { attentionItems, activeContract, headLine, toProfileContracts } from './seafarers/profileView'
+import Banner from '../../components/ds/Banner'
+import ScanButton from '../../components/ds/ScanButton'
+import { EmailActions, PhoneActions } from '../../components/ds/ContactActions'
+import { attentionItems, headLine, toProfileContracts, voyageNow } from './seafarers/profileView'
 import { useContractList } from '../../hooks/useVoyages'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
@@ -56,8 +65,8 @@ import ProfileExports from './seafarers/ProfileExports'
 import CrewPhoto from './seafarers/CrewPhoto'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerProfile.css'
+import './contracts/contracts.css'
 
-const { useBreakpoint } = Grid
 
 const STATUS_COLOR = {
   AVAILABLE: 'green',
@@ -71,6 +80,8 @@ const STATUS_LABEL = {
 
 
 
+const NOW_LABEL = { next: 'Chuyến sắp tới', last: 'Chuyến gần nhất' }
+
 const PROFILE_TABS = [
   { value: 'overview', label: 'Tổng quan' },
   { value: 'docs', label: 'Chứng chỉ' },
@@ -78,30 +89,6 @@ const PROFILE_TABS = [
   { value: 'exports', label: 'Đã xuất' },
   { value: 'history', label: 'Lịch sử' },
 ]
-
-function AttentionSection({ items, reviewTo, canReview }) {
-  return (
-    <Section title="Cần chú ý">
-      {items.length ? (
-        <ul className="crew-attention">
-          {items.map((item) => (
-            <li key={item.text}>
-              {item.kind === 'review' ? (
-                <span className="crew-pending"><EllipsisOutlined aria-hidden />Chờ duyệt</span>
-              ) : (
-                <StatusBadge group="cert" value={item.state} />
-              )}
-              <span>{item.text}</span>
-              {item.kind === 'review' && canReview && <Link to={reviewTo}>Mở màn duyệt</Link>}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="crew-muted">Giấy tờ còn hạn, không có gì chờ duyệt.</p>
-      )}
-    </Section>
-  )
-}
 
 export default function SeafarerDetailPage() {
   const { id } = useParams()
@@ -112,6 +99,13 @@ export default function SeafarerDetailPage() {
   const [tab, setTab] = useState('overview')
   const pageRef = useRef(null)
   const can = useCan()
+  const [dismissed, setDismissed] = useState(() => loadDismissed(id))
+  const saveDismissed = (next) => {
+    setDismissed(next)
+    try { localStorage.setItem(dismissKey(id), JSON.stringify(next)) } catch { /* trình duyệt chặn lưu thì chỉ đổi lần này */ }
+  }
+  const dismissAlerts = (items) => saveDismissed({ ...dismissed, ...Object.fromEntries(items.map((i) => [i.id, i.expiry])) })
+  const restoreAlert = (certId) => saveDismissed(Object.fromEntries(Object.entries(dismissed).filter(([key]) => String(key) !== String(certId))))
 
   const { data: seafarer, isLoading, isError, refetch } = useQuery({
     queryKey: ['seafarer', id],
@@ -148,6 +142,30 @@ export default function SeafarerDetailPage() {
     onError: (e) => toast.error('Không xoá được thuyền viên', { description: e.response?.data?.error }),
   })
 
+  const activeMutation = useMutation({
+    mutationFn: (active) => (active ? seafarerApi.activate(id) : seafarerApi.deactivate(id)),
+    onSuccess: (_, active) => {
+      toast.success(active ? 'Đã kích hoạt lại thuyền viên' : 'Đã tạm ngưng thuyền viên')
+      queryClient.invalidateQueries({ queryKey: ['seafarer', id] })
+      queryClient.invalidateQueries({ queryKey: ['seafarers'] })
+      queryClient.invalidateQueries({ queryKey: ['revisions', id] })
+    },
+    onError: (e) => toast.error('Không đổi được trạng thái', { description: e.response?.data?.error || e.response?.data?.message }),
+  })
+
+  function handleToggleActive() {
+    const active = seafarer?.status === 'INACTIVE'
+    modal.confirm({
+      title: active ? `Kích hoạt lại ${seafarer?.full_name}?` : `Tạm ngưng ${seafarer?.full_name}?`,
+      content: active
+        ? 'Thuyền viên về trạng thái Ở bờ và có thể được xếp vào hợp đồng mới.'
+        : 'Thuyền viên sẽ không được chọn khi tạo hợp đồng. Hồ sơ vẫn giữ nguyên, kích hoạt lại bất cứ lúc nào.',
+      okText: active ? 'Kích hoạt lại' : 'Tạm ngưng',
+      cancelText: 'Huỷ',
+      onOk: () => activeMutation.mutateAsync(active),
+    })
+  }
+
   function handleDelete() {
     modal.confirm({
       title: `Xoá thuyền viên ${seafarer?.full_name}?`,
@@ -180,10 +198,14 @@ export default function SeafarerDetailPage() {
 
   const certList = Array.isArray(certificates) ? certificates : certificates?.data || []
   const contractList = toProfileContracts(contracts?.data)
-  const attention = attentionItems(seafarer, certList)
+  const nowVoyage = voyageNow(contracts?.data, seafarer.status)
+  const certAlerts = expiryAlerts(certList, { dismissed })
+  const replaced = supersededIds(certList)
+  const liveCerts = certList.filter((c) => !replaced.has(c.id))
+  const attention = attentionItems(seafarer, liveCerts)
   const expired = attention.filter((item) => item.state === 'EXPIRED').length
   const expiring = attention.filter((item) => item.state === 'EXPIRING').length
-  const rules = readinessRules({ seafarer, certificates: certList, contracts: contractList, pendingReview: certList.filter((c) => c.status === 'PENDING').length })
+  const rules = readinessRules({ seafarer, contracts: contractList, pendingReview: certList.filter((c) => c.status === 'PENDING').length })
   const readiness = readinessLevel(rules)
   const failing = rules.filter((rule) => rule.result !== 'PASS')
   // [nhãn, hành động, quyền cần có]
@@ -196,18 +218,18 @@ export default function SeafarerDetailPage() {
   const READINESS_TEXT = {
     BLOCKED: `Chưa xuất được: ${failing.filter((r) => r.result === 'FAIL').length} điều kiện không đạt.`,
     NEEDS_REVIEW: 'Xuất được, nhưng còn chỗ chưa duyệt. Người duyệt bản xuất sẽ thấy cảnh báo.',
-    READY_IN_SCOPE: 'Đủ điều kiện xuất theo các mẫu trong phạm vi MVP.',
   }
   const createPack = () => navigate(`/exports/new?seafarer=${id}`)
   const dropFiles = () => navigate(`/seafarers/${id}/upload`)
   const moreItems = [
-    ...(can('seafarer.update') ? [{ key: 'edit', icon: <EditOutlined />, label: 'Sửa thông tin' }] : []),
-    ...(can('seafarer.update') && can('seafarer.delete') ? [{ type: 'divider' }] : []),
+    ...(can('export.create') ? [{ key: 'pack', icon: <SendOutlined />, label: 'Tạo bộ giấy', disabled: readiness === 'BLOCKED', title: readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra bên dưới' : undefined }] : []),
+    ...((can('export.create') && (can('seafarer.update') || can('seafarer.delete'))) ? [{ type: 'divider' }] : []),
+    ...(can('seafarer.update') ? [seafarer.status === 'INACTIVE' ? { key: 'activate', icon: <PlayCircleOutlined />, label: 'Kích hoạt lại' } : { key: 'deactivate', icon: <PauseCircleOutlined />, label: 'Tạm ngưng thuyền viên' }] : []),
     ...(can('seafarer.delete') ? [{ key: 'delete', icon: <DeleteOutlined />, label: 'Xoá thuyền viên', danger: true }] : []),
   ]
   const moreMenu = {
     items: moreItems,
-    onClick: ({ key }) => (key === 'edit' ? navigate(`/seafarers/${id}/edit`) : handleDelete()),
+    onClick: ({ key }) => (key === 'pack' ? createPack() : key === 'delete' ? handleDelete() : handleToggleActive()),
   }
   // Tab Đã xuất cần export.view; phần Hợp đồng ở tab Đi tàu cần contract.view.
   const TAB_PERM = { exports: 'export.view' }
@@ -219,13 +241,11 @@ export default function SeafarerDetailPage() {
   const bodies = {
     overview: (
       <>
-        <AttentionSection items={attention} reviewTo={`/seafarers/${id}/review`} canReview={can('seafarer.docs')} />
         <ProfileOverview seafarer={seafarer} seafarerId={id} />
-        <WorkSection s={seafarer} />
       </>
     ),
     docs: (
-      <CertificatesSection seafarerId={id} />
+      <CertificatesSection seafarerId={id} dismissed={dismissed} onDismiss={dismissAlerts} onRestore={restoreAlert} />
     ),
     service: (
       <>
@@ -254,31 +274,59 @@ export default function SeafarerDetailPage() {
 
       <div className="crew-head">
         <div className="crew-head__person">
-          <CrewPhoto size="xl" src={photo} />
+          <div className="crew-head__photo">
+            <CrewPhoto size="xl" src={photo} />
+            {photo && (
+              <Button size="small" className="crew-head__download" icon={<DownloadOutlined />} href={photo} download={`${seafarer.seafarer_code || seafarer.id} - ${seafarer.full_name}.${photo.startsWith('data:image/png') ? 'png' : 'jpg'}`}>Tải ảnh</Button>
+            )}
+          </div>
           <div className="crew-head__text">
-            <h1 className="crew-head__title">{seafarer.full_name}</h1>
-            <p className="crew-head__desc">{headLine(seafarer, activeContract(contractList)) || seafarer.seafarer_code}</p>
-            <div className="crew-head__badges">
+            <div className="crew-head__titlerow">
+              <h1 className="crew-head__title">{seafarer.full_name}</h1>
               <StatusBadge group="crew" value={seafarer.status} />
               {expired > 0 && <span className="crew-docs crew-docs--error">{expired} giấy tờ hết hạn</span>}
               {!expired && expiring > 0 && <span className="crew-docs crew-docs--warning">{expiring} sắp hết hạn</span>}
             </div>
+            <p className="crew-head__desc">{headLine(seafarer) || seafarer.seafarer_code}</p>
+            <dl className="crew-head__meta">
+              {nowVoyage && (
+                <>
+                  <dt>{NOW_LABEL[nowVoyage.kind] || 'Tàu'}</dt>
+                  <dd>
+                    <Link to={`/voyages/${nowVoyage.row.voyage_id}`}>{nowVoyage.row.vessel_name}</Link>
+                    {nowVoyage.row.rank_name && nowVoyage.row.rank_name !== seafarer.rank_name ? ` · ${nowVoyage.row.rank_name}` : ''}
+                    {nowVoyage.kind === 'current' ? ` · đến ${fmt(nowVoyage.row.end_date)}` : ` · ${fmt(nowVoyage.row.start_date)} → ${fmt(nowVoyage.row.end_date)}`}
+                  </dd>
+                </>
+              )}
+              {seafarer.phone_primary && (
+                <>
+                  <dt>Điện thoại</dt>
+                  <dd>{seafarer.phone_primary}<PhoneActions phone={seafarer.phone_primary} /></dd>
+                </>
+              )}
+              {seafarer.email && (
+                <>
+                  <dt>Email</dt>
+                  <dd>{seafarer.email}<EmailActions email={seafarer.email} /></dd>
+                </>
+              )}
+            </dl>
           </div>
         </div>
         <div className="crew-head__actions">
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
-              <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending} />
+              <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending || activeMutation.isPending} />
             </Dropdown>
           )}
-          {can('export.create') && (
-            <Button icon={<SendOutlined />} disabled={readiness === 'BLOCKED'} title={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra bên dưới' : undefined} onClick={createPack}>Tạo bộ giấy</Button>
-          )}
+          {can('seafarer.update') && <Button icon={<EditOutlined />} onClick={() => navigate(`/seafarers/${id}/edit`)}>Sửa thông tin</Button>}
           {can('seafarer.docs') && <Button type="primary" icon={<UploadOutlined />} onClick={dropFiles}>Tải giấy tờ lên</Button>}
         </div>
       </div>
 
-      <div role={readiness === 'BLOCKED' ? 'alert' : 'status'} className={`ds-banner ds-banner--${{ BLOCKED: 'error', NEEDS_REVIEW: 'warning', READY_IN_SCOPE: 'neutral' }[readiness]}`}>
+      {readiness !== 'READY_IN_SCOPE' && (
+      <div role={readiness === 'BLOCKED' ? 'alert' : 'status'} className={`ds-banner ds-banner--${{ BLOCKED: 'error', NEEDS_REVIEW: 'warning' }[readiness]}`}>
         <div className="ds-banner__body">
           <p className="ds-banner__title"><StatusBadge group="readiness" value={readiness} /> {READINESS_TEXT[readiness]}</p>
           {failing.length > 0 && (
@@ -296,8 +344,11 @@ export default function SeafarerDetailPage() {
             </ul>
           )}
         </div>
-        {readiness === 'READY_IN_SCOPE' && can('export.create') && <div className="ds-banner__action"><Button onClick={createPack}>Tạo bộ giấy</Button></div>}
       </div>
+      )}
+
+      <ExpiryAlert tone="error" onDismiss={dismissAlerts} items={certAlerts.expired} title={(n) => `${n} chứng chỉ đã quá hạn`} line={(i) => `quá hạn ${-i.days} ngày (hết hạn ${i.expiresOn})`} />
+      <ExpiryAlert tone="warning" onDismiss={dismissAlerts} items={certAlerts.expiring} title={(n) => `${n} chứng chỉ sắp hết hạn trong 60 ngày tới`} line={(i) => (i.days === 0 ? `hết hạn hôm nay (${i.expiresOn})` : `còn ${i.days} ngày (hết hạn ${i.expiresOn})`)} />
 
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
       {bodies[tab]}
@@ -319,53 +370,33 @@ function Section({ title, children, noPad, extra }) {
   )
 }
 
-function DescList({ fields, isMobile }) {
+// Khung cảnh báo hạn chứng chỉ ở đầu tab. Tắt được: tắt cả các chứng chỉ đang liệt kê.
+function ExpiryAlert({ tone, items, title, line, onDismiss }) {
+  if (!items.length) return null
   return (
-    <Descriptions
-      column={isMobile ? 1 : 2}
-      bordered
-      size="small"
-      styles={{ label: { width: 160, background: 'var(--background)' } }}
-    >
-      {fields.map(([label, value]) => (
-        <Descriptions.Item key={label} label={label}>
-          {value ?? '-'}
-        </Descriptions.Item>
-      ))}
-    </Descriptions>
+    <Banner tone={tone} title={title(items.length)} action={<Button size="small" icon={<CloseOutlined />} onClick={() => onDismiss(items)}>Tắt cảnh báo</Button>}>
+      <ul className="crew-certs__alerts">
+        {items.map((i) => <li key={i.id}><b>{i.name}</b> · {line(i)}</li>)}
+      </ul>
+    </Banner>
   )
 }
 
-function WorkSection({ s }) {
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
-  const fields = [
-    ['Khối', s.vessel_group],
-    ['Tên tàu', s.vessel_name_raw],
-    ['Ngày bay', fmt(s.contract_flight_date)],
-    ['Ngày nhập tàu', fmt(s.contract_start_date)],
-    ['Thời gian HĐ', s.contract_duration_raw],
-    ['Lương HĐ', s.contract_salary_raw != null ? s.contract_salary_raw.toLocaleString() : '-'],
-    ['Ngày rời tàu', fmt(s.contract_end_date)],
-    ['Ngày về VN', fmt(s.contract_return_date)],
-    [
-      'BHXH',
-      s.social_insurance_joined === 1 ? 'Có' : s.social_insurance_joined === 0 ? 'Không' : '-',
-    ],
-    ['Số sổ BHXH', s.social_insurance_number],
-  ]
-  return (
-    <Section title="Công tác">
-      <DescList fields={fields} isMobile={isMobile} />
-    </Section>
-  )
+// Cảnh báo đã tắt nhớ trong trình duyệt theo thuyền viên: { [id chứng chỉ]: hạn lúc tắt }.
+const dismissKey = (seafarerId) => `cert-alert-dismissed:${seafarerId}`
+function loadDismissed(seafarerId) {
+  try { return JSON.parse(localStorage.getItem(dismissKey(seafarerId))) || {} } catch { return {} }
 }
 
-function CertificatesSection({ seafarerId }) {
+function CertificatesSection({ seafarerId, dismissed, onDismiss, onRestore }) {
   const queryClient = useQueryClient()
   const toast = useToast()
   const can = useCan()
   const [editing, setEditing] = useState(null) // null | 'new' | dòng chứng chỉ
+  const quickScanInput = useRef(null)
+  const [newType, setNewType] = useState('')
+  const [creatingType, setCreatingType] = useState(false)
+  const [renewing, setRenewing] = useState(null) // chứng chỉ đang được cập nhật bằng bản mới (editing = 'new')
   const [certFile, setCertFile] = useState(null)
   const [form] = Form.useForm()
 
@@ -379,7 +410,7 @@ function CertificatesSection({ seafarerId }) {
     queryFn: () => lookupApi.certificateTypes().then((r) => r.data),
   })
 
-  const close = () => { setEditing(null); form.resetFields(); setCertFile(null) }
+  const close = () => { setEditing(null); setRenewing(null); form.resetFields(); setCertFile(null) }
   const saved = (text) => () => {
     toast.success(text)
     close()
@@ -427,6 +458,33 @@ function CertificatesSection({ seafarerId }) {
     })
   }
 
+  // Tạo nhanh loại chứng chỉ ngay trong ô chọn loại; mã tự sinh từ tên.
+  async function createType() {
+    const name = newType.trim()
+    if (!name || creatingType) return
+    setCreatingType(true)
+    try {
+      const code = `${name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').toUpperCase().slice(0, 40)}_${Date.now().toString(36).toUpperCase().slice(-4)}`
+      const created = await certificateTypeApi.create({ code, name_vi: name, name_en: name })
+      await queryClient.invalidateQueries({ queryKey: ['certificate-types'] })
+      form.setFieldValue('certificate_type_id', created.id)
+      setNewType('')
+      toast.success(`Đã tạo loại "${name}"`)
+    } catch (e) {
+      failed('Không tạo được loại chứng chỉ')(e)
+    } finally {
+      setCreatingType(false)
+    }
+  }
+
+  // Cập nhật = tạo chứng chỉ mới, điền sẵn loại và số của bản cũ. Bản mới có hạn muộn hơn thì bản cũ hết cảnh báo.
+  function startRenew(cert) {
+    setRenewing(cert.raw)
+    setEditing('new')
+    form.resetFields()
+    form.setFieldsValue({ certificate_type_id: cert.raw.certificate_type_id, certificate_number: cert.raw.certificate_number })
+  }
+
   function startEdit(row) {
     setEditing(row)
     form.setFieldsValue({
@@ -448,38 +506,141 @@ function CertificatesSection({ seafarerId }) {
     }
   }
 
+  async function downloadCert(cert) {
+    try {
+      const blob = cert.uploadId ? await documentApi.uploadFile(cert.uploadId) : await certificateApi.file(seafarerId, cert.id)
+      const ext = blob.type === 'application/pdf' ? 'pdf' : blob.type === 'image/png' ? 'png' : 'jpg'
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.download = cert.fileName || `${cert.name}${cert.number !== '—' ? ` - ${cert.number}` : ''}.${ext}`
+      link.click()
+      URL.revokeObjectURL(link.href)
+    } catch (e) {
+      failed('Không tải được chứng chỉ')(e)
+    }
+  }
+
+  const certTypeList = certTypes?.data || certTypes || []
+  const [scanning, setScanning] = useState(false)
+  const [scanDone, setScanDone] = useState('')
+  async function scanCertificate(file) {
+    setScanning(true)
+    try {
+      const result = await documentApi.scan(file, 'certificate')
+      const got = Object.fromEntries((result.fields || []).map((item) => [item.field, item.value]))
+      const type = certTypeList.find((c) => c.code === got.certificate_type_code)
+      const values = {
+        ...(type ? { certificate_type_id: type.id } : {}),
+        ...(got.certificate_number ? { certificate_number: got.certificate_number } : {}),
+        ...(got.issued_date ? { issued_date: dayjs(got.issued_date) } : {}),
+        ...(got.expiry_date ? { expiry_date: dayjs(got.expiry_date) } : {}),
+        ...(got.no_expiry ? { no_expiry: true, expiry_date: null } : {}),
+      }
+      if (!Object.keys(values).length) {
+        toast.warning('Không đọc được ô nào từ giấy này', { description: 'Thử ảnh rõ hơn hoặc nhập tay.' })
+        return
+      }
+      form.setFieldsValue(values)
+      setCertFile(file)
+      setScanDone(`Đã điền ${Object.keys(values).length} ô`)
+      setTimeout(() => setScanDone(''), 5000)
+      if (!type) toast.warning('Chưa nhận ra loại chứng chỉ', { description: 'Chọn loại tay rồi kiểm tra các ô còn lại.' })
+    } catch (e) {
+      failed('Không đọc được chứng chỉ')(e)
+    } finally {
+      setScanning(false)
+    }
+  }
+
   const rows = data?.data || []
   const isNew = editing === 'new'
   const noExpiry = Form.useWatch('no_expiry', form)
 
   return (
-    <Section title={<>Chứng chỉ {rows.length ? <span className="ds-num">{rows.length}</span> : null}</>} noPad extra={can('seafarer.update') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setEditing('new') }}>Thêm chứng chỉ</Button> : null}>
+    <section className="ct-block" aria-label="Chứng chỉ">
+      <div className="crew-certs__head">
+        <h3 className="crew-certs__title">Danh sách chứng chỉ</h3>
+        {can('seafarer.update') ? (
+          <Space.Compact>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => { form.resetFields(); setEditing('new') }}>Thêm chứng chỉ</Button>
+            {can('seafarer.docs') ? (
+              <Dropdown
+                trigger={['click']}
+                placement="bottomRight"
+                menu={{ items: [{ key: 'scan', icon: <ScanOutlined />, label: 'Quét chứng chỉ' }], onClick: () => quickScanInput.current?.click() }}
+              >
+                <Button type="primary" icon={<DownOutlined />} aria-label="Thêm chứng chỉ theo cách khác" />
+              </Dropdown>
+            ) : null}
+          </Space.Compact>
+        ) : null}
+        <input
+          ref={quickScanInput}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="ds-sr-only"
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (!file) return
+            form.resetFields()
+            setEditing('new')
+            scanCertificate(file)
+          }}
+        />
+      </div>
       {isLoading ? (
         <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
       ) : rows.length === 0 ? (
         <EmptyState title="Chưa có chứng chỉ nào" description="Bấm Tải giấy tờ lên ở đầu hồ sơ. Chứng chỉ duyệt xong sẽ hiện ở đây." />
       ) : (
         <CertificateTable
-          certs={toTableCerts(rows)}
+          certs={toTableCerts(rows, { dismissed })}
+          onDismiss={(cert) => onDismiss([{ id: cert.id, expiry: String(cert.raw.expiry_date).slice(0, 10) }])}
+          onRestore={(cert) => onRestore(cert.id)}
+          onRenew={can('seafarer.update') ? startRenew : undefined}
           onEdit={can('seafarer.update') ? (cert) => startEdit(cert.raw) : undefined}
           onOpenSource={openSource}
+          onDownload={downloadCert}
         />
       )}
       <Modal
-        title={isNew ? 'Thêm chứng chỉ' : 'Sửa chứng chỉ'}
+        title={renewing ? `Cập nhật chứng chỉ: ${renewing.display_name}` : isNew ? 'Thêm chứng chỉ' : 'Sửa chứng chỉ'}
         open={editing !== null}
         onCancel={close}
         footer={null}
         width={440}
         destroyOnHidden
       >
+        {isNew && can('seafarer.docs') ? (
+          <div className="crew-certs__scan">
+            <ScanButton
+              label="Quét chứng chỉ"
+              loading={scanning}
+              doneText={scanDone || undefined}
+              onPick={(files) => scanCertificate(files[0])}
+            />
+          </div>
+        ) : null}
+        {renewing ? <p className="crew-certs__renew">Nhập thông tin bản mới. Khi bản mới có hạn muộn hơn, cảnh báo của bản cũ sẽ tự tắt.</p> : null}
         <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v })}>
           <Form.Item name="certificate_type_id" label="Loại chứng chỉ" rules={[{ required: true, message: 'Chọn loại chứng chỉ' }]}>
             <Select
               placeholder="Chọn loại"
               showSearch
               optionFilterProp="label"
-              options={(certTypes?.data || certTypes || []).map((c) => ({ value: c.id, label: c.name_vi || c.name }))}
+              options={certTypeList.map((c) => ({ value: c.id, label: c.name_vi || c.name }))}
+              popupRender={(menu) => (can('catalog.update') ? (
+                <>
+                  {menu}
+                  <div className="crew-certs__newtype">
+                    <Input size="small" value={newType} maxLength={200} placeholder="Tên loại chứng chỉ mới" onChange={(e) => setNewType(e.target.value)} onKeyDown={(e) => e.stopPropagation()} onPressEnter={createType} />
+                    <Button size="small" type="primary" icon={<PlusOutlined />} disabled={!newType.trim()} loading={creatingType} onClick={createType}>Tạo nhanh</Button>
+                  </div>
+                </>
+              ) : menu)}
             />
           </Form.Item>
           <Form.Item name="certificate_number" label="Số chứng chỉ">
@@ -508,7 +669,7 @@ function CertificatesSection({ seafarerId }) {
           </Form.Item>
         </Form>
       </Modal>
-    </Section>
+    </section>
   )
 }
 

@@ -39,7 +39,7 @@ const createBody = (over = {}) => ({ voyage_position_id: 4, seafarer_id: 2, star
 const createRoutes = (over = {}) => [
   ['FROM voyage_position p JOIN voyage v', () => [[{ id: 4, voyage_status: 'PLANNING', ...over.position }]]],
   ['SELECT 1 FROM seafarer_contract WHERE voyage_position_id', () => [over.taken ? [{ '?column?': 1 }] : []]],
-  ['SELECT id FROM seafarer WHERE', () => [[{ id: 2 }]]],
+  ['FROM seafarer WHERE', () => [[{ id: 2, status: 'AVAILABLE' }]]],
   ['SELECT c.contract_number, s.full_name', () => [over.overlap ?? []]],
   ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 142 }] }]],
   ['INSERT INTO seafarer_contract SET', () => [{ insertId: 9, rows: [{ id: 9 }] }]],
@@ -82,7 +82,7 @@ describe('seafarer_contract.service', () => {
     }
     const pool = fakePool([
       ['FOR UPDATE', () => [[{ id: 9, status: 'REJECTED' }]]],
-      ['SELECT id FROM seafarer WHERE', () => [[{ id: 2 }]]],
+      ['FROM seafarer WHERE', () => [[{ id: 2, status: 'AVAILABLE' }]]],
       ...detailRoutes(),
     ])
     await service.update(pool, 9, createBody(), 5)

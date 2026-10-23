@@ -30,7 +30,13 @@ describe('toFormFields', () => {
   })
 
   it('giấy loại không có khuôn thì không điền gì', () => {
-    expect(toFormFields('certificate', [f('no', 'A1')])).toEqual([])
+    expect(toFormFields('other', [f('no', 'A1')])).toEqual([])
+  })
+
+  it('chứng chỉ: đổi mã loại, số, ngày cấp, hạn; "không thời hạn" chỉ điền khi là true', () => {
+    const out = toFormFields('certificate', [f('typeCode', 'AFF'), f('no', 'AFF-01'), f('issuedOn', '20/08/2023'), f('noExpiry', 'false')])
+    expect(out.map((o) => [o.field, o.value])).toEqual([['certificate_type_code', 'AFF'], ['certificate_number', 'AFF-01'], ['issued_date', '2023-08-20']])
+    expect(toFormFields('certificate', [f('noExpiry', 'true')])[0]).toMatchObject({ field: 'no_expiry', value: 'true' })
   })
 })
 

@@ -12,6 +12,16 @@
 .crew-head__title { margin: 0; font-size: 18px; font-weight: 600; text-wrap: balance; }
 .crew-head__desc { max-width: 60ch; margin: 4px 0 0; color: var(--muted); }
 .crew-head__badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; }
+/* Ảnh 4x6: khung tỉ lệ 2:3, ảnh cắt cover ở giữa (danh sách thuyền viên dùng đúng tỉ lệ và cách cắt này). */
+.crew-head__photo { position: relative; align-self: flex-start; width: 130px; height: 195px; flex-shrink: 0; }
+.crew-head__photo .crew-avatar { display: block; width: 100%; height: 100%; }
+/* Nút tải ảnh nằm trong ảnh, nửa trong suốt, rõ hẳn khi rê chuột hoặc bàn phím tới. */
+.crew-head__download { position: absolute; right: 6px; bottom: 6px; left: 6px; opacity: 0.55; transition: opacity 0.15s; }
+.crew-head__photo:hover .crew-head__download, .crew-head__download:hover, .crew-head__download:focus-visible { opacity: 1; }
+.crew-head__titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.crew-head__meta { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 2px 16px; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--border); font-size: 14px; }
+.crew-head__meta dt { color: var(--muted); font-size: 13px; }
+.crew-head__meta dd { display: flex; flex-wrap: wrap; align-items: center; min-width: 0; margin: 0; }
 .crew-head__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .crew-avatar--xl { width: 96px; height: 128px; }
 
@@ -61,3 +71,12 @@
 }
 .rev-changes { display: grid; gap: 2px; margin: 6px 0 0; padding-left: 16px; color: var(--muted); font-size: 13px; }
 .rev-changes b { color: var(--foreground); font-weight: 500; }
+
+/* Tiêu đề bảng thụt vào đúng bằng đệm ô đầu (12px + viền 1px): khung bo góc 16px làm chữ sát mép trông như bị lệch ra ngoài. */
+.crew-certs__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.crew-certs__title { margin: 0; padding-left: 13px; color: var(--foreground); font-size: 15px; font-weight: 600; line-height: 32px; }
+.crew-certs__scan { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; }
+.crew-certs__alerts { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+.crew-certs__renew { margin: 0 0 16px; color: var(--muted); font-size: 13px; }
+.crew-certs__newtype { display: flex; gap: 8px; padding: 8px; border-top: 1px solid var(--border); }
+.crew-certs__newtype .ant-input { flex: 1; }

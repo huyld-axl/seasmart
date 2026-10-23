@@ -34,6 +34,8 @@ import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
+import CopyButton from '../components/ds/CopyButton'
+import { EmailActions, PhoneActions } from '../components/ds/ContactActions'
 import PermissionCheck from '../components/ds/PermissionCheck'
 import { SegmentedPick } from './admin/fleet/FleetParts'
 import LogoField from '../components/ds/LogoField'
@@ -656,7 +658,7 @@ export default function DesignSystemPage() {
             <SeaServiceTimeline trips={TRIPS} />
           </Demo>
           <Demo label="Bảng chứng chỉ: còn hạn, hết hạn, không thời hạn (nhập tay)" wide>
-            <div className="dsp-box"><CertificateTable certs={CERTS} /></div>
+            <CertificateTable certs={CERTS} />
           </Demo>
         </div>
       </Section>
@@ -695,6 +697,17 @@ export default function DesignSystemPage() {
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
             <Demo label="Đã sửa, chưa lưu"><ToggleRow label="Nồi hơi" value changed onChange={() => {}} /></Demo>
+          </div>
+        </div>
+      </Section>
+
+      <Section id="sao-chep" title="Sao chép và gửi mail">
+        <div className="dsp-stack">
+          <p className="dsp-note">Trường mã số (số hộ chiếu, CCCD, sổ thuyền viên, số điện thoại, số tài khoản, số BHXH, email) có nút sao chép ngay sau giá trị. Số điện thoại có thêm gọi, SMS và Zalo; email có thêm gửi mail (mở ứng dụng mail của thiết bị).</p>
+          <div className="ds-toggle-grid">
+            <Demo label="Sao chép"><span>C1234567<CopyButton value="C1234567" /></span></Demo>
+            <Demo label="Số điện thoại"><span>0912345678<PhoneActions phone="0912345678" /></span></Demo>
+            <Demo label="Email"><span>minh.nguyen@example.com<EmailActions email="minh.nguyen@example.com" /></span></Demo>
           </div>
         </div>
       </Section>
@@ -755,6 +768,13 @@ export default function DesignSystemPage() {
             { value: 'processing', label: 'Đang trích xuất', count: 2 },
             { value: 'review', label: 'Chờ duyệt', count: 5 },
             { value: 'failed', label: 'Lỗi', count: 1 },
+          ]} />
+        </Demo>
+        <Demo label="Tab trạng thái dạng gọn (thanh công cụ ít chỗ)">
+          <StatusTabs compact mobileLabel="Trạng thái:" value={statusTab} onChange={setStatusTab} tabs={[
+            { value: 'all', label: 'Tất cả', count: 24 },
+            { value: 'processing', label: 'Đang trích xuất', count: 2 },
+            { value: 'review', label: 'Chờ duyệt', count: 5 },
           ]} />
         </Demo>
         <Demo label="Chip lọc" wide>

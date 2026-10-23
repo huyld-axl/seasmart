@@ -11,6 +11,7 @@ import useAuthStore from './stores/authStore'
 import { sectionsFor } from './layouts/navConfig'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/admin/LoginPage'
+import DashboardPage from './pages/admin/DashboardPage'
 import SeafarerListPage from './pages/admin/SeafarerListPage'
 import SeafarerDetailPage from './pages/admin/SeafarerDetailPage'
 import SeafarerImportPage from './pages/admin/SeafarerImportPage'
@@ -98,6 +99,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
+        <Route path="/dashboard" element={guard('seafarer.view', <DashboardPage />)} />
         <Route path="/seafarers" element={guard('seafarer.view', <SeafarerListPage />)} />
         <Route path="/seafarers/new" element={guard('seafarer.create', <SeafarerFormPage />)} />
         <Route

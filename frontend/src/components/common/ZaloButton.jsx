@@ -1,6 +1,7 @@
 import { Tooltip } from 'antd'
+import '../ds/ds.css'
 
-export default function ZaloButton({ phone, size = 18 }) {
+export default function ZaloButton({ phone, size = 16 }) {
   if (!phone) return null
   const clean = phone.replace(/\D/g, '')
   return (
@@ -9,7 +10,7 @@ export default function ZaloButton({ phone, size = 18 }) {
         href={`https://zalo.me/${clean}`}
         target="_blank"
         rel="noopener noreferrer"
-        style={{ display: 'inline-flex', alignItems: 'center', marginLeft: 6 }}
+        className="ds-copy"
         onClick={(e) => e.stopPropagation()}
       >
         <img

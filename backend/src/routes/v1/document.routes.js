@@ -25,7 +25,7 @@ async function documentRoutes(fastify) {
     }
   })
 
-  // Quét nhanh một tệp để điền form: multipart gồm `file` và `kind` (auto | cccd | passport | seaman_book | diploma). Không lưu gì.
+  // Quét nhanh một tệp để điền form: multipart gồm `file` và `kind` (auto | cccd | passport | seaman_book | diploma | certificate). Không lưu gì.
   fastify.post('/scan', guard, async (request) => {
     const part = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })
     if (!part) throw { statusCode: 400, message: 'Chưa chọn tệp' }

@@ -47,7 +47,7 @@ function ContractForm({ contract, ctx, initial }) {
     queryFn: () => seafarerApi.list({ search: search || undefined, limit: 20 }).then((r) => r.data.data),
   })
   const personRows = people.data || []
-  const options = personRows.map((p) => ({ value: p.id, label: p.seafarer_code ? `${p.full_name} · ${p.seafarer_code}` : p.full_name, status: p.status, name: p.full_name }))
+  const options = personRows.filter((p) => p.status !== 'INACTIVE').map((p) => ({ value: p.id, label: p.seafarer_code ? `${p.full_name} · ${p.seafarer_code}` : p.full_name, status: p.status, name: p.full_name }))
   if (contract && !options.some((o) => o.value === contract.seafarer.id)) {
     options.unshift({ value: contract.seafarer.id, label: contract.seafarer.seafarer_code ? `${contract.seafarer.full_name} · ${contract.seafarer.seafarer_code}` : contract.seafarer.full_name, status: contract.seafarer.status, name: contract.seafarer.full_name })
   }

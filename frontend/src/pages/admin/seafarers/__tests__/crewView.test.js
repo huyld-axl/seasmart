@@ -1,16 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { availabilityText, docsAlert, nameInitials, CREW_TABS } from '../crewView'
+import { vesselNow, docsAlert, nameInitials, CREW_TABS } from '../crewView'
 
 describe('crewView', () => {
-  it('đang trên tàu: tên tàu và ngày rời tàu', () => {
-    expect(availabilityText({ status: 'ON_VESSEL', vessel_name: 'MV Lotus Pearl', contract_end: '2027-01-05' })).toBe('MV Lotus Pearl · đến 05/01/2027')
-    expect(availabilityText({ status: 'ON_VESSEL', vessel_name: 'MV Lotus Pearl' })).toBe('MV Lotus Pearl')
-    expect(availabilityText({ status: 'ON_VESSEL' })).toBe('Đang trên tàu')
-  })
-
-  it('ở bờ và trạng thái khác', () => {
-    expect(availabilityText({ status: 'AVAILABLE' })).toBe('Ở bờ')
-    expect(availabilityText({ status: 'RETIRED' })).toBe('—')
+  it('tàu đang sign on: tên tàu và hạn hợp đồng, chỉ khi đang trên tàu', () => {
+    expect(vesselNow({ status: 'ON_VESSEL', vessel_name: 'MV Lotus Pearl', contract_end: '2027-01-05' })).toEqual({ vessel: 'MV Lotus Pearl', vesselId: null, until: 'đến 05/01/2027' })
+    expect(vesselNow({ status: 'ON_VESSEL', vessel_name: 'MV Lotus Pearl' })).toEqual({ vessel: 'MV Lotus Pearl', vesselId: null, until: null })
+    expect(vesselNow({ status: 'ON_VESSEL' })).toBeNull()
+    expect(vesselNow({ status: 'AVAILABLE', vessel_name: 'MV Lotus Pearl' })).toBeNull()
   })
 
   it('giấy tờ hết hạn đứng trước sắp hết hạn', () => {
@@ -26,7 +22,7 @@ describe('crewView', () => {
     expect(nameInitials('')).toBe('?')
   })
 
-  it('đủ 5 tab theo UI Kit', () => {
-    expect(CREW_TABS.map((t) => t.label)).toEqual(['Tất cả', 'Đang trên tàu', 'Chờ tàu', 'Chờ duyệt', 'Sắp hết hạn'])
+  it('đủ 4 tab: tất cả và ba trạng thái với tàu', () => {
+    expect(CREW_TABS.map((t) => t.label)).toEqual(['Tất cả', 'Đang trên tàu', 'Ở bờ', 'Tạm ngưng'])
   })
 })

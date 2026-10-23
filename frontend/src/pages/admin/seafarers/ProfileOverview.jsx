@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Button, Skeleton, Tag } from 'antd'
-import { EditOutlined } from '@ant-design/icons'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Button, Input, Skeleton, Tag } from 'antd'
 import dayjs from 'dayjs'
 import { seafarerApi } from '../../../api'
-import ZaloButton from '../../../components/common/ZaloButton'
+import CopyButton from '../../../components/ds/CopyButton'
+import { EmailActions, PhoneActions } from '../../../components/ds/ContactActions'
 import StatusBadge from '../../../components/ds/StatusBadge'
+import useToast from '../../../components/ds/useToast'
 import { useCan } from '../../../hooks/usePermission'
 import './SeafarerForm.css'
 
@@ -16,6 +16,10 @@ const YES_NO = { 1: 'Có', 0: 'Không' }
 const filled = (v) => v !== undefined && v !== null && v !== ''
 
 // Cùng các khối, cùng thứ tự và tên với form thêm / sửa hồ sơ. Mỗi trường: [nhãn, giá trị, độ rộng].
+const copyable = (v) => (filled(v) ? <span>{v}<CopyButton value={v} /></span> : null)
+const phone = (v) => (v ? <span>{v}<PhoneActions phone={v} /></span> : null)
+const mail = (v) => (v ? <span>{v}<EmailActions email={v} /></span> : null)
+
 function buildSections(s, contacts) {
   const banks = s.bank_accounts?.length
     ? s.bank_accounts
@@ -43,9 +47,9 @@ function buildSections(s, contacts) {
       key: 'identity',
       title: 'Giấy tờ tùy thân',
       groups: [
-        { sub: 'Hộ chiếu', fields: [['Số hộ chiếu', s.passport_number, 4], ['Ngày cấp', date(s.passport_issued_date), 4], ['Ngày hết hạn', date(s.passport_expiry), 4], ['Nơi sinh', s.place_of_birth, 6], ['Quốc tịch', s.nationality_name, 6]] },
-        { sub: 'Căn cước công dân', fields: [['Số CCCD', s.national_id, 4], ['Ngày cấp', date(s.national_id_issued_date), 4], ['Nơi cấp', s.national_id_issued_place, 4]] },
-        { sub: 'Sổ thuyền viên', fields: [['Số sổ thuyền viên', s.seaman_book_number, 4]] },
+        { sub: 'Hộ chiếu', fields: [['Số hộ chiếu', copyable(s.passport_number), 4], ['Ngày cấp', date(s.passport_issued_date), 4], ['Ngày hết hạn', date(s.passport_expiry), 4], ['Nơi sinh', s.place_of_birth, 6], ['Quốc tịch', s.nationality_name, 6]] },
+        { sub: 'Căn cước công dân', fields: [['Số CCCD', copyable(s.national_id), 4], ['Ngày cấp', date(s.national_id_issued_date), 4], ['Nơi cấp', s.national_id_issued_place, 4]] },
+        { sub: 'Sổ thuyền viên', fields: [['Số sổ thuyền viên', copyable(s.seaman_book_number), 4]] },
       ],
     },
     {
@@ -65,8 +69,8 @@ function buildSections(s, contacts) {
       key: 'contact',
       title: 'Liên hệ',
       fields: [
-        ['Số điện thoại', s.phone_primary ? <span>{s.phone_primary}<ZaloButton phone={s.phone_primary} /></span> : null, 6],
-        ['Email', s.email, 6],
+        ['Số điện thoại', phone(s.phone_primary), 6],
+        ['Email', mail(s.email), 6],
       ],
     },
     {
@@ -74,10 +78,10 @@ function buildSections(s, contacts) {
       title: 'Ngân hàng & BHXH',
       items: banks.map((b, i) => ({
         title: `Tài khoản ${i + 1}`,
-        fields: [['Tên ngân hàng', b.bank_name, 4], ['Số tài khoản', b.account_number, 4], ['Tên chủ tài khoản', b.account_holder, 4]],
+        fields: [['Tên ngân hàng', b.bank_name, 4], ['Số tài khoản', copyable(b.account_number), 4], ['Tên chủ tài khoản', b.account_holder, 4]],
       })),
       itemsEmpty: 'Chưa có tài khoản ngân hàng.',
-      groups: [{ sub: 'Bảo hiểm xã hội', fields: [['Tham gia BHXH', YES_NO[s.social_insurance_joined], 4], ['Số BHXH', s.social_insurance_number, 4]] }],
+      groups: [{ sub: 'Bảo hiểm xã hội', fields: [['Tham gia BHXH', YES_NO[s.social_insurance_joined], 4], ['Số BHXH', copyable(s.social_insurance_number), 4]] }],
     },
     {
       key: 'family',
@@ -88,8 +92,8 @@ function buildSections(s, contacts) {
         fields: [
           ['Họ tên', c.full_name, 4],
           ['Quan hệ', c.relationship, 4],
-          ['Số điện thoại', c.phone_primary ? <span>{c.phone_primary}<ZaloButton phone={c.phone_primary} /></span> : null, 4],
-          ['Số CCCD', c.guarantor_id_number, 4],
+          ['Số điện thoại', phone(c.phone_primary), 4],
+          ['Số CCCD', copyable(c.guarantor_id_number), 4],
           ['Ngày cấp CCCD', date(c.guarantor_id_issued_date), 4],
           ['Nơi cấp CCCD', c.guarantor_id_issued_place, 4],
           ['Địa chỉ', c.address, 12],
@@ -102,7 +106,6 @@ function buildSections(s, contacts) {
       title: 'Học vấn',
       fields: [['Bằng cấp', s.education_level, 12], ['Trường', s.education_school, 5], ['Ngành', s.education_major, 4], ['Trình độ tiếng Anh', s.english_level, 3]],
     },
-    { key: 'notes', title: 'Ghi chú', fields: [['Ghi chú', s.notes, 12]] },
   ]
 }
 
@@ -166,9 +169,51 @@ function Panel({ index, section }) {
   )
 }
 
+// Ghi chú sửa ngay tại màn xem; lưu qua PUT hồ sơ với lý do cố định.
+function NoteBox({ seafarer, seafarerId }) {
+  const can = useCan()
+  const toast = useToast()
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+  const canEdit = can('seafarer.update')
+  const save = useMutation({
+    mutationFn: () => seafarerApi.update(seafarerId, { notes: draft.trim() || null, reason: 'Cập nhật ghi chú' }),
+    onSuccess: () => {
+      toast.success('Đã lưu ghi chú')
+      setEditing(false)
+      queryClient.invalidateQueries({ queryKey: ['seafarer', seafarerId] })
+      queryClient.invalidateQueries({ queryKey: ['seafarer', Number(seafarerId)] })
+    },
+    onError: (e) => toast.error('Không lưu được ghi chú', { description: e.response?.data?.error || e.response?.data?.message }),
+  })
+  const start = () => { setDraft(seafarer.notes || ''); setEditing(true) }
+  if (!filled(seafarer.notes) && !editing && !canEdit) return null
+  return (
+    <div className="sf-note" role="note">
+      <div className="sf-note__head">
+        <span className="sf-note__title">Ghi chú</span>
+        {canEdit && !editing && <Button type="link" size="small" onClick={start}>{filled(seafarer.notes) ? 'Sửa' : 'Thêm'}</Button>}
+      </div>
+      {editing ? (
+        <>
+          <Input.TextArea value={draft} onChange={(e) => setDraft(e.target.value)} autoSize={{ minRows: 3, maxRows: 10 }} maxLength={2000} autoFocus />
+          <div className="sf-note__actions">
+            <Button size="small" onClick={() => setEditing(false)}>Huỷ</Button>
+            <Button size="small" type="primary" loading={save.isPending} disabled={draft.trim() === (seafarer.notes || '').trim()} onClick={() => save.mutate()}>Lưu</Button>
+          </div>
+        </>
+      ) : filled(seafarer.notes) ? (
+        <div className="sf-note__body">{seafarer.notes}</div>
+      ) : (
+        <div className="sf-ro__empty">Chưa có ghi chú.</div>
+      )}
+    </div>
+  )
+}
+
 // Màn xem hồ sơ: bố cục giống form sửa (ảnh + mục lục bên trái, các khối bên phải) nhưng chỉ đọc.
 export default function ProfileOverview({ seafarer, seafarerId }) {
-  const can = useCan()
   const [active, setActive] = useState('general')
   const { data: contacts, isLoading } = useQuery({
     queryKey: ['seafarer-contacts', seafarerId],
@@ -208,12 +253,10 @@ export default function ProfileOverview({ seafarer, seafarerId }) {
             </a>
           ))}
         </nav>
+        <NoteBox seafarer={seafarer} seafarerId={seafarerId} />
       </aside>
       <div className="sf-sections">
         {isLoading ? <Skeleton active paragraph={{ rows: 6 }} /> : sections.map((s, i) => <Panel key={s.key} index={i} section={s} />)}
-        <div>
-          {can('seafarer.update') && <Link to={`/seafarers/${seafarerId}/edit`}><Button icon={<EditOutlined />}>Sửa hồ sơ</Button></Link>}
-        </div>
       </div>
     </div>
   )

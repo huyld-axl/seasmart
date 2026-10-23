@@ -6,9 +6,9 @@ const config = require('../config')
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const ALLOWED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png']
 
-const EXPIRING_DAYS = 90
+const EXPIRING_DAYS = 60
 
-// Trạng thái hạn để hiện: không thời hạn, hết hạn, sắp hết hạn (trong 90 ngày), còn hạn.
+// Trạng thái hạn để hiện: không thời hạn, hết hạn, sắp hết hạn (trong 60 ngày), còn hạn.
 // Tính từ ngày hết hạn, không tin cột status (job đêm mới cập nhật cột đó).
 function expiryStatusOf(row, now = new Date()) {
   if (row.no_expiry) return 'NO_EXPIRY'
@@ -45,6 +45,7 @@ const certificateService = {
               TO_CHAR(sc.issued_date, 'YYYY-MM-DD') AS issued_date,
               TO_CHAR(sc.expiry_date, 'YYYY-MM-DD') AS expiry_date,
               ct.name_vi as certificate_type_name,
+              ct.category as certificate_category,
               c.name_vi  as issued_at_country_name,
               COALESCE(u.file_name, sd.file_name) AS source_file_name,
               sd.page_label AS source_page,
@@ -150,6 +151,21 @@ const certificateService = {
     )
 
     return this.getById(id, seafarerId)
+  },
+
+  // File chứng chỉ nhập tay (document_url) để tải về; chứng chỉ từ giấy tờ AI đọc thì tải qua /documents/uploads/:id/file.
+  async manualFile(id, seafarerId) {
+    const [rows] = await pool.query(
+      'SELECT document_url, certificate_name_raw FROM seafarer_certificate WHERE id = ? AND seafarer_id = ? AND deleted_at IS NULL',
+      [id, seafarerId]
+    )
+    const url = rows[0]?.document_url
+    if (!url) throw { statusCode: 404, message: 'Chứng chỉ này không có file đính kèm' }
+    const name = path.basename(url)
+    const filepath = path.join(config.upload.dir, 'certificates', String(seafarerId), name)
+    if (!fs.existsSync(filepath)) throw { statusCode: 404, message: 'Không tìm thấy file chứng chỉ' }
+    const mime = { '.pdf': 'application/pdf', '.png': 'image/png' }[path.extname(name).toLowerCase()] || 'image/jpeg'
+    return { path: filepath, name, mime }
   },
 }
 

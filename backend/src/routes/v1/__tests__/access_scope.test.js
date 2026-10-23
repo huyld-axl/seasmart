@@ -44,6 +44,7 @@ beforeAll(async () => {
   await app.register(seafarerSeaServiceRoutes, { prefix: '/seafarers/:seafarerId/sea-services' })
   await app.register(seaServiceRoutes, { prefix: '/sea-services' })
   await app.register(require('../document.routes'), { prefix: '/documents' })
+  await app.register(require('../dashboard.routes'), { prefix: '/dashboard' })
   await app.register(require('../voyage.routes'), { prefix: '/voyages' })
   await app.register(require('../seafarer_contract.routes'), { prefix: '/contracts' })
   await app.register(require('../export_pack.routes').exportPackRoutes, { prefix: '/exports' })
@@ -72,6 +73,7 @@ describe('thiếu quyền thì 403', () => {
     ['GET', '/seafarers/1/certificates', 'seafarer.view'],
     ['POST', '/seafarers/1/sea-services', 'seafarer.sea', {}],
     ['GET', '/documents/seafarer/1', 'seafarer.docs'],
+    ['GET', '/dashboard/certificate-alerts', 'seafarer.view'],
     ['GET', '/voyages', 'voyage.view'],
     ['POST', '/voyages/1/start', 'voyage.run', { actual_embark_date: '2026-01-01', embark_port_id: 1 }],
     ['DELETE', '/voyages/1', 'voyage.delete'],

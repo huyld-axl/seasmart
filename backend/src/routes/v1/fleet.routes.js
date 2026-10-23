@@ -96,7 +96,7 @@ function crudRoutes({ table, perm, list, get, create, update, extra }) {
       const row = await create.fn(pool, request.body)
       return reply.code(201).send(row)
     })
-    fastify.put('/:id', { ...onRequest('update'), schema: { params: idParams, body: update.schema } }, async (request) => update.fn(pool, request.params.id, request.body))
+    fastify.put('/:id', { ...onRequest('update'), schema: { params: idParams, body: update.schema } }, async (request) => update.fn(pool, request.params.id, request.body, request.user.id))
     fastify.delete('/:id', { ...onRequest('delete'), schema: { params: idParams } }, async (request) => fleetService.softDelete(pool, table, request.params.id))
     fastify.post('/:id/restore', { ...onRequest('update'), schema: { params: idParams } }, async (request) => fleetService.restore(pool, table, request.params.id))
   }
@@ -124,13 +124,34 @@ async function fleetRoutes(fastify) {
       list: (db, query) => fleetService.listOwners(db, query),
       get: (db, id) => fleetService.getOwnerDetail(db, id),
       create: { schema: ownerBody, required: ['company_name'], fn: (db, body) => fleetService.createOwner(db, body) },
-      update: { schema: ownerBody, fn: (db, id, body) => fleetService.updateOwner(db, id, body) },
+      update: { schema: ownerBody, fn: (db, id, body, actorId) => fleetService.updateOwner(db, id, body, actorId) },
       extra: (app, { read, idParams: params }) => {
+        app.get('/:id/revisions', { ...read, schema: { params, querystring: { type: 'object', properties: { limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }, offset: { type: 'integer', minimum: 0, default: 0 } } } } }, async (request) => {
+          await fleetService.getOwner(pool, request.params.id)
+          const { limit = 20, offset = 0 } = request.query
+          const [rows] = await pool.query('SELECT r.*, u.email AS changed_by_email FROM ship_owner_revision r LEFT JOIN "user" u ON u.id = r.changed_by WHERE r.ship_owner_id = ? ORDER BY r.created_at DESC, r.id DESC LIMIT ? OFFSET ?', [request.params.id, limit + 1, offset])
+          const [countries] = await pool.query('SELECT id, name_vi, name_en FROM country')
+          const names = new Map(countries.map((c) => [String(c.id), c.name_vi || c.name_en]))
+          const normalizeContacts = (items) => (items || []).map((c) => Object.fromEntries(['name', 'position', 'phone', 'zalo', 'email', 'whatsapp', 'line_id', 'wechat_id', 'is_primary'].map((key) => [key, key === 'is_primary' ? Boolean(c[key]) : c[key] || null])))
+          const data = rows.slice(0, limit).map((row) => {
+            const changes = { ...(typeof row.changes === 'string' ? JSON.parse(row.changes) : row.changes) }
+            if (changes.contacts) {
+              const pair = changes.contacts.map(normalizeContacts)
+              if (JSON.stringify(pair[0]) === JSON.stringify(pair[1])) delete changes.contacts
+              else changes.contacts = pair.map((items) => items.map((c) => Object.values(c).filter((v) => v && v !== true).join(' · ')).join('; '))
+            }
+            if (changes.country_id) changes.country_id = changes.country_id.map((id) => id == null ? null : names.get(String(id)) || String(id))
+            return { ...row, reason: 'Cập nhật thông tin đối tác', changes }
+          }).filter((row) => Object.keys(row.changes).length)
+          return { data, nextOffset: rows.length > limit ? offset + limit : null }
+
+        })
+
         const write = { onRequest: [app.authenticate, app.can('partner.update')] }
         app.get('/:id/vessels', { onRequest: [app.authenticate, app.can('partner.view'), app.can('vessel.view')], schema: { params } }, async (request) => fleetService.listOwnerVessels(pool, request.params.id))
         app.post('/:id/vessels', {
           onRequest: [app.authenticate, app.can('partner.update'), app.can('vessel.view'), app.can('vessel.update')],
-          schema: { params, body: { type: 'object', required: ['vessel_id', 'expected_owner_id'], additionalProperties: false, properties: { vessel_id: { type: 'integer', minimum: 1 }, expected_owner_id: nullableInt } } },
+          schema: { params, body: { type: 'object', required: ['vessel_id', 'expected_owner_id'], additionalProperties: false, properties: { vessel_id: { type: 'integer', minimum: 1 }, expected_owner_id: nullableInt, ownership_id: nullableInt, started_at: { type: ['string', 'null'], format: 'date' }, ended_at: { type: ['string', 'null'], format: 'date' }, is_current: { type: 'boolean' } } } },
         }, async (request) => fleetService.linkOwnerVessel(pool, request.params.id, request.body))
         app.get('/:id/vessels/:vesselId/crew', {
           onRequest: [app.authenticate, app.can('partner.view'), app.can('vessel.view'), app.can('seafarer.view')],

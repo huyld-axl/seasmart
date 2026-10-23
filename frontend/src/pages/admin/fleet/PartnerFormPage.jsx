@@ -1,3 +1,4 @@
+import OwnershipFields, { ownershipProblem } from './OwnershipFields'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -6,7 +7,8 @@ import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import { lookupApi } from '../../../api'
-import { shipOwnerApi, shipOwnerLogoApi } from '../../../api/fleetApi'
+import { useCan } from '../../../hooks/usePermission'
+import { shipOwnerApi, shipOwnerLogoApi, vesselApi } from '../../../api/fleetApi'
 import { ListItem } from '../seafarers/SeafarerFormParts'
 import LogoField from '../../../components/ds/LogoField'
 import PrimaryMark from '../../../components/ds/PrimaryMark'
@@ -25,12 +27,13 @@ const SECTIONS = [
   { key: 'company', title: 'Công ty', desc: 'Tên đối tác hiện ở mục “Nộp cho” của bộ giấy và trên danh sách tàu.', fields: ['company_name', 'company_name_en', 'tax_id', 'country_id', 'logo'] },
   { key: 'contact', title: 'Liên hệ công ty', fields: ['address', 'phone', 'zalo', 'fax', 'email', 'website'] },
   { key: 'person', title: 'Người liên hệ', desc: 'Có thể thêm nhiều người. Liên hệ chính là người nhận bộ giấy tờ phía đối tác.', fields: ['contacts'] },
+  { key: 'vessels', title: 'Tàu sở hữu', fields: ['vessels'] },
   { key: 'notes', title: 'Ghi chú', fields: ['notes'] },
 ]
 const FIELD_LABELS = {
   company_name: 'Tên công ty', company_name_en: 'Tên tiếng Anh', tax_id: 'Mã số thuế', country_id: 'Quốc gia', is_active: 'Tình trạng', logo: 'Logo',
   address: 'Địa chỉ', phone: 'Điện thoại', zalo: 'Zalo', fax: 'Fax', email: 'Email', website: 'Website',
-  contacts: 'Người liên hệ', notes: 'Ghi chú',
+  contacts: 'Người liên hệ', vessels: 'Tàu sở hữu', notes: 'Ghi chú',
 }
 const QR_FIELD = { whatsapp: 'whatsapp', line: 'line_id', wechat: 'wechat_id', zalo: 'zalo' }
 const QR_LABEL = { whatsapp: 'WhatsApp', line: 'LINE', wechat: 'WeChat', zalo: 'Zalo' }
@@ -39,6 +42,12 @@ const emailRule = { type: 'email', message: 'Email phải có dạng ten@congty.
 
 function PartnerForm({ owner }) {
   const isEdit = !!owner
+  const can = useCan()
+  const owned = useQuery({ queryKey: ['fleet', 'owner-vessels', owner?.id], queryFn: () => shipOwnerApi.vessels(owner.id), enabled: Boolean(owner) && can('vessel.view') })
+  const [vesselDraft, setVesselDraft] = useState(null)
+  const vessels = vesselDraft ?? (owned.data?.data || []).map((v) => ({ ...v, locked: true, original_name: v.vessel_name }))
+  const setVessels = setVesselDraft
+  const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
   const toast = useToast()
   const [form] = Form.useForm()
@@ -120,9 +129,11 @@ function PartnerForm({ owner }) {
 
   const changed = new Set(isEdit ? changedKeys(initial, values, partnerToPayload) : [])
   if (isEdit && logoChanged) changed.add('logo')
+  if (vesselDraft !== null) changed.add('vessels')
   const cn = (name, base) => [base, changed.has(name) && 'sf-changed'].filter(Boolean).join(' ') || undefined
   const label = (name, text) => changedLabel(text, changed.has(name))
   const isFilled = (name) => {
+    if (name === 'vessels') return vessels.length > 0
     if (name === 'logo') return Boolean(logoSrc)
     if (name === 'contacts') return cleanContactList(values.contacts).length > 0
     return filled(typeof values[name] === 'string' ? values[name].trim() : values[name])
@@ -134,9 +145,22 @@ function PartnerForm({ owner }) {
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
 
   async function submit(formValues) {
+    const problem = vessels.filter((v) => v.dirty || !v.locked).map(ownershipProblem).find(Boolean)
+    if (problem) { toast.error(problem); return }
+    if (new Set(vessels.filter((v) => v.id).map((v) => v.id)).size !== vessels.filter((v) => v.id).length) { toast.error('Mỗi tàu chỉ được chọn một lần.'); return }
+    setSubmitting(true)
     try {
       const row = await save.mutateAsync({ id: owner?.id, ...partnerToPayload(formValues) })
-      let logoFailed = ''
+      const remaining = []
+      for (const vessel of vessels.filter((v) => v.dirty || !v.locked)) {
+        try {
+          if (vessel.locked && vessel.vessel_name.trim() !== vessel.original_name) await vesselApi.update(vessel.id, { vessel_name: vessel.vessel_name.trim() })
+          const selected = vessel
+          await shipOwnerApi.linkVessel(row.id, { vessel_id: selected.id, ownership_id: vessel.ownership_id || null, expected_owner_id: selected.ship_owner_id ?? null, started_at: vessel.started_at, ended_at: vessel.is_current === false ? vessel.ended_at : null, is_current: vessel.is_current !== false })
+        }
+        catch { remaining.push(vessel.vessel_name) }
+      }
+      let logoFailed = remaining.length ? `Chưa liên kết được tàu: ${remaining.join(', ')}. Mở mục Tàu sở hữu để thử lại.` : ''
       try {
         if (logoFile) await shipOwnerLogoApi.upload(row.id, logoFile)
         else if (logoRemoved && owner?.has_logo) await shipOwnerLogoApi.remove(row.id)
@@ -148,6 +172,7 @@ function PartnerForm({ owner }) {
       else toast.success(isEdit ? `Đã lưu ${row.company_name}` : `Đã thêm ${row.company_name}`)
       if (againRef.current) {
         form.resetFields()
+        setVessels([])
         setLogoFile(null)
         setPickedLogo(null)
         setLogoRemoved(false)
@@ -158,7 +183,7 @@ function PartnerForm({ owner }) {
       }
     } catch (error) {
       toast.error(isEdit ? 'Không lưu được đối tác' : 'Không thêm được đối tác', { description: errorText(error, 'Thử lại sau ít phút.') })
-    }
+    } finally { setSubmitting(false) }
   }
 
   return (
@@ -297,6 +322,16 @@ function PartnerForm({ owner }) {
         </FormSection>
 
         <FormSection index={3} section={SECTIONS[3]} meta={metas[3]}>
+          {owner && owned.isPending && <Skeleton active />}
+          {owner && owned.isError && <Button onClick={() => owned.refetch()}>Thử tải lại tàu sở hữu</Button>}
+          {can('vessel.view', 'vessel.update') && <div className="sf-items">
+            {vessels.map((v, index) => <ListItem key={index} title={`Tàu sở hữu ${index + 1}`} onRemove={v.locked ? undefined : () => setVessels(vessels.filter((_, i) => i !== index))} removeLabel={`Xoá tàu ${index + 1}`}>
+              <div className="sf-c12"><OwnershipFields value={v} canCreate={can('vessel.create')} onChange={(next) => setVessels(vessels.map((old, i) => i === index ? { ...next, dirty: true } : old))} /></div>
+            </ListItem>)}
+            <button type="button" className="sf-add" onClick={() => setVessels([...vessels, { mode: 'existing', is_current: true }])}><PlusOutlined aria-hidden />Thêm tàu</button>
+          </div>}
+        </FormSection>
+        <FormSection index={4} section={SECTIONS[4]} meta={metas[4]}>
           <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')} style={{ marginBottom: 0 }}>
             <Input.TextArea rows={3} maxLength={2000} showCount />
           </Form.Item>
@@ -318,8 +353,8 @@ function PartnerForm({ owner }) {
             <Button onClick={() => navigate(isEdit ? `/partners/${owner.id}` : '/partners')}>Huỷ</Button>
             {isEdit ? null : (
               <Button
-                loading={save.isPending && again}
-                disabled={save.isPending}
+                loading={(save.isPending || submitting) && again}
+                disabled={(save.isPending || submitting)}
                 onClick={() => {
                   againRef.current = true
                   setAgain(true)
@@ -333,7 +368,7 @@ function PartnerForm({ owner }) {
               type="primary"
               htmlType="submit"
               icon={isEdit ? undefined : <PlusOutlined />}
-              loading={save.isPending && !again}
+              loading={(save.isPending || submitting) && !again}
               disabled={isEdit && !changed.size}
               onClick={() => {
                 againRef.current = false

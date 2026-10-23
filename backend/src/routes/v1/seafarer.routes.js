@@ -210,11 +210,11 @@ async function seafarerRoutes(fastify) {
     '/:id/revisions',
     {
       onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
-      schema: { params: { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } } },
+      schema: { querystring: { type: 'object', properties: { limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }, offset: { type: 'integer', minimum: 0, default: 0 } } }, params: { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } } },
     },
     async (request) => {
       await assertSeafarerInScope(request, request.params.id)
-      return seafarerService.revisions(request.params.id)
+      return seafarerService.revisions(request.params.id, request.query)
     }
   )
 

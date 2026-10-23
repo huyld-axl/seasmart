@@ -44,17 +44,16 @@ export default function PartnerListPage() {
   const [search, setSearch] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [countryId, setCountryId] = useState(undefined)
-  const [missing, setMissing] = useState([])
   const [channels, setChannels] = useState([])
-  const filterCount = Number(Boolean(countryId)) + Number(missing.length > 0) + Number(channels.length > 0)
-  const clearFilters = () => { setCountryId(undefined); setMissing([]); setChannels([]); setPage(1) }
+  const filterCount = Number(Boolean(countryId)) + Number(channels.length > 0)
+  const clearFilters = () => { setCountryId(undefined); setChannels([]); setPage(1) }
   const countries = useQuery({ queryKey: ['lookup', 'countries'], queryFn: () => lookupApi.countries().then((r) => r.data), enabled: filtersOpen })
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
-  const list = useFleetList('ship-owners', shipOwnerApi, { country_id: countryId, missing: missing.length ? missing.join(',') : undefined, channels: channels.length ? channels.join(',') : undefined, active: TAB_ACTIVE[tab], search: keyword || undefined, page, limit: pageSize })
+  const list = useFleetList('ship-owners', shipOwnerApi, { country_id: countryId, channels: channels.length ? channels.join(',') : undefined, active: TAB_ACTIVE[tab], search: keyword || undefined, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -159,10 +158,6 @@ export default function PartnerListPage() {
             <Select aria-label="Lọc theo quốc gia" allowClear showSearch optionFilterProp="label" placeholder="Tất cả quốc gia" loading={countries.isLoading} value={countryId} onChange={(value) => { setCountryId(value); setPage(1) }} options={(countries.data || []).map((country) => ({ value: country.id, label: withFlag(country.code, country.name_vi || country.name_en, country.flag_emoji) }))} />
           </label>
           {countries.isError && <Button onClick={() => countries.refetch()}>Tải lại quốc gia</Button>}
-          <label className="crew-filterbar__field crew-filterbar__field--wide" title="Kiểm tra điện thoại/email của công ty và tất cả người liên hệ; kết quả phải thiếu đủ các mục đã chọn.">
-            <span>Thông tin còn thiếu</span>
-            <Select aria-label="Lọc thông tin còn thiếu" mode="multiple" allowClear maxTagCount="responsive" placeholder="Chọn thông tin còn thiếu" value={missing} onChange={(value) => { setMissing(value); setPage(1) }} options={[{ value: 'primary', label: 'Chưa có liên hệ chính' }, { value: 'phone', label: 'Thiếu điện thoại liên hệ' }, { value: 'email', label: 'Thiếu email liên hệ' }]} />
-          </label>
           <label className="crew-filterbar__field crew-filterbar__field--wide" title="Có đủ các kênh đã chọn, ở công ty hoặc người liên hệ.">
             <span>Kênh liên hệ đang có</span>
             <Select aria-label="Lọc kênh liên hệ" mode="multiple" allowClear maxTagCount="responsive" placeholder="Có đủ các kênh đã chọn" value={channels} onChange={(value) => { setChannels(value); setPage(1) }} options={[{ value: 'zalo', label: 'Zalo' }, { value: 'whatsapp', label: 'WhatsApp' }, { value: 'line', label: 'LINE' }, { value: 'wechat', label: 'WeChat' }]} />

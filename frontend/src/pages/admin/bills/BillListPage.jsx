@@ -31,11 +31,11 @@ const TABS = [
 const stop = (event) => event.stopPropagation()
 
 // Danh sách yêu cầu thanh toán: không có nút tạo, bill sinh khi duyệt hợp đồng. Mặc định mở tab Cần gửi.
-export default function BillListPage() {
+export default function BillListPage({ shipOwnerId } = {}) {
   const can = useCan()
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
-  const [tab, setTab] = useState('TO_SEND')
+  const [tab, setTab] = useState(shipOwnerId ? 'all' : 'TO_SEND')
   const [search, setSearch] = useState('')
   const [ownerId, setOwnerId] = useState()
   const [voyageId, setVoyageId] = useState()
@@ -44,9 +44,9 @@ export default function BillListPage() {
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
-  const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: can('partner.view') })
+  const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: !shipOwnerId && can('partner.view') })
   const voyages = useVoyageList({ limit: 100 }, { enabled: can('voyage.view') })
-  const list = useBillList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, voyage_id: voyageId, page, limit: pageSize })
+  const list = useBillList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: shipOwnerId || ownerId, voyage_id: voyageId, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -156,7 +156,7 @@ export default function BillListPage() {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
-          {can('partner.view') ? (
+          {!shipOwnerId && can('partner.view') ? (
             <Select
               className="vy-owner-filter"
               allowClear

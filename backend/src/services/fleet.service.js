@@ -314,13 +314,13 @@ const fleetService = {
       SELECT v.id, v.vessel_name, v.imo_number, v.status, vt.name_vi AS vessel_type_name,
              COALESCE(c.name_vi, c.name_en) AS flag_name, c.code AS flag_code, c.flag_emoji AS flag_emoji, v.ship_owner_id, o.company_name AS current_owner_name,
              (v.ship_owner_id = ?) IS TRUE AS is_current,
-             h.started_at, h.ended_at
+             h.id AS ownership_id, h.started_at, h.ended_at
       FROM vessel v
       LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
       LEFT JOIN country c ON c.id = v.flag_country_id
       LEFT JOIN ship_owner o ON o.id = v.ship_owner_id
       LEFT JOIN LATERAL (
-        SELECT started_at, ended_at FROM vessel_ownership
+        SELECT id, started_at, ended_at FROM vessel_ownership
         WHERE vessel_id = v.id AND ship_owner_id = ?
         ORDER BY ended_at DESC NULLS FIRST, id DESC LIMIT 1
       ) h ON TRUE
@@ -338,9 +338,25 @@ const fleetService = {
       if (Number(owner.is_active) !== 1) throw { statusCode: 409, message: 'Đối tác đã ngừng hợp tác' }
       const [[vessel]] = await conn.query('SELECT id, ship_owner_id FROM vessel WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [body.vessel_id])
       if (!vessel) throw { statusCode: 404, message: 'Không tìm thấy tàu' }
-      if (vessel.ship_owner_id === ownerId) return
+      const current = body.is_current !== false
+      const start = body.started_at || null
+      const end = current ? null : body.ended_at
+      if (!current && (!start || !end || end < start)) throw { statusCode: 400, message: 'Thời gian sở hữu không hợp lệ' }
       if (vessel.ship_owner_id !== body.expected_owner_id) throw { statusCode: 409, message: 'Chủ tàu đã thay đổi. Hãy tải lại danh sách và chọn lại tàu.' }
-      await conn.query('UPDATE vessel SET ship_owner_id = ? WHERE id = ?', [ownerId, vessel.id])
+      if (current) {
+        if (vessel.ship_owner_id !== ownerId) await conn.query('UPDATE vessel SET ship_owner_id = ? WHERE id = ?', [ownerId, vessel.id])
+        if (start) {
+          await conn.query('UPDATE vessel_ownership SET started_at = ? WHERE vessel_id = ? AND ship_owner_id = ? AND ended_at IS NULL', [start, vessel.id, ownerId])
+          await conn.query('UPDATE vessel_ownership SET ended_at = ? WHERE id = (SELECT id FROM vessel_ownership WHERE vessel_id = ? AND ship_owner_id <> ? ORDER BY ended_at DESC NULLS FIRST, id DESC LIMIT 1) AND ended_at > ?', [start, vessel.id, ownerId, start])
+        }
+      } else if (vessel.ship_owner_id === ownerId) {
+        await conn.query('UPDATE vessel SET ship_owner_id = NULL WHERE id = ?', [vessel.id])
+        await conn.query('UPDATE vessel_ownership SET started_at = ?, ended_at = ? WHERE id = (SELECT id FROM vessel_ownership WHERE vessel_id = ? AND ship_owner_id = ? ORDER BY id DESC LIMIT 1)', [start, end, vessel.id, ownerId])
+      } else if (body.ownership_id) {
+        await conn.query('UPDATE vessel_ownership SET started_at = ?, ended_at = ? WHERE id = ? AND vessel_id = ? AND ship_owner_id = ?', [start, end, body.ownership_id, vessel.id, ownerId])
+      } else {
+        await conn.query('INSERT INTO vessel_ownership (vessel_id, ship_owner_id, started_at, ended_at) VALUES (?, ?, ?, ?)', [vessel.id, ownerId, start, end])
+      }
     })
     return { success: true }
   },
@@ -391,14 +407,14 @@ const fleetService = {
     return this.getOwner(pool, id)
   },
 
-  async updateOwner(pool, id, body) {
+  async updateOwner(pool, id, body, actorId = null) {
     const data = pickAllowed(body, OWNER_COLUMNS)
     const contacts = body?.contacts === undefined ? null : cleanContacts(body.contacts)
     if (!Object.keys(data).length && !contacts) throw { statusCode: 400, message: 'Không có dữ liệu hợp lệ' }
     if ('company_name' in data && !data.company_name) {
       throw { statusCode: 400, message: 'Thiếu tên đối tác' }
     }
-    await this.getOwner(pool, id)
+    const before = await this.getOwner(pool, id)
     const cols = Object.keys(data)
     await withTransaction(pool, async (conn) => {
       if (cols.length) {
@@ -411,6 +427,14 @@ const fleetService = {
         await replaceContacts(conn, id, contacts)
         if (!cols.length) await conn.query('UPDATE ship_owner SET updated_at = NOW() WHERE id = ?', [id])
       }
+      const after = await this.getOwner(conn, id)
+      const changes = {}
+      for (const field of [...cols, ...(contacts ? ['contacts'] : [])]) {
+        const from = field === 'contacts' ? cleanContacts(before[field]) : before[field] ?? null
+        const to = field === 'contacts' ? cleanContacts(after[field]) : after[field] ?? null
+        if (JSON.stringify(from) !== JSON.stringify(to)) changes[field] = [from, to]
+      }
+      if (Object.keys(changes).length) await conn.query('INSERT INTO ship_owner_revision (ship_owner_id, changed_by, changes) VALUES (?, ?, ?)', [id, actorId, JSON.stringify(changes)])
     })
     return this.getOwner(pool, id)
   },

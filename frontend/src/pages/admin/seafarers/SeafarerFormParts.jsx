@@ -14,7 +14,7 @@ export function ListItem({ title, onRemove, removeLabel, actions, children }) {
         <h4 className="sf-item__title">{title}</h4>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {actions}
-          <Button type="text" icon={<DeleteOutlined />} aria-label={removeLabel} onClick={onRemove} />
+          {onRemove && <Button type="text" icon={<DeleteOutlined />} aria-label={removeLabel} onClick={onRemove} />}
         </span>
       </div>
       <div className="sf-item__body sf-grid">{children}</div>

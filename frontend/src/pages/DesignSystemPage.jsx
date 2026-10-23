@@ -416,7 +416,8 @@ export default function DesignSystemPage() {
           <Demo label="Viền · rê" state="hover"><Button>Lưu nháp</Button></Demo>
           <Demo label="Viền · khoá"><Button disabled>Lưu nháp</Button></Demo>
           <Demo label="Viền · có icon"><Button icon={<UploadIcon />}>Tải tài liệu lên</Button></Demo>
-          <Demo label="Icon tải lên / tải xuống"><Space><Button icon={<UploadIcon />}>Tải lên</Button><Button icon={<DownloadIcon />}>Tải xuống</Button></Space></Demo>
+          <Demo label="Icon tải lên / tải xuống"><Space><Button icon={<UploadIcon />}>Tải lên</Button><Button icon={<DownloadIcon />}>Tải xuống</Button><Button icon={<DownloadIcon />}>Tải log</Button></Space></Demo>
+          <p className="dsp-note">Mọi thao tác tải tệp và xuất log dùng UploadIcon / DownloadIcon từ components/ds/TransferIcons, thay cho icon tải lên / tải xuống mặc định của Ant Design.</p>
         </div>
         <div className="dsp-states">
           <Demo label="Chính · thường"><Button type="primary">Công bố hồ sơ</Button></Demo>

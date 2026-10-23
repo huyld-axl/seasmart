@@ -132,7 +132,7 @@ describe('người liên hệ của đối tác', () => {
 
   it('màn chi tiết liệt kê từng người, ghi rõ ai là liên hệ chính', () => {
     const person = partnerSections({ contacts: [{ name: 'An', position: 'GĐ', phone: '1', is_primary: true }, { name: 'Bình', is_primary: false }] }).find((x) => x.key === 'person')
-    expect(person.items.map((item) => item.title)).toEqual(['Người liên hệ 1', 'Người liên hệ 2'])
+    expect(person.items.map((item) => item.title)).toEqual(['An', 'Bình'])
     expect(person.items[0].tags).toEqual(['Liên hệ chính'])
     expect(person.items[1].tags).toEqual([])
     expect(person.items[0].fields.find((f) => f[0] === 'Chức vụ')[1]).toBe('GĐ')

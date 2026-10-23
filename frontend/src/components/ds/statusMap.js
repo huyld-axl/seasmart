@@ -91,6 +91,10 @@ export const STATUS = {
     UNDER_CONSTRUCTION: { label: 'Đang đóng', tone: 'warning', mark: 'clock' },
     SCRAPPED: { label: 'Phá dỡ', tone: 'neutral', mark: 'cross' },
   },
+  ownership: {
+    CURRENT: { label: 'Đang sở hữu', tone: 'success', mark: 'check' },
+    ENDED: { label: 'Đã kết thúc sở hữu', tone: 'neutral', mark: 'minus' },
+  },
   partner: {
     ACTIVE: { label: 'Đang hợp tác', tone: 'success', mark: 'check' },
   },
@@ -123,6 +127,7 @@ export const STATUS_GROUP_LABELS = {
   contract: 'Hợp đồng',
   bill: 'Yêu cầu thanh toán',
   vesselStatus: 'Trạng thái tàu',
+  ownership: 'Tình trạng sở hữu tàu',
   partner: 'Tình trạng đối tác',
   cert: 'Hạn giấy tờ',
   upload: 'Tệp tải lên',

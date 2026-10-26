@@ -15,6 +15,7 @@ import { formatDate, formatUsd } from '../../../utils/format'
 import { Crumb, FleetTile } from '../fleet/FleetParts'
 import CandidateTable from './CandidateTable'
 import useSendToOwner from './useSendToOwner'
+import PlaceModal from './PlaceModal'
 import CandidatePanel from './CandidatePanel'
 import { deadlineLabel, requirementName, requirementSummary } from './opportunityView'
 import '../seafarers/SeafarerListPage.css'
@@ -96,6 +97,7 @@ export default function OpportunityDetailPage() {
   const [fitFor, setFitFor] = useState(null)
   const [closing, setClosing] = useState(false)
   const [panel, setPanel] = useState(null)
+  const [placing, setPlacing] = useState(false)
   const sendToOwner = useSendToOwner()
 
   if (isLoading) {
@@ -259,6 +261,7 @@ export default function OpportunityDetailPage() {
             </Dropdown>
           ) : null}
           {editable ? <Button icon={<EditOutlined />} onClick={() => navigate(`/opportunities/${o.id}/edit`)}>Sửa cơ hội</Button> : null}
+          {isOpen && live.length && can('opportunity.close') ? <Button type="primary" onClick={() => setPlacing(true)}>Chốt người</Button> : null}
           {o.voyage && can('voyage.view') ? <Button type="primary" onClick={() => navigate(`/voyages/${o.voyage.id}`)}>Mở chuyến {o.voyage.code}</Button> : null}
         </div>
       </div>
@@ -332,6 +335,7 @@ export default function OpportunityDetailPage() {
       {fitFor ? <FitModal candidate={fitFor} requirements={o.requirements} onClose={() => setFitFor(null)} /> : null}
       {panel ? <CandidatePanel opportunity={o} mode={panel} onClose={() => setPanel(null)} /> : null}
       {closing ? <CloseModal opportunity={o} onClose={() => setClosing(false)} /> : null}
+      {placing ? <PlaceModal opportunity={o} onClose={() => setPlacing(false)} /> : null}
     </div>
   )
 }

@@ -145,19 +145,11 @@ describe('seafarer_contract.service', () => {
     expect(inserts(pool, 'contract_approval_log')[0].params[0]).toMatchObject({ action: 'REJECT', reason: 'Sai ngày' })
   })
 
-  it('duyệt khi chuyến đang trên tàu: move_onboard bật thì đổi trạng thái thuyền viên, tắt hoặc chuyến khác thì không', async () => {
+  it('duyệt không đổi trạng thái thuyền viên nữa (giờ chỉ chuyến đổi), kể cả khi gửi move_onboard', async () => {
     const onboard = transitionPool('PENDING', 'ONBOARD')
     const result = await service.transition(onboard, 9, 'approve', { move_onboard: true }, 5)
-    expect(result.moved).toBe(true)
-    expect(onboard.calls.find((c) => c.sql.startsWith('UPDATE seafarer SET')).params).toEqual(['ON_VESSEL', 2])
-
-    const off = transitionPool('PENDING', 'ONBOARD')
-    expect((await service.transition(off, 9, 'approve', { move_onboard: false })).moved).toBe(false)
-    expect(off.calls.some((c) => c.sql.startsWith('UPDATE seafarer SET'))).toBe(false)
-
-    const planning = transitionPool('PENDING', 'PLANNING')
-    expect((await service.transition(planning, 9, 'approve', { move_onboard: true })).moved).toBe(false)
-    expect(planning.calls.some((c) => c.sql.startsWith('UPDATE seafarer SET'))).toBe(false)
+    expect(result.moved).toBeUndefined()
+    expect(onboard.calls.some((c) => c.sql.startsWith('UPDATE seafarer SET'))).toBe(false)
   })
 
   it('chỉ xoá được hợp đồng nháp', async () => {

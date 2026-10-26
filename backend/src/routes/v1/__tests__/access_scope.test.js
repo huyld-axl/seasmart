@@ -224,3 +224,13 @@ describe('/roles/options cho người quản lý tài khoản', () => {
     expect(JSON.parse(res.body).data).toEqual([{ id: 1, name: 'Quản trị viên', description: null, is_system: true }])
   })
 })
+
+describe('giai đoạn 1: khoá tạo hợp đồng', () => {
+  it('POST /contracts trả 409 kể cả khi có quyền tạo', async () => {
+    const res = await app.inject({
+      method: 'POST', url: '/contracts', headers: as(['contract.create']),
+      payload: { voyage_position_id: 1, seafarer_id: 1, start_date: '2026-11-01', end_date: '2027-05-01' },
+    })
+    expect(res.statusCode).toBe(409)
+  })
+})

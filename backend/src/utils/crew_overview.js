@@ -12,19 +12,18 @@ const EXPIRED_EXPR = dateCount('< CURRENT_DATE')
 const EXPIRING_EXPR = dateCount(`BETWEEN CURRENT_DATE AND (CURRENT_DATE + (${EXPIRING_DAYS} * INTERVAL '1 day'))`)
 const PENDING_EXPR = '(SELECT COUNT(*) FROM seafarer_certificate sc WHERE sc.seafarer_id = s.id AND sc.status = \'PENDING\')'
 
-// Hợp đồng Hiệu lực của chuyến đang trên tàu (ONBOARD), mới nhất: tàu và ngày kết thúc hợp đồng.
-// Chỉ chuyến đã bắt đầu mới tính, cùng điều kiện với việc chuyển seafarer.status sang ON_VESSEL (bắt đầu chuyến, duyệt hợp đồng).
-const activeContract = (column) =>
-  `(SELECT ${column} FROM seafarer_contract ec
-    JOIN voyage_position vp ON vp.id = ec.voyage_position_id
-    JOIN voyage vy ON vy.id = vp.voyage_id
-    JOIN vessel v ON v.id = vy.vessel_id
-    WHERE ec.seafarer_id = s.id AND ec.status = 'ACTIVE' AND ec.deleted_at IS NULL AND vy.status = 'ONBOARD'
-    ORDER BY ec.start_date DESC LIMIT 1)`
+// Tàu đang làm: chuyến mới đang trên tàu (seafarer_voyage, mỗi người tối đa một).
+const onboardVoyage = (column) =>
+  `(SELECT ${column} FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
+    WHERE sv.seafarer_id = s.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL LIMIT 1)`
+// Hết hạn: hợp đồng Hiệu lực gắn với chuyến đó (dữ liệu cũ), không có thì ngày rời dự kiến của chuyến.
+const CONTRACT_END = `(SELECT COALESCE(ec.end_date, sv.planned_leave_date) FROM seafarer_voyage sv
+    LEFT JOIN seafarer_contract ec ON ec.id = sv.legacy_contract_id AND ec.status = 'ACTIVE' AND ec.deleted_at IS NULL
+    WHERE sv.seafarer_id = s.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL LIMIT 1)`
 
-const OVERVIEW_FIELDS = `${activeContract('v.vessel_name')} AS vessel_name,
-  ${activeContract('v.id')} AS vessel_id,
-  ${activeContract('ec.end_date')} AS contract_end,
+const OVERVIEW_FIELDS = `${onboardVoyage('v.vessel_name')} AS vessel_name,
+  ${onboardVoyage('v.id')} AS vessel_id,
+  ${CONTRACT_END} AS contract_end,
   ${EXPIRED_EXPR} AS expired_count,
   ${EXPIRING_EXPR} AS expiring_count,
   ${PENDING_EXPR} AS pending_review_count,

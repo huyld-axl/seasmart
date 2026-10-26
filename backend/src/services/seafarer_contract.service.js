@@ -32,6 +32,7 @@ const CONTRACT_SELECT = `SELECT c.id, c.contract_number, c.status, c.voyage_posi
     p.sort_order AS position_sort_order, p.budget_total_usd, p.budget_monthly_usd, r.name_vi AS rank_name,
     v.id AS voyage_id, v.code AS voyage_code, v.status AS voyage_status, v.actual_embark_date AS voyage_actual_embark_date,
     v.vessel_id, ves.vessel_name, o.company_name AS ship_owner_name, v.ship_owner_id,
+    tr.id AS trip_id, tr.code AS trip_code, tr.status AS trip_status,
     (SELECT COUNT(*) FROM voyage_position vp WHERE vp.voyage_id = v.id AND vp.deleted_at IS NULL) AS positions_total,
     (SELECT COUNT(*) FROM voyage_position vp WHERE vp.voyage_id = v.id AND vp.deleted_at IS NULL
        AND EXISTS (SELECT 1 FROM seafarer_contract c2 WHERE c2.voyage_position_id = vp.id AND c2.deleted_at IS NULL)) AS positions_filled,
@@ -43,7 +44,8 @@ const CONTRACT_SELECT = `SELECT c.id, c.contract_number, c.status, c.voyage_posi
   JOIN "rank" r ON r.id = p.rank_id
   JOIN voyage v ON v.id = p.voyage_id
   JOIN vessel ves ON ves.id = v.vessel_id
-  JOIN ship_owner o ON o.id = v.ship_owner_id`
+  JOIN ship_owner o ON o.id = v.ship_owner_id
+  LEFT JOIN seafarer_voyage tr ON tr.legacy_contract_id = c.id AND tr.deleted_at IS NULL`
 
 function parseItems(input) {
   const rows = Array.isArray(input) ? input : []
@@ -132,6 +134,7 @@ function summaryRow(row) {
     vessel_id: row.vessel_id,
     vessel_name: row.vessel_name,
     ship_owner_name: row.ship_owner_name,
+    trip: row.trip_id ? { id: row.trip_id, code: row.trip_code, status: row.trip_status } : null,
     start_date: row.start_date,
     end_date: row.end_date,
     receivable_monthly: receivable,
@@ -242,6 +245,8 @@ const seafarerContractService = {
         ship_owner_name: row.ship_owner_name,
         actual_embark_date: row.voyage_actual_embark_date,
       },
+      // Chuyến mới chuyển từ hợp đồng này (giai đoạn 1 không nối hợp đồng vào chuyến mới).
+      trip: row.trip_id ? { id: row.trip_id, code: row.trip_code, status: row.trip_status } : null,
       seafarer: { id: row.seafarer_id, full_name: row.seafarer_name, seafarer_code: row.seafarer_code, status: row.seafarer_status },
       items,
       terms: Object.fromEntries(termRows.map(({ side, ...t }) => [side, t])),
@@ -324,12 +329,11 @@ const seafarerContractService = {
     return { success: true }
   },
 
-  // action: submit | withdraw | reject | approve. extra: { reason } hoặc { move_onboard }.
+  // action: submit | withdraw | reject | approve. extra: { reason }. Trạng thái thuyền viên chỉ do chuyến đổi.
   async transition(pool, id, action, extra = {}, userId) {
     const rule = TRANSITIONS[action]
     const reason = typeof extra.reason === 'string' ? extra.reason.trim() : ''
     if (action === 'reject' && (!reason || reason.length > 1000)) throw { statusCode: 400, message: 'Cần ghi lý do từ chối (tối đa 1000 ký tự)' }
-    let moved = false
     await withTransaction(pool, async (conn) => {
       const [[current]] = await conn.query(
         `SELECT c.status, c.seafarer_id, v.status AS voyage_status
@@ -349,13 +353,8 @@ const seafarerContractService = {
       await writeLog(conn, id, rule.log, userId, action === 'reject' ? reason : null)
       // Duyệt là sinh đủ yêu cầu thanh toán bên phải thu, cùng transaction: lỗi thì không duyệt.
       if (action === 'approve') await contractBillService.generateForContract(conn, id, 'RECEIVABLE', userId)
-      if (action === 'approve' && extra.move_onboard === true && current.voyage_status === 'ONBOARD') {
-        await conn.query('UPDATE seafarer SET status = ? WHERE id = ?', ['ON_VESSEL', current.seafarer_id])
-        moved = true
-      }
     })
-    const detail = await this.get(pool, id)
-    return action === 'approve' ? { ...detail, moved } : detail
+    return this.get(pool, id)
   },
 }
 

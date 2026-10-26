@@ -430,7 +430,7 @@ const opportunityService = {
   async place(pool, id, body, userId) {
     const result = await refGuard(withTransaction(pool, async (conn) => {
       const opportunity = await this.lockOpen(conn, id)
-      const [[{ today }]] = await conn.query("SELECT to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today")
+      const [[{ today }]] = await conn.query('SELECT to_char(CURRENT_DATE, \'YYYY-MM-DD\') AS today')
       if (body.join_date > today) throw { statusCode: 400, message: 'Ngày xuống tàu không được sau hôm nay' }
       const vesselId = opportunity.vessel_id || body.vessel_id
       if (!vesselId) throw { statusCode: 400, message: 'Cơ hội chưa có tàu, chọn tàu trước khi chốt' }
@@ -468,11 +468,11 @@ const opportunityService = {
         voyage_id: voyageId, action: 'PLACE', actor_id: userId ?? null,
         payload: JSON.stringify({ opportunity_id: id, join_date: joinDate, join_port_id: body.join_port_id }),
       }])
-      await conn.query("UPDATE opportunity SET status = 'WON', vessel_id = ?, updated_by = ? WHERE id = ?", [vesselId, userId ?? null, id])
+      await conn.query('UPDATE opportunity SET status = \'WON\', vessel_id = ?, updated_by = ? WHERE id = ?', [vesselId, userId ?? null, id])
       await conn.query(
         `UPDATE opportunity_candidate SET status = CASE WHEN id = ? THEN 'PLACED' ELSE 'NOT_SELECTED' END
          WHERE opportunity_id = ? AND status = 'PICKED'`, [candidate.id, id])
-      await conn.query("UPDATE seafarer SET status = 'ON_VESSEL' WHERE id = ?", [body.seafarer_id])
+      await conn.query('UPDATE seafarer SET status = \'ON_VESSEL\' WHERE id = ?', [body.seafarer_id])
       return { id: voyageId, code }
     }))
     return { opportunity: await this.get(pool, id), voyage: result }

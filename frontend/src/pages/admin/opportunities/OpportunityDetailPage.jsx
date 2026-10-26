@@ -270,7 +270,7 @@ export default function OpportunityDetailPage() {
 
       <section className="crew-panel">
         <div className="crew-panel__head">
-          <h2 className="crew-panel__title">Ứng viên <span className="vd-count">{live.length}</span></h2>
+          <h2 className="crew-panel__title">Ứng viên <span className="vd-count">{candidates.length}</span></h2>
         </div>
         {editable && selected.length ? (
           <div className="op-bulk">

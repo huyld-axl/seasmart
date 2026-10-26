@@ -169,3 +169,45 @@ describe('ứng viên, nhãn, ghi nhận gửi', () => {
     expect(result.data.find((r) => r.id === 4)).toMatchObject({ held_by: null, free_from: null })
   })
 })
+
+describe('chốt người', () => {
+  const lock = (over = {}) => ['SELECT * FROM opportunity WHERE id', () => [[row(over)]]]
+  const today = ["SELECT to_char(CURRENT_DATE", () => [[{ today: '2026-10-26' }]]]
+  const candidate = ['AS seafarer_status FROM opportunity_candidate c', () => [[{ id: 31, full_name: 'Đặng Văn Thịnh', seafarer_status: 'AVAILABLE' }]]]
+  const placeBody = (over = {}) => ({ seafarer_id: 5, join_date: '2026-10-26', join_port_id: 2, ...over })
+
+  it('ngày xuống sau hôm nay thì 400', async () => {
+    const pool = fakePool([lock(), today])
+    await expect(opportunityService.place(pool, 9, placeBody({ join_date: '2026-10-27' }), 1)).rejects.toMatchObject({ statusCode: 400 })
+    expect(writes(pool)).toHaveLength(0)
+  })
+
+  it('cơ hội chưa có tàu mà không gửi tàu thì 400', async () => {
+    const pool = fakePool([lock({ vessel_id: null }), today])
+    await expect(opportunityService.place(pool, 9, placeBody(), 1)).rejects.toMatchObject({ statusCode: 400 })
+  })
+
+  it('người đang trên tàu khác thì 409', async () => {
+    const pool = fakePool([lock(), today, candidate, ['FROM seafarer_voyage sv JOIN vessel', () => [[{ code: 'CT-2026-0003', vessel_name: 'MV Ocean Pride' }]]]])
+    await expect(opportunityService.place(pool, 9, placeBody(), 1)).rejects.toMatchObject({ statusCode: 409, message: 'Đặng Văn Thịnh đang trên MV Ocean Pride, ghi rời tàu chuyến đó trước' })
+    expect(writes(pool)).toHaveLength(0)
+  })
+
+  it('thành công: tạo chuyến ONBOARD, ghi log PLACE, cơ hội WON, ứng viên PLACED / NOT_SELECTED, thuyền viên ON_VESSEL', async () => {
+    const pool = fakePool([
+      lock({ budget_monthly_usd: '4900.00', planned_leave_port_id: 2 }), today, candidate,
+      ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 158 }] }]],
+      ['INSERT INTO seafarer_voyage SET', () => [{ insertId: 77 }]],
+      ...detailRoutes(row({ status: 'WON' })),
+    ])
+    const result = await opportunityService.place(pool, 9, placeBody(), 1)
+    expect(result.voyage).toEqual({ id: 77, code: 'CT-2026-0158' })
+    const sv = pool.calls.find((c) => c.sql.startsWith('INSERT INTO seafarer_voyage SET')).params[0]
+    expect(sv).toMatchObject({ status: 'ONBOARD', source: 'OPPORTUNITY', opportunity_id: 9, vessel_id: 3, join_date: '2026-10-26', planned_leave_date: '2027-07-25', budget_monthly_usd: '4900.00' })
+    const sqls = writes(pool).map((c) => c.sql)
+    expect(sqls.some((q) => q.includes('seafarer_voyage_log'))).toBe(true)
+    expect(sqls.some((q) => q.includes("SET status = 'WON'"))).toBe(true)
+    expect(sqls.some((q) => q.includes("'PLACED' ELSE 'NOT_SELECTED'"))).toBe(true)
+    expect(sqls.some((q) => q.includes("SET status = 'ON_VESSEL'"))).toBe(true)
+  })
+})

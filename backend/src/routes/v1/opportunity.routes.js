@@ -110,6 +110,12 @@ const sendBody = {
   },
 }
 
+const placeBody = {
+  type: 'object',
+  required: ['seafarer_id', 'join_date', 'join_port_id'],
+  properties: { seafarer_id: id, join_date: date, join_port_id: id, vessel_id: id },
+}
+
 async function opportunityRoutes(fastify) {
   const can = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`opportunity.${action}`)] })
   const inScope = (request) => assertRecordInScope(request, 'opportunity', request.params.id, NOT_FOUND)
@@ -180,6 +186,14 @@ async function opportunityRoutes(fastify) {
   fastify.delete('/:id/candidates/:seafarerId/owner-selected', { ...can('update'), schema: { params: candidateParams } }, async (request) => {
     await inScope(request)
     return opportunityService.setOwnerSelected(pool, request.params.id, request.params.seafarerId, false, request.user.id)
+  })
+  // Chốt cũng tạo chuyến, nên cần thêm quyền xem chuyến.
+  fastify.post('/:id/place', {
+    onRequest: [fastify.authenticate, fastify.can('opportunity.close'), fastify.can('voyage.view')],
+    schema: { params: idParams, body: placeBody },
+  }, async (request) => {
+    await inScope(request)
+    return opportunityService.place(pool, request.params.id, request.body, request.user.id)
   })
   fastify.post('/:id/sends', { ...can('send'), schema: { params: idParams, body: sendBody } }, async (request) => {
     await inScope(request)

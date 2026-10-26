@@ -426,6 +426,58 @@ const opportunityService = {
     return this.get(pool, id)
   },
 
+  // ---------- Chốt người = ghi lên tàu (mục 1.4) ----------
+  async place(pool, id, body, userId) {
+    const result = await refGuard(withTransaction(pool, async (conn) => {
+      const opportunity = await this.lockOpen(conn, id)
+      const [[{ today }]] = await conn.query("SELECT to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today")
+      if (body.join_date > today) throw { statusCode: 400, message: 'Ngày xuống tàu không được sau hôm nay' }
+      const vesselId = opportunity.vessel_id || body.vessel_id
+      if (!vesselId) throw { statusCode: 400, message: 'Cơ hội chưa có tàu, chọn tàu trước khi chốt' }
+      const [[candidate]] = await conn.query(
+        `SELECT c.id, s.full_name, s.status AS seafarer_status FROM opportunity_candidate c JOIN seafarer s ON s.id = c.seafarer_id
+         WHERE c.opportunity_id = ? AND c.seafarer_id = ? AND c.status = 'PICKED' FOR UPDATE OF c`, [id, body.seafarer_id])
+      if (!candidate) throw { statusCode: 409, message: 'Người này không có trong danh sách ứng viên' }
+      if (candidate.seafarer_status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng' }
+      const [[onboard]] = await conn.query(
+        `SELECT sv.code, v.vessel_name FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
+         WHERE sv.seafarer_id = ? AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL`, [body.seafarer_id])
+      if (onboard) throw { statusCode: 409, message: `${candidate.full_name} đang trên ${onboard.vessel_name}, ghi rời tàu chuyến đó trước` }
+      const joinDate = body.join_date
+      const plannedLeave = iso(opportunity.planned_leave_date) < joinDate ? joinDate : iso(opportunity.planned_leave_date)
+      const code = await nextCode(conn, 'VOYAGE1', Number(joinDate.slice(0, 4)), 'CT', 4)
+      const [inserted] = await conn.query('INSERT INTO seafarer_voyage SET ?', [{
+        code,
+        seafarer_id: body.seafarer_id,
+        rank_id: opportunity.rank_id,
+        vessel_id: vesselId,
+        ship_owner_id: opportunity.ship_owner_id,
+        opportunity_id: id,
+        source: 'OPPORTUNITY',
+        budget_monthly_usd: opportunity.budget_monthly_usd,
+        join_date: joinDate,
+        join_port_id: body.join_port_id,
+        planned_leave_date: plannedLeave,
+        planned_leave_port_id: opportunity.planned_leave_port_id,
+        status: 'ONBOARD',
+        created_by: userId ?? null,
+        updated_by: userId ?? null,
+      }])
+      const voyageId = inserted.insertId
+      await conn.query('INSERT INTO seafarer_voyage_log SET ?', [{
+        voyage_id: voyageId, action: 'PLACE', actor_id: userId ?? null,
+        payload: JSON.stringify({ opportunity_id: id, join_date: joinDate, join_port_id: body.join_port_id }),
+      }])
+      await conn.query("UPDATE opportunity SET status = 'WON', vessel_id = ?, updated_by = ? WHERE id = ?", [vesselId, userId ?? null, id])
+      await conn.query(
+        `UPDATE opportunity_candidate SET status = CASE WHEN id = ? THEN 'PLACED' ELSE 'NOT_SELECTED' END
+         WHERE opportunity_id = ? AND status = 'PICKED'`, [candidate.id, id])
+      await conn.query("UPDATE seafarer SET status = 'ON_VESSEL' WHERE id = ?", [body.seafarer_id])
+      return { id: voyageId, code }
+    }))
+    return { opportunity: await this.get(pool, id), voyage: result }
+  },
+
   // ---------- Đề xuất ứng viên (mục 1.7) ----------
   async suggestions(pool, id, query) {
     const opportunity = await this.get(pool, id)

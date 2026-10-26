@@ -1,0 +1,1386 @@
+<title>Cơ hội và Chuyến tàu</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe tách Cơ hội > Chuyến (mỗi chuyến một thuyền viên). Một theme sáng có chủ ý, như app.
+     Token chép từ frontend/src/theme/tokens.js. Bố cục: mục lục dính bên trái, các màn xếp dọc trong khung app. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-hover: #1a4775;
+    --primary-foreground: #ffffff;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --primary-mid: rgba(0, 51, 102, 0.16);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --item-hover: #f4f4f6;
+    --surface-hover: #f8f8fa;
+    --neutral: #52525c;
+    --neutral-bg: #f4f4f5;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --error-border: #ffc9c9;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: var(--primary); }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); }
+
+  /* ---------- Trang tài liệu ---------- */
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1480px; margin: 0 auto; padding-block: 32px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .toc__group { margin: 14px 0 4px 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  .intro h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; letter-spacing: -.01em; text-wrap: balance; }
+  .intro p { max-width: 70ch; margin: 0 0 10px; color: var(--neutral); }
+  .screen { display: grid; gap: 14px; min-width: 0; scroll-margin-top: 24px; }
+  .screen__head { display: grid; gap: 4px; max-width: 80ch; }
+  .screen__kicker { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--primary); }
+  .screen__head h2 { margin: 0; font-size: 20px; text-wrap: balance; }
+  .screen__head p { margin: 0; color: var(--neutral); }
+  .notes { display: grid; gap: 6px; max-width: 86ch; margin: 0; padding-left: 18px; color: var(--neutral); font-size: 13px; }
+  .notes b { color: var(--foreground); font-weight: 600; }
+  .scroll { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border-strong); background: var(--background); }
+
+  /* ---------- Khung app ---------- */
+  .app { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-width: 1160px; min-height: 540px; position: relative; }
+  .side { display: grid; align-content: start; gap: 2px; padding: 16px 10px; background: var(--surface); border-right: 1px solid var(--border); }
+  .side__brand { display: flex; align-items: center; gap: 8px; padding: 2px 8px 14px; font-weight: 700; color: var(--primary); }
+  .side__logo { width: 26px; height: 26px; border-radius: 7px; background: var(--primary); }
+  .side__item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--neutral); }
+  .side__item i { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid currentColor; opacity: .55; }
+  .side__item--on { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .side__item--new::after { content: 'Mới'; margin-left: auto; padding: 0 6px; border-radius: 99px; background: var(--info-bg); color: var(--info); font-size: 10px; font-weight: 600; }
+  .side__sep { height: 1px; margin: 8px 6px; background: var(--border); }
+  .page { display: grid; align-content: start; gap: 16px; padding: 20px 24px 28px; min-width: 0; }
+  .crumb { font-size: 12px; color: var(--muted); }
+  .crumb a { color: var(--muted); }
+  .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .head h1 { margin: 0; font-size: 20px; line-height: 1.3; }
+  .head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .head__badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); font-size: 13px; font-weight: 500; white-space: nowrap; cursor: default; }
+  .btn--primary { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+  .btn--text { border-color: transparent; background: none; color: var(--primary); padding: 0 8px; }
+  .btn--sm { height: 28px; padding: 0 10px; font-size: 12px; }
+  .btn--danger { color: var(--error-strong); border-color: var(--error-border); }
+  .btn[disabled] { opacity: .45; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .05); font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+  .badge::before { content: ''; width: 8px; height: 8px; border-radius: 99px; background: currentColor; }
+  .badge--plain::before { display: none; }
+  .b-neutral { background: var(--neutral-bg); color: var(--neutral); }
+  .b-success { background: var(--success-bg); color: var(--success); }
+  .b-warning { background: var(--warning-bg); color: var(--warning); }
+  .b-error { background: var(--error-bg); color: var(--error-strong); }
+  .b-info { background: var(--info-bg); color: var(--info); }
+  .b-primary { background: var(--primary-light); color: var(--primary); }
+  .b-ring::before { background: none; border: 1.5px solid currentColor; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); min-width: 0; }
+  .card__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .card__head h3 { margin: 0; font-size: 15px; }
+  .card__body { padding: 16px; }
+  .count { margin-left: 4px; padding: 0 7px; border-radius: 99px; background: var(--secondary); color: var(--neutral); font-size: 12px; font-weight: 500; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 8px 12px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tab--on { color: var(--primary); border-color: var(--primary); font-weight: 600; }
+  .tab span { margin-left: 4px; color: var(--muted); font-weight: 400; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .input { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: 13px; min-width: 150px; }
+  .input--search { min-width: 260px; }
+  .input--filled { color: var(--foreground); }
+  .input--sel::after { content: ''; margin-left: auto; padding-left: 10px; width: 0; height: 0; border: 4px solid transparent; border-top-color: var(--muted); transform: translateY(2px); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 9px 12px; text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); background: var(--surface-hover); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .r { text-align: right; }
+  .cell2 { display: grid; gap: 2px; }
+  .cell2 small { color: var(--muted); font-size: 12px; }
+  .strong { font-weight: 600; }
+  .row--muted td { color: var(--muted); }
+  .row--muted td .strong { color: var(--neutral); }
+  .delta { font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 99px; }
+  .delta--early { background: var(--warning-bg); color: var(--warning); }
+  .delta--late { background: var(--error-bg); color: var(--error-strong); }
+  .delta--ext { background: var(--info-bg); color: var(--info); }
+  .link-sub { font-size: 12px; color: var(--muted); }
+
+  .banner { display: flex; gap: 12px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--warning-border); background: var(--warning-bg); font-size: 13px; }
+  .banner b { display: block; }
+  .banner--info { border-color: rgba(29, 78, 216, .2); background: var(--info-bg); }
+
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+  .fact { padding: 14px 16px; border-right: 1px solid var(--border); }
+  .fact:last-child { border-right: 0; }
+  .fact dt { font-size: 12px; color: var(--muted); }
+  .fact dd { margin: 2px 0 0; font-weight: 600; }
+  .fact dd small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  .sums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .sum { padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .sum p { margin: 0; }
+  .sum__label { font-size: 12px; color: var(--muted); }
+  .sum__value { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sum__value span { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .sum__sub { font-size: 12px; color: var(--muted); }
+
+  /* Form */
+  .form { display: grid; gap: 16px; max-width: 980px; }
+  .fgroup { display: grid; gap: 14px; }
+  .fgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 16px; }
+  .fgrid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--neutral); }
+  .field label em { color: var(--error-strong); font-style: normal; margin-left: 2px; }
+  .field .input { width: 100%; min-width: 0; }
+  .field small { font-size: 12px; color: var(--muted); }
+  .span2 { grid-column: span 2; }
+  .span3 { grid-column: 1 / -1; }
+  .choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .choice__item { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); font-size: 13px; }
+  .choice__item b { display: flex; align-items: center; gap: 8px; }
+  .choice__item b::before { content: ''; width: 14px; height: 14px; border-radius: 99px; border: 1.5px solid var(--border-strong); }
+  .choice__item--on { border-color: var(--primary); box-shadow: 0 0 0 2px var(--ring, var(--primary-light)); background: var(--primary-light); }
+  .choice__item--on b::before { border: 4px solid var(--primary); }
+  .choice__item span { color: var(--muted); padding-left: 22px; }
+  .stick { position: sticky; bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+
+  /* Ứng viên trong cơ hội */
+  .slots { display: grid; gap: 0; }
+  .slot { display: grid; grid-template-columns: 220px minmax(0, 1fr); border-bottom: 1px solid var(--border); }
+  .slot:last-child { border-bottom: 0; }
+  .slot__pos { padding: 14px 16px; border-right: 1px solid var(--border); display: grid; gap: 4px; align-content: start; }
+  .slot__pos b { font-size: 14px; }
+  .slot__pos small { color: var(--muted); font-size: 12px; }
+  .slot__cands { display: grid; gap: 8px; padding: 12px 16px; align-content: start; }
+  .cand { display: grid; grid-template-columns: 28px minmax(0, 1.3fr) minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .cand--sel { border-color: rgba(0, 122, 85, .35); background: var(--success-bg); }
+  .cand--out { opacity: .6; }
+  .avatar { width: 28px; height: 28px; border-radius: 99px; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--neutral); }
+  .add-cand { justify-self: start; }
+
+  /* Gantt */
+  .gantt { display: grid; grid-template-columns: 230px minmax(0, 1fr); font-size: 12px; }
+  .gantt__names { border-right: 1px solid var(--border); }
+  .gantt__name { height: 44px; display: grid; align-content: center; padding: 0 14px; border-bottom: 1px solid var(--border); }
+  .gantt__name b { font-size: 13px; font-weight: 600; }
+  .gantt__name small { color: var(--muted); }
+  .gantt__name--head, .gantt__months { height: 32px; background: var(--surface-hover); border-bottom: 1px solid var(--border); }
+  .gantt__name--head { color: var(--muted); font-weight: 500; }
+  .gantt__chart { position: relative; }
+  .gantt__months { display: grid; }
+  .gantt__months span { padding: 8px 6px; border-left: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .gantt__row { position: relative; height: 44px; border-bottom: 1px solid var(--border); }
+  .gantt__grid { position: absolute; inset: 32px 0 0; display: grid; pointer-events: none; }
+  .gantt__grid span { border-left: 1px solid var(--border); }
+  .bar { position: absolute; top: 12px; height: 20px; border-radius: 5px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+  .bar--plan { top: 14px; height: 16px; border: 1.5px dashed var(--border-strong); background: transparent; }
+  .bar--on { background: var(--primary); color: var(--primary-foreground); }
+  .bar--left { background: var(--neutral); color: var(--primary-foreground); opacity: .7; }
+  .bar--wait { background: var(--primary-mid); color: var(--primary); }
+  .bar--ext { background: repeating-linear-gradient(135deg, var(--info-bg) 0 6px, rgba(29, 78, 216, .18) 6px 12px); color: var(--info); border: 1px solid rgba(29, 78, 216, .3); }
+  .today { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--error-strong); z-index: 2; }
+  .today::before { content: 'Hôm nay 26/10'; position: absolute; top: 6px; left: 4px; padding: 1px 6px; border-radius: 4px; background: var(--error-strong); color: var(--primary-foreground); font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 18px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* Modal */
+  .overlay { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 24px; }
+  .modal { width: 620px; max-width: 100%; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); display: grid; }
+  .modal--wide { width: 820px; }
+  .modal__head { padding: 18px 20px 6px; }
+  .modal__head h3 { margin: 0; font-size: 17px; }
+  .modal__head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .modal__body { display: grid; gap: 14px; padding: 12px 20px 16px; }
+  .modal__foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); }
+  .modal__foot .muted { margin-right: auto; align-self: center; font-size: 12px; }
+  .chk { display: inline-block; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border-strong); vertical-align: -3px; }
+  .chk--on { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 0 5px var(--surface); }
+  .impact { display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-hover); border: 1px solid var(--border); font-size: 13px; }
+  .impact h4 { margin: 0; font-size: 13px; }
+  .impact ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--neutral); }
+  .seg { display: inline-flex; padding: 2px; border-radius: var(--radius-sm); background: var(--secondary); gap: 2px; flex-wrap: wrap; }
+  .seg span { padding: 5px 10px; border-radius: 6px; font-size: 12px; color: var(--neutral); }
+  .seg .on { background: var(--surface); color: var(--foreground); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+
+  /* Mô hình */
+  .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; align-items: stretch; min-width: 980px; padding: 20px; background: var(--surface); }
+  .node { position: relative; display: grid; gap: 6px; align-content: start; padding: 14px; margin-right: 28px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); }
+  .node:last-child { margin-right: 0; }
+  .node:not(:last-child)::after { content: ''; position: absolute; right: -24px; top: 30px; width: 20px; height: 2px; background: var(--primary); }
+  .node:not(:last-child)::before { content: ''; position: absolute; right: -25px; top: 26px; border: 5px solid transparent; border-left: 7px solid var(--primary); }
+  .node--key { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+  .node__name { font-weight: 700; font-size: 15px; }
+  .node__mult { font-size: 11px; color: var(--primary); font-weight: 600; letter-spacing: .02em; }
+  .node p { margin: 0; font-size: 12.5px; color: var(--neutral); }
+  .node ul { margin: 0; padding-left: 16px; font-size: 12px; color: var(--neutral); display: grid; gap: 2px; }
+  .states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .state h4 { margin: 0 0 10px; font-size: 14px; }
+  .state__line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .state__line + .state__line { margin-top: 8px; }
+  .compare td:first-child { font-weight: 600; white-space: nowrap; }
+  .q { display: grid; gap: 10px; }
+  .q__item { padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .q__item b { display: block; margin-bottom: 4px; }
+  .q__item p { margin: 0; color: var(--neutral); font-size: 13px; }
+  .q__item .rec { margin-top: 6px; color: var(--success); font-weight: 500; }
+
+  @media (max-width: 900px) {
+    .doc { grid-template-columns: minmax(0, 1fr); }
+    .toc { position: static; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .toc__head, .toc__group { grid-column: 1 / -1; }
+    .states { grid-template-columns: minmax(0, 1fr); }
+  }
+  .bulk { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--primary-light); border: 1px solid var(--primary-mid); font-size: 13px; }
+  .pl-row { display: grid; grid-template-columns: 180px minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+  .pl-row__label { display: grid; font-size: 13px; }
+  .pl-row__label small { color: var(--muted); font-size: 12px; }
+  .pl-track { position: relative; height: 24px; border-radius: 6px; background: var(--surface-hover); border: 1px solid var(--border); }
+  .pl-seg { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+  .pl-seg--base { background: var(--primary); color: var(--primary-foreground); }
+  .pl-seg--adj { background: var(--success-bg); color: var(--success); border: 1px solid rgba(0, 122, 85, .3); }
+  .pl-seg--ext { background: repeating-linear-gradient(135deg, var(--info-bg) 0 6px, rgba(29, 78, 216, .18) 6px 12px); color: var(--info); border: 1px solid rgba(29, 78, 216, .3); }
+  .seg--sm span { padding: 3px 8px; font-size: 11px; }
+  .req-group td { padding: 8px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); background: var(--surface-hover); }
+  .fit { display: inline-flex; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: var(--neutral-bg); color: var(--neutral); white-space: nowrap; }
+  .fit--ok { background: var(--success-bg); color: var(--success); }
+  .fit--warn { background: var(--warning-bg); color: var(--warning); }
+  .warn-text { color: var(--warning); }
+  .pill { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 12px; color: var(--neutral); white-space: nowrap; }
+  .pill--on { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .drawer-scrim { position: absolute; inset: 0; background: var(--scrim); }
+  .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 720px; max-width: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--surface); box-shadow: var(--elevation-modal); }
+  .drawer__head { display: flex; justify-content: space-between; gap: 12px; padding: 18px 20px 10px; }
+  .drawer__body { display: grid; align-content: start; gap: 12px; padding: 0 20px 16px; overflow: auto; }
+  .drawer__foot { display: flex; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); align-items: center; }
+  .sug { display: grid; border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .sug__row { display: grid; grid-template-columns: 16px 28px minmax(0, 1.2fr) auto minmax(0, 1.4fr); gap: 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .sug__row:last-child { border-bottom: 0; }
+  .sug__row--dim { opacity: .55; }
+  .sug__fit { display: flex; gap: 4px; }
+  .sug__why { display: flex; flex-wrap: wrap; gap: 4px; }
+  .why { padding: 1px 8px; border-radius: 6px; background: var(--info-bg); color: var(--info); font-size: 11px; }
+  .why--miss { background: var(--warning-bg); color: var(--warning); }
+  .textarea { min-height: 120px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 13px; }
+  .pack { display: grid; grid-template-columns: 220px minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
+  .pack__people { display: grid; gap: 6px; }
+  .pack__person { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+  .pack__person--on { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+  .row--on td { background: var(--primary-light); }
+  .sheet { margin: 16px; padding: 20px; border: 1px solid var(--border); border-radius: 4px; display: grid; gap: 8px; font-size: 12px; }
+  .sheet__title { text-align: center; font-weight: 700; letter-spacing: .08em; margin-bottom: 6px; }
+  .sheet__line { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dotted var(--border-strong); padding-bottom: 4px; }
+  .sheet__line span { color: var(--muted); }
+  .sheet__bar { height: 8px; border-radius: 4px; background: var(--secondary); }
+  .phase { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 99px; background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; white-space: nowrap; vertical-align: 1px; }
+  .sum--muted { background: var(--surface-hover); border-style: dashed; }
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; }
+  .toggle-row small { display: block; color: var(--muted); font-size: 12px; }
+  .switch { width: 36px; height: 20px; border-radius: 99px; background: var(--border-strong); position: relative; flex-shrink: 0; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 99px; background: var(--surface); }
+</style>
+
+<div class="doc">
+  <nav class="toc" aria-label="Các màn">
+    <p class="toc__head">Cơ hội và Chuyến tàu</p>
+    <a href="#he-thong"><b>!</b>Dựng theo hệ thống</a>
+    <a href="#mo-hinh"><b>0</b>Mô hình và luồng</a>
+    <p class="toc__group">Cơ hội (mỗi cơ hội một vị trí)</p>
+    <a href="#ds-co-hoi"><b>1</b>Danh sách cơ hội</a>
+    <a href="#tao-co-hoi"><b>2</b>Tạo cơ hội</a>
+    <a href="#ct-co-hoi"><b>3</b>Chi tiết cơ hội</a>
+    <a href="#tim-ung-vien"><b>4</b>Tìm và đề xuất ứng viên</a>
+    <a href="#ban-xuat"><b>5</b>Bản xuất (màn có sẵn)</a>
+    <a href="#gui-chu-tau"><b>6</b>Gửi cho chủ tàu</a>
+    <a href="#chot"><b>7</b>Chốt người = lên tàu</a>
+    <p class="toc__group">Chuyến (mỗi chuyến một người)</p>
+    <a href="#ds-chuyen"><b>8</b>Danh sách chuyến</a>
+    <a href="#tao-chuyen"><b>9</b>Tạo chuyến</a>
+    <a href="#doi-ngu"><b>10</b>Đội ngũ trên trang tàu</a>
+    <a href="#ct-chuyen"><b>11</b>Chi tiết chuyến</a>
+    <a href="#roi-tau"><b>12</b>Ghi rời tàu</a>
+    <a href="#doi-ngay"><b>13</b>Đổi ngày rời dự kiến</a>
+    <a href="#huy-chot"><b>Đ4</b>Huỷ chốt</a>
+    <a href="#ho-so"><b>14</b>Chuyến trên hồ sơ</a>
+    <p class="toc__group">Hợp đồng · giai đoạn 2</p>
+    <a href="#dac-biet"><b>Đ</b>Quy tắc và bảng xử lý</a>
+    <a href="#phu-luc"><b>Đ1</b>Hợp đồng và phụ lục</a>
+    <a href="#tao-phu-luc"><b>Đ2</b>Phụ lục điều chỉnh tiền</a>
+    <a href="#roi-muon"><b>Đ3</b>Rời tàu sau hạn hợp đồng</a>
+    <p class="toc__group">Dựng</p>
+    <a href="#du-lieu"><b>15</b>Thay đổi dữ liệu</a>
+    <a href="#cau-hoi"><b>16</b>Cần chốt</a>
+  </nav>
+
+  <main class="main">
+    <header class="intro">
+      <h1>Tách Cơ hội và Chuyến, mỗi chuyến một thuyền viên</h1>
+      <p>Hiện nay một chuyến tàu vừa là kế hoạch (vị trí dự kiến, budget) vừa là thực tế (ngày xuống, ngày rời), và gom cả nhóm người lên tàu, rời tàu cùng một lúc. Bản này tách thành hai tầng: <b>Cơ hội</b> là một vị trí chủ tàu cần người, kèm hồ sơ yêu cầu; <b>Chuyến</b> là một thuyền viên đi một tàu, với ngày lên, ngày rời, hợp đồng của riêng người đó.</p>
+      <p><b>Làm theo hai giai đoạn.</b> Giai đoạn 1: Cơ hội và Chuyến, làm kỹ, chưa đụng hợp đồng. Giai đoạn 2: Hợp đồng gắn vào chuyến, phụ lục, các trường hợp đặc biệt về tiền. Phần nào thuộc giai đoạn 2 có nhãn <span class="phase">Giai đoạn 2</span>. Thanh toán thiết kế sau nữa.</p>
+      <p>Không có bản ghi gom nhiều người. Muốn biết đội ngũ trên một tàu trong một khoảng thời gian thì mở thẻ Đội ngũ trên trang tàu. Dữ liệu mẫu: chủ tàu Hải Phong Shipping, tàu MV Ocean Pride. Hôm nay là 26/10/2026.</p>
+    </header>
+
+    <!-- Dựng theo hệ thống -->
+    <section class="screen" id="he-thong">
+      <div class="screen__head">
+        <span class="screen__kicker">Đọc trước khi dựng</span>
+        <h2>Dựng theo màn và component đang có</h2>
+        <p>Wireframe này để thống nhất luồng và nội dung, không phải hình dáng cuối. Khi dựng màn thật, lấy đúng khung của màn đang có trong app và component trong <code>components/ds/</code> (CLAUDE.md mục 3.3, 3.4). Thiếu control nào thì thêm vào <code>components/ds/</code> và trang <code>/design-system</code> trước, rồi mới dùng.</p>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Màn</th><th>Dựng theo</th><th>Cần thêm vào design system</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">1 Danh sách cơ hội</td><td>Khung danh sách như <code>VoyageListPage</code> / <code>ContractListPage</code>: <code>StatusTabs</code>, ô tìm, <code>Select</code> lọc, bảng <code>ds-table</code>, <code>RowActions</code>, <code>ListFooter</code>; nhãn bằng <code>StatusBadge</code></td><td>Nhóm <code>opportunity</code> trong <code>statusMap</code></td></tr>
+            <tr><td class="strong">2 Tạo cơ hội</td><td><code>FormFrame</code> + CSS <code>sf-*</code> như form thuyền viên; budget dùng <code>MoneyInput</code>; mức Bắt buộc / Nên có dùng <code>SegmentedPick</code></td><td>—</td></tr>
+            <tr><td class="strong">3 Chi tiết cơ hội</td><td>Khung chi tiết như <code>VoyageDetailPage</code>: <code>crew-head</code>, <code>crew-panel</code>, <code>DescriptionList</code></td><td>Chip đối chiếu hồ sơ yêu cầu ("8/8 bắt buộc"), nhóm <code>candidate</code> trong <code>statusMap</code></td></tr>
+            <tr><td class="strong">4 Đề xuất ứng viên</td><td><code>SlidePanel</code>, bộ lọc bằng <code>FilterChips</code>, dòng kết quả bằng <code>ListRow</code></td><td><code>SlidePanel</code> thêm cỡ rộng (bảng đề xuất cần hơn 448px)</td></tr>
+            <tr><td class="strong">5 Bản xuất</td><td>Dùng lại nguyên màn <code>/exports/new</code> và <code>/exports/:packId</code></td><td>—</td></tr>
+            <tr><td class="strong">6 Gửi chủ tàu</td><td>Không có màn: mở app mail mặc định, sau đó một <code>modal.confirm</code></td><td>—</td></tr>
+            <tr><td class="strong">7 Chốt người, 12 Ghi rời tàu, 13 Đổi ngày rời, Đ4 Huỷ chốt</td><td>Hộp thoại như <code>VoyageTransitionModal</code> / <code>ApproveModal</code></td><td>—</td></tr>
+            <tr><td class="strong">8 Danh sách chuyến, 11 Chi tiết chuyến</td><td>Sửa trên <code>VoyageListPage</code>, <code>VoyageDetailPage</code> đang có (bỏ bảng vị trí, thêm nguồn)</td><td>Nhóm <code>voyage</code> trong <code>statusMap</code> đổi giá trị</td></tr>
+            <tr><td class="strong">9 Tạo chuyến</td><td>Sửa <code>VoyageFormPage</code> theo <code>FormFrame</code>; "Chuyến đã kết thúc" dùng <code>ToggleRow</code></td><td>—</td></tr>
+            <tr><td class="strong">10 Đội ngũ trên trang tàu</td><td>Thêm tab vào <code>StatusTabs</code> của <code>VesselDetailPage</code></td><td><b>Biểu đồ thời gian theo hàng</b> (mỗi hàng một chuyến) là control mới</td></tr>
+            <tr><td class="strong">14 Chuyến trên hồ sơ</td><td>Tab Đi tàu của hồ sơ đang dùng <code>SeaServiceTimeline</code>: thêm nguồn "chuyến" vào đó thay vì bảng mới</td><td><code>SeaServiceTimeline</code> thêm <code>source.type = 'voyage'</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 0. Mô hình -->
+    <section class="screen" id="mo-hinh">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 0</span>
+        <h2>Mô hình và luồng</h2>
+        <p>Chuyến sinh ra theo hai đường: chốt một ứng viên trên cơ hội, hoặc bấm Tạo chuyến (không qua tuyển: chuyển tàu, chủ tàu tự tuyển, nhập chuyến cũ). Ngày, cảng, trạng thái nằm ở chuyến.</p>
+      </div>
+      <div class="scroll">
+        <div class="flow">
+          <div class="node">
+            <span class="node__mult">CƠ HỘI · CH-2026-044</span>
+            <span class="node__name">Cơ hội</span>
+            <p>Một vị trí chủ tàu cần người. Cần nhiều vị trí thì tạo nhiều cơ hội.</p>
+            <ul><li>Chủ tàu, tàu, chức danh, budget</li><li>Xuống, rời tàu dự kiến: ngày, nơi</li><li>Hạn chốt</li></ul>
+          </div>
+          <div class="node">
+            <span class="node__mult">NHIỀU / CƠ HỘI</span>
+            <span class="node__name">Hồ sơ yêu cầu</span>
+            <p>Giấy tờ, chứng chỉ, kinh nghiệm ứng viên phải có, và mẫu giấy xuất kèm.</p>
+            <ul><li>Bắt buộc / Nên có</li><li>Còn hạn tới ngày nào</li><li>Điền sẵn theo tàu + chức danh</li></ul>
+          </div>
+          <div class="node">
+            <span class="node__mult">NHIỀU / CƠ HỘI</span>
+            <span class="node__name">Ứng viên và bản xuất</span>
+            <p>Người được chọn, đối chiếu với hồ sơ yêu cầu. Mỗi người một bản xuất (màn bộ giấy có sẵn), tải xuống hoặc gửi chủ tàu qua app mail.</p>
+            <ul><li>Đã chọn → Đã tạo bản xuất → Đã gửi</li><li>Chốt tay một người khi người đó lên tàu</li></ul>
+          </div>
+          <div class="node node--key">
+            <span class="node__mult">TỪ CƠ HỘI HOẶC TẠO TAY · CT-2026-0104</span>
+            <span class="node__name">Chuyến</span>
+            <p>Một thuyền viên đi một tàu. Không gom người.</p>
+            <ul><li>Thuyền viên, chức danh, tàu, chủ tàu</li><li>Lên tàu: ngày, cảng (ghi lúc chốt hoặc lúc tạo)</li><li>Nguồn: cơ hội, hoặc lý do tạo tay</li><li>Rời tàu: dự kiến, thực tế, cảng, ghi chú</li></ul>
+          </div>
+          <div class="node node--key">
+            <span class="node__mult">MỘT / CHUYẾN · <span class="phase">Giai đoạn 2</span></span>
+            <span class="node__name">Hợp đồng</span>
+            <p>Như hiện nay: phải thu, phải chi, duyệt. Gắn vào chuyến thay vì vị trí.</p>
+            <ul><li>Nhiều phụ lục: gia hạn, điều chỉnh tiền, đổi chức danh</li><li>Kết thúc sớm khi rời tàu sớm</li></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="states">
+        <div class="card card__body state">
+          <h4>Cơ hội</h4>
+          <div class="state__line"><span class="badge b-neutral">Mới</span>→<span class="badge b-info">Đang chọn ứng viên</span>→<span class="badge b-warning">Chờ kết quả</span>→<span class="badge b-primary">Chủ tàu đã chọn</span>→<span class="badge b-success">Đã chốt</span></div>
+          <div class="state__line">Đóng tay khi không thành: <span class="badge b-error">Không thành</span> <span class="badge b-neutral b-ring">Huỷ</span></div>
+          <div class="state__line">Chờ kết quả: đã gửi ít nhất một người. Kết quả chủ tàu nhận ngoài hệ thống. Người làm gắn nhãn "Chủ tàu đã chọn" cho một ứng viên để giữ chỗ; khi người đó lên tàu thì chốt. Không chốt trước ngày lên tàu; Đã chốt nghĩa là đã lên tàu.</div>
+        </div>
+        <div class="card card__body state">
+          <h4>Chuyến</h4>
+          <div class="state__line"><span class="badge b-success">Đang trên tàu</span>→<span class="badge b-neutral">Đã rời tàu</span></div>
+          <div class="state__line">Sinh ra lúc chốt (chốt người = ghi lên tàu) hoặc lúc Tạo chuyến. Không có trạng thái chờ lên.</div>
+          <div class="state__line">Trạng thái thuyền viên (Đang trên tàu / Ở bờ) lấy từ chuyến. Mỗi người chỉ có một chuyến Đang trên tàu tại một thời điểm.</div>
+        </div>
+        <div class="card card__body state">
+          <h4>Đội ngũ trên tàu</h4>
+          <div class="state__line">Không lưu. Xem ở thẻ Đội ngũ trên trang tàu: các chuyến của tàu có khoảng lên–rời giao với khoảng thời gian đang xem.</div>
+          <div class="state__line">Người rời sớm và người thay họ là hai chuyến khác nhau, nằm cạnh nhau trên biểu đồ.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <table class="compare">
+          <thead><tr><th>Việc</th><th>Hiện nay</th><th>Sau khi tách</th></tr></thead>
+          <tbody>
+            <tr><td>Nhận yêu cầu chủ tàu</td><td>Tạo chuyến PLANNING với vị trí dự kiến</td><td>Tạo một cơ hội cho mỗi vị trí, kèm hồ sơ yêu cầu. Chưa có chuyến cho tới khi chốt</td></tr>
+            <tr><td>Tìm người, gửi hồ sơ</td><td>Ngoài hệ thống</td><td>Đề xuất nhanh theo hồ sơ yêu cầu, tạo bản xuất, duyệt, tải hoặc gửi chủ tàu</td></tr>
+            <tr><td>Chủ tàu không chọn ai</td><td>Chuyến PLANNING nằm mãi hoặc phải xoá</td><td>Đóng cơ hội "Không thành", ghi lý do</td></tr>
+            <tr><td>Chốt người</td><td>Tạo hợp đồng từ vị trí của chuyến</td><td>Chốt tay một ứng viên khi người đó lên tàu; hệ thống tự tạo chuyến Đang trên tàu, cơ hội đóng (hợp đồng Nháp tự tạo ở giai đoạn 2)</td></tr>
+            <tr><td>Lên tàu</td><td>Bắt đầu chuyến: một ngày, một cảng cho cả nhóm</td><td>Chốt người trên cơ hội là ghi lên tàu, kèm ngày và cảng thực tế. Mỗi cơ hội chốt riêng</td></tr>
+            <tr><td>Đi tàu không qua tuyển</td><td>Tạo chuyến trực tiếp</td><td>Nút Tạo chuyến (Màn 9): chuyển tàu, chủ tàu tự tuyển, nhập chuyến cũ</td></tr>
+            <tr><td>Một người rời sớm</td><td>Không làm được (để giai đoạn 3)</td><td>Ghi rời tàu trên chuyến của người đó, kèm ghi chú. Cần người thay thì tạo cơ hội mới. Hợp đồng kết thúc sớm ở giai đoạn 2</td></tr>
+            <tr><td>Người lên muộn, rời muộn</td><td>Không ghi được</td><td>Mỗi chuyến có ngày dự kiến và thực tế, hiện chênh lệch ngày</td></tr>
+            <tr><td>Xem ai đang trên tàu</td><td>Mở chuyến</td><td>Thẻ Đội ngũ trên trang tàu: biểu đồ các chuyến của tàu theo khoảng thời gian (Màn 10)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 1. Danh sách cơ hội -->
+    <section class="screen" id="ds-co-hoi">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 1 · /opportunities</span>
+        <h2>Danh sách cơ hội</h2>
+        <p>Mỗi dòng là một vị trí. Chủ tàu cần 6 người cho MV Lotus Star thì có 6 cơ hội, lọc theo tàu để xem chung.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--on side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="head">
+            <div><h1>Cơ hội</h1><p>Mỗi cơ hội là một vị trí chủ tàu cần người.</p></div>
+            <div class="actions"><span class="btn btn--primary">+ Tạo cơ hội</span></div>
+          </div>
+          <div class="tabs">
+            <span class="tab tab--on">Đang mở<span>9</span></span><span class="tab">Đã chốt<span>27</span></span><span class="tab">Không thành<span>4</span></span><span class="tab">Huỷ<span>1</span></span><span class="tab">Tất cả<span>41</span></span>
+          </div>
+          <div class="filters"><span class="input input--search">Tìm mã, chức danh, tàu…</span><span class="input input--sel input--filled">MV Lotus Star</span><span class="input input--sel">Chủ tàu</span><span class="input input--sel">Chức danh</span><span class="input input--sel">Người phụ trách</span><span class="input input--sel">Hạn chốt</span></div>
+          <div class="card">
+            <table>
+              <thead><tr><th>Cơ hội · chức danh</th><th>Chủ tàu · tàu</th><th>Xuống tàu dự kiến</th><th>Rời tàu dự kiến</th><th>Ứng viên</th><th>Hạn chốt</th><th>Trạng thái</th><th class="r">Budget/tháng</th></tr></thead>
+              <tbody>
+                <tr><td class="cell2"><span class="strong">Máy hai</span><small>CH-2026-044</small></td><td class="cell2"><span>MV Lotus Star</span><small>Đông Á Marine</small></td><td class="cell2 num"><span>25/10/2026</span><small>Hải Phòng</small></td><td class="cell2 num"><span>25/07/2027</span><small>Hải Phòng</small></td><td class="cell2"><span>Đặng Văn Thịnh</span><small>chủ tàu đã chọn 20/10 · 4 ứng viên</small></td><td class="num">15/10/2026 <span class="delta delta--late">quá 11 ngày</span></td><td><span class="badge b-primary">Chủ tàu đã chọn</span></td><td class="r num">4.900</td></tr>
+                <tr><td class="cell2"><span class="strong">Thợ máy</span><small>CH-2026-045</small></td><td class="cell2"><span>MV Lotus Star</span><small>Đông Á Marine</small></td><td class="cell2 num"><span>25/10/2026</span><small>Hải Phòng</small></td><td class="cell2 num"><span>25/07/2027</span><small>Hải Phòng</small></td><td class="cell2"><span>2 đã chọn</span><small>chưa gửi</small></td><td class="num">15/10/2026 <span class="delta delta--late">quá 11 ngày</span></td><td><span class="badge b-info">Đang chọn ứng viên</span></td><td class="r num">1.800</td></tr>
+                <tr><td class="cell2"><span class="strong">Thủy thủ AB</span><small>CH-2026-043</small></td><td class="cell2"><span>MV Lotus Star</span><small>Đông Á Marine</small></td><td class="cell2 num"><span>25/10/2026</span><small>Hải Phòng</small></td><td class="cell2 num"><span>25/07/2027</span><small>Hải Phòng</small></td><td class="muted">Chưa có</td><td class="num">15/10/2026 <span class="delta delta--late">quá 11 ngày</span></td><td><span class="badge b-neutral">Mới</span></td><td class="r num">1.650</td></tr>
+                <tr><td class="cell2"><span class="strong">Thuyền phó 1</span><small>CH-2026-041</small></td><td class="cell2"><span>MV Lotus Star</span><small>Đông Á Marine</small></td><td class="cell2 num"><span>25/10/2026</span><small>Hải Phòng</small></td><td class="cell2 num"><span>25/07/2027</span><small>Hải Phòng</small></td><td class="cell2"><span>Trần Quốc Mạnh</span><small>chuyến <a>CT-2026-0141</a></small></td><td class="num muted">15/10/2026</td><td><span class="badge b-success">Đã chốt</span></td><td class="r num">5.200</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Đang lọc MV Lotus Star nên chỉ thấy 4 dòng; bỏ lọc thì thấy mọi tàu. Cơ hội đã chốt vẫn hiện ở tab Đang mở trong 7 ngày để thấy tiến độ cả tàu, sau đó chỉ còn ở tab Đã chốt.</li>
+        <li>Hạn chốt dùng lại cách cảnh báo trễ ngày hiện nay (vàng khi còn 0–7 ngày, đỏ khi đã quá).</li>
+      </ul>
+    </section>
+
+    <!-- 2. Tạo cơ hội -->
+    <section class="screen" id="tao-co-hoi">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 2 · /opportunities/new</span>
+        <h2>Tạo cơ hội</h2>
+        <p>Một vị trí. Nhập đủ bốn mốc dự kiến (ngày, nơi xuống; ngày, nơi rời), không có ô số tháng. Hồ sơ yêu cầu điền sẵn theo tàu và chức danh, sửa được. "Lưu &amp; thêm vị trí khác" giữ chủ tàu, tàu và các mốc để tạo tiếp vị trí kế.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--on side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="crumb"><a>Cơ hội</a> / Tạo cơ hội</div>
+          <div class="head"><div><h1>Tạo cơ hội</h1></div></div>
+          <div class="form">
+            <div class="card">
+              <div class="card__head"><h3>Vị trí</h3></div>
+              <div class="card__body fgrid">
+                <div class="field"><label>Chủ tàu<em>*</em></label><span class="input input--sel input--filled">Đông Á Marine</span></div>
+                <div class="field"><label>Tàu</label><span class="input input--sel input--filled">MV Lotus Star · IMO 9712345</span><small>Để trống nếu chủ tàu chưa báo tàu. Phải có khi chốt.</small></div>
+                <div class="field"><label>Chức danh<em>*</em></label><span class="input input--sel input--filled">Máy hai</span></div>
+                <div class="field"><label>Budget/tháng (USD)<em>*</em></label><span class="input input--filled num">4.900,00</span></div>
+                <div class="field"><label>Budget cả chuyến (USD)</label><span class="input input--filled num">44.100,00</span><small>Tính theo ngày xuống → rời: 9 tháng. Sửa ô nào ô kia tự tính.</small></div>
+                <div class="field"><label>Người phụ trách<em>*</em></label><span class="input input--sel input--filled">Nguyễn Thu Hà</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__head"><h3>Thời gian dự kiến</h3></div>
+              <div class="card__body fgrid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+                <div class="field"><label>Ngày xuống tàu<em>*</em></label><span class="input input--filled num">25/10/2026</span></div>
+                <div class="field"><label>Nơi xuống tàu</label><span class="input input--sel input--filled">Hải Phòng, Việt Nam</span></div>
+                <div class="field"><label>Ngày rời tàu<em>*</em></label><span class="input input--filled num">25/07/2027</span></div>
+                <div class="field"><label>Nơi rời tàu</label><span class="input input--sel input--filled">Hải Phòng, Việt Nam</span></div>
+                <div class="field"><label>Hạn chốt<em>*</em></label><span class="input input--filled num">15/10/2026</span><small>Ngày chủ tàu cần danh sách</small></div>
+                <div class="field" style="grid-column:span 3"><label>Ghi chú</label><span class="input input--filled">Chủ tàu ưu tiên người đã chạy tàu hàng rời, tiếng Anh giao tiếp.</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card__head"><h3>Hồ sơ yêu cầu <span class="count">11</span></h3><span class="muted" style="font-size:12px">Điền sẵn từ yêu cầu chứng chỉ của MV Lotus Star cho Máy hai · <a>Dùng mẫu khác</a></span></div>
+              <table>
+                <thead><tr><th>Yêu cầu</th><th>Mức</th><th>Điều kiện</th><th></th></tr></thead>
+                <tbody>
+                  <tr class="req-group"><td colspan="4">Giấy tờ</td></tr>
+                  <tr><td>Hộ chiếu</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Còn hạn tới ngày rời + 6 tháng (15/03/2028)</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Sổ thuyền viên</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Còn hạn tới ngày rời</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Giấy chứng nhận sức khỏe thuyền viên</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Còn hạn tới ngày xuống</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Sổ tiêm chủng vàng da</td><td><span class="seg seg--sm"><span>Bắt buộc</span><span class="on">Nên có</span></span></td><td class="muted">Có là được</td><td class="muted r">Xoá</td></tr>
+                  <tr class="req-group"><td colspan="4">Chứng chỉ</td></tr>
+                  <tr><td>GCNKNCM Máy hai (COC II/2)</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Còn hạn tới ngày rời</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Huấn luyện cơ bản STCW</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Còn hạn tới ngày rời</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Thiết bị cứu sinh (PSCRB)</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Còn hạn tới ngày rời</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Chữa cháy nâng cao</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Còn hạn tới ngày rời</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Bằng chuyên môn Panama</td><td><span class="seg seg--sm"><span>Bắt buộc</span><span class="on">Nên có</span></span></td><td class="muted">Tàu treo cờ Panama</td><td class="muted r">Xoá</td></tr>
+                  <tr class="req-group"><td colspan="4">Kinh nghiệm</td></tr>
+                  <tr><td>Đã đi chức danh Máy hai</td><td><span class="seg seg--sm"><span class="on">Bắt buộc</span><span>Nên có</span></span></td><td class="muted">Tối thiểu 12 tháng</td><td class="muted r">Xoá</td></tr>
+                  <tr><td>Đã đi tàu hàng rời</td><td><span class="seg seg--sm"><span>Bắt buộc</span><span class="on">Nên có</span></span></td><td class="muted">Ít nhất 1 chuyến</td><td class="muted r">Xoá</td></tr>
+                  <tr class="req-group"><td colspan="4">Mẫu giấy xuất kèm</td></tr>
+                  <tr><td>CV chủ tàu</td><td colspan="2" class="muted">Điền từ hồ sơ thuyền viên khi tạo bản xuất</td><td class="muted r">Xoá</td></tr>
+                </tbody>
+              </table>
+              <div class="card__body" style="display:flex;gap:8px;padding-top:12px"><span class="btn btn--text btn--sm">+ Giấy tờ</span><span class="btn btn--text btn--sm">+ Chứng chỉ</span><span class="btn btn--text btn--sm">+ Kinh nghiệm</span><span class="btn btn--text btn--sm">+ Mẫu giấy</span></div>
+            </div>
+            <div class="stick"><span class="muted num">Máy hai · 4.900 USD/tháng · 25/10/2026 → 25/07/2027</span><div class="actions"><span class="btn">Huỷ</span><span class="btn">Lưu &amp; thêm vị trí khác</span><span class="btn btn--primary">Tạo cơ hội</span></div></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Lưu &amp; thêm vị trí khác:</b> lưu xong ở lại form, giữ chủ tàu, tàu, bốn mốc dự kiến, hạn chốt, người phụ trách; xoá chức danh, budget, hồ sơ yêu cầu. Chọn chức danh mới thì hồ sơ yêu cầu tự điền lại theo chức danh đó. Toast "Đã tạo CH-2026-044 · Máy hai".</li>
+        <li>Chi tiết cơ hội cũng có "Nhân bản cho vị trí khác" trong menu "…", làm cùng việc này.</li>
+        <li>Nguồn điền sẵn: yêu cầu chứng chỉ của tàu theo chức danh (bảng có sẵn vessel_certificate_requirement), không có thì lấy mẫu mặc định của chức danh. Thêm "Lưu thành mẫu cho Máy hai" ở cuối bảng.</li>
+        <li>"Còn hạn tới" chọn một trong: ngày xuống · ngày rời · ngày rời + N tháng · có là được.</li>
+      </ul>
+    </section>
+
+    <!-- 3. Chi tiết cơ hội -->
+    <section class="screen" id="ct-co-hoi">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 3 · /opportunities/:id</span>
+        <h2>Chi tiết cơ hội</h2>
+        <p>Danh sách ứng viên đã chọn, mỗi người đối chiếu với hồ sơ yêu cầu. Từ đây: đề xuất nhanh, tạo bản xuất cho từng người hoặc tất cả, gửi chủ tàu, và chốt khi có kết quả.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--on side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="crumb"><a>Cơ hội</a> / CH-2026-044</div>
+          <div class="head">
+            <div>
+              <h1>Máy hai · MV Lotus Star · CH-2026-044</h1>
+              <p>Đông Á Marine · phụ trách Nguyễn Thu Hà</p>
+              <div class="head__badges"><span class="badge b-primary">Chủ tàu đã chọn</span><span class="badge badge--plain b-error">Quá ngày xuống dự kiến 1 ngày</span></div>
+            </div>
+            <div class="actions"><span class="btn">…</span><span class="btn">Sửa cơ hội</span><span class="btn btn--primary">Chốt người</span></div>
+          </div>
+          <div class="card"><dl class="facts">
+            <div class="fact"><dt>Xuống tàu dự kiến</dt><dd class="num">25/10/2026<small>Hải Phòng</small></dd></div>
+            <div class="fact"><dt>Rời tàu dự kiến</dt><dd class="num">25/07/2027<small>Hải Phòng · 9 tháng</small></dd></div>
+            <div class="fact"><dt>Budget</dt><dd class="num">4.900 USD/tháng<small>44.100 USD cả chuyến</small></dd></div>
+            <div class="fact"><dt>Hồ sơ yêu cầu</dt><dd>8 bắt buộc · 3 nên có<small>+ mẫu CV chủ tàu · <a>Xem</a></small></dd></div>
+          </dl></div>
+          <div class="card">
+            <div class="card__head"><h3>Ứng viên <span class="count">4</span></h3><div class="actions"><span class="btn btn--sm">Đề xuất nhanh</span><span class="btn btn--sm">+ Thêm ứng viên</span></div></div>
+            <div class="bulk" style="border-radius:0;border-width:0 0 1px"><span class="chk chk--on"></span><b>Đã chọn 2</b><span class="btn btn--sm">Tạo bản xuất cho 2 người</span><span class="btn btn--sm">Gửi cho chủ tàu</span><span class="btn btn--sm">Bỏ khỏi danh sách</span></div>
+            <table>
+              <thead><tr><th><span class="chk"></span></th><th>Ứng viên</th><th>Hồ sơ yêu cầu</th><th>Thiếu hoặc sắp hết hạn</th><th>Bản xuất</th><th>Gửi chủ tàu</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><span class="chk"></span></td><td class="cell2"><span class="strong">Đặng Văn Thịnh <span class="badge badge--plain b-primary">Chủ tàu đã chọn</span></span><small>Ở bờ · rời tàu 02/10/2026 · gắn nhãn 20/10 bởi Nguyễn Thu Hà</small></td><td><span class="fit fit--ok">8/8 bắt buộc</span> <span class="fit">3/3 nên có</span></td><td class="muted">—</td><td><a>Đã tạo</a></td><td class="cell2 num"><span>14/10/2026</span><small>Mr. Park, Đông Á Marine</small></td><td class="r"><span class="btn btn--sm">Tải xuống</span> <span class="btn btn--sm">…</span></td></tr>
+                <tr><td><span class="chk"></span></td><td class="cell2"><span class="strong">Ngô Đức Khải</span><small>Ở bờ</small></td><td><span class="fit fit--ok">8/8 bắt buộc</span> <span class="fit">2/3 nên có</span></td><td class="muted">Không có Bằng chuyên môn Panama</td><td><a>Đã tạo</a></td><td class="cell2 num"><span>14/10/2026</span><small>Mr. Park, Đông Á Marine</small></td><td class="r"><span class="btn btn--sm">Tải xuống</span> <span class="btn btn--sm">…</span></td></tr>
+                <tr><td><span class="chk chk--on"></span></td><td class="cell2"><span class="strong">Hồ Văn Lực</span><small>Ở bờ · rời tàu 01/09/2026</small></td><td><span class="fit fit--warn">7/8 bắt buộc</span> <span class="fit">2/3 nên có</span></td><td class="cell2"><span class="warn-text">Sức khỏe hết hạn 20/10/2026, trước ngày xuống</span><small>Không có Sổ tiêm chủng vàng da</small></td><td><a>Đã tạo</a></td><td class="muted">Chưa gửi</td><td class="r"><span class="btn btn--sm">Mở bản xuất</span> <span class="btn btn--sm">…</span></td></tr>
+                <tr><td><span class="chk chk--on"></span></td><td class="cell2"><span class="strong">Trịnh Quang Vinh</span><small>Ở bờ</small></td><td><span class="fit fit--ok">8/8 bắt buộc</span> <span class="fit">1/3 nên có</span></td><td class="muted">Chưa đi tàu hàng rời · không có Panama</td><td class="muted">Chưa tạo</td><td class="muted">Chưa gửi</td><td class="r"><span class="btn btn--sm">Tạo bản xuất</span> <span class="btn btn--sm">…</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Cột Hồ sơ yêu cầu bấm vào mở bảng đối chiếu từng mục (có / thiếu / hết hạn trước mốc cần). Thiếu mục bắt buộc vẫn chọn được, chỉ hiện màu cảnh báo.</li>
+        <li>Thanh chọn nhiều: <b>Tạo bản xuất cho N người</b> mở màn Tạo bộ giấy có sẵn với N người đó (Màn 5); <b>Gửi cho chủ tàu</b> chỉ bật khi mọi người đã chọn đều đã có bản xuất.</li>
+        <li><b>Nhãn "Chủ tàu đã chọn":</b> menu "…" của dòng → "Đánh dấu chủ tàu đã chọn" (bỏ nhãn cũng ở đó). Mỗi cơ hội chỉ một người mang nhãn; gắn cho người khác thì nhãn chuyển sang. Cơ hội hiện trạng thái Chủ tàu đã chọn, người đó được giữ chỗ cho tới khi chốt hoặc bỏ nhãn. Không sinh chuyến, không đổi trạng thái thuyền viên.</li>
+        <li>Menu "…" của dòng: Đánh dấu / bỏ nhãn chủ tàu đã chọn · Mở hồ sơ thuyền viên · Tạo lại bản xuất · Bỏ khỏi danh sách. Menu "…" của trang: Nhân bản cho vị trí khác · Đóng cơ hội (Không thành, có lý do) · Huỷ.</li>
+        <li>Không có ô ghi chủ tàu chọn hay loại. Người được chọn lên tàu thì bấm <b>Chốt người</b> (Màn 7): chốt cũng là ghi lên tàu.</li>
+      </ul>
+    </section>
+
+    <!-- 4. Tìm ứng viên -->
+    <section class="screen" id="tim-ung-vien">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 4 · bảng trượt từ "+ Thêm ứng viên" hoặc "Đề xuất nhanh"</span>
+        <h2>Tìm và đề xuất ứng viên</h2>
+        <p>Bảng trượt bên phải, nằm trên chi tiết cơ hội. "Đề xuất nhanh" bật sẵn bộ lọc theo hồ sơ yêu cầu và xếp người hợp nhất lên đầu; "+ Thêm ứng viên" mở cùng bảng nhưng không lọc, để tìm tên bất kỳ.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:640px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--on side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="drawer-scrim"></div>
+        <div class="drawer">
+          <div class="drawer__head"><div><h3 style="margin:0;font-size:17px">Đề xuất ứng viên · Máy hai · MV Lotus Star</h3><p class="muted" style="margin:2px 0 0;font-size:13px">Rảnh trước 25/10/2026, đối chiếu 11 yêu cầu.</p></div><span class="btn btn--sm">Đóng</span></div>
+          <div class="drawer__body">
+            <div class="filters"><span class="input input--search" style="flex:1">Tìm tên, mã thuyền viên, số hộ chiếu…</span></div>
+            <div class="filters">
+              <span class="pill pill--on">Đủ mục bắt buộc</span><span class="pill pill--on">Chức danh: Máy hai</span><span class="pill pill--on">Rảnh trước 25/10/2026</span><span class="pill">Đã làm cho Đông Á Marine</span><span class="pill">Đã đi tàu hàng rời</span><span class="pill">Quốc tịch</span><span class="pill">Độ tuổi</span><span class="btn btn--text btn--sm">Xoá lọc</span>
+            </div>
+            <p class="muted" style="margin:0;font-size:12px">12 người khớp · xếp theo mức hợp: đủ bắt buộc, rồi số mục nên có, rồi ngày rảnh gần ngày xuống</p>
+            <div class="sug">
+              <div class="sug__row"><span class="chk chk--on"></span><span class="avatar">PH</span><span class="cell2"><span class="strong">Phí Văn Hậu</span><small>Máy hai · 41 tuổi · Ở bờ từ 03/08/2026</small></span><span class="sug__fit"><span class="fit fit--ok">8/8</span> <span class="fit">3/3</span></span><span class="sug__why"><span class="why">2 chuyến với Đông Á Marine</span><span class="why">Tàu hàng rời 4 chuyến</span><span class="why">Có Panama COC</span></span></div>
+              <div class="sug__row"><span class="chk chk--on"></span><span class="avatar">LT</span><span class="cell2"><span class="strong">Lâm Đức Toàn</span><small>Máy hai · 36 tuổi · Ở bờ</small></span><span class="sug__fit"><span class="fit fit--ok">8/8</span> <span class="fit">2/3</span></span><span class="sug__why"><span class="why">Tàu hàng rời 2 chuyến</span><span class="why why--miss">Không có vàng da</span></span></div>
+              <div class="sug__row"><span class="chk"></span><span class="avatar">BQ</span><span class="cell2"><span class="strong">Bạch Quang Huy</span><small>Máy hai · 45 tuổi · Ở bờ từ 10/10/2026</small></span><span class="sug__fit"><span class="fit fit--ok">8/8</span> <span class="fit">2/3</span></span><span class="sug__why"><span class="why">Vừa rời tàu, giấy tờ mới</span><span class="why why--miss">Chưa đi tàu hàng rời</span></span></div>
+              <div class="sug__row sug__row--dim"><span class="chk"></span><span class="avatar">HL</span><span class="cell2"><span class="strong">Hồ Văn Lực</span><small>Đã trong danh sách</small></span><span class="sug__fit"><span class="fit fit--warn">7/8</span> <span class="fit">2/3</span></span><span class="sug__why"><span class="why why--miss">Sức khỏe hết hạn 20/10/2026</span></span></div>
+              <div class="sug__row"><span class="chk"></span><span class="avatar">NV</span><span class="cell2"><span class="strong">Nông Văn Bảy</span><small>Thợ máy · 39 tuổi · Ở bờ · chưa từng đi Máy hai</small></span><span class="sug__fit"><span class="fit fit--warn">7/8</span> <span class="fit">1/3</span></span><span class="sug__why"><span class="why why--miss">Thiếu COC II/2</span></span></div>
+            </div>
+          </div>
+          <div class="drawer__foot"><span class="muted" style="margin-right:auto;font-size:12px">Đã tích 2 người</span><span class="btn">Huỷ</span><span class="btn btn--primary">Thêm 2 ứng viên</span></div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Rảnh trước ngày xuống:</b> người Ở bờ, hoặc người Đang trên tàu có ngày rời dự kiến trước ngày xuống của cơ hội. Người đã có chuyến khác trùng thời gian không hiện. Người đang được giữ chỗ (nhãn Chủ tàu đã chọn) ở cơ hội khác trùng thời gian vẫn hiện nhưng mờ, ghi "Đang giữ cho CH-…".</li>
+        <li>Đối chiếu dùng chứng chỉ và giấy tờ đã duyệt trên hồ sơ thuyền viên (seafarer_certificate, seafarer_document), có ngày hết hạn so với mốc "còn hạn tới" của từng yêu cầu.</li>
+        <li>Bỏ bộ lọc "Đủ mục bắt buộc" thì thấy cả người thiếu (dòng Nông Văn Bảy), vẫn thêm được.</li>
+      </ul>
+    </section>
+
+    <!-- 5. Bản xuất -->
+    <section class="screen" id="ban-xuat">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 5 · dùng lại /exports/new và /exports/:packId</span>
+        <h2>Bản xuất</h2>
+        <p>Không vẽ màn mới. "Tạo bản xuất" trên chi tiết cơ hội mở màn Tạo bộ giấy đang có, điền sẵn theo cơ hội; tạo xong là Bộ giấy đã tạo đang có, ở đó xem lại, tải xuống, hoặc gửi chủ tàu.</p>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Bước</th><th>Màn đang có</th><th>Thêm gì</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">Mở</td><td><code>/exports/new?seafarer=…&amp;owner=…</code></td><td>Thêm tham số <code>opportunity</code> và nhiều <code>seafarer</code> (màn đã hỗ trợ "Tạo N bộ giấy"). Mẫu giấy chọn sẵn theo mục "Mẫu giấy xuất kèm" của hồ sơ yêu cầu</td></tr>
+            <tr><td class="strong">Giấy tờ, chứng chỉ</td><td>Danh sách giấy bên trái</td><td>Thêm nhóm "Giấy tờ theo hồ sơ yêu cầu": file đã có trên hồ sơ thuyền viên, gộp vào cuối PDF; thiếu file thì báo như "Hồ sơ còn thiếu" hiện nay</td></tr>
+            <tr><td class="strong">Xem lại</td><td>Xem trước bên phải, sửa ô trên giấy</td><td>—</td></tr>
+            <tr><td class="strong">Xong</td><td><code>/exports/:packId</code>: tải từng giấy hoặc cả bộ</td><td>Khi bộ thuộc một cơ hội: nút "Gửi cho chủ tàu" (Màn 6) và đường quay về cơ hội. Cột Bản xuất ở Màn 3 hiện "Đã tạo" kèm link tới bộ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 6. Gửi chủ tàu -->
+    <section class="screen" id="gui-chu-tau">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 6 · nút "Gửi cho chủ tàu"</span>
+        <h2>Gửi cho chủ tàu</h2>
+        <p>Không có cửa sổ soạn mail trong app. Bấm "Gửi cho chủ tàu" thì tải bản xuất của những người đã chọn về máy và mở app mail mặc định (Outlook, Mail, Gmail…) với người nhận, CC, tiêu đề, nội dung điền sẵn. Người làm kéo file vừa tải vào thư rồi gửi. Quay lại app, một hộp hỏi đã gửi chưa để ghi nhận.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:420px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--on side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal" style="width:440px">
+            <div class="modal__head"><h3>Đã gửi email cho Đông Á Marine?</h3><p>Đã tải 2 file và mở app mail tới crewing@dongamarine.example. Đính kèm 2 file trong thư mục Tải về rồi gửi.</p></div>
+            <div class="modal__body">
+              <div class="impact"><ul><li>HO-VAN-LUC_2nd-Engineer_LotusStar.pdf</li><li>TRINH-QUANG-VINH_2nd-Engineer_LotusStar.pdf</li></ul></div>
+            </div>
+            <div class="modal__foot"><span class="btn">Mở lại app mail</span><span class="btn">Chưa gửi</span><span class="btn btn--primary">Đã gửi</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Nội dung điền sẵn</b> (qua link <code>mailto:</code>): Tới = người liên hệ chính của chủ tàu; CC = email người bấm; Tiêu đề "MCAH · 2nd Engineer candidates for MV Lotus Star · join 25/10/2026 Hai Phong"; Nội dung tiếng Anh liệt kê từng người.</li>
+        <li><b>Không tự đính kèm được:</b> <code>mailto:</code> không mang file, nên app tải file về trước. Nội dung dài quá ~1.800 ký tự thì rút gọn danh sách.</li>
+        <li><b>Đã gửi</b> ghi nhận vào lịch sử cơ hội (ai, lúc nào, gửi tới đâu, những người nào) và đổi cột "Gửi chủ tàu" ở Màn 3. <b>Chưa gửi</b> thì không ghi gì.</li>
+        <li>Chủ tàu chưa có email liên hệ thì nút báo "Thêm email liên hệ cho Đông Á Marine" kèm link sang trang đối tác.</li>
+        <li>Không cần hộp thư gửi đi, không cần cấu hình SMTP.</li>
+      </ul>
+    </section>
+
+    <!-- 7. Chốt -->
+    <section class="screen" id="chot">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 7 · hộp thoại "Chốt người" trên chi tiết cơ hội</span>
+        <h2>Chốt người = ghi lên tàu</h2>
+        <p>Ba ô: người, ngày xuống tàu, nơi xuống tàu. Lưu xong có chuyến Đang trên tàu cho người đó và cơ hội chuyển Đã chốt.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:520px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--on side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal" style="width:480px">
+            <div class="modal__head"><h3>Chốt người · Máy hai · MV Lotus Star</h3><p>CH-2026-044 · Đông Á Marine</p></div>
+            <div class="modal__body">
+              <div class="field"><label>Người<em>*</em></label><span class="input input--sel input--filled">Đặng Văn Thịnh · chủ tàu đã chọn</span></div>
+              <div class="fgrid fgrid--2">
+                <div class="field"><label>Ngày xuống tàu<em>*</em></label><span class="input input--filled num">26/10/2026</span><small>Không được sau hôm nay</small></div>
+                <div class="field"><label>Nơi xuống tàu<em>*</em></label><span class="input input--sel input--filled">Hải Phòng</span></div>
+              </div>
+            </div>
+            <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--primary">Chốt</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Ô Người là <code>Select</code> các ứng viên của cơ hội, chọn sẵn người mang nhãn Chủ tàu đã chọn. Ngày và nơi điền sẵn theo cơ hội.</li>
+        <li>Những thứ khác hệ thống tự làm, không hỏi: ngày rời dự kiến và budget lấy từ cơ hội (sửa sau trên chuyến nếu cần); ứng viên còn lại ghi "Không được chọn"; thuyền viên chuyển Đang trên tàu. Toast "Đã chốt Đặng Văn Thịnh · CT-2026-0158" có link mở chuyến.</li>
+        <li>Tàu chưa rõ thì hộp thoại thêm ô Tàu. Người được chọn mà không đi được: bỏ ứng viên đó, chốt người khác. Chốt nhầm: huỷ ở chi tiết chuyến (Đ4).</li>
+        <li><span class="phase">Giai đoạn 2</span> Chốt cũng tạo hợp đồng Nháp, bắt đầu từ ngày xuống thật.</li>
+      </ul>
+    </section>
+
+    <!-- 8. Danh sách chuyến -->
+    <section class="screen" id="ds-chuyen">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 8 · /voyages</span>
+        <h2>Danh sách chuyến</h2>
+        <p>Mỗi dòng là một người trên một tàu. Bộ lọc thời gian giữ những chuyến có khoảng lên–rời giao với khoảng đang chọn. Tích nhiều dòng để ghi rời tàu một lần.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="head"><div><h1>Chuyến tàu</h1><p>Mỗi chuyến là một thuyền viên đi một tàu.</p></div><div class="actions"><span class="btn btn--primary">+ Tạo chuyến</span></div></div>
+          <div class="tabs"><span class="tab tab--on">Đang trên tàu<span>38</span></span><span class="tab">Đã rời tàu<span>112</span></span><span class="tab">Tất cả<span>150</span></span></div>
+          <div class="filters"><span class="input input--search">Tìm thuyền viên, mã chuyến…</span><span class="input input--sel input--filled">Trên tàu trong 01/10/2026 – 31/10/2026</span><span class="input input--sel">Tàu</span><span class="input input--sel">Chủ tàu</span><span class="input input--sel">Chức danh</span><span class="input input--sel">Sắp rời trong 30 ngày</span></div>
+          <div class="bulk"><span class="chk chk--on"></span><b>Đã chọn 2 chuyến</b><span class="btn btn--sm">Ghi rời tàu</span><span class="btn btn--sm">Bỏ chọn</span></div>
+          <div class="card">
+            <table>
+              <thead><tr><th><span class="chk"></span></th><th>Thuyền viên · chuyến</th><th>Vị trí</th><th>Tàu · chủ tàu</th><th>Lên tàu</th><th>Rời tàu</th><th>Nguồn</th></tr></thead>
+              <tbody>
+                <tr><td><span class="chk"></span></td><td class="cell2"><span class="strong">Phạm Minh Đức</span><small>CT-2026-0101</small></td><td>Thuyền trưởng</td><td class="cell2"><span>MV Ocean Pride</span><small>Hải Phong Shipping</small></td><td class="cell2 num"><span>05/06/2026</span><small>Hải Phòng</small></td><td class="cell2 num"><span>05/03/2027</span><small>dự kiến</small></td><td><a>CH-2026-010</a></td></tr>
+                <tr><td><span class="chk"></span></td><td class="cell2"><span class="strong">Nguyễn Hữu Toàn</span><small>CT-2026-0102</small></td><td>Máy trưởng</td><td class="cell2"><span>MV Ocean Pride</span><small>Hải Phong Shipping</small></td><td class="cell2 num"><span>05/06/2026</span><small>Hải Phòng</small></td><td class="cell2 num"><span>05/04/2027 <span class="delta delta--ext">+1 tháng</span></span><small>đã dời từ 05/03/2027</small></td><td><a>CH-2026-011</a></td></tr>
+                <tr><td><span class="chk"></span></td><td class="cell2"><span class="strong">Đỗ Văn Nam</span><small>CT-2026-0104</small></td><td>Thủy thủ AB</td><td class="cell2"><span>MV Ocean Pride</span><small>Hải Phong Shipping</small></td><td class="cell2 num"><span>18/06/2026 <span class="delta delta--late">muộn 13 ngày</span></span><small>Busan</small></td><td class="cell2 num"><span>05/03/2027</span><small>dự kiến</small></td><td><a>CH-2026-012</a></td></tr>
+                <tr><td><span class="chk"></span></td><td class="cell2"><span class="strong">Lê Quang Huy</span><small>CT-2026-0139</small></td><td>Thợ máy</td><td class="cell2"><span>MV Ocean Pride</span><small>Hải Phong Shipping</small></td><td class="cell2 num"><span>02/10/2026</span><small>Singapore</small></td><td class="cell2 num"><span>02/07/2027</span><small>dự kiến</small></td><td><a>CH-2026-029</a></td></tr>
+                <tr><td><span class="chk chk--on"></span></td><td class="cell2"><span class="strong">Mai Văn Hưng</span><small>CT-2026-0088</small></td><td>Thuyền phó 2</td><td class="cell2"><span>MV Hà Giang 09</span><small>Đông Á Marine</small></td><td class="cell2 num"><span>20/04/2026</span><small>Busan</small></td><td class="cell2 num"><span>28/10/2026 <span class="delta delta--early">còn 2 ngày</span></span><small>dự kiến</small></td><td><span class="muted">Tạo tay · chủ tàu tự tuyển</span></td></tr>
+                <tr><td><span class="chk chk--on"></span></td><td class="cell2"><span class="strong">Lưu Văn Đạt</span><small>CT-2026-0042</small></td><td>Thợ cả</td><td class="cell2"><span>MV Pacific Dawn</span><small>Kanto Kisen</small></td><td class="cell2 num"><span>02/02/2026</span><small>Singapore</small></td><td class="cell2 num"><span>20/10/2026 <span class="delta delta--late">quá 6 ngày</span></span><small>dự kiến, chưa ghi rời</small></td><td><span class="muted">Tạo tay · nhập chuyến cũ</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Tab đếm theo trạng thái chuyến; bộ lọc thời gian mặc định là tháng hiện tại. Đội ngũ của một tàu theo thời gian xem ở trang tàu (Màn 10); lọc tàu ở đây chỉ để thao tác hàng loạt.</li>
+        <li>Thanh chọn nhiều có "Ghi rời tàu" cho các dòng Đang trên tàu. Không có nút ghi lên tàu: lên tàu ghi lúc chốt trên cơ hội.</li>
+        <li><b>+ Tạo chuyến</b> mở Màn 9, cho mọi trường hợp đi tàu không qua tuyển. Cột Nguồn cho biết chuyến từ cơ hội nào hoặc lý do tạo tay; lọc được theo nguồn.</li>
+        <li><span class="phase">Giai đoạn 2</span> Thêm cột Hợp đồng (trạng thái) và Chênh lệch/tháng.</li>
+      </ul>
+    </section>
+
+    <!-- 9. Tạo chuyến -->
+    <section class="screen" id="tao-chuyen">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 9 · /voyages/new</span>
+        <h2>Tạo chuyến</h2>
+        <p>Tạo chuyến không qua cơ hội, cho mọi trường hợp không qua tuyển: chuyển tàu, chủ tàu tự tuyển người, nhập chuyến cũ. Như chốt, tạo chuyến là ghi việc đã xảy ra: người đó đã lên tàu.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="crumb"><a>Chuyến tàu</a> / Tạo chuyến</div>
+          <div class="head"><div><h1>Tạo chuyến</h1></div></div>
+          <div class="form">
+            <div class="card">
+              <div class="card__head"><h3>Người và tàu</h3></div>
+              <div class="card__body fgrid">
+                <div class="field"><label>Thuyền viên<em>*</em></label><span class="input input--sel input--filled">Lê Quang Huy · TV-0412</span></div>
+                <div class="field"><label>Chức danh<em>*</em></label><span class="input input--sel input--filled">Thợ máy</span><small>Mặc định chức danh hiện tại của thuyền viên</small></div>
+                <div class="field"><label>Lý do tạo không qua cơ hội<em>*</em></label><span class="input input--sel input--filled">Chuyển tàu</span></div>
+                <div class="field"><label>Tàu<em>*</em></label><span class="input input--sel input--filled">MV Ocean Grace · IMO 9734567</span></div>
+                <div class="field"><label>Chủ tàu<em>*</em></label><span class="input input--sel input--filled">Hải Phong Shipping</span><small>Lấy theo tàu, sửa được</small></div>
+                <div class="field"><label>Budget/tháng (USD)</label><span class="input input--filled num">1.800,00</span><small>Không bắt buộc. Dùng làm mặc định cho hợp đồng ở giai đoạn 2</small></div>
+              </div>
+            </div>
+            <div class="banner banner--info"><div><b>Lê Quang Huy đang trên MV Ocean Pride (CT-2026-0139)</b>Lưu chuyến này sẽ ghi rời tàu chuyến đó ngày 26/10/2026 tại Kaohsiung (ghi chú "Chuyển sang MV Ocean Grace") và nối hai chuyến với nhau.</div></div>
+            <div class="card">
+              <div class="card__head"><h3>Thời gian</h3></div>
+              <div class="card__body fgrid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+                <div class="field"><label>Ngày lên tàu<em>*</em></label><span class="input input--filled num">26/10/2026</span><small>Không được sau hôm nay</small></div>
+                <div class="field"><label>Nơi lên tàu<em>*</em></label><span class="input input--sel input--filled">Kaohsiung, Đài Loan</span></div>
+                <div class="field"><label>Ngày rời dự kiến<em>*</em></label><span class="input input--filled num">02/07/2027</span><small>Mặc định ngày rời dự kiến của chuyến cũ</small></div>
+                <div class="field"><label>Nơi rời dự kiến</label><span class="input input--sel">Chọn cảng</span></div>
+                <div class="field span3" style="grid-column:1 / -1"><div class="toggle-row"><span><b>Chuyến đã kết thúc</b><small>Bật khi nhập chuyến cũ: hiện thêm ngày rời, nơi rời thực tế và ghi chú rời</small></span><span class="switch"></span></div></div>
+                <div class="field" style="grid-column:1 / -1"><label>Ghi chú</label><span class="input input--filled">Chủ tàu điều sang Ocean Grace do thiếu thợ máy, giữ nguyên lương.</span></div>
+              </div>
+            </div>
+            <div class="stick"><span class="muted">Tạo xong: chuyến CT-2026-0161 Đang trên tàu; CT-2026-0139 chuyển Đã rời tàu</span><div class="actions"><span class="btn">Huỷ</span><span class="btn">Lưu &amp; tạo chuyến khác</span><span class="btn btn--primary">Tạo chuyến</span></div></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Lý do tạo không qua cơ hội</b> (bắt buộc, danh mục cố định): Chuyển tàu · Chủ tàu tự tuyển · Nhập chuyến cũ · Khác (bắt ghi chú). Hiện ở cột Nguồn và lọc được.</li>
+        <li><b>Mở từ đâu:</b> nút "+ Tạo chuyến" trên danh sách chuyến; "+ Tạo chuyến" ở thẻ Đội ngũ của tàu (điền sẵn tàu, chủ tàu); "Thêm chuyến" trên hồ sơ thuyền viên (điền sẵn người); "Chuyển tàu" trên chi tiết chuyến và lối tắt "Chuyển sang tàu khác" sau khi ghi rời tàu (điền sẵn người, chức danh, budget, ngày lên = ngày rời).</li>
+        <li><b>Kiểm trùng:</b> người đang có chuyến Đang trên tàu thì hiện banner như trên. Lý do tạo là Chuyển tàu thì tự đóng chuyến cũ; lý do khác thì bắt ghi rời tàu chuyến cũ trước. Chuyến đã kết thúc (nhập chuyến cũ) không được trùng thời gian với chuyến khác của cùng người.</li>
+        <li>Nút tạo luôn bật và báo lỗi khi bấm; "Lưu &amp; tạo chuyến khác" giữ tàu, chủ tàu, ngày và cảng để nhập tiếp người cùng tàu.</li>
+        <li><span class="phase">Giai đoạn 2</span> Tạo chuyến cũng tạo hợp đồng Nháp như khi chốt.</li>
+      </ul>
+    </section>
+
+    <!-- 10. Đội ngũ -->
+    <section class="screen" id="doi-ngu">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 10 · /vessels/:id, thẻ "Đội ngũ"</span>
+        <h2>Đội ngũ trên trang tàu</h2>
+        <p>Trang chi tiết tàu đổi thẻ "Thuyền viên" thành "Đội ngũ": các chuyến của tàu theo thời gian, mỗi hàng một người. Người rời sớm và người thay họ hiện thành hai hàng riêng. Thẻ "Đi tàu" (lịch sử đi tàu khai trên hồ sơ) giữ nguyên.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item side__item--on"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="crumb"><a>Tàu</a> / MV Ocean Pride</div>
+          <div class="head">
+            <div>
+              <h1>MV Ocean Pride</h1>
+              <p>Hàng rời · Cờ Panama · <a>Hải Phong Shipping</a></p>
+            </div>
+            <div class="actions"><span class="btn">…</span><span class="btn">Sửa tàu</span><span class="btn btn--primary">+ Tạo chuyến</span></div>
+          </div>
+          <div class="tabs"><span class="tab">Tổng quan</span><span class="tab tab--on">Đội ngũ<span>5</span></span><span class="tab">Đi tàu<span>23</span></span></div>
+          <div class="filters" style="align-items:center">
+            <span class="seg"><span>Hôm nay</span><span>6 tháng tới</span><span class="on">Cả năm</span><span>Tuỳ chọn</span></span>
+            <span class="input input--filled num">01/06/2026 – 31/08/2027</span>
+            <span class="input input--sel">Chức danh</span>
+            <span style="margin-left:auto" class="seg"><span class="on">Biểu đồ</span><span>Bảng</span></span>
+          </div>
+          <div class="sums">
+            <div class="sum"><p class="sum__label">Trên tàu hôm nay</p><p class="sum__value">5 <span>người</span></p><p class="sum__sub">26/10/2026 · 1 cơ hội đang chờ kết quả</p></div>
+            <div class="sum"><p class="sum__label">Chuyến trong khoảng</p><p class="sum__value">7</p><p class="sum__sub">2 đã rời</p></div>
+            <div class="sum"><p class="sum__label">Sắp rời, chưa có người thay</p><p class="sum__value">3 <span>người</span></p><p class="sum__sub">05/03/2027 · <a>Tạo cơ hội thay</a></p></div>
+            <div class="sum"><p class="sum__label">Nguồn</p><p class="sum__value">6 <span>từ cơ hội</span></p><p class="sum__sub">1 tạo tay · chủ tàu tự tuyển</p></div>
+          </div>
+          <div class="card">
+            <div class="gantt" id="gantt"></div>
+            <div class="legend">
+              <span><i style="background:var(--primary)"></i>Đang trên tàu (thực tế)</span>
+              <span><i style="background:var(--neutral);opacity:.7"></i>Đã rời tàu</span>
+              <span><i style="background:var(--primary-mid)"></i>Cơ hội đang mở (chưa chốt)</span>
+              <span><i style="border:1.5px dashed var(--border-strong)"></i>Dự kiến ban đầu</span>
+              <span><i style="background:repeating-linear-gradient(135deg, var(--info-bg) 0 4px, rgba(29,78,216,.25) 4px 8px)"></i>Ngày rời đã dời</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Hàng cơ hội đang mở của tàu (chưa chốt) hiện nhạt theo ngày dự kiến, để thấy chỗ sắp có người; bấm mở cơ hội. Bấm hàng chuyến mở chi tiết chuyến (Màn 11). Các số trên cùng tính theo khoảng đang chọn, không lưu.</li>
+        <li><b>Bảng</b> là cùng các chuyến đó dạng danh sách (cột như Màn 8), có chọn nhiều để ghi rời tàu cho cả nhóm trên tàu này.</li>
+        <li>"Sắp rời, chưa có người thay": người có ngày rời dự kiến trong 6 tháng tới mà chưa có cơ hội đang mở nào cùng tàu, cùng chức danh. "Tạo cơ hội thay" mở form Tạo cơ hội điền sẵn tàu, chức danh, ngày xuống = ngày rời của người đó.</li>
+        <li>Thẻ Tổng quan giữ khung "Đang trên tàu" như hiện nay, lấy từ chuyến; "Xem tất cả" mở thẻ Đội ngũ với khoảng Hôm nay.</li>
+        <li>Trang chủ tàu có thể thêm cùng thẻ này, gom theo từng tàu của chủ tàu đó (để sau).</li>
+      </ul>
+    </section>
+
+    <!-- 11. Chi tiết chuyến -->
+    <section class="screen" id="ct-chuyen">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 11 · /voyages/:id</span>
+        <h2>Chi tiết chuyến</h2>
+        <p>Một người, một tàu. Đầu trang là thuyền viên và tàu, giữa là ngày dự kiến so với thực tế, dưới là nguồn, budget và lịch sử. Hợp đồng thêm vào ở giai đoạn 2.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="crumb"><a>Chuyến tàu</a> / CT-2026-0104</div>
+          <div class="head">
+            <div>
+              <h1>Đỗ Văn Nam · CT-2026-0104</h1>
+              <p>Thủy thủ AB trên <a>MV Ocean Pride</a> · Hải Phong Shipping · từ cơ hội <a>CH-2026-012</a></p>
+              <div class="head__badges"><span class="badge b-success">Đang trên tàu</span><span class="badge badge--plain b-error">Lên muộn 13 ngày</span></div>
+            </div>
+            <div class="actions"><span class="btn">…</span><span class="btn">Đổi ngày rời dự kiến</span><span class="btn btn--primary">Ghi rời tàu</span></div>
+          </div>
+          <div class="card"><dl class="facts">
+            <div class="fact"><dt>Lên tàu</dt><dd class="num">18/06/2026<small>Ghi lúc chốt · cơ hội dự kiến 05/06/2026</small></dd></div>
+            <div class="fact"><dt>Nơi lên tàu</dt><dd>Busan<small>Dự kiến Hải Phòng</small></dd></div>
+            <div class="fact"><dt>Rời tàu</dt><dd class="num">05/03/2027<small>Dự kiến · còn 4,3 tháng</small></dd></div>
+            <div class="fact"><dt>Nơi rời tàu</dt><dd>Kaohsiung<small>Dự kiến</small></dd></div>
+          </dl></div>
+          <div class="sums" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <div class="sum"><p class="sum__label">Nguồn</p><p class="sum__value" style="font-size:16px"><a>CH-2026-012</a></p><p class="sum__sub">Chốt 18/06/2026 bởi Nguyễn Thu Hà</p></div>
+            <div class="sum"><p class="sum__label">Budget</p><p class="sum__value num">1.650 <span>USD/tháng</span></p><p class="sum__sub">Lấy từ cơ hội</p></div>
+            <div class="sum sum--muted"><p class="sum__label">Hợp đồng <span class="phase">Giai đoạn 2</span></p><p class="sum__value" style="font-size:16px">—</p><p class="sum__sub">Thẻ hợp đồng, phải thu, phải chi, chênh lệch hiện ở đây</p></div>
+          </div>
+          <div class="card">
+            <div class="card__head"><h3>Lịch sử</h3></div>
+            <table>
+              <tbody>
+                <tr><td class="num muted" style="width:150px">18/06/2026 09:12</td><td>Nguyễn Thu Hà <b>chốt</b> từ cơ hội CH-2026-012: lên tàu 18/06/2026 tại Busan (dự kiến 05/06 Hải Phòng). Ghi chú: chờ visa Hàn Quốc.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Nút chính: Đang trên tàu → <b>Ghi rời tàu</b>; Đã rời tàu → không có nút chính.</li>
+        <li>Menu "…": <b>Chuyển tàu</b> (mở Tạo chuyến, Màn 9, điền sẵn người, chức danh, budget) · Sửa ngày đã ghi · Tạo cơ hội tìm người thay · Huỷ chốt (Đ4; chuyến tạo tay thì là "Xoá chuyến").</li>
+        <li>Chuyến của người cùng tàu không hiện ở đây; muốn xem thì bấm tên tàu, mở thẻ Đội ngũ của trang tàu (Màn 10).</li>
+      </ul>
+    </section>
+
+    <!-- 12. Rời tàu -->
+    <section class="screen" id="roi-tau">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 12 · hộp thoại trên chi tiết chuyến</span>
+        <h2>Ghi rời tàu</h2>
+        <p>Ba ô: ngày rời, nơi rời, ghi chú. Luồng "một thuyền viên rời tàu trước thời hạn" đã hẹn làm ở giai đoạn 3 nằm ở đây.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:520px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal" style="width:480px">
+            <div class="modal__head"><h3>Ghi rời tàu · Trần Văn Bình</h3><p>Thợ máy · MV Ocean Pride · lên 05/06/2026 · rời dự kiến 05/02/2027</p></div>
+            <div class="modal__body">
+              <div class="fgrid fgrid--2">
+                <div class="field"><label>Ngày rời tàu<em>*</em></label><span class="input input--filled num">14/09/2026</span><small><span class="delta delta--early">sớm 4,7 tháng</span></small></div>
+                <div class="field"><label>Nơi rời tàu<em>*</em></label><span class="input input--sel input--filled">Singapore</span></div>
+              </div>
+              <div class="field"><label>Ghi chú</label><div class="textarea" style="min-height:72px">Đau ruột thừa, nhập viện tại Singapore. Chủ tàu chịu vé về.</div></div>
+            </div>
+            <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--primary">Ghi rời tàu</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Lưu xong: chuyến Đã rời tàu, thuyền viên Ở bờ; ngày rời dự kiến giữ lại để hiện sớm / muộn bao nhiêu. Không cần duyệt.</li>
+        <li>Toast sau khi lưu có hai lối tắt: <b>Tạo cơ hội tìm người thay</b> (điền sẵn chủ tàu, tàu, chức danh) và <b>Chuyển sang tàu khác</b> (mở Tạo chuyến, Màn 9, điền sẵn người, chức danh, ngày lên = ngày rời).</li>
+        <li>Chọn nhiều chuyến trên danh sách thì cùng hộp thoại, áp một ngày, nơi, ghi chú cho cả nhóm.</li>
+        <li><span class="phase">Giai đoạn 2</span> Rời trước hạn hợp đồng thì kết thúc sớm hợp đồng; rời sau hạn thì hỏi làm phụ lục gia hạn (Đ3).</li>
+      </ul>
+    </section>
+
+    <!-- 13. Đổi ngày rời -->
+    <section class="screen" id="doi-ngay">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 13 · nút trên chi tiết chuyến</span>
+        <h2>Đổi ngày rời dự kiến</h2>
+        <p>Dùng khi chủ tàu báo trước người đó sẽ ở lâu hơn hay xuống sớm hơn. Giai đoạn 1 chỉ đổi ngày rời dự kiến của chuyến và ghi lịch sử, giữ ngày gốc để đối chiếu.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:500px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal">
+            <div class="modal__head"><h3>Đổi ngày rời dự kiến · Nguyễn Hữu Toàn · CT-2026-0102</h3><p>Máy trưởng · MV Ocean Pride · rời dự kiến 05/03/2027</p></div>
+            <div class="modal__body">
+              <div class="fgrid fgrid--2">
+                <div class="field"><label>Ngày rời hiện tại</label><span class="input num">05/03/2027</span></div>
+                <div class="field"><label>Ngày rời mới<em>*</em></label><span class="input input--filled num">05/04/2027</span><small><span class="delta delta--ext">+1 tháng</span></small></div>
+                <div class="field span2"><label>Ghi chú</label><span class="input input--filled">Chủ tàu đề nghị ở thêm 1 tháng, chưa có máy trưởng thay.</span></div>
+              </div>
+              <div class="impact">
+                <h4>Sau khi lưu</h4>
+                <ul>
+                  <li>Ngày rời dự kiến đổi thành 05/04/2027; ngày gốc 05/03/2027 giữ để hiện chênh lệch.</li>
+                  <li class="muted"><span class="phase">Giai đoạn 2</span> Ngày mới sau hạn hợp đồng thì tạo phụ lục gia hạn chờ duyệt.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--primary">Lưu ngày rời mới</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Đổi nhiều lần thì lịch sử ghi từng lần; chênh lệch luôn so với ngày gốc lúc chốt hoặc lúc tạo.</li>
+      </ul>
+    </section>
+
+    <!-- Đ. Trường hợp đặc biệt -->
+    <section class="screen" id="dac-biet">
+      <div class="screen__head">
+        <span class="screen__kicker">Trường hợp đặc biệt · <span class="phase">Giai đoạn 2</span></span>
+        <h2>Một chuyến, một hợp đồng, nhiều phụ lục</h2>
+        <p>Bình thường một chuyến có đúng một hợp đồng. Khi có thay đổi giữa chừng, hợp đồng không nhân đôi: thoả thuận mới thì thêm phụ lục, còn việc đã xảy ra thì ghi lên chuyến và hệ thống tự kết thúc hoặc huỷ phần còn lại.</p>
+      </div>
+      <div class="sums">
+        <div class="sum"><p class="sum__label">Quy tắc 1</p><p class="strong" style="margin:4px 0">Mỗi chuyến chỉ một hợp đồng còn sống</p><p class="sum__sub">Gia hạn, đổi lương, đổi chức danh đều là phụ lục của hợp đồng đó. Chỉ thay hợp đồng mới khi hợp đồng cũ sai, cần làm lại.</p></div>
+        <div class="sum"><p class="sum__label">Quy tắc 2</p><p class="strong" style="margin:4px 0">Thoả thuận mới thì qua duyệt</p><p class="sum__sub">Phụ lục đi đúng luồng của hợp đồng: Nháp → Chờ duyệt → Hiệu lực, có từ chối kèm lý do.</p></div>
+        <div class="sum"><p class="sum__label">Quy tắc 3</p><p class="strong" style="margin:4px 0">Việc đã xảy ra thì ghi thẳng</p><p class="sum__sub">Rời sớm, huỷ chốt không cần duyệt. Hệ thống kết thúc sớm, huỷ hoặc xoá hợp đồng, ghi lịch sử.</p></div>
+        <div class="sum"><p class="sum__label">Quy tắc 4</p><p class="strong" style="margin:4px 0">Phụ lục có ngày hiệu lực</p><p class="sum__sub">Hợp đồng luôn trả lời được "ở ngày X điều khoản là gì" (gốc + phụ lục đã duyệt). Luồng thanh toán thiết kế sau sẽ đọc từ đây.</p></div>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Trường hợp</th><th>Ghi ở đâu</th><th>Hợp đồng</th><th>Duyệt</th></tr></thead>
+          <tbody>
+            <tr><td class="cell2"><span class="strong">Gia hạn có báo trước</span><small>Chủ tàu đề nghị ở thêm</small></td><td>Chuyến → Đổi ngày rời dự kiến (Màn 13)</td><td>Phụ lục <b>Gia hạn</b>, ngày kết thúc mới</td><td><span class="badge b-warning">Có</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Rời muộn ngoài kế hoạch</span><small>Tàu chưa cập cảng, chờ người thay</small></td><td>Ghi rời tàu với ngày sau hạn hợp đồng (Đ3)</td><td>Hỏi: tạo phụ lục Gia hạn tới ngày rời, hoặc không tính thêm</td><td><span class="badge b-warning">Có, nếu tạo phụ lục</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Rút ngắn có báo trước</span><small>Biết sẽ xuống sớm</small></td><td>Đổi ngày rời dự kiến</td><td>Chưa đổi; chỉ đổi ngày dự kiến của chuyến</td><td><span class="badge b-neutral">Không</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Rời tàu sớm</span><small>Sức khoẻ, gia đình, chủ tàu cho xuống</small></td><td>Ghi rời tàu (Màn 12)</td><td><b>Kết thúc sớm</b>: ghi ngày chấm dứt và ghi chú, không cần phụ lục</td><td><span class="badge b-neutral">Không</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Lên tàu khác ngày dự kiến</span><small>Chờ visa, đổi cảng</small></td><td>Chốt (Màn 7) với ngày, cảng thật</td><td>Bắt đầu từ ngày lên thật, không cần dời</td><td><span class="badge b-warning">Như hợp đồng</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Người được chọn không đi được</span><small>Trượt khám, visa bị từ chối, rút</small></td><td>Cơ hội: bỏ ứng viên, chốt người khác</td><td>Chưa có (chưa chốt thì chưa có chuyến, hợp đồng)</td><td><span class="badge b-neutral">Không</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Chốt nhầm</span><small>Nhầm người</small></td><td>Chuyến → Huỷ chốt (Đ4)</td><td>Nháp thì xoá; đã Hiệu lực thì Huỷ. Cơ hội mở lại</td><td><span class="badge b-neutral">Không</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Đổi lương, khoản tiền giữa chuyến</span><small>Tăng lương, thêm phụ cấp</small></td><td>Hợp đồng → Tạo phụ lục (Đ2)</td><td>Phụ lục <b>Điều chỉnh</b>, hiệu lực từ một ngày</td><td><span class="badge b-warning">Có</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Thăng chức trên cùng tàu</span><small>AB lên Thủy thủ trưởng</small></td><td>Hợp đồng → Tạo phụ lục</td><td>Phụ lục <b>Đổi chức danh</b>, thường kèm tiền mới</td><td><span class="badge b-warning">Có</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Chuyển sang tàu khác</span><small>Cùng hoặc khác chủ tàu</small></td><td>Chuyến → Chuyển tàu, hoặc lối tắt "Chuyển sang tàu khác" sau khi ghi rời tàu → Tạo chuyến (Màn 9)</td><td>Hợp đồng cũ kết thúc. Tàu mới là chuyến mới tạo tay, hợp đồng mới</td><td><span class="badge b-warning">Có (hợp đồng mới)</span></td></tr>
+            <tr><td class="cell2"><span class="strong">Hợp đồng hiệu lực bị sai</span><small>Nhập nhầm, cần làm lại</small></td><td>Hợp đồng → Thay hợp đồng</td><td>Hợp đồng mới thay thế; cũ thành <b>Đã thay</b>. Vẫn chỉ một hợp đồng còn sống</td><td><span class="badge b-warning">Có</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="notes">
+        <li><b>Job hết hạn hợp đồng đổi:</b> hợp đồng quá ngày kết thúc mà chuyến còn Đang trên tàu thì <b>không</b> chuyển Hết hạn. Chuyến và danh sách hiện nhãn đỏ "Quá hạn hợp đồng N ngày" để người làm gia hạn hoặc ghi rời tàu. Hợp đồng chuyển Hết hạn khi chuyến đã rời tàu.</li>
+        <li>Phụ lục chỉ tạo được khi hợp đồng Hiệu lực. Mỗi lúc chỉ có một phụ lục đang chờ duyệt cho một hợp đồng, để thứ tự áp dụng rõ ràng.</li>
+      </ul>
+    </section>
+
+    <!-- Đ1. Hợp đồng và phụ lục -->
+    <section class="screen" id="phu-luc">
+      <div class="screen__head">
+        <span class="screen__kicker"><span class="phase">Giai đoạn 2</span> Đ1 · /contracts/:id, thẻ mới "Phụ lục"</span>
+        <h2>Hợp đồng và phụ lục</h2>
+        <p>Chi tiết hợp đồng thêm một thẻ: dòng thời gian của hợp đồng gốc và các phụ lục, và bảng điều khoản theo từng giai đoạn. Luồng thanh toán (thiết kế sau) sẽ đọc từ bảng này.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page">
+          <div class="crumb"><a>Hợp đồng</a> / HĐ-2026-0102</div>
+          <div class="head">
+            <div>
+              <h1>HĐ-2026-0102 · Nguyễn Hữu Toàn</h1>
+              <p>Máy trưởng · MV Ocean Pride · chuyến <a>CT-2026-0102</a></p>
+              <div class="head__badges"><span class="badge b-success">Hiệu lực</span><span class="badge badge--plain b-warning">PL-02 chờ duyệt</span></div>
+            </div>
+            <div class="actions"><span class="btn">…</span><span class="btn">In hợp đồng</span><span class="btn btn--primary">+ Tạo phụ lục ▾</span></div>
+          </div>
+          <div class="tabs"><span class="tab">Thoả thuận</span><span class="tab tab--on">Phụ lục<span>2</span></span><span class="tab">Lịch sử duyệt</span></div>
+          <div class="card">
+            <div class="card__head"><h3>Dòng thời gian</h3><span class="muted" style="font-size:12px">05/06/2026 → 05/04/2027 nếu PL-02 được duyệt</span></div>
+            <div class="card__body" style="display:grid;gap:10px">
+              <div class="pl-row"><span class="pl-row__label"><b>Hợp đồng gốc</b><small>05/06/2026 – 05/03/2027</small></span><span class="pl-track"><span class="pl-seg pl-seg--base" style="left:0;width:90%">9 tháng · thu 4.400 / chi 3.820</span></span><span class="badge b-success">Hiệu lực</span></div>
+              <div class="pl-row"><span class="pl-row__label"><b>PL-01 · Điều chỉnh</b><small>từ 01/09/2026</small></span><span class="pl-track"><span class="pl-seg pl-seg--adj" style="left:29%;width:61%">Lương cơ bản +200 cả hai bên</span></span><span class="badge b-success">Hiệu lực</span></div>
+              <div class="pl-row"><span class="pl-row__label"><b>PL-02 · Gia hạn</b><small>tới 05/04/2027</small></span><span class="pl-track"><span class="pl-seg pl-seg--ext" style="left:90%;width:10%">+1 tháng</span></span><span class="actions"><span class="btn btn--sm">Từ chối</span><span class="btn btn--sm btn--primary">Duyệt</span></span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__head"><h3>Điều khoản theo giai đoạn</h3><span class="muted" style="font-size:12px">USD/tháng, chỉ khoản hằng tháng</span></div>
+            <table>
+              <thead><tr><th>Giai đoạn</th><th>Theo</th><th class="r">Phải thu</th><th class="r">Phải chi</th><th class="r">Chênh lệch</th></tr></thead>
+              <tbody>
+                <tr><td class="num">05/06/2026 – 31/08/2026</td><td>Hợp đồng gốc</td><td class="r num">4.400</td><td class="r num">3.820</td><td class="r num strong">580</td></tr>
+                <tr><td class="num">01/09/2026 – 05/03/2027</td><td>Gốc + PL-01</td><td class="r num">4.600</td><td class="r num">4.020</td><td class="r num strong">580</td></tr>
+                <tr class="row--muted"><td class="num">06/03/2027 – 05/04/2027</td><td>Gốc + PL-01 + PL-02 <span class="badge b-warning" style="padding:1px 8px">chờ duyệt</span></td><td class="r num">4.600</td><td class="r num">4.020</td><td class="r num">580</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Menu "Tạo phụ lục": Gia hạn · Điều chỉnh tiền · Đổi chức danh · Dời ngày. Gia hạn mở từ chuyến (Màn 13) cũng ra cùng loại phụ lục này.</li>
+        <li>Menu "…" của hợp đồng thêm: <b>Thay hợp đồng</b> (chỉ khi Hiệu lực). Tạo bản nháp chép từ hợp đồng hiện tại; duyệt xong bản cũ thành Đã thay.</li>
+        <li>Thẻ Thoả thuận vẫn là bảng hai cột như hiện nay, có ô chọn "Xem theo ngày" để thấy số đang áp dụng ở một ngày bất kỳ.</li>
+      </ul>
+    </section>
+
+    <!-- Đ2. Phụ lục điều chỉnh -->
+    <section class="screen" id="tao-phu-luc">
+      <div class="screen__head">
+        <span class="screen__kicker"><span class="phase">Giai đoạn 2</span> Đ2 · hộp thoại trên chi tiết hợp đồng</span>
+        <h2>Phụ lục điều chỉnh tiền</h2>
+        <p>Chỉ nhập khoản thay đổi, kèm ngày hiệu lực. Ngày hiệu lực gợi ý là ngày đầu tháng kế tiếp.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:620px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal modal--wide">
+            <div class="modal__head"><h3>Tạo phụ lục · HĐ-2026-0102</h3><p>Nguyễn Hữu Toàn · Máy trưởng · MV Ocean Pride</p></div>
+            <div class="modal__body">
+              <div class="field"><label>Loại phụ lục</label><div class="seg"><span>Gia hạn</span><span class="on">Điều chỉnh tiền</span><span>Đổi chức danh</span><span>Dời ngày</span></div></div>
+              <div class="fgrid fgrid--2">
+                <div class="field"><label>Hiệu lực từ<em>*</em></label><span class="input input--filled num">01/09/2026</span><small>Gợi ý: ngày đầu tháng kế tiếp</small></div>
+                <div class="field"><label>Lý do<em>*</em></label><span class="input input--filled">Chủ tàu tăng lương máy trưởng toàn đội tàu.</span></div>
+              </div>
+              <div class="card">
+                <table>
+                  <thead><tr><th>Khoản hằng tháng</th><th class="r">Phải thu hiện tại</th><th class="r">Phải thu mới</th><th class="r">Phải chi hiện tại</th><th class="r">Phải chi mới</th></tr></thead>
+                  <tbody>
+                    <tr style="background:var(--primary-light)"><td class="strong">Lương cơ bản</td><td class="r num muted">3.200</td><td class="r"><span class="input input--filled num" style="min-width:100px;justify-content:flex-end">3.400</span></td><td class="r num muted">3.000</td><td class="r"><span class="input input--filled num" style="min-width:100px;justify-content:flex-end">3.200</span></td></tr>
+                    <tr><td>Làm thêm cố định</td><td class="r num muted">800</td><td class="r num muted">800</td><td class="r num muted">620</td><td class="r num muted">620</td></tr>
+                    <tr><td>Phí dịch vụ</td><td class="r num muted">400</td><td class="r num muted">400</td><td class="r num muted">—</td><td class="r num muted">—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="impact">
+                <h4>Sau khi duyệt</h4>
+                <ul>
+                  <li>Từ 01/09/2026: phải thu 4.600, phải chi 4.020, chênh lệch giữ 580 USD/tháng.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn">Lưu nháp</span><span class="btn btn--primary">Lưu và xin duyệt</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Đổi chức danh: thêm ô chức danh mới ở trên bảng; chuyến hiện chức danh mới từ ngày hiệu lực, hồ sơ thuyền viên giữ cả hai mốc.</li>
+        <li>Dời ngày: hai ô ngày bắt đầu, kết thúc mới; dùng khi hợp đồng đã Hiệu lực mà cần đổi ngày.</li>
+      </ul>
+    </section>
+
+    <!-- Đ3. Rời muộn -->
+    <section class="screen" id="roi-muon">
+      <div class="screen__head">
+        <span class="screen__kicker"><span class="phase">Giai đoạn 2</span> Đ3 · hộp thoại Ghi rời tàu khi ngày rời sau hạn hợp đồng</span>
+        <h2>Rời tàu sau hạn hợp đồng</h2>
+        <p>Người đã ở lại quá hạn hợp đồng (tàu chưa cập cảng, chưa có người thay). Hộp thoại hỏi có làm phụ lục gia hạn tới ngày rời thật không, vì việc này đổi tiền thu và chi.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:620px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal">
+            <div class="modal__head"><h3>Ghi rời tàu · Phạm Minh Đức · CT-2026-0101</h3><p>Thuyền trưởng · MV Ocean Pride · hợp đồng HĐ-2026-0101 tới 05/03/2027</p></div>
+            <div class="modal__body">
+              <div class="fgrid fgrid--2">
+                <div class="field"><label>Ngày rời tàu<em>*</em></label><span class="input input--filled num">03/04/2027</span><small><span class="delta delta--late">sau hạn hợp đồng 29 ngày</span></small></div>
+                <div class="field"><label>Nơi rời tàu<em>*</em></label><span class="input input--sel input--filled">Kaohsiung</span></div>
+                <div class="field span2"><label>Ghi chú</label><span class="input input--filled">Tàu chưa cập cảng, chờ máy trưởng thay.</span></div>
+              </div>
+              <div class="field"><label>29 ngày sau hạn hợp đồng tính thế nào?<em>*</em></label>
+                <div class="choice" style="grid-template-columns:minmax(0,1fr)">
+                  <div class="choice__item choice__item--on"><b>Tạo phụ lục gia hạn tới 03/04/2027</b><span>PL-01 Chờ duyệt, giữ nguyên khoản tiền; hợp đồng kéo tới ngày rời thật.</span></div>
+                  <div class="choice__item"><b>Không tính thêm</b><span>Hợp đồng giữ hạn 05/03/2027, chỉ ghi ngày rời thật lên chuyến.</span></div>
+                </div>
+              </div>
+              <div class="impact">
+                <h4>Sau khi lưu</h4>
+                <ul>
+                  <li>Chuyến chuyển <b>Đã rời tàu</b>, Phạm Minh Đức chuyển <b>Ở bờ</b>.</li>
+                  <li>Hợp đồng chuyển Hết hạn khi PL-01 được duyệt hoặc bị từ chối.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--primary">Ghi rời tàu và xin duyệt PL-01</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Rời sau hạn 1–3 ngày thì mặc định chọn "Không tính thêm".</li>
+        <li>Trước đó, từ ngày 06/03/2027 chuyến đã hiện nhãn "Quá hạn hợp đồng" trên danh sách, để người làm gia hạn sớm thay vì đợi tới lúc rời.</li>
+      </ul>
+    </section>
+
+    <!-- Đ4. Huỷ chốt -->
+    <section class="screen" id="huy-chot">
+      <div class="screen__head">
+        <span class="screen__kicker">Đ4 · menu "…" trên chi tiết chuyến · giai đoạn 1</span>
+        <h2>Huỷ chốt</h2>
+        <p>Chốt nhầm người. Vì chốt cũng là ghi lên tàu, huỷ chốt xoá luôn chuyến và hợp đồng, đưa thuyền viên về Ở bờ và mở lại cơ hội. Nhầm ngày hoặc cảng thì không huỷ, dùng "Sửa ngày đã ghi".</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:540px">
+        <aside class="side" aria-hidden="true">
+          <div class="side__brand"><span class="side__logo"></span>MCAH</div>
+          <div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div>
+          <div class="side__sep"></div>
+          <div class="side__item side__item--new"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div>
+        </aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal">
+            <div class="modal__head"><h3>Huỷ chốt · Bùi Văn Hiếu · CT-2026-0160</h3><p>Thủy thủ AB · MV Hà Giang 09 · chốt và lên tàu 25/10/2026 tại Busan</p></div>
+            <div class="modal__body">
+              <div class="field"><label>Ghi chú</label><span class="input input--filled">Chốt nhầm, chủ tàu chọn Cao Minh Tú.</span></div>
+              <div class="impact">
+                <h4>Sau khi huỷ</h4>
+                <ul>
+                  <li>Xoá chuyến CT-2026-0160 (mã không dùng lại).</li>
+                  <li>Bùi Văn Hiếu về <b>Ở bờ</b>.</li>
+                  <li>Cơ hội CH-2026-049 về <b>Chờ kết quả</b>, các ứng viên giữ nguyên để chốt người khác.</li>
+                </ul>
+              </div>
+            </div>
+            <div class="modal__foot"><span class="btn">Đóng</span><span class="btn btn--danger">Huỷ chốt</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><span class="phase">Giai đoạn 2</span> Hợp đồng còn Nháp hoặc Chờ duyệt thì xoá cùng chuyến; đã Hiệu lực thì chuyển Huỷ.</li>
+        <li>Chuyến tạo tay (Màn 9) không có cơ hội để mở lại: menu là "Xoá chuyến", cùng điều kiện.</li>
+        <li>Người đã lên tàu thật mà phải xuống ngay thì không huỷ chốt, ghi Rời tàu sớm (Màn 12) để còn lịch sử.</li>
+      </ul>
+    </section>
+
+    <!-- 14. Hồ sơ -->
+    <section class="screen" id="ho-so">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 14 · thẻ trên hồ sơ thuyền viên</span>
+        <h2>Chuyến trên hồ sơ thuyền viên</h2>
+        <p>Vì chuyến là của từng người, hồ sơ có ngay lịch sử đi tàu đúng ngày thật. Đây cũng là nguồn để sinh sea service sau này.</p>
+      </div>
+      <div class="card" style="max-width:980px">
+        <div class="card__head"><h3>Chuyến <span class="count">4</span></h3><div class="actions"><span class="badge b-success">Đang trên tàu</span><span class="btn btn--sm">+ Thêm chuyến</span></div></div>
+        <table>
+          <thead><tr><th>Chuyến · tàu</th><th>Vị trí</th><th>Lên tàu</th><th>Rời tàu</th><th>Thời gian</th><th>Ghi chú rời</th><th>Nguồn</th></tr></thead>
+          <tbody>
+            <tr><td class="cell2"><span class="strong">CT-2026-0161 · MV Ocean Grace</span><small>Hải Phong Shipping</small></td><td>Thợ máy</td><td class="num">26/10/2026 Kaohsiung</td><td class="num muted">02/07/2027 dự kiến</td><td class="num">0 tháng</td><td class="muted">—</td><td class="muted">Tạo tay · chuyển tàu</td></tr>
+            <tr><td class="cell2"><span class="strong">CT-2026-0139 · MV Ocean Pride</span><small>Hải Phong Shipping</small></td><td>Thợ máy</td><td class="num">02/10/2026 Singapore</td><td class="num">26/10/2026 Kaohsiung</td><td class="num">0,8 tháng</td><td>Chuyển sang MV Ocean Grace</td><td><a>CH-2026-029</a></td></tr>
+            <tr><td class="cell2"><span class="strong">CT-2025-0310 · MV Hà Giang 09</span><small>Đông Á Marine</small></td><td>Thợ máy</td><td class="num">11/08/2025 Busan</td><td class="num">03/05/2026 Hải Phòng</td><td class="num">8,73 tháng</td><td>Hết hạn</td><td class="muted">Tạo tay · nhập chuyến cũ</td></tr>
+            <tr><td class="cell2"><span class="strong">CT-2025-0021 · MV Pacific Dawn</span><small>Kanto Kisen</small></td><td>Thủy thủ AB</td><td class="num">02/01/2025 Singapore</td><td class="num">20/03/2025 Singapore <span class="delta delta--early">sớm</span></td><td class="num">2,6 tháng</td><td>Việc gia đình</td><td class="muted">Tạo tay · nhập chuyến cũ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 15. Dữ liệu -->
+    <section class="screen" id="du-lieu">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 15</span>
+        <h2>Thay đổi dữ liệu</h2>
+        <p>Một migration mới, không sửa 005. Bảng voyage giữ tên nhưng đổi nghĩa thành chuyến của một người. Giai đoạn 1 chỉ gồm các bảng cơ hội và chuyến; hợp đồng giữ nguyên tới giai đoạn 2 rồi mới đổi chỗ gắn. Luồng thanh toán chưa có, thiết kế sau.</p>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Bảng</th><th>Việc</th><th>Cột chính</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">opportunity</td><td><span class="badge badge--plain b-info">Mới</span></td><td>code (CH-năm-số), ship_owner_id, vessel_id null được, rank_id, budget_monthly_usd, budget_total_usd, planned_join_date, planned_join_port_id, planned_leave_date, planned_leave_port_id, deadline, owner_user_id, status OPEN/WON/LOST/CANCELLED (hiển thị: Mới, Đang chọn ứng viên, Chờ kết quả, Chủ tàu đã chọn), close_reason, notes</td></tr>
+            <tr><td class="strong">opportunity_requirement</td><td><span class="badge badge--plain b-info">Mới</span></td><td>opportunity_id, kind DOCUMENT/CERTIFICATE/EXPERIENCE/TEMPLATE, certificate_type_id hoặc template_key hoặc rule kinh nghiệm, level REQUIRED/PREFERRED, valid_until JOIN/LEAVE/LEAVE_PLUS/ANY, plus_months, sort_order</td></tr>
+            <tr><td class="strong">rank_requirement_preset</td><td><span class="badge badge--plain b-info">Mới</span></td><td>Mẫu yêu cầu mặc định theo chức danh. Theo tàu thì dùng vessel_certificate_requirement đã có (đang chưa dùng)</td></tr>
+            <tr><td class="strong">opportunity_candidate</td><td><span class="badge badge--plain b-info">Mới</span></td><td>opportunity_id, seafarer_id (unique cặp), status PICKED/PLACED/NOT_SELECTED/REMOVED (PLACED khi chốt = lên tàu), owner_selected_at, owner_selected_by (nhãn Chủ tàu đã chọn; unique một người mỗi cơ hội), export_pack_id, last_sent_at, added_by, source SUGGEST/SEARCH</td></tr>
+            <tr><td class="strong">export_pack</td><td><span class="badge badge--plain b-warning">Đổi</span></td><td>Thêm opportunity_id và danh sách file giấy tờ đính kèm. Duyệt dùng approved_by/approved_at, trả lại dùng reject_reason, "Cần tạo lại" dùng stale_reason đã có</td></tr>
+            <tr><td class="strong">opportunity_send</td><td><span class="badge badge--plain b-info">Mới</span></td><td>opportunity_id, ship_owner_contact_id, to_email, subject, candidate_ids, export_pack_ids, sent_by, sent_at. Chỉ ghi nhận khi người làm bấm "Đã gửi"; email gửi từ app mail của máy</td></tr>
+            <tr><td class="strong">voyage</td><td><span class="badge badge--plain b-warning">Đổi nghĩa</span></td><td>Một dòng = một người: code (CT-năm-4 số), seafarer_id, rank_id, vessel_id, ship_owner_id, opportunity_id (null được, unique khi có), source OPPORTUNITY/MANUAL, manual_reason TRANSFER/OWNER_HIRED/LEGACY/OTHER, transferred_from_id, budget_monthly_usd (null được), join_date, join_port_id (ghi lúc chốt hoặc tạo, bắt buộc), original_leave_date, planned_leave_date, planned_leave_port_id, actual_leave_date, actual_leave_port_id, leave_note, status ONBOARD/LEFT. Ngày xuống dự kiến chỉ nằm ở cơ hội. Bỏ API start/end; chốt = POST /opportunities/:id/close-won; tạo tay = POST /voyages (Chuyển tàu đóng chuyến cũ trong cùng transaction). Mỗi thuyền viên tối đa một chuyến ONBOARD (unique index)</td></tr>
+            <tr><td class="strong">voyage_position</td><td><span class="badge badge--plain b-error">Bỏ</span></td><td>Mỗi vị trí cũ thành một opportunity</td></tr>
+            <tr><td class="strong">seafarer_contract</td><td><span class="phase">Giai đoạn 2</span> <span class="badge badge--plain b-warning">Đổi</span></td><td>voyage_position_id → voyage_id; unique một hợp đồng còn sống mỗi chuyến (trừ REPLACED, CANCELLED). Thêm terminated_date, terminated_reason, replaced_by_id. Trạng thái thêm CANCELLED (Huỷ), REPLACED (Đã thay). Job hết hạn bỏ qua hợp đồng có chuyến còn ONBOARD</td></tr>
+            <tr><td class="strong">contract_addendum</td><td><span class="phase">Giai đoạn 2</span> <span class="badge badge--plain b-info">Mới</span></td><td>contract_id, seq (PL-01…), kind EXTEND/ADJUST/RANK/RESCHEDULE, effective_date, new_start_date, new_end_date, new_rank_id, reason, status DRAFT/PENDING/REJECTED/ACTIVE, last_reject_reason. Dùng chung TRANSITIONS và bảng log duyệt (thêm cột addendum_id)</td></tr>
+            <tr><td class="strong">contract_addendum_item</td><td><span class="phase">Giai đoạn 2</span> <span class="badge badge--plain b-info">Mới</span></td><td>addendum_id, item_code hoặc custom_name, receivable_usd, payable_usd: giá trị mới của khoản thay đổi từ effective_date</td></tr>
+            
+            <tr><td class="strong">seafarer.status</td><td><span class="badge badge--plain b-neutral">Giữ</span></td><td>Vẫn ON_VESSEL / AVAILABLE, đặt khi ghi lên / rời tàu của chuyến</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="notes">
+        <li><b>Lọc theo thời gian:</b> chuyến giao với [từ, đến] khi ngày lên (thực tế, không có thì dự kiến) ≤ đến và ngày rời (thực tế, không có thì dự kiến) ≥ từ. Thêm index (vessel_id, ngày lên, ngày rời).</li>
+        <li><b>Chuyển dữ liệu cũ:</b> mỗi voyage_position cũ sinh một opportunity (có hợp đồng thì WON, trống thì OPEN), ngày và nơi lấy từ chuyến cũ; mỗi hợp đồng cũ sinh một voyage mới cho người đó (ngày dự kiến = ngày hợp đồng, ngày thực tế = ngày thực tế của chuyến cũ nếu có); mã chuyến cũ ghi vào ghi chú. Cơ hội chuyển sang không có hồ sơ yêu cầu; điền sau nếu cần.</li>
+        <li>Quyền mới: opportunity.view/create/update/close, opportunity.send (ghi nhận gửi chủ tàu); bản xuất dùng quyền export.create, export.view có sẵn; voyage.run đổi nghĩa thành ghi lên/rời tàu.</li>
+      </ul>
+    </section>
+
+    <!-- 16. Câu hỏi -->
+    <section class="screen" id="cau-hoi">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 16</span>
+        <h2>Cần chốt trước khi dựng</h2>
+      </div>
+      <div class="q">
+        <div class="q__item"><b>Đã chốt</b><p>Không có luồng thay ca: người thay là một cơ hội mới. Mỗi chuyến chỉ theo dõi một thuyền viên; đội ngũ trên tàu là kết quả lọc. Bình thường một chuyến một hợp đồng; thay đổi giữa chừng xử lý theo bảng Trường hợp đặc biệt. Một cơ hội một vị trí; kết quả chủ tàu không ghi trong hệ thống, người làm chốt tay. Gửi chủ tàu bằng app mail mặc định của máy (mailto), app chỉ ghi nhận đã gửi. Chốt người = ghi lên tàu, không chốt trước ngày lên tàu; giữ chỗ bằng nhãn "Chủ tàu đã chọn" trên ứng viên.</p></div>
+        
+        
+        <div class="q__item"><b>Đã chốt thêm</b><p>Rời sớm và huỷ chốt ghi thẳng, không qua duyệt. Luồng thanh toán chưa có, thiết kế sau; bản này không đụng tới. Chuyến và hợp đồng là hai màn riêng.</p></div>
+        <div class="q__item"><b>Đã chốt: Tạo chuyến không qua cơ hội</b><p>Có nút Tạo chuyến (Màn 9) cho mọi trường hợp không qua tuyển; chuyển tàu dùng nút này. Làm Cơ hội và Chuyến trước (giai đoạn 1), Hợp đồng sau (giai đoạn 2). Bản xuất dùng lại màn có sẵn. Chốt chỉ hỏi người, ngày và nơi xuống. Không có chốt cả nhóm. Ghi rời tàu chỉ có ghi chú, không có danh mục lý do.</p></div>
+        <div class="q__item"><b>1. Tạo chuyến tay có bắt nhập budget không?</b><p>Bản vẽ để không bắt buộc, vì nhập chuyến cũ thường không có số. Giai đoạn 2 hợp đồng sẽ lấy budget làm mặc định nếu có.</p><p class="rec">Đề xuất: không bắt buộc.</p></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // Biểu đồ đội ngũ MV Ocean Pride: mỗi hàng một chuyến. Mốc: 01/06/2026 → 01/09/2027.
+  (function () {
+    const start = Date.UTC(2026, 5, 1)
+    const end = Date.UTC(2027, 8, 1)
+    const span = end - start
+    const d = (s) => { const [dd, mm, yy] = s.split('/').map(Number); return Date.UTC(yy, mm - 1, dd) }
+    const pct = (s) => ((d(s) - start) / span) * 100
+    const months = []
+    for (let y = 2026, m = 5; Date.UTC(y, m, 1) < end; m++) { if (m === 12) { m = 0; y++ } months.push(`${String(m + 1).padStart(2, '0')}/${String(y).slice(2)}`) }
+    const rows = [
+      { name: 'Phạm Minh Đức', rank: 'Thuyền trưởng · CT-2026-0101', bars: [['plan', '05/06/2026', '05/03/2027'], ['on', '05/06/2026', '26/10/2026', 'Hải Phòng →']] },
+      { name: 'Nguyễn Hữu Toàn', rank: 'Máy trưởng · CT-2026-0102', bars: [['plan', '05/06/2026', '05/03/2027'], ['on', '05/06/2026', '26/10/2026', 'Hải Phòng →'], ['ext', '05/03/2027', '05/04/2027', 'dời +1 tháng']] },
+      { name: 'Đỗ Văn Nam', rank: 'Thủy thủ AB · CT-2026-0104', bars: [['plan', '05/06/2026', '05/03/2027'], ['on', '18/06/2026', '26/10/2026', 'Busan · muộn 13 ngày']] },
+      { name: 'Mai Thế Anh', rank: 'Thợ máy · CT-2026-0105', bars: [['plan', '05/06/2026', '05/03/2027'], ['on', '05/06/2026', '26/10/2026', 'Hải Phòng →']] },
+      { name: 'Trần Văn Bình', rank: 'Thợ máy · CT-2026-0103', bars: [['plan', '05/06/2026', '05/02/2027'], ['left', '05/06/2026', '14/09/2026', 'Rời sớm · Sức khoẻ']] },
+      { name: 'Lê Quang Huy', rank: 'Thợ máy · CT-2026-0139', bars: [['plan', '02/10/2026', '02/07/2027'], ['on', '02/10/2026', '26/10/2026', 'SIN']] },
+      { name: 'Vũ Đình Long', rank: 'Thủy thủ AB · CT-2026-0106', bars: [['plan', '05/06/2026', '20/10/2026'], ['left', '05/06/2026', '20/10/2026', 'Hết hợp đồng']] },
+      { name: 'CH-2026-047', rank: 'Thủy thủ AB · cơ hội, chưa chốt', bars: [['wait', '08/11/2026', '08/08/2027', 'Dự kiến 08/11 · chủ tàu đã chọn Hoàng Gia Khánh']] },
+    ]
+    const cols = `repeat(${months.length}, minmax(0, 1fr))`
+    let names = '<div class="gantt__names"><div class="gantt__name gantt__name--head">Chuyến</div>'
+    let chart = `<div class="gantt__chart" style="min-width:${months.length * 52}px"><div class="gantt__months" style="grid-template-columns:${cols}">${months.map((m) => `<span>${m}</span>`).join('')}</div>`
+    chart += `<div class="gantt__grid" style="grid-template-columns:${cols}">${months.map(() => '<span></span>').join('')}</div>`
+    for (const r of rows) {
+      names += `<div class="gantt__name"><b>${r.name}</b><small>${r.rank}</small></div>`
+      chart += '<div class="gantt__row">' + r.bars.map(([k, a, b, label]) => `<div class="bar bar--${k}" style="left:${pct(a)}%;width:${pct(b) - pct(a)}%">${label || ''}</div>`).join('') + '</div>'
+    }
+    chart += `<div class="today" style="left:${pct('26/10/2026')}%"></div></div>`
+    names += '</div>'
+    document.getElementById('gantt').innerHTML = names + `<div style="overflow-x:auto;min-width:0">${chart}</div>`
+  })()
+</script>

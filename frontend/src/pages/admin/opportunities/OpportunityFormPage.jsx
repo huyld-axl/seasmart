@@ -17,7 +17,7 @@ import useAuthStore from '../../../stores/authStore'
 import apiErrorText from '../../../utils/apiError'
 import { formatUsd } from '../../../utils/format'
 import { withFlag } from '../../../utils/flag'
-import { FleetTile, FormFrame, FormSection } from '../fleet/FleetParts'
+import { FleetTile, TargetSvg, FormFrame, FormSection } from '../fleet/FleetParts'
 import changedLabel from '../fleet/changedLabel'
 import { monthsBetween, splitBudget } from '../voyages/voyageView'
 import RequirementTable from './RequirementTable'
@@ -191,8 +191,8 @@ function OpportunityForm({ opportunity, prefill }) {
     <FormFrame
       crumbs={isEdit ? [{ label: 'Cơ hội', to: '/opportunities' }, { label: opportunity.code, to: `/opportunities/${opportunity.id}` }, { label: 'Sửa cơ hội' }] : [{ label: 'Cơ hội', to: '/opportunities' }, { label: 'Tạo cơ hội' }]}
       title={isEdit ? 'Sửa cơ hội' : 'Tạo cơ hội'}
-      description={isEdit ? `${opportunity.rank_name} · ${opportunity.code}` : 'Một vị trí chủ tàu cần người, kèm hồ sơ yêu cầu.'}
-      tile={<FleetTile large />}
+      description={isEdit ? `${opportunity.rank_name} · ${opportunity.code}` : undefined}
+      tile={<FleetTile large icon={TargetSvg} />}
       name={rankName || (isEdit ? opportunity.rank_name : 'Cơ hội mới')}
       sub={[selectedVessel?.label.split(' · IMO')[0], selectedOwner?.label].filter(Boolean).join(' · ') || undefined}
       sections={sections}

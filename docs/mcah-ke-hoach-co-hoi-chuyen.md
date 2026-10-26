@@ -115,7 +115,7 @@ Mỗi dòng trả: thuyền viên (tên, mã, chức danh, tuổi, trạng thái
 
 ### 1.9 Mã số
 
-- Cơ hội: `CH-{năm tạo}-{3 chữ số}`, ví dụ `CH-2026-044`. `nextCode(conn, 'OPPORTUNITY', năm, 'CH', 3)`.
+- Cơ hội: `CH{2 số cuối năm tạo}{3 chữ số}`, ví dụ `CH26044` (quá 999 thì đếm tiếp `CH261000`). `nextCode(conn, 'OPPORTUNITY', năm, 'CH', 3, true)`.
 - Chuyến (mới): `CT-{năm tạo}-{4 chữ số}`, ví dụ `CT-2026-0104`. `nextCode(conn, 'VOYAGE1', năm, 'CT', 4)` (kind mới để không đụng bộ đếm 3 chữ số cũ). Mã chuyến cũ (3 chữ số) chỉ còn trong bảng lưu trữ (mục 3.1).
 
 ---

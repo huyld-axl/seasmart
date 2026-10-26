@@ -132,7 +132,7 @@ const CREW_ROWS = [
   { id: 3, title: 'Đỗ Văn Nam', subtitle: 'Thủy thủ AB · CT-2026-0104', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-06-05', end: '2027-03-05' }, { kind: 'onboard', start: '2026-06-18', end: '2026-10-26', label: 'Busan · muộn 13 ngày' }] },
   { id: 4, title: 'Trần Văn Bình', subtitle: 'Thợ máy · CT-2026-0103', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-06-05', end: '2027-02-05' }, { kind: 'left', start: '2026-06-05', end: '2026-09-14', label: 'Rời sớm' }] },
   { id: 5, title: 'Lê Quang Huy', subtitle: 'Thợ máy · CT-2026-0139', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-10-02', end: '2027-07-02' }, { kind: 'onboard', start: '2026-10-02', end: '2026-10-26', label: 'SIN' }] },
-  { id: 6, title: 'CH-2026-047', subtitle: 'Thủy thủ AB · cơ hội, chưa chốt', onClick: () => {}, bars: [{ kind: 'opening', start: '2026-11-08', end: '2027-08-08', label: 'Dự kiến 08/11 · chủ tàu đã chọn Hoàng Gia Khánh' }] },
+  { id: 6, title: 'CH26047', subtitle: 'Thủy thủ AB · cơ hội, chưa chốt', onClick: () => {}, bars: [{ kind: 'opening', start: '2026-11-08', end: '2027-08-08', label: 'Dự kiến 08/11 · chủ tàu đã chọn Hoàng Gia Khánh' }] },
 ]
 const CERTS = [
   { id: 'c1', name: 'Advanced Fire Fighting', number: 'A2949.AF/BNHP', issuedOn: '02/07/2020', expiresOn: '02/07/2025', status: 'EXPIRED' },

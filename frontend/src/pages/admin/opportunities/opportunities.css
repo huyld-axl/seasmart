@@ -1,18 +1,12 @@
 /* Màn cơ hội. Chỉ phần riêng; khung bảng, thẻ, toolbar dùng lớp có sẵn (ds-*, crew-*, vd-*). */
-.op-filters { padding-top: 0; }
-.op-flag { width: fit-content; padding: 0 6px; border-radius: 9999px; font-size: 11px; font-weight: 600; line-height: 18px; white-space: nowrap; }
-.op-flag--warning { background: var(--warning-bg); color: var(--warning); }
-.op-flag--error { background: var(--error-bg); color: var(--error-strong); }
 
 /* Bảng hồ sơ yêu cầu trong form (cùng khung với bảng vị trí của form chuyến cũ: .vp). */
 .rq { margin: 4px 0 0; overflow: hidden; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); }
 .rq--changed { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
-.rq__head, .rq__row { display: grid; grid-template-columns: minmax(0, 1.4fr) 168px minmax(0, 1.2fr) 40px; align-items: center; gap: 0 16px; padding: 8px 16px; }
+.rq__head, .rq__row { display: grid; grid-template-columns: minmax(0, 1fr) 168px 40px; align-items: center; gap: 0 16px; padding: 8px 16px; }
 .rq__head { background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 500; border-bottom: 2px solid var(--primary); }
 .rq__group-title { margin: 0; padding: 10px 16px 2px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
 .rq__row { border-bottom: 1px solid var(--border); }
-.rq__cond { display: flex; gap: 8px; min-width: 0; }
-.rq__cond .ant-select { flex: 1 1 auto; min-width: 0; }
 .rq__muted, .rq__empty { color: var(--muted); font-size: 13px; }
 .rq__empty { margin: 0; padding: 16px; }
 .rq__add { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 8px 12px; }
@@ -20,8 +14,8 @@
 @media (max-width: 767px) {
   .rq__head { display: none; }
   .rq__row { grid-template-columns: minmax(0, 1fr) 40px; gap: 8px; }
-  .rq__row > :nth-child(2), .rq__row > :nth-child(3) { grid-column: 1 / 2; }
-  .rq__row > :nth-child(4) { grid-column: 2; grid-row: 1; }
+  .rq__row > :nth-child(2) { grid-column: 1 / 2; }
+  .rq__row > :nth-child(3) { grid-column: 2; grid-row: 1; }
 }
 
 /* Chi tiết cơ hội */

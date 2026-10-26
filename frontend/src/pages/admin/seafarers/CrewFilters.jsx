@@ -5,10 +5,10 @@ import { DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { lookupApi } from '../../../api'
 import { EMPTY_FILTERS, filterCount } from './crewFilters'
 
-// Nút mở / đóng hàng bộ lọc nâng cao; số trên nút là số nhóm lọc đang bật.
-export function CrewFilterButton({ value, open, onToggle }) {
+// Nút mở / đóng hàng bộ lọc nâng cao; số trên nút là số nhóm lọc đang bật (`count` ghi đè khi màn khác dùng bộ lọc riêng).
+export function CrewFilterButton({ value, count = filterCount(value), open, onToggle }) {
   return (
-    <Badge count={filterCount(value)} size="small" offset={[-4, 4]}>
+    <Badge count={count} size="small" offset={[-4, 4]}>
       <Button className="crew-filter-btn" icon={<FilterOutlined />} aria-expanded={open} aria-controls="crew-filter-bar" onClick={onToggle}>
         Bộ lọc <DownOutlined className="crew-filter-btn__chev" />
       </Button>

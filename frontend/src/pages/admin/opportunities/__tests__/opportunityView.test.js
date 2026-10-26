@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { candidateSummary, deadlineLabel, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
+import { chosenCandidate, deadlineLabel, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
 
-const fmt = (d) => d.slice(8, 10) + '/' + d.slice(5, 7)
 
 describe('deadlineLabel', () => {
   it('quá hạn đỏ, sắp tới vàng, hôm nay', () => {
@@ -12,12 +11,11 @@ describe('deadlineLabel', () => {
   })
 })
 
-describe('candidateSummary', () => {
-  it('ưu tiên người được chốt, rồi người chủ tàu đã chọn, rồi số ứng viên', () => {
-    expect(candidateSummary({ placed_name: 'A', voyage_code: 'CT-2026-0141' }, fmt)).toEqual({ main: 'A', sub: 'chuyến CT-2026-0141' })
-    expect(candidateSummary({ selected_name: 'B', selected_at: '2026-10-20', candidates_count: 4 }, fmt).sub).toBe('chủ tàu đã chọn 20/10 · 4 ứng viên')
-    expect(candidateSummary({ candidates_count: 4, sent_count: 2, last_sent_at: '2026-10-14' }, fmt)).toEqual({ main: '4 ứng viên', sub: '2 đã gửi 14/10' })
-    expect(candidateSummary({ candidates_count: 0 }, fmt)).toMatchObject({ main: 'Chưa có', muted: true })
+describe('chosenCandidate', () => {
+  it('lấy người đã chốt, rồi người chủ tàu chọn, không có thì null', () => {
+    expect(chosenCandidate({ placed_name: 'A', placed_seafarer_id: 1, selected_name: 'B' })).toEqual({ name: 'A', seafarerId: 1 })
+    expect(chosenCandidate({ selected_name: 'B', selected_seafarer_id: 2 })).toEqual({ name: 'B', seafarerId: 2 })
+    expect(chosenCandidate({ candidates_count: 4 })).toBeNull()
   })
 })
 

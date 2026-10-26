@@ -35,6 +35,10 @@ const LIST_SELECT = `SELECT o.id, o.code, o.status, o.close_reason, o.rank_id, r
     (SELECT MAX(c.last_sent_at) FROM opportunity_candidate c WHERE c.opportunity_id = o.id AND c.status <> 'REMOVED') AS last_sent_at,
     (SELECT s.full_name FROM opportunity_candidate c JOIN seafarer s ON s.id = c.seafarer_id
        WHERE c.opportunity_id = o.id AND c.owner_selected_at IS NOT NULL AND c.status <> 'REMOVED' LIMIT 1) AS selected_name,
+    (SELECT c.seafarer_id FROM opportunity_candidate c
+       WHERE c.opportunity_id = o.id AND c.owner_selected_at IS NOT NULL AND c.status <> 'REMOVED' LIMIT 1) AS selected_seafarer_id,
+    (SELECT c.seafarer_id FROM opportunity_candidate c
+       WHERE c.opportunity_id = o.id AND c.status = 'PLACED' LIMIT 1) AS placed_seafarer_id,
     (SELECT c.owner_selected_at FROM opportunity_candidate c
        WHERE c.opportunity_id = o.id AND c.owner_selected_at IS NOT NULL AND c.status <> 'REMOVED' LIMIT 1) AS selected_at,
     (SELECT s.full_name FROM opportunity_candidate c JOIN seafarer s ON s.id = c.seafarer_id
@@ -258,7 +262,7 @@ const opportunityService = {
     const requirements = parseRequirements(body.requirements)
     if (!data.owner_user_id) data.owner_user_id = userId
     const id = await refGuard(withTransaction(pool, async (conn) => {
-      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 3)
+      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 3, true)
       const [result] = await conn.query('INSERT INTO opportunity SET ?', [{ ...data, code, status: 'OPEN', created_by: userId ?? null, updated_by: userId ?? null }])
       await writeRequirements(conn, 'opportunity_requirement', 'opportunity_id', result.insertId, requirements)
       return result.insertId
@@ -293,7 +297,7 @@ const opportunityService = {
       if (!current) throw { statusCode: 404, message: NOT_FOUND }
       const data = Object.fromEntries(OPPORTUNITY_COLUMNS.map((key) => [key, current[key]]))
       if (body?.rank_id) data.rank_id = body.rank_id
-      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 3)
+      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 3, true)
       const [result] = await conn.query('INSERT INTO opportunity SET ?', [{ ...data, code, status: 'OPEN', created_by: userId ?? null, updated_by: userId ?? null }])
       await conn.query(
         `INSERT INTO opportunity_requirement (opportunity_id, ${REQUIREMENT_COLUMNS.join(', ')}, sort_order)

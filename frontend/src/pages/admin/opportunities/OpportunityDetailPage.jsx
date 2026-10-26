@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Input, Modal, Skeleton } from 'antd'
 import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RollbackOutlined, StopOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import Banner from '../../../components/ds/Banner'
-import { EmptyState } from '../../../components/ds/Controls'
-import DescriptionList from '../../../components/ds/DescriptionList'
+import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
+import { ReadLayout } from '../seafarers/ReadSections'
 import RequirementFit from '../../../components/ds/RequirementFit'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
@@ -12,14 +12,15 @@ import { useOpportunity, useOpportunityMutations } from '../../../hooks/useOppor
 import { useCan } from '../../../hooks/usePermission'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatUsd } from '../../../utils/format'
-import { Crumb, FleetTile } from '../fleet/FleetParts'
+import { Crumb, FleetTile, TargetSvg } from '../fleet/FleetParts'
 import CandidateTable from './CandidateTable'
 import useSendToOwner from './useSendToOwner'
 import PlaceModal from './PlaceModal'
 import CandidatePanel from './CandidatePanel'
-import { deadlineLabel, requirementName, requirementSummary } from './opportunityView'
+import { deadlineLabel, requirementName } from './opportunityView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
+import '../seafarers/SeafarerForm.css'
 import '../voyages/voyages.css'
 import './opportunities.css'
 
@@ -98,6 +99,7 @@ export default function OpportunityDetailPage() {
   const [closing, setClosing] = useState(false)
   const [panel, setPanel] = useState(null)
   const [placing, setPlacing] = useState(false)
+  const [tab, setTab] = useState('overview')
   const sendToOwner = useSendToOwner()
 
   if (isLoading) {
@@ -122,9 +124,13 @@ export default function OpportunityDetailPage() {
   const isOpen = o.status === 'OPEN'
   const editable = isOpen && can('opportunity.update')
   const flag = isOpen ? deadlineLabel(o.deadline_flag) : null
-  const summary = requirementSummary(o.requirements)
   const candidates = o.candidates || []
   const live = candidates.filter((c) => c.status === 'PICKED')
+  const tabs = [
+    { value: 'overview', label: 'Tổng quan' },
+    { value: 'candidates', label: 'Ứng viên', count: candidates.length },
+    ...(o.sends?.length ? [{ value: 'sends', label: 'Lịch sử gửi chủ tàu', count: o.sends.length }] : []),
+  ]
   const run = async (promise, ok, fail) => {
     try {
       await promise
@@ -238,20 +244,68 @@ export default function OpportunityDetailPage() {
     delete: confirmDelete,
   })[key]?.()
 
+  const place = (date, port) => `${formatDate(date)}${port ? ` · ${port}` : ''}`
+  const names = (list) => list.map(requirementName).join(' · ') || null
+  const reqs = o.requirements
+  const sections = [
+    {
+      key: 'position',
+      title: 'Vị trí',
+      fields: [
+        ['Mã cơ hội', o.code, 4],
+        ['Chức danh', o.rank_name, 4],
+        ['Người phụ trách', o.owner_user_email, 4],
+        ['Chủ tàu', can('partner.view') ? <Link to={`/partners/${o.ship_owner_id}`}>{o.ship_owner_name}</Link> : o.ship_owner_name, 6],
+        ['Tàu', o.vessel_name ? (can('vessel.view') ? <Link to={`/vessels/${o.vessel_id}`}>{o.vessel_name}</Link> : o.vessel_name) : null, 6],
+        ['Budget/tháng', `${formatUsd(o.budget_monthly_usd)} USD`, 6],
+        ['Budget cả chuyến', `${formatUsd(o.budget_total_usd)} USD`, 6],
+      ],
+    },
+    {
+      key: 'time',
+      title: 'Thời gian dự kiến',
+      fields: [
+        ['Xuống tàu', place(o.planned_join_date, o.planned_join_port_name), 6],
+        ['Rời tàu', place(o.planned_leave_date, o.planned_leave_port_name), 6],
+        ['Thời gian', formatMonths(o.months), 4],
+        ['Hạn chốt', formatDate(o.deadline), 4],
+        ['Ghi chú', o.notes, 12],
+      ],
+    },
+    {
+      key: 'requirements',
+      title: 'Hồ sơ yêu cầu',
+      fields: [
+        ['Bắt buộc', names(reqs.filter((r) => r.kind !== 'TEMPLATE' && r.level === 'REQUIRED')), 12],
+        ['Nên có', names(reqs.filter((r) => r.kind !== 'TEMPLATE' && r.level === 'PREFERRED')), 12],
+        ['Mẫu giấy xuất kèm', names(reqs.filter((r) => r.kind === 'TEMPLATE')), 12],
+      ],
+    },
+  ]
+
   return (
     <div className="ds-page crew-profile">
       <Crumb items={[{ label: 'Cơ hội', to: '/opportunities' }, { label: o.code }]} />
 
       <div className="crew-head">
         <div className="crew-head__person">
-          <FleetTile large />
+          <div className="crew-head__photo crew-head__photo--logo">
+            <FleetTile large icon={TargetSvg} />
+          </div>
           <div className="crew-head__text">
-            <h1 className="crew-head__title">{o.rank_name} · {o.vessel_name || 'Chưa rõ tàu'} · {o.code}</h1>
-            <p className="crew-head__desc">{o.ship_owner_name} · phụ trách {o.owner_user_email || '—'}</p>
-            <div className="crew-head__badges">
+            <div className="crew-head__titlerow">
+              <h1 className="crew-head__title">{o.rank_name}</h1>
               <StatusBadge group="opportunity" value={o.display_status} />
-              {flag ? <span className={`op-flag op-flag--${flag.tone}`}>Hạn chốt {flag.text}</span> : null}
+              {flag ? <span className={`crew-docs crew-docs--${flag.tone}`}>Hạn chốt {flag.text}</span> : null}
             </div>
+            <dl className="crew-head__meta">
+              <dt>Tàu</dt>
+              <dd>{o.vessel_name ? (can('vessel.view') ? <Link to={`/vessels/${o.vessel_id}`}>{o.vessel_name}</Link> : o.vessel_name) : 'Chưa rõ tàu'}</dd>
+              <dt>Chủ tàu</dt>
+              <dd>{can('partner.view') ? <Link to={`/partners/${o.ship_owner_id}`}>{o.ship_owner_name}</Link> : o.ship_owner_name}</dd>
+              <dt>Phụ trách</dt>
+              <dd>{o.owner_user_email || '—'}</dd>
+            </dl>
           </div>
         </div>
         <div className="crew-head__actions">
@@ -268,68 +322,55 @@ export default function OpportunityDetailPage() {
 
       {o.status === 'LOST' && o.close_reason ? <Banner tone="neutral" title="Không thành" description={o.close_reason} /> : null}
 
-      <section className="crew-panel crew-panel__body">
-        <DescriptionList items={[
-          { label: 'Xuống tàu dự kiến', value: `${formatDate(o.planned_join_date)}${o.planned_join_port_name ? ` · ${o.planned_join_port_name}` : ''}` },
-          { label: 'Rời tàu dự kiến', value: `${formatDate(o.planned_leave_date)}${o.planned_leave_port_name ? ` · ${o.planned_leave_port_name}` : ''} · ${formatMonths(o.months)}` },
-          { label: 'Budget', value: `${formatUsd(o.budget_monthly_usd)} USD/tháng · ${formatUsd(o.budget_total_usd)} USD cả chuyến` },
-          { label: 'Hạn chốt', value: formatDate(o.deadline) },
-          {
-            label: 'Hồ sơ yêu cầu',
-            value: o.requirements.length
-              ? `${summary.required} bắt buộc · ${summary.preferred} nên có${summary.templates ? ` · ${summary.templates} mẫu giấy` : ''}`
-              : null,
-          },
-          { label: 'Ghi chú', value: o.notes },
-        ]} />
-      </section>
-
-      <section className="crew-panel">
-        <div className="crew-panel__head">
-          <h2 className="crew-panel__title">Ứng viên <span className="vd-count">{candidates.length}</span></h2>
-          {editable ? (
-            <span className="op-panel-actions">
-              <Button onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button>
-              <Button type="text" icon={<PlusOutlined />} onClick={() => setPanel('search')}>Thêm ứng viên</Button>
-            </span>
-          ) : null}
-        </div>
-        {editable && selected.length ? (
-          <div className="op-bulk">
-            <b>Đã chọn {selected.length}</b>
-            {unpacked.length && can('export.create') ? <Button size="small" onClick={() => makePacks(unpacked)}>Tạo bản xuất cho {unpacked.length} người</Button> : null}
-            {packed.length && can('opportunity.send') ? <Button size="small" onClick={() => sendToOwner(o, packed)}>Gửi cho chủ tàu ({packed.length})</Button> : null}
-            <Button size="small" danger onClick={removeSelected}>Bỏ khỏi danh sách</Button>
-            <Button size="small" type="text" onClick={() => setSelected([])}>Bỏ chọn</Button>
-          </div>
-        ) : null}
-        {candidates.length ? (
-          <CandidateTable
-            candidates={candidates}
-            requirements={o.requirements}
-            editable={editable}
-            selected={selected}
-            onSelect={setSelected}
-            onMenu={onCandidateMenu}
-            onOpenFit={setFitFor}
-          />
-        ) : (
-          <EmptyState title="Chưa có ứng viên" description="Bấm Đề xuất nhanh để xem người hợp với hồ sơ yêu cầu, hoặc Thêm ứng viên để tìm theo tên." action={editable ? <Button type="primary" onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button> : undefined} />
-        )}
-      </section>
-
-      {o.sends?.length ? (
+      {tabs.length > 1 ? <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" /> : null}
+      {tab === 'overview' ? <ReadLayout sections={sections} label="cơ hội" /> : null}
+      {tab === 'candidates' ? (
         <section className="crew-panel">
-          <div className="crew-panel__head"><h2 className="crew-panel__title">Lịch sử gửi chủ tàu <span className="vd-count">{o.sends.length}</span></h2></div>
-          <ul className="op-sends">
-            {o.sends.map((s) => (
-              <li key={s.id}>
-                <b>{s.subject}</b>
-                <span className="vd-muted">{formatDate(s.sent_at)} · {s.sent_by_email} gửi tới {s.to_email} · {s.candidate_ids.length} người</span>
-              </li>
-            ))}
-          </ul>
+          <div className="crew-panel__head">
+            <h2 className="crew-panel__title">Ứng viên <span className="vd-count">{candidates.length}</span></h2>
+            {editable ? (
+              <span className="op-panel-actions">
+                <Button onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button>
+                <Button type="text" icon={<PlusOutlined />} onClick={() => setPanel('search')}>Thêm ứng viên</Button>
+              </span>
+            ) : null}
+          </div>
+          {editable && selected.length ? (
+            <div className="op-bulk">
+              <b>Đã chọn {selected.length}</b>
+              {unpacked.length && can('export.create') ? <Button size="small" onClick={() => makePacks(unpacked)}>Tạo bản xuất cho {unpacked.length} người</Button> : null}
+              {packed.length && can('opportunity.send') ? <Button size="small" onClick={() => sendToOwner(o, packed)}>Gửi cho chủ tàu ({packed.length})</Button> : null}
+              <Button size="small" danger onClick={removeSelected}>Bỏ khỏi danh sách</Button>
+              <Button size="small" type="text" onClick={() => setSelected([])}>Bỏ chọn</Button>
+            </div>
+          ) : null}
+          {candidates.length ? (
+            <CandidateTable
+              candidates={candidates}
+              requirements={o.requirements}
+              editable={editable}
+              selected={selected}
+              onSelect={setSelected}
+              onMenu={onCandidateMenu}
+              onOpenFit={setFitFor}
+            />
+          ) : (
+            <EmptyState title="Chưa có ứng viên" description="Bấm Đề xuất nhanh để xem người hợp với hồ sơ yêu cầu, hoặc Thêm ứng viên để tìm theo tên." action={editable ? <Button type="primary" onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button> : undefined} />
+          )}
         </section>
+      ) : null}
+      {tab === 'sends' && o.sends?.length ? (
+          <section className="crew-panel">
+            <div className="crew-panel__head"><h2 className="crew-panel__title">Lịch sử gửi chủ tàu <span className="vd-count">{o.sends.length}</span></h2></div>
+            <ul className="op-sends">
+              {o.sends.map((s) => (
+                <li key={s.id}>
+                  <b>{s.subject}</b>
+                  <span className="vd-muted">{formatDate(s.sent_at)} · {s.sent_by_email} gửi tới {s.to_email} · {s.candidate_ids.length} người</span>
+                </li>
+              ))}
+            </ul>
+          </section>
       ) : null}
 
       {fitFor ? <FitModal candidate={fitFor} requirements={o.requirements} onClose={() => setFitFor(null)} /> : null}

@@ -22,7 +22,7 @@ function fakePool(routes) {
 const writes = (pool) => pool.calls.filter((c) => /^(INSERT|UPDATE|DELETE)/.test(c.sql.trim()))
 
 const row = (over = {}) => ({
-  id: 9, code: 'CH-2026-044', status: 'OPEN', rank_id: 2, rank_name: 'Máy hai', ship_owner_id: 1, vessel_id: 3,
+  id: 9, code: 'CH26044', status: 'OPEN', rank_id: 2, rank_name: 'Máy hai', ship_owner_id: 1, vessel_id: 3,
   planned_join_date: '2026-10-25', planned_leave_date: '2027-07-25', deadline: '2026-10-15',
   budget_monthly_usd: '4900.00', budget_total_usd: '44100.00', today: '2026-10-26', updated_at: new Date().toISOString(),
   candidates_count: '0', sent_count: '0', last_sent_at: null, selected_at: null, voyage_id: null, voyage_code: null,
@@ -37,7 +37,7 @@ const body = (over = {}) => ({
 })
 
 describe('opportunity.service', () => {
-  it('tạo cơ hội cấp mã CH-năm-số, tự tính budget cả chuyến, ghi hồ sơ yêu cầu theo thứ tự', async () => {
+  it('tạo cơ hội cấp mã CHyynnn, tự tính budget cả chuyến, ghi hồ sơ yêu cầu theo thứ tự', async () => {
     const year = new Date().getUTCFullYear()
     const pool = fakePool([
       ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 44 }] }]],
@@ -46,7 +46,7 @@ describe('opportunity.service', () => {
     ])
     const result = await opportunityService.create(pool, body(), 5)
     const insert = pool.calls.find((c) => c.sql.startsWith('INSERT INTO opportunity SET'))
-    expect(insert.params[0]).toMatchObject({ code: `CH-${year}-044`, status: 'OPEN', owner_user_id: 5, budget_monthly_usd: 4900, budget_total_usd: 44100 })
+    expect(insert.params[0]).toMatchObject({ code: `CH${String(year).slice(-2)}044`, status: 'OPEN', owner_user_id: 5, budget_monthly_usd: 4900, budget_total_usd: 44100 })
     const reqs = pool.calls.filter((c) => c.sql.startsWith('INSERT INTO opportunity_requirement'))
     expect(reqs.map((c) => [c.params[0].kind, c.params[0].sort_order, c.params[0].valid_until])).toEqual([['CERTIFICATE', 0, 'LEAVE'], ['TEMPLATE', 1, 'ANY']])
     expect(result.display_status).toBe('NEW')
@@ -159,13 +159,13 @@ describe('ứng viên, nhãn, ghi nhận gửi', () => {
         { id: 4, full_name: 'B', today: '2026-10-26', onboard_voyage_id: null },
         { id: 5, full_name: 'A', today: '2026-10-26', onboard_voyage_id: 8, onboard_until: '2026-10-20' },
       ]]],
-      ['FROM opportunity_candidate c JOIN opportunity o', () => [[{ seafarer_id: 5, code: 'CH-2026-050' }]]],
+      ['FROM opportunity_candidate c JOIN opportunity o', () => [[{ seafarer_id: 5, code: 'CH26050' }]]],
     ])
     const result = await opportunityService.suggestions(pool, 9, { free_before: '2026-10-25' })
     const sql = pool.calls.find((c) => c.sql.includes('FROM seafarer s\n'))
     expect(sql.sql).toContain('ob.planned_leave_date <= ?')
     expect(sql.params).toContain('2026-10-25')
-    expect(result.data.find((r) => r.id === 5)).toMatchObject({ held_by: 'CH-2026-050', free_from: '2026-10-20' })
+    expect(result.data.find((r) => r.id === 5)).toMatchObject({ held_by: 'CH26050', free_from: '2026-10-20' })
     expect(result.data.find((r) => r.id === 4)).toMatchObject({ held_by: null, free_from: null })
   })
 })

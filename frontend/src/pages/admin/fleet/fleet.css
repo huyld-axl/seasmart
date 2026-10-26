@@ -47,6 +47,7 @@
 /* Logo ở đầu màn chi tiết đối tác: cùng chỗ với ảnh chân dung ở hồ sơ thuyền viên, khung vuông */
 .crew-head__photo--logo { width: 168px; height: 168px; }
 .crew-head__photo--logo .fl-tile { width: 100%; height: 100%; border-radius: 16px; font-size: 32px; }
+.crew-head__photo--logo .fl-tile .anticon { font-size: 72px; }
 
 /* Tách liên hệ công ty và người phụ trách thành hai vùng, cho phép email dài xuống dòng. */
 .partner-profile .crew-head__text { flex: 1; }

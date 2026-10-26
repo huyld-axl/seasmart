@@ -6,7 +6,7 @@ const SCOPED_TABLES = {
   seafarer: 'seafarer',
   export: 'export_pack',
   opportunity: 'opportunity',
-  voyage: 'voyage',
+  voyage: 'seafarer_voyage',
   contract: 'seafarer_contract',
   bill: 'contract_bill',
 }

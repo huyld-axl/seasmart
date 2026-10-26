@@ -75,7 +75,7 @@ describe('thiếu quyền thì 403', () => {
     ['GET', '/documents/seafarer/1', 'seafarer.docs'],
     ['GET', '/dashboard/certificate-alerts', 'seafarer.view'],
     ['GET', '/voyages', 'voyage.view'],
-    ['POST', '/voyages/1/start', 'voyage.run', { actual_embark_date: '2026-01-01', embark_port_id: 1 }],
+    ['POST', '/voyages/1/leave', 'voyage.run', { leave_date: '2026-01-01', leave_port_id: 1 }],
     ['DELETE', '/voyages/1', 'voyage.delete'],
     ['GET', '/contracts', 'contract.view'],
     ['POST', '/contracts/1/approve', 'contract.approve', {}],
@@ -111,7 +111,7 @@ describe('thiếu quyền thì 403', () => {
 describe('phạm vi own: danh sách', () => {
   const lists = [
     ['/seafarers', 'seafarer', 'seafarer.view', /FROM seafarer s/, 's.created_by = ?'],
-    ['/voyages', 'voyage', 'voyage.view', /FROM voyage v/, 'v.created_by = ?'],
+    ['/voyages', 'voyage', 'voyage.view', /FROM seafarer_voyage sv/, 'sv.created_by = ?'],
     ['/contracts', 'contract', 'contract.view', /FROM seafarer_contract c/, 'c.created_by = ?'],
     ['/exports', 'export', 'export.view', /FROM export_pack p/, 'p.created_by = ?'],
   ]
@@ -133,7 +133,7 @@ describe('phạm vi own: danh sách', () => {
 
 describe('phạm vi own: mở theo id', () => {
   const details = [
-    ['/voyages/3', 'voyage', 'voyage.view', 'FROM "voyage"', /FROM voyage v/],
+    ['/voyages/3', 'voyage', 'voyage.view', 'FROM "seafarer_voyage"', /FROM seafarer_voyage sv/],
     ['/contracts/3', 'contract', 'contract.view', 'FROM "seafarer_contract"', /FROM seafarer_contract c/],
     ['/exports/3', 'export', 'export.view', 'FROM "export_pack"', /FROM export_pack p/],
   ]
@@ -165,7 +165,7 @@ describe('phạm vi own: mở theo id', () => {
   })
 
   it('thao tác ghi cũng bị chặn 404 khi ngoài phạm vi (xoá chuyến, duyệt hợp đồng)', async () => {
-    rules = [['FROM "voyage"', () => [[{ created_by: 8 }]]], ['FROM "seafarer_contract"', () => [[{ created_by: 8 }]]]]
+    rules = [['FROM "seafarer_voyage"', () => [[{ created_by: 8 }]]], ['FROM "seafarer_contract"', () => [[{ created_by: 8 }]]]]
     expect((await app.inject({ method: 'DELETE', url: '/voyages/3', headers: as(['voyage.delete'], { voyage: 'own' }) })).statusCode).toBe(404)
     const approve = await app.inject({ method: 'POST', url: '/contracts/3/approve', payload: {}, headers: as(['contract.approve'], { contract: 'own' }) })
     expect(approve.statusCode).toBe(404)

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+
 // Hàm thuần cho các màn cơ hội.
 
 // Nhãn hạn chốt từ deadline_flag của API: { kind: 'SOON' | 'LATE', days } hoặc null.
@@ -14,4 +16,114 @@ export function candidateSummary(row, formatDate) {
   if (!row.candidates_count) return { main: 'Chưa có', sub: null, muted: true }
   const sent = row.sent_count ? `${row.sent_count} đã gửi ${formatDate(row.last_sent_at)}` : 'chưa gửi'
   return { main: `${row.candidates_count} ứng viên`, sub: sent }
+}
+
+// ---------- Form tạo / sửa ----------
+
+const API_DATE = 'YYYY-MM-DD'
+const toDay = (value) => (value ? dayjs(value) : null)
+const fromDay = (value) => (value ? dayjs(value).format(API_DATE) : null)
+
+// Nhóm hiển thị của một yêu cầu: giấy tờ (loại giấy DOCUMENT, MEDICAL), chứng chỉ, kinh nghiệm, mẫu giấy.
+export const REQUIREMENT_GROUPS = [
+  { key: 'doc', title: 'Giấy tờ' },
+  { key: 'cert', title: 'Chứng chỉ' },
+  { key: 'exp', title: 'Kinh nghiệm' },
+  { key: 'tpl', title: 'Mẫu giấy xuất kèm' },
+]
+export const DOC_CATEGORIES = ['DOCUMENT', 'MEDICAL']
+
+export function requirementGroup(row, categoryOf = () => null) {
+  if (row._group) return row._group
+  if (row.kind === 'TEMPLATE') return 'tpl'
+  if (row.kind === 'EXPERIENCE') return 'exp'
+  return DOC_CATEGORIES.includes(row.certificate_category || categoryOf(row.certificate_type_id)) ? 'doc' : 'cert'
+}
+
+// Dòng yêu cầu từ API (opportunity hoặc mẫu) -> dòng của bảng trong form.
+export function toRequirementRows(requirements = []) {
+  return requirements.map((r) => ({
+    kind: r.kind,
+    certificate_type_id: r.certificate_type_id ?? null,
+    certificate_category: r.certificate_category ?? null,
+    rank_id: r.rank_id ?? null,
+    vessel_type_id: r.vessel_type_id ?? null,
+    min_months: r.min_months ?? null,
+    min_trips: r.min_trips ?? null,
+    template_key: r.template_key ?? null,
+    level: r.level || 'REQUIRED',
+    valid_until: r.valid_until || (r.kind === 'CERTIFICATE' ? 'LEAVE' : 'ANY'),
+    plus_months: r.plus_months ?? null,
+  }))
+}
+
+// Dòng bảng -> body API, xếp theo nhóm. Dòng chưa chọn gì thì bỏ.
+export function toRequirementPayload(rows = [], categoryOf) {
+  const order = Object.fromEntries(REQUIREMENT_GROUPS.map((g, i) => [g.key, i]))
+  return rows
+    .filter((r) => r.certificate_type_id || r.rank_id || r.vessel_type_id || r.template_key)
+    .map((r, i) => ({ r, i, g: order[requirementGroup(r, categoryOf)] }))
+    .sort((a, b) => a.g - b.g || a.i - b.i)
+    .map(({ r }) => {
+      if (r.kind === 'TEMPLATE') return { kind: 'TEMPLATE', template_key: r.template_key, level: 'REQUIRED', valid_until: 'ANY' }
+      if (r.kind === 'EXPERIENCE') {
+        return r.rank_id
+          ? { kind: 'EXPERIENCE', rank_id: r.rank_id, min_months: Number(r.min_months) || 1, level: r.level, valid_until: 'ANY' }
+          : { kind: 'EXPERIENCE', vessel_type_id: r.vessel_type_id, min_trips: Number(r.min_trips) || 1, level: r.level, valid_until: 'ANY' }
+      }
+      return {
+        kind: 'CERTIFICATE',
+        certificate_type_id: r.certificate_type_id,
+        level: r.level,
+        valid_until: r.valid_until,
+        plus_months: r.valid_until === 'LEAVE_PLUS' ? Number(r.plus_months) || 6 : null,
+      }
+    })
+}
+
+export const EMPTY_FORM = {
+  ship_owner_id: undefined, vessel_id: undefined, rank_id: undefined, budget_monthly_usd: null, budget_total_usd: null,
+  planned_join_date: null, planned_join_port_id: undefined, planned_leave_date: null, planned_leave_port_id: undefined,
+  deadline: null, owner_user_id: undefined, notes: '', requirements: [],
+}
+
+export function toFormValues(o) {
+  return {
+    ship_owner_id: o.ship_owner_id,
+    vessel_id: o.vessel_id ?? undefined,
+    rank_id: o.rank_id,
+    budget_monthly_usd: o.budget_monthly_usd,
+    budget_total_usd: o.budget_total_usd,
+    planned_join_date: toDay(o.planned_join_date),
+    planned_join_port_id: o.planned_join_port_id ?? undefined,
+    planned_leave_date: toDay(o.planned_leave_date),
+    planned_leave_port_id: o.planned_leave_port_id ?? undefined,
+    deadline: toDay(o.deadline),
+    owner_user_id: o.owner_user_id,
+    notes: o.notes ?? '',
+    requirements: toRequirementRows(o.requirements),
+  }
+}
+
+export function toPayload(values, categoryOf) {
+  return {
+    ship_owner_id: values.ship_owner_id,
+    vessel_id: values.vessel_id || null,
+    rank_id: values.rank_id,
+    budget_monthly_usd: values.budget_monthly_usd == null ? null : Number(values.budget_monthly_usd),
+    budget_total_usd: values.budget_total_usd == null ? null : Number(values.budget_total_usd),
+    planned_join_date: fromDay(values.planned_join_date),
+    planned_join_port_id: values.planned_join_port_id || null,
+    planned_leave_date: fromDay(values.planned_leave_date),
+    planned_leave_port_id: values.planned_leave_port_id || null,
+    deadline: fromDay(values.deadline),
+    ...(values.owner_user_id ? { owner_user_id: values.owner_user_id } : {}),
+    notes: values.notes?.trim() || null,
+    requirements: toRequirementPayload(values.requirements, categoryOf),
+  }
+}
+
+// "Lưu & thêm vị trí khác": giữ chủ tàu, tàu, bốn mốc, hạn chốt, người phụ trách; xoá chức danh, budget, hồ sơ yêu cầu.
+export function nextPositionValues(values) {
+  return { ...EMPTY_FORM, ...values, rank_id: undefined, budget_monthly_usd: null, budget_total_usd: null, requirements: [] }
 }

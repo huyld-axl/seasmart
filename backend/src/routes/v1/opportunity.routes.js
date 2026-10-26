@@ -69,6 +69,47 @@ const closeBody = {
   properties: { outcome: { type: 'string', enum: ['LOST', 'CANCELLED'] }, reason: { type: ['string', 'null'], maxLength: 1000 } },
 }
 
+const candidateParams = {
+  type: 'object',
+  required: ['id', 'seafarerId'],
+  properties: { id, seafarerId: id },
+}
+const flag = { type: 'integer', enum: [0, 1] }
+const suggestQuery = {
+  type: 'object',
+  properties: {
+    search: { type: 'string', maxLength: 100 },
+    required_ok: flag,
+    rank_id: id,
+    free_before: date,
+    worked_with_owner: flag,
+    vessel_type_id: id,
+    nationality_id: id,
+    age_min: { type: 'integer', minimum: 16, maximum: 80 },
+    age_max: { type: 'integer', minimum: 16, maximum: 80 },
+    page: { type: 'integer', minimum: 1 },
+    limit: { type: 'integer', minimum: 1, maximum: 50 },
+  },
+}
+const addBody = {
+  type: 'object',
+  required: ['seafarer_ids'],
+  properties: {
+    seafarer_ids: { type: 'array', minItems: 1, maxItems: 50, items: id },
+    source: { type: 'string', enum: ['SUGGEST', 'SEARCH'] },
+  },
+}
+const sendBody = {
+  type: 'object',
+  required: ['candidate_ids', 'to_email', 'subject'],
+  properties: {
+    candidate_ids: { type: 'array', minItems: 1, maxItems: 50, items: id },
+    ship_owner_contact_id: nullableId,
+    to_email: { type: 'string', minLength: 3, maxLength: 150 },
+    subject: { type: 'string', minLength: 1, maxLength: 300 },
+  },
+}
+
 async function opportunityRoutes(fastify) {
   const can = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`opportunity.${action}`)] })
   const inScope = (request) => assertRecordInScope(request, 'opportunity', request.params.id, NOT_FOUND)
@@ -117,6 +158,32 @@ async function opportunityRoutes(fastify) {
   fastify.delete('/:id', { ...can('close'), schema: { params: idParams } }, async (request) => {
     await inScope(request)
     return opportunityService.remove(pool, request.params.id)
+  })
+
+  // ---------- Ứng viên, đề xuất, ghi nhận gửi ----------
+  fastify.get('/:id/suggestions', { ...can('view'), schema: { params: idParams, querystring: suggestQuery } }, async (request) => {
+    await inScope(request)
+    return opportunityService.suggestions(pool, request.params.id, { ...request.query, ownerId: ownerIdFor(request, 'seafarer') })
+  })
+  fastify.post('/:id/candidates', { ...can('update'), schema: { params: idParams, body: addBody } }, async (request) => {
+    await inScope(request)
+    return opportunityService.addCandidates(pool, request.params.id, request.body, request.user.id)
+  })
+  fastify.delete('/:id/candidates/:seafarerId', { ...can('update'), schema: { params: candidateParams } }, async (request) => {
+    await inScope(request)
+    return opportunityService.removeCandidate(pool, request.params.id, request.params.seafarerId)
+  })
+  fastify.post('/:id/candidates/:seafarerId/owner-selected', { ...can('update'), schema: { params: candidateParams } }, async (request) => {
+    await inScope(request)
+    return opportunityService.setOwnerSelected(pool, request.params.id, request.params.seafarerId, true, request.user.id)
+  })
+  fastify.delete('/:id/candidates/:seafarerId/owner-selected', { ...can('update'), schema: { params: candidateParams } }, async (request) => {
+    await inScope(request)
+    return opportunityService.setOwnerSelected(pool, request.params.id, request.params.seafarerId, false, request.user.id)
+  })
+  fastify.post('/:id/sends', { ...can('send'), schema: { params: idParams, body: sendBody } }, async (request) => {
+    await inScope(request)
+    return opportunityService.recordSend(pool, request.params.id, request.body, request.user.id)
   })
 }
 

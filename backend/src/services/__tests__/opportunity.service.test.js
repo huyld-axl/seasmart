@@ -118,3 +118,54 @@ describe('parseRequirements', () => {
     expect(parseRequirements([{ kind: 'CERTIFICATE', certificate_type_id: 1, valid_until: 'LEAVE_PLUS', plus_months: 6 }])).toHaveLength(1)
   })
 })
+
+describe('ứng viên, nhãn, ghi nhận gửi', () => {
+  const lock = (status = 'OPEN') => ['SELECT * FROM opportunity WHERE id', () => [[row({ status })]]]
+
+  it('thêm người tạm ngưng thì 409, không ghi gì', async () => {
+    const pool = fakePool([lock(), ['FROM seafarer WHERE id IN', () => [[{ id: 4, full_name: 'Lê Văn A', status: 'INACTIVE' }]]]])
+    await expect(opportunityService.addCandidates(pool, 9, { seafarer_ids: [4] }, 1)).rejects.toMatchObject({ statusCode: 409 })
+    expect(writes(pool)).toHaveLength(0)
+  })
+
+  it('cơ hội đã đóng thì không thêm ứng viên', async () => {
+    const pool = fakePool([lock('WON')])
+    await expect(opportunityService.addCandidates(pool, 9, { seafarer_ids: [4] }, 1)).rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('gắn nhãn cho người thứ hai thì bỏ nhãn người thứ nhất trước', async () => {
+    const pool = fakePool([lock(), ['UPDATE opportunity_candidate SET owner_selected_at', () => [{ affectedRows: 1 }]], ...detailRoutes()])
+    await opportunityService.setOwnerSelected(pool, 9, 5, true, 1)
+    const ups = writes(pool).map((c) => c.sql)
+    expect(ups[0]).toContain('owner_selected_at = NULL')
+    expect(ups[0]).toContain('seafarer_id <> ?')
+    expect(ups[1]).toContain('owner_selected_at = NOW()')
+  })
+
+  it('ghi nhận gửi khi có người chưa có bản xuất thì 409', async () => {
+    const pool = fakePool([
+      lock(),
+      ['FROM opportunity_candidate c JOIN seafarer s', () => [[{ id: 1, export_pack_id: 3, full_name: 'A' }, { id: 2, export_pack_id: null, full_name: 'Trịnh Quang Vinh' }]]],
+    ])
+    await expect(opportunityService.recordSend(pool, 9, { candidate_ids: [1, 2], to_email: 'x@y.z', subject: 's' }, 1))
+      .rejects.toMatchObject({ statusCode: 409, message: 'Chưa có bản xuất: Trịnh Quang Vinh' })
+    expect(writes(pool)).toHaveLength(0)
+  })
+
+  it('đề xuất: lọc rảnh trước ngày bằng chuyến đang trên tàu, đánh dấu người đang được giữ chỗ', async () => {
+    const pool = fakePool([
+      ...detailRoutes(row({ ship_owner_name: 'Đông Á' })),
+      ['FROM seafarer s\n', () => [[
+        { id: 4, full_name: 'B', today: '2026-10-26', onboard_voyage_id: null },
+        { id: 5, full_name: 'A', today: '2026-10-26', onboard_voyage_id: 8, onboard_until: '2026-10-20' },
+      ]]],
+      ['FROM opportunity_candidate c JOIN opportunity o', () => [[{ seafarer_id: 5, code: 'CH-2026-050' }]]],
+    ])
+    const result = await opportunityService.suggestions(pool, 9, { free_before: '2026-10-25' })
+    const sql = pool.calls.find((c) => c.sql.includes('FROM seafarer s\n'))
+    expect(sql.sql).toContain('ob.planned_leave_date <= ?')
+    expect(sql.params).toContain('2026-10-25')
+    expect(result.data.find((r) => r.id === 5)).toMatchObject({ held_by: 'CH-2026-050', free_from: '2026-10-20' })
+    expect(result.data.find((r) => r.id === 4)).toMatchObject({ held_by: null, free_from: null })
+  })
+})

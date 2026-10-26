@@ -2,7 +2,7 @@ const { pickAllowed, paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
 const { nextCode } = require('../utils/code_counter')
 const { monthsBetween, splitBudget, round2 } = require('../utils/voyage_math')
-const { displayStatus, deadlineFlag, requirementFit, experienceFromHistory } = require('../utils/opportunity_rules')
+const { displayStatus, deadlineFlag, requirementFit, experienceFromHistory, compareSuggestions } = require('../utils/opportunity_rules')
 const { REQUIREMENT_KINDS, REQUIREMENT_LEVELS, VALID_UNTIL } = require('../constants/opportunity_voyage')
 const { TEMPLATE_KEYS } = require('../constants/pack_templates')
 
@@ -16,6 +16,10 @@ const MAX_REQUIREMENTS = 60
 const NOT_FOUND = 'Không tìm thấy cơ hội'
 // Cơ hội đã chốt vẫn ở tab Đang mở trong 7 ngày để thấy tiến độ cả tàu.
 const RECENT_WON_DAYS = 7
+// Đề xuất: lọc bằng SQL trước, đối chiếu hồ sơ yêu cầu tối đa ngần này người rồi mới xếp và chia trang.
+const SUGGEST_POOL = 500
+const SUGGEST_LIMIT = 50
+const MAX_ADD = 50
 
 const num = (v) => (v == null ? null : Number(v))
 const iso = (v) => (v == null ? null : String(v instanceof Date ? v.toISOString() : v).slice(0, 10))
@@ -328,6 +332,179 @@ const opportunityService = {
     if (sent.length) throw { statusCode: 409, message: 'Cơ hội đã gửi chủ tàu, đóng cơ hội thay vì xoá' }
     await pool.query('UPDATE opportunity SET deleted_at = NOW() WHERE id = ?', [id])
     return { success: true }
+  },
+
+  // ---------- Ứng viên ----------
+
+  // Cơ hội còn mở, khoá dòng trong transaction. Dùng cho mọi thao tác trên ứng viên.
+  async lockOpen(conn, id) {
+    const [[row]] = await conn.query('SELECT * FROM opportunity WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+    if (!row) throw { statusCode: 404, message: NOT_FOUND }
+    if (row.status !== 'OPEN') throw { statusCode: 409, message: 'Cơ hội đã đóng, không đổi được danh sách ứng viên' }
+    return row
+  },
+
+  async addCandidates(pool, id, { seafarer_ids: seafarerIds, source = 'SEARCH' }, userId) {
+    const ids = [...new Set(seafarerIds || [])]
+    if (!ids.length || ids.length > MAX_ADD) throw { statusCode: 400, message: `Chọn từ 1 tới ${MAX_ADD} thuyền viên` }
+    await withTransaction(pool, async (conn) => {
+      await this.lockOpen(conn, id)
+      const [people] = await conn.query('SELECT id, full_name, status FROM seafarer WHERE id IN (?) AND deleted_at IS NULL', [ids])
+      if (people.length !== ids.length) throw { statusCode: 400, message: 'Không tìm thấy thuyền viên' }
+      const inactive = people.filter((p) => p.status === 'INACTIVE').map((p) => p.full_name)
+      if (inactive.length) throw { statusCode: 409, message: `${inactive.join(', ')} đang tạm ngưng, kích hoạt lại trước khi thêm` }
+      for (const seafarerId of ids) {
+        // Người đã bỏ thì về lại danh sách; người đang có thì giữ nguyên.
+        await conn.query(
+          `INSERT INTO opportunity_candidate (opportunity_id, seafarer_id, status, source, added_by) VALUES (?, ?, 'PICKED', ?, ?)
+           ON CONFLICT (opportunity_id, seafarer_id) DO UPDATE SET status = 'PICKED', source = EXCLUDED.source, added_by = EXCLUDED.added_by
+           WHERE opportunity_candidate.status = 'REMOVED'`,
+          [id, seafarerId, source, userId ?? null])
+      }
+    })
+    return this.get(pool, id)
+  },
+
+  async removeCandidate(pool, id, seafarerId) {
+    await withTransaction(pool, async (conn) => {
+      await this.lockOpen(conn, id)
+      const [res] = await conn.query(
+        `UPDATE opportunity_candidate SET status = 'REMOVED', owner_selected_at = NULL, owner_selected_by = NULL
+         WHERE opportunity_id = ? AND seafarer_id = ? AND status = 'PICKED'`, [id, seafarerId])
+      if (!res.affectedRows) throw { statusCode: 404, message: 'Người này không có trong danh sách ứng viên' }
+    })
+    return this.get(pool, id)
+  },
+
+  // Nhãn Chủ tàu đã chọn: tối đa một người mỗi cơ hội, gắn cho người khác thì nhãn chuyển sang.
+  async setOwnerSelected(pool, id, seafarerId, selected, userId) {
+    await withTransaction(pool, async (conn) => {
+      await this.lockOpen(conn, id)
+      if (selected) {
+        await conn.query(
+          `UPDATE opportunity_candidate SET owner_selected_at = NULL, owner_selected_by = NULL
+           WHERE opportunity_id = ? AND seafarer_id <> ? AND owner_selected_at IS NOT NULL`, [id, seafarerId])
+      }
+      const [res] = await conn.query(
+        `UPDATE opportunity_candidate SET owner_selected_at = ${selected ? 'NOW()' : 'NULL'}, owner_selected_by = ?
+         WHERE opportunity_id = ? AND seafarer_id = ? AND status = 'PICKED'`,
+        [selected ? userId ?? null : null, id, seafarerId])
+      if (!res.affectedRows) throw { statusCode: 404, message: 'Người này không có trong danh sách ứng viên' }
+    })
+    return this.get(pool, id)
+  },
+
+  // Ghi nhận đã gửi chủ tàu (người làm gửi bằng app mail của máy rồi bấm "Đã gửi").
+  async recordSend(pool, id, body, userId) {
+    const ids = [...new Set(body.candidate_ids || [])]
+    if (!ids.length) throw { statusCode: 400, message: 'Chọn ít nhất một ứng viên' }
+    await withTransaction(pool, async (conn) => {
+      await this.lockOpen(conn, id)
+      const [rows] = await conn.query(
+        `SELECT c.id, c.export_pack_id, s.full_name FROM opportunity_candidate c JOIN seafarer s ON s.id = c.seafarer_id
+         WHERE c.opportunity_id = ? AND c.id IN (?) AND c.status = 'PICKED'`, [id, ids])
+      if (rows.length !== ids.length) throw { statusCode: 400, message: 'Có ứng viên không thuộc danh sách của cơ hội này' }
+      const missing = rows.filter((r) => !r.export_pack_id).map((r) => r.full_name)
+      if (missing.length) throw { statusCode: 409, message: `Chưa có bản xuất: ${missing.join(', ')}` }
+      if (body.ship_owner_contact_id) {
+        const [[contact]] = await conn.query(
+          'SELECT c.id FROM ship_owner_contact c JOIN opportunity o ON o.ship_owner_id = c.ship_owner_id WHERE c.id = ? AND o.id = ?',
+          [body.ship_owner_contact_id, id])
+        if (!contact) throw { statusCode: 400, message: 'Người liên hệ không thuộc chủ tàu của cơ hội' }
+      }
+      await conn.query('INSERT INTO opportunity_send SET ?', [{
+        opportunity_id: id,
+        ship_owner_contact_id: body.ship_owner_contact_id || null,
+        to_email: body.to_email,
+        subject: body.subject,
+        candidate_ids: rows.map((r) => r.id),
+        export_pack_ids: rows.map((r) => r.export_pack_id),
+        sent_by: userId,
+      }])
+      await conn.query('UPDATE opportunity_candidate SET last_sent_at = NOW() WHERE id IN (?)', [rows.map((r) => r.id)])
+    })
+    return this.get(pool, id)
+  },
+
+  // ---------- Đề xuất ứng viên (mục 1.7) ----------
+  async suggestions(pool, id, query) {
+    const opportunity = await this.get(pool, id)
+    const { page, limit, offset } = paging({ page: query.page, limit: query.limit || SUGGEST_LIMIT })
+    const params = []
+    let where = "WHERE s.deleted_at IS NULL AND s.status <> 'INACTIVE'"
+    if (query.ownerId) { where += ' AND s.created_by = ?'; params.push(Number(query.ownerId)) }
+    if (query.search) {
+      where += ' AND (unaccent(s.full_name::text) ILIKE unaccent(?) OR s.seafarer_code ILIKE ? OR s.passport_number ILIKE ?)'
+      params.push(...Array(3).fill(`%${query.search}%`))
+    }
+    if (query.rank_id) { where += ' AND s.current_rank_id = ?'; params.push(Number(query.rank_id)) }
+    if (query.nationality_id) { where += ' AND s.nationality_id = ?'; params.push(Number(query.nationality_id)) }
+    if (query.age_min) { where += " AND s.date_of_birth <= CURRENT_DATE - (? * INTERVAL '1 year')"; params.push(Number(query.age_min)) }
+    if (query.age_max) { where += " AND s.date_of_birth > CURRENT_DATE - ((? + 1) * INTERVAL '1 year')"; params.push(Number(query.age_max)) }
+    // Rảnh trước ngày: không có chuyến đang trên tàu, hoặc chuyến đó rời dự kiến trước ngày này.
+    if (query.free_before) { where += ' AND (ob.id IS NULL OR ob.planned_leave_date <= ?)'; params.push(query.free_before) }
+    if (query.worked_with_owner) {
+      where += ' AND EXISTS (SELECT 1 FROM seafarer_voyage w WHERE w.seafarer_id = s.id AND w.ship_owner_id = ? AND w.deleted_at IS NULL)'
+      params.push(opportunity.ship_owner_id)
+    }
+    if (query.vessel_type_id) {
+      where += ` AND (EXISTS (SELECT 1 FROM seafarer_voyage w JOIN vessel v ON v.id = w.vessel_id WHERE w.seafarer_id = s.id AND w.deleted_at IS NULL AND v.vessel_type_id = ?)
+        OR EXISTS (SELECT 1 FROM sea_service w JOIN vessel v ON v.id = w.vessel_id WHERE w.seafarer_id = s.id AND w.deleted_at IS NULL AND v.vessel_type_id = ?))`
+      params.push(Number(query.vessel_type_id), Number(query.vessel_type_id))
+    }
+    const [people] = await pool.query(
+      `SELECT s.id, s.full_name, s.seafarer_code, s.status, s.current_rank_id, r.name_vi AS rank_name, s.date_of_birth,
+              ob.id AS onboard_voyage_id, ob.planned_leave_date AS onboard_until, obv.vessel_name AS onboard_vessel_name,
+              to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today
+       FROM seafarer s
+       LEFT JOIN "rank" r ON r.id = s.current_rank_id
+       LEFT JOIN seafarer_voyage ob ON ob.seafarer_id = s.id AND ob.status = 'ONBOARD' AND ob.deleted_at IS NULL
+       LEFT JOIN vessel obv ON obv.id = ob.vessel_id
+       ${where}
+       ORDER BY s.full_name LIMIT ${SUGGEST_POOL}`, params)
+    const ids = people.map((p) => p.id)
+    const today = people[0]?.today
+    const fits = await loadFitInputs(pool, ids, today)
+    const [owners] = ids.length
+      ? await pool.query(
+        `SELECT seafarer_id, COUNT(*) AS n FROM seafarer_voyage WHERE seafarer_id IN (?) AND ship_owner_id = ? AND deleted_at IS NULL GROUP BY seafarer_id`,
+        [ids, opportunity.ship_owner_id])
+      : [[]]
+    const ownerTrips = new Map(owners.map((o) => [o.seafarer_id, Number(o.n)]))
+    // Người đang được giữ chỗ ở cơ hội khác có khoảng dự kiến giao với cơ hội này.
+    const [held] = ids.length
+      ? await pool.query(
+        `SELECT c.seafarer_id, o.code FROM opportunity_candidate c JOIN opportunity o ON o.id = c.opportunity_id
+         WHERE c.seafarer_id IN (?) AND c.owner_selected_at IS NOT NULL AND c.status = 'PICKED' AND o.status = 'OPEN'
+           AND o.deleted_at IS NULL AND o.id <> ? AND o.planned_join_date <= ? AND o.planned_leave_date >= ?`,
+        [ids, id, iso(opportunity.planned_leave_date), iso(opportunity.planned_join_date)])
+      : [[]]
+    const heldBy = new Map(held.map((h) => [h.seafarer_id, h.code]))
+    const inList = new Set(opportunity.candidates.map((c) => c.seafarer_id))
+    const dates = { join: iso(opportunity.planned_join_date), leave: iso(opportunity.planned_leave_date) }
+    const reqName = new Map(opportunity.requirements.map((r) => [r.id, r.certificate_name || r.rank_name || r.vessel_type_name]))
+    const vesselType = opportunity.vessel_id
+      ? (await pool.query('SELECT v.vessel_type_id, vt.name_vi FROM vessel v LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id WHERE v.id = ?', [opportunity.vessel_id]))[0][0]
+      : null
+    let rows = people.map((p) => {
+      const input = fits.get(p.id)
+      const fit = requirementFit({ ...input, requirements: opportunity.requirements, dates })
+      const reasons = []
+      if (ownerTrips.get(p.id)) reasons.push({ tone: 'good', text: `${ownerTrips.get(p.id)} chuyến với ${opportunity.ship_owner_name}` })
+      const typeTrips = vesselType?.vessel_type_id ? input.experience.vesselTypeTrips[vesselType.vessel_type_id] : 0
+      if (typeTrips) reasons.push({ tone: 'good', text: `Tàu ${vesselType.name_vi} ${typeTrips} chuyến` })
+      for (const item of fit.items) {
+        if (item.state === 'missing') reasons.push({ tone: 'miss', text: `Thiếu ${reqName.get(item.requirement_id)}` })
+        if (item.state === 'expires_early') reasons.push({ tone: 'miss', text: `${reqName.get(item.requirement_id)} hết hạn ${item.expiry}` })
+      }
+      const freeFrom = p.onboard_voyage_id ? iso(p.onboard_until) : null
+      const { today: _today, ...person } = p
+      return { ...person, free_from: freeFrom, fit, reasons, held_by: heldBy.get(p.id) || null, in_list: inList.has(p.id), today, join: dates.join }
+    })
+    if (query.required_ok) rows = rows.filter((r) => r.fit.required.ok === r.fit.required.total)
+    rows.sort(compareSuggestions)
+    const data = rows.slice(offset, offset + limit).map(({ today: _t, join: _j, ...rest }) => rest)
+    return { data, total: rows.length, page, limit, capped: people.length >= SUGGEST_POOL }
   },
 
   // Không cập nhật được: 404 nếu không có, 409 nếu sai trạng thái.

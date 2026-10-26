@@ -23,6 +23,7 @@ import VesselFormPage from './pages/admin/fleet/VesselFormPage'
 import PartnerListPage from './pages/admin/fleet/PartnerListPage'
 import PartnerDetailPage from './pages/admin/fleet/PartnerDetailPage'
 import PartnerFormPage from './pages/admin/fleet/PartnerFormPage'
+import OpportunityListPage from './pages/admin/opportunities/OpportunityListPage'
 import VoyageListPage from './pages/admin/voyages/VoyageListPage'
 import VoyageFormPage from './pages/admin/voyages/VoyageFormPage'
 import VoyageDetailPage from './pages/admin/voyages/VoyageDetailPage'
@@ -124,6 +125,7 @@ function AppRoutes() {
         <Route path="/partners/new" element={guard('partner.create', <PartnerFormPage />)} />
         <Route path="/partners/:id" element={guard('partner.view', <PartnerDetailPage />)} />
         <Route path="/partners/:id/edit" element={guard('partner.update', <PartnerFormPage />)} />
+        <Route path="/opportunities" element={guard('opportunity.view', <OpportunityListPage />)} />
         <Route path="/voyages" element={guard('voyage.view', <VoyageListPage />)} />
         <Route path="/voyages/new" element={guard('voyage.create', <VoyageFormPage />)} />
         <Route path="/voyages/:id" element={guard('voyage.view', <VoyageDetailPage />)} />

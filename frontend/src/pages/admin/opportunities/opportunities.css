@@ -1,0 +1,5 @@
+/* Màn cơ hội. Chỉ phần riêng; khung bảng, thẻ, toolbar dùng lớp có sẵn (ds-*, crew-*, vd-*). */
+.op-filters { padding-top: 0; }
+.op-flag { width: fit-content; padding: 0 6px; border-radius: 9999px; font-size: 11px; font-weight: 600; line-height: 18px; white-space: nowrap; }
+.op-flag--warning { background: var(--warning-bg); color: var(--warning); }
+.op-flag--error { background: var(--error-bg); color: var(--error-strong); }

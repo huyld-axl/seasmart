@@ -48,6 +48,15 @@ const AnchorSvg = () => (
   </svg>
 )
 
+// Cơ hội: hai vòng tròn đồng tâm và chấm giữa.
+const TargetSvg = () => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="5" />
+    <circle cx="12" cy="12" r="1" />
+  </svg>
+)
+
 const ICONS = {
   dashboard: <DashboardOutlined />,
   team: <TeamOutlined />,
@@ -55,6 +64,7 @@ const ICONS = {
   database: <DatabaseOutlined />,
   ship: <Icon component={ShipSvg} />,
   anchor: <Icon component={AnchorSvg} />,
+  target: <Icon component={TargetSvg} />,
   file: <FileTextOutlined />,
   bill: <AccountBookOutlined />,
   building: <Icon component={BuildingSvg} />,

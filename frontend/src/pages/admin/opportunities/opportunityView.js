@@ -127,3 +127,33 @@ export function toPayload(values, categoryOf) {
 export function nextPositionValues(values) {
   return { ...EMPTY_FORM, ...values, rank_id: undefined, budget_monthly_usd: null, budget_total_usd: null, requirements: [] }
 }
+
+// ---------- Chi tiết ----------
+
+// Tên một yêu cầu để hiện cho người dùng.
+export function requirementName(r) {
+  if (r.kind === 'TEMPLATE') return r.template_key
+  if (r.kind === 'EXPERIENCE') return r.rank_id ? `Đã đi ${r.rank_name} ${r.min_months} tháng` : `Đã đi tàu ${r.vessel_type_name} ${r.min_trips} chuyến`
+  return r.certificate_name
+}
+
+// Các mục thiếu hoặc hết hạn trước mốc của một ứng viên, bắt buộc trước.
+export function fitIssues(fit, requirements, formatDate) {
+  const byId = new Map(requirements.map((r) => [r.id, r]))
+  return (fit?.items || [])
+    .filter((item) => item.state !== 'ok')
+    .sort((a, b) => (a.level === b.level ? 0 : a.level === 'REQUIRED' ? -1 : 1))
+    .map((item) => {
+      const name = requirementName(byId.get(item.requirement_id) || {}) || 'Yêu cầu'
+      const text = item.state === 'expires_early' ? `${name} hết hạn ${formatDate(item.expiry)}` : item.kind === 'EXPERIENCE' ? `Chưa đủ: ${name}` : `Thiếu ${name}`
+      return { text, required: item.level === 'REQUIRED', expiring: item.state === 'expires_early' }
+    })
+}
+
+// Tóm tắt hồ sơ yêu cầu: "8 bắt buộc · 3 nên có" (không tính mẫu giấy) và số mẫu giấy.
+export function requirementSummary(requirements = []) {
+  const rows = requirements.filter((r) => r.kind !== 'TEMPLATE')
+  const required = rows.filter((r) => r.level === 'REQUIRED').length
+  const templates = requirements.length - rows.length
+  return { required, preferred: rows.length - required, templates }
+}

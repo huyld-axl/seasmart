@@ -1,11 +1,12 @@
 import { Button } from 'antd'
-import { ArrowRightOutlined, DeleteOutlined, EditOutlined, FileTextOutlined } from '@ant-design/icons'
+import { ArrowRightOutlined, CompassOutlined, DeleteOutlined, EditOutlined, FileTextOutlined } from '@ant-design/icons'
 import StatusBadge from './StatusBadge'
 import './ds.css'
 
 // Chuyến đi tàu của thuyền viên (T5, tab Đi tàu), xếp trên một đường dọc, mới nhất trên cùng.
 // trip: { id, vessel, vesselSub, signOn, signOff, ongoing, rank, rankName, overlapNote, vesselStatus,
-//         source: { type: 'document' | 'manual', label } }
+//         source: { type: 'document' | 'manual' | 'voyage', label } }
+// source.type 'voyage': chuyến của hệ thống (bảng chuyến), label là mã chuyến; bấm "Mở chuyến" gọi onOpenSource.
 // Nút Sửa / Xoá chỉ hiện khi truyền `onEdit` / `onDelete` (theo quyền).
 // Chỉ chuyến chưa khớp danh mục hay trùng thời gian mới có nhãn; chuyến bình thường không nhãn thừa.
 export default function SeaServiceTimeline({ trips = [], onEdit, onDelete, onOpenSource }) {
@@ -33,7 +34,13 @@ export default function SeaServiceTimeline({ trips = [], onEdit, onDelete, onOpe
             {flags.length > 0 ? <div className="ds-trip__flags">{flags}</div> : null}
             {trip.overlapNote ? <p className="ds-trip__overlap">{trip.overlapNote}</p> : null}
             <p className="ds-trip__source">
-              {trip.source?.type === 'document' ? (
+              {trip.source?.type === 'voyage' ? (
+                <>
+                  <CompassOutlined aria-hidden />
+                  Chuyến {trip.source.label} ·{' '}
+                  <button type="button" className="ds-link" onClick={() => onOpenSource?.(trip)}>Mở chuyến</button>
+                </>
+              ) : trip.source?.type === 'document' ? (
                 <>
                   <FileTextOutlined aria-hidden />
                   {trip.source.label} ·{' '}

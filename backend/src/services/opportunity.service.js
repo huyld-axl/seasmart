@@ -431,7 +431,7 @@ const opportunityService = {
     const opportunity = await this.get(pool, id)
     const { page, limit, offset } = paging({ page: query.page, limit: query.limit || SUGGEST_LIMIT })
     const params = []
-    let where = "WHERE s.deleted_at IS NULL AND s.status <> 'INACTIVE'"
+    let where = 'WHERE s.deleted_at IS NULL AND s.status <> \'INACTIVE\''
     if (query.ownerId) { where += ' AND s.created_by = ?'; params.push(Number(query.ownerId)) }
     if (query.search) {
       where += ' AND (unaccent(s.full_name::text) ILIKE unaccent(?) OR s.seafarer_code ILIKE ? OR s.passport_number ILIKE ?)'
@@ -439,8 +439,8 @@ const opportunityService = {
     }
     if (query.rank_id) { where += ' AND s.current_rank_id = ?'; params.push(Number(query.rank_id)) }
     if (query.nationality_id) { where += ' AND s.nationality_id = ?'; params.push(Number(query.nationality_id)) }
-    if (query.age_min) { where += " AND s.date_of_birth <= CURRENT_DATE - (? * INTERVAL '1 year')"; params.push(Number(query.age_min)) }
-    if (query.age_max) { where += " AND s.date_of_birth > CURRENT_DATE - ((? + 1) * INTERVAL '1 year')"; params.push(Number(query.age_max)) }
+    if (query.age_min) { where += ' AND s.date_of_birth <= CURRENT_DATE - (? * INTERVAL \'1 year\')'; params.push(Number(query.age_min)) }
+    if (query.age_max) { where += ' AND s.date_of_birth > CURRENT_DATE - ((? + 1) * INTERVAL \'1 year\')'; params.push(Number(query.age_max)) }
     // Rảnh trước ngày: không có chuyến đang trên tàu, hoặc chuyến đó rời dự kiến trước ngày này.
     if (query.free_before) { where += ' AND (ob.id IS NULL OR ob.planned_leave_date <= ?)'; params.push(query.free_before) }
     if (query.worked_with_owner) {
@@ -467,7 +467,7 @@ const opportunityService = {
     const fits = await loadFitInputs(pool, ids, today)
     const [owners] = ids.length
       ? await pool.query(
-        `SELECT seafarer_id, COUNT(*) AS n FROM seafarer_voyage WHERE seafarer_id IN (?) AND ship_owner_id = ? AND deleted_at IS NULL GROUP BY seafarer_id`,
+        'SELECT seafarer_id, COUNT(*) AS n FROM seafarer_voyage WHERE seafarer_id IN (?) AND ship_owner_id = ? AND deleted_at IS NULL GROUP BY seafarer_id',
         [ids, opportunity.ship_owner_id])
       : [[]]
     const ownerTrips = new Map(owners.map((o) => [o.seafarer_id, Number(o.n)]))
@@ -498,12 +498,13 @@ const opportunityService = {
         if (item.state === 'expires_early') reasons.push({ tone: 'miss', text: `${reqName.get(item.requirement_id)} hết hạn ${item.expiry}` })
       }
       const freeFrom = p.onboard_voyage_id ? iso(p.onboard_until) : null
-      const { today: _today, ...person } = p
+      const person = { ...p }
+      delete person.today
       return { ...person, free_from: freeFrom, fit, reasons, held_by: heldBy.get(p.id) || null, in_list: inList.has(p.id), today, join: dates.join }
     })
     if (query.required_ok) rows = rows.filter((r) => r.fit.required.ok === r.fit.required.total)
     rows.sort(compareSuggestions)
-    const data = rows.slice(offset, offset + limit).map(({ today: _t, join: _j, ...rest }) => rest)
+    const data = rows.slice(offset, offset + limit).map((r) => { const out = { ...r }; delete out.today; delete out.join; return out })
     return { data, total: rows.length, page, limit, capped: people.length >= SUGGEST_POOL }
   },
 

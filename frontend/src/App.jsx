@@ -127,7 +127,6 @@ function AppRoutes() {
         <Route path="/voyages" element={guard('voyage.view', <VoyageListPage />)} />
         <Route path="/voyages/new" element={guard('voyage.create', <VoyageFormPage />)} />
         <Route path="/voyages/:id" element={guard('voyage.view', <VoyageDetailPage />)} />
-        <Route path="/voyages/:id/edit" element={guard('voyage.update', <VoyageFormPage />)} />
         <Route path="/contracts" element={guard('contract.view', <ContractListPage />)} />
         <Route path="/contracts/new" element={guard('contract.create', <ContractFormPage />)} />
         <Route path="/contracts/:id" element={guard('contract.view', <ContractDetailPage />)} />

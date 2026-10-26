@@ -12,9 +12,20 @@ export function useVoyageList(params, options = {}) {
 
 export function useVoyage(id) {
   return useQuery({
-    queryKey: ['voyages', 'item', id],
+    queryKey: ['voyages', 'item', String(id)],
     queryFn: () => voyageApi.get(id),
     enabled: !!id,
+  })
+}
+
+// Thẻ Đội ngũ trên trang tàu.
+export function useCrewTimeline(params, options = {}) {
+  return useQuery({
+    queryKey: ['voyages', 'timeline', params],
+    queryFn: () => voyageApi.crewTimeline(params),
+    enabled: !!params?.vessel_id,
+    placeholderData: (previous) => previous,
+    ...options,
   })
 }
 
@@ -35,11 +46,11 @@ export function useContract(id) {
   })
 }
 
-// Mọi thay đổi làm mới chuyến, hợp đồng và thuyền viên (trạng thái thuyền viên đổi theo chuyến).
+// Mọi thay đổi làm mới chuyến, cơ hội, hợp đồng và thuyền viên (trạng thái thuyền viên đổi theo chuyến).
 function useRefresh() {
   const queryClient = useQueryClient()
   return () => {
-    for (const key of ['voyages', 'contracts', 'seafarers', 'bills'])
+    for (const key of ['voyages', 'opportunities', 'contracts', 'seafarers', 'bills'])
       queryClient.invalidateQueries({ queryKey: [key] })
   }
 }
@@ -48,14 +59,12 @@ export function useVoyageMutations() {
   const refresh = useRefresh()
   const options = { onSuccess: refresh }
   return {
-    save: useMutation({
-      mutationFn: ({ id, ...values }) =>
-        id ? voyageApi.update(id, values) : voyageApi.create(values),
-      ...options,
-    }),
-    remove: useMutation({ mutationFn: (id) => voyageApi.remove(id), ...options }),
-    start: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.start(id, body), ...options }),
-    end: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.end(id, body), ...options }),
+    create: useMutation({ mutationFn: (values) => voyageApi.create(values), ...options }),
+    editDates: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.editDates(id, body), ...options }),
+    leavePlan: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.leavePlan(id, body), ...options }),
+    leave: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.leave(id, body), ...options }),
+    leaveMany: useMutation({ mutationFn: (body) => voyageApi.leaveMany(body), ...options }),
+    remove: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.remove(id, body), ...options }),
   }
 }
 

@@ -1,14 +1,16 @@
 import api from './client'
 
-// Chuyến tàu (vị trí dự kiến, bắt đầu / kết thúc chuyến).
+// Chuyến: một thuyền viên đi một tàu. Lên tàu ghi khi chốt trên cơ hội hoặc khi tạo chuyến tay.
 export const voyageApi = {
   list: (params) => api.get('/voyages', { params }).then((r) => r.data),
   get: (id) => api.get(`/voyages/${id}`).then((r) => r.data),
   create: (data) => api.post('/voyages', data).then((r) => r.data),
-  update: (id, data) => api.put(`/voyages/${id}`, data).then((r) => r.data),
-  remove: (id) => api.delete(`/voyages/${id}`).then((r) => r.data),
-  start: (id, body) => api.post(`/voyages/${id}/start`, body).then((r) => r.data),
-  end: (id, body) => api.post(`/voyages/${id}/end`, body).then((r) => r.data),
+  editDates: (id, body) => api.patch(`/voyages/${id}/dates`, body).then((r) => r.data),
+  leavePlan: (id, body) => api.post(`/voyages/${id}/leave-plan`, body).then((r) => r.data),
+  leave: (id, body) => api.post(`/voyages/${id}/leave`, body).then((r) => r.data),
+  leaveMany: (body) => api.post('/voyages/leave', body).then((r) => r.data),
+  remove: (id, body) => api.delete(`/voyages/${id}`, { data: body || {} }).then((r) => r.data),
+  crewTimeline: (params) => api.get('/voyages/crew-timeline', { params }).then((r) => r.data),
 }
 
 // Yêu cầu thanh toán (bill phải thu) sinh khi duyệt hợp đồng.

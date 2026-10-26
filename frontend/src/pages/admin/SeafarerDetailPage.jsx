@@ -39,7 +39,7 @@ import Banner from '../../components/ds/Banner'
 import ScanButton from '../../components/ds/ScanButton'
 import { ZaloActions, EmailActions, PhoneActions } from '../../components/ds/ContactActions'
 import { attentionItems, headLine, toProfileContracts, voyageNow } from './seafarers/profileView'
-import { useContractList } from '../../hooks/useVoyages'
+import { useContractList, useVoyageList } from '../../hooks/useVoyages'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
 import { useCan } from '../../hooks/usePermission'
@@ -65,7 +65,7 @@ const STATUS_LABEL = {
 
 
 
-const NOW_LABEL = { current: 'Chuyến', next: 'Chuyến sắp tới', last: 'Chuyến gần nhất' }
+const NOW_LABEL = { current: 'Chuyến', last: 'Chuyến gần nhất' }
 
 const PROFILE_TABS = [
   { value: 'overview', label: 'Tổng quan' },
@@ -116,6 +116,7 @@ export default function SeafarerDetailPage() {
     enabled: !!seafarer,
   })
   const { data: contracts } = useContractList({ seafarer_id: Number(id), limit: 100 }, { enabled: !!seafarer && can('contract.view') })
+  const { data: voyages } = useVoyageList({ seafarer_id: Number(id), tab: 'all', limit: 100 }, { enabled: !!seafarer && can('voyage.view') })
 
   const deleteMutation = useMutation({
     mutationFn: () => seafarerApi.remove(id),
@@ -183,7 +184,7 @@ export default function SeafarerDetailPage() {
 
   const certList = Array.isArray(certificates) ? certificates : certificates?.data || []
   const contractList = toProfileContracts(contracts?.data)
-  const nowVoyage = voyageNow(contracts?.data, seafarer.status)
+  const nowVoyage = voyageNow(voyages?.data)
   const certAlerts = expiryAlerts(certList, { dismissed })
   const replaced = supersededIds(certList)
   const liveCerts = certList.filter((c) => !replaced.has(c.id))

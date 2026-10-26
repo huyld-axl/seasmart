@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, DatePicker, Form, Input, Select, Skeleton } from 'antd'
 import { EmptyState } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { seafarerApi } from '../../../api'
-import { useContract, useContractMutations, useVoyage } from '../../../hooks/useVoyages'
+import { useContract, useContractMutations } from '../../../hooks/useVoyages'
 import { EDITABLE_CONTRACT_STATUSES } from '../../../constants/voyageContract'
 import apiErrorText from '../../../utils/apiError'
 import { Crumb } from '../fleet/FleetParts'
@@ -14,7 +14,7 @@ import { monthsBetween } from '../voyages/voyageView'
 import BalanceBar from './BalanceBar'
 import DealTable from './DealTable'
 import TermsTable from './TermsTable'
-import { balance, newFormValues, toFormValues, toPayload } from './contractView'
+import { balance, toFormValues, toPayload } from './contractView'
 import '../seafarers/SeafarerForm.css'
 import '../seafarers/SeafarerProfile.css'
 import '../fleet/fleet.css'
@@ -175,50 +175,6 @@ function Loading() {
   )
 }
 
-function NewContract({ positionId, voyageId }) {
-  const navigate = useNavigate()
-  const toast = useToast()
-  const { data: voyage, isLoading, isError, refetch } = useVoyage(voyageId)
-  const position = voyage?.positions.find((p) => p.id === positionId)
-  const index = voyage?.positions.findIndex((p) => p.id === positionId)
-  const existing = position?.contract
-
-  useEffect(() => {
-    if (existing) {
-      toast.error('Vị trí này đã có hợp đồng')
-      navigate(`/contracts/${existing.id}`, { replace: true })
-    } else if (voyage?.status === 'ENDED') {
-      toast.error('Chuyến đã kết thúc, không tạo thêm hợp đồng')
-      navigate(`/voyages/${voyage.id}`, { replace: true })
-    }
-  }, [existing, voyage, navigate, toast])
-
-  if (isLoading) return <Loading />
-  if (isError || !voyage || !position) {
-    return (
-      <EmptyState
-        isError={isError}
-        title={isError ? 'Không tải được chuyến tàu' : 'Không tìm thấy vị trí'}
-        description="Mở một chuyến tàu, bấm Tạo hợp đồng ở dòng vị trí còn trống."
-        action={isError ? <Button onClick={() => refetch()}>Thử lại</Button> : <Button onClick={() => navigate('/voyages')}>Xem chuyến tàu</Button>}
-      />
-    )
-  }
-  if (existing || voyage.status === 'ENDED') return <Loading />
-  const ctx = {
-    voyageId: voyage.id,
-    voyageCode: voyage.code,
-    vesselName: voyage.vessel_name,
-    ownerName: voyage.ship_owner_name,
-    positionId: position.id,
-    rankName: position.rank_name,
-    lineNo: index + 1,
-    budgetMonthly: position.budget_monthly_usd,
-    budgetTotal: position.budget_total_usd,
-  }
-  return <ContractForm key={position.id} ctx={ctx} initial={newFormValues(voyage)} />
-}
-
 function EditContract({ id }) {
   const navigate = useNavigate()
   const toast = useToast()
@@ -259,19 +215,14 @@ function EditContract({ id }) {
 
 export default function ContractFormPage() {
   const { id } = useParams()
-  const [params] = useSearchParams()
   const navigate = useNavigate()
   if (id) return <EditContract id={id} />
-  const positionId = Number(params.get('positionId'))
-  const voyageId = Number(params.get('voyageId'))
-  if (!positionId || !voyageId) {
-    return (
-      <EmptyState
-        title="Chưa chọn vị trí để tạo hợp đồng"
-        description="Mở một chuyến tàu, bấm Tạo hợp đồng ở dòng vị trí còn trống."
-        action={<Button onClick={() => navigate('/voyages')}>Xem chuyến tàu</Button>}
-      />
-    )
-  }
-  return <NewContract positionId={positionId} voyageId={voyageId} />
+  // Giai đoạn 1: khoá tạo hợp đồng mới tới khi hợp đồng gắn với chuyến.
+  return (
+    <EmptyState
+      title="Tạm khoá tạo hợp đồng mới"
+      description="Hợp đồng sẽ gắn với chuyến ở giai đoạn sau. Hợp đồng đang có vẫn sửa nháp, xin duyệt và duyệt được."
+      action={<Button onClick={() => navigate('/contracts')}>Về danh sách hợp đồng</Button>}
+    />
+  )
 }

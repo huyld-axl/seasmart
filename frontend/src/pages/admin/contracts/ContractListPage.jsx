@@ -70,7 +70,7 @@ export default function ContractListPage() {
       render: (_, row) => (
         <span className="ds-cell2">
           <span className="ds-cell2__main">{row.vessel_name}</span>
-          <span className="ds-cell2__sub ds-mono">{row.voyage_code}</span>
+          <span className="ds-cell2__sub ds-mono">{row.trip ? row.trip.code : row.voyage_code}</span>
         </span>
       ),
     },
@@ -102,7 +102,7 @@ export default function ContractListPage() {
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có hợp đồng nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
-    body = <EmptyState title="Chưa có hợp đồng nào" description="Mở một chuyến tàu, bấm Tạo hợp đồng ở dòng vị trí còn trống." action={can('voyage.view') ? <Button type="primary" onClick={() => navigate('/voyages')}>Xem chuyến tàu</Button> : undefined} />
+    body = <EmptyState title="Chưa có hợp đồng nào" description="Tạo hợp đồng mới đang tạm khoá; hợp đồng sẽ gắn với chuyến ở giai đoạn sau." />
   } else if (isMobile) {
     body = (
       <ul className="crew-list">

@@ -17,6 +17,7 @@ import BillMoneyTable from './BillMoneyTable'
 import { closingLabel, groupItems, overdueLabel, payLabel } from './billView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
+import TripLink from '../voyages/TripLink'
 import '../voyages/voyages.css'
 import '../contracts/contracts.css'
 import './bills.css'
@@ -162,7 +163,7 @@ export default function BillDetailPage() {
       <Crumb items={[
         { label: 'Tàu', to: '/vessels' },
         { label: bill.vessel.vessel_name, to: `/vessels/${bill.vessel.id}` },
-        { label: bill.voyage.code, to: `/voyages/${bill.voyage.id}` },
+        bill.trip ? { label: bill.trip.code, to: `/voyages/${bill.trip.id}` } : { label: bill.voyage.code },
         { label: bill.contract.contract_number, to: `/contracts/${bill.contract.id}` },
         { label: bill.code },
       ]} />
@@ -185,7 +186,7 @@ export default function BillDetailPage() {
                 <Field label="Hợp đồng"><Link className="ds-mono" to={`/contracts/${bill.contract.id}`}>{bill.contract.contract_number}</Link></Field>
                 <Field label="Thuyền viên"><Link to={`/seafarers/${bill.seafarer.id}`}>{bill.seafarer.full_name}</Link> <span className="vd-muted">· {bill.seafarer.rank_name}</span></Field>
                 <Field label="Đối tác"><Link to={`/partners/${bill.ship_owner.id}`}>{bill.ship_owner.company_name}</Link></Field>
-                <Field label="Tàu"><Link to={`/vessels/${bill.vessel.id}`}>{bill.vessel.vessel_name}</Link> <span className="vd-muted">· chuyến <Link to={`/voyages/${bill.voyage.id}`}>{bill.voyage.code}</Link></span></Field>
+                <Field label="Tàu"><Link to={`/vessels/${bill.vessel.id}`}>{bill.vessel.vessel_name}</Link> <span className="vd-muted">· chuyến <TripLink trip={bill.trip} legacyCode={bill.voyage.code} /></span></Field>
                 <Field label="Kỳ" span={3}>{formatDate(bill.period_start)} → {formatDate(bill.period_end)}</Field>
                 <Field label="Ngày chốt sổ" span={3}>{term ? closingLabel(term.closing_day) : <Empty>—</Empty>}</Field>
                 <Field label="Hạn thanh toán">{formatDate(bill.due_date)} ({WEEKDAY[dayjs(bill.due_date).day()]}) {term ? <span className="vd-muted">· {payLabel(term).toLowerCase()}</span> : null}</Field>

@@ -61,24 +61,15 @@ describe('profileView', () => {
 
 describe('voyageNow', () => {
   const rows = [
-    { id: 1, status: 'ENDED', voyage_status: 'ENDED', start_date: '2026-03-03', end_date: '2026-08-30', vessel_name: 'A' },
-    { id: 2, status: 'ACTIVE', voyage_status: 'ONBOARD', start_date: '2026-09-17', end_date: '2027-06-15', vessel_name: 'B' },
-    { id: 3, status: 'ACTIVE', voyage_status: 'PLANNING', start_date: '2026-12-01', end_date: '2027-06-01', vessel_name: 'C' },
-    { id: 4, status: 'PENDING', voyage_status: 'PLANNING', start_date: '2026-11-01', end_date: '2027-05-01', vessel_name: 'D' },
+    { id: 1, code: 'CT-2026-0001', status: 'LEFT', join_date: '2025-01-01', leave_date: '2025-06-01', planned_leave_date: '2025-07-01', vessel_id: 3, vessel_name: 'MV A' },
+    { id: 2, code: 'CT-2026-0002', status: 'LEFT', join_date: '2025-08-01', leave_date: '2026-02-01', planned_leave_date: '2026-02-01', vessel_id: 3, vessel_name: 'MV A' },
+    { id: 3, code: 'CT-2026-0003', status: 'ONBOARD', join_date: '2026-06-05', leave_date: null, planned_leave_date: '2027-03-05', vessel_id: 4, vessel_name: 'MV B' },
   ]
-
-  it('đang trên tàu chỉ khi trạng thái ON_VESSEL và chuyến đã bắt đầu', () => {
-    expect(voyageNow(rows, 'ON_VESSEL')).toMatchObject({ kind: 'current', row: { id: 2 } })
+  it('đang trên tàu thì lấy chuyến ONBOARD, hạn là ngày rời dự kiến', () => {
+    expect(voyageNow(rows)).toMatchObject({ kind: 'current', row: { voyage_id: 3, voyage_code: 'CT-2026-0003', vessel_name: 'MV B', end_date: '2027-03-05' } })
   })
-
-  it('ở bờ thì ra chuyến sắp tới (hợp đồng Hiệu lực chưa lên tàu, sớm nhất), bỏ hợp đồng chưa hiệu lực', () => {
-    expect(voyageNow(rows, 'AVAILABLE')).toMatchObject({ kind: 'next', row: { id: 2 } })
-    expect(voyageNow(rows.filter((r) => r.id !== 2), 'AVAILABLE')).toMatchObject({ kind: 'next', row: { id: 3 } })
-  })
-
-  it('hết chuyến sắp tới thì ra chuyến gần nhất; chuyến đã kết thúc không tính là đang chạy', () => {
-    expect(voyageNow([rows[0]], 'AVAILABLE')).toMatchObject({ kind: 'last', row: { id: 1 } })
-    expect(voyageNow([{ ...rows[1], voyage_status: 'ENDED' }], 'AVAILABLE')).toMatchObject({ kind: 'last' })
-    expect(voyageNow([], 'AVAILABLE')).toBeNull()
+  it('đã rời hết thì lấy chuyến rời gần nhất; không có chuyến thì null', () => {
+    expect(voyageNow(rows.slice(0, 2))).toMatchObject({ kind: 'last', row: { voyage_id: 2, end_date: '2026-02-01' } })
+    expect(voyageNow([])).toBeNull()
   })
 })

@@ -13,6 +13,7 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatDateTime } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
 import ApproveModal from './ApproveModal'
+import TripLink from '../voyages/TripLink'
 import BalanceCard from './BalanceCard'
 import DealTable from './DealTable'
 import RejectModal from './RejectModal'
@@ -70,7 +71,7 @@ export default function ContractDetailPage() {
     )
   }
 
-  const { contract, voyage, seafarer, position, balance, log } = data
+  const { contract, voyage, seafarer, position, balance, log, trip } = data
   const number = contract.contract_number
   const status = contract.status
   const locked = ['PENDING', 'ACTIVE', 'ENDED'].includes(status)
@@ -89,7 +90,7 @@ export default function ContractDetailPage() {
   function handleDelete() {
     modal.confirm({
       title: `Xoá hợp đồng ${number}?`,
-      content: 'Hợp đồng nháp sẽ bị xoá và vị trí được trống lại để tạo hợp đồng khác.',
+      content: 'Hợp đồng nháp sẽ bị xoá.',
       okText: 'Xoá hợp đồng',
       okType: 'danger',
       cancelText: 'Huỷ',
@@ -97,7 +98,7 @@ export default function ContractDetailPage() {
         try {
           await remove.mutateAsync(contract.id)
           toast.success(`Đã xoá hợp đồng ${number}`)
-          navigate(`/voyages/${voyage.id}`)
+          navigate('/contracts')
         } catch (error) {
           toast.error(`Không xoá được hợp đồng ${number}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
         }
@@ -159,14 +160,14 @@ export default function ContractDetailPage() {
       <Crumb items={[
         { label: 'Tàu', to: '/vessels' },
         ...(voyage.vessel_id ? [{ label: voyage.vessel_name, to: `/vessels/${voyage.vessel_id}` }] : []),
-        { label: voyage.code, to: `/voyages/${voyage.id}` },
+        trip ? { label: trip.code, to: `/voyages/${trip.id}` } : { label: voyage.code },
         { label: number },
       ]} />
 
       <div className="crew-head">
         <div className="crew-head__text">
           <h1 className="crew-head__title">{number} · {seafarer.full_name}</h1>
-          <p className="crew-head__desc">{position.rank_name} · {voyage.vessel_id ? <Link to={`/vessels/${voyage.vessel_id}`}>{voyage.vessel_name}</Link> : voyage.vessel_name} · chuyến <Link to={`/voyages/${voyage.id}`}>{voyage.code}</Link></p>
+          <p className="crew-head__desc">{position.rank_name} · {voyage.vessel_id ? <Link to={`/vessels/${voyage.vessel_id}`}>{voyage.vessel_name}</Link> : voyage.vessel_name} · chuyến <TripLink trip={trip} legacyCode={voyage.code} /></p>
           <div className="crew-head__badges"><StatusBadge group="contract" value={status} /></div>
         </div>
         <div className="crew-head__actions">{actions}</div>
@@ -191,7 +192,7 @@ export default function ContractDetailPage() {
                 <Field label="Ngày kết thúc" span={3}>{formatDate(contract.end_date)} <span className="vd-muted">· {formatMonths(contract.months)}</span></Field>
                 <Field label="Ghi chú" span={6}>{contract.notes}</Field>
                 <Field label="Chuyến" span={6}>
-                  <Link to={`/voyages/${voyage.id}`}>{voyage.code}</Link> <StatusBadge group="voyage" value={voyage.display_status} />
+                  <TripLink trip={trip} legacyCode={voyage.code} withStatus />
                 </Field>
                 <Field label="Trạng thái thuyền viên" span={6}><StatusBadge group="crew" value={seafarer.status} /></Field>
               </dl>

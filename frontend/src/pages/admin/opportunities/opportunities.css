@@ -37,3 +37,20 @@
 .op-sends li { display: grid; gap: 2px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
 .op-sends li:last-child { border-bottom: 0; }
 .op-fit--ok { color: var(--success); }
+
+/* Bảng trượt đề xuất ứng viên */
+.op-sug__tools { display: grid; gap: 10px; margin-bottom: 8px; }
+.op-sug__hint { margin: 0; color: var(--muted); font-size: 12px; }
+.op-sug { margin: 0 -12px; padding: 0; list-style: none; }
+.op-sug .ds-row { align-items: flex-start; }
+.op-sug .ds-row__title { white-space: normal; }
+.op-sug .ds-row__meta { display: grid; gap: 4px; white-space: normal; }
+.op-sug__name { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.op-sug__name--dim { color: var(--muted); }
+.op-sug__note { padding: 0 6px; border-radius: 9999px; background: var(--neutral-bg); color: var(--neutral); font-size: 11px; font-weight: 500; line-height: 18px; }
+.op-sug__why { display: flex; flex-wrap: wrap; gap: 4px; }
+.op-why { padding: 0 6px; border-radius: 6px; font-size: 11px; line-height: 18px; }
+.op-why--good { background: var(--primary-light); color: var(--primary); }
+.op-why--miss { background: var(--warning-bg); color: var(--warning); }
+.op-sug__count { margin-right: auto; color: var(--muted); font-size: 13px; }
+.op-panel-actions { display: flex; gap: 8px; margin-left: auto; }

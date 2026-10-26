@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Input, Modal, Skeleton } from 'antd'
-import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, RollbackOutlined, StopOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RollbackOutlined, StopOutlined, CloseCircleOutlined } from '@ant-design/icons'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState } from '../../../components/ds/Controls'
 import DescriptionList from '../../../components/ds/DescriptionList'
@@ -14,6 +14,7 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatUsd } from '../../../utils/format'
 import { Crumb, FleetTile } from '../fleet/FleetParts'
 import CandidateTable from './CandidateTable'
+import CandidatePanel from './CandidatePanel'
 import { deadlineLabel, requirementName, requirementSummary } from './opportunityView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
@@ -93,6 +94,7 @@ export default function OpportunityDetailPage() {
   const [selected, setSelected] = useState([])
   const [fitFor, setFitFor] = useState(null)
   const [closing, setClosing] = useState(false)
+  const [panel, setPanel] = useState(null)
 
   if (isLoading) {
     return (
@@ -271,6 +273,12 @@ export default function OpportunityDetailPage() {
       <section className="crew-panel">
         <div className="crew-panel__head">
           <h2 className="crew-panel__title">Ứng viên <span className="vd-count">{candidates.length}</span></h2>
+          {editable ? (
+            <span className="op-panel-actions">
+              <Button onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button>
+              <Button type="text" icon={<PlusOutlined />} onClick={() => setPanel('search')}>Thêm ứng viên</Button>
+            </span>
+          ) : null}
         </div>
         {editable && selected.length ? (
           <div className="op-bulk">
@@ -290,7 +298,7 @@ export default function OpportunityDetailPage() {
             onOpenFit={setFitFor}
           />
         ) : (
-          <EmptyState title="Chưa có ứng viên" description="Thêm ứng viên từ danh sách thuyền viên, đối chiếu với hồ sơ yêu cầu." />
+          <EmptyState title="Chưa có ứng viên" description="Bấm Đề xuất nhanh để xem người hợp với hồ sơ yêu cầu, hoặc Thêm ứng viên để tìm theo tên." action={editable ? <Button type="primary" onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button> : undefined} />
         )}
       </section>
 
@@ -309,6 +317,7 @@ export default function OpportunityDetailPage() {
       ) : null}
 
       {fitFor ? <FitModal candidate={fitFor} requirements={o.requirements} onClose={() => setFitFor(null)} /> : null}
+      {panel ? <CandidatePanel opportunity={o} mode={panel} onClose={() => setPanel(null)} /> : null}
       {closing ? <CloseModal opportunity={o} onClose={() => setClosing(false)} /> : null}
     </div>
   )

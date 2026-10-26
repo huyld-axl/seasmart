@@ -1,7 +1,7 @@
 import { TEMPLATES } from './packModel'
 
 const VERSION = 1
-const fields = ['people', 'pickedLabels', 'ownerId', 'ownerLabel', 'selected', 'inputs', 'edits', 'picked', 'viewId', 'editing']
+const fields = ['people', 'pickedLabels', 'ownerId', 'ownerLabel', 'selected', 'inputs', 'edits', 'picked', 'viewId', 'editing', 'opportunityId']
 const isObject = (value) => value && typeof value === 'object' && !Array.isArray(value)
 export const draftKey = (userId) => `exports.new.draft.v${VERSION}.${userId}`
 export const emptyDraft = (seafarer) => ({

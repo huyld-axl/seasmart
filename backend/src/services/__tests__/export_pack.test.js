@@ -203,3 +203,40 @@ describe('thông tin điền thêm và ô sửa tay vào đúng chỗ trên gi�
     expect(tl.cells.A13).toBe('Hôm nay ngày 05 tháng 11 năm 2026, tại [TÊN CÔNG TY], chúng tôi gồm:')
   })
 })
+
+describe('requirementFiles (bộ giấy của cơ hội)', () => {
+  it('lấy file chứng chỉ, file giấy hộ chiếu; mục không có file vào danh sách thiếu', async () => {
+    const os = require('os')
+    const fsx = require('fs')
+    const pathx = require('path')
+    const { requirementFiles } = require('../export_pack.service')
+    const tmp = fsx.mkdtempSync(pathx.join(os.tmpdir(), 'pack-'))
+    const passport = pathx.join(tmp, 'hc.pdf')
+    const cert = pathx.join(tmp, 'bst.jpg')
+    fsx.writeFileSync(passport, 'x'); fsx.writeFileSync(cert, 'y')
+    const pool = {
+      query: async (sql) => {
+        if (sql.includes('FROM opportunity_requirement')) return [[
+          { certificate_type_id: 1, code: 'PASSPORT', name_vi: 'Hộ chiếu phổ thông' },
+          { certificate_type_id: 2, code: 'STCW-BASIC', name_vi: 'Huấn luyện cơ bản' },
+          { certificate_type_id: 3, code: 'AFF', name_vi: 'Chữa cháy nâng cao' },
+        ]]
+        if (sql.includes('doc_type = ?')) return [[{ id: 9 }]]
+        if (sql.includes('JOIN document_upload')) return [[{ storage_path: sql.includes('d.id = ?') ? passport : null }]]
+        if (sql.includes('FROM seafarer_certificate')) return [[]]
+        return [[]]
+      },
+    }
+    // Chứng chỉ thứ hai lấy qua source_document_id; chứng chỉ thứ ba không có.
+    let certCalls = 0
+    const q = pool.query
+    pool.query = async (sql, params) => {
+      if (sql.includes('FROM seafarer_certificate')) { certCalls += 1; return [[certCalls === 1 ? { document_url: null, source_document_id: 7 } : undefined].filter(Boolean)] }
+      if (sql.includes('JOIN document_upload') && params[0] === 7) return [[{ storage_path: cert }]]
+      return q(sql, params)
+    }
+    const out = await requirementFiles(pool, 1, 5)
+    expect(out.found.map((f) => [f.name, f.path])).toEqual([['Hộ chiếu phổ thông', passport], ['Huấn luyện cơ bản', cert]])
+    expect(out.lacking).toEqual(['Chữa cháy nâng cao'])
+  })
+})

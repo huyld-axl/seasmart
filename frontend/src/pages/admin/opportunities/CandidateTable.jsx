@@ -66,6 +66,7 @@ export default function CandidateTable({ candidates, requirements, editable, sel
           menu={{
             items: [
               c.owner_selected_at ? { key: 'unselect', label: 'Bỏ nhãn chủ tàu đã chọn' } : { key: 'select', label: 'Đánh dấu chủ tàu đã chọn' },
+              c.export_pack ? { key: 'send', label: 'Gửi cho chủ tàu' } : { key: 'pack', label: 'Tạo bản xuất' },
               { key: 'profile', label: 'Mở hồ sơ thuyền viên' },
               { type: 'divider' },
               { key: 'remove', label: 'Bỏ khỏi danh sách', danger: true },

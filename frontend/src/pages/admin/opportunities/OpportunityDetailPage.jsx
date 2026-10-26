@@ -14,6 +14,7 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatUsd } from '../../../utils/format'
 import { Crumb, FleetTile } from '../fleet/FleetParts'
 import CandidateTable from './CandidateTable'
+import useSendToOwner from './useSendToOwner'
 import CandidatePanel from './CandidatePanel'
 import { deadlineLabel, requirementName, requirementSummary } from './opportunityView'
 import '../seafarers/SeafarerListPage.css'
@@ -95,6 +96,7 @@ export default function OpportunityDetailPage() {
   const [fitFor, setFitFor] = useState(null)
   const [closing, setClosing] = useState(false)
   const [panel, setPanel] = useState(null)
+  const sendToOwner = useSendToOwner()
 
   if (isLoading) {
     return (
@@ -132,6 +134,8 @@ export default function OpportunityDetailPage() {
 
   function onCandidateMenu(action, c) {
     if (action === 'profile') return navigate(`/seafarers/${c.seafarer_id}`)
+    if (action === 'pack') return makePacks([c])
+    if (action === 'send') return sendToOwner(o, [c])
     if (action === 'select' || action === 'unselect') {
       const selectedNow = action === 'select'
       return run(
@@ -151,6 +155,13 @@ export default function OpportunityDetailPage() {
       })
     }
     return undefined
+  }
+
+  const picked = live.filter((c) => selected.includes(c.seafarer_id))
+  const unpacked = picked.filter((c) => !c.export_pack)
+  const packed = picked.filter((c) => c.export_pack)
+  function makePacks(people) {
+    navigate(`/exports/new?opportunity=${o.id}&seafarers=${people.map((c) => c.seafarer_id).join(',')}`)
   }
 
   function removeSelected() {
@@ -283,6 +294,8 @@ export default function OpportunityDetailPage() {
         {editable && selected.length ? (
           <div className="op-bulk">
             <b>Đã chọn {selected.length}</b>
+            {unpacked.length && can('export.create') ? <Button size="small" onClick={() => makePacks(unpacked)}>Tạo bản xuất cho {unpacked.length} người</Button> : null}
+            {packed.length && can('opportunity.send') ? <Button size="small" onClick={() => sendToOwner(o, packed)}>Gửi cho chủ tàu ({packed.length})</Button> : null}
             <Button size="small" danger onClick={removeSelected}>Bỏ khỏi danh sách</Button>
             <Button size="small" type="text" onClick={() => setSelected([])}>Bỏ chọn</Button>
           </div>

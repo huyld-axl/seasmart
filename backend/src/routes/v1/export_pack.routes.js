@@ -63,6 +63,7 @@ async function exportPackRoutes(fastify) {
         properties: {
           seafarer_id: { type: 'integer', minimum: 1 },
           ship_owner_id: { type: ['integer', 'null'], minimum: 1 },
+          opportunity_id: { type: ['integer', 'null'], minimum: 1 },
           docs: { type: 'array', minItems: 1, maxItems: TEMPLATE_KEYS.length, items: { type: 'string', enum: TEMPLATE_KEYS } },
           inputs: inputsSchema,
           edits: packEditsSchema,

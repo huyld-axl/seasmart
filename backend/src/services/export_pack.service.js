@@ -1,4 +1,7 @@
+const fs = require('fs')
+const path = require('path')
 const PizZip = require('pizzip')
+const config = require('../config')
 const { withTransaction } = require('../utils/transaction')
 const { xlsxToPdf } = require('../utils/xlsx_pdf')
 const { PACK_TEMPLATES, TEMPLATE_KEYS, STAGE_TITLE, templateOf } = require('../constants/pack_templates')
@@ -112,8 +115,10 @@ const parseJson = (value) => (typeof value === 'string' ? JSON.parse(value) : va
 
 async function loadPack(pool, id, { forUpdate = false } = {}) {
   const [[row]] = await pool.query(
-    `SELECT p.*, s.full_name AS seafarer_name, o.company_name AS ship_owner_name, u.email AS created_by_email
+    `SELECT p.*, s.full_name AS seafarer_name, o.company_name AS ship_owner_name, u.email AS created_by_email,
+            op.code AS opportunity_code
      FROM export_pack p
+     LEFT JOIN opportunity op ON op.id = p.opportunity_id
      JOIN seafarer s ON s.id = p.seafarer_id
      LEFT JOIN ship_owner o ON o.id = p.ship_owner_id
      JOIN "user" u ON u.id = p.created_by
@@ -133,6 +138,8 @@ function shape({ row, docs }) {
     seafarer_name: row.seafarer_name,
     ship_owner_id: row.ship_owner_id,
     ship_owner_name: row.ship_owner_name || null,
+    opportunity_id: row.opportunity_id || null,
+    opportunity_code: row.opportunity_code || null,
     title: row.title,
     docs,
     inputs: parseJson(row.inputs),
@@ -141,6 +148,45 @@ function shape({ row, docs }) {
     created_by_email: row.created_by_email,
     created_at: row.created_at,
   }
+}
+
+// Loại giấy trên hồ sơ (seafarer_document.doc_type) ứng với ba giấy lưu ở cột seafarer.
+const DOC_TYPE_OF_CODE = { PASSPORT: 'passport', SEAMAN_BOOK: 'seaman_book_info' }
+
+// File giấy tờ, chứng chỉ của thuyền viên khớp các yêu cầu CERTIFICATE của cơ hội.
+// Chứng chỉ: file tải tay (document_url) hoặc tệp gốc của giấy AI đọc (source_document_id); hộ chiếu, sổ: tệp gốc của giấy cùng loại mới nhất.
+async function requirementFiles(pool, opportunityId, seafarerId) {
+  const [reqs] = await pool.query(
+    `SELECT q.certificate_type_id, ct.code, ct.name_vi FROM opportunity_requirement q JOIN certificate_type ct ON ct.id = q.certificate_type_id
+     WHERE q.opportunity_id = ? AND q.kind = 'CERTIFICATE' ORDER BY q.sort_order, q.id`, [opportunityId])
+  const found = []
+  const lacking = []
+  const uploadPath = async (documentId) => {
+    const [[up]] = await pool.query(
+      `SELECT u.storage_path FROM seafarer_document d JOIN document_upload u ON u.id = d.upload_id
+       WHERE d.id = ? AND d.deleted_at IS NULL`, [documentId])
+    return up?.storage_path
+  }
+  for (const req of reqs) {
+    let file = null
+    if (DOC_TYPE_OF_CODE[req.code]) {
+      const [[doc]] = await pool.query(
+        `SELECT id FROM seafarer_document WHERE seafarer_id = ? AND doc_type = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+        [seafarerId, DOC_TYPE_OF_CODE[req.code]])
+      file = doc ? await uploadPath(doc.id) : null
+    } else {
+      const [[cert]] = await pool.query(
+        `SELECT document_url, source_document_id FROM seafarer_certificate
+         WHERE seafarer_id = ? AND certificate_type_id = ? AND deleted_at IS NULL AND status <> 'REVOKED'
+         ORDER BY (document_url IS NOT NULL OR source_document_id IS NOT NULL) DESC, expiry_date DESC NULLS LAST LIMIT 1`,
+        [seafarerId, req.certificate_type_id])
+      if (cert?.document_url) file = path.join(config.upload.dir, 'certificates', String(seafarerId), path.basename(cert.document_url))
+      else if (cert?.source_document_id) file = await uploadPath(cert.source_document_id)
+    }
+    if (file && fs.existsSync(file)) found.push({ name: req.name_vi, path: file })
+    else lacking.push(req.name_vi)
+  }
+  return { found, lacking }
 }
 
 // Điền các giấy `keys` của bộ ra file Excel, rồi chuyển PDF nếu cần.
@@ -211,8 +257,15 @@ const exportPackService = {
     return shape(await loadPack(pool, id))
   },
 
-  async create(pool, { seafarer_id: seafarerId, ship_owner_id: shipOwnerId = null, docs, inputs, edits }, user) {
+  async create(pool, { seafarer_id: seafarerId, ship_owner_id: shipOwnerId = null, opportunity_id: opportunityId = null, docs, inputs, edits }, user) {
     const keys = normalizeDocs(docs)
+    if (opportunityId) {
+      const [[candidate]] = await pool.query(
+        `SELECT c.id FROM opportunity_candidate c JOIN opportunity o ON o.id = c.opportunity_id
+         WHERE c.opportunity_id = ? AND c.seafarer_id = ? AND c.status = 'PICKED' AND o.status = 'OPEN' AND o.deleted_at IS NULL`,
+        [opportunityId, seafarerId])
+      if (!candidate) throw { statusCode: 409, message: 'Thuyền viên này không còn là ứng viên của cơ hội đang mở' }
+    }
     if (shipOwnerId) {
       const [[owner]] = await pool.query('SELECT id FROM ship_owner WHERE id = ? AND deleted_at IS NULL', [shipOwnerId])
       if (!owner) throw { statusCode: 404, message: 'Không tìm thấy chủ tàu' }
@@ -226,9 +279,13 @@ const exportPackService = {
     const snapshot = { full_name: seafarer.full_name, date_of_birth: seafarer.date_of_birth, rank_name: seafarer.rank_name }
     const id = await withTransaction(pool, async (conn) => {
       const [result] = await conn.query(
-        'INSERT INTO export_pack (seafarer_id, ship_owner_id, title, status, inputs, edits, snapshot, created_by) VALUES (?, ?, ?, \'DONE\', ?, ?, ?, ?)',
-        [seafarerId, shipOwnerId || null, packTitle(keys), JSON.stringify(cleanInputs(inputs)), JSON.stringify(cleanEdits(edits, keys)), JSON.stringify(snapshot), user.id]
+        'INSERT INTO export_pack (seafarer_id, ship_owner_id, opportunity_id, title, status, inputs, edits, snapshot, created_by) VALUES (?, ?, ?, ?, \'DONE\', ?, ?, ?, ?)',
+        [seafarerId, shipOwnerId || null, opportunityId || null, packTitle(keys), JSON.stringify(cleanInputs(inputs)), JSON.stringify(cleanEdits(edits, keys)), JSON.stringify(snapshot), user.id]
       )
+      // Bộ mới thay bộ cũ của ứng viên trong cơ hội.
+      if (opportunityId) {
+        await conn.query('UPDATE opportunity_candidate SET export_pack_id = ? WHERE opportunity_id = ? AND seafarer_id = ?', [result.insertId, opportunityId, seafarerId])
+      }
       await conn.query('INSERT INTO export_pack_doc (pack_id, template_key, sort_order) VALUES ?', [keys.map((key, i) => [result.insertId, key, i])])
       return result.insertId
     })
@@ -276,11 +333,17 @@ const exportPackService = {
       }
     }
     if (missing.length) zip.file(`${folder}/CHUA-CO.txt`, `Các giấy chưa xuất được:\n${missing.join('\n')}\n`)
+    // Bộ của một cơ hội: thêm file giấy tờ, chứng chỉ theo hồ sơ yêu cầu; mục không tìm được file ghi vào THIEU-GIAY.txt.
+    if (row.opportunity_id) {
+      const { found, lacking } = await requirementFiles(pool, row.opportunity_id, row.seafarer_id)
+      found.forEach((file, i) => zip.file(`${folder}/GIAY-TO/${String(i + 1).padStart(2, '0')}-${safeName(file.name)}${path.extname(file.path).toLowerCase()}`, fs.readFileSync(file.path)))
+      if (lacking.length) zip.file(`${folder}/THIEU-GIAY.txt`, `Chưa có file trên hồ sơ:\n${lacking.join('\n')}\n`)
+    }
     return { buffer: zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }), filename: `${folder}.zip` }
   },
 }
 
 module.exports = {
-  exportPackService,
+  exportPackService, requirementFiles,
   normalizeDocs, packTitle, cleanInputs, cleanEdits, packCode, packIdFromCode, zipPaths,
 }

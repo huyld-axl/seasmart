@@ -6,7 +6,11 @@ import { EmptyState, StatusTabs } from '../../components/ds/Controls'
 import StatusBadge from '../../components/ds/StatusBadge'
 import { dashboardApi } from '../../api'
 import { formatDate } from '../../utils/format'
+import { useOpportunityList } from '../../hooks/useOpportunities'
+import { useCan } from '../../hooks/usePermission'
+import { deadlineLabel } from './opportunities/opportunityView'
 import './seafarers/SeafarerListPage.css'
+import './opportunities/opportunities.css'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
@@ -20,9 +24,43 @@ const countdown = (row) => {
   return row.days_left === 0 ? 'Hết hạn hôm nay' : `Còn ${row.days_left} ngày`
 }
 
-// Tổng quan: tạm thời chỉ có bảng thông báo chứng chỉ quá hạn / sắp hết hạn của thuyền viên. Các khối khác thêm sau.
+// Thông báo 2: cơ hội đang mở đã quá hạn chốt hoặc sắp tới hạn (bản thô, sẽ thiết kế lại).
+function DeadlineAlerts() {
+  const navigate = useNavigate()
+  const list = useOpportunityList({ tab: 'open', limit: 100 })
+  const rows = (list.data?.data || []).filter((row) => row.deadline_flag)
+  return (
+    <section className="ds-card">
+      <h2 className="crew-panel__title" style={{ padding: '16px 20px 0' }}>Cơ hội sắp đến hạn chốt</h2>
+      {list.isError ? (
+        <EmptyState isError title="Không tải được cơ hội" action={<Button onClick={() => list.refetch()}>Thử lại</Button>} />
+      ) : list.isLoading ? (
+        <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 3 }} /></div>
+      ) : !rows.length ? (
+        <EmptyState title="Không có cơ hội nào sắp đến hạn chốt" />
+      ) : (
+        <Table
+          rowKey="id"
+          className="crew-table"
+          dataSource={rows}
+          pagination={false}
+          onRow={(row) => ({ onClick: () => navigate(`/opportunities/${row.id}`), tabIndex: 0 })}
+          columns={[
+            { title: 'Cơ hội', key: 'code', render: (_, row) => <span className="ds-cell2"><span className="ds-cell2__main">{row.rank_name}</span><span className="ds-cell2__sub ds-mono">{row.code}</span></span> },
+            { title: 'Tàu · chủ tàu', key: 'vessel', render: (_, row) => <span className="ds-cell2"><span className="ds-cell2__main">{row.vessel_name || 'Chưa rõ tàu'}</span><span className="ds-cell2__sub">{row.ship_owner_name}</span></span> },
+            { title: 'Hạn chốt', dataIndex: 'deadline', render: (value) => <span className="ds-num">{formatDate(value)}</span> },
+            { title: 'Cảnh báo', key: 'flag', render: (_, row) => { const flag = deadlineLabel(row.deadline_flag); return <span className={`crew-docs crew-docs--${flag.tone}`}>{flag.text}</span> } },
+          ]}
+        />
+      )}
+    </section>
+  )
+}
+
+// Tổng quan: thông báo 1 là chứng chỉ thuyền viên quá hạn / sắp hết hạn, thông báo 2 là hạn chốt cơ hội. Các khối khác thêm sau.
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const can = useCan()
   const isMobile = !Grid.useBreakpoint().md
   const [tab, setTab] = useState('all')
   const alerts = useQuery({ queryKey: ['dashboard', 'certificate-alerts'], queryFn: dashboardApi.certificateAlerts })
@@ -118,6 +156,7 @@ export default function DashboardPage() {
       </div>
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
       <div className="ds-card">{body}</div>
+      {can('opportunity.view') ? <DeadlineAlerts /> : null}
     </div>
   )
 }

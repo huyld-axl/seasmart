@@ -5,7 +5,8 @@ const { scopeOf, assertInScope } = require('../plugins/access')
 const SCOPED_TABLES = {
   seafarer: 'seafarer',
   export: 'export_pack',
-  voyage: 'voyage',
+  opportunity: 'opportunity',
+  voyage: 'seafarer_voyage',
   contract: 'seafarer_contract',
   bill: 'contract_bill',
 }

@@ -62,7 +62,7 @@ function BillForm({ data }) {
         <Crumb items={[
           { label: 'Tàu', to: '/vessels' },
           { label: bill.vessel.vessel_name, to: `/vessels/${bill.vessel.id}` },
-          { label: bill.voyage.code, to: `/voyages/${bill.voyage.id}` },
+          bill.trip ? { label: bill.trip.code, to: `/voyages/${bill.trip.id}` } : { label: bill.voyage.code },
           { label: bill.contract.contract_number, to: `/contracts/${bill.contract.id}` },
           { label: bill.code, to: back },
           { label: 'Sửa' },

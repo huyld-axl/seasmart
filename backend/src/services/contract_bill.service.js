@@ -32,7 +32,10 @@ const BILL_SELECT = `SELECT b.id, b.code, b.contract_id, b.side, b.seq, b.period
     b.sent_at, b.paid_date, b.note, b.created_at, ${DISPLAY_SQL} AS display_status, ${TOTAL_SQL} AS total_usd,
     (SELECT COUNT(*) FROM contract_bill b2 WHERE b2.contract_id = b.contract_id AND b2.side = b.side) AS periods,
     c.contract_number, c.seafarer_id, s.full_name AS seafarer_name, r.name_vi AS rank_name,
-    v.id AS voyage_id, v.code AS voyage_code, ves.id AS vessel_id, ves.vessel_name, o.id AS ship_owner_id, o.company_name AS ship_owner_name`
+    v.id AS voyage_id, v.code AS voyage_code,
+    (SELECT tr.id FROM seafarer_voyage tr WHERE tr.legacy_contract_id = c.id AND tr.deleted_at IS NULL) AS trip_id,
+    (SELECT tr.code FROM seafarer_voyage tr WHERE tr.legacy_contract_id = c.id AND tr.deleted_at IS NULL) AS trip_code,
+    ves.id AS vessel_id, ves.vessel_name, o.id AS ship_owner_id, o.company_name AS ship_owner_name`
 
 // Bên phải thu là hiện tại; giữ tham số side để làm bên phải chi sau.
 const SIDE = 'RECEIVABLE'
@@ -53,6 +56,7 @@ function summary(row) {
     seafarer: { id: row.seafarer_id, full_name: row.seafarer_name, rank_name: row.rank_name },
     vessel: { id: row.vessel_id, vessel_name: row.vessel_name },
     voyage: { id: row.voyage_id, code: row.voyage_code },
+    trip: row.trip_id ? { id: row.trip_id, code: row.trip_code } : null,
     ship_owner: { id: row.ship_owner_id, company_name: row.ship_owner_name },
   }
 }

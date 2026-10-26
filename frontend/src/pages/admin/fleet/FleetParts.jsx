@@ -14,10 +14,19 @@ export const ShipSvg = () => (
   </svg>
 )
 
+// Cơ hội: hai vòng tròn đồng tâm và chấm giữa.
+export const TargetSvg = () => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="5" />
+    <circle cx="12" cy="12" r="1" />
+  </svg>
+)
+
 // Ô đầu dòng: tàu là hình tàu, đối tác là hai chữ đầu của tên.
-export function FleetTile({ text, large, src, onClick, actionLabel }) {
+export function FleetTile({ text, large, src, onClick, actionLabel, icon = ShipSvg }) {
   const className = `fl-tile${large ? ' fl-tile--lg' : ''}${src ? ' fl-tile--img' : ''}`
-  const content = src ? <img src={src} alt="" /> : text || <Icon component={ShipSvg} />
+  const content = src ? <img src={src} alt="" /> : text || <Icon component={icon} />
   // Có onClick thì ô là nút bấm được (bấm ảnh logo để chọn ảnh mới), cùng kiểu ảnh chân dung ở form thuyền viên.
   if (onClick) {
     return (

@@ -23,6 +23,9 @@ import VesselFormPage from './pages/admin/fleet/VesselFormPage'
 import PartnerListPage from './pages/admin/fleet/PartnerListPage'
 import PartnerDetailPage from './pages/admin/fleet/PartnerDetailPage'
 import PartnerFormPage from './pages/admin/fleet/PartnerFormPage'
+import OpportunityListPage from './pages/admin/opportunities/OpportunityListPage'
+import OpportunityFormPage from './pages/admin/opportunities/OpportunityFormPage'
+import OpportunityDetailPage from './pages/admin/opportunities/OpportunityDetailPage'
 import VoyageListPage from './pages/admin/voyages/VoyageListPage'
 import VoyageFormPage from './pages/admin/voyages/VoyageFormPage'
 import VoyageDetailPage from './pages/admin/voyages/VoyageDetailPage'
@@ -124,10 +127,13 @@ function AppRoutes() {
         <Route path="/partners/new" element={guard('partner.create', <PartnerFormPage />)} />
         <Route path="/partners/:id" element={guard('partner.view', <PartnerDetailPage />)} />
         <Route path="/partners/:id/edit" element={guard('partner.update', <PartnerFormPage />)} />
+        <Route path="/opportunities" element={guard('opportunity.view', <OpportunityListPage />)} />
+        <Route path="/opportunities/new" element={guard('opportunity.create', <OpportunityFormPage />)} />
+        <Route path="/opportunities/:id" element={guard('opportunity.view', <OpportunityDetailPage />)} />
+        <Route path="/opportunities/:id/edit" element={guard('opportunity.update', <OpportunityFormPage />)} />
         <Route path="/voyages" element={guard('voyage.view', <VoyageListPage />)} />
         <Route path="/voyages/new" element={guard('voyage.create', <VoyageFormPage />)} />
         <Route path="/voyages/:id" element={guard('voyage.view', <VoyageDetailPage />)} />
-        <Route path="/voyages/:id/edit" element={guard('voyage.update', <VoyageFormPage />)} />
         <Route path="/contracts" element={guard('contract.view', <ContractListPage />)} />
         <Route path="/contracts/new" element={guard('contract.create', <ContractFormPage />)} />
         <Route path="/contracts/:id" element={guard('contract.view', <ContractDetailPage />)} />

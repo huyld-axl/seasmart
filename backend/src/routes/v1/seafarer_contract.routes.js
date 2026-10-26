@@ -60,7 +60,7 @@ const createBody = {
 }
 const updateBody = { type: 'object', required: ['seafarer_id', 'start_date', 'end_date'], properties: contractProps }
 const rejectBody = { type: 'object', required: ['reason'], properties: { reason: { type: 'string', minLength: 1, maxLength: 1000 } } }
-const approveBody = { type: 'object', properties: { move_onboard: { type: 'boolean' } } }
+const approveBody = { type: ['object', 'null'], properties: {} }
 
 async function seafarerContractRoutes(fastify) {
   const can = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`contract.${action}`)] })
@@ -72,9 +72,9 @@ async function seafarerContractRoutes(fastify) {
     await inScope(request)
     return seafarerContractService.get(pool, request.params.id)
   })
-  fastify.post('/', { ...can('create'), schema: { body: createBody } }, async (request, reply) => {
-    const row = await seafarerContractService.create(pool, request.body, request.user.id)
-    return reply.code(201).send(row)
+  // Giai đoạn 1: khoá tạo hợp đồng mới tới khi hợp đồng gắn với chuyến (giai đoạn 2). Giữ service create để làm tiếp.
+  fastify.post('/', { ...can('create'), schema: { body: createBody } }, async () => {
+    throw { statusCode: 409, message: 'Tạm khoá tạo hợp đồng mới. Hợp đồng sẽ gắn với chuyến ở giai đoạn 2.' }
   })
   fastify.put('/:id', { ...can('update'), schema: { params: idParams, body: updateBody } }, async (request) => {
     await inScope(request)

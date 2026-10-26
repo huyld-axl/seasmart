@@ -35,6 +35,8 @@ import ScanButton from '../components/ds/ScanButton'
 import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
 import SlidePanel from '../components/ds/SlidePanel'
+import RequirementFit from '../components/ds/RequirementFit'
+import CrewTimeline, { CrewTimelineLegend } from '../components/ds/CrewTimeline'
 import useToast from '../components/ds/useToast'
 import ToastContent from '../components/ds/ToastContent'
 import { EmptyState, FilterChips, ListRow, ProgressBar, SaveStatus, StatusTabs } from '../components/ds/Controls'
@@ -118,9 +120,19 @@ const UPLOAD_PROBLEMS = [
   { id: 'p7', name: 'IMG_2051.jpg', kind: 'image', state: 'saved' },
 ]
 const TRIPS = [
+  { id: 't0', vessel: 'MV Ocean Pride', vesselSub: 'Hàng rời · Panama · Hải Phong Shipping', signOn: '02/10/2026', signOff: null, ongoing: true, rank: 'Thợ máy', vesselStatus: 'VERIFIED', source: { type: 'voyage', label: 'CT-2026-0139' } },
   { id: 't1', vessel: 'PACIFIC ARROW 2', vesselSub: 'Hàng rời · Marshall Islands · 35.410 GT', signOn: '15/03/2020', signOff: null, ongoing: true, rank: '2/E', rankName: 'Máy hai', vesselStatus: 'NOT_CHECKED', source: { type: 'document', label: 'Từ sổ thuyền viên, tr.5' } },
   { id: 't2', vessel: 'SEA ORCHID', vesselSub: 'Container · Panama · 18.230 GT', signOn: '09/08/2019', signOff: '21/01/2020', rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'NOT_FOUND', overlapNote: 'Trùng với chuyến PACIFIC ARROW 2 từ 15/03/2020', source: { type: 'document', label: 'Từ sổ thuyền viên, tr.4' } },
   { id: 't3', vessel: 'MV Halong Spirit', vesselSub: 'Hàng rời · Việt Nam · 4.120 GT', signOn: '03/12/2018', signOff: '17/06/2019', rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'VERIFIED', source: { type: 'manual' } },
+]
+// Đội ngũ MV Ocean Pride, mỗi hàng một chuyến (wireframe co-hoi-chuyen-tau, Màn 10).
+const CREW_ROWS = [
+  { id: 1, title: 'Phạm Minh Đức', subtitle: 'Thuyền trưởng · CT-2026-0101', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-06-05', end: '2027-03-05' }, { kind: 'onboard', start: '2026-06-05', end: '2026-10-26', label: 'Hải Phòng →' }] },
+  { id: 2, title: 'Nguyễn Hữu Toàn', subtitle: 'Máy trưởng · CT-2026-0102', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-06-05', end: '2027-03-05' }, { kind: 'onboard', start: '2026-06-05', end: '2026-10-26', label: 'Hải Phòng →' }, { kind: 'moved', start: '2027-03-05', end: '2027-04-05', label: 'dời +1 tháng' }] },
+  { id: 3, title: 'Đỗ Văn Nam', subtitle: 'Thủy thủ AB · CT-2026-0104', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-06-05', end: '2027-03-05' }, { kind: 'onboard', start: '2026-06-18', end: '2026-10-26', label: 'Busan · muộn 13 ngày' }] },
+  { id: 4, title: 'Trần Văn Bình', subtitle: 'Thợ máy · CT-2026-0103', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-06-05', end: '2027-02-05' }, { kind: 'left', start: '2026-06-05', end: '2026-09-14', label: 'Rời sớm' }] },
+  { id: 5, title: 'Lê Quang Huy', subtitle: 'Thợ máy · CT-2026-0139', onClick: () => {}, bars: [{ kind: 'planned', start: '2026-10-02', end: '2027-07-02' }, { kind: 'onboard', start: '2026-10-02', end: '2026-10-26', label: 'SIN' }] },
+  { id: 6, title: 'CH26047', subtitle: 'Thủy thủ AB · cơ hội, chưa chốt', onClick: () => {}, bars: [{ kind: 'opening', start: '2026-11-08', end: '2027-08-08', label: 'Dự kiến 08/11 · chủ tàu đã chọn Hoàng Gia Khánh' }] },
 ]
 const CERTS = [
   { id: 'c1', name: 'Advanced Fire Fighting', number: 'A2949.AF/BNHP', issuedOn: '02/07/2020', expiresOn: '02/07/2025', status: 'EXPIRED' },
@@ -248,6 +260,27 @@ function Demo({ label, state, children, wide = false }) {
         children
       )}
     </div>
+  )
+}
+
+function WidePanelDemo() {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button onClick={() => setOpen(true)}>Mở panel Đề xuất ứng viên</Button>
+      <SlidePanel
+        open={open}
+        size="wide"
+        title="Đề xuất ứng viên · Máy hai · MV Lotus Star"
+        description="Rảnh trước 25/10/2026, đối chiếu 11 yêu cầu."
+        onClose={() => setOpen(false)}
+        hasForm={false}
+        footer={<><Button onClick={() => setOpen(false)}>Huỷ</Button><Button type="primary" onClick={() => setOpen(false)}>Thêm 2 ứng viên</Button></>}
+      >
+        <ListRow title="Phí Văn Hậu" meta="Máy hai · 41 tuổi · Ở bờ" trailing={<RequirementFit fit={{ required: { ok: 8, total: 8 }, preferred: { ok: 3, total: 3 } }} short />} />
+        <ListRow title="Lâm Đức Toàn" meta="Máy hai · 36 tuổi · Ở bờ" trailing={<RequirementFit fit={{ required: { ok: 8, total: 8 }, preferred: { ok: 2, total: 3 } }} short />} />
+      </SlidePanel>
+    </>
   )
 }
 
@@ -657,6 +690,29 @@ export default function DesignSystemPage() {
         </div>
       </Section>
 
+
+      <Section id="co-hoi-chuyen" title="Cơ hội và chuyến">
+        <div className="dsp-states">
+          <Demo label="Đối chiếu hồ sơ yêu cầu (RequirementFit): đủ, thiếu, bấm mở bảng đối chiếu, dạng ngắn">
+            <div className="dsp-inline">
+              <RequirementFit fit={{ required: { ok: 8, total: 8 }, preferred: { ok: 3, total: 3 } }} />
+              <RequirementFit fit={{ required: { ok: 7, total: 8 }, preferred: { ok: 2, total: 3 } }} onOpen={() => {}} />
+              <RequirementFit fit={{ required: { ok: 8, total: 8 }, preferred: { ok: 1, total: 3 } }} short />
+              <RequirementFit fit={{ required: { ok: 0, total: 0 }, preferred: { ok: 0, total: 0 } }} />
+            </div>
+          </Demo>
+          <Demo label="Panel trượt rộng (SlidePanel size=&quot;wide&quot;, 720px): bảng đề xuất ứng viên">
+            <WidePanelDemo />
+          </Demo>
+          <Demo label="Biểu đồ đội ngũ theo hàng (CrewTimeline): mỗi hàng một chuyến, vạch hôm nay, hàng cơ hội nhạt" wide>
+            <CrewTimeline from="2026-06-01" to="2027-08-31" today="2026-10-26" rows={CREW_ROWS} />
+            <CrewTimelineLegend />
+          </Demo>
+          <Demo label="CrewTimeline khi không có chuyến" wide>
+            <CrewTimeline from="2026-10-01" to="2026-10-31" today="2026-10-26" rows={[]} />
+          </Demo>
+        </div>
+      </Section>
 
       <Section id="audit" title="Dòng thời gian audit">
         <div className="dsp-box dsp-box--pad"><AuditTimeline items={AUDIT} /></div>

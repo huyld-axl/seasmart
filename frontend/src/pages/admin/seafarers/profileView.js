@@ -70,22 +70,22 @@ export function headLine(seafarer, contract) {
   return parts.filter(Boolean).join(' · ')
 }
 
-// Dòng "đang ở đâu" ở đầu hồ sơ, từ danh sách hợp đồng (GET /contracts) và trạng thái của thuyền viên (seafarer.status,
-// do luồng chuyến tàu và duyệt hợp đồng đặt). Chỉ tính hợp đồng Hiệu lực và Hết hạn; chuyến tàu đã kết thúc coi như xong.
-// current: đang trên tàu, hợp đồng Hiệu lực của chuyến ONBOARD; next: hợp đồng Hiệu lực chưa lên tàu, sớm nhất; last: đã xong, gần đây nhất.
-export function voyageNow(rows = [], seafarerStatus) {
-  const valid = rows.filter((row) => (row.status === 'ACTIVE' || row.status === 'ENDED') && row.start_date)
-  const finished = (row) => row.status === 'ENDED' || row.voyage_status === 'ENDED'
-  const open = valid.filter((row) => !finished(row))
-  const byStart = (dir) => (a, b) => dir * String(a.start_date).localeCompare(String(b.start_date))
-  if (seafarerStatus === 'ON_VESSEL') {
-    const current = open.filter((row) => row.voyage_status === 'ONBOARD').sort(byStart(-1))[0]
-    if (current) return { kind: 'current', row: current }
-  }
-  const next = open.sort(byStart(1))[0]
-  if (next) return { kind: 'next', row: next }
-  const last = valid.filter(finished).sort((a, b) => String(b.end_date).localeCompare(String(a.end_date)))[0]
-  return last ? { kind: 'last', row: last } : null
+// Dòng "đang ở đâu" ở đầu hồ sơ, từ danh sách chuyến của thuyền viên (GET /voyages?seafarer_id=).
+// current: chuyến đang trên tàu (mỗi người tối đa một); last: chuyến đã rời gần đây nhất. Không có "sắp tới": chuyến chỉ có khi đã lên tàu.
+export function voyageNow(rows = []) {
+  const shape = (row) => ({
+    voyage_id: row.id,
+    voyage_code: row.code,
+    vessel_id: row.vessel_id,
+    vessel_name: row.vessel_name,
+    rank_name: row.rank_name,
+    start_date: row.join_date,
+    end_date: row.leave_date || row.planned_leave_date,
+  })
+  const current = rows.find((row) => row.status === 'ONBOARD')
+  if (current) return { kind: 'current', row: shape(current) }
+  const last = rows.filter((row) => row.status === 'LEFT').sort((a, b) => String(b.leave_date).localeCompare(String(a.leave_date)))[0]
+  return last ? { kind: 'last', row: shape(last) } : null
 }
 
 // Mở hộp chọn tệp của khung thả giấy tờ đang hiện trong trang.

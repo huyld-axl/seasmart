@@ -659,3 +659,46 @@
 .ds-copy:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
 .ds-contact-value { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; max-width: 100%; overflow-wrap: anywhere; }
 .ds-contact-value .ds-contact-actions { margin-left: 0; }
+
+/* ---------- Đối chiếu hồ sơ yêu cầu ---------- */
+.ds-fits { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.ds-fit { display: inline-flex; align-items: center; padding: 1px 8px; border: 0; border-radius: 9999px; background: var(--neutral-bg); color: var(--neutral); font: inherit; font-size: 12px; font-weight: 600; line-height: 20px; white-space: nowrap; }
+.ds-fit--ok { background: var(--success-bg); color: var(--success); }
+.ds-fit--warn { background: var(--warning-bg); color: var(--warning); }
+.ds-fit--button { cursor: pointer; }
+.ds-fit--button:hover { text-decoration: underline; text-underline-offset: 2px; }
+.ds-fit--button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+/* ---------- Biểu đồ thời gian theo hàng (CrewTimeline) ---------- */
+.ds-ct { display: grid; grid-template-columns: minmax(150px, 220px) minmax(0, 1fr); border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; font-size: 12px; }
+.ds-ct__names { border-right: 1px solid var(--border); }
+.ds-ct__corner, .ds-ct__months { height: 32px; background: var(--table-header, var(--secondary)); border-bottom: 1px solid var(--border); }
+.ds-ct__corner { display: flex; align-items: center; padding: 0 12px; color: var(--muted); font-weight: 500; }
+.ds-ct__name { display: grid; align-content: center; width: 100%; height: 44px; padding: 0 12px; border: 0; border-bottom: 1px solid var(--border); background: none; font: inherit; text-align: left; cursor: pointer; }
+.ds-ct__name:last-child { border-bottom: 0; }
+.ds-ct__name:hover { background: var(--item-hover); }
+.ds-ct__name:disabled { cursor: default; background: none; }
+.ds-ct__name:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.ds-ct__name b { overflow: hidden; color: var(--foreground); font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ds-ct__name small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
+.ds-ct__scroll { min-width: 0; overflow-x: auto; }
+.ds-ct__chart { position: relative; }
+.ds-ct__months { position: relative; }
+.ds-ct__months span { position: absolute; top: 0; bottom: 0; padding: 8px 6px; border-left: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+.ds-ct__grid { position: absolute; inset: 52px 0 0; pointer-events: none; }
+.ds-ct__grid span { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); }
+.ds-ct__row { position: relative; height: 44px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.ds-ct__row:last-child { border-bottom: 0; }
+.ds-ct__bar { position: absolute; top: 12px; height: 20px; display: flex; align-items: center; padding: 0 8px; border-radius: 5px; overflow: hidden; font-size: 11px; font-weight: 600; white-space: nowrap; box-sizing: border-box; }
+.ds-ct__bar--onboard { background: var(--primary); color: var(--primary-foreground); }
+.ds-ct__bar--left { background: var(--neutral); color: var(--primary-foreground); opacity: .7; }
+.ds-ct__bar--planned { top: 14px; height: 16px; border: 1.5px dashed var(--border-strong); background: transparent; }
+.ds-ct__bar--moved { background: repeating-linear-gradient(135deg, var(--primary-light) 0 6px, rgba(0, 51, 102, 0.16) 6px 12px); color: var(--primary); border: 1px solid rgba(0, 51, 102, 0.25); }
+.ds-ct__bar--opening { background: rgba(0, 51, 102, 0.12); color: var(--primary); }
+.ds-ct__today { position: absolute; top: 32px; bottom: 0; width: 0; border-left: 2px solid var(--error-strong); z-index: 1; pointer-events: none; }
+/* Dải dưới hàng tháng chỉ để đặt nhãn Hôm nay, không đè chữ tháng hay thanh. */
+.ds-ct__strip { position: relative; height: 20px; border-bottom: 1px solid var(--border); }
+.ds-ct__strip span { position: absolute; top: 2px; padding: 1px 6px; border-radius: 4px; background: var(--error-strong); color: var(--primary-foreground); font-size: 10px; font-weight: 600; white-space: nowrap; transform: translateX(-50%); }
+.ds-ct-legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 0; padding: 10px 0 0; list-style: none; color: var(--muted); font-size: 12px; }
+.ds-ct-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.ds-ct-legend .ds-ct__bar { position: static; display: inline-block; width: 18px; height: 10px; padding: 0; border-radius: 3px; }

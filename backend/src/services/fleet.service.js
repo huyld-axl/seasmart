@@ -219,7 +219,11 @@ const fleetService = {
 
   async vesselUsage(pool, id) {
     const [[a]] = await pool.query('SELECT COUNT(*) AS n FROM sea_service WHERE vessel_id = ? AND deleted_at IS NULL', [id])
-    const [[b]] = await pool.query('SELECT COUNT(*) AS n FROM voyage WHERE vessel_id = ? AND deleted_at IS NULL', [id])
+    // Chuyến cũ (hợp đồng còn đọc), chuyến mới và cơ hội đều chặn xoá tàu.
+    const [[b]] = await pool.query(
+      `SELECT (SELECT COUNT(*) FROM voyage WHERE vessel_id = ? AND deleted_at IS NULL)
+        + (SELECT COUNT(*) FROM seafarer_voyage WHERE vessel_id = ? AND deleted_at IS NULL)
+        + (SELECT COUNT(*) FROM opportunity WHERE vessel_id = ? AND deleted_at IS NULL) AS n`, [id, id, id])
     const [[c]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE vessel_id = ? AND deleted_at IS NULL', [id])
     const usage = { sea_service: Number(a.n), voyages: Number(b.n), documents: Number(c.n) }
     return { ...usage, total: usage.sea_service + usage.voyages + usage.documents }
@@ -367,14 +371,10 @@ const fleetService = {
       AND (v.ship_owner_id = ? OR EXISTS (SELECT 1 FROM vessel_ownership h WHERE h.vessel_id = v.id AND h.ship_owner_id = ?))`, [vesselId, ownerId, ownerId])
     if (!vessel) throw { statusCode: 404, message: 'Không tìm thấy tàu liên kết' }
     const [rows] = await pool.query(`WITH active_assignments AS (
-      SELECT DISTINCT ON (ec.seafarer_id) ec.seafarer_id, vy.vessel_id,
-        r.name_vi AS rank_name, GREATEST(vy.actual_embark_date, ec.start_date) AS sign_on_date
-      FROM seafarer_contract ec
-      JOIN voyage_position vp ON vp.id = ec.voyage_position_id
-      JOIN voyage vy ON vy.id = vp.voyage_id AND vy.deleted_at IS NULL
-      LEFT JOIN "rank" r ON r.id = vp.rank_id
-      WHERE ec.status = 'ACTIVE' AND ec.deleted_at IS NULL AND vy.status = 'ONBOARD'
-      ORDER BY ec.seafarer_id, ec.start_date DESC, ec.id DESC
+      SELECT sv.seafarer_id, sv.vessel_id, r.name_vi AS rank_name, sv.join_date AS sign_on_date
+      FROM seafarer_voyage sv
+      LEFT JOIN "rank" r ON r.id = sv.rank_id
+      WHERE sv.status = 'ONBOARD' AND sv.deleted_at IS NULL
     ), current_crew AS (
       SELECT seafarer_id, rank_name, sign_on_date FROM active_assignments WHERE vessel_id = ?
       UNION ALL

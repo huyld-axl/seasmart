@@ -23,6 +23,7 @@ import ErrorBoundary from '../components/common/ErrorBoundary'
 import ProductBrand from '../components/common/ProductBrand'
 import useAuthStore from '../stores/authStore'
 import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
+import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 
 const { useBreakpoint } = Grid
@@ -55,6 +56,7 @@ const ICONS = {
   database: <DatabaseOutlined />,
   ship: <Icon component={ShipSvg} />,
   anchor: <Icon component={AnchorSvg} />,
+  target: <Icon component={TargetSvg} />,
   file: <FileTextOutlined />,
   bill: <AccountBookOutlined />,
   building: <Icon component={BuildingSvg} />,

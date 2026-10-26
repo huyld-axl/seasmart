@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Input, Popconfirm, Select, Tooltip } from 'antd'
-import { CloseOutlined, CopyOutlined, EditOutlined, ExclamationCircleOutlined, HistoryOutlined, RightOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
+import { CloseOutlined, CopyOutlined, EditOutlined, ExclamationCircleOutlined, InfoCircleOutlined, HistoryOutlined, RightOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi } from '../../../api'
 import { exportApi } from '../../../api/exportApi'
 import { shipOwnerApi, vesselApi } from '../../../api/fleetApi'
+import { opportunityApi } from '../../../api/opportunityApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import useAuthStore from '../../../stores/authStore'
@@ -108,7 +109,7 @@ export default function PackCreatePage() {
   const qc = useQueryClient()
   const userId = useAuthStore((state) => state.user?.id)
   const { data: draft, savedAt, storageError, setField, clearDraft } = useExportDraft(userId, params.get('seafarer'))
-  const { people, picked, pickedLabels, ownerId, ownerLabel, selected, inputs, edits, viewId, editing } = draft
+  const { people, picked, pickedLabels, ownerId, ownerLabel, selected, inputs, edits, viewId, editing, opportunityId } = draft
   const setPeople = (value) => setField('people', value)
   const setPicked = (value) => setField('picked', value)
   const setPickedLabels = (value) => setField('pickedLabels', value)
@@ -138,6 +139,35 @@ export default function PackCreatePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ownerParam])
+
+  // Mở từ cơ hội (?opportunity=&seafarers=1,2): chọn sẵn người, chủ tàu, tàu và các mẫu giấy trong hồ sơ yêu cầu.
+  // Bộ giấy tạo ra gắn vào ứng viên của cơ hội; giấy tờ yêu cầu (hộ chiếu, chứng chỉ) đính kèm khi tải về.
+  const oppParam = params.get('opportunity')
+  const seafarersParam = params.get('seafarers')
+  const { data: oppData } = useQuery({
+    queryKey: ['opportunities', 'item', String(oppParam || opportunityId)],
+    queryFn: () => opportunityApi.get(oppParam || opportunityId),
+    enabled: !!(oppParam || opportunityId),
+  })
+  const opportunity = oppData?.requirements ? oppData : null
+  useEffect(() => {
+    if (!seafarersParam || !opportunity || String(opportunity.id) !== oppParam) return
+    const ids = (seafarersParam || '').split(',').filter(Boolean)
+    const chosen = opportunity.candidates.filter((c) => ids.includes(String(c.seafarer_id)))
+    setField('opportunityId', opportunity.id)
+    setField('people', chosen.map((c) => String(c.seafarer_id)))
+    setField('pickedLabels', Object.fromEntries(chosen.map((c) => [String(c.seafarer_id), c.full_name])))
+    setField('ownerId', opportunity.ship_owner_id)
+    setField('ownerLabel', opportunity.ship_owner_name)
+    setField('inputs', opportunity.vessel_name ? { [VESSEL_FIELD]: opportunity.vessel_name } : {})
+    const keys = opportunity.requirements.filter((r) => r.kind === 'TEMPLATE' && r.template_key).map((r) => r.template_key)
+    setField('selected', keys.filter((key, i) => keys.indexOf(key) === i && TEMPLATES.some((t) => t.key === key)))
+    setField('picked', null)
+    setField('edits', {})
+    navigate('/exports/new?opportunity=' + oppParam, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oppParam, opportunity])
+  const attachCount = opportunity ? opportunity.requirements.filter((r) => r.kind === 'CERTIFICATE').length : 0
 
   const profiles = useQueries({
     queries: people.map((id) => ({ queryKey: ['seafarer', id], queryFn: () => seafarerApi.getById(id).then((r) => r.data) })),
@@ -199,11 +229,13 @@ export default function PackCreatePage() {
     const created = []
     try {
       for (const s of seafarers) {
-        created.push(await exportApi.create({ seafarer_id: s.id, ship_owner_id: ownerId, docs: selected, inputs, edits: edits[s.id] || {} }))
+        created.push(await exportApi.create({ seafarer_id: s.id, ship_owner_id: ownerId, docs: selected, inputs, edits: edits[s.id] || {}, opportunity_id: opportunity?.id }))
       }
       qc.invalidateQueries({ queryKey: ['exports'] })
+      if (opportunity) qc.invalidateQueries({ queryKey: ['opportunities'] })
       clearDraft()
       if (created.length === 1) navigate(`/exports/${created[0].id}`)
+      else if (opportunity) { toast.success(`Đã tạo ${created.length} bộ giấy cho ${opportunity.code}`); navigate(`/opportunities/${opportunity.id}`) }
       else { toast.success(`Đã tạo ${created.length} bộ giấy`); navigate('/exports') }
     } catch (e) {
       if (created.length) {
@@ -223,7 +255,7 @@ export default function PackCreatePage() {
   return (
     <div className="ds-page">
       <nav className="crew-crumb" aria-label="Đường dẫn">
-        <Link to="/exports">Bản xuất</Link>
+        {opportunity ? <><Link to="/opportunities">Cơ hội</Link><RightOutlined aria-hidden /><Link to={`/opportunities/${opportunity.id}`}>{opportunity.code}</Link></> : <Link to="/exports">Bản xuất</Link>}
         <RightOutlined aria-hidden />
         {single && <><Link to={`/seafarers/${single.id}`}>{single.full_name}</Link><RightOutlined aria-hidden /></>}
         <span aria-current="page">Tạo bộ giấy</span>
@@ -246,6 +278,21 @@ export default function PackCreatePage() {
           <Popconfirm title="Xóa bản nháp và bắt đầu lại?" description="Các lựa chọn và ô đã sửa sẽ bị xóa." okText="Xóa bản nháp" cancelText="Giữ lại" onConfirm={clearDraft}>
             <Button size="small" danger disabled={submitting}>Xóa bản nháp</Button>
           </Popconfirm>
+        </div>
+      )}
+
+      {opportunity && (
+        <div role="status" className="ds-banner ds-banner--neutral">
+          <InfoCircleOutlined className="ds-banner__icon" aria-hidden />
+          <div className="ds-banner__body">
+            <p className="ds-banner__title">Bộ giấy cho {opportunity.code} · {opportunity.rank_name}{opportunity.vessel_name ? ` · ${opportunity.vessel_name}` : ''}</p>
+            <p className="ds-banner__text">
+              {opportunity.requirements.some((r) => r.kind === 'TEMPLATE') ? 'Đã chọn sẵn mẫu giấy trong hồ sơ yêu cầu.' : 'Hồ sơ yêu cầu chưa có mẫu giấy nào, thêm giấy bên dưới.'}{attachCount ? ` ${attachCount} giấy tờ, chứng chỉ yêu cầu được đính kèm vào thư mục GIAY-TO khi tải về; thiếu bản scan thì ghi vào THIEU-GIAY.txt.` : ''}
+            </p>
+          </div>
+          <div className="ds-banner__action">
+            <Button onClick={() => { setField('opportunityId', null); navigate('/exports/new', { replace: true }) }}>Bỏ gắn cơ hội</Button>
+          </div>
         </div>
       )}
 

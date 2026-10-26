@@ -61,12 +61,27 @@ export const STATUS = {
     AVAILABLE: { label: 'Ở bờ', tone: 'info', mark: 'ring' },
     INACTIVE: { label: 'Tạm ngưng', tone: 'neutral', mark: 'minus' },
   },
-  // Chuyến tàu: trạng thái hiển thị (voyage.display_status), tính từ voyage.status và số vị trí có hợp đồng.
+  // Cơ hội: trạng thái hiển thị (opportunity.display_status), tính từ trạng thái lưu và ứng viên.
+  opportunity: {
+    NEW: { label: 'Mới', tone: 'neutral', mark: 'ring' },
+    PICKING: { label: 'Đang chọn ứng viên', tone: 'warning', mark: 'ellipsis' },
+    WAITING: { label: 'Chờ kết quả', tone: 'warning', mark: 'clock' },
+    OWNER_SELECTED: { label: 'Chủ tàu đã chọn', tone: 'success', mark: 'ring-dot' },
+    WON: { label: 'Đã chốt', tone: 'success', mark: 'check' },
+    LOST: { label: 'Không thành', tone: 'error', mark: 'cross' },
+    CANCELLED: { label: 'Huỷ', tone: 'neutral', mark: 'minus' },
+  },
+  // Ứng viên của cơ hội (opportunity_candidate.status).
+  candidate: {
+    PICKED: { label: 'Trong danh sách', tone: 'neutral', mark: 'ring' },
+    PLACED: { label: 'Được chốt', tone: 'success', mark: 'check' },
+    NOT_SELECTED: { label: 'Không được chọn', tone: 'neutral', mark: 'minus' },
+    REMOVED: { label: 'Đã bỏ', tone: 'neutral', mark: 'minus' },
+  },
+  // Chuyến: một thuyền viên đi một tàu (seafarer_voyage.status).
   voyage: {
-    RECRUITING: { label: 'Đang tuyển', tone: 'warning', mark: 'ellipsis' },
-    FULL: { label: 'Đủ người', tone: 'success', mark: 'check' },
     ONBOARD: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
-    ENDED: { label: 'Đã kết thúc', tone: 'neutral', mark: 'ring' },
+    LEFT: { label: 'Đã rời tàu', tone: 'neutral', mark: 'ring' },
   },
   // Hợp đồng thuyền viên (seafarer_contract.status).
   contract: {
@@ -123,6 +138,8 @@ export const STATUS_GROUP_LABELS = {
   export: 'Bộ giấy tờ',
   signature: 'Chữ ký',
   crew: 'Tình trạng thuyền viên',
+  opportunity: 'Cơ hội',
+  candidate: 'Ứng viên',
   voyage: 'Chuyến tàu',
   contract: 'Hợp đồng',
   bill: 'Yêu cầu thanh toán',

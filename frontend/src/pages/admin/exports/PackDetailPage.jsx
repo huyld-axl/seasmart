@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Skeleton, Tooltip } from 'antd'
-import { EditOutlined, RightOutlined } from '@ant-design/icons'
+import { EditOutlined, MailOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { useCan } from '../../../hooks/usePermission'
 import { exportApi } from '../../../api/exportApi'
+import { opportunityApi } from '../../../api/opportunityApi'
+import useSendToOwner from '../opportunities/useSendToOwner'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import { DocDownload, PackDownload } from './DownloadButtons'
@@ -26,6 +28,13 @@ export default function PackDetailPage() {
   const [draft, setDraft] = useState(null)
 
   const { data: pack, isLoading, isError, error, refetch } = useQuery({ queryKey: ['export', packId], queryFn: () => exportApi.get(packId) })
+  const { data: opportunity } = useQuery({
+    queryKey: ['opportunities', 'item', String(pack?.opportunity_id)],
+    queryFn: () => opportunityApi.get(pack.opportunity_id),
+    enabled: !!pack?.opportunity_id,
+  })
+  const sendToOwner = useSendToOwner()
+  const [sending, setSending] = useState(false)
   const save = useMutation({
     mutationFn: () => exportApi.update(packId, draft),
     onSuccess: (data) => {
@@ -47,11 +56,18 @@ export default function PackDetailPage() {
   const mayEdit = can('export.create')
   const shown = draft || { inputs: pack.inputs, edits: pack.edits || {} }
   const saveFirst = draft ? 'Lưu hoặc huỷ thay đổi trước khi tải' : ''
+  const candidate = opportunity?.candidates.find((c) => c.export_pack?.id === pack.id)
+  async function send() {
+    setSending(true)
+    try { await sendToOwner(opportunity, [candidate]) } finally { setSending(false) }
+  }
 
   return (
     <div className="ds-page">
       <nav className="crew-crumb" aria-label="Đường dẫn">
-        <Link to="/exports">Bản xuất</Link>
+        {pack.opportunity_id
+          ? <><Link to="/opportunities">Cơ hội</Link><RightOutlined aria-hidden /><Link to={`/opportunities/${pack.opportunity_id}`}>{pack.opportunity_code}</Link></>
+          : <Link to="/exports">Bản xuất</Link>}
         <RightOutlined aria-hidden />
         <span aria-current="page">#{pack.code}</span>
       </nav>
@@ -64,6 +80,11 @@ export default function PackDetailPage() {
           </p>
         </div>
         <div className="crew-head__actions">
+          {candidate && can('opportunity.send') && (
+            <Tooltip title={saveFirst}>
+              <Button icon={<MailOutlined />} disabled={!!draft} loading={sending} onClick={send}>Gửi cho chủ tàu</Button>
+            </Tooltip>
+          )}
           <Tooltip title={saveFirst}>
             <span><PackDownload pack={pack} type="primary" disabled={!!draft} /></span>
           </Tooltip>

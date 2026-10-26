@@ -6,7 +6,7 @@ import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
-import { useContractList, useVoyageList } from '../../../hooks/useVoyages'
+import { useContractList } from '../../../hooks/useVoyages'
 import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
 import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
@@ -34,22 +34,20 @@ export default function ContractListPage() {
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [ownerId, setOwnerId] = useState()
-  const [voyageId, setVoyageId] = useState()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
   const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: can('partner.view') })
-  const voyages = useVoyageList({ limit: 100 }, { enabled: can('voyage.view') })
-  const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, voyage_id: voyageId, page, limit: pageSize })
+  const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
   const tabs = TABS.map((item) => ({ ...item, count: counts ? counts[item.value] : null }))
   const open = (row) => navigate(`/contracts/${row.id}`)
-  const filtered = Boolean(keyword || ownerId || voyageId)
-  const resetFilters = () => { setSearch(''); setOwnerId(undefined); setVoyageId(undefined); setPage(1) }
+  const filtered = Boolean(keyword || ownerId)
+  const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPage(1) }
 
   const columns = [
     { title: 'Số hợp đồng', dataIndex: 'contract_number', render: (value) => <span className="ds-mono">{value}</span> },
@@ -163,20 +161,6 @@ export default function ContractListPage() {
             loading={owners.isLoading}
             options={(owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
             onChange={(value) => { setOwnerId(value); setPage(1) }}
-          />
-          ) : null}
-          {can('voyage.view') ? (
-          <Select
-            className="vy-owner-filter"
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Tất cả chuyến"
-            aria-label="Lọc theo chuyến"
-            value={voyageId}
-            loading={voyages.isLoading}
-            options={(voyages.data?.data || []).map((v) => ({ value: v.id, label: `${v.code} · ${v.vessel_name}` }))}
-            onChange={(value) => { setVoyageId(value); setPage(1) }}
           />
           ) : null}
         </div>

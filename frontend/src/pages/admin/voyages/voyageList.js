@@ -130,3 +130,49 @@ export function historyItems(history, { formatDate, portName = () => null }) {
     return item
   })
 }
+
+// ---------- Thẻ Đội ngũ trên trang tàu ----------
+// Khoảng xem: Hôm nay · 6 tháng tới · Cả năm (tính từ hôm nay). Tuỳ chọn thì lấy từ RangePicker.
+export function crewRange(key, today = dayjs()) {
+  const t = dayjs(today).startOf('day')
+  if (key === 'today') return [t, t]
+  if (key === 'half') return [t, t.add(6, 'month')]
+  if (key === 'year') return [t.startOf('year'), t.endOf('year').startOf('day')]
+  return null
+}
+
+const iso = (v) => (v ? String(v).slice(0, 10) : null)
+
+// Hàng cho CrewTimeline: mỗi chuyến một hàng, rồi các cơ hội đang mở (nhạt). Biểu đồ cần ít nhất vài ngày nên
+// khoảng "Hôm nay" được nới ra ±1 tháng ở trang gọi.
+export function crewRows({ voyages = [], openings = [], today, formatDate, onVoyage, onOpening }) {
+  const rows = voyages.map((v) => {
+    const original = iso(v.original_leave_date) || iso(v.planned_leave_date)
+    const bars = [{ kind: 'planned', start: iso(v.join_date), end: original }]
+    if (v.status === 'LEFT') {
+      const delta = deltaText(v.leave_delta_days)
+      bars.push({ kind: 'left', start: iso(v.join_date), end: iso(v.leave_date), label: [v.leave_port_name, delta].filter(Boolean).join(' · ') })
+    } else {
+      const delta = deltaText(v.join_delta_days)
+      bars.push({ kind: 'onboard', start: iso(v.join_date), end: today, label: [v.join_port_name, delta].filter(Boolean).join(' · ') })
+      if (iso(v.planned_leave_date) !== original) {
+        const [a, b] = [original, iso(v.planned_leave_date)].sort()
+        bars.push({ kind: 'moved', start: a, end: b, label: `dời tới ${formatDate(v.planned_leave_date)}` })
+      }
+    }
+    return { id: `v${v.id}`, title: v.seafarer_name, subtitle: `${v.rank_name} · ${v.code}`, onClick: onVoyage ? () => onVoyage(v) : undefined, bars }
+  })
+  const opens = openings.map((o) => ({
+    id: `o${o.id}`,
+    title: o.code,
+    subtitle: `${o.rank_name} · cơ hội, chưa chốt`,
+    onClick: onOpening ? () => onOpening(o) : undefined,
+    bars: [{
+      kind: 'opening',
+      start: iso(o.planned_join_date),
+      end: iso(o.planned_leave_date),
+      label: `Dự kiến ${formatDate(o.planned_join_date)}${o.selected_name ? ` · chủ tàu đã chọn ${o.selected_name}` : ''}`,
+    }],
+  }))
+  return [...rows, ...opens]
+}

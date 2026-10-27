@@ -96,3 +96,9 @@
 /* Danh sách chuyến mới: khoảng "Trên tàu trong" cạnh ô tìm; danh sách người trong hộp Ghi rời tàu nhiều chuyến. */
 .vy-range { width: 260px; max-width: 100%; }
 .vy-leave-list { margin: 0 0 16px; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+
+/* Thẻ Đội ngũ trên trang tàu: hàng công cụ (khoảng, chức danh, cách xem) và bốn ô tóm tắt. */
+.vy-crew-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.vy-crew-tools__end { margin-left: auto; }
+.vy-crew-sums { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .vy-crew-sums { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

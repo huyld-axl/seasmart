@@ -88,3 +88,33 @@ describe('chi tiết chuyến', () => {
     expect(items[2].title).toBe('Tạo chuyến · Chuyển tàu')
   })
 })
+
+describe('thẻ Đội ngũ', () => {
+  it('khoảng xem', async () => {
+    const { crewRange } = await import('../voyageList')
+    const f = (r) => r.map((d) => d.format('YYYY-MM-DD'))
+    expect(f(crewRange('today', '2026-10-27'))).toEqual(['2026-10-27', '2026-10-27'])
+    expect(f(crewRange('half', '2026-10-27'))).toEqual(['2026-10-27', '2027-04-27'])
+    expect(f(crewRange('year', '2026-10-27'))).toEqual(['2026-01-01', '2026-12-31'])
+    expect(crewRange('custom')).toBeNull()
+  })
+
+  it('hàng chuyến và cơ hội', async () => {
+    const { crewRows } = await import('../voyageList')
+    const rows = crewRows({
+      today: '2026-10-27',
+      formatDate: fmt,
+      voyages: [
+        { id: 1, seafarer_name: 'A', rank_name: 'Máy hai', code: 'CT-1', status: 'ONBOARD', join_date: '2026-06-05', planned_leave_date: '2027-04-05', original_leave_date: '2027-03-05', join_port_name: 'Hải Phòng', join_delta_days: 13 },
+        { id: 2, seafarer_name: 'B', rank_name: 'Thợ máy', code: 'CT-2', status: 'LEFT', join_date: '2026-06-05', planned_leave_date: '2027-02-05', leave_date: '2026-09-14', leave_delta_days: -144 },
+      ],
+      openings: [{ id: 9, code: 'CH26047', rank_name: 'Thủy thủ', planned_join_date: '2026-11-08', planned_leave_date: '2027-08-08', selected_name: 'K' }],
+    })
+    expect(rows[0].bars.map((b) => b.kind)).toEqual(['planned', 'onboard', 'moved'])
+    expect(rows[0].bars[1]).toMatchObject({ end: '2026-10-27', label: 'Hải Phòng · muộn 13 ngày' })
+    expect(rows[0].bars[2]).toMatchObject({ start: '2027-03-05', end: '2027-04-05' })
+    expect(rows[1].bars[1]).toMatchObject({ kind: 'left', end: '2026-09-14', label: 'sớm 4,8 tháng' })
+    expect(rows[2]).toMatchObject({ id: 'o9', title: 'CH26047' })
+    expect(rows[2].bars[0].label).toBe('Dự kiến 08/11/2026 · chủ tàu đã chọn K')
+  })
+})

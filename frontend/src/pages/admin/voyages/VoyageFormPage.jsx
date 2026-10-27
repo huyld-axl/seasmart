@@ -116,8 +116,9 @@ export default function VoyageFormPage() {
       const closed = row.closed_voyage ? ` · đã ghi rời ${row.closed_voyage.code}` : ''
       if (againRef.current) {
         toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}${closed}`)
+        // resetFields trả về giá trị điền sẵn từ đường dẫn (có thể có người); người, chức danh phải trống cho chuyến kế tiếp.
         form.resetFields()
-        form.setFieldsValue(nextVoyageValues(form.getFieldsValue(true), formValues))
+        form.setFieldsValue({ seafarer_id: undefined, rank_id: undefined, ...nextVoyageValues(form.getFieldsValue(true), formValues) })
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}${closed}`)

@@ -171,7 +171,7 @@ async function requirementFiles(pool, opportunityId, seafarerId) {
     let file = null
     if (DOC_TYPE_OF_CODE[req.code]) {
       const [[doc]] = await pool.query(
-        `SELECT id FROM seafarer_document WHERE seafarer_id = ? AND doc_type = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1`,
+        'SELECT id FROM seafarer_document WHERE seafarer_id = ? AND doc_type = ? AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 1',
         [seafarerId, DOC_TYPE_OF_CODE[req.code]])
       file = doc ? await uploadPath(doc.id) : null
     } else {

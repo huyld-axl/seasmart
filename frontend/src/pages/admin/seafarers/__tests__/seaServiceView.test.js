@@ -35,3 +35,16 @@ describe('chuyến đi tàu', () => {
     expect(out[1].overlapNote).toBeNull()
   })
 })
+
+describe('chuyến hệ thống trên tab Đi tàu', () => {
+  it('đổi chuyến sang trip nguồn voyage và xếp chung với lịch sử khai', async () => {
+    const { voyageTrips, mergeTrips, toTimelineTrips } = await import('../seaServiceView')
+    const voyages = voyageTrips([{ id: 6, code: 'CT-2026-0006', vessel_name: 'MV Ocean Glory', ship_owner_name: 'Lotus', rank_name: 'Đại phó', status: 'ONBOARD', join_date: '2026-09-17' }])
+    expect(voyages[0]).toMatchObject({ id: 'v6', signOn: '17/09/2026', signOff: null, ongoing: true, source: { type: 'voyage', label: 'CT-2026-0006' } })
+    const declared = toTimelineTrips([
+      { id: 1, vessel_name_raw: 'A', sign_on_date: '2025-01-01', sign_off_date: '2025-06-01', source_type: 'MANUAL' },
+      { id: 2, vessel_name_raw: 'B', sign_on_date: '2027-01-01', sign_off_date: null, source_type: 'MANUAL' },
+    ])
+    expect(mergeTrips(declared, voyages).map((t) => t.id)).toEqual([2, 'v6', 1])
+  })
+})

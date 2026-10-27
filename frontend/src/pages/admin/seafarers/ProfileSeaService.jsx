@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, DatePicker, Form, Input, Modal, Skeleton } from 'antd'
 import { PlusOutlined } from '@ant-design/icons'
@@ -9,16 +10,21 @@ import { EmptyState } from '../../../components/ds/Controls'
 import SeaServiceTimeline from '../../../components/ds/SeaServiceTimeline'
 import useToast from '../../../components/ds/useToast'
 import { useCan } from '../../../hooks/usePermission'
-import { toTimelineTrips } from './seaServiceView'
+import { useVoyageList } from '../../../hooks/useVoyages'
+import { mergeTrips, toTimelineTrips, voyageTrips } from './seaServiceView'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
 
-// Tab "Đi tàu" (T5): chuyến đi tàu của thuyền viên, mới nhất trước. Chuyến lấy từ sổ thuyền viên hoặc nhập tay.
+// Tab "Đi tàu" (T5): chuyến đi tàu của thuyền viên, mới nhất trước. Gồm chuyến của hệ thống (Màn 14, mở trang chuyến)
+// và lịch sử khai từ sổ thuyền viên hoặc nhập tay.
 // Sửa và xoá bắt buộc ghi lý do; backend ghi lý do vào lịch sử hồ sơ.
 export default function ProfileSeaService({ seafarerId }) {
   const qc = useQueryClient()
   const toast = useToast()
-  const canEdit = useCan()('seafarer.sea')
+  const navigate = useNavigate()
+  const can = useCan()
+  const canEdit = can('seafarer.sea')
+  const voyages = useVoyageList({ seafarer_id: seafarerId, tab: 'all', limit: 100 }, { enabled: can('voyage.view') })
   const [editing, setEditing] = useState(null) // null | 'new' | chuyến
   const [deleting, setDeleting] = useState(null)
   const [reason, setReason] = useState('')
@@ -51,6 +57,7 @@ export default function ProfileSeaService({ seafarerId }) {
   })
 
   async function openSource(trip) {
+    if (trip.source?.type === 'voyage') return navigate(`/voyages/${trip.raw.id}`)
     const docId = trip.raw.document_id
     try {
       const doc = docId ? await documentApi.get(docId) : null
@@ -79,7 +86,10 @@ export default function ProfileSeaService({ seafarerId }) {
     setEditing('new')
   }
 
-  const trips = toTimelineTrips(data || [], () => 'Từ sổ thuyền viên')
+  const trips = mergeTrips(toTimelineTrips(data || [], () => 'Từ sổ thuyền viên'), voyageTrips(voyages.data?.data || []))
+  const createVoyage = can('voyage.create')
+    ? <Button icon={<PlusOutlined />} onClick={() => navigate(`/voyages/new?seafarer=${seafarerId}`)}>Tạo chuyến</Button>
+    : null
   const isNew = editing === 'new'
   let body
   if (isLoading) body = <Skeleton active paragraph={{ rows: 4 }} />
@@ -95,9 +105,12 @@ export default function ProfileSeaService({ seafarerId }) {
       <div className="crew-panel__head">
         <div>
           <h2 className="crew-panel__title">Chuyến đi tàu {trips.length ? <span className="ds-num">{trips.length}</span> : null}</h2>
-          <p className="ds-field__reason" style={{ margin: 0 }}>Mới nhất trước. Chuyến lấy từ sổ thuyền viên hoặc nhập tay.</p>
+          <p className="ds-field__reason" style={{ margin: 0 }}>Mới nhất trước. Gồm chuyến của hệ thống và chuyến lấy từ sổ thuyền viên hoặc nhập tay.</p>
         </div>
-        {canEdit ? <Button type="primary" icon={<PlusOutlined />} onClick={startNew}>Thêm chuyến</Button> : null}
+        <span className="rv-inline">
+          {createVoyage}
+          {canEdit ? <Button type="primary" icon={<PlusOutlined />} onClick={startNew}>Thêm chuyến</Button> : null}
+        </span>
       </div>
       <div className="crew-panel__body">{body}</div>
 

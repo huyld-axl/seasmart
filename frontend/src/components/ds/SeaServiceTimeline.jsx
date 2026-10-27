@@ -7,7 +7,7 @@ import './ds.css'
 // trip: { id, vessel, vesselSub, signOn, signOff, ongoing, rank, rankName, overlapNote, vesselStatus,
 //         source: { type: 'document' | 'manual' | 'voyage', label } }
 // source.type 'voyage': chuyến của hệ thống (bảng chuyến), label là mã chuyến; bấm "Mở chuyến" gọi onOpenSource.
-// Nút Sửa / Xoá chỉ hiện khi truyền `onEdit` / `onDelete` (theo quyền).
+// Nút Sửa / Xoá chỉ hiện khi truyền `onEdit` / `onDelete` (theo quyền), và không hiện ở chuyến hệ thống (sửa trên trang chuyến).
 // Chỉ chuyến chưa khớp danh mục hay trùng thời gian mới có nhãn; chuyến bình thường không nhãn thừa.
 export default function SeaServiceTimeline({ trips = [], onEdit, onDelete, onOpenSource }) {
   return (
@@ -21,8 +21,8 @@ export default function SeaServiceTimeline({ trips = [], onEdit, onDelete, onOpe
             <div className="ds-trip__head">
               <b className="ds-trip__vessel">{trip.vessel}</b>
               {trip.overlapNote ? <StatusBadge group="seaService" value="OVERLAP" /> : null}
-              {onEdit ? <Button type="text" size="small" icon={<EditOutlined />} aria-label={`Sửa chuyến ${trip.vessel}`} onClick={() => onEdit(trip)} /> : null}
-              {onDelete ? <Button type="text" size="small" icon={<DeleteOutlined />} aria-label={`Xoá chuyến ${trip.vessel}`} onClick={() => onDelete(trip)} /> : null}
+              {onEdit && trip.source?.type !== 'voyage' ? <Button type="text" size="small" icon={<EditOutlined />} aria-label={`Sửa chuyến ${trip.vessel}`} onClick={() => onEdit(trip)} /> : null}
+              {onDelete && trip.source?.type !== 'voyage' ? <Button type="text" size="small" icon={<DeleteOutlined />} aria-label={`Xoá chuyến ${trip.vessel}`} onClick={() => onDelete(trip)} /> : null}
             </div>
             {trip.vesselSub ? <p className="ds-trip__sub">{trip.vesselSub}</p> : null}
             <p className="ds-trip__dates">

@@ -58,3 +58,28 @@ export function toTimelineTrips(trips, documentLabel = () => 'Từ sổ thuyền
     }
   })
 }
+
+// Chuyến của hệ thống (GET /voyages?seafarer_id=) -> trip của SeaServiceTimeline, nguồn 'voyage'.
+export function voyageTrips(voyages = []) {
+  return voyages.map((v) => ({
+    id: `v${v.id}`,
+    vessel: v.vessel_name,
+    vesselSub: v.ship_owner_name || '',
+    signOn: toDisplayDate(String(v.join_date).slice(0, 10)),
+    signOff: v.leave_date ? toDisplayDate(String(v.leave_date).slice(0, 10)) : null,
+    ongoing: v.status === 'ONBOARD',
+    rank: v.rank_name || '',
+    rankName: '',
+    vesselStatus: 'VERIFIED',
+    overlapNote: null,
+    source: { type: 'voyage', label: v.code },
+    sortDate: String(v.join_date).slice(0, 10),
+    raw: v,
+  }))
+}
+
+// Xếp chung chuyến hệ thống với lịch sử khai, mới nhất trước theo ngày xuống; không có ngày xuống thì cuối.
+export function mergeTrips(declared, voyages) {
+  const key = (t) => t.sortDate || t.raw?.sign_on_date || ''
+  return [...declared, ...voyages].sort((a, b) => key(b).localeCompare(key(a)))
+}

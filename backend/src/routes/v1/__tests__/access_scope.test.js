@@ -46,6 +46,7 @@ beforeAll(async () => {
   await app.register(require('../document.routes'), { prefix: '/documents' })
   await app.register(require('../dashboard.routes'), { prefix: '/dashboard' })
   await app.register(require('../voyage.routes'), { prefix: '/voyages' })
+  await app.register(require('../opportunity.routes'), { prefix: '/opportunities' })
   await app.register(require('../seafarer_contract.routes'), { prefix: '/contracts' })
   await app.register(require('../export_pack.routes').exportPackRoutes, { prefix: '/exports' })
   await app.register(require('../master_data.routes'), { prefix: '/admin/master' })
@@ -74,6 +75,8 @@ describe('thiếu quyền thì 403', () => {
     ['POST', '/seafarers/1/sea-services', 'seafarer.sea', {}],
     ['GET', '/documents/seafarer/1', 'seafarer.docs'],
     ['GET', '/dashboard/certificate-alerts', 'seafarer.view'],
+    ['GET', '/opportunities', 'opportunity.view'],
+    ['POST', '/opportunities/1/place', 'opportunity.close', { seafarer_id: 1, join_date: '2026-01-01', join_port_id: 1 }],
     ['GET', '/voyages', 'voyage.view'],
     ['POST', '/voyages/1/leave', 'voyage.run', { leave_date: '2026-01-01', leave_port_id: 1 }],
     ['DELETE', '/voyages/1', 'voyage.delete'],
@@ -111,6 +114,7 @@ describe('thiếu quyền thì 403', () => {
 describe('phạm vi own: danh sách', () => {
   const lists = [
     ['/seafarers', 'seafarer', 'seafarer.view', /FROM seafarer s/, 's.created_by = ?'],
+    ['/opportunities', 'opportunity', 'opportunity.view', /FROM opportunity o/, 'o.created_by = ?'],
     ['/voyages', 'voyage', 'voyage.view', /FROM seafarer_voyage sv/, 'sv.created_by = ?'],
     ['/contracts', 'contract', 'contract.view', /FROM seafarer_contract c/, 'c.created_by = ?'],
     ['/exports', 'export', 'export.view', /FROM export_pack p/, 'p.created_by = ?'],
@@ -133,6 +137,7 @@ describe('phạm vi own: danh sách', () => {
 
 describe('phạm vi own: mở theo id', () => {
   const details = [
+    ['/opportunities/3', 'opportunity', 'opportunity.view', 'FROM "opportunity"', /FROM opportunity o/],
     ['/voyages/3', 'voyage', 'voyage.view', 'FROM "seafarer_voyage"', /FROM seafarer_voyage sv/],
     ['/contracts/3', 'contract', 'contract.view', 'FROM "seafarer_contract"', /FROM seafarer_contract c/],
     ['/exports/3', 'export', 'export.view', 'FROM "export_pack"', /FROM export_pack p/],

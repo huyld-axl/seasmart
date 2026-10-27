@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon, { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { filled, countFilled } from './fleetView'
 import useScrollSpy from './useScrollSpy'
 import '../seafarers/SeafarerForm.css'
 import '../seafarers/SeafarerProfile.css'
@@ -66,50 +65,6 @@ export function Crumb({ items }) {
         </span>
       ))}
     </nav>
-  )
-}
-
-// ---- Màn chi tiết: khối chỉ đọc ----
-
-function ReadField({ label, value, span, kind }) {
-  const cls = span && span < 12 ? ` sf-c${span}` : ''
-  const empty = !filled(value)
-  return (
-    <div className={`sf-ro${cls}`}>
-      <dt className="sf-ro__label">{label}</dt>
-      <dd className={`sf-ro__value${kind === 'mono' ? ' fl-mono' : ''}`}>{empty ? <span className="sf-ro__empty">Chưa có</span> : value}</dd>
-    </div>
-  )
-}
-
-export function ReadPanel({ section }) {
-  const { done, total } = countFilled(section)
-  return (
-    <section className="crew-panel">
-      <div className="crew-panel__head">
-        <h2 className="crew-panel__title">{section.title}</h2>
-        {total > 0 && section.fields.length > 1 ? <span className="sf-panel__meta" style={{ paddingTop: 0 }}>{done}/{total}</span> : null}
-      </div>
-      <div className="crew-panel__body">
-        <dl className="sf-grid">
-          {section.fields.map(([label, value, span, kind]) => (
-            <ReadField key={label} label={label} value={value} span={span} kind={kind} />
-          ))}
-        </dl>
-      </div>
-    </section>
-  )
-}
-
-export function SidePanel({ title, action, children }) {
-  return (
-    <section className="crew-panel">
-      <div className="crew-panel__head">
-        <h2 className="crew-panel__title">{title}</h2>
-        {action}
-      </div>
-      <div className="crew-panel__body">{children}</div>
-    </section>
   )
 }
 

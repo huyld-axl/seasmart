@@ -92,3 +92,7 @@
 .vt-warn { margin-top: 16px; }
 .vt-skipped { margin: 4px 0 0; padding-left: 20px; }
 @media (max-width: 575px) { .vt-fields { grid-template-columns: minmax(0, 1fr); } }
+
+/* Danh sách chuyến mới: khoảng "Trên tàu trong" cạnh ô tìm; danh sách người trong hộp Ghi rời tàu nhiều chuyến. */
+.vy-range { width: 260px; max-width: 100%; }
+.vy-leave-list { margin: 0 0 16px; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }

@@ -61,3 +61,30 @@ describe('form Tạo chuyến', () => {
     expect(next).toEqual({ vessel_id: 3, ship_owner_id: 4, manual_reason: 'OWNER_HIRED', join_date: 'd' })
   })
 })
+
+describe('chi tiết chuyến', () => {
+  it('lệch ngày theo ngày rồi theo tháng', async () => {
+    const { deltaText } = await import('../voyageList')
+    expect(deltaText(0)).toBeNull()
+    expect(deltaText(13)).toBe('muộn 13 ngày')
+    expect(deltaText(-141)).toBe('sớm 4,7 tháng')
+  })
+
+  it('còn bao nhiêu tháng', async () => {
+    const { monthsLeft } = await import('../voyageList')
+    expect(monthsLeft('2027-01-30', '2026-10-27')).toBe('3,2')
+    expect(monthsLeft('2026-10-01', '2026-10-27')).toBeNull()
+  })
+
+  it('lịch sử ra dòng thời gian', async () => {
+    const { historyItems } = await import('../voyageList')
+    const items = historyItems([
+      { id: 3, action: 'LEAVE_PLAN', payload: { from: '2027-03-05', to: '2027-04-05', note: 'chủ tàu xin thêm' }, created_at: '2026-10-27T01:00:00Z', actor_email: 'a@x' },
+      { id: 2, action: 'EDIT_DATES', payload: '{"before":{"join_date":"2026-10-01","join_port_id":1},"after":{"join_date":"2026-10-02","join_port_id":1}}', created_at: '2026-10-26T01:00:00Z' },
+      { id: 1, action: 'CREATE', payload: { manual_reason: 'TRANSFER' }, created_at: '2026-10-25T01:00:00Z' },
+    ], { formatDate: fmt, portName: (id) => (id === 1 ? 'Hải Phòng' : null) })
+    expect(items[0]).toMatchObject({ title: 'Đổi ngày rời dự kiến', before: '05/03/2027', after: '05/04/2027', reason: 'chủ tàu xin thêm', actor: 'a@x' })
+    expect(items[1]).toMatchObject({ before: 'lên 01/10/2026 · Hải Phòng', after: 'lên 02/10/2026 · Hải Phòng' })
+    expect(items[2].title).toBe('Tạo chuyến · Chuyển tàu')
+  })
+})

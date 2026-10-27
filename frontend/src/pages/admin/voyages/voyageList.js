@@ -83,3 +83,50 @@ export function nextVoyageValues(_, saved) {
   const keep = ['vessel_id', 'ship_owner_id', 'manual_reason', 'join_date', 'join_port_id', 'planned_leave_date', 'planned_leave_port_id', 'ended', 'leave_date', 'leave_port_id']
   return Object.fromEntries(keep.filter((key) => saved[key] !== undefined).map((key) => [key, saved[key]]))
 }
+
+// ---------- Chi tiết chuyến ----------
+// Lệch ngày kiểu "muộn 13 ngày" / "sớm 4,7 tháng": dưới 60 ngày tính ngày, từ 60 ngày tính tháng (30 ngày một tháng).
+export function deltaText(days) {
+  if (!days) return null
+  const n = Math.abs(days)
+  const amount = n < 60 ? `${n} ngày` : `${String(Math.round((n / 30) * 10) / 10).replace('.', ',')} tháng`
+  return days > 0 ? `muộn ${amount}` : `sớm ${amount}`
+}
+
+// Số tháng còn lại tới ngày rời dự kiến, một chữ số thập phân; đã qua thì null.
+export function monthsLeft(planned, today = dayjs()) {
+  const days = dayjs(planned).startOf('day').diff(dayjs(today).startOf('day'), 'day')
+  if (days < 0) return null
+  return String(Math.round((days / 30) * 10) / 10).replace('.', ',')
+}
+
+const HISTORY = {
+  PLACE: { kind: 'accept', tone: 'success', title: 'Chốt người, ghi lên tàu' },
+  CREATE: { kind: 'edit', tone: 'success', title: 'Tạo chuyến' },
+  MIGRATE: { kind: 'upload', tone: 'neutral', title: 'Chuyển từ dữ liệu chuyến cũ' },
+  LEAVE: { kind: 'export', tone: 'neutral', title: 'Ghi rời tàu' },
+  TRANSFER_OUT: { kind: 'export', tone: 'neutral', title: 'Rời tàu do chuyển tàu' },
+  LEAVE_PLAN: { kind: 'edit', tone: 'warning', title: 'Đổi ngày rời dự kiến' },
+  EDIT_DATES: { kind: 'edit', tone: 'warning', title: 'Sửa ngày đã ghi' },
+  DELETE: { kind: 'reject', tone: 'error', title: 'Huỷ chốt / xoá chuyến' },
+}
+
+// Lịch sử chuyến (mục 4.7) -> item của AuditTimeline. portName(id) đổi id cảng ra tên.
+export function historyItems(history, { formatDate, portName = () => null }) {
+  const at = (date, port) => [formatDate(date), portName(port)].filter(Boolean).join(' · ')
+  return (history || []).map((h) => {
+    const p = typeof h.payload === 'string' ? JSON.parse(h.payload) : h.payload || {}
+    const base = HISTORY[h.action] || { kind: 'edit', tone: 'neutral', title: h.action }
+    const item = { id: h.id, kind: base.kind, tone: base.tone, title: base.title, time: dayjs(h.created_at).format('HH:mm DD/MM/YYYY'), actor: h.actor_email || null }
+    if (h.action === 'PLACE') item.after = at(p.join_date, p.join_port_id)
+    if (h.action === 'CREATE' && p.manual_reason) item.title = `Tạo chuyến · ${MANUAL_REASON_LABELS[p.manual_reason] || p.manual_reason}`
+    if (h.action === 'LEAVE' || h.action === 'TRANSFER_OUT') item.after = at(p.leave_date, p.leave_port_id)
+    if (h.action === 'LEAVE_PLAN') Object.assign(item, { before: formatDate(p.from), after: formatDate(p.to) })
+    if (h.action === 'EDIT_DATES' && p.before && p.after) {
+      const show = (v) => [at(v.join_date, v.join_port_id), v.leave_date ? `rời ${at(v.leave_date, v.leave_port_id)}` : null].filter(Boolean).join(' · ')
+      Object.assign(item, { before: `lên ${show(p.before)}`, after: `lên ${show(p.after)}` })
+    }
+    if (p.note) item.reason = p.note
+    return item
+  })
+}

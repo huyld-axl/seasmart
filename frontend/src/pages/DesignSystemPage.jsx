@@ -23,6 +23,7 @@ import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
+import PasswordField from '../components/ds/PasswordField'
 import PrimaryMark from '../components/ds/PrimaryMark'
 import QrScanButton from '../components/ds/QrScanButton'
 import { QuickContact } from '../components/ds/ContactActions'
@@ -750,6 +751,17 @@ export default function DesignSystemPage() {
             <Demo label="Quét mã QR cuối ô nhập (QrScanButton)"><Input style={{ maxWidth: 280 }} placeholder="WhatsApp, LINE, WeChat" suffix={<QrScanButton onText={() => {}} />} /></Demo>
             <Demo label="Liên hệ nhanh (QuickContact): chỉ hiện kênh người đó có"><QuickContact phone="+65 9123 4567" email="an@congty.com" whatsapp="+65 9123 4567" line="an.tan" wechat="an_tan" /></Demo>
             <Demo label="Liên hệ chính (PrimaryMark): chọn một trong nhiều dòng"><Space><PrimaryMark value onChange={() => {}} /><PrimaryMark value={false} onChange={() => {}} /></Space></Demo>
+          </div>
+        </div>
+      </Section>
+
+      <Section id="mat-khau" title="Ô mật khẩu">
+        <div className="dsp-stack">
+          <p className="dsp-note">Một kiểu duy nhất cho ô đặt mật khẩu: có hiện / ẩn, thanh độ mạnh và luật hiện sẵn dưới ô, đạt luật nào đổi xanh luật đó. Ô đăng nhập chỉ cần ô mật khẩu thường.</p>
+          <div className="ds-toggle-grid">
+            <Demo label="Chưa nhập"><PasswordField value="" email="hoa.pham@mcah.demo" /></Demo>
+            <Demo label="Chưa đạt"><PasswordField value="abc12" email="hoa.pham@mcah.demo" /></Demo>
+            <Demo label="Đạt đủ"><PasswordField value="Marine2026" email="hoa.pham@mcah.demo" /></Demo>
           </div>
         </div>
       </Section>

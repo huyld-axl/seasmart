@@ -9,6 +9,12 @@ const authService = {
     const user = rows[0]
     if (!user) throw { statusCode: 401, message: 'Email hoặc mật khẩu không đúng' }
     if (!user.is_active) throw { statusCode: 403, message: 'Tài khoản đã bị khóa' }
+    if (!user.activated_at) {
+      throw {
+        statusCode: 403,
+        message: 'Tài khoản chưa được kích hoạt. Mở email mời để đặt mật khẩu, hoặc liên hệ quản trị viên.',
+      }
+    }
 
     const valid = await bcrypt.compare(password, user.password_hash)
     if (!valid) throw { statusCode: 401, message: 'Email hoặc mật khẩu không đúng' }

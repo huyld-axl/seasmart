@@ -12,8 +12,8 @@ function guard(fastify, perm) {
 async function usersRoutes(fastify) {
   // GET /api/v1/users
   fastify.get('/', { ...guard(fastify, 'account.view'), schema: listUsersQuerySchema }, async (request) => {
-    const { role_id, is_active, email, page, limit } = request.query
-    const result = await userService.listUsers({ role_id, is_active, email }, { page, limit })
+    const { role_id, is_active, email, status, page, limit } = request.query
+    const result = await userService.listUsers({ role_id, is_active, email, status }, { page, limit })
     return { data: result.rows, total: result.total, page: result.page, limit: result.limit }
   })
 
@@ -28,6 +28,12 @@ async function usersRoutes(fastify) {
   fastify.post('/', { ...guard(fastify, 'account.update'), schema: createUserSchema }, async (request, reply) => {
     const user = await userService.createUser(request.body, request.access)
     return reply.code(201).send({ data: user })
+  })
+
+  // POST /api/v1/users/:id/resend-invite
+  fastify.post('/:id/resend-invite', guard(fastify, 'account.update'), async (request, reply) => {
+    await userService.resendInvite(request.params.id)
+    return reply.code(204).send()
   })
 
   // PATCH /api/v1/users/:id

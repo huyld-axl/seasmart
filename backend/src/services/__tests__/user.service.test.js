@@ -2,6 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const userService = require('../user.service')
+const emailService = require('../email.service')
+
+const sentInvites = []
+emailService.sendInvite = async (mail) => {
+  sentInvites.push(mail)
+}
 
 // Db giả có trạng thái, hiểu các câu SQL của user.service.
 function fakeDb(users, roles = [{ id: 1, code: 'admin', name: 'Quản trị viên' }, { id: 2, code: null, name: 'Nhân viên' }]) {
@@ -23,8 +29,8 @@ function fakeDb(users, roles = [{ id: 1, code: 'admin', name: 'Quản trị viê
       return [state.users.filter((u) => u.email === params[0] && !u.deleted_at && u.id !== (params[1] ?? -1)).map((u) => ({ id: u.id }))]
     }
     if (sql.startsWith('INSERT INTO "user"')) {
-      const [email, , role_id] = params
-      state.users.push({ id: state.nextId, email, role_id, is_active: 1, deleted_at: null })
+      const [email, full_name, role_id] = params
+      state.users.push({ id: state.nextId, email, full_name, role_id, is_active: 1, activated_at: null, deleted_at: null })
       return [{ insertId: state.nextId++ }]
     }
     if (sql.startsWith('UPDATE "user" SET deleted_at')) {
@@ -59,21 +65,31 @@ const actorStaff = { userId: 10, isAdmin: false }
 describe('tạo tài khoản', () => {
   it('chọn vai trò không tồn tại thì 400', async () => {
     const db = fakeDb([admin()])
-    await expect(userService.createUser({ email: 'n@x', password: 'secret1', role_id: 99 }, actorAdmin, db)).rejects.toMatchObject({ statusCode: 400 })
+    await expect(userService.createUser({ email: 'n@x', full_name: 'Phạm Thị Hoa', role_id: 99 }, actorAdmin, db)).rejects.toMatchObject({ statusCode: 400 })
   })
   it('người không phải Quản trị viên không gán được vai trò Quản trị viên', async () => {
     const db = fakeDb([admin(), staff(10)])
-    await expect(userService.createUser({ email: 'n@x', password: 'secret1', role_id: 1 }, actorStaff, db)).rejects.toMatchObject({ statusCode: 403 })
+    await expect(userService.createUser({ email: 'n@x', full_name: 'Phạm Thị Hoa', role_id: 1 }, actorStaff, db)).rejects.toMatchObject({ statusCode: 403 })
     expect(db.users).toHaveLength(2)
   })
   it('Quản trị viên tạo được tài khoản vai trò thường', async () => {
     const db = fakeDb([admin()])
-    const user = await userService.createUser({ email: 'n@x', password: 'secret1', role_id: 2 }, actorAdmin, db)
+    const user = await userService.createUser({ email: 'n@x', full_name: 'Phạm Thị Hoa', role_id: 2 }, actorAdmin, db)
     expect(user.role).toEqual({ id: 2, name: 'Nhân viên', is_system: false })
+  })
+  it('tài khoản mới ở trạng thái Chờ kích hoạt và được gửi thư mời kèm mã', async () => {
+    const db = fakeDb([admin()])
+    sentInvites.length = 0
+    const user = await userService.createUser({ email: 'n@x', full_name: 'Phạm Thị Hoa', role_id: 2 }, actorAdmin, db)
+    expect(user.status).toBe('PENDING')
+    expect(sentInvites).toHaveLength(1)
+    expect(sentInvites[0]).toMatchObject({ to: 'n@x', fullName: 'Phạm Thị Hoa', roleName: 'Nhân viên' })
+    expect(sentInvites[0].token).toMatch(/^[0-9a-f]{64}$/)
+    expect(db.users.find((u) => u.id === user.id).invite_token_hash).not.toBe(sentInvites[0].token)
   })
   it('email trùng thì 400', async () => {
     const db = fakeDb([admin(), staff(10)])
-    await expect(userService.createUser({ email: 's10@x', password: 'secret1', role_id: 2 }, actorAdmin, db)).rejects.toMatchObject({ statusCode: 400 })
+    await expect(userService.createUser({ email: 's10@x', full_name: 'Phạm Thị Hoa', role_id: 2 }, actorAdmin, db)).rejects.toMatchObject({ statusCode: 400 })
   })
 })
 

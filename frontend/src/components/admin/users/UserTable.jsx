@@ -1,20 +1,22 @@
-import { Switch, Table } from 'antd'
+import { Button, Table } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import RoleBadge from './RoleBadge'
+import StatusBadge from '../../ds/StatusBadge'
 import RowActions from '../../ds/RowActions'
 import { actionColumn } from '../../ds/actionColumn'
 import useAccountRights from '../../../hooks/useAccountRights'
 
 const formatDate = (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : '—')
 
-// Bảng tài khoản: email là chữ chính, vai trò là badge trung tính, công tắc cho phép đăng nhập, cột Thao tác Xem / Sửa / Xoá.
+// Bảng tài khoản: họ tên là chữ chính (email dưới), vai trò là badge trung tính, tình trạng, cột Thao tác Xem / Sửa / Xoá.
+// Tài khoản Chờ kích hoạt có nút Gửi lại lời mời; khoá / mở khoá nằm trong form sửa.
 export default function UserTable({
   data,
   loading,
   scroll = { x: 'max-content' },
   onEdit,
   onDelete,
-  onToggleActive,
+  onResendInvite,
 }) {
   const navigate = useNavigate()
   const rights = useAccountRights()
@@ -25,8 +27,8 @@ export default function UserTable({
       key: 'email',
       render: (_, user) => (
         <span className="ds-cell2" style={{ maxWidth: 320 }}>
-          <span className="ds-cell2__main">{user.email}</span>
-          <span className="ds-cell2__sub">Tạo ngày {formatDate(user.created_at)}</span>
+          <span className="ds-cell2__main">{user.full_name || user.email}</span>
+          <span className="ds-cell2__sub">{user.full_name ? user.email : `Tạo ngày ${formatDate(user.created_at)}`}</span>
         </span>
       ),
     },
@@ -37,24 +39,25 @@ export default function UserTable({
       render: (role) => <RoleBadge role={role} />,
     },
     {
-      title: 'Đăng nhập',
-      dataIndex: 'is_active',
-      key: 'is_active',
+      title: 'Tình trạng',
+      dataIndex: 'status',
+      key: 'status',
       render: (value, user) => (
-        <span
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
-        >
-          <Switch
-            checked={!!value}
-            disabled={!rights.canToggle(user)}
-            onChange={() => onToggleActive(user)}
-            aria-label={`Cho phép ${user.email} đăng nhập`}
-          />
-          <span style={{ color: value ? 'var(--foreground)' : 'var(--muted)' }}>
-            {value ? 'Cho phép' : 'Đã khoá'}
-          </span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
+          <StatusBadge group="account" value={value} />
+          {value === 'PENDING' && rights.canEdit(user) ? (
+            <Button type="link" size="small" onClick={() => onResendInvite(user)}>
+              Gửi lại lời mời
+            </Button>
+          ) : null}
         </span>
       ),
+    },
+    {
+      title: 'Đăng nhập gần nhất',
+      dataIndex: 'last_login_at',
+      key: 'last_login_at',
+      render: (value) => formatDate(value),
     },
     actionColumn(
       (user) => (

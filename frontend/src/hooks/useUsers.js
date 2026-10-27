@@ -55,3 +55,7 @@ export function useToggleActive() {
     },
   })
 }
+
+export function useResendInvite() {
+  return useMutation({ mutationFn: (id) => usersApi.resendInvite(id) })
+}

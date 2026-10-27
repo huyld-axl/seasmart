@@ -24,7 +24,7 @@ async function seed() {
   const hash = await bcrypt.hash(password, 12)
   const [[admin]] = await db.query('SELECT id FROM "role" WHERE code = \'admin\'')
   if (!admin) throw new Error('Chưa có vai trò Quản trị viên: chạy npm run migrate trước')
-  await db.query('INSERT INTO "user" (email, password_hash, role_id, verification_status) VALUES (?, ?, ?, \'verified\')', [email, hash, admin.id])
+  await db.query('INSERT INTO "user" (email, password_hash, role_id, verification_status, activated_at) VALUES (?, ?, ?, \'verified\', NOW())', [email, hash, admin.id])
   console.log('Admin account created')
 }
 seed().catch((error) => {

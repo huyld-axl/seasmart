@@ -38,6 +38,12 @@ export const STATUS = {
     NEEDS_REVIEW: { label: 'Cần xem lại', tone: 'warning', mark: 'ellipsis' },
     BLOCKED: { label: 'Bị chặn', tone: 'error', mark: 'cross' },
   },
+  // Tài khoản đăng nhập: máy chủ trả `status` (user.status).
+  account: {
+    ACTIVE: { label: 'Hoạt động', tone: 'success', mark: 'check' },
+    PENDING: { label: 'Chờ kích hoạt', tone: 'warning', mark: 'clock' },
+    LOCKED: { label: 'Đã khoá', tone: 'neutral', mark: 'lock' },
+  },
   seaService: {
     ONGOING: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
     OVERLAP: { label: 'Trùng thời gian', tone: 'warning', mark: 'overlap' },

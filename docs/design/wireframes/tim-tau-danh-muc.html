@@ -1,0 +1,938 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Tìm tàu từ danh mục</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+
+  /* Wireframe Quản trị > Vai trò và quyền. Token chép từ frontend/src/theme/tokens.js, khung app như AdminLayout. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-foreground: #fff; --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --secondary: #e7e8ec; --secondary-hover: #dbdce2;
+    --item-hover: #f4f4f6; --surface-hover: #f8f8fa; --button-hover: #f1f1f3; --ring-focus: rgba(0, 51, 102, 0.1);
+    --neutral: #52525c; --neutral-bg: #f4f4f5; --success: #007a55; --success-bg: #ecfdf5;
+    --warning: #bb4d00; --warning-bg: #fffbeb; --warning-border: #fee685;
+    --error-strong: #c10007; --error-bg: #fef2f2; --error-border: #ffc9c9; --error-text: #e7000b; --danger: #c70036;
+    --table-header: #e9eef5; --chip-bg: #eef3f8;
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px;
+    --elevation-popover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #dfe1e6; color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  svg.i { width: 1em; height: 1em; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ===== Thanh wireframe (không thuộc thiết kế) ===== */
+  .wf-bar { position: sticky; top: 0; z-index: 100; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px; background: #1f1f1f; color: #eee; font-size: 13px; }
+  .wf-bar b { font-weight: 600; color: #fff; }
+  .wf-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .wf-group > span { margin-right: 4px; color: #aaa; }
+  .wf-btn { height: 28px; padding: 0 10px; border: 1px solid #444; border-radius: 6px; background: #2b2b2b; color: #eee; cursor: pointer; }
+  .wf-btn:hover { background: #383838; }
+  .wf-btn[aria-pressed="true"] { border-color: #fff; background: #fff; color: #111; }
+  .wf-notes { margin: 16px; padding: 0; border: 1px solid #c9ccd3; border-radius: 12px; background: #fffef6; }
+  .wf-notes summary { padding: 12px 16px; font-weight: 600; cursor: pointer; }
+  .wf-notes__body { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 8px 32px; padding: 0 16px 16px; }
+  .wf-notes h3 { margin: 4px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #555; }
+  .wf-notes ol { margin: 0; padding-left: 20px; }
+  .wf-notes li { margin: 0 0 6px; }
+  .wf-notes li b { font-weight: 600; }
+  .wf-stage { padding: 0 16px 32px; }
+  .wf-stage--phone { display: grid; place-items: start center; }
+  .wf-frame { overflow: hidden; border: 1px solid #c9ccd3; border-radius: 12px; background: var(--background); }
+  .wf-stage--phone .wf-frame { width: 375px; max-width: 100%; border-radius: 28px; }
+
+  /* ===== Khung app ===== */
+  .app { position: relative; display: flex; height: min(900px, calc(100vh - 80px)); min-height: 640px; }
+  .wf-stage--phone .app { height: 812px; }
+  .sider { display: flex; flex-direction: column; flex-shrink: 0; width: 232px; border-right: 1px solid var(--border); background: var(--surface); }
+  .sider__head { display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 20px; border-bottom: 1px solid var(--border); font-weight: 700; letter-spacing: .02em; color: var(--primary); }
+  .sider__logo { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 13px; }
+  .sider__nav { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; overflow: auto; }
+  .nav-sep { margin: 12px 12px 4px; color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .nav-item { display: flex; align-items: center; gap: 10px; height: 38px; padding: 0 12px; border-radius: 10px; color: rgb(44 44 44 / .7); white-space: nowrap; }
+  .nav-item svg { font-size: 16px; }
+  .nav-item[aria-current="page"] { background: var(--secondary); color: var(--foreground); font-weight: 500; }
+  .main { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+  .topbar { display: flex; flex-shrink: 0; align-items: center; gap: 12px; height: 56px; padding: 0 16px 0 24px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .topbar__title { margin: 0; font-size: 16px; font-weight: 600; }
+  .topbar__right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .avatar { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; background: #e6edf5; color: #1a4775; font-size: 12px; font-weight: 600; }
+  .tabs { display: flex; flex-shrink: 0; gap: 4px; padding: 0 16px; overflow-x: auto; border-bottom: 1px solid var(--border); background: var(--surface); scrollbar-width: none; }
+  .tab { position: relative; display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; height: 44px; padding: 0 12px; color: var(--muted); white-space: nowrap; }
+  .tab[aria-current="page"] { color: var(--foreground); font-weight: 500; }
+  .tab[aria-current="page"]::after { content: ''; position: absolute; right: 12px; bottom: 0; left: 12px; height: 2px; border-radius: 2px 2px 0 0; background: var(--foreground); }
+  .tab__new { padding: 0 6px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); font-size: 10px; font-weight: 600; }
+  .content { display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 0; padding: 20px 24px 16px; }
+  .burger { display: none; }
+
+  /* ===== Control ===== */
+  .btn { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); font-weight: 500; white-space: nowrap; cursor: pointer; }
+  .btn:hover { background: var(--button-hover); }
+  .btn svg { font-size: 16px; }
+  .btn--primary { border-color: transparent; background: var(--primary); color: #fff; }
+  .btn--primary:hover { background: var(--primary-hover); }
+  .btn--danger { border-color: transparent; background: var(--danger); color: #fff; }
+  .btn--ghost { border-color: transparent; background: transparent; color: var(--muted); }
+  .btn--ghost:hover { background: rgb(44 44 44 / .05); color: var(--foreground); }
+  .btn--sm { min-height: 32px; padding: 0 10px; border-radius: 8px; font-size: 13px; }
+  .btn--icon { width: 32px; padding: 0; }
+  .btn:disabled { cursor: not-allowed; opacity: .45; }
+  .btn:disabled:hover { background: var(--primary); }
+  .input { width: 100%; height: 40px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); outline: none; }
+  .input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .input--error { border-color: var(--error-text); }
+  textarea.input { height: 72px; padding: 10px 14px; resize: vertical; }
+  select.input { appearance: none; padding-right: 36px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23707070' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px; }
+  .search { position: relative; display: flex; align-items: center; flex: 1 1 220px; max-width: 300px; }
+  .search svg { position: absolute; left: 12px; color: var(--muted); }
+  .search .input { height: 36px; padding-left: 36px; border-radius: 10px; }
+  .field { display: grid; gap: 6px; }
+  .field__label { font-weight: 500; }
+  .field__label i { color: var(--error-text); font-style: normal; }
+  .field__hint { margin: 0; color: var(--muted); font-size: 12px; }
+  .field__err { margin: 0; color: var(--error-text); font-size: 12px; }
+  .chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; background: var(--chip-bg); color: var(--primary); font-size: 11px; font-weight: 500; white-space: nowrap; }
+  .chip--lock { gap: 4px; background: var(--neutral-bg); color: var(--neutral); }
+  .chip--add { background: var(--success-bg); color: var(--success); }
+  .chip--rm { background: var(--error-bg); color: var(--error-strong); }
+  .muted { color: var(--muted); }
+
+  /* ===== Đầu trang ===== */
+  .page-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 16px; }
+  .page-head h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  .page-head p { max-width: 720px; margin: 4px 0 0; color: var(--muted); }
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-left: auto; color: var(--muted); font-size: 12px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* Thanh lưu dính đáy, giống sf-savebar của form */
+  .savebar { display: flex; flex-shrink: 0; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 12px 16px 12px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--elevation-popover); }
+  .savebar__msg { display: flex; flex: 1 1 260px; align-items: center; gap: 8px; min-width: 0; color: var(--neutral); }
+  .savebar__msg svg { font-size: 16px; }
+  .savebar__msg--ok svg { color: var(--success); }
+  .savebar__msg b { color: var(--foreground); font-weight: 600; }
+  .savebar__actions { display: flex; gap: 8px; margin-left: auto; }
+
+  /* Menu ⋯ ở đầu cột */
+  .menu { position: fixed; z-index: 60; display: grid; min-width: 220px; padding: 4px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--elevation-popover); color: var(--foreground); font-size: 14px; font-weight: 400; }
+  .menu__item { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: none; text-align: left; cursor: pointer; }
+  .menu__item:hover { background: var(--item-hover); }
+  .menu__item svg { color: var(--muted); }
+  .menu__item--danger, .menu__item--danger svg { color: var(--danger); }
+  .menu__sep { height: 1px; margin: 4px 0; background: var(--border); }
+  .menu__meta { padding: 8px 12px 4px; color: var(--muted); font-size: 12px; }
+
+  /* Hộp thoại */
+  .scrim { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgb(0 0 0 / .35); }
+  .modal { display: flex; flex-direction: column; width: min(520px, 100%); max-height: 100%; border-radius: var(--radius-lg); background: var(--surface); box-shadow: var(--elevation-modal); }
+  .modal--wide { width: min(640px, 100%); }
+  .modal__head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 20px 0; }
+  .modal__title { margin: 0; font-size: 18px; font-weight: 600; }
+  .modal__desc { margin: 4px 0 0; color: var(--muted); }
+  .modal__body { display: grid; gap: 16px; padding: 20px; overflow: auto; }
+  .modal__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 0 20px 20px; }
+  .modal__icon { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); font-size: 20px; }
+  .modal__icon--danger { background: var(--error-bg); color: var(--error-strong); }
+  .diff { border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .diff + .diff { margin-top: -4px; }
+  .diff__head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .diff__head b { font-weight: 600; }
+  .diff__head span { color: var(--muted); font-size: 12px; }
+  .diff__rows { display: grid; gap: 6px; padding: 10px 14px; }
+  .diff__row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .diff__row > span:first-child { width: 52px; color: var(--muted); font-size: 12px; }
+  .banner { display: flex; gap: 10px; padding: 12px 14px; border: 1px solid var(--warning-border); border-radius: var(--radius-md); background: var(--warning-bg); color: #6b3a00; font-size: 13px; }
+  .banner svg { flex-shrink: 0; margin-top: 2px; color: var(--warning); font-size: 16px; }
+  .banner--info { border-color: #cfdcea; background: var(--chip-bg); color: var(--primary); }
+  .banner--info svg { color: var(--primary); }
+
+  .toast { position: absolute; right: 24px; bottom: 96px; z-index: 70; display: flex; align-items: center; gap: 10px; max-width: 420px; padding: 12px 16px; border-radius: 12px; background: #1f1f1f; color: #fff; box-shadow: var(--elevation-popover); }
+  .toast svg { color: #6ee7b7; font-size: 16px; }
+
+  /* ===== Điện thoại: chọn một vai trò, mỗi quyền là một ToggleRow ===== */
+  .is-phone .sider { display: none; }
+  .is-phone .burger { display: inline-flex; }
+  .is-phone .topbar { padding-left: 8px; }
+  .is-phone .content { gap: 12px; padding: 16px 16px 12px; overflow: auto; }
+  .is-phone .page-head h1 { font-size: 18px; }
+  .is-phone .toast { right: 16px; bottom: 150px; left: 16px; }
+  .mrole { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .mrole__top { display: flex; align-items: center; gap: 8px; }
+  .mrole__top b { font-size: 15px; font-weight: 600; }
+  .mmod { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .mmod__head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; font-weight: 600; }
+  .mmod__head .ic { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--chip-bg); color: var(--primary); font-size: 15px; }
+  .mmod__head small { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 400; }
+  .mmod__body { display: grid; gap: 8px; padding: 0 12px 12px; }
+  .ds-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 8px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); }
+  .ds-toggle-row.is-changed { border-color: var(--primary); background: var(--primary-light); }
+  .ds-toggle-row__text { display: grid; min-width: 0; }
+  .ds-toggle-row__hint { color: var(--muted); font-size: 12px; line-height: 1.35; }
+  .ds-toggle-row__end { display: inline-flex; flex-shrink: 0; align-items: center; gap: 10px; }
+  .ds-toggle-row__state { color: var(--muted); font-size: 12px; }
+  .sw { position: relative; width: 44px; height: 22px; padding: 0; border: 0; border-radius: 999px; background: rgb(0 0 0 / .25); cursor: pointer; transition: background .15s; }
+  .sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgb(0 0 0 / .2); transition: left .15s; }
+  .sw[aria-checked="true"] { background: var(--primary); }
+  .sw[aria-checked="true"]::after { left: 24px; }
+  .sw:disabled { cursor: not-allowed; opacity: .45; }
+  .is-phone .savebar { position: sticky; bottom: 0; padding: 12px; }
+  .is-phone .savebar__actions { width: 100%; }
+  .is-phone .savebar__actions .btn { flex: 1; }
+
+
+  /* ===== Riêng màn này: danh sách Tàu có nhóm gợi ý từ danh mục ===== */
+  .lt-card { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .lt-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .lt-bar .search { max-width: 320px; }
+  .lt-bar .end { margin-left: auto; }
+  .status-tabs { display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: rgb(44 44 44 / .05); }
+  .status-tabs span { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 8px; color: var(--muted); }
+  .status-tabs span[aria-current="true"] { background: var(--surface); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .06); }
+  .status-tabs small { color: var(--muted); font-size: 11px; }
+  .lt-scroll { flex: 1; min-height: 0; overflow: auto; }
+  .lt-cols, .lt-row { display: grid; grid-template-columns: minmax(240px, 2.2fr) 104px minmax(130px, 1.2fr) minmax(130px, 1.2fr) 84px 104px; gap: 12px; align-items: center; padding: 0 16px; }
+  .lt-cols { position: sticky; top: 0; z-index: 2; height: 40px; border-bottom: 1px solid var(--border); background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 600; }
+  .lt-cols .r, .lt-row .r { text-align: right; }
+  .lt-row { min-height: 60px; padding-top: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .lt-row--mcah:hover { background: var(--surface-hover); cursor: pointer; }
+  .lt-who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .lt-tile { display: grid; flex-shrink: 0; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--chip-bg); color: var(--primary); font-size: 18px; }
+  .lt-tile--cat { background: var(--neutral-bg); color: var(--neutral); }
+  .lt-main { overflow: hidden; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+  .lt-sub { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .lt-sec { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-height: 36px; padding: 6px 16px; border-bottom: 1px solid var(--border); background: var(--surface-hover); color: var(--muted); font-size: 12px; }
+  .lt-sec b { color: var(--foreground); font-weight: 600; }
+  .lt-sec .hint { margin-left: auto; }
+  .lt-sec--cat { border-top: 1px solid var(--border); }
+  .chip--ex { background: var(--warning-bg); color: var(--warning); }
+  .chip--src { background: var(--chip-bg); color: var(--primary); }
+  .lt-more { display: flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border: 0; border-bottom: 1px solid var(--border); background: none; color: var(--primary); font-weight: 500; width: 100%; text-align: left; cursor: pointer; }
+  .lt-more:hover { background: var(--item-hover); }
+  .lt-note { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--muted); }
+  .lt-note svg { font-size: 16px; }
+  .sk { display: block; height: 12px; border-radius: 6px; background: linear-gradient(90deg, #ececf0, #f6f6f8, #ececf0); }
+  .lt-empty { display: grid; justify-items: center; gap: 8px; padding: 56px 24px; text-align: center; }
+  .lt-empty h3 { margin: 0; font-size: 16px; font-weight: 600; }
+  .lt-empty p { max-width: 420px; margin: 0; color: var(--muted); }
+  .lt-empty .acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 8px; }
+  .lt-err { color: var(--error-strong); }
+  .lt-foot { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+
+  /* ===== Form Thêm tàu (khung FormFrame có sẵn, chỉ thêm banner và chip) ===== */
+  .ff { display: flex; flex: 1; flex-direction: column; gap: 12px; min-height: 0; }
+  .ff-scroll { display: grid; flex: 1; align-content: start; gap: 12px; min-height: 0; overflow: auto; }
+  .ff-card { display: grid; gap: 14px; padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .ff-card h2 { margin: 0; font-size: 14px; font-weight: 600; }
+  .ff-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 14px 16px; }
+  .is-phone .ff-grid { grid-template-columns: 1fr; }
+  .field__label { display: flex; align-items: center; gap: 8px; }
+  .field--cat .input { border-color: #b9c9db; background-color: #f9fbfd; }
+  .field__sugg { margin: 0; color: var(--warning); font-size: 12px; }
+  .back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .is-phone .lt-bar { padding: 10px 12px; }
+  .is-phone .lt-bar .search { max-width: none; flex-basis: 100%; }
+  .is-phone .lt-bar .end { margin-left: 0; width: 100%; }
+  .is-phone .lt-bar .end .btn { width: 100%; }
+  .m-list { margin: 0; padding: 0; list-style: none; }
+  .m-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .m-row .lt-who { flex: 1; }
+  .m-row .lt-sub, .m-row .lt-main { white-space: normal; }
+
+  .lt-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--surface-hover); }
+  .lt-scope .hint { color: var(--muted); font-size: 12px; }
+  .seg { display: inline-grid; grid-auto-flow: column; gap: 2px; padding: 3px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--foreground) 6%, transparent); }
+  .seg button { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border: 0; border-radius: 9px; background: none; color: color-mix(in srgb, var(--foreground) 70%, transparent); white-space: nowrap; cursor: pointer; }
+  .seg button small { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .seg button[aria-pressed="true"] { background: var(--surface); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .06), 0 0 0 1px rgb(0 0 0 / .04); }
+  .pager { display: inline-flex; align-items: center; gap: 4px; }
+  .pager .btn.is-cur { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .is-phone .lt-scope { padding: 10px 12px; }
+  .is-phone .seg { display: grid; width: 100%; grid-auto-columns: 1fr; }
+  .is-phone .seg button { justify-content: center; padding: 0 8px; }
+  .is-phone .lt-scope .hint { display: none; }
+  .is-phone .lt-foot { flex-wrap: wrap; gap: 8px; }
+
+  .lt-scope .seg button svg { font-size: 14px; }
+  .lt-link { padding: 0; border: 0; background: none; color: var(--primary); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+  .ol { display: grid; gap: 16px; margin: 16px; padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+  .ol__head { display: flex; align-items: center; gap: 12px; }
+  .ol__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px 24px; margin: 0; }
+  .ol__grid dt { color: var(--muted); font-size: 12px; }
+  .ol__grid dd { margin: 2px 0 0; font-weight: 500; overflow-wrap: anywhere; }
+  .ol__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; }
+  .ol__acts { display: inline-flex; gap: 8px; }
+  .lt-note .btn { margin-left: 4px; }
+  .tfix { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12px; }
+  .fld-act { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .field__ok { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--success); font-size: 12px; }
+  .qa { display: grid; gap: 12px; padding: 12px 14px; border: 1px solid var(--border-focus); border-radius: var(--radius-md); background: var(--primary-light); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .qa__head { display: flex; align-items: center; justify-content: space-between; }
+  .qa__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+  .qa__grid .field:last-child { grid-column: 1 / -1; }
+  .qa__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .qa__acts { display: inline-flex; gap: 8px; }
+  .is-phone .qa__grid { grid-template-columns: 1fr; }
+  .is-phone .ol { margin: 12px; padding: 14px; }
+
+  .main { position: relative; }
+  .hs { position: relative; flex: 1; max-width: 680px; margin: 0 auto; }
+  .hs__box { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 5px 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface-hover); transition: box-shadow .12s, border-color .12s; }
+  .hs__box:focus-within { border-color: var(--border-focus); background: var(--surface); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .hs__box > svg { color: var(--muted); font-size: 16px; }
+  .hs__input { flex: 1; min-width: 0; height: 100%; border: 0; background: none; outline: none; }
+  .hs__input::placeholder { color: var(--muted); }
+  .hs__x { display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 999px; background: none; color: var(--muted); cursor: pointer; }
+  .hs__x:hover { background: rgb(44 44 44 / .08); }
+  .hs__x[hidden] { display: none; }
+  .hs__chip { display: inline-flex; flex-shrink: 0; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--foreground); font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer; }
+  .hs__chip:hover { background: var(--button-hover); }
+  .hs__chip svg { font-size: 14px; }
+  .hs__chip[aria-pressed="true"] { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .hs.is-deep .hs__box { border-color: var(--border-focus); background: var(--surface); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .dd { position: absolute; top: calc(100% + 8px); right: 0; left: 0; z-index: 40; max-height: min(600px, calc(100vh - 150px)); padding: 6px 0; overflow: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: var(--elevation-popover); }
+  .dd[hidden] { display: none; }
+  .dd__sec { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 4px; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .dd__sec small { margin-left: 6px; font-weight: 400; }
+  .dd__sec b { color: var(--foreground); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .dd__row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; padding: 6px 16px; border: 0; background: none; text-align: left; cursor: pointer; }
+  .dd__row:hover { background: var(--item-hover); }
+  .dd__row .lt-tile { width: 32px; height: 32px; font-size: 16px; }
+  .dd__txt { display: grid; flex: 1; min-width: 0; }
+  .dd__txt .lt-sub { display: block; }
+  .dd__more { display: flex; align-items: center; justify-content: space-between; width: 100%; height: 36px; padding: 0 16px; border: 0; background: none; color: var(--primary); font-weight: 500; cursor: pointer; }
+  .dd__more:hover { background: var(--item-hover); }
+  kbd { padding: 1px 6px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); color: var(--muted); font: 11px/1.5 var(--app-font); }
+  .dd__hint, .dd__none { padding: 8px 16px; color: var(--muted); font-size: 12px; }
+  .dd__tip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 12px 16px; color: var(--muted); }
+  .dd__tip svg { flex-shrink: 0; font-size: 16px; }
+  .dd__tip > span { flex: 1 1 200px; }
+  .dd__tip--err { color: var(--error-strong); }
+  .dd__deep { display: flex; align-items: center; gap: 12px; width: calc(100% - 16px); margin: 6px 8px 2px; padding: 10px 12px; border: 1px dashed rgb(0 51 102 / .35); border-radius: 12px; background: var(--chip-bg); color: var(--primary); text-align: left; cursor: pointer; }
+  .dd__deep:hover { border-color: var(--primary); background: #fff; }
+  .dd__deep svg { font-size: 18px; }
+  .dd__deep b { font-weight: 600; }
+  .dd__empty { display: grid; justify-items: center; gap: 4px; padding: 20px 16px 8px; text-align: center; }
+  .dd__row--btn { margin-top: 2px; }
+  .dd__deephead { display: flex; align-items: center; gap: 12px; padding: 10px 16px 12px; border-bottom: 1px solid var(--border); }
+  .dd__deephead > svg { font-size: 20px; color: var(--primary); }
+  .dd__deephead > div { display: grid; flex: 1; }
+  .dd__deephead span { color: var(--muted); font-size: 12px; }
+  .dd__ready { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
+  .dd__ready > div { display: grid; gap: 2px; }
+  .dd__ready span { font-size: 12px; }
+  .steps { display: grid; gap: 2px; margin: 0; padding: 12px 16px 14px; list-style: none; }
+  .steps li { display: flex; align-items: center; gap: 10px; min-height: 30px; color: var(--muted); }
+  .steps li.done { color: var(--success); }
+  .steps li.now { color: var(--foreground); font-weight: 500; }
+  .steps svg { font-size: 16px; }
+  .spin { width: 14px; height: 14px; margin: 1px; border: 2px solid var(--border-strong); border-top-color: var(--primary); border-radius: 999px; animation: sp .8s linear infinite; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .ol--dd { margin: 10px 12px 12px; padding: 14px 16px; }
+  .ol--dd .ol__grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .fchip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px 0 12px; border-radius: 999px; background: var(--chip-bg); color: var(--primary); font-size: 12px; }
+  .fchip button { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 999px; background: none; color: inherit; cursor: pointer; }
+  .fchip button:hover { background: rgb(0 51 102 / .12); }
+  .is-phone .topbar { gap: 6px; padding-right: 10px; }
+  .is-phone .topbar__title { display: none; }
+  .is-phone .hs { position: static; max-width: none; margin: 0; }
+  .is-phone .hs__chip { width: 30px; padding: 0; justify-content: center; }
+  .is-phone .hs__chip span { display: none; }
+  .is-phone .dd { top: 60px; right: 8px; left: 8px; }
+  .is-phone .dd__row .btn { padding: 0 8px; }
+  .is-phone .dd__row .lt-main { white-space: normal; }
+  .is-phone .ol--dd .ol__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+  .scrim { z-index: 60; }
+  .sp-scrim { position: absolute; inset: 0; z-index: 50; background: rgb(0 0 0 / .3); }
+  .sp { position: absolute; top: 0; right: 0; bottom: 0; z-index: 51; display: flex; flex-direction: column; width: min(660px, 100%); background: var(--surface); box-shadow: var(--elevation-modal); }
+  .sp__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .sp__head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+  .sp__head p { margin: 2px 0 0; color: var(--muted); }
+  .sp__search { padding: 12px 20px; border-bottom: 1px solid var(--border); }
+  .sp__body { flex: 1; min-height: 0; overflow: auto; }
+  .sp .m-row { padding: 10px 20px; }
+  .hs__cat { flex-shrink: 0; height: 40px; border-radius: 999px; }
+  .hs { display: flex; align-items: center; gap: 8px; }
+  .hs__box { flex: 1; min-width: 0; }
+  .inrow { display: flex; gap: 8px; }
+  .inrow .input { flex: 1; min-width: 0; }
+  .smart { flex-shrink: 0; border-color: var(--primary); color: var(--primary); }
+  .smart:disabled { border-color: var(--border-strong); color: var(--muted); opacity: 1; background: var(--surface-hover); }
+  .smart:disabled:hover { background: var(--surface-hover); }
+  .field--chg .input { border-color: var(--primary); background-color: var(--primary-light); }
+  .chip svg { margin-right: 3px; font-size: 11px; }
+  .cmpcard { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+  table.cmp { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.cmp th { padding: 6px 8px; border-bottom: 1px solid var(--border-strong); color: var(--muted); font-size: 12px; font-weight: 500; text-align: left; }
+  table.cmp td { padding: 8px; border-bottom: 1px solid var(--border); }
+  table.cmp input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--primary); }
+  .is-phone .hs__cat { width: 40px; padding: 0; }
+  .is-phone .hs__cat span { display: none; }
+  .is-phone .hs { position: static; }
+  .is-phone .inrow { flex-wrap: wrap; }
+  .is-phone .modal__foot .btn { flex: 1 1 100%; }
+</style></head>
+<body>
+
+<div class="wf-bar">
+  <b>Wireframe · Tàu › Tìm tàu từ danh mục tàu thế giới</b>
+  <div class="wf-group"><span>Khung</span><button class="wf-btn" data-wf="frame:desk">Máy tính</button><button class="wf-btn" data-wf="frame:phone">Điện thoại</button></div>
+  <div class="wf-group"><span>Trang Tàu</span>
+    <button class="wf-btn" data-wf="st:base">Danh sách thường</button>
+    <button class="wf-btn" data-wf="st:filter">Gõ "maru"</button>
+    <button class="wf-btn" data-wf="st:none">Không khớp</button>
+    <button class="wf-btn" data-wf="st:imo">Gõ IMO chưa có</button>
+  </div>
+  <div class="wf-group"><span>Danh mục tàu thế giới</span>
+    <button class="wf-btn" data-wf="st:p-empty">Vừa mở</button>
+    <button class="wf-btn" data-wf="st:p-maru">"maru" (nhiều, phân trang)</button>
+    <button class="wf-btn" data-wf="st:p-ex">Khớp tên cũ</button>
+    <button class="wf-btn" data-wf="st:p-none">Không kết quả</button>
+    <button class="wf-btn" data-wf="st:p-load">Đang tìm</button>
+    <button class="wf-btn" data-wf="st:p-err">Lỗi</button>
+  </div>
+  <div class="wf-group"><span>Xác nhận khi Thêm</span>
+    <button class="wf-btn" data-wf="st:s-confirm">Hỏi Lấy thông minh</button>
+    <button class="wf-btn" data-wf="st:s-cool">Đang chờ 2 phút</button>
+    <button class="wf-btn" data-wf="st:s-load">Đang lấy</button>
+    <button class="wf-btn" data-wf="st:s-err">Lỗi</button>
+  </div>
+  <div class="wf-group"><span>Form</span>
+    <button class="wf-btn" data-wf="st:f-cat">Từ danh mục</button>
+    <button class="wf-btn" data-wf="st:f-smart">Sau khi lấy thông minh</button>
+    <button class="wf-btn" data-wf="st:f-type">Loại tàu không khớp</button>
+    <button class="wf-btn" data-wf="st:f-qa">Thêm nhanh loại tàu</button>
+    <button class="wf-btn" data-wf="st:f-manual">Nhập tay + IMO</button>
+    <button class="wf-btn" data-wf="st:f-edit">Sửa tàu</button>
+    <button class="wf-btn" data-wf="st:f-cmp">Sửa tàu: so sánh</button>
+  </div>
+  <span style="color:#aaa">Gõ thử vào ô tìm ở header (lọc ngay bảng); bấm Danh mục tàu thế giới; bấm Thêm.</span>
+</div>
+
+<details class="wf-notes" open>
+  <summary>Ghi chú (bản 6, chờ duyệt): ô tìm lọc bảng, Danh mục tàu thế giới là panel, Lấy thông minh có xác nhận và thời gian chờ 2 phút</summary>
+  <div class="wf-notes__body">
+    <div>
+      <h3>Trang Tàu</h3>
+      <ol>
+        <li><b>Ô tìm ở header</b> chỉ lọc bảng bên dưới, giống mọi màn danh sách khác: gõ là lọc, có phân trang, có nút xoá. Không mở kết quả riêng dưới ô tìm.</li>
+        <li><b>Nút "Danh mục tàu thế giới"</b> nằm ngay cạnh ô tìm. Mở ra một <b>panel bên phải</b> (SlidePanel có sẵn) giữ nguyên trang Tàu phía sau.</li>
+        <li>Không có tàu nào khớp trong bảng: hiện nút mở Danh mục tàu thế giới. Nếu từ khoá là một số IMO 7 chữ số: nút <b>Thêm tàu IMO …</b> mở form với IMO điền sẵn (người dùng có thể bấm Lấy thông minh ở đó).</li>
+      </ol>
+      <h3>Panel Danh mục tàu thế giới</h3>
+      <ol>
+        <li>Ô tìm riêng (tên, tên cũ, IMO, MMSI; từ 2 ký tự). Kho có hơn 700 nghìn tàu nên lúc mới mở chỉ nhắc gõ để tìm, không liệt kê.</li>
+        <li>Mỗi dòng: tên (kèm chip "Tên cũ" nếu khớp qua tên cũ), loại · cờ · MMSI, IMO, nút <b>Thêm</b>. Có phân trang ở chân panel. Tàu đã có trong MCAH không hiện ở đây.</li>
+        <li>Trạng thái: vừa mở, nhiều kết quả (phân trang), khớp tên cũ, không kết quả, đang tìm, lỗi.</li>
+      </ol>
+      <h3>Bấm Thêm: hỏi "Lấy thông tin thông minh?"</h3>
+      <ol>
+        <li>Tàu có IMO hợp lệ: hiện hộp xác nhận. <b>Không</b> thì mở form với thông tin danh mục. <b>Lấy thông tin thông minh</b> thì gọi API ngoài rồi mở form đã điền thêm năm đóng, trọng tải, quản lý… (chỉ vào ô còn trống), kèm chip "Thông minh".</li>
+        <li>Tàu không có IMO hoặc IMO sai số kiểm tra: không hỏi, mở form luôn (không có gì để tra).</li>
+        <li><b>Thời gian chờ 2 phút cho mỗi tàu.</b> Trong lúc chờ, nút xác nhận mờ và ghi "Lấy lại sau 1:45" đếm ngược; hết giờ tự mở lại. Thời gian chờ tính khi nguồn <b>đã trả lời</b> (có hoặc không có tàu); nguồn lỗi thì không tính, bấm Thử lại được ngay.</li>
+        <li>Không thấy tàu trên nguồn ngoài: vẫn mở form từ danh mục, báo ở đầu form.</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Form Thêm / Sửa tàu</h3>
+      <ol>
+        <li><b>Nút "Lấy thông minh" nằm ngay bên phải ô IMO</b>, dùng chung thời gian chờ 2 phút theo từng tàu với hộp xác nhận (vừa lấy ở danh sách thì nút ở form cũng đang đếm ngược). Mờ khi IMO trống hoặc sai số kiểm tra, kèm dòng giải thích.</li>
+        <li><b>Thêm tàu:</b> chỉ điền vào ô còn trống, giữ nguyên ô người dùng đã nhập. Báo "Đã lấy thêm n trường".</li>
+        <li><b>Sửa tàu:</b> không bao giờ ghi đè. Hiện bảng so sánh Hiện tại | Thông minh; ô trống được chọn sẵn, ô khác giá trị thì để người dùng quyết định (chip "Khác"). Bấm Áp dụng n trường thì các trường đó thành "Đã sửa", và chỉ ghi vào tàu khi bấm Lưu thay đổi.</li>
+        <li><b>Loại tàu không khớp:</b> chọn loại gần nhất, hoặc <b>Thêm nhanh loại tàu</b> ngay tại ô (tên Anh điền sẵn, tên Việt bắt buộc, mã tự sinh; cần quyền <code>catalog.update</code>).</li>
+        <li>Chủ tàu từ nguồn ngoài chưa khớp đối tác: chỉ gợi ý. Cờ không khớp: để trống.</li>
+      </ol>
+      <h3>API</h3>
+      <ol>
+        <li>Bảng tàu: <code>GET /admin/master/vessels?search=&amp;page=</code> (đã có).</li>
+        <li>Panel: <code>GET /admin/master/vessels/catalog?q=&amp;page=&amp;limit=20</code> trả <code>{ data, total }</code>, loại tàu đã có bằng <code>NOT EXISTS</code> trên toàn bảng vessel.</li>
+        <li>Lấy thông minh: <code>GET /admin/master/vessels/lookup/:imo</code> (đề xuất, không ghi DB). <b>Server giữ thời gian chờ 2 phút theo từng IMO</b> (trả bản cũ trong bộ đệm kèm thời điểm, hoặc 429 kèm số giây còn lại), không chỉ dựa vào nút ở giao diện. Thêm giới hạn chung 20 lượt mỗi phút cho mỗi người dùng.</li>
+        <li><b>Nguồn ngoài chỉ có đúng một cách tra: theo số IMO</b> (<code>GET /api/vessel/{imo}</code>), nên Lấy thông minh luôn cần IMO hợp lệ. Tìm theo tên là việc của Danh mục tàu thế giới. Chưa cấu hình nguồn (đang chờ <code>ENC_KEY</code>) thì ẩn mọi nút Lấy thông minh.</li>
+      </ol>
+      <h3>Control mới (thêm vào <code>components/ds</code> và <code>/design-system</code> trước)</h3>
+      <ol>
+        <li>Nút có đếm ngược thời gian chờ (<code>CooldownButton</code>), chip "Thông minh" / "Từ danh mục" / "Loại mới", bảng so sánh thông tin thông minh. Dùng lại: <code>SlidePanel</code>, <code>ListFooter</code>, hộp thoại xác nhận có sẵn.</li>
+      </ol>
+    </div>
+  </div>
+</details>
+
+<div class="wf-stage" id="stage"></div>
+
+<script>
+const P = {
+  users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/>',
+  ship: '<path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.94 5.34 2.81 7.76"/><path d="M19 13V7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v6"/><path d="M12 10v4M12 2v3"/>',
+  send: '<path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>',
+  anchor: '<circle cx="12" cy="5" r="3"/><path d="M12 22V8"/><path d="M5 12H2a10 10 0 0 0 20 0h-3"/>',
+  file: '<path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M14 2v6h6"/>',
+  database: '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  close: '<path d="M18 6 6 18M6 6l12 12"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  alert: '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4M12 17h.01"/>',
+  globe: '<circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/>',
+  back: '<path d="m12 19-7-7 7-7M19 12H5"/>',
+  refresh: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  ok: '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m9 11 3 3L22 4"/>',
+  spark: '<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>',
+  ext: '<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+}
+const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${P[n]}</svg>`
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+const norm = (s) => String(s).toLowerCase()
+
+// ---------- Dữ liệu mẫu ----------
+// MCAH có 1.240 tàu (bảng vessel); danh mục tàu thế giới có hàng chục nghìn (ship_catalog, thật là 733 nghìn).
+const PRE = ['ASAHI', 'FUJI', 'HOKUTO', 'KAIYO', 'MIZUHO', 'SAKURA', 'TAIYO', 'YAMATO', 'HARUNA', 'SEIWA', 'KOYO', 'NIPPON', 'ORIENT', 'PACIFIC', 'GOLDEN', 'OCEAN', 'BLUE', 'SILVER', 'STAR', 'NORTH', 'SOUTH', 'EASTERN', 'WESTERN', 'GRAND', 'ROYAL', 'LUCKY', 'SUNRISE', 'VIET', 'THANH', 'HAI']
+const SUF = ['MARU', 'STAR', 'GLORY', 'HARMONY', 'PIONEER', 'SPIRIT', 'DAWN', 'EXPRESS', 'TRADER', 'FORTUNE']
+const FL = ['Panama', 'Singapore', 'Quần đảo Marshall', 'Liberia', 'Việt Nam', 'Nhật Bản']
+const TY = ['Bulk carrier', 'Container', 'Tàu dầu', 'Hàng tổng hợp']
+const OW = ['Sealift Maritime S.A.', 'Viet Ocean Lines', 'Pan Asia Shipping', 'Hai Phong Marine']
+const gen = (i, off) => `${PRE[(i + off) % 30]} ${SUF[(Math.floor(i / 30) + off) % 10]}${i >= 300 ? ` ${Math.floor(i / 300) + 1}` : ''}`
+const V = [
+  { name: 'GEIYO K', type: 'Bulk carrier', imo: '9747613', flag: 'Quần đảo Marshall', owner: 'Sealift Maritime S.A.', grt: 31557, crew: 3 },
+  { name: 'ORIENT STAR', type: 'Container', imo: '9321483', flag: 'Panama', owner: 'Viet Ocean Lines', grt: 42120, crew: 5 },
+  { name: 'PACIFIC DAWN', type: 'Tàu dầu', imo: '9456217', flag: 'Singapore', owner: 'Pan Asia Shipping', grt: 28990, crew: 0 },
+  ...Array.from({ length: 1237 }, (_, i) => ({ name: gen(i, 0), type: TY[i % 4], imo: String(9000000 + i * 7), flag: FL[i % 6], owner: OW[i % 4], grt: 8000 + ((i * 937) % 60000), crew: i % 6 })),
+]
+// ex = tên cũ, tm = loại tàu MCAH khớp được (hoặc null)
+const C = [
+  { name: 'GEIYO K', type: 'Bulk carrier', imo: '9747613', mmsi: '538006748', flag: 'Quần đảo Marshall', ex: [], tm: 'Bulk carrier' },
+  { name: 'GEIYO MARU', type: 'Cargo', imo: '5175147', mmsi: '', flag: 'Nhật Bản', ex: [], tm: 'Hàng tổng hợp' },
+  { name: 'SEIYO STAR', type: 'Tanker', imo: '9102331', mmsi: '371820000', flag: 'Panama', ex: ['GEIYO'], tm: 'Tàu dầu' },
+  { name: 'GEIYO 2', type: 'Fishing vessel', imo: '', mmsi: '431701220', flag: 'Nhật Bản', ex: [], tm: 'Tàu cá' },
+  { name: 'YAAKOB II', type: 'General cargo ship', imo: '7108978', mmsi: '710897869', flag: 'Brazil', ex: ['KIVANC TARUS', 'SHERIN EXPRESS'], tm: 'Hàng tổng hợp' },
+  { name: 'EVER GIVEN', type: 'Container ship', imo: '9811000', mmsi: '353136000', flag: 'Panama', ex: [], tm: 'Container' },
+  { name: 'XXII', type: 'Limestone carrier', imo: '7112759', mmsi: '408708000', flag: 'Bahrain', ex: [], tm: null },
+  ...Array.from({ length: 3400 }, (_, i) => ({ name: gen(i, 11), type: i % 3 ? 'General cargo ship' : 'Bulk carrier', imo: i % 40 === 0 ? '' : String(8000000 + i * 13), mmsi: i % 3 ? '' : String(400000000 + i * 31), flag: FL[(i + 1) % 6], ex: [], tm: i % 3 ? 'Hàng tổng hợp' : 'Bulk carrier' })),
+]
+const PRESET = { geiyo: 'geiyo', maru: 'maru', marucat: 'maru', given: 'ever given', ex: 'kivanc', none: 'zzzzq', loading: 'geiyo', error: 'geiyo' }
+const PAGE = 20
+const fmt = (n) => n.toLocaleString('vi-VN')
+// Nguồn trực tuyến (API ngoài) chỉ tra theo số IMO, và số IMO phải qua số kiểm tra.
+const imoOk = (v) => /^\d{7}$/.test(v) && [...v.slice(0, 6)].reduce((a, d, i) => a + Number(d) * (7 - i), 0) % 10 === Number(v[6])
+const ONLINE = {
+  '9811000': { name: 'EVER GIVEN', type: 'Container ship', typeMcah: 'Container', flag: 'Panama', mmsi: '353136000', callsign: 'H3RC', year: '2018', gt: '220940', dwt: '199629', manager: 'Harbor Ship Management', owner: 'Sunrise Shipping Co.', cls: "Lloyd's Register", at: '20/10/2026 03:00', cached: true },
+  '9074729': { name: 'NORTHERN BREEZE', type: 'Chemical tanker', typeMcah: null, flag: 'Liberia', mmsi: '636091234', callsign: 'A8XY2', year: '2011', gt: '29800', dwt: '46200', manager: 'Harbor Ship Management', owner: 'Sunrise Shipping Co.', cls: 'DNV', at: '27/10/2026 09:30', cached: false },
+  '9747613': { name: 'GEIYO K', type: 'Bulk carrier', typeMcah: 'Bulk carrier', flag: 'Quần đảo Marshall', mmsi: '538006748', callsign: 'V7KT9', year: '2014', gt: '31557', dwt: '56000', manager: 'Sealift Management', owner: 'Sealift Maritime S.A.', cls: 'NK', at: '27/10/2026 09:10', cached: false },
+}
+
+const COOL = 120 // giây chờ giữa hai lần "Lấy thông minh" của cùng một tàu
+const S = { frame: 'desk', screen: 'list', q: '', page: 1, panel: false, cq: '', cpage: 1, cmode: 'ok', modal: null, cd: {}, form: null, lastRows: [] }
+// q: từ khoá lọc danh sách tàu (ô tìm ở header). panel: panel Danh mục tàu thế giới đang mở (cq, cpage: tìm và trang trong panel).
+// modal: hộp xác nhận Lấy thông tin thông minh. cd: { [imo]: thời điểm hết chờ (ms) }.
+const left = (imo) => Math.max(0, Math.ceil(((S.cd[imo] || 0) - Date.now()) / 1000))
+const mmss = (n) => `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`
+
+const matchV = (v, t) => norm(v.name).includes(t) || v.imo.includes(t) || norm(v.owner).includes(t) || norm(v.flag).includes(t)
+function catSearch(q) {
+  const t = norm(q.trim())
+  if (t.length < 2) return null
+  // Tàu đã có trong MCAH không hiện ở danh mục (loại theo IMO trên toàn bảng vessel).
+  const have = new Set(V.map((v) => v.imo))
+  return C.filter((c) => (norm(c.name).includes(t) || c.ex.some((e) => norm(e).includes(t)) || c.imo === t || c.mmsi === t) && !(c.imo && have.has(c.imo)))
+    .sort((a, b) => (norm(b.name).startsWith(t) - norm(a.name).startsWith(t)) || (!!b.imo - !!a.imo))
+}
+const exHit = (c, t) => (norm(c.name).includes(t) ? null : c.ex.find((e) => norm(e).includes(t)))
+
+// ---------- Vẽ ----------
+const NAV = [[1, 'Thuyền viên', 'users'], [1, 'Đối tác', 'building'], [1, 'Tàu', 'ship'], [1, 'Bản xuất', 'send'], [2, 'Chuyến tàu', 'anchor'], [2, 'Hợp đồng', 'file'], [3, 'Danh mục', 'database'], [3, 'Quản trị', 'shield']]
+const GROUPS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
+
+// Ô tìm ở header chỉ lọc bảng bên dưới (giống các màn khác), không mở kết quả riêng. Cạnh ô là nút mở Danh mục tàu thế giới.
+function headerSearch() {
+  return `<div class="hs">
+    <div class="hs__box">${ic('search')}<input class="hs__input" id="q" value="${esc(S.q)}" placeholder="Tìm tên tàu, IMO, chủ tàu" autocomplete="off" aria-label="Tìm tàu"><button type="button" class="hs__x" id="qx" data-act="clear" aria-label="Xoá" ${S.q ? '' : 'hidden'}>${ic('close')}</button></div>
+    <button type="button" class="btn hs__cat" data-act="panel-open" title="Danh mục tàu thế giới">${ic('globe')}<span>Danh mục tàu thế giới</span></button>
+  </div>`
+}
+
+function shell(content, overlay) {
+  let g = 0
+  const nav = NAV.map(([grp, label, icon]) => {
+    const sep = grp !== g ? `<div class="nav-sep">${GROUPS[grp]}</div>` : ''; g = grp
+    return `${sep}<div class="nav-item" ${label === 'Tàu' ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span></div>`
+  }).join('')
+  return `<div class="app ${S.frame === 'phone' ? 'is-phone' : ''}">
+    <aside class="sider"><div class="sider__head"><span class="sider__logo">M</span>MCAH</div><nav class="sider__nav">${nav}</nav></aside>
+    <div class="main">
+      <header class="topbar"><button class="btn btn--ghost btn--icon burger" aria-label="Mở menu">${ic('menu')}</button><h1 class="topbar__title">Tàu</h1>${S.screen === 'list' ? headerSearch() : ''}<div class="topbar__right"><span class="avatar">AD</span></div></header>
+      <main class="content">${content}</main>
+    </div>
+    ${overlay || ''}
+  </div>`
+}
+
+function pagerHtml(page, pages, act) {
+  if (pages < 2) return ''
+  const win = []
+  for (let p = Math.max(1, page - 2); p <= Math.min(pages, Math.max(1, page - 2) + 4); p++) win.push(p)
+  return `<span class="pager"><button class="btn btn--sm btn--icon" data-act="${act}" data-p="${page - 1}" ${page === 1 ? 'disabled' : ''} aria-label="Trang trước">‹</button>${win.map((x) => `<button class="btn btn--sm btn--icon ${x === page ? 'is-cur' : ''}" data-act="${act}" data-p="${x}">${x}</button>`).join('')}${win[win.length - 1] < pages ? `<span class="muted">…</span><button class="btn btn--sm btn--icon" data-act="${act}" data-p="${pages}">${fmt(pages)}</button>` : ''}<button class="btn btn--sm btn--icon" data-act="${act}" data-p="${page + 1}" ${page === pages ? 'disabled' : ''} aria-label="Trang sau">›</button></span>`
+}
+
+// ---------- Danh sách tàu (trang Tàu) ----------
+const mcahRowD = (v) => `<div class="lt-row lt-row--mcah"><div class="lt-who"><span class="lt-tile">${ic('ship')}</span><div style="min-width:0"><div class="lt-main">${esc(v.name)}</div><div class="lt-sub">${esc(v.type)}</div></div></div><span class="mono">${v.imo}</span><span>${esc(v.flag)}</span><span class="lt-main" style="font-weight:400">${esc(v.owner)}</span><span class="r num">${fmt(v.grt)}</span><span class="r num">${v.crew}</span></div>`
+const mcahRowM = (v) => `<li class="m-row"><div class="lt-who"><span class="lt-tile">${ic('ship')}</span><div style="min-width:0"><div class="lt-main">${esc(v.name)}</div><div class="lt-sub">IMO ${v.imo} · ${esc(v.flag)} · ${esc(v.owner)}</div></div></div></li>`
+
+function listParts() {
+  const phone = S.frame === 'phone'
+  const t = norm(S.q.trim())
+  const all = t ? V.filter((v) => matchV(v, t)) : V
+  const pages = Math.max(1, Math.ceil(all.length / PAGE))
+  S.page = Math.min(S.page, pages)
+  const rows = all.slice((S.page - 1) * PAGE, S.page * PAGE)
+  const q = S.q.trim()
+  let body
+  if (!rows.length) {
+    const imo7 = /^\d{7}$/.test(q)
+    body = imo7
+      ? `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Chưa có tàu IMO ${esc(q)} trong MCAH</h3><p>Thêm tàu này: IMO được điền sẵn, và bạn có thể bấm Lấy thông minh để điền các thông số còn lại.</p><div class="acts"><button class="btn" data-act="clear">Xoá tìm kiếm</button><button class="btn btn--primary" data-act="add-imo">${ic('plus')}Thêm tàu IMO ${esc(q)}</button></div></div>`
+      : `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Không có tàu nào khớp "${esc(q)}"</h3><p>Tàu có thể chưa được thêm. Tìm trong Danh mục tàu thế giới, hoặc thêm thủ công.</p><div class="acts"><button class="btn" data-act="clear">Xoá tìm kiếm</button><button class="btn btn--primary" data-act="panel-open">${ic('globe')}Danh mục tàu thế giới</button></div></div>`
+  } else if (phone) body = `<ul class="m-list">${rows.map(mcahRowM).join('')}</ul>`
+  else body = '<div class="lt-cols"><span>Tàu</span><span>IMO</span><span>Cờ</span><span>Chủ tàu</span><span class="r">GRT</span><span class="r">Đang trên tàu</span></div>' + rows.map(mcahRowD).join('')
+  const from = rows.length ? (S.page - 1) * PAGE + 1 : 0
+  const foot = rows.length ? `<span>${fmt(from)}–${fmt(Math.min(all.length, S.page * PAGE))} trong ${fmt(all.length)} tàu</span>${pagerHtml(S.page, pages, 'page')}` : '<span></span>'
+  return { body, foot }
+}
+
+function listScreen() {
+  const phone = S.frame === 'phone'
+  const tabs = '<div class="status-tabs"><span aria-current="true">Tất cả <small>1.240</small></span><span>Hoạt động <small>1.102</small></span><span>Nằm bờ <small>98</small></span><span>Đang đóng <small>31</small></span><span>Phá dỡ <small>9</small></span></div>'
+  const v = listParts()
+  return `<div class="lt-card">
+    <div class="lt-bar">${phone ? '' : tabs}<span class="end"><button class="btn btn--primary" data-act="manual">${ic('plus')}Thêm tàu</button></span></div>
+    <div class="lt-scroll" id="results">${v.body}</div>
+    <div class="lt-foot" id="foot">${v.foot}</div>
+  </div>`
+}
+
+// ---------- Panel Danh mục tàu thế giới (SlidePanel) ----------
+const pRow = (c, i, t) => {
+  const ex = exHit(c, t)
+  return `<li class="m-row"><span class="lt-tile lt-tile--cat">${ic('ship')}</span><div class="dd__txt" style="flex:1"><span class="lt-main">${esc(c.name)}${ex ? ` <span class="chip chip--ex">Tên cũ: ${esc(ex)}</span>` : ''}</span><span class="lt-sub">${esc(c.type)} · ${esc(c.flag)}${c.mmsi ? ` · MMSI ${c.mmsi}` : ''}</span></div>${c.imo ? `<span class="mono">${c.imo}</span>` : '<span class="muted">Không có IMO</span>'}<button type="button" class="btn btn--sm" data-act="cat-add" data-i="${i}">${ic('plus')}Thêm</button></li>`
+}
+const sk3 = () => [0, 1, 2, 3].map(() => '<li class="m-row"><span class="lt-tile lt-tile--cat"></span><div class="dd__txt" style="flex:1"><span class="sk" style="width:50%"></span><span class="sk" style="width:30%;margin-top:6px;height:10px"></span></div><span class="sk" style="width:70px"></span><span class="sk" style="width:60px;height:28px"></span></li>').join('')
+
+function panelParts() {
+  const q = S.cq.trim()
+  const t = norm(q)
+  const r = catSearch(S.cq)
+  S.lastRows = []
+  if (S.cmode === 'loading') return { body: `<ul class="m-list">${sk3()}</ul>`, foot: '<span></span>' }
+  if (S.cmode === 'error') return { body: `<div class="lt-empty"><span class="lt-tile">${ic('alert')}</span><h3>Không tải được danh mục</h3><p>Dữ liệu trong MCAH không bị ảnh hưởng.</p><div class="acts"><button class="btn" data-act="retry">${ic('refresh')}Thử lại</button></div></div>`, foot: '<span></span>' }
+  if (r === null) return { body: `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Tìm tàu trong danh mục</h3><p>Gõ tên tàu, tên cũ, số IMO hoặc MMSI (từ 2 ký tự). Danh mục có hơn 700 nghìn tàu; tàu đã có trong MCAH không hiện ở đây.</p></div>`, foot: '<span></span>' }
+  if (!r.length) return { body: `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Không có tàu nào khớp "${esc(q)}"</h3><p>Thử tên khác, tên cũ, số IMO hoặc MMSI. Tàu đã có trong MCAH không hiện ở đây.</p><div class="acts"><button class="btn btn--primary" data-act="manual">${ic('plus')}Thêm tàu thủ công</button></div></div>`, foot: '<span></span>' }
+  const pages = Math.max(1, Math.ceil(r.length / PAGE))
+  S.cpage = Math.min(S.cpage, pages)
+  S.lastRows = r.slice((S.cpage - 1) * PAGE, S.cpage * PAGE)
+  return {
+    body: `<ul class="m-list">${S.lastRows.map((c, i) => pRow(c, i, t)).join('')}</ul>`,
+    foot: `<span>${fmt((S.cpage - 1) * PAGE + 1)}–${fmt(Math.min(r.length, S.cpage * PAGE))} trong ${fmt(r.length)} tàu</span>${pagerHtml(S.cpage, pages, 'cpage')}`,
+  }
+}
+
+function panelHtml() {
+  if (!S.panel) return ''
+  const v = panelParts()
+  return `<div class="sp-scrim" data-act="panel-close"></div>
+  <aside class="sp" role="dialog" aria-label="Danh mục tàu thế giới">
+    <div class="sp__head"><div><h2>Danh mục tàu thế giới</h2><p>Kho tàu tra cứu có sẵn. Bấm Thêm để đưa tàu vào MCAH.</p></div><button type="button" class="btn btn--ghost btn--icon" data-act="panel-close" aria-label="Đóng">${ic('close')}</button></div>
+    <div class="sp__search"><label class="search" style="max-width:none">${ic('search')}<input class="input" id="cq" value="${esc(S.cq)}" placeholder="Tên tàu, tên cũ, IMO, MMSI" autocomplete="off" aria-label="Tìm trong danh mục"></label></div>
+    <div class="sp__body" id="cbody">${v.body}</div>
+    <div class="lt-foot" id="cfoot">${v.foot}</div>
+  </aside>`
+}
+
+// ---------- Hộp xác nhận Lấy thông tin thông minh ----------
+function modalHtml() {
+  const m = S.modal
+  if (!m) return ''
+  const c = m.c
+  const l = left(c.imo)
+  const head = (title, desc, danger) => `<div class="modal__head"><span class="modal__icon ${danger ? 'modal__icon--danger' : ''}">${ic(danger ? 'alert' : 'spark')}</span><div><h2 class="modal__title">${title}</h2><p class="modal__desc">${desc}</p></div></div>`
+  let inner
+  if (m.type === 'loading') {
+    inner = `${head('Đang lấy thông tin thông minh…', `${esc(c.name)} · IMO ${c.imo}`)}<div class="modal__body"><div class="dd__tip" style="padding:0"><span class="spin"></span><span>Đang hỏi nguồn bên ngoài, thường mất vài giây.</span></div></div>`
+  } else if (m.type === 'error') {
+    inner = `${head('Không lấy được thông tin thông minh', `${esc(c.name)} · IMO ${c.imo}`, true)}<div class="modal__body"><p style="margin:0">Nguồn bên ngoài không phản hồi. Chưa tính vào thời gian chờ nên bạn có thể thử lại ngay, hoặc tiếp tục với thông tin có sẵn.</p></div><div class="modal__foot"><button class="btn" data-act="smart-no">Dùng thông tin danh mục</button><button class="btn btn--primary" data-act="smart-yes">${ic('refresh')}Thử lại</button></div>`
+  } else {
+    inner = `${head('Lấy thông tin thông minh?', `${esc(c.name)} · IMO <span class="mono">${c.imo}</span>`)}
+    <div class="modal__body"><p style="margin:0">Hệ thống tra thêm <b>năm đóng, trọng tải, quản lý, chủ tàu…</b> từ nguồn bên ngoài và điền vào form. Mất vài giây. Bạn vẫn kiểm tra lại trước khi lưu. Chọn Không thì chỉ dùng thông tin trong danh mục.</p>${l > 0 ? `<div class="banner">${ic('info')}<span>Tàu này vừa được lấy thông tin. Có thể lấy lại sau <b data-cdimo="${c.imo}">${mmss(l)}</b>.</span></div>` : '<p class="field__hint" style="margin:0">Mỗi tàu cách nhau 2 phút giữa hai lần lấy.</p>'}</div>
+    <div class="modal__foot"><button class="btn" data-act="smart-no">Không, chỉ dùng thông tin danh mục</button><button class="btn btn--primary" data-act="smart-yes" ${l > 0 ? 'disabled' : ''}>${ic('spark')}${l > 0 ? `Lấy lại sau <span data-cdimo="${c.imo}">${mmss(l)}</span>` : 'Lấy thông tin thông minh'}</button></div>`
+  }
+  return `<div class="scrim"><div class="modal" role="dialog" aria-modal="true">${inner}</div></div>`
+}
+
+// ---------- Form thêm / sửa tàu ----------
+const CHIP = { cat: 'Từ danh mục', online: 'Thông minh', new: 'Loại mới' }
+function newForm() { return { v: {}, src: {}, typeHint: '', ownerHint: '', qa: null, note: null, mode: 'add', dirty: new Set(), cmp: null, busy: false } }
+const FIELDS = [['name', 'Tên tàu', (o) => o.name], ['type', 'Loại tàu', (o) => o.typeMcah], ['flag', 'Cờ', (o) => o.flag], ['mmsi', 'MMSI', (o) => o.mmsi], ['callsign', 'Hô hiệu', (o) => o.callsign], ['year', 'Năm đóng', (o) => o.year], ['gt', 'Tổng dung tích (GT)', (o) => fmt(Number(o.gt))], ['dwt', 'Trọng tải (DWT)', (o) => fmt(Number(o.dwt))], ['manager', 'Quản lý kỹ thuật', (o) => o.manager]]
+// Thêm tàu: chỉ điền vào ô còn trống.
+function mergeOnline(f, imo, o) {
+  let n = 0
+  const put = (k, val) => { if (val && !f.v[k]) { f.v[k] = val; f.src[k] = 'online'; n += 1 } }
+  put('imo', imo)
+  FIELDS.forEach(([k, , get]) => put(k, get(o)))
+  if (!f.v.type && !f.typeHint) f.typeHint = o.type
+  f.ownerHint = o.owner || ''
+  return n
+}
+function formFromCatalog(c) {
+  const f = newForm()
+  const set = (k, val) => { if (val) { f.v[k] = val; f.src[k] = 'cat' } }
+  set('name', c.name); set('imo', c.imo); set('mmsi', c.mmsi); set('flag', c.flag); set('type', c.tm)
+  if (!c.tm) f.typeHint = c.type
+  return f
+}
+function formEdit() {
+  const f = newForm(); f.mode = 'edit'
+  Object.assign(f.v, { name: 'GEIYO K', imo: '9747613', type: 'Bulk carrier', flag: 'Quần đảo Marshall', mmsi: '538006748', year: '2013', gt: '31.557', owner: 'Sealift Maritime S.A.' })
+  return f
+}
+// Sửa tàu: không ghi đè, chỉ liệt kê ô trống hoặc khác để người dùng chọn.
+function buildCmp(f, o) {
+  const rows = FIELDS.map(([k, label, get]) => ({ k, label, cur: f.v[k] || '', nv: get(o) || '' })).filter((r) => r.nv && r.nv !== r.cur).map((r) => ({ ...r, on: !r.cur }))
+  return { at: o.at, rows }
+}
+function smartFill(f, imo, o) {
+  S.cd[imo] = Date.now() + COOL * 1000
+  if (!o) { f.note = { kind: 'miss', text: `Nguồn bên ngoài không có tàu IMO ${imo}. Các trường còn lại nhập tay.` }; return }
+  if (f.mode === 'edit') { f.cmp = buildCmp(f, o); if (!f.cmp.rows.length) { f.cmp = null; f.note = { kind: 'ok', text: 'Không có thông tin nào mới hơn dữ liệu hiện tại.' } } return }
+  f.note = { kind: 'ok', text: `Đã lấy thêm ${mergeOnline(f, imo, o)} trường bằng Lấy thông minh (lúc ${o.at}). Ô đã có giá trị được giữ nguyên.` }
+}
+
+function qaCard(f) {
+  const code = f.qa.en.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '')
+  return `<div class="qa">
+    <div class="qa__head"><b>Thêm loại tàu mới</b><button type="button" class="btn btn--ghost btn--sm btn--icon" data-act="qa-cancel" aria-label="Đóng">${ic('close')}</button></div>
+    <div class="qa__grid">
+      <div class="field"><label class="field__label">Tên tiếng Anh<i>*</i></label><input class="input" id="qa-en" value="${esc(f.qa.en)}"></div>
+      <div class="field"><label class="field__label">Tên tiếng Việt<i>*</i></label><input class="input ${f.qa.err ? 'input--error' : ''}" id="qa-vi" value="${esc(f.qa.vi)}" placeholder="VD: Tàu chở đá vôi">${f.qa.err ? '<p class="field__err">Nhập tên tiếng Việt.</p>' : ''}</div>
+      <div class="field"><label class="field__label">Mã</label><input class="input mono" id="qa-code" value="${code}"><p class="field__hint">Tự sinh từ tên tiếng Anh.</p></div>
+    </div>
+    <div class="qa__foot"><span class="field__hint">Dùng được ngay cho mọi tàu. Sửa sau ở Danh mục › Loại tàu.</span><span class="qa__acts"><button type="button" class="btn btn--sm" data-act="qa-cancel">Huỷ</button><button type="button" class="btn btn--sm btn--primary" data-act="qa-ok">Thêm loại tàu</button></span></div>
+  </div>`
+}
+
+// Nút Lấy thông minh nằm ngay cạnh ô IMO; có thời gian chờ 2 phút cho mỗi tàu.
+function smartCtl(f) {
+  const v = f.v.imo || ''
+  const ok = imoOk(v)
+  const l = ok ? left(v) : 0
+  const dis = !ok || l > 0 || f.busy
+  const label = f.busy ? '<span class="spin"></span>Đang lấy…' : l > 0 ? `${ic('spark')}Lấy lại sau <span data-cdimo="${v}">${mmss(l)}</span>` : `${ic('spark')}Lấy thông minh`
+  const hint = !v ? 'Nhập số IMO để dùng Lấy thông minh.' : !ok ? 'IMO không qua số kiểm tra nên không lấy thông minh được.' : l > 0 ? 'Vừa lấy xong. Mỗi tàu cách nhau 2 phút giữa hai lần lấy.' : 'Điền thêm năm đóng, tải trọng, quản lý… từ nguồn bên ngoài. Mỗi tàu cách nhau 2 phút giữa hai lần.'
+  return { btn: `<button type="button" class="btn smart" data-act="smart" ${dis ? 'disabled' : ''}>${label}</button>`, hint }
+}
+
+function cmpCard(f) {
+  const c = f.cmp
+  const n = c.rows.filter((r) => r.on).length
+  return `<section class="ff-card cmpcard"><div class="qa__head"><b>Thông tin thông minh <span class="muted">(lấy lúc ${c.at})</span></b><button type="button" class="btn btn--ghost btn--sm btn--icon" data-act="cmp-close" aria-label="Đóng">${ic('close')}</button></div>
+    <p class="field__hint" style="margin:0">Chọn trường muốn áp dụng. Ô đang trống được chọn sẵn; ô khác giá trị hiện tại thì để bạn quyết định.</p>
+    <table class="cmp"><thead><tr><th></th><th>Trường</th><th>Hiện tại</th><th>Thông minh</th></tr></thead><tbody>${c.rows.map((r) => `<tr><td><input type="checkbox" data-act="cmp-toggle" data-k="${r.k}" ${r.on ? 'checked' : ''} aria-label="Áp dụng ${esc(r.label)}"></td><td>${esc(r.label)}</td><td>${r.cur ? esc(r.cur) : '<span class="muted">Trống</span>'}</td><td><b>${esc(r.nv)}</b>${r.cur ? ' <span class="chip chip--ex">Khác</span>' : ''}</td></tr>`).join('')}</tbody></table>
+    <div class="qa__foot"><span></span><span class="qa__acts"><button type="button" class="btn btn--sm" data-act="cmp-close">Bỏ qua</button><button type="button" class="btn btn--sm btn--primary" data-act="cmp-apply" ${n ? '' : 'disabled'}>Áp dụng ${n} trường</button></span></div></section>`
+}
+
+function formScreen() {
+  const f = S.form
+  const phone = S.frame === 'phone'
+  const edit = f.mode === 'edit'
+  const n = Object.keys(f.src).length
+  const chip = (k) => (f.src[k] ? `<span class="chip ${f.src[k] === 'new' ? 'chip--add' : 'chip--src'}">${f.src[k] === 'online' ? ic('spark') : ''}${CHIP[f.src[k]]}</span>` : '')
+  const fld = (k, o) => {
+    const val = f.v[k]
+    const ctl = o.ctl || (o.select ? `<select class="input"><option>${val ? esc(val) : o.ph}</option></select>` : `<input class="input ${o.mono ? 'mono' : ''}" value="${esc(val || '')}" placeholder="${esc(o.ph || '')}">`)
+    return `<div class="field ${f.dirty.has(k) ? 'field--chg' : f.src[k] ? 'field--cat' : ''}"><label class="field__label">${o.label}${o.req ? '<i>*</i>' : ''}${f.dirty.has(k) ? '<span class="chip">Đã sửa</span>' : ''}${chip(k)}</label>${ctl}${o.extra || ''}</div>`
+  }
+  const typeExtra = f.typeHint && !f.v.type
+    ? (f.qa ? qaCard(f) : `<p class="field__sugg">Nguồn ghi loại tàu: ${esc(f.typeHint)}. MCAH chưa có loại tương ứng.</p><div class="tfix"><span class="muted">Chọn loại gần nhất ở ô trên, hoặc</span><button type="button" class="btn btn--sm" data-act="qa-open">${ic('plus')}Thêm nhanh loại tàu</button></div>`)
+    : f.src.type === 'new' ? `<p class="field__ok">${ic('ok')}Đã thêm loại tàu "${esc(f.v.type)}" vào danh mục. Dùng được ngay cho các tàu khác.</p>` : ''
+  const s = smartCtl(f)
+  const imoCtl = `<div class="inrow"><input class="input mono" id="f-imo" value="${esc(f.v.imo || '')}" placeholder="7 chữ số"><span id="smartbtn">${s.btn}</span></div><p class="field__hint" id="imohint" style="margin:0">${s.hint}</p>`
+  const banner = edit ? '' : f.src.name === 'cat' && !f.note ? `Đã điền ${n} trường từ danh mục tàu thế giới. Kiểm tra lại rồi bấm Thêm tàu.` : f.src.name === 'cat' ? `Đã điền từ danh mục tàu thế giới. Kiểm tra lại rồi bấm Thêm tàu.` : ''
+  const note = f.note ? `<div class="banner ${f.note.kind === 'ok' ? 'banner--info' : ''}">${ic(f.note.kind === 'ok' ? 'info' : 'alert')}<span>${esc(f.note.text)}</span></div>` : ''
+  const dn = f.dirty.size
+  const save = edit
+    ? `<div class="savebar"><div class="savebar__msg">${ic('info')}<span>${dn ? `<b>${dn} thay đổi</b> chưa lưu` : 'Chưa có thay đổi'}</span></div><div class="savebar__actions"><button class="btn" data-act="back">Huỷ</button><button class="btn btn--primary" data-act="save" ${dn ? '' : 'disabled'}>Lưu thay đổi</button></div></div>`
+    : `<div class="savebar"><div class="savebar__msg">${ic('info')}<span>Thêm mới: các trường bắt buộc còn thiếu sẽ báo lỗi khi bấm lưu.</span></div><div class="savebar__actions"><button class="btn" data-act="back">Huỷ</button>${phone ? '' : '<button class="btn" data-act="saveNext">Lưu &amp; thêm tàu khác</button>'}<button class="btn btn--primary" data-act="save">Thêm tàu</button></div></div>`
+  return `<div class="ff">
+    <div class="page-head"><div><span class="back" data-act="back">${ic('back')}${edit ? 'Quay lại chi tiết tàu' : 'Quay lại danh sách'}</span><h1>${edit ? 'Sửa tàu GEIYO K' : 'Thêm tàu'}</h1></div></div>
+    <div class="ff-scroll">
+      ${banner ? `<div class="banner banner--info">${ic('info')}<span>${banner}</span></div>` : ''}${note}${f.cmp ? cmpCard(f) : ''}
+      <section class="ff-card"><h2>Thông tin chung</h2><div class="ff-grid">
+        ${fld('name', { label: 'Tên tàu', req: true })}
+        ${fld('imo', { label: 'Số IMO', ctl: imoCtl })}
+        ${fld('type', { label: 'Loại tàu', select: true, ph: 'Chọn loại tàu', extra: typeExtra })}
+        ${fld('flag', { label: 'Cờ', select: true, ph: 'Chọn quốc gia' })}
+        ${fld('mmsi', { label: 'MMSI', mono: true, ph: '9 chữ số' })}
+        ${fld('callsign', { label: 'Hô hiệu', ph: 'Tối đa 10 ký tự' })}
+      </div></section>
+      <section class="ff-card"><h2>Chủ tàu và quản lý</h2><div class="ff-grid">
+        ${fld('owner', { label: 'Chủ tàu', select: true, ph: 'Chọn chủ tàu', extra: f.ownerHint && !f.v.owner ? `<p class="field__sugg">Nguồn ghi chủ tàu: ${esc(f.ownerHint)}. Chọn đối tác tương ứng hoặc thêm đối tác mới.</p>` : '' })}
+        ${fld('manager', { label: 'Quản lý kỹ thuật', ph: 'Tên công ty' })}
+      </div></section>
+      <section class="ff-card"><h2>Kỹ thuật</h2><div class="ff-grid">
+        ${fld('year', { label: 'Năm đóng', ph: '2015' })}
+        ${fld('gt', { label: 'Tổng dung tích (GT)', ph: '0' })}
+        ${fld('dwt', { label: 'Trọng tải (DWT)', ph: '0' })}
+      </div></section>
+    </div>
+    ${save}
+  </div>`
+}
+
+function render() {
+  const stage = document.getElementById('stage')
+  stage.className = `wf-stage ${S.frame === 'phone' ? 'wf-stage--phone' : ''}`
+  stage.innerHTML = `<div class="wf-frame">${shell(S.screen === 'form' ? formScreen() : listScreen(), panelHtml() + modalHtml())}</div>`
+  document.querySelectorAll('[data-wf^="frame:"]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.wf === `frame:${S.frame}`))
+}
+function refreshList() {
+  const v = listParts()
+  document.getElementById('results').innerHTML = v.body
+  document.getElementById('foot').innerHTML = v.foot
+  const x = document.getElementById('qx'); if (x) x.hidden = !S.q
+}
+function refreshPanel() {
+  const v = panelParts()
+  document.getElementById('cbody').innerHTML = v.body
+  document.getElementById('cfoot').innerHTML = v.foot
+}
+function refreshSmart() {
+  const s = smartCtl(S.form)
+  const b = document.getElementById('smartbtn'); const h = document.getElementById('imohint')
+  if (b) b.innerHTML = s.btn
+  if (h) h.textContent = s.hint
+}
+
+function openForm(f) {
+  S.form = f || newForm()
+  S.screen = 'form'; S.panel = false; S.modal = null
+  render()
+}
+const catBy = (name) => C.find((x) => x.name === name)
+
+function preset(k) {
+  Object.assign(S, { screen: 'list', q: '', page: 1, panel: false, cq: '', cpage: 1, cmode: 'ok', modal: null, cd: {} })
+  const ever = catBy('EVER GIVEN')
+  switch (k) {
+    case 'base': break
+    case 'filter': S.q = 'maru'; break
+    case 'none': S.q = 'zzzzq'; break
+    case 'imo': S.q = '9100009'; break
+    case 'p-empty': S.panel = true; break
+    case 'p-maru': S.panel = true; S.cq = 'maru'; break
+    case 'p-ex': S.panel = true; S.cq = 'kivanc'; break
+    case 'p-none': S.panel = true; S.cq = 'zzzzq'; break
+    case 'p-load': S.panel = true; S.cq = 'maru'; S.cmode = 'loading'; break
+    case 'p-err': S.panel = true; S.cq = 'maru'; S.cmode = 'error'; break
+    case 's-confirm': S.panel = true; S.cq = 'ever given'; S.modal = { type: 'confirm', c: ever }; break
+    case 's-cool': S.panel = true; S.cq = 'ever given'; S.cd[ever.imo] = Date.now() + 105000; S.modal = { type: 'confirm', c: ever }; break
+    case 's-load': S.panel = true; S.cq = 'ever given'; S.modal = { type: 'loading', c: ever, hold: true }; break
+    case 's-err': S.panel = true; S.cq = 'ever given'; S.modal = { type: 'error', c: ever }; break
+    case 'f-cat': return openForm(formFromCatalog(ever))
+    case 'f-smart': { const f = formFromCatalog(ever); smartFill(f, ever.imo, ONLINE[ever.imo]); return openForm(f) }
+    case 'f-type': return openForm(formFromCatalog(catBy('XXII')))
+    case 'f-qa': { const f = formFromCatalog(catBy('XXII')); f.qa = { en: f.typeHint, vi: '', err: false }; return openForm(f) }
+    case 'f-manual': { const f = newForm(); f.v.imo = '9074729'; return openForm(f) }
+    case 'f-edit': return openForm(formEdit())
+    case 'f-cmp': { const f = formEdit(); smartFill(f, f.v.imo, ONLINE[f.v.imo]); return openForm(f) }
+  }
+  render()
+}
+
+function finishSmart(c) {
+  const f = formFromCatalog(c)
+  smartFill(f, c.imo, ONLINE[c.imo])
+  openForm(f)
+}
+
+document.addEventListener('click', (e) => {
+  const wf = e.target.closest('[data-wf]')
+  if (wf) { const [kind, v] = wf.dataset.wf.split(':'); if (kind === 'frame') { S.frame = v; return render() } return preset(v) }
+  const el = e.target.closest('[data-act]')
+  if (!el || el.disabled) return
+  const f = S.form
+  switch (el.dataset.act) {
+    case 'panel-open': S.panel = true; S.cq = ''; S.cpage = 1; S.cmode = 'ok'; render(); document.getElementById('cq')?.focus(); return
+    case 'panel-close': S.panel = false; return render()
+    case 'cat-add': {
+      const c = S.lastRows[+el.dataset.i]
+      // Có IMO hợp lệ mới hỏi Lấy thông tin thông minh; không có thì mở form luôn.
+      if (c.imo && imoOk(c.imo)) { S.modal = { type: 'confirm', c }; return render() }
+      return openForm(formFromCatalog(c))
+    }
+    case 'smart-no': return openForm(formFromCatalog(S.modal.c))
+    case 'smart-yes': {
+      const c = S.modal.c
+      S.modal = { type: 'loading', c }; render()
+      setTimeout(() => { if (S.modal && S.modal.type === 'loading') finishSmart(c) }, 1100)
+      return
+    }
+    case 'manual': return openForm(null)
+    case 'add-imo': { const nf = newForm(); nf.v.imo = S.q.trim(); return openForm(nf) }
+    case 'back': S.screen = 'list'; return render()
+    case 'save': case 'saveNext': S.screen = 'list'; return render()
+    case 'clear': S.q = ''; S.page = 1; refreshList(); document.getElementById('q')?.focus(); return
+    case 'retry': S.cmode = 'ok'; return render()
+    case 'page': S.page = +el.dataset.p; return refreshList()
+    case 'cpage': S.cpage = +el.dataset.p; return refreshPanel()
+    case 'smart': {
+      f.busy = true; refreshSmart()
+      const imo = f.v.imo
+      setTimeout(() => { f.busy = false; smartFill(f, imo, ONLINE[imo]); render() }, 1000)
+      return
+    }
+    case 'cmp-toggle': { const r = f.cmp.rows.find((x) => x.k === el.dataset.k); r.on = el.checked; return render() }
+    case 'cmp-close': f.cmp = null; return render()
+    case 'cmp-apply': {
+      let k = 0
+      f.cmp.rows.filter((r) => r.on).forEach((r) => { f.v[r.k] = r.nv; f.src[r.k] = 'online'; f.dirty.add(r.k); k += 1 })
+      f.note = { kind: 'ok', text: `Đã áp dụng ${k} trường từ Lấy thông minh. Bấm Lưu thay đổi để ghi vào tàu.` }; f.cmp = null
+      return render()
+    }
+    case 'qa-open': f.qa = { en: f.typeHint, vi: '', err: false }; return render()
+    case 'qa-cancel': f.qa = null; return render()
+    case 'qa-ok': if (!f.qa.vi.trim()) { f.qa.err = true; return render() } f.v.type = f.qa.vi.trim(); f.src.type = 'new'; f.qa = null; return render()
+  }
+})
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { if (S.modal) { S.modal = null; return render() } if (S.panel) { S.panel = false; render() } }
+})
+document.addEventListener('input', (e) => {
+  const id = e.target.id
+  if (id === 'qa-en' || id === 'qa-vi') {
+    const q = S.form.qa; q[id === 'qa-en' ? 'en' : 'vi'] = e.target.value; q.err = false
+    document.getElementById('qa-code').value = q.en.toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '')
+    return
+  }
+  if (id === 'f-imo') { S.form.v.imo = e.target.value.trim(); return refreshSmart() }
+  if (id === 'cq') { S.cq = e.target.value; S.cpage = 1; S.cmode = 'ok'; return refreshPanel() }
+  if (id === 'q') { S.q = e.target.value; S.page = 1; refreshList() }
+})
+// Đếm ngược thời gian chờ; hết giờ thì mở lại nút.
+setInterval(() => {
+  let expired = false
+  document.querySelectorAll('[data-cdimo]').forEach((el) => { const n = left(el.dataset.cdimo); if (n <= 0) expired = true; else el.textContent = mmss(n) })
+  if (expired) render()
+}, 1000)
+
+const hash = location.hash.slice(1)
+if (hash.startsWith('phone-')) S.frame = 'phone'
+preset(hash.replace('phone-', '') || 'base')
+</script>
+</body></html>

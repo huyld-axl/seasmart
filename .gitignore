@@ -55,3 +55,6 @@ docker/postgres.env
 docker/jwt_secret
 backups/
 .deploy.lock
+
+# Danh mục tàu nguồn (30MB), nạp bằng npm run seed:ship-catalog
+docs/ships_plain.db

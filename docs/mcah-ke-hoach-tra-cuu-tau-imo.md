@@ -319,3 +319,4 @@ Mục 6.4, 6.5.
 |---|---|---|---|
 | 2026-10-20 | Lập kế hoạch | — | Server legacy `157.180.60.155:8888` không phản hồi; chưa có `ENC_KEY`. |
 | 2026-10-20 | Bước 0 | — | HuyLD chốt **phương án A**: dùng lại server trung gian của legacy, adapter `legacy_proxy`. Đang chờ URL hiện tại và `ENC_KEY`. |
+| 2026-10-27 | Thiết kế lại và làm | — | Làm bản **Lấy thông tin thông minh** thay cho thiết kế mục 6 (đã duyệt wireframe `docs/design/wireframes/tim-tau-danh-muc.html`): Danh mục tàu thế giới (`ship_catalog`, 733 nghìn tàu) tìm theo tên, tên cũ, IMO, MMSI ở panel cạnh ô tìm; bấm Thêm thì hỏi có lấy thông tin thông minh (nguồn ngoài, tra theo IMO) không; nút Lấy thông minh cạnh ô IMO ở form Thêm và Sửa. Trần chung 1 lần mỗi 2 phút cho cả hệ thống (bảng `vessel_lookup_gate`), mỗi IMO giữ bản lưu 2 phút. Nhóm tab và panel bên phải ở trang chi tiết tàu đổi sang mục lục như thuyền viên. |

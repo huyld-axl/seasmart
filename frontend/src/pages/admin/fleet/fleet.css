@@ -32,8 +32,6 @@
 .fl-rows__main a { overflow: hidden; color: var(--foreground); font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .fl-rows__end { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .fl-note { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
-.fl-attn { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.fl-attn li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 
 .fl-readonly .ant-input[disabled] { color: var(--neutral); background: var(--surface-hover); }
 .fl-count { margin: 0; color: var(--muted); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
@@ -79,3 +77,48 @@
 
 .pv-expand-cell { width: 40px; padding-right: 4px !important; padding-left: 4px !important; text-align: center !important; }
 .pv-card-name { display: inline-flex; align-items: center; gap: 4px; }
+
+/* ---------- Danh mục tàu thế giới, Lấy thông tin thông minh, thêm nhanh loại tàu ---------- */
+.fl-catalog__body { margin-top: 12px; }
+.fl-catalog { margin: 0; padding: 0; list-style: none; }
+.fl-catalog__loading { padding: 12px 0; }
+.fl-catalog__ex { margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); font-size: 11px; font-weight: 500; }
+.fl-catalog__end { display: inline-flex; align-items: center; gap: 12px; }
+.fl-catalog__noimo { color: var(--muted); }
+.fl-smart { display: grid; gap: 12px; padding-top: 4px; }
+.fl-smart__vessel { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-hover); }
+.fl-smart__who { display: grid; min-width: 0; }
+.fl-smart__name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.fl-smart__sub { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.fl-smart__text { margin: 0; color: var(--foreground); }
+.fl-smart__hint { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: 12px; }
+.fl-smart .ds-banner { padding: 12px 14px; }
+.fl-smart__foot { display: flex; justify-content: flex-end; gap: 8px; }
+.fl-compare { display: grid; gap: 10px; padding: 14px 16px; border: 1px solid var(--border-focus); border-radius: var(--radius-lg); background: var(--surface); box-shadow: 0 0 0 2px var(--ring-focus); }
+.fl-compare__head { display: flex; align-items: center; justify-content: space-between; }
+.fl-compare__at { margin-left: 6px; color: var(--muted); font-size: 12px; font-weight: 400; }
+.fl-compare__hint { margin: 0; color: var(--muted); font-size: 12px; }
+.fl-compare__table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.fl-compare__table th { padding: 6px 8px; border-bottom: 1px solid var(--border-strong); color: var(--muted); font-size: 12px; font-weight: 500; text-align: left; }
+.fl-compare__table td { padding: 8px; border-bottom: 1px solid var(--border); }
+.fl-compare__empty { color: var(--muted); }
+.fl-compare__diff { margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--warning-bg); color: var(--warning); font-size: 11px; }
+.fl-compare__foot { display: flex; justify-content: flex-end; gap: 8px; }
+.fl-quick { display: grid; gap: 10px; margin-top: 8px; padding: 12px 14px; border: 1px solid var(--border-focus); border-radius: var(--radius-md); background: var(--primary-light); box-shadow: 0 0 0 2px var(--ring-focus); }
+.fl-quick__head, .fl-quick__foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.fl-quick__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+.fl-quick__field { display: grid; gap: 4px; font-size: 13px; }
+.fl-quick__field span { font-weight: 500; }
+.fl-quick__field i { color: var(--error-text); font-style: normal; }
+.fl-quick__field em { color: var(--error-text); font-size: 12px; font-style: normal; }
+.fl-quick__foot > span:first-child { color: var(--muted); font-size: 12px; }
+.fl-quick__acts { display: inline-flex; gap: 8px; }
+.fl-notes { display: grid; gap: 12px; }
+.fl-fieldhint { margin: 4px 0 0; color: var(--warning); font-size: 12px; }
+.fl-quick__link { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 4px; color: var(--muted); font-size: 12px; }
+@media (max-width: 767px) { .fl-quick__grid { grid-template-columns: 1fr; } }
+
+/* Ô tìm và nút Danh mục tàu thế giới đi liền nhau (không rớt hai dòng khi toolbar hẹp); ô tìm vẫn rộng 320px như màn thuyền viên. */
+.fl-searchgroup { display: flex; flex: 1 1 220px; gap: 8px; min-width: 0; max-width: 368px; }
+.fl-searchgroup .ds-toolbar__search { flex: 1 1 auto; min-width: 0; max-width: none; }
+.fl-searchgroup > .ant-btn { flex-shrink: 0; }

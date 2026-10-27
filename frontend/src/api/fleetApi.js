@@ -15,6 +15,16 @@ export const vesselApi = {
   ...crud('vessels'),
   // Các chuyến đi tàu đã khớp với tàu (đang trên tàu là chuyến chưa có ngày rời).
   service: (id) => api.get(`/admin/master/vessels/${id}/service`).then((r) => r.data),
+  // Danh mục tàu thế giới (kho tra cứu). Trả { data, total }, mỗi dòng kèm prefill và unmatched cho form Thêm tàu.
+  catalog: (params) => api.get('/admin/master/vessels/catalog', { params }).then((r) => r.data),
+  // Lấy thông tin thông minh: tra IMO ở nguồn ngoài, trả bản đề xuất (không ghi vào tàu). Mỗi IMO có thời gian chờ ở máy chủ.
+  // Nguồn ngoài có thể mất tới một phút nên nới giới hạn chờ (mặc định của client là 15 giây).
+  lookup: (imo) => api.get(`/admin/master/vessels/lookup/${imo}`, { timeout: 70000 }).then((r) => r.data),
+  lookupStatus: () => api.get('/admin/master/vessels/lookup-status').then((r) => r.data),
+}
+// Thêm nhanh loại tàu ngay trong form tàu (cần quyền catalog.update).
+export const vesselTypeApi = {
+  create: (data) => api.post('/admin/master/vessel-types', data).then((r) => r.data),
 }
 export const shipOwnerApi = {
   ...crud('ship-owners'),

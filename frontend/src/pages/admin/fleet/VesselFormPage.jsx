@@ -1,14 +1,21 @@
 import { withFlag } from '../../../utils/flag'
 import { useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { Button, Form, Input, InputNumber, Select, Skeleton } from 'antd'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import dayjs from 'dayjs'
+import { Button, Form, Input, InputNumber, Select, Skeleton, Space } from 'antd'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
+import Banner from '../../../components/ds/Banner'
+import CooldownButton from '../../../components/ds/CooldownButton'
+import SourceChip from '../../../components/ds/SourceChip'
+import SparkIcon from '../../../components/ds/SparkIcon'
 import useToast from '../../../components/ds/useToast'
 import { lookupApi } from '../../../api'
 import { vesselApi, shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetItem, useFleetMutations } from '../../../hooks/useFleet'
+import { useCooldown, useLookupStatus, useVesselLookup } from '../../../hooks/useLookupCooldown'
+import { useCan } from '../../../hooks/usePermission'
 import { isValidImo } from '../../../utils/imo'
 import { ChoiceGroup } from '../seafarers/SeafarerFormParts'
 import {
@@ -23,6 +30,9 @@ import {
 import ToggleRow from '../../../components/ds/ToggleRow'
 import { FleetTile, FormFrame, FormSection, SegmentedPick } from './FleetParts'
 import changedLabel from './changedLabel'
+import SmartCompareCard from './SmartCompareCard'
+import QuickAddVesselType from './QuickAddVesselType'
+import { compareRows, fillBlanks, seedFromIncoming, seedNotices, unmatchedHints } from './smartFetch'
 
 const SECTIONS = [
   {
@@ -69,8 +79,18 @@ function VesselForm({ vessel }) {
   const navigate = useNavigate()
   const toast = useToast()
   const [form] = Form.useForm()
-  const initial = useMemo(() => vesselToFormValues(vessel), [vessel])
+  const location = useLocation()
+  const can = useCan()
+  const queryClient = useQueryClient()
+  // Thêm tàu từ Danh mục tàu thế giới (hoặc từ ô tìm có IMO) mang theo { prefill, unmatched, smart } trong location.state.
+  const seed = useMemo(() => seedFromIncoming(vesselToFormValues(vessel), vessel ? null : location.state), [vessel, location.state])
+  const initial = seed.values
   const values = Form.useWatch([], form) || initial
+  const [sources, setSources] = useState(seed.sources)
+  const [unmatched, setUnmatched] = useState(seed.unmatched)
+  const [notices, setNotices] = useState(() => seedNotices(seed, seed.smart?.fetched_at ? dayjs(seed.smart.fetched_at).format('DD/MM/YYYY HH:mm') : ''))
+  const [compare, setCompare] = useState(null)
+  const [quickType, setQuickType] = useState(false)
   const { save } = useFleetMutations(vesselApi)
   const againRef = useRef(false)
   const [again, setAgain] = useState(false)
@@ -86,13 +106,86 @@ function VesselForm({ vessel }) {
     ownerOptions.push({ value: vessel.ship_owner_id, label: vessel.ship_owner_name })
   }
 
+  const lookupStatus = useLookupStatus()
+  const lookup = useVesselLookup()
+  const imo = values.imo_number
+  const cooldown = useCooldown(imo)
+  const imoValid = isValidImo(imo)
+  const smartOn = !!lookupStatus.data?.enabled && can(isEdit ? 'vessel.update' : 'vessel.create')
+  const hints = unmatchedHints(unmatched, values)
+
   const changed = new Set(isEdit ? changedKeys(initial, values, vesselToPayload) : [])
   const stats = SECTIONS.map((section) => section.fields.filter((name) => filled(values[name])).length)
   const done = stats.reduce((sum, count) => sum + count, 0)
   const total = SECTIONS.reduce((sum, section) => sum + section.fields.length, 0)
   const cn = (name, base) => [base, changed.has(name) && 'sf-changed'].filter(Boolean).join(' ') || undefined
-  const label = (name, text) => changedLabel(text, changed.has(name))
+  const label = (name, text) => <>{changedLabel(text, changed.has(name))}<SourceChip source={sources[name]} /></>
   const hasName = filled(values.vessel_name?.trim?.() ?? values.vessel_name)
+
+  const setNotice = (notice) => setNotices((previous) => [...previous.filter((item) => item.key !== notice.key), notice])
+  const fetchedAt = (iso) => (iso ? dayjs(iso).format('DD/MM/YYYY HH:mm') : '')
+  // Đổi id thành tên để hiện trong bảng so sánh.
+  function display(key, value) {
+    if (key === 'vessel_type_id') return types.data?.find((row) => row.id === value)?.name_vi || String(value)
+    if (key === 'flag_country_id') return ((row) => (row ? row.name_vi || row.name_en : String(value)))(countries.data?.find((item) => item.id === value))
+    if (key === 'class_status') return CLASS_STATUS_OPTIONS.find((option) => option.value === value)?.label || String(value)
+    if (typeof value === 'number' && key !== 'year_built') return value.toLocaleString('vi-VN')
+    return String(value)
+  }
+
+  // Lấy thông tin thông minh: Thêm tàu chỉ điền ô trống; Sửa tàu hiện bảng so sánh để người dùng chọn, không ghi đè.
+  async function smartFetch() {
+    let result
+    try {
+      result = await lookup.mutateAsync(imo)
+    } catch (error) {
+      toast.error('Không lấy được thông tin thông minh', { description: errorText(error, 'Nguồn bên ngoài không phản hồi. Thử lại sau ít phút.') })
+      return
+    }
+    if (!result.found) {
+      setNotice({ key: 'smart', tone: 'warning', title: `Nguồn bên ngoài không có tàu IMO ${imo}`, description: 'Các trường còn lại nhập tay.' })
+      return
+    }
+    const current = form.getFieldsValue()
+    if (isEdit) {
+      const rows = compareRows(current, result.proposal, { labels: FIELD_LABELS, display })
+      if (!rows.length) {
+        setNotice({ key: 'smart', tone: 'neutral', title: 'Không có thông tin nào mới hơn dữ liệu hiện tại', description: `Lấy lúc ${fetchedAt(result.fetched_at)}.` })
+        return
+      }
+      setCompare({ rows, at: fetchedAt(result.fetched_at), unmatched: result.unmatched })
+      return
+    }
+    const patch = fillBlanks(current, result.proposal)
+    form.setFieldsValue(patch)
+    setSources((previous) => ({ ...previous, ...Object.fromEntries(Object.keys(patch).map((key) => [key, 'smart'])) }))
+    setUnmatched((previous) => ({ ...previous, ...result.unmatched }))
+    setNotice({ key: 'smart', tone: 'neutral', title: `Đã lấy thêm ${Object.keys(patch).length} trường bằng Lấy thông minh (lúc ${fetchedAt(result.fetched_at)})`, description: 'Ô đã có giá trị được giữ nguyên.' })
+  }
+  function applyCompare(rows) {
+    form.setFieldsValue(Object.fromEntries(rows.map((row) => [row.key, row.value])))
+    setSources((previous) => ({ ...previous, ...Object.fromEntries(rows.map((row) => [row.key, 'smart'])) }))
+    setUnmatched((previous) => ({ ...previous, ...compare.unmatched }))
+    setNotice({ key: 'smart', tone: 'neutral', title: `Đã áp dụng ${rows.length} trường từ Lấy thông minh`, description: 'Bấm Lưu thay đổi để ghi vào tàu.' })
+    setCompare(null)
+  }
+  // Người dùng tự sửa một trường thì không còn là "Từ danh mục / Thông minh" nữa.
+  function dropSources(changedValues) {
+    setSources((previous) => {
+      const keys = Object.keys(changedValues).filter((key) => previous[key])
+      if (!keys.length) return previous
+      const next = { ...previous }
+      keys.forEach((key) => delete next[key])
+      return next
+    })
+  }
+  async function typeCreated(row) {
+    await queryClient.invalidateQueries({ queryKey: ['lookup', 'vessel-types'] })
+    form.setFieldValue('vessel_type_id', row.id)
+    setSources((previous) => ({ ...previous, vessel_type_id: 'created' }))
+    setQuickType(false)
+    toast.success(`Đã thêm loại tàu "${row.name_vi}"`)
+  }
 
   async function submit(formValues) {
     const payload = vesselToPayload(formValues)
@@ -100,7 +193,15 @@ function VesselForm({ vessel }) {
       const row = await save.mutateAsync({ id: vessel?.id, ...payload })
       toast.success(isEdit ? `Đã lưu ${row.vessel_name}` : `Đã thêm ${row.vessel_name}`)
       if (againRef.current) {
+        // Về form trống thật sự: bỏ cả giá trị điền sẵn từ danh mục và các nguồn, gợi ý, thông báo.
         form.resetFields()
+        form.setFieldsValue({ ...Object.fromEntries(Object.keys(initial).map((key) => [key, null])), ...vesselToFormValues(null) })
+        setSources({})
+        setUnmatched({})
+        setNotices([])
+        setCompare(null)
+        setQuickType(false)
+        navigate(location.pathname, { replace: true, state: null })
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         navigate(`/vessels/${row.id}`)
@@ -127,7 +228,23 @@ function VesselForm({ vessel }) {
       done={done}
       total={total}
     >
-      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={dropSources} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+        {notices.length || compare ? (
+          <div className="fl-notes">
+            {notices.map((notice) => (
+              <Banner
+                key={notice.key}
+                tone={notice.tone === 'warning' ? 'warning' : 'neutral'}
+                icon={notice.tone === 'warning' ? undefined : InfoCircleOutlined}
+                title={notice.title}
+                description={notice.description}
+                action={notice.vesselId ? <Link to={`/vessels/${notice.vesselId}`}><Button>Mở tàu</Button></Link> : null}
+              />
+            ))}
+            {compare ? <SmartCompareCard compare={compare} onApply={applyCompare} onClose={() => setCompare(null)} /> : null}
+          </div>
+        ) : null}
+
         <FormSection index={0} section={SECTIONS[0]} meta={sectionMeta(0)}>
           <div className="sf-grid">
             <Form.Item name="vessel_name" label={label('vessel_name', 'Tên tàu')} className={cn('vessel_name', 'sf-c6')} rules={[{ required: true, whitespace: true, message: 'Nhập tên tàu, ví dụ GEIYO K' }]}>
@@ -136,13 +253,27 @@ function VesselForm({ vessel }) {
             <Form.Item name="vessel_name_prev" label={label('vessel_name_prev', <>Tên cũ<span className="sf-opt">Nếu tàu đã đổi tên</span></>)} className={cn('vessel_name_prev', 'sf-c6')}>
               <Input maxLength={150} placeholder="Ví dụ Fortune Island" />
             </Form.Item>
-            <Form.Item name="imo_number" label={label('imo_number', 'Số IMO')} className={cn('imo_number', 'sf-c4')} rules={[imoRule]} normalize={digitsOnly} extra="Để trống nếu tàu không có IMO.">
-              <Input inputMode="numeric" maxLength={7} placeholder="7 chữ số" />
+            <Form.Item
+              label={label('imo_number', 'Số IMO')}
+              htmlFor="imo_number"
+              className={cn('imo_number', 'sf-c6')}
+              extra={smartOn ? (!imo ? 'Nhập số IMO để dùng Lấy thông minh.' : !imoValid ? 'IMO sai số kiểm tra nên không lấy thông minh được.' : cooldown > 0 ? 'Hệ thống chỉ lấy thông minh 1 lần mỗi 2 phút. Có thể lấy sau khi hết giờ.' : 'Điền thêm năm đóng, tải trọng, quản lý… từ nguồn bên ngoài. Toàn hệ thống chỉ 1 lần mỗi 2 phút.') : 'Để trống nếu tàu không có IMO.'}
+            >
+              <Space.Compact block>
+                <Form.Item name="imo_number" noStyle rules={[imoRule]} normalize={digitsOnly}>
+                  <Input inputMode="numeric" maxLength={7} placeholder="7 chữ số" />
+                </Form.Item>
+                {smartOn ? (
+                  <CooldownButton icon={<SparkIcon />} seconds={cooldown} loading={lookup.isPending} disabled={!imoValid} onClick={smartFetch}>
+                    Lấy thông minh
+                  </CooldownButton>
+                ) : null}
+              </Space.Compact>
             </Form.Item>
-            <Form.Item name="call_sign" label={label('call_sign', 'Call Sign')} className={cn('call_sign', 'sf-c4')}>
+            <Form.Item name="call_sign" label={label('call_sign', 'Call Sign')} className={cn('call_sign', 'sf-c3')}>
               <Input maxLength={10} placeholder="Hô hiệu" />
             </Form.Item>
-            <Form.Item name="mmsi" label={label('mmsi', 'MMSI')} className={cn('mmsi', 'sf-c4')} normalize={digitsOnly} rules={[{ pattern: /^\d{9}$/, message: 'MMSI có 9 chữ số' }]}>
+            <Form.Item name="mmsi" label={label('mmsi', 'MMSI')} className={cn('mmsi', 'sf-c3')} normalize={digitsOnly} rules={[{ pattern: /^\d{9}$/, message: 'MMSI có 9 chữ số' }]}>
               <Input inputMode="numeric" maxLength={9} placeholder="9 chữ số" />
             </Form.Item>
           </div>
@@ -150,10 +281,26 @@ function VesselForm({ vessel }) {
 
         <FormSection index={1} section={SECTIONS[1]} meta={sectionMeta(1)}>
           <div className="sf-grid">
-            <Form.Item name="vessel_type_id" label={label('vessel_type_id', 'Loại tàu')} className={cn('vessel_type_id', 'sf-c4')} extra="Lấy từ danh mục Loại tàu.">
+            <Form.Item name="vessel_type_id" label={label('vessel_type_id', 'Loại tàu')} className={cn('vessel_type_id', 'sf-c4')} extra={
+              <>
+                Lấy từ danh mục Loại tàu.
+                {hints.vessel_type ? (
+                  quickType ? (
+                    <QuickAddVesselType nameEn={hints.vessel_type} existingCodes={(types.data || []).map((row) => row.code)} onCreated={typeCreated} onCancel={() => setQuickType(false)} />
+                  ) : (
+                    <>
+                      <p className="fl-fieldhint">Nguồn ghi loại tàu: {hints.vessel_type}. MCAH chưa có loại tương ứng.</p>
+                      {can('catalog.update') ? (
+                        <span className="fl-quick__link">Chọn loại gần nhất ở ô trên, hoặc <Button size="small" icon={<PlusOutlined />} onClick={() => setQuickType(true)}>Thêm nhanh loại tàu</Button></span>
+                      ) : null}
+                    </>
+                  )
+                ) : null}
+              </>
+            }>
               <Select {...selectProps} loading={types.isLoading} options={toOptions(types.data, (row) => row.name_vi)} placeholder="Chọn loại tàu" />
             </Form.Item>
-            <Form.Item name="flag_country_id" label={label('flag_country_id', 'Cờ quốc gia')} className={cn('flag_country_id', 'sf-c4')} extra="Lấy từ danh mục Quốc gia.">
+            <Form.Item name="flag_country_id" label={label('flag_country_id', 'Cờ quốc gia')} className={cn('flag_country_id', 'sf-c4')} extra={<>Lấy từ danh mục Quốc gia.{hints.flag ? <p className="fl-fieldhint">Nguồn ghi cờ: {hints.flag}. MCAH chưa có quốc gia tương ứng.</p> : null}</>}>
               <Select {...selectProps} loading={countries.isLoading} options={toOptions(countries.data, (row) => withFlag(row.code, row.name_vi || row.name_en, row.flag_emoji))} placeholder="Chọn quốc gia" />
             </Form.Item>
             <Form.Item name="year_built" label={label('year_built', 'Năm đóng')} className={cn('year_built', 'sf-c4')}>
@@ -219,7 +366,7 @@ function VesselForm({ vessel }) {
 
         <FormSection index={4} section={SECTIONS[4]} meta={sectionMeta(4)}>
           <div className="sf-grid">
-            <Form.Item name="ship_owner_id" label={label('ship_owner_id', 'Chủ tàu')} className={cn('ship_owner_id')} extra={<Link to="/partners/new" target="_blank">Chưa có trong danh sách? Thêm đối tác mới</Link>}>
+            <Form.Item name="ship_owner_id" label={label('ship_owner_id', 'Chủ tàu')} className={cn('ship_owner_id')} extra={<>{hints.ship_owner ? <p className="fl-fieldhint">Nguồn ghi chủ tàu: {hints.ship_owner}. Chọn đối tác tương ứng hoặc thêm đối tác mới.</p> : null}<Link to="/partners/new" target="_blank">Chưa có trong danh sách? Thêm đối tác mới</Link></>}>
               <Select {...selectProps} loading={owners.isLoading} options={ownerOptions} placeholder="Chọn chủ tàu" />
             </Form.Item>
             <Form.Item name="technical_manager" label={label('technical_manager', 'Quản lý kỹ thuật')} className={cn('technical_manager', 'sf-c6')}>

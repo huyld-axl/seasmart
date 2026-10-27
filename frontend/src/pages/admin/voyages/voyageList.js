@@ -38,3 +38,48 @@ export function leaveHint(leaveDate, plannedLeave) {
   if (!days) return 'Đúng ngày rời dự kiến'
   return days < 0 ? `Sớm ${-days} ngày so với dự kiến` : `Muộn ${days} ngày so với dự kiến`
 }
+
+// ---------- Form Tạo chuyến ----------
+const API_DATE = 'YYYY-MM-DD'
+const day = (value) => (value ? dayjs(value).format(API_DATE) : undefined)
+
+// Điền sẵn từ đường dẫn: ?seafarer=&vessel=&owner=&rank=&reason=.
+export function voyagePrefill(params) {
+  const num = (key) => (params.get(key) ? Number(params.get(key)) : undefined)
+  const reason = params.get('reason')
+  return Object.fromEntries(Object.entries({
+    seafarer_id: num('seafarer'),
+    vessel_id: num('vessel'),
+    ship_owner_id: num('owner'),
+    rank_id: num('rank'),
+    manual_reason: MANUAL_REASON_LABELS[reason] ? reason : undefined,
+    ended: false,
+  }).filter(([, v]) => v !== undefined))
+}
+
+// Giá trị form -> body POST /voyages. Ngày rời thực tế chỉ gửi khi bật "Chuyến đã kết thúc".
+export function toVoyagePayload(values) {
+  const ended = !!values.ended
+  const body = {
+    seafarer_id: values.seafarer_id,
+    rank_id: values.rank_id,
+    vessel_id: values.vessel_id,
+    ship_owner_id: values.ship_owner_id,
+    manual_reason: values.manual_reason,
+    budget_monthly_usd: values.budget_monthly_usd ?? null,
+    join_date: day(values.join_date),
+    join_port_id: values.join_port_id,
+    planned_leave_date: day(values.planned_leave_date),
+    planned_leave_port_id: values.planned_leave_port_id || null,
+    notes: values.notes?.trim() || null,
+    ended,
+  }
+  if (ended) Object.assign(body, { leave_date: day(values.leave_date), leave_port_id: values.leave_port_id, leave_note: values.leave_note?.trim() || null })
+  return body
+}
+
+// "Lưu & tạo chuyến khác": giữ tàu, chủ tàu, ngày, nơi, lý do; bỏ người, chức danh, budget, ghi chú.
+export function nextVoyageValues(_, saved) {
+  const keep = ['vessel_id', 'ship_owner_id', 'manual_reason', 'join_date', 'join_port_id', 'planned_leave_date', 'planned_leave_port_id', 'ended', 'leave_date', 'leave_port_id']
+  return Object.fromEntries(keep.filter((key) => saved[key] !== undefined).map((key) => [key, saved[key]]))
+}

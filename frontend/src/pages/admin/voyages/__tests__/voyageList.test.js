@@ -36,3 +36,28 @@ describe('voyageList', () => {
     expect(leaveHint('2027-01-03', '2027-01-01')).toBe('Muộn 2 ngày so với dự kiến')
   })
 })
+
+describe('form Tạo chuyến', () => {
+  it('điền sẵn từ đường dẫn, bỏ lý do lạ', async () => {
+    const { voyagePrefill } = await import('../voyageList')
+    expect(voyagePrefill(new URLSearchParams('seafarer=5&vessel=3&owner=2&reason=TRANSFER'))).toEqual({ seafarer_id: 5, vessel_id: 3, ship_owner_id: 2, manual_reason: 'TRANSFER', ended: false })
+    expect(voyagePrefill(new URLSearchParams('reason=XYZ'))).toEqual({ ended: false })
+  })
+
+  it('body gửi API: chỉ gửi ngày rời khi đã kết thúc', async () => {
+    const dayjs = (await import('dayjs')).default
+    const { toVoyagePayload } = await import('../voyageList')
+    const base = { seafarer_id: 1, rank_id: 2, vessel_id: 3, ship_owner_id: 4, manual_reason: 'LEGACY', join_date: dayjs('2025-01-10'), join_port_id: 7, planned_leave_date: dayjs('2025-07-10'), notes: '  ' }
+    const open = toVoyagePayload(base)
+    expect(open).toMatchObject({ join_date: '2025-01-10', planned_leave_date: '2025-07-10', budget_monthly_usd: null, notes: null, ended: false })
+    expect(open).not.toHaveProperty('leave_date')
+    const ended = toVoyagePayload({ ...base, ended: true, leave_date: dayjs('2025-07-01'), leave_port_id: 8 })
+    expect(ended).toMatchObject({ ended: true, leave_date: '2025-07-01', leave_port_id: 8, leave_note: null })
+  })
+
+  it('lưu & tạo chuyến khác giữ tàu, ngày, lý do; bỏ người', async () => {
+    const { nextVoyageValues } = await import('../voyageList')
+    const next = nextVoyageValues({}, { seafarer_id: 1, rank_id: 2, vessel_id: 3, ship_owner_id: 4, manual_reason: 'OWNER_HIRED', join_date: 'd', budget_monthly_usd: 900 })
+    expect(next).toEqual({ vessel_id: 3, ship_owner_id: 4, manual_reason: 'OWNER_HIRED', join_date: 'd' })
+  })
+})

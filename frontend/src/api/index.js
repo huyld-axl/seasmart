@@ -49,6 +49,7 @@ export const certificateApi = {
   update: (seafarerId, id, data) => api.put(`/seafarers/${seafarerId}/certificates/${id}`, data),
   remove: (seafarerId, id) => api.delete(`/seafarers/${seafarerId}/certificates/${id}`),
   file: (seafarerId, id) => api.get(`/seafarers/${seafarerId}/certificates/${id}/file`, { responseType: 'blob' }).then((r) => r.data),
+  bundle: (seafarerId, ids) => api.get(`/seafarers/${seafarerId}/certificates/bundle`, { params: ids ? { ids: ids.join(',') } : undefined, responseType: 'blob', timeout: 120000 }),
   upload: (seafarerId, id, file) => {
     const form = new FormData()
     form.append('file', file)

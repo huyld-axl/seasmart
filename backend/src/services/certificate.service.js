@@ -46,9 +46,11 @@ const certificateService = {
               TO_CHAR(sc.expiry_date, 'YYYY-MM-DD') AS expiry_date,
               ct.name_vi as certificate_type_name,
               ct.category as certificate_category,
+              ct.code as certificate_type_code,
               c.name_vi  as issued_at_country_name,
               COALESCE(u.file_name, sd.file_name) AS source_file_name,
               sd.page_label AS source_page,
+              sd.page_from AS source_page_from,
               sd.upload_id AS source_upload_id
        FROM seafarer_certificate sc
        LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
@@ -167,6 +169,45 @@ const certificateService = {
     const mime = { '.pdf': 'application/pdf', '.png': 'image/png' }[path.extname(name).toLowerCase()] || 'image/jpeg'
     return { path: filepath, name, mime }
   },
+}
+
+// Tên tệp an toàn trong .zip: bỏ ký tự cấm của Windows / macOS.
+const safeName = (text) => String(text).replace(/[\\/:*?"<>|]/g, ' ').replace(/\s+/g, ' ').trim()
+
+// Tải cả bộ giấy tờ của thuyền viên (tab Giấy tờ) trong một .zip.
+// ids: chứng chỉ được chọn (bỏ trống = mọi chứng chỉ có tệp). Giấy AI đọc từ bộ tải lên: lấy ảnh đúng các trang của giấy đó.
+// photo: kèm ảnh thẻ. Giấy không có tệp ghi vào CHUA-CO-ANH.txt.
+certificateService.bundle = async function bundle(seafarerId, { ids, photo = true } = {}) {
+  const PizZip = require('pizzip')
+  const documentService = require('./document.service')
+  const [[crew]] = await pool.query(
+    'SELECT seafarer_code, full_name, photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [seafarerId])
+  if (!crew) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
+  const { data } = await this.list(seafarerId, { limit: 500 })
+  const rows = ids?.length ? data.filter((row) => ids.includes(row.id)) : data
+  const folder = safeName(`${crew.seafarer_code || seafarerId} - ${crew.full_name} - Giấy tờ`)
+  const zip = new PizZip()
+  const lacking = []
+  let n = 0
+  const put = (name, ext, buffer) => { n += 1; zip.file(`${folder}/${String(n).padStart(2, '0')} ${safeName(name)}${ext}`, buffer) }
+  if (photo && crew.photo_path && fs.existsSync(crew.photo_path)) put('Ảnh thẻ 4x6', path.extname(crew.photo_path).toLowerCase() || '.jpg', fs.readFileSync(crew.photo_path))
+  for (const row of rows) {
+    const name = `${row.display_name}${row.certificate_number ? ` - ${row.certificate_number}` : ''}`
+    if (row.document_url) {
+      const file = path.join(config.upload.dir, 'certificates', String(seafarerId), path.basename(row.document_url))
+      if (fs.existsSync(file)) { put(name, path.extname(file).toLowerCase(), fs.readFileSync(file)); continue }
+    }
+    if (row.source_document_id) {
+      const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [row.source_document_id])
+      const pages = doc ? await documentService.pageImagesOf(doc).catch(() => []) : []
+      if (pages.length === 1) { put(name, '.jpg', pages[0].buffer); continue }
+      if (pages.length > 1) { pages.forEach((page, i) => put(`${name} - trang ${i + 1}`, '.jpg', page.buffer)); continue }
+    }
+    lacking.push(row.display_name)
+  }
+  if (lacking.length) zip.file(`${folder}/CHUA-CO-ANH.txt`, `Các giấy chưa có ảnh:\n${lacking.join('\n')}\n`)
+  if (!n) throw { statusCode: 404, message: 'Chưa có giấy nào có ảnh để tải' }
+  return { buffer: zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }), filename: `${folder}.zip` }
 }
 
 module.exports = certificateService

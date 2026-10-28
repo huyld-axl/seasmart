@@ -7,6 +7,7 @@ import './ds.css'
 // Bảng chứng chỉ của thuyền viên (T5, tab Chứng chỉ). Rộng thì bảng, hẹp thì thẻ.
 // cert: { id, name, category, number, issuedOn, expiresOn ('' = không thời hạn), status (khoá statusMap.cert),
 //         alert ('expired' | 'expiring' | null), muted (cảnh báo đã tắt), daysLeft, canRenew, hasFile, replaced (đã có bản mới thay: xuống cuối, màu xám) }
+// `thumb(cert)` (tuỳ chọn) vẽ ảnh thu nhỏ trước tên; có ảnh thì bỏ link "Xem bản gốc" (bấm ảnh để xem).
 // Hết hạn đánh dấu viền trái đỏ, sắp hết hạn viền vàng; dòng có cảnh báo ghi "Còn N ngày" / "Quá hạn N ngày" và nút tắt.
 const alertText = (cert) => {
   if (cert.alert === 'expired') return `Quá hạn ${-cert.daysLeft} ngày`
@@ -15,8 +16,9 @@ const alertText = (cert) => {
 
 const badge = (cert) => <StatusBadge group="cert" value={cert.replaced ? 'REPLACED' : cert.status} />
 
-export default function CertificateTable({ certs = [], onEdit, onOpenSource, onDownload, onRenew, onDismiss, onRestore }) {
-  const source = (cert) => (cert.manual ? null : <button type="button" className="ds-link" onClick={() => onOpenSource?.(cert)}>Xem bản gốc</button>)
+export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSource, onDownload, onRenew, onDismiss, onRestore }) {
+  const name = (cert) => (thumb ? <span className="ds-ctable__name">{thumb(cert)}<b>{cert.name}</b></span> : <b>{cert.name}</b>)
+  const source = (cert) => (thumb || cert.manual ? null : <button type="button" className="ds-link" onClick={() => onOpenSource?.(cert)}>Xem bản gốc</button>)
   // Các nút chỉ hiện khi truyền handler tương ứng (theo quyền) và dòng đủ điều kiện.
   const renew = (cert) => (onRenew && cert.canRenew ? <Button type="text" size="small" icon={<SyncOutlined />} aria-label={`Cập nhật ${cert.name}`} title="Cập nhật chứng chỉ" onClick={() => onRenew(cert)} /> : null)
   const download = (cert) => (onDownload && cert.hasFile ? <Button type="text" size="small" icon={<DownloadIcon />} aria-label={`Tải ${cert.name}`} title="Tải về" onClick={() => onDownload(cert)} /> : null)
@@ -48,7 +50,7 @@ export default function CertificateTable({ certs = [], onEdit, onOpenSource, onD
         <tbody>
           {certs.map((cert) => (
             <tr key={cert.id} data-replaced={cert.replaced ? '' : undefined} data-tone={cert.alert === 'expired' ? 'error' : cert.alert === 'expiring' ? 'warn' : ''}>
-              <td><b>{cert.name}</b></td>
+              <td>{name(cert)}</td>
               <td>{cert.category || '—'}</td>
               <td className="ds-ctable__mono">{cert.number}</td>
               <td className="ds-ctable__mono">{cert.issuedOn}</td>
@@ -64,7 +66,7 @@ export default function CertificateTable({ certs = [], onEdit, onOpenSource, onD
       <ul className="ds-ccards">
         {certs.map((cert) => (
           <li key={cert.id} data-replaced={cert.replaced ? '' : undefined} data-tone={cert.alert === 'expired' ? 'error' : cert.alert === 'expiring' ? 'warn' : ''}>
-            <div className="ds-ccards__top"><b>{cert.name}</b>{badge(cert)}</div>
+            <div className="ds-ccards__top">{name(cert)}{badge(cert)}</div>
             <span className="ds-ctable__note">
               {cert.category ? `${cert.category} · ` : ''}<span className="ds-ctable__mono">{cert.number}</span> · Cấp {cert.issuedOn} · {cert.noExpiry ? 'Không thời hạn' : `Hết hạn ${cert.expiresOn}`}
             </span>

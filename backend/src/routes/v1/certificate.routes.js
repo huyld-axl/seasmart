@@ -19,6 +19,29 @@ async function certificateRoutes(fastify) {
     }
   )
 
+  // GET /api/v1/seafarers/:seafarerId/certificates/bundle?ids=1,2&photo=1 — tải cả bộ giấy tờ (.zip)
+  fastify.get(
+    '/bundle',
+    {
+      onRequest: [fastify.authenticate, fastify.can('seafarer.view')],
+      schema: {
+        querystring: {
+          type: 'object',
+          properties: { ids: { type: 'string', pattern: '^[0-9]+(,[0-9]+)*$' }, photo: { type: 'boolean', default: true } },
+        },
+      },
+    },
+    async (request, reply) => {
+      const seafarerId = parseInt(request.params.seafarerId)
+      await assertSeafarerInScope(request, seafarerId)
+      const ids = request.query.ids ? request.query.ids.split(',').map(Number) : null
+      const { buffer, filename } = await certificateService.bundle(seafarerId, { ids, photo: request.query.photo })
+      reply.header('Content-Type', 'application/zip')
+      reply.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`)
+      return reply.send(buffer)
+    }
+  )
+
   // POST /api/v1/seafarers/:seafarerId/certificates
   fastify.post(
     '/',

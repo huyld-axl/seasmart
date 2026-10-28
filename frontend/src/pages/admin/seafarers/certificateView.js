@@ -3,7 +3,7 @@
 
 const toDisplayDate = (iso) => (iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '')
 
-const CATEGORY = { STCW: 'STCW', VN: 'Việt Nam', MEDICAL: 'Y tế', DOCUMENT: 'Giấy tờ', PANAMA: 'Panama', OTHER: 'Khác' }
+export const CATEGORY = { DOCUMENT: 'Tuỳ thân', STCW: 'STCW', MEDICAL: 'Y tế', VN: 'Việt Nam', PANAMA: 'Panama', OTHER: 'Khác' }
 
 // Chứng chỉ đã có bản mới thay (cùng loại, bản kia không thời hạn hoặc hết hạn muộn hơn): không còn cảnh báo, không cần cập nhật.
 export function supersededIds(rows) {
@@ -37,6 +37,7 @@ export function toTableCerts(rows, { today = new Date(), dismissed } = {}) {
     expiresOn: row.no_expiry ? '' : toDisplayDate(row.expiry_date),
     status: row.expiry_status,
     category: CATEGORY[row.certificate_category] || row.certificate_category || '',
+    categoryKey: row.certificate_category || 'OTHER',
     noExpiry: Boolean(row.no_expiry || !row.expiry_date),
     daysLeft: daysLeft(row, today),
     alert: alertOf(row, { superseded, dismissed }),

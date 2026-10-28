@@ -619,6 +619,7 @@ function CertificatesSection({ seafarerId, dismissed, onDismiss, onRestore }) {
         <Form form={form} layout="vertical" onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v })}>
           <Form.Item name="certificate_type_id" label="Loại chứng chỉ" rules={[{ required: true, message: 'Chọn loại chứng chỉ' }]}>
             <Select
+              allowClear
               placeholder="Chọn loại"
               showSearch
               optionFilterProp="label"

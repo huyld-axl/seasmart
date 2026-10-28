@@ -10,7 +10,7 @@ import { formatDate } from '../../../utils/format'
 import { withFlag } from '../../../utils/flag'
 import { leaveHint } from './voyageList'
 
-const selectProps = { showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
+const selectProps = { allowClear: true, showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
 
 // Màn 12 · Ghi rời tàu: một hoặc nhiều chuyến đang trên tàu. Chỉ ngày rời, nơi rời, ghi chú.
 // voyages: dòng chuyến từ API (id, code, seafarer_name, rank_name, vessel_id, vessel_name, ship_owner_id, rank_id, join_date, planned_leave_date, planned_leave_port_id).

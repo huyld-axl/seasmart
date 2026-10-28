@@ -17,6 +17,7 @@ const listQuery = {
     status: { type: 'string', enum: VESSEL_STATUSES },
     active: { type: 'string', enum: ['0', '1'] },
     country_id: { type: 'integer', minimum: 1 },
+    ship_owner_id: { type: 'integer', minimum: 1 },
     missing: { type: 'string', pattern: '^(primary|phone|email)(,(primary|phone|email))*$' },
     channels: { type: 'string', pattern: '^(zalo|whatsapp|line|wechat)(,(zalo|whatsapp|line|wechat))*$' },
     page: { type: 'integer', minimum: 1 },

@@ -12,7 +12,7 @@ import { deltaText } from './voyageList'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
 const API_DATE = 'YYYY-MM-DD'
-const selectProps = { showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
+const selectProps = { allowClear: true, showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
 
 function usePortOptions() {
   const ports = useQuery({ queryKey: ['lookup', 'ports'], queryFn: () => lookupApi.ports().then((r) => r.data) })

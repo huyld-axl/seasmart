@@ -444,6 +444,7 @@ function PortTab() {
           </Form.Item>
           <Form.Item name="country_id" label="Quốc gia" rules={[{ required: true }]}>
             <Select
+              allowClear
               showSearch
               optionFilterProp="label"
               options={countryOptions}

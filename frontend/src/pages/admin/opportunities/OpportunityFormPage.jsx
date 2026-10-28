@@ -61,7 +61,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const [ownerFromVessel, setOwnerFromVessel] = useState(false)
   const [presetSource, setPresetSource] = useState(null)
 
-  const vessels = useQuery({ queryKey: ['fleet', 'vessel-options', vesselSearch], queryFn: () => vesselApi.list({ search: vesselSearch || undefined, limit: 50 }) })
+  const vessels = useQuery({ queryKey: ['fleet', 'vessel-options', vesselSearch, values.ship_owner_id], queryFn: () => vesselApi.list({ search: vesselSearch || undefined, ship_owner_id: values.ship_owner_id || undefined, limit: 50 }) })
   const owners = useQuery({ queryKey: ['fleet', 'owner-options'], queryFn: () => shipOwnerApi.list({ limit: 100 }) })
   const ports = useQuery({ queryKey: ['lookup', 'ports'], queryFn: () => lookupApi.ports().then((r) => r.data) })
   const ranks = useQuery({ queryKey: ['lookup', 'ranks'], queryFn: () => lookupApi.ranks().then((r) => r.data) })
@@ -72,7 +72,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const categoryOf = (id) => (certTypes.data || []).find((c) => c.id === id)?.category
   const vesselRows = vessels.data?.data || []
   const vesselOptions = vesselRows.map((row) => ({ value: row.id, label: row.imo_number ? `${row.vessel_name} · IMO ${row.imo_number}` : row.vessel_name, ownerId: row.ship_owner_id }))
-  if (opportunity?.vessel_id && !vesselRows.some((row) => row.id === opportunity.vessel_id)) vesselOptions.unshift({ value: opportunity.vessel_id, label: opportunity.vessel_name })
+  if (opportunity?.vessel_id && !vesselRows.some((row) => row.id === opportunity.vessel_id)) vesselOptions.unshift({ value: opportunity.vessel_id, label: opportunity.vessel_name, ownerId: opportunity.ship_owner_id })
   const ownerOptions = (owners.data?.data || []).map((row) => ({ value: row.id, label: row.company_name }))
   const portOptions = (ports.data || []).map((row) => ({ value: row.id, label: row.country_name ? `${row.name} (${withFlag(row.country_code, row.country_name, row.country_flag_emoji)})` : row.name }))
   const rankOptions = (ranks.data || []).map((row) => ({ value: row.id, label: row.name_en ? `${row.name_vi} (${row.name_en})` : row.name_vi }))
@@ -110,6 +110,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const metas = [`${filled(coreFields)}/${coreFields.length}`, `${filled(timeFields)}/${timeFields.length}`, `${requirements.length}`]
   const ready = !!(values.ship_owner_id && values.rank_id && values.budget_monthly_usd != null && values.planned_join_date && values.planned_leave_date && values.deadline)
   const selectedVessel = vesselOptions.find((o) => o.value === values.vessel_id)
+  const vesselHasNoOwner = Boolean(selectedVessel) && !selectedVessel.ownerId
   const selectedOwner = ownerOptions.find((o) => o.value === values.ship_owner_id)
 
   // Hồ sơ yêu cầu điền sẵn khi chọn chức danh (và tàu). Bảng đã có dòng thì hỏi trước khi thay.
@@ -145,11 +146,19 @@ function OpportunityForm({ opportunity, prefill }) {
     }
   }
 
+  function onOwnerChange(ownerId) {
+    setOwnerFromVessel(false)
+    const current = vesselOptions.find((o) => o.value === form.getFieldValue('vessel_id'))
+    if (ownerId && current?.ownerId && current.ownerId !== ownerId) form.setFieldsValue({ vessel_id: undefined })
+  }
+
   function onVesselChange(_, option) {
     if (option?.ownerId) {
       form.setFieldsValue({ ship_owner_id: option.ownerId })
       setOwnerFromVessel(true)
     } else {
+      // Tàu vô chủ: không có chủ tàu để chọn, bỏ chủ tàu đang chọn (nếu có) để khỏi lưu lệch.
+      if (option) form.setFieldsValue({ ship_owner_id: undefined })
       setOwnerFromVessel(false)
     }
   }
@@ -203,14 +212,14 @@ function OpportunityForm({ opportunity, prefill }) {
       <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={onValuesChange} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         <FormSection index={0} section={sections[0]} meta={metas[0]}>
           <div className="sf-grid">
-            <Form.Item name="ship_owner_id" className={cn('ship_owner_id', 'sf-c4')} label={label('ship_owner_id', 'Chủ tàu')} rules={[{ required: true, message: 'Chọn chủ tàu' }]} extra={ownerFromVessel ? 'Lấy theo tàu' : undefined}>
-              <Select {...selectProps} allowClear={false} loading={owners.isLoading} options={ownerOptions} placeholder="Chọn chủ tàu" onChange={() => setOwnerFromVessel(false)} />
+            <Form.Item name="ship_owner_id" className={cn('ship_owner_id', 'sf-c4')} label={label('ship_owner_id', 'Chủ tàu')} rules={[{ required: true, message: vesselHasNoOwner ? 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng.' : 'Chọn chủ tàu' }]} extra={vesselHasNoOwner ? 'Tàu chưa có chủ tàu' : ownerFromVessel ? 'Lấy theo tàu' : undefined}>
+              <Select {...selectProps} loading={owners.isLoading} options={vesselHasNoOwner ? [] : ownerOptions} disabled={vesselHasNoOwner} placeholder="Chọn chủ tàu" onChange={onOwnerChange} />
             </Form.Item>
             <Form.Item name="vessel_id" className={cn('vessel_id', 'sf-c4')} label={label('vessel_id', 'Tàu')} extra="Để trống nếu chủ tàu chưa báo tàu. Phải có khi chốt.">
               <Select {...selectProps} filterOption={false} onSearch={setVesselSearch} onChange={onVesselChange} loading={vessels.isLoading} options={vesselOptions} placeholder="Chọn tàu" />
             </Form.Item>
             <Form.Item name="rank_id" className={cn('rank_id', 'sf-c4')} label={label('rank_id', 'Chức danh')} rules={[{ required: true, message: 'Chọn chức danh' }]}>
-              <Select {...selectProps} allowClear={false} loading={ranks.isLoading} options={rankOptions} placeholder="Chọn chức danh" />
+              <Select {...selectProps} loading={ranks.isLoading} options={rankOptions} placeholder="Chọn chức danh" />
             </Form.Item>
             <Form.Item name="budget_monthly_usd" className={cn('budget_monthly_usd', 'sf-c4')} label={label('budget_monthly_usd', 'Budget/tháng (USD)')} rules={[{ required: true, message: 'Nhập budget/tháng' }]}>
               <MoneyInput aria-label="Budget mỗi tháng" />
@@ -219,7 +228,7 @@ function OpportunityForm({ opportunity, prefill }) {
               <MoneyInput aria-label="Budget cả chuyến" />
             </Form.Item>
             <Form.Item name="owner_user_id" className={cn('owner_user_id', 'sf-c4')} label={label('owner_user_id', 'Người phụ trách')} extra={can('account.view') ? undefined : 'Mặc định là bạn'}>
-              <Select {...selectProps} allowClear={false} disabled={!can('account.view')} loading={users.isLoading} options={userOptions} placeholder="Chọn người phụ trách" />
+              <Select {...selectProps} disabled={!can('account.view')} loading={users.isLoading} options={userOptions} placeholder="Chọn người phụ trách" />
             </Form.Item>
           </div>
         </FormSection>

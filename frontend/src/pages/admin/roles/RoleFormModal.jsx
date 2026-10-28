@@ -136,7 +136,7 @@ export default function RoleFormModal({ open, mode, role, initial, roles, onClos
             label="Chép quyền từ"
             extra="Chép từ vai trò gần giống rồi sửa vài ô sẽ nhanh hơn tích từ đầu."
           >
-            <Select options={copyOptions} />
+            <Select allowClear options={copyOptions} />
           </Form.Item>
         )}
       </Form>

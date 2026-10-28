@@ -70,6 +70,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
         extra={isSelf ? 'Không tự đổi vai trò của mình.' : undefined}
       >
         <Select
+          allowClear
           placeholder="Chọn vai trò"
           options={
             isSelf && initialValues.role

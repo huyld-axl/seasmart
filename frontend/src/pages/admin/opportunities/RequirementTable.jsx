@@ -6,7 +6,7 @@ import { TEMPLATES } from '../exports/packModel'
 import { DOC_CATEGORIES, REQUIREMENT_GROUPS, requirementGroup } from './opportunityView'
 
 const LEVEL_OPTIONS = Object.entries(LEVEL_LABELS).map(([value, label]) => ({ value, label }))
-const selectProps = { showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
+const selectProps = { allowClear: true, showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
 
 const BLANK = {
   doc: { kind: 'CERTIFICATE', _group: 'doc', level: 'REQUIRED', valid_until: 'LEAVE' },

@@ -22,7 +22,7 @@ const fmtDate = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '')
 
 // Tab Giấy tờ: mọi giấy lấy trọn vẹn từ thuyền viên (ảnh thẻ, CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ), chỉ cần nạp ảnh.
 // Một bảng chung, lọc theo loại; cột ảnh thu nhỏ, bấm để xem lớn. Giấy chưa có ảnh là khung nét đứt, bấm để nạp.
-export default function DocumentsSection({ seafarerId, seafarer, photo, dismissed, onDismiss, onRestore, onUploadMany }) {
+export default function DocumentsSection({ seafarerId, seafarer, photo, dismissed, onDismiss, onRestore }) {
   const queryClient = useQueryClient()
   const toast = useToast()
   const can = useCan()
@@ -272,10 +272,9 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     items: [
       ...(can('seafarer.docs') ? [
         { key: 'scan', icon: <ScanOutlined />, label: 'Quét một giấy (AI điền)' },
-        { key: 'many', icon: <UploadIcon />, label: 'Tải tệp nhiều giấy (AI tách)' },
       ] : []),
     ],
-    onClick: ({ key }) => (key === 'scan' ? quickScanInput.current?.click() : onUploadMany()),
+    onClick: () => quickScanInput.current?.click(),
   }
 
   return (

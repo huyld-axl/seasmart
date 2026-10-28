@@ -196,13 +196,12 @@ export default function SeafarerDetailPage() {
     edit: ['Sửa hồ sơ', () => navigate(`/seafarers/${id}/edit`), 'seafarer.update'],
     service: ['Xem đi tàu', () => setTab('service')],
     review: ['Duyệt', () => navigate(`/seafarers/${id}/review`), 'seafarer.docs'],
-    upload: ['Tải giấy tờ lên', () => dropFiles(), 'seafarer.docs'],
+    upload: ['Mở tab Giấy tờ', () => setTab('docs')],
   }
   const READINESS_TEXT = {
     BLOCKED: `Hồ sơ chưa đủ để nộp: ${failing.filter((r) => r.result === 'FAIL').length} điều kiện không đạt.`,
     NEEDS_REVIEW: 'Hồ sơ còn giấy tờ chưa duyệt. Kiểm tra trước khi nộp cho chủ tàu.',
   }
-  const dropFiles = () => navigate(`/seafarers/${id}/upload`)
   const moreItems = [
     ...(can('seafarer.update') ? [seafarer.status === 'INACTIVE' ? { key: 'activate', icon: <PlayCircleOutlined />, label: 'Kích hoạt lại' } : { key: 'deactivate', icon: <PauseCircleOutlined />, label: 'Tạm ngưng thuyền viên' }] : []),
     ...(can('seafarer.delete') ? [{ key: 'delete', icon: <DeleteOutlined />, label: 'Xoá thuyền viên', danger: true }] : []),
@@ -225,7 +224,7 @@ export default function SeafarerDetailPage() {
       </>
     ),
     docs: (
-      <DocumentsSection seafarerId={id} seafarer={seafarer} photo={photo} dismissed={dismissed} onDismiss={dismissAlerts} onRestore={restoreAlert} onUploadMany={dropFiles} />
+      <DocumentsSection seafarerId={id} seafarer={seafarer} photo={photo} dismissed={dismissed} onDismiss={dismissAlerts} onRestore={restoreAlert} />
     ),
     service: (
       <>

@@ -270,10 +270,12 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
 
   const addMenu = {
     items: [
-      ...(can('seafarer.docs') ? [{ key: 'scan', icon: <ScanOutlined />, label: 'Quét một giấy (AI điền)' }] : []),
-      { key: 'manual', icon: <EditOutlined />, label: 'Nhập tay một giấy' },
+      ...(can('seafarer.docs') ? [
+        { key: 'scan', icon: <ScanOutlined />, label: 'Quét một giấy (AI điền)' },
+        { key: 'many', icon: <UploadIcon />, label: 'Tải tệp nhiều giấy (AI tách)' },
+      ] : []),
     ],
-    onClick: ({ key }) => (key === 'scan' ? quickScanInput.current?.click() : startNew()),
+    onClick: ({ key }) => (key === 'scan' ? quickScanInput.current?.click() : onUploadMany()),
   }
 
   return (
@@ -282,14 +284,14 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         <h3 className="crew-certs__title">Giấy tờ</h3>
         <Space wrap>
           {docs.some((d) => d.hasFile) ? <Button icon={<DownloadIcon />} loading={bundling} onClick={downloadAll}>Tải cả bộ</Button> : null}
-          {canEdit ? (
+          {canEdit && addMenu.items.length ? (
             <Space.Compact>
-              <Button type="primary" icon={<UploadIcon />} onClick={can('seafarer.docs') ? onUploadMany : startNew}>Nạp giấy tờ</Button>
+              <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button>
               <Dropdown trigger={['click']} placement="bottomRight" menu={addMenu}>
                 <Button type="primary" icon={<DownOutlined />} aria-label="Nạp giấy tờ theo cách khác" />
               </Dropdown>
             </Space.Compact>
-          ) : null}
+          ) : canEdit ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : null}
         </Space>
         <input
           ref={quickScanInput}

@@ -271,7 +271,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const addMenu = {
     items: [
       ...(can('seafarer.docs') ? [
-        { key: 'scan', icon: <ScanOutlined />, label: 'Quét một giấy (AI điền)' },
+        { key: 'scan', icon: <ScanOutlined />, label: 'Quét giấy tờ (AI)' },
       ] : []),
     ],
     onClick: () => quickScanInput.current?.click(),
@@ -369,7 +369,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
             </label>
           )}
           {isNew && can('seafarer.docs') && !certFile ? (
-            <ScanButton label="Quét giấy (AI điền)" loading={scanning} doneText={scanDone || undefined} onPick={(files) => scanCertificate(files[0])} />
+            <ScanButton label="Quét giấy tờ (AI)" loading={scanning} doneText={scanDone || undefined} onPick={(files) => scanCertificate(files[0])} />
           ) : null}
         </div>
         {renewing ? <p className="crew-certs__renew">Nhập thông tin bản mới. Khi bản mới có hạn muộn hơn, cảnh báo của bản cũ sẽ tự tắt.</p> : null}

@@ -40,6 +40,15 @@ module.exports = {
     concurrency: parseInt(process.env.AI_CONCURRENCY) || 3,
     timeoutMs: parseInt(process.env.AI_TIMEOUT_MS) || 120000,
   },
+  // Lấy thông tin thông minh (tra tàu theo IMO ở nguồn ngoài). provider rỗng = tắt tính năng.
+  vesselLookup: {
+    provider: process.env.VESSEL_LOOKUP_PROVIDER || '',
+    baseUrl: process.env.VESSEL_API_BASE_URL || '',
+    encKey: process.env.VESSEL_API_ENC_KEY || '',
+    cooldownSeconds: parseInt(process.env.VESSEL_LOOKUP_COOLDOWN_SECONDS) || 120,
+    globalCooldownSeconds: parseInt(process.env.VESSEL_LOOKUP_GLOBAL_COOLDOWN_SECONDS) || 120,
+    timeoutMs: parseInt(process.env.VESSEL_LOOKUP_TIMEOUT_MS) || 60000,
+  },
   // Mail server công ty (SMTP). Thiếu host thì không gửi, chỉ ghi log.
   // useSsl: TLS ngay khi kết nối (thường cổng 465). useTls: nâng cấp bằng STARTTLS (thường cổng 587).
   smtp: {

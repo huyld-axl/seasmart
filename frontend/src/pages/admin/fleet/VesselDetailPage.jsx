@@ -3,8 +3,9 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Dropdown, Skeleton, Table } from 'antd'
-import { DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RightOutlined, SwapOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
+import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
@@ -14,7 +15,8 @@ import { useCan } from '../../../hooks/usePermission'
 import { useVoyageList } from '../../../hooks/useVoyages'
 import VesselCrewTab from './VesselCrewTab'
 import { VESSEL_STATUS_OPTIONS, vesselSections, filled } from './fleetView'
-import { Crumb, FleetTile, ReadPanel, SidePanel } from './FleetParts'
+import { Crumb, FleetTile } from './FleetParts'
+import { NotePanel, ReadLayout } from '../seafarers/ReadSections'
 import '../seafarers/SeafarerListPage.css'
 
 const date = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '—')
@@ -86,6 +88,37 @@ export default function VesselDetailPage() {
     linkOwner: (v) => <Link to={`/partners/${v.ship_owner_id}`}>{v.ship_owner_name}</Link>,
   })
   const missing = sections.flatMap((section) => section.fields).filter(([label, value]) => KEY_FIELDS.includes(label) && !filled(value)).map(([label]) => label)
+  // Cùng khuôn màn thuyền viên và đối tác: mục lục bên trái, các khối đánh số bên phải. Ghi chú nằm ở đầu trang (NotePanel), không thành khối.
+  const readSections = [
+    ...sections
+      .filter((section) => section.key !== 'notes')
+      .map((section) => ({ ...section, fields: section.fields.map(([label, value, span, kind]) => [label, kind === 'mono' && filled(value) ? <span className="fl-mono">{value}</span> : value, span]) })),
+    {
+      key: 'usage',
+      title: 'Đang được dùng ở',
+      countLabel: `${vessel.usage.total} mục`,
+      content: (
+        <>
+          <ul className="fl-rows">
+            <li><span className="fl-rows__main">Chuyến đi tàu đã khớp</span><span className="ds-num">{vessel.usage.sea_service}</span></li>
+            <li><span className="fl-rows__main">Chuyến tàu</span><span className="ds-num">{vessel.usage.voyages}</span></li>
+            <li><span className="fl-rows__main">Giấy tờ thuyền viên gắn với tàu</span><span className="ds-num">{vessel.usage.documents}</span></li>
+          </ul>
+          <p className="fl-note">Tàu đang được dùng thì không xoá được, chỉ đổi trạng thái (Nằm bờ, Phá dỡ).</p>
+        </>
+      ),
+    },
+  ]
+
+  async function saveNotes(notes) {
+    try {
+      await save.mutateAsync({ id: vessel.id, notes })
+      toast.success('Đã lưu ghi chú')
+    } catch (error) {
+      toast.error('Không lưu được ghi chú', { description: error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.' })
+      throw error
+    }
+  }
 
   async function changeStatus(status) {
     try {
@@ -144,55 +177,7 @@ export default function VesselDetailPage() {
   ].filter(Boolean)
   const description = [vessel.vessel_type_name, vessel.flag_name && `Cờ ${withFlag(vessel.flag_code, vessel.flag_name, vessel.flag_emoji)}`].filter(Boolean).join(' · ')
 
-  const attention = missing.length ? (
-    <ul className="fl-attn">
-      <li>
-        <span className="ds-role">Thiếu</span>
-        <span>Chưa có {missing.join(', ')}</span>
-        <Link to={`/vessels/${vessel.id}/edit`}>Bổ sung</Link>
-      </li>
-    </ul>
-  ) : (
-    <p className="crew-muted">Các thông tin chính đã đủ.</p>
-  )
-
-  const overview = (
-    <div className="crew-two-col">
-      <div style={{ display: 'grid', gap: 16 }}>
-        {sections.map((section) => <ReadPanel key={section.key} section={section} />)}
-      </div>
-      <div style={{ display: 'grid', gap: 16 }}>
-        <SidePanel title="Cần chú ý">{attention}</SidePanel>
-        <SidePanel title="Đang trên tàu" action={onBoard.length > 5 ? <Button size="small" type="text" onClick={() => setTab('crew')}>Xem tất cả <RightOutlined /></Button> : null}>
-          {crew.isError ? (
-            <p className="crew-muted">Không tải được danh sách thuyền viên.</p>
-          ) : onBoard.length ? (
-            <ul className="fl-rows">
-              {onBoard.slice(0, 5).map((row) => (
-                <li key={row.id}>
-                  <span className="fl-rows__main">
-                    <Link to={`/voyages/${row.id}`}>{row.seafarer_name}</Link>
-                    <span className="ds-cell2__sub">{row.rank_name} · {row.code}</span>
-                  </span>
-                  <span className="fl-rows__end">Lên tàu {date(row.join_date)}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="crew-muted">Hiện chưa có thuyền viên nào trên tàu.</p>
-          )}
-        </SidePanel>
-        <SidePanel title="Đang được dùng ở">
-          <ul className="fl-rows">
-            <li><span className="fl-rows__main">Chuyến đi tàu đã khớp</span><span className="ds-num">{vessel.usage.sea_service}</span></li>
-            <li><span className="fl-rows__main">Chuyến tàu</span><span className="ds-num">{vessel.usage.voyages}</span></li>
-            <li><span className="fl-rows__main">Giấy tờ thuyền viên gắn với tàu</span><span className="ds-num">{vessel.usage.documents}</span></li>
-          </ul>
-          <p className="fl-note">Tàu đang được dùng thì không xoá được, chỉ đổi trạng thái (Nằm bờ, Phá dỡ).</p>
-        </SidePanel>
-      </div>
-    </div>
-  )
+  const overview = <ReadLayout sections={readSections} label="tàu" />
 
   return (
     <div className="ds-page crew-profile">
@@ -217,6 +202,7 @@ export default function VesselDetailPage() {
             </div>
           </div>
         </div>
+        <NotePanel notes={vessel.notes} canEdit={can('vessel.update')} saving={save.isPending} onSave={saveNotes} className="sf-note--head" />
         <div className="crew-head__actions">
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
@@ -227,6 +213,15 @@ export default function VesselDetailPage() {
           {can('vessel.update') && <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/vessels/${vessel.id}/edit`)}>Sửa thông tin</Button>}
         </div>
       </div>
+
+      {missing.length > 0 && (
+        <Banner
+          tone="warning"
+          title="Thiếu thông tin chính"
+          description={`Chưa có ${missing.join(', ')}.`}
+          action={can('vessel.update') ? <Button onClick={() => navigate(`/vessels/${vessel.id}/edit`)}>Bổ sung</Button> : null}
+        />
+      )}
 
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
       {tab === 'overview' && overview}

@@ -712,3 +712,11 @@
 .ds-pw__rules { display: grid; gap: 4px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
 .ds-pw__rules li { display: flex; align-items: center; gap: 6px; }
 .ds-pw__rules li[data-ok="true"] { color: var(--success); }
+
+/* ---------- Chip nguồn, nút có thời gian chờ ---------- */
+.ds-source-chip { display: inline-flex; align-items: center; gap: 4px; height: 20px; margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.ds-source-chip--catalog { background: var(--neutral-bg); color: var(--neutral); }
+.ds-source-chip--smart { background: #eef3f8; color: var(--primary); }
+.ds-source-chip--created { background: var(--success-bg); color: var(--success); }
+.ds-cooldown { font-variant-numeric: tabular-nums; }
+

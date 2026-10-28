@@ -2,6 +2,9 @@ const fs = require('fs')
 const config = require('../../config')
 const pool = require('../../config/db')
 const { fleetService, VESSEL_STATUSES } = require('../../services/fleet.service')
+const { shipCatalogService } = require('../../services/ship_catalog.service')
+const { vesselLookup } = require('../../services/vessel_lookup')
+const { createRateWindow } = require('../../utils/rate_window')
 const businessCardScan = require('../../services/business_card_scan.service')
 const { ownerIdFor } = require('../../utils/scope')
 const { MAX_FILE_BYTES } = require('../../constants/document_types')
@@ -19,6 +22,21 @@ const listQuery = {
     page: { type: 'integer', minimum: 1 },
     limit: { type: 'integer', minimum: 1, maximum: 100 },
   },
+}
+const catalogQuery = {
+  type: 'object',
+  properties: {
+    q: { type: 'string', maxLength: 100 },
+    page: { type: 'integer', minimum: 1 },
+    limit: { type: 'integer', minimum: 1, maximum: 50 },
+  },
+}
+const lookupParams = { type: 'object', required: ['imo'], properties: { imo: { type: 'string', pattern: '^\\d{7}$' } } }
+// 20 lượt tra mỗi phút cho mỗi người dùng.
+const lookupLimiter = createRateWindow({ max: 20, windowMs: 60 * 1000 })
+async function requireAnyVesselWrite(request, reply) {
+  const have = request.access?.permissions
+  if (!have || !(have.has('vessel.create') || have.has('vessel.update'))) return reply.code(403).send({ error: 'Không có quyền' })
 }
 const nullableInt = { type: ['integer', 'null'], minimum: 1 }
 const nullableText = (maxLength) => ({ type: ['string', 'null'], maxLength })
@@ -113,6 +131,33 @@ async function fleetRoutes(fastify) {
       update: { schema: vesselBody, fn: (db, id, body) => fleetService.updateVessel(db, id, body) },
       extra: (app, { read, idParams: params }) => {
         app.get('/:id/service', { ...read, schema: { params } }, async (request) => fleetService.listVesselService(pool, request.params.id))
+        // Danh mục tàu thế giới (ship_catalog), tách khỏi bảng vessel. Tàu đã có trong MCAH không nằm trong kết quả.
+        app.get('/catalog', { ...read, schema: { querystring: catalogQuery } }, async (request) => shipCatalogService.search(pool, request.query))
+        // Lấy thông tin thông minh: tra IMO ở nguồn ngoài, trả bản đề xuất (không ghi vào vessel). Thêm tàu (create) hoặc sửa tàu (update) đều dùng.
+        app.get('/lookup-status', { ...read }, async () => ({
+          enabled: vesselLookup.enabled(),
+          cooldown_seconds: vesselLookup.cooldownSeconds,
+          global_cooldown_seconds: vesselLookup.globalCooldownSeconds,
+          // Giây còn lại của trần chung: giao diện khoá các nút Lấy thông minh và đếm ngược theo số này.
+          wait_seconds: vesselLookup.enabled() ? await vesselLookup.waitSeconds(pool) : 0,
+        }))
+        app.get('/lookup/:imo', { onRequest: [app.authenticate, requireAnyVesselWrite], schema: { params: lookupParams } }, async (request, reply) => {
+          const limit = lookupLimiter.hit(request.user.id)
+          if (!limit.ok) {
+            reply.header('Retry-After', limit.retryAfter)
+            return reply.code(429).send({ error: `Tra quá nhiều lần. Thử lại sau ${limit.retryAfter} giây.`, retry_after: limit.retryAfter })
+          }
+          try {
+            return await vesselLookup.lookup(pool, request.params.imo, request.user.id)
+          } catch (error) {
+            // Bộ xử lý lỗi chung che mọi 5xx thành 500 và bỏ trường phụ. Lỗi của nguồn ngoài (502) và trần chung (429) cần trả đúng mã kèm retry_after để giao diện báo và đếm ngược.
+            if (error.statusCode === 502 || error.statusCode === 429) {
+              if (error.retry_after) reply.header('Retry-After', error.retry_after)
+              return reply.code(error.statusCode).send({ error: error.message, retry_after: error.retry_after ?? null })
+            }
+            throw error
+          }
+        })
       },
     }),
     { prefix: '/vessels' }

@@ -21,6 +21,9 @@ import ListFooter from '../components/ds/ListFooter'
 import { actionColumn } from '../components/ds/actionColumn'
 import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
+import CooldownButton from '../components/ds/CooldownButton'
+import SourceChip from '../components/ds/SourceChip'
+import SparkIcon from '../components/ds/SparkIcon'
 import ChoiceCardGroup from '../components/ds/ChoiceCardGroup'
 import ToggleRow from '../components/ds/ToggleRow'
 import PasswordField from '../components/ds/PasswordField'
@@ -717,6 +720,22 @@ export default function DesignSystemPage() {
 
       <Section id="audit" title="Dòng thời gian audit">
         <div className="dsp-box dsp-box--pad"><AuditTimeline items={AUDIT} /></div>
+      </Section>
+
+      <Section id="nut-cho" title="Nút có thời gian chờ, chip nguồn">
+        <div className="dsp-states">
+          <Demo label="Nút chờ · sẵn sàng"><CooldownButton icon={<SparkIcon />}>Lấy thông minh</CooldownButton></Demo>
+          <Demo label="Nút chờ · đang chờ 1:45"><CooldownButton icon={<SparkIcon />} seconds={105}>Lấy thông minh</CooldownButton></Demo>
+          <Demo label="Nút chờ · đang xử lý"><CooldownButton icon={<SparkIcon />} loading>Lấy thông minh</CooldownButton></Demo>
+          <Demo label="Nút chờ · khoá (IMO sai)"><CooldownButton icon={<SparkIcon />} disabled>Lấy thông minh</CooldownButton></Demo>
+          <Demo label="Nút chờ · chính, trong hộp xác nhận"><CooldownButton type="primary" icon={<SparkIcon />} seconds={105}>Lấy thông tin thông minh</CooldownButton></Demo>
+        </div>
+        <div className="dsp-states">
+          <Demo label="Chip nguồn · danh mục"><span>Tên tàu<SourceChip source="catalog" /></span></Demo>
+          <Demo label="Chip nguồn · thông minh"><span>Năm đóng<SourceChip source="smart" /></span></Demo>
+          <Demo label="Chip nguồn · loại mới"><span>Loại tàu<SourceChip source="created" /></span></Demo>
+          <p className="dsp-note">Chip nguồn đứng cạnh nhãn trường, cùng kiểu chip "Đã sửa". Người dùng tự sửa trường thì chip biến mất. Nút chờ: bên gọi giữ số giây còn lại (useCooldown), hết giờ tự mở lại; thời gian chờ chính thức do máy chủ giữ.</p>
+        </div>
       </Section>
 
       <Section id="banner" title="Banner">

@@ -2,12 +2,12 @@ import { describe, it, expect } from 'vitest'
 import { NAV_SECTIONS, sectionsFor, activeSection, activeTab, initialsOf } from '../navConfig'
 
 describe('navConfig', () => {
-  it('sidebar có đúng 11 mục theo thứ tự đã chốt, chia 3 nhóm', () => {
-    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Tổng quan', 'Thuyền viên', 'Đối tác', 'Tàu', 'Bản xuất', 'Cơ hội', 'Chuyến tàu', 'Hợp đồng', 'Yêu cầu thanh toán', 'Danh mục', 'Quản trị'])
+  it('sidebar có đúng 10 mục theo thứ tự đã chốt, chia 3 nhóm', () => {
+    expect(NAV_SECTIONS.map((s) => s.label)).toEqual(['Tổng quan', 'Thuyền viên', 'Đối tác', 'Tàu', 'Cơ hội', 'Chuyến tàu', 'Hợp đồng', 'Yêu cầu thanh toán', 'Danh mục', 'Quản trị'])
   })
 
   it('3 nhóm: hồ sơ, vận hành, hệ thống', () => {
-    expect(NAV_SECTIONS.map((s) => s.group)).toEqual([1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3])
+    expect(NAV_SECTIONS.map((s) => s.group)).toEqual([1, 1, 1, 1, 2, 2, 2, 2, 3, 3])
   })
 
   const keys = (user) => sectionsFor(user).map((s) => s.key)

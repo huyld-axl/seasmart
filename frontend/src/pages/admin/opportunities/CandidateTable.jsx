@@ -7,8 +7,9 @@ import { formatDate } from '../../../utils/format'
 import { fitIssues } from './opportunityView'
 
 // Bảng ứng viên của một cơ hội. selected / onSelect: chọn nhiều dòng (thanh "Đã chọn N").
-// onMenu(action, candidate): 'select' | 'unselect' | 'remove'. onOpenFit(candidate): mở bảng đối chiếu.
-export default function CandidateTable({ candidates, requirements, editable, selected, onSelect, onMenu, onOpenFit }) {
+// onMenu(action, candidate): 'select' | 'unselect' | 'submission' | 'send' | 'profile' | 'remove'. onOpenFit(candidate): mở bảng đối chiếu.
+// onOpenSubmission(candidate): mở bảng trượt Hồ sơ nộp (giấy tờ + biểu mẫu của người đó).
+export default function CandidateTable({ candidates, requirements, editable, selected, onSelect, onMenu, onOpenFit, onOpenSubmission }) {
   const columns = [
     {
       title: 'Ứng viên',
@@ -44,11 +45,14 @@ export default function CandidateTable({ candidates, requirements, editable, sel
       },
     },
     {
-      title: 'Bản xuất',
+      title: 'Hồ sơ nộp',
       key: 'pack',
-      render: (_, c) => (c.export_pack
-        ? <Link to={`/exports/${c.export_pack.id}`} onClick={(e) => e.stopPropagation()}>Đã tạo {formatDate(c.export_pack.created_at)}</Link>
-        : <span className="vd-muted">Chưa tạo</span>),
+      render: (_, c) => (c.status === 'PICKED' || c.export_pack ? (
+        <span className="ds-cell2">
+          <Button size="small" onClick={(e) => { e.stopPropagation(); onOpenSubmission(c) }}>Hồ sơ nộp</Button>
+          <span className="ds-cell2__sub">{c.export_pack ? `Ráp ${formatDate(c.export_pack.created_at)}` : 'Chưa điền biểu mẫu'}</span>
+        </span>
+      ) : null),
     },
     {
       title: 'Gửi chủ tàu',
@@ -66,7 +70,8 @@ export default function CandidateTable({ candidates, requirements, editable, sel
           menu={{
             items: [
               c.owner_selected_at ? { key: 'unselect', label: 'Bỏ nhãn chủ tàu đã chọn' } : { key: 'select', label: 'Đánh dấu chủ tàu đã chọn' },
-              c.export_pack ? { key: 'send', label: 'Gửi cho chủ tàu' } : { key: 'pack', label: 'Tạo bản xuất' },
+              { key: 'submission', label: 'Mở hồ sơ nộp' },
+              { key: 'send', label: 'Gửi cho chủ tàu' },
               { key: 'profile', label: 'Mở hồ sơ thuyền viên' },
               { type: 'divider' },
               { key: 'remove', label: 'Bỏ khỏi danh sách', danger: true },

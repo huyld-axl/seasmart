@@ -188,11 +188,6 @@ export default function PartnerDetailPage() {
             </Dropdown>
           )}
           {can('partner.update') && <Button icon={<EditOutlined />} onClick={() => navigate(`/partners/${owner.id}/edit`)}>Sửa thông tin</Button>}
-          {can('export.create') && (
-            <Button type="primary" icon={<SendOutlined />} disabled={!active} title={active ? undefined : 'Đối tác đã ngừng hợp tác'} onClick={() => navigate(`/exports/new?owner=${owner.id}`)}>
-              Tạo bộ giấy nộp đối tác
-            </Button>
-          )}
         </div>
       </div>
 

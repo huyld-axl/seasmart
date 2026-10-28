@@ -1,6 +1,7 @@
 const pool = require('../../config/db')
 const { opportunityService } = require('../../services/opportunity.service')
 const seafarerSendService = require('../../services/seafarer_send.service')
+const submissionService = require('../../services/submission.service')
 const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
 
 const NOT_FOUND = 'Không tìm thấy cơ hội'
@@ -195,6 +196,19 @@ async function opportunityRoutes(fastify) {
   }, async (request) => {
     await inScope(request)
     return opportunityService.place(pool, request.params.id, request.body, request.user.id)
+  })
+  // Hồ sơ nộp của một ứng viên: giấy tờ theo yêu cầu và biểu mẫu phải điền. POST: tạo / bổ sung bộ biểu mẫu.
+  const candParams = { type: 'object', required: ['id', 'seafarerId'], properties: { id: { type: 'integer', minimum: 1 }, seafarerId: { type: 'integer', minimum: 1 } } }
+  fastify.get('/:id/candidates/:seafarerId/submission', { ...can('view'), schema: { params: candParams } }, async (request) => {
+    await inScope(request)
+    return submissionService.get(pool, request.params.id, request.params.seafarerId)
+  })
+  fastify.post('/:id/candidates/:seafarerId/submission/pack', {
+    onRequest: [fastify.authenticate, fastify.can('opportunity.view'), fastify.can('export.create')],
+    schema: { params: candParams },
+  }, async (request) => {
+    await inScope(request)
+    return submissionService.ensurePack(pool, request.params.id, request.params.seafarerId, request.user)
   })
   fastify.post('/:id/sends', { ...can('send'), schema: { params: idParams, body: sendBody } }, async (request) => {
     await inScope(request)

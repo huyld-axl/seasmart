@@ -38,7 +38,7 @@ export default function DocPreview({ items, index, onIndex, onClose }) {
   else stage = <EmptyState isError={isError} title="Không mở được tệp" description="Thử lại sau ít phút." />
 
   return (
-    <Modal open={open} onCancel={onClose} footer={null} width={960} destroyOnHidden title={item ? `${item.name}${items.length > 1 ? ` · ${index + 1}/${items.length}` : ''}` : ''}>
+    <Modal open={open} onCancel={onClose} footer={null} width={960} zIndex={1100} destroyOnHidden title={item ? `${item.name}${items.length > 1 ? ` · ${index + 1}/${items.length}` : ''}` : ''}>
       {item ? (
         <div className="crew-preview">
           <div className="crew-preview__stage">

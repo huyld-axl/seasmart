@@ -39,11 +39,8 @@ import BillFormPage from './pages/admin/bills/BillFormPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
 import DesignSystemPage from './pages/DesignSystemPage'
-import ExportListPage from './pages/admin/exports/ExportListPage'
 import ReviewPage from './pages/admin/review/ReviewPage'
 import UploadPage from './pages/admin/UploadPage'
-import PackCreatePage from './pages/admin/exports/PackCreatePage'
-import PackDetailPage from './pages/admin/exports/PackDetailPage'
 import StandaloneError from './pages/errors/StandaloneError'
 import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
@@ -118,9 +115,6 @@ function AppRoutes() {
         />
         <Route path="/seafarers/:id/upload" element={guard('seafarer.docs', <UploadPage />)} />
         <Route path="/seafarers/:id/review" element={guard('seafarer.docs', <ReviewPage />)} />
-        <Route path="/exports" element={guard('export.view', <ExportListPage />)} />
-        <Route path="/exports/new" element={guard('export.create', <PackCreatePage />)} />
-        <Route path="/exports/:packId" element={guard('export.view', <PackDetailPage />)} />
         <Route path="/vessels" element={guard('vessel.view', <VesselListPage />)} />
         <Route path="/vessels/new" element={guard('vessel.create', <VesselFormPage />)} />
         <Route path="/vessels/:id" element={guard('vessel.view', <VesselDetailPage />)} />

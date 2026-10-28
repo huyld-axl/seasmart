@@ -199,8 +199,8 @@ export default function SeafarerDetailPage() {
     upload: ['Tải giấy tờ lên', () => dropFiles(), 'seafarer.docs'],
   }
   const READINESS_TEXT = {
-    BLOCKED: `Chưa xuất được: ${failing.filter((r) => r.result === 'FAIL').length} điều kiện không đạt.`,
-    NEEDS_REVIEW: 'Xuất được, nhưng còn chỗ chưa duyệt. Người duyệt bản xuất sẽ thấy cảnh báo.',
+    BLOCKED: `Hồ sơ chưa đủ để nộp: ${failing.filter((r) => r.result === 'FAIL').length} điều kiện không đạt.`,
+    NEEDS_REVIEW: 'Hồ sơ còn giấy tờ chưa duyệt. Kiểm tra trước khi nộp cho chủ tàu.',
   }
   const dropFiles = () => navigate(`/seafarers/${id}/upload`)
   const moreItems = [

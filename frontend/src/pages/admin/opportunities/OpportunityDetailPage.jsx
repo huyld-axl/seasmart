@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Input, Modal, Skeleton } from 'antd'
 import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RollbackOutlined, StopOutlined, CloseCircleOutlined } from '@ant-design/icons'
@@ -17,6 +18,10 @@ import CandidateTable from './CandidateTable'
 import useSendToOwner from './useSendToOwner'
 import PlaceModal from './PlaceModal'
 import CandidatePanel from './CandidatePanel'
+import SubmissionPanel from './SubmissionPanel'
+import { opportunityApi } from '../../../api/opportunityApi'
+import { exportApi } from '../../../api/exportApi'
+import { saveBlob, downloadError } from '../exports/download'
 import { deadlineLabel, requirementName } from './opportunityView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
@@ -95,6 +100,9 @@ export default function OpportunityDetailPage() {
   const { data: o, isLoading, isError, refetch } = useOpportunity(id)
   const m = useOpportunityMutations()
   const [selected, setSelected] = useState([])
+  const [submissionFor, setSubmissionFor] = useState(null)
+  const [downloadingAll, setDownloadingAll] = useState(false)
+  const queryClient = useQueryClient()
   const [fitFor, setFitFor] = useState(null)
   const [closing, setClosing] = useState(false)
   const [panel, setPanel] = useState(null)
@@ -142,7 +150,7 @@ export default function OpportunityDetailPage() {
 
   function onCandidateMenu(action, c) {
     if (action === 'profile') return navigate(`/seafarers/${c.seafarer_id}`)
-    if (action === 'pack') return makePacks([c])
+    if (action === 'submission') return setSubmissionFor(c)
     if (action === 'send') return sendToOwner(o, [c])
     if (action === 'select' || action === 'unselect') {
       const selectedNow = action === 'select'
@@ -166,10 +174,20 @@ export default function OpportunityDetailPage() {
   }
 
   const picked = live.filter((c) => selected.includes(c.seafarer_id))
-  const unpacked = picked.filter((c) => !c.export_pack)
-  const packed = picked.filter((c) => c.export_pack)
-  function makePacks(people) {
-    navigate(`/exports/new?opportunity=${o.id}&seafarers=${people.map((c) => c.seafarer_id).join(',')}`)
+  // Tải hồ sơ nộp của những người đã chọn, mỗi người một .zip (người chưa có bộ biểu mẫu thì tạo trước).
+  async function downloadPicked(people) {
+    setDownloadingAll(true)
+    try {
+      for (const c of people) {
+        const packId = c.export_pack?.id || (await opportunityApi.ensurePack(o.id, c.seafarer_id)).pack.id
+        saveBlob(await exportApi.download(packId, 'pdf'), `${c.full_name}.zip`)
+      }
+      queryClient.invalidateQueries({ queryKey: ['opportunities', 'item', String(o.id)] })
+    } catch (e) {
+      toast.error('Không tải được hồ sơ', { description: await downloadError(e) })
+    } finally {
+      setDownloadingAll(false)
+    }
   }
 
   function removeSelected() {
@@ -338,8 +356,8 @@ export default function OpportunityDetailPage() {
           {editable && selected.length ? (
             <div className="op-bulk">
               <b>Đã chọn {selected.length}</b>
-              {unpacked.length && can('export.create') ? <Button size="small" onClick={() => makePacks(unpacked)}>Tạo bản xuất cho {unpacked.length} người</Button> : null}
-              {packed.length && can('opportunity.send') ? <Button size="small" onClick={() => sendToOwner(o, packed)}>Gửi cho chủ tàu ({packed.length})</Button> : null}
+              {picked.length && can('export.create') ? <Button size="small" loading={downloadingAll} onClick={() => downloadPicked(picked)}>Tải hồ sơ {picked.length} người</Button> : null}
+              {picked.length && can('opportunity.send') ? <Button size="small" onClick={() => sendToOwner(o, picked)}>Gửi cho chủ tàu ({picked.length})</Button> : null}
               <Button size="small" danger onClick={removeSelected}>Bỏ khỏi danh sách</Button>
               <Button size="small" type="text" onClick={() => setSelected([])}>Bỏ chọn</Button>
             </div>
@@ -353,6 +371,7 @@ export default function OpportunityDetailPage() {
               onSelect={setSelected}
               onMenu={onCandidateMenu}
               onOpenFit={setFitFor}
+              onOpenSubmission={setSubmissionFor}
             />
           ) : (
             <EmptyState title="Chưa có ứng viên" description="Bấm Đề xuất nhanh để xem người hợp với hồ sơ yêu cầu, hoặc Thêm ứng viên để tìm theo tên." action={editable ? <Button type="primary" onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button> : undefined} />
@@ -373,6 +392,14 @@ export default function OpportunityDetailPage() {
           </section>
       ) : null}
 
+      {submissionFor ? (
+        <SubmissionPanel
+          opportunityId={o.id}
+          seafarerId={submissionFor.seafarer_id}
+          onClose={() => setSubmissionFor(null)}
+          onSend={editable ? () => sendToOwner(o, [o.candidates.find((c) => c.seafarer_id === submissionFor.seafarer_id) || submissionFor]) : undefined}
+        />
+      ) : null}
       {fitFor ? <FitModal candidate={fitFor} requirements={o.requirements} onClose={() => setFitFor(null)} /> : null}
       {panel ? <CandidatePanel opportunity={o} mode={panel} onClose={() => setPanel(null)} /> : null}
       {closing ? <CloseModal opportunity={o} onClose={() => setClosing(false)} /> : null}

@@ -37,6 +37,7 @@ describe('bộ giấy tờ: luật thuần', () => {
   it('từ chối mẫu lạ, danh sách rỗng, hai đơn BHXH cùng lúc', () => {
     expect(() => normalizeDocs(['xyz'])).toThrow()
     expect(() => normalizeDocs([])).toThrowError(expect.objectContaining({ statusCode: 400 }))
+    expect(normalizeDocs([], { allowEmpty: true })).toEqual([])
     expect(() => normalizeDocs(['bhxh', 'kbhxh'])).toThrowError(expect.objectContaining({ message: 'Chỉ chọn một trong hai đơn BHXH' }))
   })
 

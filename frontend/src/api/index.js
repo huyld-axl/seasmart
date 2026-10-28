@@ -32,6 +32,9 @@ export const seafarerApi = {
     return api.post(`/seafarers/${id}/photo`, form)
   },
   removePhoto: (id) => api.delete(`/seafarers/${id}/photo`),
+  // Tab Đã xuất: các lần nộp hồ sơ cho cơ hội, và tải lại đúng bản đã gửi.
+  sends: (id) => api.get(`/seafarers/${id}/sends`).then((r) => r.data),
+  sendDownload: (id, sendId) => api.get(`/seafarers/${id}/sends/${sendId}/download`, { responseType: 'blob', timeout: 180000 }),
   downloadTemplate: () => api.get('/import/excel/template', { responseType: 'blob' }),
   importFile: (file) => {
     const form = new FormData()

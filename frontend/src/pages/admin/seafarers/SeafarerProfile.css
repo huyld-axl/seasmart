@@ -104,3 +104,32 @@
 @media (max-width: 767px) {
   .crew-preview { grid-template-columns: 1fr; }
 }
+
+/* Tab Đã xuất: các lần nộp hồ sơ, mở dòng xem tệp */
+.crew-sends__desc { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.crew-sends { margin: 0; padding: 0; list-style: none; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.crew-sends > li + li { border-top: 1px solid var(--border); }
+.crew-sends > li[data-open] { background: var(--surface-hover); }
+.crew-sends__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 12px 10px 6px; }
+.crew-sends__what { flex: 1 1 220px; min-width: 0; }
+.crew-sends__files { flex: 0 0 150px; }
+.crew-sends__when { flex: 0 1 190px; min-width: 0; }
+.crew-sends__when .ds-cell2__sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crew-sends__acts { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.crew-sends__stale { color: var(--warning); }
+.crew-sends__detail { padding: 0 16px 14px 44px; }
+.crew-sends__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 24px; }
+.crew-sends__label { margin: 0 0 4px; color: var(--muted); font-size: 12px; font-weight: 500; }
+.crew-sends__list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.crew-sends__list li { display: flex; align-items: center; gap: 8px; }
+.crew-sends__list .anticon { color: var(--muted); }
+.crew-sends__tag { padding: 0 8px; font-size: 11px; }
+.crew-sends__note { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.crew-sends__old { margin-top: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.crew-sends__old summary { cursor: pointer; font-weight: 500; }
+.crew-sends__oldlist { display: grid; margin: 8px 0 0; padding: 0; list-style: none; }
+.crew-sends__oldlist li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); }
+@media (max-width: 767px) {
+  .crew-sends__files, .crew-sends__when { flex: 1 1 140px; }
+  .crew-sends__detail { padding-left: 16px; }
+}

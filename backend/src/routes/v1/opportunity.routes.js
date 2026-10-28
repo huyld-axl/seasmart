@@ -1,5 +1,6 @@
 const pool = require('../../config/db')
 const { opportunityService } = require('../../services/opportunity.service')
+const seafarerSendService = require('../../services/seafarer_send.service')
 const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
 
 const NOT_FOUND = 'Không tìm thấy cơ hội'
@@ -197,7 +198,11 @@ async function opportunityRoutes(fastify) {
   })
   fastify.post('/:id/sends', { ...can('send'), schema: { params: idParams, body: sendBody } }, async (request) => {
     await inScope(request)
-    return opportunityService.recordSend(pool, request.params.id, request.body, request.user.id)
+    const result = await opportunityService.recordSend(pool, request.params.id, request.body, request.user.id)
+    // Giữ bản đã gửi của từng người cho tab Đã xuất; chạy nền, lỗi chỉ ghi log.
+    const sendId = result.sends?.[0]?.id
+    if (sendId) seafarerSendService.keepCopies(pool, sendId, request.log).catch((error) => request.log.warn({ err: error, sendId }, 'Không giữ được bản đã gửi'))
+    return result
   })
 }
 

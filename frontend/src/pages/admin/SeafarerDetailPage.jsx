@@ -233,14 +233,7 @@ export default function SeafarerDetailPage() {
         {can('contract.view') ? <ContractsSection seafarerId={id} /> : null}
       </>
     ),
-    exports: (
-      <>
-        <ProfileExports seafarerId={Number(id)} canCreate={readiness !== 'BLOCKED'} blockedReason={readiness === 'BLOCKED' ? 'Hồ sơ đang bị chặn, xem mục kiểm tra phía trên' : undefined} />
-        <Section title="Xuất lẻ từng mẫu">
-          <FormExportTab seafarerId={parseInt(id)} seafarerName={seafarer.full_name} />
-        </Section>
-      </>
-    ),
+    exports: <ProfileExports seafarerId={Number(id)} />,
     history: <ProfileHistory seafarerId={id} />,
   }
 

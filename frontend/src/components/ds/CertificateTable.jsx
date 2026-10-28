@@ -18,7 +18,7 @@ const badge = (cert) => <StatusBadge group="cert" value={cert.replaced ? 'REPLAC
 
 export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSource, onDownload, onRenew, onDismiss, onRestore }) {
   const name = (cert) => (thumb ? <span className="ds-ctable__name">{thumb(cert)}<b>{cert.name}</b></span> : <b>{cert.name}</b>)
-  const source = (cert) => (thumb || cert.manual ? null : <button type="button" className="ds-link" onClick={() => onOpenSource?.(cert)}>Xem bản gốc</button>)
+  const source = (cert) => (thumb || !onOpenSource || !(cert.hasFile ?? !cert.manual) ? null : <button type="button" className="ds-link" onClick={() => onOpenSource?.(cert)}>Xem bản gốc</button>)
   // Các nút chỉ hiện khi truyền handler tương ứng (theo quyền) và dòng đủ điều kiện.
   const renew = (cert) => (onRenew && cert.canRenew ? <Button type="text" size="small" icon={<SyncOutlined />} aria-label={`Cập nhật ${cert.name}`} title="Cập nhật chứng chỉ" onClick={() => onRenew(cert)} /> : null)
   const download = (cert) => (onDownload && cert.hasFile ? <Button type="text" size="small" icon={<DownloadIcon />} aria-label={`Tải ${cert.name}`} title="Tải về" onClick={() => onDownload(cert)} /> : null)

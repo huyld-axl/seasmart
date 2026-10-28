@@ -9,7 +9,6 @@ import { DownloadIcon, UploadIcon } from '../../../components/ds/TransferIcons'
 import useToast from '../../../components/ds/useToast'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import CertificateTable from '../../../components/ds/CertificateTable'
-import DocThumb from '../../../components/ds/DocThumb'
 import ScanButton from '../../../components/ds/ScanButton'
 import { useCan } from '../../../hooks/usePermission'
 import { saveBlob, downloadError } from '../exports/download'
@@ -21,7 +20,7 @@ import useObjectUrl from '../../../hooks/useObjectUrl'
 const fmtDate = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '')
 
 // Tab Giấy tờ: mọi giấy lấy trọn vẹn từ thuyền viên (ảnh thẻ, CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ), chỉ cần nạp ảnh.
-// Một bảng chung, lọc theo loại; cột ảnh thu nhỏ, bấm để xem lớn. Giấy chưa có ảnh là khung nét đứt, bấm để nạp.
+// Một bảng chung, lọc theo loại; giấy có ảnh thì bấm Xem bản gốc để xem lớn. Giấy chưa có ảnh nạp qua nút Sửa.
 export default function DocumentsSection({ seafarerId, seafarer, photo, dismissed, onDismiss, onRestore }) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -236,18 +235,6 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     if (cert.isPhoto) return photo ? { key: ['photo', seafarerId, seafarer.photo_updated_at], load: () => fetch(photo).then((r) => r.blob()) } : null
     return certImage(seafarerId, cert.raw, size)
   }
-  const thumb = (cert) => {
-    const image = imageOf(cert, 'thumb')
-    return (
-      <DocThumb
-        name={cert.name}
-        cacheKey={image?.key}
-        load={image?.load}
-        onOpen={() => setPreviewAt(shown.indexOf(cert))}
-        onUpload={canEdit ? (cert.isPhoto ? pickPhoto : () => startEdit(cert.raw)) : undefined}
-      />
-    )
-  }
   const previewItems = shown.map((cert) => ({
     key: cert.id,
     name: cert.name,
@@ -331,14 +318,14 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           ) : null}
           <CertificateTable
             certs={shown}
-            thumb={thumb}
+            onOpenSource={(cert) => setPreviewAt(shown.indexOf(cert))}
             onDismiss={(cert) => onDismiss([{ id: cert.id, expiry: String(cert.raw.expiry_date).slice(0, 10) }])}
             onRestore={(cert) => onRestore(cert.id)}
             onRenew={canEdit ? startRenew : undefined}
             onEdit={canEdit ? (cert) => (cert.isPhoto ? pickPhoto() : startEdit(cert.raw)) : undefined}
             onDownload={downloadCert}
           />
-          {missing && canEdit ? <p className="crew-certs__renew" style={{ margin: '12px 0 0' }}>{missing} giấy chưa có ảnh. Bấm ô nét đứt ở cột ảnh để nạp.</p> : null}
+          {missing && canEdit ? <p className="crew-certs__renew" style={{ margin: '12px 0 0' }}>{missing} giấy chưa có ảnh. Bấm Sửa ở dòng đó để nạp ảnh.</p> : null}
         </>
       )}
       <DocPreview items={previewItems} index={previewAt} onIndex={setPreviewAt} onClose={() => setPreviewAt(null)} />

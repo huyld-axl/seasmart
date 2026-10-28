@@ -49,9 +49,17 @@ module.exports = {
     globalCooldownSeconds: parseInt(process.env.VESSEL_LOOKUP_GLOBAL_COOLDOWN_SECONDS) || 120,
     timeoutMs: parseInt(process.env.VESSEL_LOOKUP_TIMEOUT_MS) || 60000,
   },
-  sendgrid: {
-    apiKey: process.env.SENDGRID_API_KEY || '',
-    fromEmail: process.env.SENDGRID_FROM_EMAIL || 'noreply@marineport.vn',
-    fromName: process.env.SENDGRID_FROM_NAME || 'MarinePort',
+  // Mail server công ty (SMTP). Thiếu host thì không gửi, chỉ ghi log.
+  // useSsl: TLS ngay khi kết nối (thường cổng 465). useTls: nâng cấp bằng STARTTLS (thường cổng 587).
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    username: process.env.SMTP_USERNAME || '',
+    password: process.env.SMTP_PASSWORD || '',
+    useSsl: process.env.SMTP_USE_SSL === 'true',
+    useTls: process.env.SMTP_USE_TLS === 'true',
+    fromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@marineport.vn',
+    fromName: process.env.SMTP_FROM_NAME || 'MarinePort',
   },
+  appUrl: (process.env.APP_URL || 'http://localhost:5173').replace(/\/+$/, ''),
 }

@@ -11,6 +11,7 @@ import useAuthStore from './stores/authStore'
 import { sectionsFor } from './layouts/navConfig'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/admin/LoginPage'
+import SetPasswordPage from './pages/admin/SetPasswordPage'
 import DashboardPage from './pages/admin/DashboardPage'
 import SeafarerListPage from './pages/admin/SeafarerListPage'
 import SeafarerDetailPage from './pages/admin/SeafarerDetailPage'
@@ -77,6 +78,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/dat-mat-khau" element={<SetPasswordPage />} />
       <Route path="/design-system" element={<DesignSystemPage />} />
       <Route
         path="/"

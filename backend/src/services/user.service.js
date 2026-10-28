@@ -1,10 +1,12 @@
+const crypto = require('crypto')
 const bcrypt = require('bcrypt')
 const pool = require('../config/db')
 const { ADMIN_ROLE_CODE } = require('../constants/permissions')
+const emailService = require('./email.service')
 
 const SALT_ROUNDS = 10
 
-const USER_SELECT = `SELECT u.id, u.email, u.is_active, u.role_id, u.created_at, u.updated_at, u.last_login_at,
+const USER_SELECT = `SELECT u.id, u.email, u.full_name, u.is_active, u.activated_at, u.role_id, u.created_at, u.updated_at, u.last_login_at,
         r.code AS role_code, r.name AS role_name
  FROM "user" u LEFT JOIN "role" r ON r.id = u.role_id`
 
@@ -13,6 +15,7 @@ function shapeUser(row) {
   const { role_id, role_code, role_name, ...rest } = row
   return {
     ...rest,
+    status: !row.is_active ? 'LOCKED' : row.activated_at ? 'ACTIVE' : 'PENDING',
     role: role_id == null ? null : { id: role_id, name: role_name, is_system: role_code != null },
     is_admin: role_code === ADMIN_ROLE_CODE,
   }
@@ -20,8 +23,26 @@ function shapeUser(row) {
 
 const fail = (statusCode, message) => ({ statusCode, message })
 
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex')
+
+// Mã đặt mật khẩu: bản gốc chỉ nằm trong thư, DB giữ bản băm.
+async function issueInviteToken(db, userId) {
+  const token = crypto.randomBytes(32).toString('hex')
+  await db.query('UPDATE "user" SET invite_token_hash = ?, updated_at = NOW() WHERE id = ?', [hashToken(token), userId])
+  return token
+}
+
+async function sendInvite(user, token) {
+  await emailService.sendInvite({
+    to: user.email,
+    fullName: user.full_name || user.email,
+    roleName: user.role?.name || '',
+    token,
+  })
+}
+
 async function listUsers(filters = {}, pagination = {}, db = pool) {
-  const { role_id, is_active, email } = filters
+  const { role_id, is_active, email, status } = filters
   const page = Math.max(1, parseInt(pagination.page) || 1)
   const limit = Math.min(100, Math.max(1, parseInt(pagination.limit) || 20))
   const offset = (page - 1) * limit
@@ -39,9 +60,12 @@ async function listUsers(filters = {}, pagination = {}, db = pool) {
     conditions.push('u.is_active = ?')
     params.push(is_active === 'true' || is_active === true ? 1 : 0)
   }
+  if (status === 'pending') conditions.push('u.activated_at IS NULL AND u.is_active = 1')
+  if (status === 'active') conditions.push('u.activated_at IS NOT NULL AND u.is_active = 1')
+  if (status === 'locked') conditions.push('u.is_active = 0')
   if (email) {
-    conditions.push('unaccent(u.email::text) ILIKE unaccent(?)')
-    params.push(`%${email}%`)
+    conditions.push('(unaccent(u.email::text) ILIKE unaccent(?) OR unaccent(COALESCE(u.full_name, \'\')) ILIKE unaccent(?))')
+    params.push(`%${email}%`, `%${email}%`)
   }
 
   const where = conditions.join(' AND ')
@@ -114,7 +138,7 @@ async function loadTarget(db, id) {
 }
 
 async function createUser(data, actor, db = pool) {
-  const { email, password, role_id } = data
+  const { email, full_name, role_id } = data
   const role = await findRole(db, role_id)
   if (role.code === ADMIN_ROLE_CODE && !actor.isAdmin) {
     throw fail(403, 'Chỉ Quản trị viên được gán hoặc bỏ vai trò Quản trị viên')
@@ -123,13 +147,48 @@ async function createUser(data, actor, db = pool) {
   const [existing] = await db.query('SELECT id FROM "user" WHERE email = ? AND deleted_at IS NULL', [email])
   if (existing.length > 0) throw fail(400, 'Email đã tồn tại')
 
-  const hash = await bcrypt.hash(password, SALT_ROUNDS)
   const [result] = await db.query(
-    `INSERT INTO "user" (email, password_hash, role_id, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, 1, NOW(), NOW())`,
-    [email, hash, role.id]
+    `INSERT INTO "user" (email, full_name, password_hash, role_id, is_active, created_at, updated_at)
+     VALUES (?, ?, NULL, ?, 1, NOW(), NOW())`,
+    [email, full_name.trim(), role.id]
   )
-  return getUserById(result.insertId, db)
+  const token = await issueInviteToken(db, result.insertId)
+  const user = await getUserById(result.insertId, db)
+  await sendInvite(user, token)
+  return user
+}
+
+async function resendInvite(id, db = pool) {
+  const user = await loadTarget(db, id)
+  if (user.status !== 'PENDING') throw fail(400, 'Tài khoản này đã kích hoạt')
+  await sendInvite(user, await issueInviteToken(db, id))
+  return user
+}
+
+async function findPendingByToken(db, token) {
+  const [rows] = await db.query(
+    'SELECT id, email, full_name FROM "user" WHERE invite_token_hash = ? AND activated_at IS NULL AND is_active = 1 AND deleted_at IS NULL',
+    [hashToken(token)]
+  )
+  if (!rows[0]) throw fail(400, 'Liên kết không hợp lệ hoặc đã được dùng')
+  return rows[0]
+}
+
+// Trang đặt mật khẩu hỏi mã này của ai để hiện email.
+async function getInviteByToken(token, db = pool) {
+  const { email, full_name } = await findPendingByToken(db, token)
+  return { email, full_name }
+}
+
+// Người dùng đặt mật khẩu lần đầu qua liên kết trong thư mời.
+async function setPasswordByToken({ token, password }, db = pool) {
+  const user = await findPendingByToken(db, token)
+  if (password.toLowerCase() === String(user.email).toLowerCase()) throw fail(400, 'Mật khẩu không được trùng email')
+  const hash = await bcrypt.hash(password, SALT_ROUNDS)
+  await db.query(
+    'UPDATE "user" SET password_hash = ?, activated_at = NOW(), invite_token_hash = NULL, updated_at = NOW() WHERE id = ?',
+    [hash, user.id]
+  )
 }
 
 async function updateUser(id, data, actor, db = pool) {
@@ -137,7 +196,7 @@ async function updateUser(id, data, actor, db = pool) {
   const fields = []
   const params = []
 
-  for (const key of ['email', 'is_active']) {
+  for (const key of ['email', 'full_name', 'is_active']) {
     if (data[key] !== undefined) {
       fields.push(`${key} = ?`)
       params.push(data[key])
@@ -182,6 +241,9 @@ module.exports = {
   listUsers,
   getUserById,
   createUser,
+  resendInvite,
+  setPasswordByToken,
+  getInviteByToken,
   updateUser,
   softDeleteUser,
   toggleActive,

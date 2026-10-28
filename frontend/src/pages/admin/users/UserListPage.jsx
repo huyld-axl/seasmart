@@ -5,7 +5,7 @@ import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import UserTable from '../../../components/admin/users/UserTable'
 import UserForm from '../../../components/admin/users/UserForm'
 import useToast from '../../../components/ds/useToast'
-import { EmptyState } from '../../../components/ds/Controls'
+import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import ListFooter from '../../../components/ds/ListFooter'
 import useListSticky from '../../../components/ds/useListSticky'
 import useAccountRights from '../../../hooks/useAccountRights'
@@ -15,7 +15,7 @@ import {
   useCreateUser,
   useUpdateUser,
   useDeleteUser,
-  useToggleActive,
+  useResendInvite,
 } from '../../../hooks/useUsers'
 
 const PAGE_SIZE = 20 // mặc định; người dùng đổi ở dòng chân
@@ -42,11 +42,12 @@ export default function UserListPage() {
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
-  const toggleActive = useToggleActive()
+  const resendInvite = useResendInvite()
+  const [formKey, setFormKey] = useState(0)
 
   const rows = data?.data || []
   const total = data?.total || 0
-  const filtered = !!(filters.email || filters.role_id || filters.is_active)
+  const filtered = !!(filters.email || filters.role_id || filters.status)
   const setFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value || undefined, page: 1 }))
     if (key === 'role_id')
@@ -58,17 +59,20 @@ export default function UserListPage() {
     setPanelOpen(true)
   }
 
-  const handleSubmit = (values) => {
+  const handleSubmit = (values, form, addAnother) => {
+    const name = values.full_name?.trim() || values.email
     const done = (text) => ({
       onSuccess: () => {
         toast.success(text)
-        setPanelOpen(false)
+        if (addAnother) {
+          form.resetFields()
+          setFormKey((key) => key + 1)
+        } else setPanelOpen(false)
       },
       onError: (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) }),
     })
-    if (editTarget)
-      updateUser.mutate({ id: editTarget.id, data: values }, done(`Đã lưu ${values.email}`))
-    else createUser.mutate(values, done(`Đã tạo tài khoản ${values.email}`))
+    if (editTarget) updateUser.mutate({ id: editTarget.id, data: values }, done(`Đã lưu ${name}`))
+    else createUser.mutate(values, done(`Đã tạo tài khoản và gửi email mời tới ${values.email}`))
   }
 
   const confirmDelete = (user) =>
@@ -86,11 +90,10 @@ export default function UserListPage() {
         ),
     })
 
-  const handleToggle = (user) =>
-    toggleActive.mutate(user.id, {
-      onSuccess: () =>
-        toast.success(user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`),
-      onError: (error) => toast.error(user.is_active ? `Không khoá được ${user.email}` : `Không mở lại được ${user.email}`, { description: errorText(error) }),
+  const handleResend = (user) =>
+    resendInvite.mutate(user.id, {
+      onSuccess: () => toast.success(`Đã gửi lại lời mời tới ${user.email}`),
+      onError: (error) => toast.error('Không gửi được lời mời', { description: errorText(error) }),
     })
 
   let body
@@ -124,7 +127,7 @@ export default function UserListPage() {
         action={
           rights.canCreate ? (
             <Button icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-              Tạo tài khoản
+              Thêm tài khoản
             </Button>
           ) : undefined
         }
@@ -139,7 +142,7 @@ export default function UserListPage() {
           scroll={tableScroll}
           onEdit={openPanel}
           onDelete={confirmDelete}
-          onToggleActive={handleToggle}
+          onResendInvite={handleResend}
         />
         <ListFooter
           total={total}
@@ -156,12 +159,22 @@ export default function UserListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
+          <StatusTabs
+            tabs={[
+              { value: 'all', label: 'Tất cả' },
+              { value: 'pending', label: 'Chờ kích hoạt' },
+              { value: 'active', label: 'Hoạt động' },
+              { value: 'locked', label: 'Đã khoá' },
+            ]}
+            value={filters.status || 'all'}
+            onChange={(value) => setFilter('status', value === 'all' ? '' : value)}
+          />
           <Input
             className="ds-toolbar__search"
             allowClear
             prefix={<SearchOutlined />}
-            placeholder="Tìm theo email"
-            aria-label="Tìm theo email"
+            placeholder="Tìm tên, email"
+            aria-label="Tìm tên, email"
             defaultValue={filters.email}
             onPressEnter={(event) => setFilter('email', event.target.value.trim())}
             onChange={(event) => !event.target.value && setFilter('email', '')}
@@ -178,22 +191,10 @@ export default function UserListPage() {
             ]}
             aria-label="Lọc theo vai trò"
           />
-          <Select
-            allowClear
-            style={{ width: 180 }}
-            placeholder="Đăng nhập: Tất cả"
-            value={filters.is_active}
-            onChange={(value) => setFilter('is_active', value)}
-            options={[
-              { value: 'true', label: 'Cho phép' },
-              { value: 'false', label: 'Đã khoá' },
-            ]}
-            aria-label="Lọc theo trạng thái đăng nhập"
-          />
           {rights.canCreate ? (
             <span className="ds-toolbar__end">
               <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-                Tạo tài khoản
+                Thêm tài khoản
               </Button>
             </span>
           ) : null}
@@ -206,6 +207,7 @@ export default function UserListPage() {
         onSubmit={handleSubmit}
         initialValues={editTarget}
         loading={createUser.isPending || updateUser.isPending}
+        resetKey={formKey}
       />
     </div>
   )

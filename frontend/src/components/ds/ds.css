@@ -703,6 +703,16 @@
 .ds-ct-legend li { display: inline-flex; align-items: center; gap: 6px; }
 .ds-ct-legend .ds-ct__bar { position: static; display: inline-block; width: 18px; height: 10px; padding: 0; border-radius: 3px; }
 
+/* ---------- Ô mật khẩu (PasswordField): thanh độ mạnh và luật hiện sẵn ---------- */
+.ds-pw__bar { display: flex; gap: 4px; margin-top: 8px; }
+.ds-pw__bar span { flex: 1; height: 4px; border-radius: 2px; background: var(--border); }
+.ds-pw__bar[data-level="1"] span:nth-child(-n+1) { background: var(--error-strong); }
+.ds-pw__bar[data-level="2"] span:nth-child(-n+2) { background: var(--warning); }
+.ds-pw__bar[data-level="3"] span:nth-child(-n+3) { background: var(--success); }
+.ds-pw__rules { display: grid; gap: 4px; margin: 8px 0 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
+.ds-pw__rules li { display: flex; align-items: center; gap: 6px; }
+.ds-pw__rules li[data-ok="true"] { color: var(--success); }
+
 /* ---------- Chip nguồn, nút có thời gian chờ ---------- */
 .ds-source-chip { display: inline-flex; align-items: center; gap: 4px; height: 20px; margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; }
 .ds-source-chip--catalog { background: var(--neutral-bg); color: var(--neutral); }

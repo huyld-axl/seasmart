@@ -10,6 +10,8 @@ function cleanListParams(params = {}) {
 export const authApi = {
   login: (data) => api.post('/auth/login', data),
   me: () => api.get('/auth/me'),
+  getInvite: (token) => api.get('/auth/invite', { params: { token } }),
+  setPassword: (data) => api.post('/auth/set-password', data),
 }
 
 export const seafarerApi = {

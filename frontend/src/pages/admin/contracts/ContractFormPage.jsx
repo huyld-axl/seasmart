@@ -104,6 +104,7 @@ function ContractForm({ contract, ctx, initial }) {
                 extra={picked?.status ? <StatusBadge group="crew" value={picked.status} /> : undefined}
               >
                 <Select
+                allowClear
                   showSearch={{ filterOption: false, onSearch: setSearch }}
                   loading={people.isLoading}
                   options={options}

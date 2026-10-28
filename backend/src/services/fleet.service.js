@@ -102,7 +102,7 @@ const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_num
     v.engine_power_kw, v.engine_type, v.dp_class, v.has_boiler, v.has_refrigeration,
     v.ship_owner_id, o.company_name AS ship_owner_name,
     v.technical_manager, v.commercial_manager, v.notes, v.updated_at,
-    (SELECT COUNT(*) FROM sea_service ss WHERE ss.vessel_id = v.id AND ${ON_BOARD}) AS crew_on_board
+    (SELECT COUNT(*) FROM seafarer_voyage sv WHERE sv.vessel_id = v.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL) AS crew_on_board
   FROM vessel v
   LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
   LEFT JOIN country c ON c.id = v.flag_country_id
@@ -134,6 +134,10 @@ const fleetService = {
     if (query.search) {
       search = ' AND (unaccent(v.vessel_name::text) ILIKE unaccent(?) OR unaccent(v.imo_number::text) ILIKE unaccent(?) OR unaccent(o.company_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)
+    }
+    if (query.ship_owner_id) {
+      search += ' AND (v.ship_owner_id = ? OR v.ship_owner_id IS NULL)'
+      params.push(Number(query.ship_owner_id))
     }
     const status = VESSEL_STATUSES.includes(query.status) ? query.status : null
     const from = 'FROM vessel v LEFT JOIN ship_owner o ON o.id = v.ship_owner_id WHERE v.deleted_at IS NULL'
@@ -297,7 +301,7 @@ const fleetService = {
     const owner = await this.getOwner(pool, id)
     const [vessels] = await pool.query(
       `SELECT v.id, v.vessel_name, v.imo_number, vt.name_vi AS vessel_type_name, v.status,
-              (SELECT COUNT(*) FROM sea_service ss WHERE ss.vessel_id = v.id AND ${ON_BOARD}) AS crew_on_board
+              (SELECT COUNT(*) FROM seafarer_voyage sv WHERE sv.vessel_id = v.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL) AS crew_on_board
        FROM vessel v LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
        WHERE v.ship_owner_id = ? AND v.deleted_at IS NULL ORDER BY v.vessel_name`,
       [id]

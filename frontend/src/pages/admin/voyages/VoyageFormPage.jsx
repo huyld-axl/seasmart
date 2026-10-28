@@ -53,7 +53,7 @@ export default function VoyageFormPage() {
     queryFn: () => voyageApi.list({ seafarer_id: values.seafarer_id, tab: 'onboard', limit: 1 }),
     enabled: !!values.seafarer_id,
   })
-  const vessels = useQuery({ queryKey: ['fleet', 'vessel-options', vesselSearch], queryFn: () => vesselApi.list({ search: vesselSearch || undefined, limit: 50 }) })
+  const vessels = useQuery({ queryKey: ['fleet', 'vessel-options', vesselSearch, values.ship_owner_id], queryFn: () => vesselApi.list({ search: vesselSearch || undefined, ship_owner_id: values.ship_owner_id || undefined, limit: 50 }) })
   const owners = useQuery({ queryKey: ['fleet', 'owner-options'], queryFn: () => shipOwnerApi.list({ limit: 100 }) })
   const ports = useQuery({ queryKey: ['lookup', 'ports'], queryFn: () => lookupApi.ports().then((r) => r.data) })
   const ranks = useQuery({ queryKey: ['lookup', 'ranks'], queryFn: () => lookupApi.ranks().then((r) => r.data) })
@@ -89,6 +89,7 @@ export default function VoyageFormPage() {
   const metas = [`${filled(coreFields)}/${coreFields.length}`, `${filled(timeFields)}/${timeFields.length}`]
   const ready = filled(coreFields) === coreFields.length && filled(timeFields) === timeFields.length && !blocked
   const selectedVessel = vesselOptions.find((o) => o.value === values.vessel_id)
+  const vesselHasNoOwner = Boolean(selectedVessel) && !selectedVessel.ownerId
 
   function onValuesChange(change) {
     if ('seafarer_id' in change) {
@@ -97,11 +98,19 @@ export default function VoyageFormPage() {
     }
   }
 
+  function onOwnerChange(ownerId) {
+    setOwnerFromVessel(false)
+    const current = vesselOptions.find((o) => o.value === form.getFieldValue('vessel_id'))
+    if (ownerId && current?.ownerId && current.ownerId !== ownerId) form.setFieldsValue({ vessel_id: undefined })
+  }
+
   function onVesselChange(_, option) {
     if (option?.ownerId) {
       form.setFieldsValue({ ship_owner_id: option.ownerId })
       setOwnerFromVessel(true)
     } else {
+      // Tàu vô chủ: không có chủ tàu để chọn, bỏ chủ tàu đang chọn (nếu có) để khỏi lưu lệch.
+      if (option) form.setFieldsValue({ ship_owner_id: undefined })
       setOwnerFromVessel(false)
     }
   }
@@ -156,10 +165,10 @@ export default function VoyageFormPage() {
               <Select {...selectProps} filterOption={false} onSearch={setPersonSearch} loading={people.isFetching} options={personOptions} placeholder="Tìm tên, mã thuyền viên" />
             </Form.Item>
             <Form.Item name="rank_id" className="sf-c4" label="Chức danh" rules={[{ required: true, message: 'Chọn chức danh' }]} extra="Mặc định chức danh hiện tại">
-              <Select {...selectProps} allowClear={false} loading={ranks.isLoading} options={rankOptions} placeholder="Chọn chức danh" />
+              <Select {...selectProps} loading={ranks.isLoading} options={rankOptions} placeholder="Chọn chức danh" />
             </Form.Item>
             <Form.Item name="manual_reason" className="sf-c4" label="Lý do tạo không qua cơ hội" rules={[{ required: true, message: 'Chọn lý do' }]}>
-              <Select {...selectProps} allowClear={false} options={REASON_OPTIONS} placeholder="Chọn lý do" />
+              <Select {...selectProps} options={REASON_OPTIONS} placeholder="Chọn lý do" />
             </Form.Item>
             {current ? (
               <div className={`ds-banner ds-banner--${blocked ? 'warning' : 'neutral'}`} role="status" style={{ gridColumn: '1 / -1' }}>
@@ -178,8 +187,8 @@ export default function VoyageFormPage() {
             <Form.Item name="vessel_id" className="sf-c4" label="Tàu" rules={[{ required: true, message: 'Chọn tàu' }]}>
               <Select {...selectProps} filterOption={false} onSearch={setVesselSearch} onChange={onVesselChange} loading={vessels.isLoading} options={vesselOptions} placeholder="Chọn tàu" />
             </Form.Item>
-            <Form.Item name="ship_owner_id" className="sf-c4" label="Chủ tàu" rules={[{ required: true, message: 'Chọn chủ tàu' }]} extra={ownerFromVessel ? 'Lấy theo tàu' : undefined}>
-              <Select {...selectProps} allowClear={false} loading={owners.isLoading} options={ownerOptions} placeholder="Chọn chủ tàu" onChange={() => setOwnerFromVessel(false)} />
+            <Form.Item name="ship_owner_id" className="sf-c4" label="Chủ tàu" rules={[{ required: true, message: vesselHasNoOwner ? 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng.' : 'Chọn chủ tàu' }]} extra={vesselHasNoOwner ? 'Tàu chưa có chủ tàu' : ownerFromVessel ? 'Lấy theo tàu' : undefined}>
+              <Select {...selectProps} loading={owners.isLoading} options={vesselHasNoOwner ? [] : ownerOptions} disabled={vesselHasNoOwner} placeholder="Chọn chủ tàu" onChange={onOwnerChange} />
             </Form.Item>
             <Form.Item name="budget_monthly_usd" className="sf-c4" label="Budget/tháng (USD)" extra="Không bắt buộc">
               <MoneyInput aria-label="Budget mỗi tháng" />

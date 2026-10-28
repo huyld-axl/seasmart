@@ -52,11 +52,11 @@ function PeoplePicker({ people, labels, onChange }) {
 }
 
 // Tên tàu của cả bộ: chọn trong danh mục Tàu. Giá trị lưu là tên tàu (cùng chỗ lưu cũ), để trống thì lấy theo hồ sơ.
-function VesselPicker({ value, onChange }) {
+function VesselPicker({ value, onChange, ownerId }) {
   const [search, setSearch] = useState('')
   const { data, isFetching } = useQuery({
-    queryKey: ['vessel-pick', search],
-    queryFn: () => vesselApi.list({ search: search || undefined, limit: 50 }),
+    queryKey: ['vessel-pick', search, ownerId],
+    queryFn: () => vesselApi.list({ search: search || undefined, ship_owner_id: ownerId || undefined, limit: 50 }),
   })
   return (
     <Select
@@ -307,7 +307,7 @@ export default function PackCreatePage() {
         </label>
         <label className="ds-field">
           <span className="ds-field__label">{VESSEL_FIELD}</span>
-          <VesselPicker value={inputs[VESSEL_FIELD]} onChange={(name) => setInput(VESSEL_FIELD, name)} />
+          <VesselPicker ownerId={ownerId} value={inputs[VESSEL_FIELD]} onChange={(name) => setInput(VESSEL_FIELD, name)} />
         </label>
       </div>
 

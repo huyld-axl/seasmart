@@ -606,7 +606,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               </Field>
               <DateField name="date_of_birth" label="Ngày sinh" span={4} />
               <Field name="gender" label="Giới tính" span={4}>
-                <Select options={GENDER_OPTIONS} />
+                <Select allowClear options={GENDER_OPTIONS} />
               </Field>
               <Field name="place_of_origin" label="Nguyên quán" span={8}>
                 <Input placeholder="VD: Xã Hải Thanh, huyện Tĩnh Gia, Thanh Hóa" maxLength={255} />
@@ -654,6 +654,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               </Field>
               <Field name="nationality_id" label="Quốc tịch" span={6}>
                 <Select
+                  allowClear
                   showSearch
                   placeholder="Chọn quốc tịch"
                   optionFilterProp="label"

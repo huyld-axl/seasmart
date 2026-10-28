@@ -10,7 +10,7 @@ import { useOpportunityMutations } from '../../../hooks/useOpportunities'
 import apiErrorText from '../../../utils/apiError'
 import { withFlag } from '../../../utils/flag'
 
-const selectProps = { showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
+const selectProps = { allowClear: true, showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
 
 // Màn 7 · Chốt người = ghi lên tàu. Chỉ người, ngày xuống (không sau hôm nay), nơi xuống; tàu khi cơ hội chưa có.
 export default function PlaceModal({ opportunity: o, onClose }) {
@@ -22,8 +22,8 @@ export default function PlaceModal({ opportunity: o, onClose }) {
   const needVessel = !o.vessel_id
   const ports = useQuery({ queryKey: ['lookup', 'ports'], queryFn: () => lookupApi.ports().then((r) => r.data) })
   const vessels = useQuery({
-    queryKey: ['fleet', 'vessel-options', vesselSearch],
-    queryFn: () => vesselApi.list({ search: vesselSearch || undefined, limit: 50 }),
+    queryKey: ['fleet', 'vessel-options', vesselSearch, o.ship_owner_id],
+    queryFn: () => vesselApi.list({ search: vesselSearch || undefined, ship_owner_id: o.ship_owner_id || undefined, limit: 50 }),
     enabled: needVessel,
   })
 

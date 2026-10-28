@@ -264,6 +264,9 @@ export default function OpportunityDetailPage() {
 
   const place = (date, port) => `${formatDate(date)}${port ? ` · ${port}` : ''}`
   const names = (list) => list.map(requirementName).join(' · ') || null
+  // Liệt kê bắt buộc trước, mục nên có ghi rõ "(nên có)".
+  const withLevel = (list) => [...list.filter((r) => r.level === 'REQUIRED'), ...list.filter((r) => r.level !== 'REQUIRED')]
+    .map((r) => (r.level === 'REQUIRED' ? requirementName(r) : `${requirementName(r)} (nên có)`)).join(' · ') || null
   const reqs = o.requirements
   const sections = [
     {
@@ -294,9 +297,9 @@ export default function OpportunityDetailPage() {
       key: 'requirements',
       title: 'Hồ sơ yêu cầu',
       fields: [
-        ['Bắt buộc', names(reqs.filter((r) => r.kind !== 'TEMPLATE' && r.level === 'REQUIRED')), 12],
-        ['Nên có', names(reqs.filter((r) => r.kind !== 'TEMPLATE' && r.level === 'PREFERRED')), 12],
-        ['Mẫu giấy xuất kèm', names(reqs.filter((r) => r.kind === 'TEMPLATE')), 12],
+        ['Giấy tờ', withLevel(reqs.filter((r) => r.kind === 'CERTIFICATE')), 12],
+        ['Biểu mẫu', names(reqs.filter((r) => r.kind === 'TEMPLATE')), 12],
+        ['Kinh nghiệm', withLevel(reqs.filter((r) => r.kind === 'EXPERIENCE')), 12],
       ],
     },
   ]

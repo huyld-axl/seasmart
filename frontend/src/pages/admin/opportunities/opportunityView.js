@@ -23,19 +23,17 @@ const toDay = (value) => (value ? dayjs(value) : null)
 const fromDay = (value) => (value ? dayjs(value).format(API_DATE) : null)
 
 // Nhóm hiển thị của một yêu cầu: giấy tờ (loại giấy DOCUMENT, MEDICAL), chứng chỉ, kinh nghiệm, mẫu giấy.
+// Hồ sơ yêu cầu chia ba nhóm: giấy tờ (nạp từ thuyền viên: tuỳ thân, chứng chỉ), biểu mẫu (mình điền rồi nộp), kinh nghiệm.
 export const REQUIREMENT_GROUPS = [
-  { key: 'doc', title: 'Giấy tờ' },
-  { key: 'cert', title: 'Chứng chỉ' },
-  { key: 'exp', title: 'Kinh nghiệm' },
-  { key: 'tpl', title: 'Mẫu giấy xuất kèm' },
+  { key: 'doc', title: 'Giấy tờ', hint: 'Giấy lấy trọn vẹn từ thuyền viên: tuỳ thân, chứng chỉ, sức khoẻ.', add: 'Thêm giấy tờ', empty: 'Chưa yêu cầu giấy tờ nào.' },
+  { key: 'tpl', title: 'Biểu mẫu', hint: 'Giấy trống mình điền rồi nộp chủ tàu: CV, quyết định điều động, thư bảo lãnh…', add: 'Thêm biểu mẫu', empty: 'Chưa yêu cầu biểu mẫu nào.' },
+  { key: 'exp', title: 'Kinh nghiệm', hint: 'Số tháng đã đi một chức danh, hoặc số chuyến trên một loại tàu.', add: 'Thêm kinh nghiệm', empty: 'Chưa yêu cầu kinh nghiệm.' },
 ]
-export const DOC_CATEGORIES = ['DOCUMENT', 'MEDICAL']
 
-export function requirementGroup(row, categoryOf = () => null) {
-  if (row._group) return row._group
+export function requirementGroup(row) {
   if (row.kind === 'TEMPLATE') return 'tpl'
   if (row.kind === 'EXPERIENCE') return 'exp'
-  return DOC_CATEGORIES.includes(row.certificate_category || categoryOf(row.certificate_type_id)) ? 'doc' : 'cert'
+  return 'doc'
 }
 
 // Dòng yêu cầu từ API (opportunity hoặc mẫu) -> dòng của bảng trong form.
@@ -56,11 +54,11 @@ export function toRequirementRows(requirements = []) {
 }
 
 // Dòng bảng -> body API, xếp theo nhóm. Dòng chưa chọn gì thì bỏ.
-export function toRequirementPayload(rows = [], categoryOf) {
+export function toRequirementPayload(rows = []) {
   const order = Object.fromEntries(REQUIREMENT_GROUPS.map((g, i) => [g.key, i]))
   return rows
     .filter((r) => r.certificate_type_id || r.rank_id || r.vessel_type_id || r.template_key)
-    .map((r, i) => ({ r, i, g: order[requirementGroup(r, categoryOf)] }))
+    .map((r, i) => ({ r, i, g: order[requirementGroup(r)] }))
     .sort((a, b) => a.g - b.g || a.i - b.i)
     .map(({ r }) => {
       if (r.kind === 'TEMPLATE') return { kind: 'TEMPLATE', template_key: r.template_key, level: 'REQUIRED', valid_until: 'ANY' }
@@ -103,7 +101,7 @@ export function toFormValues(o) {
   }
 }
 
-export function toPayload(values, categoryOf) {
+export function toPayload(values) {
   return {
     ship_owner_id: values.ship_owner_id,
     vessel_id: values.vessel_id || null,
@@ -117,7 +115,7 @@ export function toPayload(values, categoryOf) {
     deadline: fromDay(values.deadline),
     ...(values.owner_user_id ? { owner_user_id: values.owner_user_id } : {}),
     notes: values.notes?.trim() || null,
-    requirements: toRequirementPayload(values.requirements, categoryOf),
+    requirements: toRequirementPayload(values.requirements),
   }
 }
 

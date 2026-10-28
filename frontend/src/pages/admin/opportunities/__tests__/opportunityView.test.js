@@ -22,7 +22,7 @@ describe('chosenCandidate', () => {
 describe('form cơ hội', () => {
   const categoryOf = (id) => ({ 1: 'DOCUMENT', 2: 'STCW', 3: 'MEDICAL' })[id]
 
-  it('hồ sơ yêu cầu xếp theo nhóm giấy tờ, chứng chỉ, kinh nghiệm, mẫu giấy; bỏ dòng chưa chọn', () => {
+  it('hồ sơ yêu cầu xếp theo nhóm giấy tờ, biểu mẫu, kinh nghiệm; bỏ dòng chưa chọn', () => {
     const out = toRequirementPayload([
       { kind: 'TEMPLATE', template_key: 'cv' },
       { kind: 'CERTIFICATE', certificate_type_id: 2, level: 'REQUIRED', valid_until: 'LEAVE' },
@@ -30,10 +30,10 @@ describe('form cơ hội', () => {
       { kind: 'CERTIFICATE', certificate_type_id: 1, level: 'REQUIRED', valid_until: 'LEAVE_PLUS', plus_months: 6 },
       { kind: 'CERTIFICATE', _group: 'doc', certificate_type_id: null },
     ], categoryOf)
-    expect(out.map((r) => r.certificate_type_id || r.rank_id || r.template_key)).toEqual([1, 2, 5, 'cv'])
-    expect(out[0]).toMatchObject({ valid_until: 'LEAVE_PLUS', plus_months: 6 })
-    expect(out[1].plus_months).toBeNull()
-    expect(out[2]).toEqual({ kind: 'EXPERIENCE', rank_id: 5, min_months: 12, level: 'PREFERRED', valid_until: 'ANY' })
+    expect(out.map((r) => r.certificate_type_id || r.rank_id || r.template_key)).toEqual([2, 1, 'cv', 5])
+    expect(out[1]).toMatchObject({ valid_until: 'LEAVE_PLUS', plus_months: 6 })
+    expect(out[0].plus_months).toBeNull()
+    expect(out[3]).toEqual({ kind: 'EXPERIENCE', rank_id: 5, min_months: 12, level: 'PREFERRED', valid_until: 'ANY' })
   })
 
   it('đọc từ API rồi gửi lại ra cùng ngày, cùng số', () => {

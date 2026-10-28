@@ -105,7 +105,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const sections = [
     { key: 'position', title: 'Vị trí', desc: 'Một cơ hội là một vị trí. Cần nhiều vị trí thì dùng "Lưu & thêm vị trí khác".' },
     { key: 'time', title: 'Thời gian dự kiến', desc: 'Bốn mốc dự kiến và hạn chủ tàu cần danh sách.' },
-    { key: 'requirements', title: 'Hồ sơ yêu cầu', desc: presetSource ? PRESET_SOURCE[presetSource] : 'Giấy tờ, chứng chỉ, kinh nghiệm ứng viên phải có, và mẫu giấy xuất kèm. Chọn chức danh thì tự điền sẵn.' },
+    { key: 'requirements', title: 'Hồ sơ yêu cầu', desc: presetSource ? PRESET_SOURCE[presetSource] : 'Giấy tờ ứng viên phải có, biểu mẫu phải nộp và kinh nghiệm. Chọn chức danh thì tự điền sẵn.' },
   ]
   const metas = [`${filled(coreFields)}/${coreFields.length}`, `${filled(timeFields)}/${timeFields.length}`, `${requirements.length}`]
   const ready = !!(values.ship_owner_id && values.rank_id && values.budget_monthly_usd != null && values.planned_join_date && values.planned_leave_date && values.deadline)

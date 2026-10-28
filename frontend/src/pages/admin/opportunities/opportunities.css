@@ -5,8 +5,16 @@
 .rq--changed { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
 .rq__head, .rq__row { display: grid; grid-template-columns: minmax(0, 1fr) 168px 40px; align-items: center; gap: 0 16px; padding: 8px 16px; }
 .rq__head { background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 500; border-bottom: 2px solid var(--primary); }
-.rq__group-title { margin: 0; padding: 10px 16px 2px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.rq__row { border-bottom: 1px solid var(--border); }
+.rq__group + .rq__group { border-top: 1px solid var(--border-strong); }
+.rq__group-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 12px 16px 8px; background: var(--table-header); }
+.rq__group-title { margin: 0; color: var(--primary); font-size: 14px; font-weight: 600; }
+.rq__count { margin-left: 4px; color: var(--muted); font-weight: 500; }
+.rq__group-hint { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+.rq__fields { display: grid; gap: 6px; min-width: 0; }
+.rq__inline { display: flex; flex-wrap: wrap; gap: 8px; }
+.rq__inline > .ant-select { flex: 1 1 200px; min-width: 0; }
+.rq__inline > .ant-input-number, .rq__inline > .ant-input-number-affix-wrapper { width: 130px; }
+.rq__row { border-top: 1px solid var(--border); }
 .rq__muted, .rq__empty { color: var(--muted); font-size: 13px; }
 .rq__empty { margin: 0; padding: 16px; }
 .rq__add { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 8px 12px; }

@@ -54,7 +54,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const [form] = Form.useForm()
   const initial = useMemo(() => (opportunity ? toFormValues(opportunity) : { ...EMPTY_FORM, owner_user_id: me?.id, ...prefill }), [opportunity, prefill, me])
   const values = Form.useWatch([], form) || initial
-  const { save, savePreset } = useOpportunityMutations()
+  const { save } = useOpportunityMutations()
   const againRef = useRef(false)
   const [again, setAgain] = useState(false)
   const [vesselSearch, setVesselSearch] = useState('')
@@ -163,15 +163,6 @@ function OpportunityForm({ opportunity, prefill }) {
     }
   }
 
-  async function saveAsPreset() {
-    try {
-      await savePreset.mutateAsync({ rankId: values.rank_id, requirements: toPayload(values, categoryOf).requirements })
-      toast.success(`Đã lưu mẫu hồ sơ yêu cầu cho ${rankName}`)
-    } catch (error) {
-      toast.error('Không lưu được mẫu', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
-    }
-  }
-
   async function submit(formValues) {
     try {
       const row = await save.mutateAsync({ id: opportunity?.id, ...toPayload(formValues, categoryOf) })
@@ -263,9 +254,6 @@ function OpportunityForm({ opportunity, prefill }) {
               ranks={ranks.data || []}
               vesselTypes={vesselTypes.data || []}
               changed={changed.has('requirements')}
-              footer={values.rank_id && can('opportunity.update') ? (
-                <Button type="link" loading={savePreset.isPending} onClick={saveAsPreset}>Lưu thành mẫu cho {rankName}</Button>
-              ) : null}
             />
           </Form.Item>
         </FormSection>

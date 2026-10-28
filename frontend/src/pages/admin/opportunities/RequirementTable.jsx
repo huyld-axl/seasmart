@@ -21,7 +21,7 @@ const BLANK = {
 // Mỗi khối có nút Thêm riêng. Giấy tờ: loại giấy (nhóm theo Tuỳ thân, STCW, Y tế…), còn hạn tới mốc nào, mức.
 // Biểu mẫu: mẫu cần nộp. Kinh nghiệm: số tháng theo chức danh hoặc số chuyến theo loại tàu, mức.
 // certTypes: [{ id, name_vi, category }], ranks, vesselTypes: lookup.
-export default function RequirementTable({ value = [], onChange, certTypes = [], ranks = [], vesselTypes = [], changed = false, footer }) {
+export default function RequirementTable({ value = [], onChange, certTypes = [], ranks = [], vesselTypes = [], changed = false }) {
   const categoryOf = (id) => certTypes.find((c) => c.id === id)?.category
   const set = (index, patch) => onChange(value.map((row, i) => (i === index ? { ...row, ...patch } : row)))
   const remove = (index) => onChange(value.filter((_, i) => i !== index))
@@ -133,7 +133,6 @@ export default function RequirementTable({ value = [], onChange, certTypes = [],
           </section>
         )
       })}
-      {footer ? <div className="rq__add"><span className="rq__footer">{footer}</span></div> : null}
     </div>
   )
 }

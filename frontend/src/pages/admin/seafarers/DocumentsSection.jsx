@@ -20,7 +20,8 @@ import useObjectUrl from '../../../hooks/useObjectUrl'
 const fmtDate = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '')
 
 // Tab Giấy tờ: mọi giấy lấy trọn vẹn từ thuyền viên (ảnh thẻ, CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ), chỉ cần nạp ảnh.
-// Một bảng chung, lọc theo loại; giấy có ảnh thì bấm Xem bản gốc để xem lớn. Giấy chưa có ảnh nạp qua nút Sửa.
+// Một bảng chung, lọc theo loại. Biểu tượng bút ở mỗi dòng mở hộp thoại giấy đó: xem bản gốc, tải về,
+// thay / nạp ảnh (chọn tệp là lưu ngay) và Sửa thông tin (loại, số, ngày cấp, hạn).
 export default function DocumentsSection({ seafarerId, seafarer, photo, dismissed, onDismiss, onRestore }) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -29,6 +30,8 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const [editing, setEditing] = useState(null) // null | 'new' | dòng chứng chỉ
   const quickScanInput = useRef(null)
   const photoInput = useRef(null)
+  const fileInput = useRef(null)
+  const [replaceFor, setReplaceFor] = useState(null) // chứng chỉ đang thay ảnh (bấm Thay ảnh trong hộp thoại xem)
   const [newType, setNewType] = useState('')
   const [creatingType, setCreatingType] = useState(false)
   const [renewing, setRenewing] = useState(null) // chứng chỉ đang được cập nhật bằng bản mới (editing = 'new')
@@ -85,6 +88,16 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     mutationFn: (certId) => certificateApi.remove(seafarerId, certId),
     onSuccess: saved('Đã xoá giấy tờ'),
     onError: failed('Xoá thất bại'),
+  })
+
+  const replaceMutation = useMutation({
+    mutationFn: ({ certId, file }) => certificateApi.upload(seafarerId, certId, file),
+    onSuccess: () => {
+      toast.success('Đã thay ảnh')
+      refresh()
+      queryClient.invalidateQueries({ queryKey: ['doc-preview'] })
+    },
+    onError: failed('Không thay được ảnh'),
   })
 
   const photoMutation = useMutation({
@@ -157,7 +170,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
       return
     }
     try {
-      const blob = cert.uploadId ? await documentApi.uploadFile(cert.uploadId) : await certificateApi.file(seafarerId, cert.id)
+      const blob = cert.raw.document_url || !cert.uploadId ? await certificateApi.file(seafarerId, cert.id) : await documentApi.uploadFile(cert.uploadId)
       const ext = blob.type === 'application/pdf' ? 'pdf' : blob.type === 'image/png' ? 'png' : 'jpg'
       const link = document.createElement('a')
       link.href = URL.createObjectURL(blob)
@@ -247,7 +260,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     source: cert.isPhoto ? null : cert.uploadId ? `${cert.fileName || 'Bộ giấy tải lên'}${cert.raw.source_page ? ` · ${cert.raw.source_page}` : ''}` : cert.hasFile ? 'Nạp tay' : null,
     image: imageOf(cert, 'full'),
     onDownload: () => downloadCert(cert),
-    onReplace: canEdit ? (cert.isPhoto ? pickPhoto : () => startEdit(cert.raw)) : undefined,
+    onReplace: canEdit ? (cert.isPhoto ? pickPhoto : () => { setReplaceFor(cert.id); fileInput.current?.click() }) : undefined,
     onEdit: canEdit && !cert.isPhoto ? () => startEdit(cert.raw) : undefined,
   }))
 
@@ -295,6 +308,19 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           }}
         />
         <input
+          ref={fileInput}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="ds-sr-only"
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file && replaceFor) replaceMutation.mutate({ certId: replaceFor, file })
+          }}
+        />
+        <input
           ref={photoInput}
           type="file"
           accept=".jpg,.jpeg,.png"
@@ -318,14 +344,13 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           ) : null}
           <CertificateTable
             certs={shown}
-            onOpenSource={(cert) => setPreviewAt(shown.indexOf(cert))}
             onDismiss={(cert) => onDismiss([{ id: cert.id, expiry: String(cert.raw.expiry_date).slice(0, 10) }])}
             onRestore={(cert) => onRestore(cert.id)}
             onRenew={canEdit ? startRenew : undefined}
-            onEdit={canEdit ? (cert) => (cert.isPhoto ? pickPhoto() : startEdit(cert.raw)) : undefined}
+            onEdit={(cert) => setPreviewAt(shown.indexOf(cert))}
             onDownload={downloadCert}
           />
-          {missing && canEdit ? <p className="crew-certs__renew" style={{ margin: '12px 0 0' }}>{missing} giấy chưa có ảnh. Bấm Sửa ở dòng đó để nạp ảnh.</p> : null}
+          {missing && canEdit ? <p className="crew-certs__renew" style={{ margin: '12px 0 0' }}>{missing} giấy chưa có ảnh. Bấm biểu tượng bút ở dòng đó để nạp ảnh.</p> : null}
         </>
       )}
       <DocPreview items={previewItems} index={previewAt} onIndex={setPreviewAt} onClose={() => setPreviewAt(null)} />

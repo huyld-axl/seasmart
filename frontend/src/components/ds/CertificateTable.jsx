@@ -22,7 +22,7 @@ export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSour
   // Các nút chỉ hiện khi truyền handler tương ứng (theo quyền) và dòng đủ điều kiện.
   const renew = (cert) => (onRenew && cert.canRenew ? <Button type="text" size="small" icon={<SyncOutlined />} aria-label={`Cập nhật ${cert.name}`} title="Cập nhật chứng chỉ" onClick={() => onRenew(cert)} /> : null)
   const download = (cert) => (onDownload && cert.hasFile ? <Button type="text" size="small" icon={<DownloadIcon />} aria-label={`Tải ${cert.name}`} title="Tải về" onClick={() => onDownload(cert)} /> : null)
-  const edit = (cert) => (onEdit ? <Button type="text" size="small" icon={<EditOutlined />} aria-label={`Sửa ${cert.name}`} title="Sửa" onClick={() => onEdit(cert)} /> : null)
+  const edit = (cert) => (onEdit ? <Button type="text" size="small" icon={<EditOutlined />} aria-label={`Xem và sửa ${cert.name}`} title="Xem và sửa" onClick={() => onEdit(cert)} /> : null)
   const alertNote = (cert) => (cert.alert ? (
     <span className={`ds-ctable__alert ds-ctable__alert--${cert.alert}`}>
       {alertText(cert)}

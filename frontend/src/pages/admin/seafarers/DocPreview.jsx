@@ -57,7 +57,7 @@ export default function DocPreview({ items, index, onIndex, onClose }) {
             <div className="crew-preview__acts">
               {item.image && item.onDownload ? <Button icon={<DownloadIcon />} onClick={item.onDownload}>Tải về</Button> : null}
               {item.onReplace ? <Button icon={<UploadIcon />} onClick={item.onReplace}>{item.image ? 'Thay ảnh' : 'Nạp ảnh'}</Button> : null}
-              {item.onEdit ? <Button type="text" icon={<EditOutlined />} onClick={item.onEdit}>Sửa thông tin</Button> : null}
+              {item.onEdit ? <Button icon={<EditOutlined />} onClick={item.onEdit}>Sửa thông tin</Button> : null}
             </div>
           </aside>
         </div>

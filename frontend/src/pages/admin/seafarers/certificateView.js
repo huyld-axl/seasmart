@@ -4,7 +4,8 @@
 const toDisplayDate = (iso) => (iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '')
 
 // Nhóm theo loại giấy; nước cấp (Việt Nam, Panama…) là thuộc tính riêng của loại giấy (certificate_country_name).
-export const CATEGORY = { DOCUMENT: 'Tuỳ thân', COMPETENCY: 'Chuyên môn', STCW: 'Huấn luyện STCW', MEDICAL: 'Y tế', OTHER: 'Khác' }
+// COMPETENCY = bằng chuyên môn (COC); STCW = chứng chỉ huấn luyện nghiệp vụ (COP). Khoá giữ nguyên, chỉ đổi nhãn.
+export const CATEGORY = { DOCUMENT: 'Tuỳ thân', COMPETENCY: 'Bằng (COC)', STCW: 'Chứng chỉ (COP)', MEDICAL: 'Y tế', OTHER: 'Khác' }
 
 // Chứng chỉ đã có bản mới thay (cùng loại, bản kia không thời hạn hoặc hết hạn muộn hơn): không còn cảnh báo, không cần cập nhật.
 export function supersededIds(rows) {

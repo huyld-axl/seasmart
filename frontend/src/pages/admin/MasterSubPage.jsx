@@ -285,7 +285,7 @@ function MasterTable({ resource, columns, formFields, title }) {
 
 const CATEGORY_OPTIONS = Object.entries(CATEGORY).map(([value, label]) => ({ value, label }))
 
-// Loại giấy: nhóm theo loại giấy (Tuỳ thân, Chuyên môn, Huấn luyện STCW, Y tế, Khác); nước cấp là cột riêng, để trống nếu không gắn một nước.
+// Loại giấy: nhóm theo loại giấy (Tuỳ thân, Bằng COC, Chứng chỉ COP, Y tế, Khác); nước cấp là cột riêng, để trống nếu không gắn một nước.
 function CertificateTypeTab() {
   const { data: countries = [] } = useQuery({ queryKey: ['lookup', 'countries'], queryFn: () => lookupApi.countries().then((r) => r.data?.data || r.data || []) })
   const countryName = (id) => countries.find((c) => c.id === id)?.name_vi || ''

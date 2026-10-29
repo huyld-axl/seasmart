@@ -43,6 +43,7 @@ import DescriptionList from '../components/ds/DescriptionList'
 import SlidePanel from '../components/ds/SlidePanel'
 import RequirementFit from '../components/ds/RequirementFit'
 import CrewTimeline, { CrewTimelineLegend } from '../components/ds/CrewTimeline'
+import StageChips from '../components/ds/StageChips'
 import StageTrack from '../components/ds/StageTrack'
 import useToast from '../components/ds/useToast'
 import ToastContent from '../components/ds/ToastContent'
@@ -756,6 +757,13 @@ export default function DesignSystemPage() {
               todo={[{ key: 'a', label: 'Thêm ứng viên', done: true }, { key: 'b', label: 'Gửi hồ sơ cho chủ tàu', done: true }, { key: 'c', label: 'Chủ tàu chọn người', done: true }, { key: 'd', label: 'Chốt người: ngày xuống, nơi xuống', done: false }]}
               end={<><Button danger>Không thành</Button><Button>Huỷ cơ hội</Button></>}
             />
+          </Demo>
+          <Demo label="Chặng nhỏ trong dòng bảng (StageChips): xong · việc kế tiếp (bấm được) · chưa tới · xong cả chuỗi" wide>
+            <div className="dsp-inline">
+              <StageChips steps={[{ key: 'a', label: 'Ráp', state: 'done', onClick: () => {} }, { key: 'b', label: 'Gửi', state: 'done', onClick: () => {} }, { key: 'c', label: 'Chủ tàu chọn', state: 'next', onClick: () => {} }]} note="29/10 · 29/10 · chờ chủ tàu" />
+              <StageChips steps={[{ key: 'a', label: 'Ráp', state: 'next', onClick: () => {} }, { key: 'b', label: 'Gửi', state: 'todo' }, { key: 'c', label: 'Chủ tàu chọn', state: 'todo' }]} note="chưa ráp hồ sơ" />
+              <StageChips steps={[{ key: 'a', label: 'Ráp', state: 'complete', onClick: () => {} }, { key: 'b', label: 'Gửi', state: 'complete', onClick: () => {} }, { key: 'c', label: 'Chủ tàu chọn', state: 'complete', onClick: () => {} }]} note="29/10 · 29/10 · 30/10" />
+            </div>
           </Demo>
           <Demo label="StageTrack khi cơ hội đã đóng: cả đường xám, giữ mốc đã tới" wide>
             <StageTrack

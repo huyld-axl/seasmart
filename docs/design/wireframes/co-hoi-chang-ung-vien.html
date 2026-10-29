@@ -1,0 +1,131 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Chặng của từng ứng viên: 3 hướng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* Wireframe: tiến trình từng ứng viên qua 3 chặng Ráp hồ sơ → Gửi chủ tàu → Chủ tàu chọn. Cùng 3 người ở 3 trạng thái. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-light: rgba(0,51,102,.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5; --warning: #bb4d00; --error-strong: #c10007; --ring-focus: rgba(0,51,102,.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 24px 80px; background: var(--background); color: var(--foreground); font: 14px/1.5 Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1060px; margin: 0 auto; display: grid; gap: 48px; }
+  h1 { margin: 0 0 4px; font-size: 20px; } .lead { margin: 0; color: var(--muted); }
+  .variant > h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 16px; }
+  .variant > h2 b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; }
+  .variant > p { margin: 0 0 12px; color: var(--muted); }
+  .variant > ul { margin: 12px 0 0; padding-left: 18px; color: var(--neutral); font-size: 13px; }
+  .card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 10px 14px; background: #e9eff6; color: var(--primary); font-size: 12px; font-weight: 600; text-align: left; border-bottom: 2px solid var(--primary); }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  td small { display: block; color: var(--muted); font-size: 12px; }
+  td a { color: var(--primary); font-weight: 500; text-decoration: none; }
+  .cb { display: inline-block; width: 16px; height: 16px; border: 1.5px solid var(--border-strong); border-radius: 4px; }
+  .ico { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 6px; color: var(--muted); font-size: 14px; }
+  .ico--del { color: var(--error-strong); }
+  .muted { color: var(--muted); }
+
+  /* kiểu 1: chấm nối, bấm chấm là làm việc */
+  .dots { display: inline-flex; align-items: flex-start; }
+  .dot { position: relative; display: grid; justify-items: center; gap: 1px; width: 92px; padding: 0; border: 0; background: none; font: inherit; color: var(--muted); }
+  .dot::before { content: ""; position: absolute; top: 11px; right: 50%; left: -50%; height: 3px; background: var(--border); }
+  .dot:first-child::before { display: none; }
+  .dot.done::before, .dot.cur::before { background: var(--success); }
+  .dot i { position: relative; z-index: 1; display: grid; place-items: center; width: 24px; height: 24px; border: 2px solid var(--border-strong); border-radius: 50%; background: var(--surface); font-style: normal; font-size: 11px; color: #fff; cursor: pointer; }
+  .dot.done i { border-color: var(--success); background: var(--success); }
+  .dot.next i { border-color: var(--primary); color: var(--primary); }
+  .dot span { font-size: 12px; font-weight: 500; color: var(--foreground); } .dot small { font-size: 11px; color: var(--muted); }
+  .dot.todo span { color: var(--muted); font-weight: 400; }
+
+  /* kiểu 2: mini chevron */
+  .mini { display: inline-flex; }
+  .mini button { height: 28px; margin-left: -8px; padding: 0 16px 0 20px; border: 0; background: var(--neutral-bg); color: var(--muted); font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%); }
+  .mini button:first-child { margin-left: 0; padding-left: 12px; border-radius: 6px 0 0 6px; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); }
+  .mini button:last-child { border-radius: 0 6px 6px 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%); }
+  .mini .done { background: var(--success-bg); color: var(--success); }
+  .mini .next { background: var(--primary-light); color: var(--primary); }
+  .mini .all { background: var(--primary); color: #fff; }
+  .dates { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); }
+
+  /* kiểu 3: một trạng thái + thanh 3 đoạn */
+  .stat { display: grid; gap: 4px; min-width: 190px; }
+  .stat b { font-size: 13px; font-weight: 500; } .stat b.ok { color: var(--success); } .stat b.wait { color: var(--warning); }
+  .bar { display: flex; gap: 3px; } .bar i { flex: 1; height: 4px; border-radius: 2px; background: var(--border); } .bar i.on { background: var(--success); } .bar i.nxt { background: repeating-linear-gradient(90deg, var(--primary) 0 4px, transparent 4px 7px); }
+  .btn { height: 28px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); font: inherit; font-size: 13px; font-weight: 500; }
+  .btn--primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+</style></head><body>
+<div class="wrap">
+  <header>
+    <h1>Chặng của từng ứng viên: 3 hướng</h1>
+    <p class="lead">Mỗi ứng viên đi qua 3 chặng: <b>Ráp hồ sơ</b> (đã điền biểu mẫu, ráp bộ giấy) → <b>Gửi chủ tàu</b> → <b>Chủ tàu chọn</b>. Cả ba hướng thay 3 nút biểu tượng và cột "Gửi chủ tàu" bằng một thứ trực quan duy nhất. Cùng 3 người: A xong cả 3 chặng, B đã ráp và gửi (chờ chủ tàu), C chưa làm gì. Nút bỏ khỏi danh sách (thùng rác) giữ nguyên ở cuối.</p>
+  </header>
+
+  <!-- ============ KIỂU 1 ============ -->
+  <section class="variant">
+    <h2><b>1</b> Ba chấm nối nhau, bấm chấm là làm việc</h2>
+    <p>Đường 3 chấm như trục của cơ hội, thu nhỏ. Chấm đã xong màu xanh có tích kèm ngày, chấm kế tiếp viền xanh navy (bấm được), chấm còn lại xám. Bấm chấm làm đúng việc của chặng đó.</p>
+    <div class="card"><table>
+      <thead><tr><th></th><th>Ứng viên</th><th>Hồ sơ yêu cầu</th><th>Tiến trình</th><th style="text-align:center">Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cb"></span></td><td><a href="#">Nguyễn Văn Hải</a><small>Ở bờ · Thuyền trưởng</small></td><td>Đủ hồ sơ</td>
+          <td><div class="dots"><button class="dot done"><i>✓</i><span>Ráp</span><small>29/10</small></button><button class="dot done"><i>✓</i><span>Gửi</span><small>29/10</small></button><button class="dot done"><i>✓</i><span>Chủ tàu chọn</span><small>30/10</small></button></div></td>
+          <td style="text-align:center"><span class="ico ico--del">🗑</span></td></tr>
+        <tr><td><span class="cb"></span></td><td><a href="#">Phan Anh Tuấn</a><small>Ở bờ · Thuyền trưởng</small></td><td>Đủ hồ sơ</td>
+          <td><div class="dots"><button class="dot done"><i>✓</i><span>Ráp</span><small>29/10</small></button><button class="dot done"><i>✓</i><span>Gửi</span><small>29/10</small></button><button class="dot next"><i>3</i><span>Chủ tàu chọn</span><small>chờ</small></button></div></td>
+          <td style="text-align:center"><span class="ico ico--del">🗑</span></td></tr>
+        <tr><td><span class="cb"></span></td><td><a href="#">Đỗ Quang Vinh</a><small>Bận · Thuyền trưởng</small></td><td style="color:var(--warning)">Thiếu giấy tờ · 2</td>
+          <td><div class="dots"><button class="dot next"><i>1</i><span>Ráp</span><small>chưa</small></button><button class="dot todo"><i>2</i><span>Gửi</span><small>&nbsp;</small></button><button class="dot todo"><i>3</i><span>Chủ tàu chọn</span><small>&nbsp;</small></button></div></td>
+          <td style="text-align:center"><span class="ico ico--del">🗑</span></td></tr>
+      </tbody></table></div>
+    <ul><li>Vừa là trạng thái vừa là nút: bỏ được 3 nút biểu tượng, cột thao tác chỉ còn thùng rác.</li><li>Chiếm ngang ~280px; khá nhiều chữ nếu mỗi chấm kèm ngày.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 2 ============ -->
+  <section class="variant">
+    <h2><b>2</b> Mini chevron, đồng bộ với trục của cơ hội</h2>
+    <p>Ba mũi tên nhỏ nối liền, cùng ngôn ngữ với trục giai đoạn ở đầu trang. Xanh nhạt là đã xong, xanh navy nhạt là việc kế tiếp (bấm được), xanh navy đặc khi cả ba xong. Ngày để dưới dạng một dòng chữ nhỏ.</p>
+    <div class="card"><table>
+      <thead><tr><th></th><th>Ứng viên</th><th>Hồ sơ yêu cầu</th><th>Tiến trình</th><th style="text-align:center">Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cb"></span></td><td><a href="#">Nguyễn Văn Hải</a><small>Ở bờ · Thuyền trưởng</small></td><td>Đủ hồ sơ</td>
+          <td><div class="mini"><button class="all">✓ Ráp</button><button class="all">✓ Gửi</button><button class="all">✓ Chủ tàu chọn</button></div><span class="dates">29/10 · 29/10 · 30/10</span></td>
+          <td style="text-align:center"><span class="ico ico--del">🗑</span></td></tr>
+        <tr><td><span class="cb"></span></td><td><a href="#">Phan Anh Tuấn</a><small>Ở bờ · Thuyền trưởng</small></td><td>Đủ hồ sơ</td>
+          <td><div class="mini"><button class="done">✓ Ráp</button><button class="done">✓ Gửi</button><button class="next">Chủ tàu chọn</button></div><span class="dates">29/10 · 29/10 · chờ chủ tàu</span></td>
+          <td style="text-align:center"><span class="ico ico--del">🗑</span></td></tr>
+        <tr><td><span class="cb"></span></td><td><a href="#">Đỗ Quang Vinh</a><small>Bận · Thuyền trưởng</small></td><td style="color:var(--warning)">Thiếu giấy tờ · 2</td>
+          <td><div class="mini"><button class="next">Ráp</button><button>Gửi</button><button>Chủ tàu chọn</button></div><span class="dates">chưa ráp hồ sơ</span></td>
+          <td style="text-align:center"><span class="ico ico--del">🗑</span></td></tr>
+      </tbody></table></div>
+    <ul><li>Cùng nhìn như trục lớn nên không phải học thêm kiểu mới.</li><li>Rộng khoảng 280px, nhưng ngày tháng chỉ một dòng nhỏ nên gọn hơn hướng 1.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 3 ============ -->
+  <section class="variant">
+    <h2><b>3</b> Một trạng thái chữ + thanh 3 đoạn + một nút kế tiếp</h2>
+    <p>Mỗi người chỉ có một câu trạng thái ("Chờ chủ tàu chọn · đã gửi 29/10"), dưới là thanh 3 đoạn, và một nút duy nhất cho việc kế tiếp (Ráp hồ sơ / Gửi chủ tàu / Chủ tàu chọn). Gọn nhất, ít bấm nhầm nhất.</p>
+    <div class="card"><table>
+      <thead><tr><th></th><th>Ứng viên</th><th>Hồ sơ yêu cầu</th><th>Tiến trình</th><th style="text-align:center">Thao tác</th></tr></thead>
+      <tbody>
+        <tr><td><span class="cb"></span></td><td><a href="#">Nguyễn Văn Hải</a><small>Ở bờ · Thuyền trưởng</small></td><td>Đủ hồ sơ</td>
+          <td><div class="stat"><b class="ok">Chủ tàu đã chọn</b><div class="bar"><i class="on"></i><i class="on"></i><i class="on"></i></div><small>Ráp 29/10 · gửi 29/10 · chọn 30/10</small></div></td>
+          <td style="text-align:center"><span class="ico ico--del">🗑</span></td></tr>
+        <tr><td><span class="cb"></span></td><td><a href="#">Phan Anh Tuấn</a><small>Ở bờ · Thuyền trưởng</small></td><td>Đủ hồ sơ</td>
+          <td><div class="stat"><b class="wait">Chờ chủ tàu chọn</b><div class="bar"><i class="on"></i><i class="on"></i><i class="nxt"></i></div><small>Ráp 29/10 · gửi 29/10</small></div></td>
+          <td style="text-align:center"><button class="btn">Chủ tàu chọn</button> <span class="ico ico--del">🗑</span></td></tr>
+        <tr><td><span class="cb"></span></td><td><a href="#">Đỗ Quang Vinh</a><small>Bận · Thuyền trưởng</small></td><td style="color:var(--warning)">Thiếu giấy tờ · 2</td>
+          <td><div class="stat"><b>Chưa ráp hồ sơ</b><div class="bar"><i class="nxt"></i><i></i><i></i></div><small>&nbsp;</small></div></td>
+          <td style="text-align:center"><button class="btn btn--primary">Ráp hồ sơ</button> <span class="ico ico--del">🗑</span></td></tr>
+      </tbody></table></div>
+    <ul><li>Dễ đọc nhất khi quét danh sách dài; nút kế tiếp ghi chữ rõ ràng.</li><li>Việc không phải "kế tiếp" (ví dụ mở lại hồ sơ nộp để xem) phải qua menu hoặc bấm vào dòng trạng thái.</li></ul>
+  </section>
+</div>
+</body></html>

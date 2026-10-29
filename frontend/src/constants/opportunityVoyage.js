@@ -8,7 +8,6 @@ export const VOYAGE_SOURCES = ['OPPORTUNITY', 'MANUAL']
 export const MANUAL_REASONS = ['TRANSFER', 'OWNER_HIRED', 'LEGACY', 'OTHER']
 export const DEADLINE_WARN_DAYS = 7
 export const LEAVE_WARN_DAYS = 30
-export const MAILTO_MAX = 1800
 
 export const OPPORTUNITY_TAB_LABELS = { open: 'Đang mở', won: 'Đã chốt', lost: 'Không thành', cancelled: 'Huỷ', all: 'Tất cả' }
 export const VOYAGE_TAB_LABELS = { onboard: 'Đang trên tàu', left: 'Đã rời tàu', all: 'Tất cả' }

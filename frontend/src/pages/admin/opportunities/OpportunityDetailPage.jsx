@@ -16,8 +16,9 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatUsd } from '../../../utils/format'
 import { Crumb, FleetTile, TargetSvg } from '../fleet/FleetParts'
 import CandidateTable from './CandidateTable'
-import useSendToOwner from './useSendToOwner'
+import ComposeMailModal from './ComposeMailModal'
 import PlaceModal from './PlaceModal'
+import OwnerPickModal from './OwnerPickModal'
 import CandidatePanel from './CandidatePanel'
 import SubmissionPanel from './SubmissionPanel'
 import { opportunityApi } from '../../../api/opportunityApi'
@@ -108,8 +109,10 @@ export default function OpportunityDetailPage() {
   const [closing, setClosing] = useState(false)
   const [adding, setAdding] = useState(false)
   const [placing, setPlacing] = useState(false)
+  const [pickingOwner, setPickingOwner] = useState(false)
   const [tab, setTab] = useState('overview')
-  const sendToOwner = useSendToOwner()
+  const [composing, setComposing] = useState(null)
+  const sendToOwner = (_opportunity, people) => setComposing(people)
 
   if (isLoading) {
     return (
@@ -269,8 +272,8 @@ export default function OpportunityDetailPage() {
       if (isOpen && live.length && stage < 2 && can('opportunity.send')) return { onClick: () => sendToOwner(o, live), hint: 'Gửi hồ sơ ứng viên cho chủ tàu' }
       return {}
     })(),
-    OWNER_SELECTED: editable && live.length && stage < 4 && stage !== 3
-      ? { menu: live.map((c) => ({ key: c.seafarer_id, label: c.full_name, onClick: () => onCandidateMenu('select', c) })), hint: 'Chọn người chủ tàu đã chọn' }
+    OWNER_SELECTED: editable && live.length && stage < 4
+      ? { onClick: () => setPickingOwner(true), hint: 'Chọn người chủ tàu đã chọn' }
       : {},
     WON: canClose && live.length ? { onClick: () => setPlacing(true), hint: 'Chốt người và ghi lên tàu' } : {},
   }
@@ -458,6 +461,8 @@ export default function OpportunityDetailPage() {
       {fitFor ? <FitModal candidate={fitFor} requirements={o.requirements} onClose={() => setFitFor(null)} /> : null}
       {adding ? <CandidatePanel opportunity={o} onClose={() => setAdding(false)} /> : null}
       {closing ? <CloseModal opportunity={o} onClose={() => setClosing(false)} /> : null}
+      {pickingOwner ? <OwnerPickModal opportunity={o} onClose={() => setPickingOwner(false)} /> : null}
+      {composing ? <ComposeMailModal opportunity={o} candidates={composing} onClose={() => setComposing(null)} /> : null}
       {placing ? <PlaceModal opportunity={o} onClose={() => setPlacing(false)} /> : null}
     </div>
   )

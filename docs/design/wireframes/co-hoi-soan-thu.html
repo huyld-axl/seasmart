@@ -1,0 +1,160 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Soạn thư gửi chủ tàu: 3 hướng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* Wireframe: hộp soạn thư khi bấm Gửi chủ tàu. App gửi bằng mail server công ty, tự đính kèm .zip từng người, không còn mở Thunderbird và không còn hộp "Đã gửi?". */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-light: rgba(0,51,102,.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5; --warning: #bb4d00; --warning-bg: #fffbeb; --warning-border: #fee685; --ring-focus: rgba(0,51,102,.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 24px 80px; background: var(--background); color: var(--foreground); font: 14px/1.5 Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 56px; }
+  h1 { margin: 0 0 4px; font-size: 20px; } .lead { margin: 0 0 8px; color: var(--muted); }
+  .rules { margin: 0; padding: 12px 16px 12px 32px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 13px; color: var(--neutral); }
+  .variant > h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 16px; }
+  .variant > h2 b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; }
+  .variant > p { margin: 0 0 12px; color: var(--muted); }
+  .variant > ul { margin: 12px 0 0; padding-left: 18px; color: var(--neutral); font-size: 13px; }
+  .stage { display: grid; place-items: center; padding: 24px; border-radius: 12px; background: rgba(0,0,0,.18); }
+  .dlg { width: 100%; max-width: 640px; border-radius: 12px; background: var(--surface); box-shadow: 0 16px 48px rgba(0,0,0,.24); overflow: hidden; }
+  .dlg--wide { max-width: 940px; }
+  .dlg__h { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .dlg__h h3 { margin: 0; font-size: 16px; } .dlg__h p { margin: 0; color: var(--muted); font-size: 12px; }
+  .dlg__x { margin-left: auto; color: var(--neutral); }
+  .dlg__f { display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); background: var(--neutral-bg); }
+  .dlg__f .grow { margin-right: auto; color: var(--muted); font-size: 12px; }
+  .btn { height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--foreground); font: inherit; font-weight: 500; white-space: nowrap; }
+  .btn--primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .btn--ghost { border-color: transparent; background: none; color: var(--primary); }
+  .form { display: grid; }
+  .f { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 8px; padding: 8px 20px; border-bottom: 1px solid var(--border); }
+  .f > span { color: var(--muted); font-size: 13px; }
+  .f .in { min-height: 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 13px; background: var(--neutral-bg); font-size: 13px; }
+  .chip--pdf::before { content: "📎"; font-size: 12px; }
+  .body { margin: 0; padding: 14px 20px; min-height: 190px; font: inherit; font-size: 13px; white-space: pre-wrap; border-bottom: 1px solid var(--border); }
+  .atts { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 20px; }
+  .note { margin: 12px 20px 0; padding: 8px 12px; border: 1px solid var(--warning-border); border-radius: 8px; background: var(--warning-bg); color: var(--warning); font-size: 12px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .lbl { display: block; margin: 0 0 6px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .box { border: 1px solid var(--border-strong); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: var(--surface); }
+
+  /* kiểu 2 */
+  .cols { display: grid; grid-template-columns: 1fr 300px; }
+  .side { padding: 14px 16px; border-left: 1px solid var(--border); background: var(--neutral-bg); display: grid; gap: 10px; align-content: start; }
+  .ppl { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); font-size: 13px; }
+  .ppl b { display: block; font-weight: 500; } .ppl small { color: var(--muted); font-size: 12px; }
+  .ppl .tag { margin-left: auto; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .tag--ok { color: var(--success); } .tag--warn { color: var(--warning); }
+  .tag::before { content: "● "; }
+
+  /* kiểu 3 */
+  .steps { display: flex; gap: 8px; padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .step { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+  .step i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--neutral-bg); font-style: normal; font-size: 11px; }
+  .step--on { color: var(--foreground); font-weight: 600; } .step--on i { background: var(--primary); color: #fff; }
+  .step--done i { background: var(--success); color: #fff; }
+  .sep { color: var(--border-strong); }
+  .check { padding: 14px 20px; display: grid; gap: 8px; }
+</style></head><body>
+<div class="wrap">
+  <header>
+    <h1>Soạn thư gửi chủ tàu: 3 hướng</h1>
+    <p class="lead">Bấm "Gửi" ở một ứng viên (hoặc "Gửi cho chủ tàu" ở nhiều người đã chọn) thì mở hộp này. Nội dung thư điền sẵn, bạn sửa tuỳ ý rồi bấm Gửi. Thư đi bằng mail server công ty, đính kèm .zip hồ sơ từng người, bạn đứng tên Reply-To và được Cc. Gửi thành công thì ghi nhận ngay, không còn hộp "Đã gửi?".</p>
+    <ol class="rules">
+      <li><b>Đến:</b> mặc định liên hệ chính của chủ tàu (có email), đổi được sang liên hệ khác hoặc gõ email.</li>
+      <li><b>Cc:</b> mặc định là chính bạn.</li>
+      <li><b>Tiêu đề và nội dung:</b> điền sẵn như thư hiện nay, sửa tự do.</li>
+      <li><b>Đính kèm:</b> tự động, mỗi người một .zip; ai chưa có bộ giấy thì app ráp trước khi gửi. Quá 20 MB thì báo, gợi ý gửi bớt người.</li>
+      <li>Lỗi thì giữ nguyên hộp để sửa và gửi lại, không ghi nhận gì. Chưa cấu hình mail server thì báo rõ ngay khi mở hộp.</li>
+    </ol>
+  </header>
+
+  <!-- ============ KIỂU 1 ============ -->
+  <section class="variant">
+    <h2><b>1</b> Hộp soạn thư kiểu Gmail</h2>
+    <p>Gọn nhất: các dòng Đến / Cc / Tiêu đề, vùng nội dung, chip đính kèm, nút Gửi. Quen thuộc với ai dùng mail.</p>
+    <div class="stage"><div class="dlg">
+      <div class="dlg__h"><div><h3>Gửi cho Halong Maritime JSC</h3><p>Thuyền trưởng · MV Mekong Star</p></div><span class="dlg__x">✕</span></div>
+      <div class="form">
+        <div class="f"><span>Đến</span><div class="in"><span class="chip">Nguyễn Thị Lan &lt;lan@halong.vn&gt; ▾</span></div></div>
+        <div class="f"><span>Cc</span><div class="in"><span class="chip">sales@marineport.vn ✕</span></div></div>
+        <div class="f"><span>Tiêu đề</span><div class="in">MCAH · Master candidates for MV Mekong Star · join 15/10/2026 Hai Phong</div></div>
+      </div>
+      <pre class="body">Dear Ms Lan,
+
+Please find attached 2 candidates for Master on MV Mekong Star, joining 15/10/2026.
+1. NGUYEN VAN HAI
+2. PHAN ANH TUAN
+
+Best regards,
+sales@marineport.vn</pre>
+      <div class="atts"><span class="chip chip--pdf">Nguyễn Văn Hải.zip</span><span class="chip chip--pdf">Phan Anh Tuấn.zip</span><span class="muted" style="align-self:center">2 tệp</span></div>
+      <div class="dlg__f"><span class="grow">Gửi từ mail server công ty</span><button class="btn">Huỷ</button><button class="btn btn--primary">Gửi thư</button></div>
+    </div></div>
+    <ul><li>Một bước, nhanh nhất.</li><li>Ít chỗ để thấy ai còn thiếu giấy trước khi gửi (chỉ có chip tên).</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 2 ============ -->
+  <section class="variant">
+    <h2><b>2</b> Hộp rộng: soạn thư bên trái, kiểm tra hồ sơ bên phải</h2>
+    <p>Cột phải liệt kê từng người sẽ đính kèm kèm tình trạng hồ sơ, để thấy ngay ai còn thiếu giấy bắt buộc trước khi bấm Gửi. Bỏ tích một người thì người đó không bị gửi.</p>
+    <div class="stage"><div class="dlg dlg--wide">
+      <div class="dlg__h"><div><h3>Gửi cho Halong Maritime JSC</h3><p>Thuyền trưởng · MV Mekong Star</p></div><span class="dlg__x">✕</span></div>
+      <div class="cols">
+        <div>
+          <div class="form">
+            <div class="f"><span>Đến</span><div class="in"><span class="chip">Nguyễn Thị Lan &lt;lan@halong.vn&gt; ▾</span></div></div>
+            <div class="f"><span>Cc</span><div class="in"><span class="chip">sales@marineport.vn ✕</span></div></div>
+            <div class="f"><span>Tiêu đề</span><div class="in">MCAH · Master candidates for MV Mekong Star · join 15/10</div></div>
+          </div>
+          <pre class="body" style="min-height:220px">Dear Ms Lan,
+
+Please find attached 2 candidates for Master on MV Mekong Star, joining 15/10/2026.
+1. NGUYEN VAN HAI
+2. PHAN ANH TUAN
+
+Best regards,
+sales@marineport.vn</pre>
+        </div>
+        <aside class="side">
+          <span class="lbl">Hồ sơ đính kèm · 2</span>
+          <div class="ppl"><span>☑</span><div><b>Nguyễn Văn Hải</b><small>Đủ hồ sơ · ráp 29/10</small></div><span class="tag tag--ok">Đủ</span></div>
+          <div class="ppl"><span>☑</span><div><b>Phan Anh Tuấn</b><small>Thiếu hộ chiếu, GMDSS</small></div><span class="tag tag--warn">Thiếu 2</span></div>
+          <div class="note" style="margin:0">Phan Anh Tuấn còn thiếu giấy bắt buộc. Vẫn gửi được, hồ sơ trong .zip sẽ thiếu các giấy này.</div>
+          <span class="muted">Tổng ~6,4 MB · giới hạn 20 MB</span>
+        </aside>
+      </div>
+      <div class="dlg__f"><span class="grow">Gửi từ mail server công ty</span><button class="btn">Huỷ</button><button class="btn btn--primary">Gửi thư (2 hồ sơ)</button></div>
+    </div></div>
+    <ul><li>Vừa soạn thư vừa kiểm tra, ít sai sót nhất; thay luôn việc phải mở từng hồ sơ nộp.</li><li>Hộp rộng 940px, nặng hơn; trên điện thoại cột phải xuống dưới.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 3 ============ -->
+  <section class="variant">
+    <h2><b>3</b> Hai bước: Kiểm tra rồi Soạn thư</h2>
+    <p>Bước 1 chỉ liệt kê người và cảnh báo; bước 2 mới soạn thư. Mỗi màn ít thứ nhất, phù hợp khi gửi nhiều người một lúc.</p>
+    <div class="stage"><div class="dlg">
+      <div class="dlg__h"><div><h3>Gửi cho Halong Maritime JSC</h3><p>Thuyền trưởng · MV Mekong Star</p></div><span class="dlg__x">✕</span></div>
+      <div class="steps"><span class="step step--done"><i>✓</i>Kiểm tra</span><span class="sep">›</span><span class="step step--on"><i>2</i>Soạn thư</span></div>
+      <div class="form">
+        <div class="f"><span>Đến</span><div class="in"><span class="chip">Nguyễn Thị Lan &lt;lan@halong.vn&gt; ▾</span></div></div>
+        <div class="f"><span>Cc</span><div class="in"><span class="chip">sales@marineport.vn ✕</span></div></div>
+        <div class="f"><span>Tiêu đề</span><div class="in">MCAH · Master candidates for MV Mekong Star · join 15/10/2026</div></div>
+      </div>
+      <pre class="body" style="min-height:130px">Dear Ms Lan,
+
+Please find attached 2 candidates for Master on MV Mekong Star...</pre>
+      <div class="atts"><span class="chip chip--pdf">Nguyễn Văn Hải.zip</span><span class="chip chip--pdf">Phan Anh Tuấn.zip</span></div>
+      <div class="dlg__f"><button class="btn btn--ghost">‹ Quay lại</button><span class="grow"></span><button class="btn">Huỷ</button><button class="btn btn--primary">Gửi thư</button></div>
+    </div></div>
+    <ul><li>Bước 1 (không vẽ): danh sách người đã chọn, thẻ Đủ hồ sơ / Thiếu giấy, nút Tiếp tục.</li><li>Thêm một bước bấm cho mỗi lần gửi, kể cả khi gửi một người.</li></ul>
+  </section>
+</div>
+</body></html>

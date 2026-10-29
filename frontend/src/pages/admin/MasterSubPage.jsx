@@ -15,6 +15,9 @@ import { actionColumn } from '../../components/ds/actionColumn'
 import { useCan } from '../../hooks/usePermission'
 import ToggleRow from '../../components/ds/ToggleRow'
 import changedLabel from './fleet/changedLabel'
+import { CategoryTag } from '../../components/ds/CertificateTable'
+import { CATEGORY } from './seafarers/certificateView'
+import { lookupApi } from '../../api'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerForm.css'
 
@@ -280,7 +283,12 @@ function MasterTable({ resource, columns, formFields, title }) {
 
 // ── Tab components ─────────────────────────────────────────────────────────────
 
+const CATEGORY_OPTIONS = Object.entries(CATEGORY).map(([value, label]) => ({ value, label }))
+
+// Loại giấy: nhóm theo loại giấy (Tuỳ thân, Chuyên môn, Huấn luyện STCW, Y tế, Khác); nước cấp là cột riêng, để trống nếu không gắn một nước.
 function CertificateTypeTab() {
+  const { data: countries = [] } = useQuery({ queryKey: ['lookup', 'countries'], queryFn: () => lookupApi.countries().then((r) => r.data?.data || r.data || []) })
+  const countryName = (id) => countries.find((c) => c.id === id)?.name_vi || ''
   return (
     <MasterTable
       resource="certificate-types"
@@ -289,6 +297,12 @@ function CertificateTypeTab() {
         { title: 'Mã', dataIndex: 'code', width: 160 },
         { title: 'Tên tiếng Việt', dataIndex: 'name_vi' },
         { title: 'Tên tiếng Anh', dataIndex: 'name_en' },
+        {
+          title: 'Nhóm',
+          dataIndex: 'category',
+          width: 220,
+          render: (v, row) => <CategoryTag cert={{ category: CATEGORY[v] || CATEGORY.OTHER, categoryKey: CATEGORY[v] ? v : 'OTHER', country: countryName(row.issuing_country_id) }} />,
+        },
         {
           title: 'Hiệu lực (năm)',
           dataIndex: 'validity_years',
@@ -312,6 +326,12 @@ function CertificateTypeTab() {
           </Form.Item>
           <Form.Item name="name_en" label="Tên tiếng Anh">
             <Input />
+          </Form.Item>
+          <Form.Item name="category" label="Nhóm" initialValue="OTHER" rules={[{ required: true }]}>
+            <Select options={CATEGORY_OPTIONS} aria-label="Nhóm" />
+          </Form.Item>
+          <Form.Item name="issuing_country_id" label="Nước cấp (để trống nếu không gắn riêng một nước)">
+            <Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="Ví dụ: Panama" options={countries.map((c) => ({ value: c.id, label: c.name_vi || c.name_en }))} />
           </Form.Item>
           <Form.Item name="issuing_authority" label="Cơ quan cấp">
             <Input />

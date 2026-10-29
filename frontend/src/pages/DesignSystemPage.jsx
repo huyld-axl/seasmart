@@ -697,9 +697,9 @@ export default function DesignSystemPage() {
           <Demo label="Bảng chứng chỉ: còn hạn, hết hạn, không thời hạn (nhập tay)" wide>
             <CertificateTable certs={CERTS} />
           </Demo>
-          <Demo label="Màu nhóm giấy tờ (CategoryTag; FilterChips nhận chip.dot = ds-cat--{nhóm})">
+          <Demo label="Màu nhóm giấy tờ (CategoryTag, kèm nước cấp nếu có; FilterChips nhận chip.dot = ds-cat--{nhóm})">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {[['DOCUMENT', 'Tuỳ thân'], ['STCW', 'STCW'], ['MEDICAL', 'Y tế'], ['VN', 'Việt Nam'], ['PANAMA', 'Panama'], ['OTHER', 'Khác']].map(([categoryKey, category]) => <CategoryTag key={categoryKey} cert={{ categoryKey, category }} />)}
+              {[['DOCUMENT', 'Tuỳ thân'], ['COMPETENCY', 'Chuyên môn', 'Panama'], ['STCW', 'Huấn luyện STCW', 'Việt Nam'], ['MEDICAL', 'Y tế'], ['OTHER', 'Khác']].map(([categoryKey, category, country]) => <CategoryTag key={categoryKey} cert={{ categoryKey, category, country }} />)}
             </div>
           </Demo>
           <Demo label="Ảnh thu nhỏ giấy tờ (DocThumb): có ảnh, PDF, chưa có ảnh bấm để nạp, chưa có ảnh chỉ xem; cỡ sm và md">

@@ -47,6 +47,7 @@ const certificateService = {
               ct.name_vi as certificate_type_name,
               ct.category as certificate_category,
               ct.code as certificate_type_code,
+              tc.name_vi as certificate_country_name,
               c.name_vi  as issued_at_country_name,
               COALESCE(u.file_name, sd.file_name) AS source_file_name,
               sd.page_label AS source_page,
@@ -55,6 +56,7 @@ const certificateService = {
        FROM seafarer_certificate sc
        LEFT JOIN certificate_type ct ON ct.id = sc.certificate_type_id
        LEFT JOIN country c ON c.id = sc.issued_at_country_id
+       LEFT JOIN country tc ON tc.id = ct.issuing_country_id
        LEFT JOIN seafarer_document sd ON sd.id = sc.source_document_id
        LEFT JOIN document_upload u ON u.id = sd.upload_id
        WHERE sc.seafarer_id = ? AND sc.deleted_at IS NULL

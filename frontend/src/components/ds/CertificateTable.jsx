@@ -14,9 +14,15 @@ const alertText = (cert) => {
   return cert.daysLeft === 0 ? 'Hết hạn hôm nay' : `Còn ${cert.daysLeft} ngày`
 }
 
-// Nhãn loại giấy có màu theo nhóm (categoryKey: DOCUMENT, STCW, MEDICAL, VN, PANAMA, OTHER); không có khoá thì chữ thường.
+// Nhãn loại giấy có màu theo nhóm (categoryKey: DOCUMENT, COMPETENCY, STCW, MEDICAL, OTHER); không có khoá thì chữ thường.
+// cert.country (tuỳ chọn): nước cấp của loại giấy, hiện chữ nhỏ sau nhãn.
 export const CategoryTag = ({ cert }) => (cert.category
-  ? <span className={`ds-cat ds-cat--${(cert.categoryKey || 'OTHER').toLowerCase()}`}>{cert.category}</span>
+  ? (
+    <span className="ds-cat-wrap">
+      <span className={`ds-cat ds-cat--${(cert.categoryKey || 'OTHER').toLowerCase()}`}>{cert.category}</span>
+      {cert.country ? <span className="ds-cat-country">{cert.country}</span> : null}
+    </span>
+  )
   : '—')
 
 const badge = (cert) => <StatusBadge group="cert" value={cert.replaced ? 'REPLACED' : cert.status} />

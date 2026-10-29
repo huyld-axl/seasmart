@@ -743,8 +743,9 @@ span.ds-thumb--empty { cursor: default; }
 .ds-cat--document { --cat-bg: #e8f0fb; --cat-fg: #1d4f91; --cat-dot: #3b78c9; }
 .ds-cat--stcw { --cat-bg: #e3f4ef; --cat-fg: #0f6b55; --cat-dot: #1f9d7c; }
 .ds-cat--medical { --cat-bg: #fdecef; --cat-fg: #a3263f; --cat-dot: #d9476a; }
-.ds-cat--vn { --cat-bg: #fdf1df; --cat-fg: #8a4b06; --cat-dot: #d98b1c; }
-.ds-cat--panama { --cat-bg: #efeafc; --cat-fg: #5233a8; --cat-dot: #7d5ce0; }
+.ds-cat--competency { --cat-bg: #efeafc; --cat-fg: #5233a8; --cat-dot: #7d5ce0; }
 .ds-cat--other { --cat-bg: var(--neutral-bg); --cat-fg: var(--neutral); --cat-dot: #a1a1aa; }
+.ds-cat-wrap { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.ds-cat-country { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .ds-chip__dot { width: 8px; height: 8px; flex: none; margin-right: 6px; border-radius: 50%; background: var(--cat-dot); }
 .ds-chip[aria-pressed="true"] .ds-chip__dot { box-shadow: 0 0 0 1.5px #fff; }

@@ -7,7 +7,7 @@ import { seafarerApi, certificateApi, certificateTypeApi, lookupApi } from '../.
 import { documentApi } from '../../../api/documentApi'
 import { DownloadIcon, UploadIcon } from '../../../components/ds/TransferIcons'
 import useToast from '../../../components/ds/useToast'
-import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
+import { EmptyState, FilterChips } from '../../../components/ds/Controls'
 import CertificateTable from '../../../components/ds/CertificateTable'
 import ScanButton from '../../../components/ds/ScanButton'
 import { useCan } from '../../../hooks/usePermission'
@@ -278,10 +278,19 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   }
 
   return (
-    <section className="ct-block" aria-label="Giấy tờ">
-      <div className="crew-certs__head">
-        <h3 className="crew-certs__title">Giấy tờ</h3>
-        <Space wrap>
+    <section className="ct-block crew-docs-sec" aria-label="Giấy tờ">
+      {/* Thanh công cụ: lọc theo loại bên trái, Tải cả bộ / Nạp giấy tờ bên phải */}
+      <div className="ds-toolbar crew-docs-toolbar">
+        <div className="crew-docs-toolbar__filter">
+          {!isLoading && tabs.length > 2 ? (
+            <FilterChips
+              chips={tabs.map((t) => ({ value: t.value, label: `${t.label} · ${t.count}` }))}
+              selected={[categories.includes(category) ? category : 'ALL']}
+              onToggle={(v) => setCategory(v === category ? 'ALL' : v)}
+            />
+          ) : null}
+        </div>
+        <Space wrap className="crew-docs-toolbar__acts">
           {docs.some((d) => d.hasFile) ? <Button icon={<DownloadIcon />} loading={bundling} onClick={downloadAll}>Tải cả bộ</Button> : null}
           {canEdit && addMenu.items.length ? (
             <Space.Compact>
@@ -338,7 +347,6 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
       ) : (
         <>
-          {tabs.length > 2 ? <div className="crew-docs-filter"><StatusTabs tabs={tabs} value={categories.includes(category) ? category : 'ALL'} onChange={setCategory} mobileLabel="Loại:" /></div> : null}
           {rows.length === 0 && !photo ? (
             <EmptyState title="Chưa có giấy tờ nào" description="Nạp ảnh hoặc bản scan CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ. Nạp cả tệp nhiều giấy thì hệ thống tự tách và đọc." />
           ) : null}

@@ -75,7 +75,7 @@
 .rev-changes b { color: var(--foreground); font-weight: 500; }
 
 /* Tiêu đề bảng thụt vào đúng bằng đệm ô đầu (12px + viền 1px): khung bo góc 16px làm chữ sát mép trông như bị lệch ra ngoài. */
-.crew-certs__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 32px; }
+.crew-certs__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; min-height: 32px; }
 .crew-certs__title { margin: 0; padding-left: 13px; color: var(--foreground); font-size: 15px; font-weight: 600; line-height: 32px; }
 .crew-certs__scan { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 16px; }
 .crew-certs__alerts { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
@@ -84,7 +84,10 @@
 .crew-certs__newtype .ant-input { flex: 1; }
 
 /* Tab Giấy tờ: lọc theo loại, hộp thoại xem lớn, khung chọn tệp khi nạp */
-.crew-docs-filter { padding: 8px 0 12px; }
+.crew-docs-sec { grid-template-columns: minmax(0, 1fr); }
+.crew-docs-toolbar { min-width: 0; margin-bottom: 12px; }
+.crew-docs-toolbar__filter { flex: 1 1 280px; min-width: 0; }
+.crew-docs-toolbar__acts { margin-left: auto; }
 .crew-preview { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; min-height: 420px; }
 .crew-preview__stage { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; padding: 12px; border-radius: var(--radius-sm); background: var(--neutral-bg); }
 .crew-preview__doc { display: flex; flex: 1; align-items: center; justify-content: center; min-width: 0; max-height: 68vh; overflow: auto; }

@@ -304,6 +304,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   const [pickedPhoto, setPickedPhoto] = useState(null)
   const [photoRemoved, setPhotoRemoved] = useState(false)
   const [photoError, setPhotoError] = useState('')
+  const [keepPhotoDoc, setKeepPhotoDoc] = useState(false) // đồng ý lưu ảnh thẻ mới vào tab Giấy tờ
   const photoInputRef = useRef(null)
   const choosePhoto = (file) => {
     if (!file) return
@@ -312,7 +313,16 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     if (problem) return
     setPhotoFile(file)
     setPhotoRemoved(false)
+    setKeepPhotoDoc(false)
     readAsDataUrl(file).then(setPickedPhoto)
+    // Ảnh thẻ mới: hỏi có lưu vào tab Giấy tờ không (thành dòng mới, ảnh trước thành Bản cũ).
+    Modal.confirm({
+      title: 'Lưu ảnh thẻ này vào tab Giấy tờ?',
+      content: 'Ảnh được lưu khi bạn lưu hồ sơ, thành một dòng "Ảnh thẻ 4x6" mới. Ảnh thẻ trước đó (nếu có) giữ lại thành Bản cũ.',
+      okText: 'Lưu vào Giấy tờ',
+      cancelText: 'Chỉ đổi ảnh hồ sơ',
+      onOk: () => setKeepPhotoDoc(true),
+    })
   }
   const photoSrc = photoFile ? pickedPhoto : photoRemoved ? null : savedPhoto
   const hasPhoto = Boolean(photoSrc)
@@ -478,21 +488,22 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         saved = (await seafarerApi.update(id, payload)).data
       }
       let photoError = null
-      // Ảnh giấy tuỳ thân đã đồng ý lưu: mỗi ảnh một dòng giấy mới, số và ngày lấy từ hồ sơ vừa lưu.
-      if (pendingDocs.length) {
+      // Ảnh giấy tuỳ thân (và ảnh thẻ) đã đồng ý lưu: mỗi ảnh một dòng giấy mới, số và ngày lấy từ hồ sơ vừa lưu.
+      const docsToSave = [...pendingDocs, ...(photoFile && keepPhotoDoc ? [{ type: 'photo', label: 'ảnh thẻ', file: photoFile }] : [])]
+      if (docsToSave.length) {
         try {
           const types = (await lookupApi.certificateTypes()).data
           const list = types?.data || types || []
-          for (const doc of pendingDocs) {
-            const identity = IDENTITY[doc.type]
+          for (const doc of docsToSave) {
+            const identity = doc.type === 'photo' ? { code: 'PHOTO' } : IDENTITY[doc.type]
             const type = list.find((c) => c.code === identity.code || (identity.code === 'SEAMAN_BOOK' && c.code === 'SEAMAN-BOOK'))
             if (!type) continue
             const day = (v) => (v ? String(v).slice(0, 10) : undefined)
             const expiry = identity.expiry ? day(saved[identity.expiry]) : undefined
             const cert = (await certificateApi.create(saved.id, {
               certificate_type_id: type.id,
-              certificate_number: saved[identity.number] || undefined,
-              issued_date: identity.issued ? day(saved[identity.issued]) : undefined,
+              certificate_number: identity.number ? saved[identity.number] || undefined : undefined,
+              issued_date: identity.issued ? day(saved[identity.issued]) : doc.type === 'photo' ? dayjs().format('YYYY-MM-DD') : undefined,
               expiry_date: expiry,
               no_expiry: !expiry,
             })).data
@@ -508,17 +519,18 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
       } catch (err) {
         photoError = err.response?.data?.error || err.response?.data?.message || 'Không lưu được ảnh chân dung'
       }
-      return { saved, photoError, again }
+      return { saved, photoError, again, docCount: docsToSave.length }
     },
-    onSuccess: ({ saved, photoError, again }) => {
+    onSuccess: ({ saved, photoError, again, docCount }) => {
       queryClient.invalidateQueries({ queryKey: ['seafarers'] })
       queryClient.invalidateQueries({ queryKey: ['seafarer'] })
       queryClient.invalidateQueries({ queryKey: ['seafarer-contacts'] })
       queryClient.invalidateQueries({ queryKey: ['seafarer-photo'] })
       queryClient.invalidateQueries({ queryKey: ['certificates'] })
       if (photoError) toast.warning(`Đã lưu hồ sơ ${saved.full_name}`, { description: photoError })
-      else toast.success(isEdit ? `Đã lưu hồ sơ ${saved.full_name}` : `Đã tạo hồ sơ ${saved.full_name}`, pendingDocs.length ? { description: `Đã lưu ${pendingDocs.length} ảnh giấy tờ vào tab Giấy tờ` } : undefined)
+      else toast.success(isEdit ? `Đã lưu hồ sơ ${saved.full_name}` : `Đã tạo hồ sơ ${saved.full_name}`, docCount ? { description: `Đã lưu ${docCount} ảnh vào tab Giấy tờ` } : undefined)
       setPendingDocs([])
+      setKeepPhotoDoc(false)
       if (again) resetForNext()
       else navigate(`/seafarers/${saved.id}`)
     },

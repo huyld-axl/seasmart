@@ -44,6 +44,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const [formInit, setFormInit] = useState({}) // giá trị đầu của hộp thoại (Form chỉ gắn khi hộp thoại mở)
   const [aiRead, setAiRead] = useState(null) // { profile } khi AI vừa đọc tệp: ô hồ sơ đọc thêm được (họ tên, ngày sinh…)
   const [skipFields, setSkipFields] = useState([]) // ô hồ sơ người dùng bỏ tích, không ghi vào hồ sơ
+  const [setAvatar, setSetAvatar] = useState(true) // nạp ảnh thẻ: dùng luôn làm ảnh đại diện hồ sơ
 
   const { data, isLoading } = useQuery({
     queryKey: ['certificates', seafarerId],
@@ -55,7 +56,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     queryFn: () => lookupApi.certificateTypes().then((r) => r.data),
   })
 
-  const close = () => { setEditing(null); setRenewing(null); setCertFile(null); setAiRead(null); setSkipFields([]) }
+  const close = () => { setEditing(null); setRenewing(null); setCertFile(null); setAiRead(null); setSkipFields([]); setSetAvatar(true) }
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
   const saved = (text) => () => {
     toast.success(text)
@@ -84,7 +85,15 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
       return cert
     },
 
-    onSuccess: async (_, { row, profile }) => {
+    onSuccess: async (_, { row, profile, avatarFile }) => {
+      if (avatarFile) {
+        try {
+          await seafarerApi.uploadPhoto(seafarerId, avatarFile)
+          queryClient.invalidateQueries({ queryKey: ['seafarer', seafarerId] })
+        } catch (e) {
+          failed('Đã lưu ảnh thẻ, nhưng chưa đổi được ảnh đại diện')(e)
+        }
+      }
       if (profile && Object.keys(profile).length) {
         try {
           await seafarerApi.update(seafarerId, { ...profile, reason: 'Cập nhật từ giấy tờ' })
@@ -271,6 +280,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const changes = editing !== null && identityOfCode(watchedCode)
     ? profileDiff({ ...(aiRead?.profile || {}), ...profileFromForm(watchedCode, watched) }, seafarer)
     : []
+  const isPhotoType = watchedCode === 'PHOTO'
   const chosenProfile = Object.fromEntries(changes.filter((c) => !skipFields.includes(c.field)).map((c) => [c.field, c.to]))
 
   // Ảnh thẻ là một dòng của bảng (nhóm Tuỳ thân), lưu ở hồ sơ thuyền viên chứ không phải chứng chỉ.
@@ -279,7 +289,9 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
       id: 'photo', isPhoto: true, canDelete: Boolean(photo), name: 'Ảnh thẻ 4x6', category: CATEGORY.DOCUMENT, categoryKey: 'DOCUMENT', number: '—',
       issuedOn: fmtDate(seafarer.photo_updated_at) || '—', expiresOn: '', noExpiry: true, status: 'NO_EXPIRY', manual: true, hasFile: Boolean(photo),
     }
-    return [photoRow, ...toTableCerts(rows, { dismissed })]
+    // Ảnh thẻ đã lưu thành giấy (loại PHOTO, có lịch sử) thì hiện các dòng đó; chưa có thì hiện ảnh đại diện của hồ sơ.
+    const hasPhotoDocs = rows.some((r) => r.certificate_type_code === 'PHOTO')
+    return [...(hasPhotoDocs ? [] : [photoRow]), ...toTableCerts(rows, { dismissed })]
   }, [rows, dismissed, photo, seafarer.photo_updated_at])
 
   const categories = Object.keys(CATEGORY).filter((key) => docs.some((d) => d.categoryKey === key))
@@ -410,7 +422,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         </div>
         {aiRead ? <Banner tone="neutral" title="Thông tin AI đọc được" description="Các ô dưới đây AI điền từ ảnh. Kiểm tra và sửa nếu sai trước khi lưu." /> : null}
         {renewing ? <p className="crew-certs__renew">Bản mới thành một dòng riêng; bản hiện tại giữ lại, chuyển thành "Bản cũ" và hết cảnh báo.</p> : null}
-        <Form form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v, profile: chosenProfile })}>
+        <Form form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v, profile: chosenProfile, avatarFile: isPhotoType && setAvatar && certFile?.type?.startsWith('image/') ? certFile : null })}>
           <Form.Item name="certificate_type_id" label="Loại giấy tờ" rules={[{ required: true, message: 'Chọn loại giấy tờ' }]}>
             <Select
               allowClear
@@ -441,6 +453,11 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           <Form.Item name="no_expiry" valuePropName="checked">
             <Checkbox>Không thời hạn</Checkbox>
           </Form.Item>
+          {isPhotoType && certFile?.type?.startsWith('image/') ? (
+            <div className="crew-sync">
+              <ToggleRow label="Dùng làm ảnh đại diện hồ sơ" hint="Ảnh ở đầu hồ sơ và trên biểu mẫu đổi theo ảnh này." value={setAvatar} onChange={setSetAvatar} />
+            </div>
+          ) : null}
           {changes.length ? (
             <div className="crew-sync">
               <p className="crew-sync__title">Cập nhật vào hồ sơ thuyền viên</p>

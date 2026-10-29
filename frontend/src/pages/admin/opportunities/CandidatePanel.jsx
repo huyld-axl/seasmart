@@ -1,25 +1,50 @@
-import { useEffect, useState } from 'react'
-import { Button, Checkbox, Input, Pagination, Skeleton } from 'antd'
-import { SearchOutlined } from '@ant-design/icons'
+import { useEffect, useRef, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import dayjs from 'dayjs'
+import { Button, DatePicker, Input, InputNumber, Pagination, Select, Skeleton, Table, Tooltip } from 'antd'
+import { FilterOutlined, SearchOutlined } from '@ant-design/icons'
 import SlidePanel from '../../../components/ds/SlidePanel'
-import RequirementFit from '../../../components/ds/RequirementFit'
-import { EmptyState, FilterChips, ListRow } from '../../../components/ds/Controls'
+import ToggleRow from '../../../components/ds/ToggleRow'
+import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
+import { lookupApi } from '../../../api'
 import { useOpportunityMutations, useOpportunitySuggestions } from '../../../hooks/useOpportunities'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate } from '../../../utils/format'
+import { withFlag } from '../../../utils/flag'
+import { candidateTags } from './opportunityView'
 
 const PAGE_SIZE = 20
 const age = (dob) => (dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null)
+const lookup = (key, fn) => ({ queryKey: ['lookup', key], queryFn: () => fn().then((r) => r.data), staleTime: 300000 })
 
-// Bảng trượt đề xuất / thêm ứng viên (Màn 4). mode 'suggest' bật sẵn ba bộ lọc theo hồ sơ yêu cầu; 'search' tắt hết.
-export default function CandidatePanel({ opportunity, mode, onClose }) {
+// Bộ lọc mặc định = đề xuất nhanh: đúng chức danh, rảnh trước ngày xuống, đủ giấy bắt buộc. Còn lại để trống.
+const defaultFilters = (opportunity) => ({
+  requiredOk: true, rankId: opportunity.rank_id, freeBefore: opportunity.planned_join_date ? dayjs(opportunity.planned_join_date) : null, workedWithOwner: false,
+  vesselTypeId: null, nationalityId: null, ageMin: null, ageMax: null,
+})
+
+// Số bộ lọc đang bật khác mặc định "không lọc" (để hiện trên nút Bộ lọc ở màn nhỏ).
+const activeCount = (f) => [f.requiredOk, f.rankId, f.freeBefore, f.workedWithOwner, f.vesselTypeId, f.nationalityId, f.ageMin != null || f.ageMax != null].filter(Boolean).length
+
+// Một thẻ cảnh báo: chấm + chữ, cam khi cần chú ý. Không thẻ nào chặn chọn. `tip`: chi tiết hiện khi rê chuột hoặc focus.
+function Tag({ tag, tip }) {
+  if (!tip) return <span className={`op-tag op-tag--${tag.tone}`}>{tag.label}</span>
+  return (
+    <Tooltip title={tip} placement="topLeft">
+      <span className={`op-tag op-tag--${tag.tone} op-tag--tip`} tabIndex={0}>{tag.label}</span>
+    </Tooltip>
+  )
+}
+
+// Side panel thêm ứng viên (Màn 4): cột lọc bên trái, thanh tìm kiếm đứng yên, danh sách cuộn riêng.
+export default function CandidatePanel({ opportunity, onClose }) {
   const toast = useToast()
   const { addCandidates } = useOpportunityMutations()
-  const suggest = mode === 'suggest'
   const [search, setSearch] = useState('')
   const [debounced, setDebounced] = useState('')
-  const [chips, setChips] = useState(suggest ? ['required_ok', 'rank', 'free'] : [])
+  const [filters, setFilters] = useState(() => defaultFilters(opportunity))
+  const [railOpen, setRailOpen] = useState(false)
   const [page, setPage] = useState(1)
   const [picked, setPicked] = useState([])
 
@@ -28,29 +53,31 @@ export default function CandidatePanel({ opportunity, mode, onClose }) {
     return () => clearTimeout(t)
   }, [search])
 
-  const chipList = [
-    { value: 'required_ok', label: 'Đủ mục bắt buộc' },
-    { value: 'rank', label: `Chức danh: ${opportunity.rank_name}` },
-    { value: 'free', label: `Rảnh trước ${formatDate(opportunity.planned_join_date)}` },
-    { value: 'owner', label: `Đã làm cho ${opportunity.ship_owner_name}` },
-  ]
+  const ranks = useQuery(lookup('ranks', lookupApi.ranks))
+  const vesselTypes = useQuery(lookup('vessel-types', lookupApi.vesselTypes))
+  const countries = useQuery(lookup('countries', lookupApi.countries))
+  const setFilter = (patch) => { setFilters((prev) => ({ ...prev, ...patch })); setPage(1) }
+
   const params = {
     search: debounced || undefined,
-    required_ok: chips.includes('required_ok') ? 1 : undefined,
-    rank_id: chips.includes('rank') ? opportunity.rank_id : undefined,
-    free_before: chips.includes('free') ? String(opportunity.planned_join_date).slice(0, 10) : undefined,
-    worked_with_owner: chips.includes('owner') ? 1 : undefined,
+    required_ok: filters.requiredOk ? 1 : undefined,
+    rank_id: filters.rankId || undefined,
+    free_before: filters.freeBefore ? filters.freeBefore.format('YYYY-MM-DD') : undefined,
+    worked_with_owner: filters.workedWithOwner ? 1 : undefined,
+    vessel_type_id: filters.vesselTypeId || undefined,
+    nationality_id: filters.nationalityId || undefined,
+    age_min: filters.ageMin ?? undefined,
+    age_max: filters.ageMax ?? undefined,
     page,
     limit: PAGE_SIZE,
   }
   const list = useOpportunitySuggestions(opportunity.id, params)
   const rows = list.data?.data || []
-  const toggleChip = (value) => { setChips((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value])); setPage(1) }
-  const togglePick = (id) => setPicked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]))
+  const scrollRef = useRef(null)
 
   async function submit() {
     try {
-      await addCandidates.mutateAsync({ id: opportunity.id, seafarer_ids: picked, source: suggest ? 'SUGGEST' : 'SEARCH' })
+      await addCandidates.mutateAsync({ id: opportunity.id, seafarer_ids: picked, source: activeCount(filters) ? 'SUGGEST' : 'SEARCH' })
       toast.success(`Đã thêm ${picked.length} ứng viên vào ${opportunity.code}`)
       onClose()
     } catch (error) {
@@ -62,55 +89,82 @@ export default function CandidatePanel({ opportunity, mode, onClose }) {
   if (list.isError) {
     body = <EmptyState isError title="Không tải được danh sách" description="Mất kết nối tới máy chủ." action={<Button onClick={() => list.refetch()}>Thử lại</Button>} />
   } else if (list.isLoading) {
-    body = <Skeleton active title={false} paragraph={{ rows: 6 }} />
+    body = <div className="op-sug__pad"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
   } else if (!rows.length) {
-    body = <EmptyState title="Không có ai khớp" description={chips.length ? 'Thử tắt bớt bộ lọc, ví dụ "Đủ mục bắt buộc".' : 'Thử tìm bằng tên, mã thuyền viên hoặc số hộ chiếu.'} />
+    body = <EmptyState title="Không có ai khớp" description={activeCount(filters) ? 'Thử tắt bớt bộ lọc bên trái, ví dụ "Đủ giấy bắt buộc".' : 'Thử tìm bằng tên, mã thuyền viên hoặc số hộ chiếu.'} />
   } else {
-    body = (
-      <ul className="op-sug">
-        {rows.map((p) => {
-          const dim = p.in_list || p.held_by
-          const meta = [
-            p.rank_name,
-            age(p.date_of_birth) != null ? `${age(p.date_of_birth)} tuổi` : null,
-            p.onboard_voyage_id ? `trên ${p.onboard_vessel_name}, rời dự kiến ${formatDate(p.onboard_until)}` : 'Ở bờ',
-          ].filter(Boolean).join(' · ')
+    const columns = [
+      {
+        title: 'Thuyền viên',
+        key: 'person',
+        width: 200,
+        render: (_, p) => {
+          const tags = candidateTags(p, opportunity, formatDate)
+          const info = [p.rank_name, age(p.date_of_birth) != null ? `${age(p.date_of_birth)} tuổi` : null].filter(Boolean).join(' · ')
           return (
-            <ListRow
-              key={p.id}
-              leading={<Checkbox checked={picked.includes(p.id)} disabled={p.in_list} onChange={() => togglePick(p.id)} aria-label={`Chọn ${p.full_name}`} />}
-              title={
-                <span className={dim ? 'op-sug__name op-sug__name--dim' : 'op-sug__name'}>
-                  {p.full_name}
-                  {p.in_list ? <span className="op-sug__note">Đã trong danh sách</span> : null}
-                  {!p.in_list && p.held_by ? <span className="op-sug__note">Đang giữ cho {p.held_by}</span> : null}
-                </span>
-              }
-              meta={
-                <>
-                  <span>{meta}</span>
-                  {p.reasons.length ? (
-                    <span className="op-sug__why">
-                      {p.reasons.slice(0, 3).map((r) => <span key={r.text} className={`op-why op-why--${r.tone}`}>{r.text}</span>)}
-                    </span>
-                  ) : null}
-                </>
-              }
-              trailing={<RequirementFit fit={p.fit} short />}
-            />
+            <div className="op-sug__cell">
+              <b className={p.in_list ? 'op-sug__name op-sug__name--dim' : 'op-sug__name'}>{p.full_name}</b>
+              {info ? <span>{info}</span> : null}
+              {!p.in_list && tags.position ? <Tag tag={tags.position} /> : null}
+            </div>
           )
-        })}
-      </ul>
+        },
+      },
+      {
+        title: 'Hiện tại',
+        key: 'now',
+        width: 220,
+        render: (_, p) => {
+          const tags = candidateTags(p, opportunity, formatDate)
+          return (
+            <div className="op-sug__cell">
+              {!p.in_list && tags.availability ? <Tag tag={tags.availability} /> : null}
+              <span>{tags.onboard}</span>
+              {!p.in_list && p.held_by ? <span>Đang giữ cho {p.held_by}</span> : null}
+            </div>
+          )
+        },
+      },
+      {
+        title: 'Hồ sơ yêu cầu',
+        key: 'docs',
+        width: 230,
+        render: (_, p) => {
+          if (p.in_list) return <span className="op-sug__muted">Đã trong danh sách</span>
+          const tags = candidateTags(p, opportunity, formatDate)
+          // Giấy thiếu nằm trong tooltip, bắt buộc trước, mục nên có ghi rõ.
+          const tip = tags.issues.length ? (
+            <ul className="op-sug__tip">
+              {tags.issues.map((i) => <li key={i.text}>{i.required ? i.text : `${i.text} (nên có)`}</li>)}
+            </ul>
+          ) : null
+          return tags.docs.tone === 'none' ? <span className="op-sug__muted">Chưa có yêu cầu</span> : <Tag tag={tags.docs} tip={tip} />
+        },
+      },
+    ]
+    body = (
+      <Table
+        className="op-sug"
+        size="middle"
+        rowKey="id"
+        columns={columns}
+        dataSource={rows}
+        pagination={false}
+        sticky={{ getContainer: () => scrollRef.current }}
+        scroll={{ x: 560 }}
+        rowSelection={{ selectedRowKeys: picked, preserveSelectedRowKeys: true, onChange: setPicked, getCheckboxProps: (p) => ({ disabled: p.in_list, 'aria-label': `Chọn ${p.full_name}` }) }}
+        rowClassName={(p) => (p.in_list ? 'op-sug__row--dim' : '')}
+      />
     )
   }
 
   return (
     <SlidePanel
       open
-      size="wide"
+      size="xl"
+      flush
       hasForm={false}
-      title={suggest ? `Đề xuất ứng viên · ${opportunity.rank_name} · ${opportunity.vessel_name || 'Chưa rõ tàu'}` : 'Thêm ứng viên'}
-      description={`Rảnh trước ${formatDate(opportunity.planned_join_date)}, đối chiếu ${opportunity.requirements.filter((r) => r.kind !== 'TEMPLATE').length} yêu cầu.`}
+      title="Thêm ứng viên"
       onClose={onClose}
       footer={
         <>
@@ -122,18 +176,62 @@ export default function CandidatePanel({ opportunity, mode, onClose }) {
         </>
       }
     >
-      <div className="op-sug__tools">
-        <Input allowClear prefix={<SearchOutlined />} placeholder="Tìm tên, mã thuyền viên, số hộ chiếu" aria-label="Tìm thuyền viên" value={search} onChange={(e) => setSearch(e.target.value)} />
-        <FilterChips chips={chipList} selected={chips} onToggle={toggleChip} />
-        <p className="op-sug__hint">
-          {list.data ? `${list.data.total} người khớp · xếp theo mức hợp: đủ bắt buộc, rồi số mục nên có, rồi ngày rảnh gần ngày xuống` : ' '}
-          {list.data?.capped ? ' · đã chạm giới hạn 500 người, lọc thêm để chắc không sót' : ''}
-        </p>
+      <div className="op-sug__split">
+        <aside className={`op-sug__rail${railOpen ? ' op-sug__rail--open' : ''}`} aria-label="Bộ lọc">
+          <div className="op-sug__railhead">
+            <b>Bộ lọc</b>
+            <Button type="text" size="small" onClick={() => { setFilters(defaultFilters(opportunity)); setPage(1) }}>Đặt lại</Button>
+          </div>
+          <ToggleRow compact label="Đủ giấy bắt buộc" value={filters.requiredOk} onChange={(v) => setFilter({ requiredOk: v })} />
+          <ToggleRow compact label="Từng làm cho chủ tàu" value={filters.workedWithOwner} onChange={(v) => setFilter({ workedWithOwner: v })} />
+          <label className="op-sug__field">
+            <span>Rảnh trước ngày</span>
+            <DatePicker allowClear format="DD/MM/YYYY" placeholder="Chọn ngày" value={filters.freeBefore} onChange={(d) => setFilter({ freeBefore: d })} />
+          </label>
+          <label className="op-sug__field">
+            <span>Chức danh hiện tại</span>
+            <Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="Tất cả" loading={ranks.isLoading} value={filters.rankId} onChange={(v) => setFilter({ rankId: v ?? null })} options={(ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi }))} />
+          </label>
+          <label className="op-sug__field">
+            <span>Đã đi loại tàu</span>
+            <Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="Tất cả" loading={vesselTypes.isLoading} value={filters.vesselTypeId} onChange={(v) => setFilter({ vesselTypeId: v ?? null })} options={(vesselTypes.data || []).map((t) => ({ value: t.id, label: t.name_vi }))} />
+          </label>
+          <label className="op-sug__field">
+            <span>Quốc tịch</span>
+            <Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="Tất cả" loading={countries.isLoading} value={filters.nationalityId} onChange={(v) => setFilter({ nationalityId: v ?? null })} options={(countries.data || []).map((c) => ({ value: c.id, label: withFlag(c.code, c.name_vi || c.name_en, c.flag_emoji) }))} />
+          </label>
+          <div className="op-sug__field">
+            <span>Tuổi</span>
+            <div className="op-sug__age">
+              <InputNumber min={16} max={80} placeholder="Từ" aria-label="Tuổi từ" value={filters.ageMin} onChange={(v) => setFilter({ ageMin: v ?? null })} />
+              <span aria-hidden>–</span>
+              <InputNumber min={16} max={80} placeholder="Đến" aria-label="Tuổi đến" value={filters.ageMax} onChange={(v) => setFilter({ ageMax: v ?? null })} />
+            </div>
+          </div>
+        </aside>
+        <div className="op-sug__main">
+          <div className="op-sug__tools">
+            <div className="op-sug__searchrow">
+              <Input allowClear prefix={<SearchOutlined />} placeholder="Tìm tên, mã thuyền viên, số hộ chiếu" aria-label="Tìm thuyền viên" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Button className="op-sug__railbtn" icon={<FilterOutlined />} aria-expanded={railOpen} onClick={() => setRailOpen((v) => !v)}>Bộ lọc{activeCount(filters) ? ` · ${activeCount(filters)}` : ''}</Button>
+            </div>
+            <div className="op-sug__bar">
+              <span className="op-sug__hint">
+                {list.data ? `${list.data.total} người khớp, xếp theo mức hợp` : ' '}
+                {list.data?.capped ? ' · đã chạm giới hạn 500 người, lọc thêm để chắc không sót' : ''}
+              </span>
+            </div>
+          </div>
+          <div className="op-sug__scroll" ref={scrollRef}>
+            {body}
+            {list.data && list.data.total > PAGE_SIZE ? (
+              <div className="op-sug__pad">
+                <Pagination size="small" align="center" current={page} pageSize={PAGE_SIZE} total={list.data.total} onChange={setPage} showSizeChanger={false} />
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
-      {body}
-      {list.data && list.data.total > PAGE_SIZE ? (
-        <Pagination size="small" align="center" current={page} pageSize={PAGE_SIZE} total={list.data.total} onChange={setPage} showSizeChanger={false} />
-      ) : null}
     </SlidePanel>
   )
 }

@@ -153,3 +153,49 @@ export function requirementSummary(requirements = []) {
   const templates = requirements.length - rows.length
   return { required, preferred: rows.length - required, templates }
 }
+
+// ---------- Trục giai đoạn ----------
+
+// Các mốc của trục, theo thứ tự. Khớp OPPORTUNITY_DISPLAY_STATUSES ở backend, bỏ Không thành / Huỷ (kết thúc riêng).
+export const STAGE_ORDER = ['NEW', 'PICKING', 'WAITING', 'OWNER_SELECTED', 'WON']
+
+// Tên ngắn của mốc trên trục (tên đầy đủ ở statusMap dùng cho nhãn trạng thái).
+export const STAGE_LABEL = { NEW: 'Mới', PICKING: 'Đang chọn', WAITING: 'Chờ kết quả', OWNER_SELECTED: 'Chủ tàu chọn', WON: 'Đã chốt' }
+
+// Chỉ số mốc hiện tại trên trục. Cơ hội đã đóng (Không thành / Huỷ) thì lấy mốc đã tới trước khi đóng, tính từ ứng viên như displayStatus ở backend.
+export function stageIndex(opportunity) {
+  const { status, display_status: display, candidates = [] } = opportunity
+  if (status === 'WON') return STAGE_ORDER.indexOf('WON')
+  if (status === 'OPEN') return Math.max(STAGE_ORDER.indexOf(display), 0)
+  const live = candidates.filter((c) => c.status !== 'REMOVED')
+  if (!live.length) return 0
+  if (live.some((c) => c.owner_selected_at)) return STAGE_ORDER.indexOf('OWNER_SELECTED')
+  if (live.some((c) => c.last_sent_at)) return STAGE_ORDER.indexOf('WAITING')
+  return STAGE_ORDER.indexOf('PICKING')
+}
+
+// ---------- Thẻ trạng thái của ứng viên trong bảng Thêm ứng viên ----------
+
+const dayOf = (value) => String(value).slice(0, 10)
+
+// Mỗi người có tối đa ba thẻ cảnh báo (cam), không thẻ nào chặn chọn:
+//   docs: luôn có · availability: Bận (đang trên tàu, rời sau ngày xuống) · position: Không trùng vị trí (khác chức danh của cơ hội).
+// Chữ thường kèm theo: rank, onboard (đang ở đâu), issues (giấy thiếu), note (đang giữ cho cơ hội khác).
+export function candidateTags(person, opportunity, formatDate) {
+  const issues = fitIssues(person.fit, opportunity.requirements || [], formatDate)
+  const required = issues.filter((i) => i.required)
+  let docs = { tone: 'ok', label: 'Đủ hồ sơ' }
+  if (!person.fit?.required?.total && !person.fit?.preferred?.total) docs = { tone: 'none', label: 'Chưa có yêu cầu' }
+  else if (required.length) docs = { tone: 'warn', label: `Thiếu giấy tờ · ${required.length}` }
+
+  const joinDay = opportunity.planned_join_date ? dayOf(opportunity.planned_join_date) : null
+  let availability = null
+  let onboard = 'Ở bờ'
+  if (person.onboard_voyage_id) {
+    const until = person.onboard_until ? dayOf(person.onboard_until) : null
+    onboard = `Trên ${person.onboard_vessel_name}${until ? `, rời dự kiến ${formatDate(until)}` : ''}`
+    if (!until || !joinDay || until > joinDay) availability = { tone: 'warn', label: 'Bận' }
+  }
+  const position = person.current_rank_id && person.current_rank_id !== opportunity.rank_id ? { tone: 'warn', label: 'Không trùng vị trí' } : null
+  return { docs, availability, position, onboard, issues, required }
+}

@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Input, Modal, Skeleton } from 'antd'
-import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RollbackOutlined, StopOutlined, CloseCircleOutlined } from '@ant-design/icons'
+import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RollbackOutlined } from '@ant-design/icons'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { ReadLayout } from '../seafarers/ReadSections'
 import RequirementFit from '../../../components/ds/RequirementFit'
+import StageTrack from '../../../components/ds/StageTrack'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { useOpportunity, useOpportunityMutations } from '../../../hooks/useOpportunities'
@@ -22,7 +23,7 @@ import SubmissionPanel from './SubmissionPanel'
 import { opportunityApi } from '../../../api/opportunityApi'
 import { exportApi } from '../../../api/exportApi'
 import { saveBlob, downloadError } from '../exports/download'
-import { deadlineLabel, requirementName } from './opportunityView'
+import { STAGE_LABEL, STAGE_ORDER, deadlineLabel, requirementName, stageIndex } from './opportunityView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
 import '../seafarers/SeafarerForm.css'
@@ -105,7 +106,7 @@ export default function OpportunityDetailPage() {
   const queryClient = useQueryClient()
   const [fitFor, setFitFor] = useState(null)
   const [closing, setClosing] = useState(false)
-  const [panel, setPanel] = useState(null)
+  const [adding, setAdding] = useState(false)
   const [placing, setPlacing] = useState(false)
   const [tab, setTab] = useState('overview')
   const sendToOwner = useSendToOwner()
@@ -248,21 +249,72 @@ export default function OpportunityDetailPage() {
 
   const menuItems = [
     can('opportunity.create') && { key: 'duplicate', icon: <CopyOutlined />, label: 'Nhân bản cho vị trí khác' },
-    isOpen && can('opportunity.close') && { key: 'lost', icon: <CloseCircleOutlined />, label: 'Đóng cơ hội · Không thành' },
-    isOpen && can('opportunity.close') && { key: 'cancel', icon: <StopOutlined />, label: 'Huỷ cơ hội' },
-    ['LOST', 'CANCELLED'].includes(o.status) && can('opportunity.close') && { key: 'reopen', icon: <RollbackOutlined />, label: 'Mở lại cơ hội' },
     isOpen && !o.sends?.length && can('opportunity.close') && { type: 'divider' },
     isOpen && !o.sends?.length && can('opportunity.close') && { key: 'delete', icon: <DeleteOutlined />, label: 'Xoá cơ hội', danger: true },
   ].filter(Boolean)
   const onMenu = ({ key }) => ({
     duplicate,
-    lost: () => setClosing(true),
-    cancel: confirmCancel,
-    reopen: () => run(m.reopen.mutateAsync(o.id), `Đã mở lại cơ hội ${o.code}`, `Không mở lại được cơ hội ${o.code}`),
     delete: confirmDelete,
   })[key]?.()
 
+  // Trục giai đoạn: bấm một mốc là làm đúng việc đưa cơ hội tới mốc đó; giai đoạn vẫn tính từ dữ liệu thật.
+  const stage = stageIndex(o)
+  const held = live.find((c) => c.owner_selected_at)
+  const lastSend = o.sends?.[0]
+  const canClose = isOpen && can('opportunity.close')
+  const stageAction = {
+    PICKING: editable && stage === 0 ? { onClick: () => setAdding(true), hint: 'Thêm ứng viên cho cơ hội' } : {},
+    WAITING: (() => {
+      if (editable && held && stage > 2) return { onClick: () => onCandidateMenu('unselect', held), hint: `Bỏ nhãn chủ tàu đã chọn ${held.full_name}` }
+      if (isOpen && live.length && stage < 2 && can('opportunity.send')) return { onClick: () => sendToOwner(o, live), hint: 'Gửi hồ sơ ứng viên cho chủ tàu' }
+      return {}
+    })(),
+    OWNER_SELECTED: editable && live.length && stage < 4 && stage !== 3
+      ? { menu: live.map((c) => ({ key: c.seafarer_id, label: c.full_name, onClick: () => onCandidateMenu('select', c) })), hint: 'Chọn người chủ tàu đã chọn' }
+      : {},
+    WON: canClose && live.length ? { onClick: () => setPlacing(true), hint: 'Chốt người và ghi lên tàu' } : {},
+  }
+  const stageSteps = STAGE_ORDER.map((key) => ({
+    key,
+    label: STAGE_LABEL[key],
+    note: key === 'PICKING' && live.length ? `${live.length}` : null,
+    ...stageAction[key],
+  }))
+  // Nút chính: việc kế tiếp. Nằm ngay sau mốc hiện tại, dùng lại đúng hành động của mốc đó.
+  const NEXT_LABEL = { PICKING: 'Thêm ứng viên', WAITING: 'Gửi chủ tàu', OWNER_SELECTED: 'Chọn người chủ tàu đã chọn', WON: 'Chốt người' }
+  const nextKey = isOpen ? STAGE_ORDER[stage + 1] : null
+  const nextAction = nextKey && (stageAction[nextKey].onClick || stageAction[nextKey].menu) ? { label: NEXT_LABEL[nextKey], ...stageAction[nextKey] } : null
+  let stageEnd = null
+  if (canClose) {
+    stageEnd = (
+      <>
+        <Button onClick={() => setClosing(true)}>Không thành</Button>
+        <Button onClick={confirmCancel}>Huỷ cơ hội</Button>
+      </>
+    )
+  } else if (['LOST', 'CANCELLED'].includes(o.status)) {
+    stageEnd = (
+      <>
+        <StatusBadge group="opportunity" value={o.status} />
+        {can('opportunity.close') ? <Button icon={<RollbackOutlined />} onClick={() => run(m.reopen.mutateAsync(o.id), `Đã mở lại cơ hội ${o.code}`, `Không mở lại được cơ hội ${o.code}`)}>Mở lại</Button> : null}
+      </>
+    )
+  }
+
   const place = (date, port) => `${formatDate(date)}${port ? ` · ${port}` : ''}`
+  const stageInfo = [
+    ['Chủ tàu chọn', held && (can('seafarer.view') ? <Link to={`/seafarers/${held.seafarer_id}`}>{held.full_name}</Link> : held.full_name)],
+    ['Số ứng viên', live.length || null],
+    ['Gửi hồ sơ', lastSend ? formatDate(lastSend.sent_at) : null],
+    ['Hạn chốt', o.deadline ? `${formatDate(o.deadline)}${flag ? ` · ${flag.text}` : ''}` : null],
+    ['Xuống tàu dự kiến', o.planned_join_date ? place(o.planned_join_date, o.planned_join_port_name) : null],
+  ]
+  const stageTodo = [
+    { key: 'add', label: 'Thêm ứng viên', done: candidates.some((c) => c.status !== 'REMOVED') },
+    { key: 'send', label: 'Gửi hồ sơ cho chủ tàu', done: stage >= 2 },
+    { key: 'pick', label: 'Chủ tàu chọn người', done: stage >= 3 },
+    { key: 'place', label: 'Chốt người: ngày xuống, nơi xuống', done: o.status === 'WON' },
+  ]
   const names = (list) => list.map(requirementName).join(' · ') || null
   // Liệt kê bắt buộc trước, mục nên có ghi rõ "(nên có)".
   const withLevel = (list) => [...list.filter((r) => r.level === 'REQUIRED'), ...list.filter((r) => r.level !== 'REQUIRED')]
@@ -336,10 +388,11 @@ export default function OpportunityDetailPage() {
             </Dropdown>
           ) : null}
           {editable ? <Button icon={<EditOutlined />} onClick={() => navigate(`/opportunities/${o.id}/edit`)}>Sửa cơ hội</Button> : null}
-          {isOpen && live.length && can('opportunity.close') ? <Button type="primary" onClick={() => setPlacing(true)}>Chốt người</Button> : null}
           {o.voyage && can('voyage.view') ? <Button type="primary" onClick={() => navigate(`/voyages/${o.voyage.id}`)}>Mở chuyến {o.voyage.code}</Button> : null}
         </div>
       </div>
+
+      <StageTrack steps={stageSteps} current={stage} stopped={!['OPEN', 'WON'].includes(o.status)} next={nextAction} info={stageInfo} todo={stageTodo} end={stageEnd} />
 
       {o.status === 'LOST' && o.close_reason ? <Banner tone="neutral" title="Không thành" description={o.close_reason} /> : null}
 
@@ -351,8 +404,7 @@ export default function OpportunityDetailPage() {
             <h2 className="crew-panel__title">Ứng viên <span className="vd-count">{candidates.length}</span></h2>
             {editable ? (
               <span className="op-panel-actions">
-                <Button onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button>
-                <Button type="text" icon={<PlusOutlined />} onClick={() => setPanel('search')}>Thêm ứng viên</Button>
+                <Button icon={<PlusOutlined />} onClick={() => setAdding(true)}>Thêm ứng viên</Button>
               </span>
             ) : null}
           </div>
@@ -377,7 +429,7 @@ export default function OpportunityDetailPage() {
               onOpenSubmission={setSubmissionFor}
             />
           ) : (
-            <EmptyState title="Chưa có ứng viên" description="Bấm Đề xuất nhanh để xem người hợp với hồ sơ yêu cầu, hoặc Thêm ứng viên để tìm theo tên." action={editable ? <Button type="primary" onClick={() => setPanel('suggest')}>Đề xuất nhanh</Button> : undefined} />
+            <EmptyState title="Chưa có ứng viên" description="Bấm Thêm ứng viên để xem người hợp với hồ sơ yêu cầu, hoặc tìm theo tên." action={editable ? <Button type="primary" onClick={() => setAdding(true)}>Thêm ứng viên</Button> : undefined} />
           )}
         </section>
       ) : null}
@@ -404,7 +456,7 @@ export default function OpportunityDetailPage() {
         />
       ) : null}
       {fitFor ? <FitModal candidate={fitFor} requirements={o.requirements} onClose={() => setFitFor(null)} /> : null}
-      {panel ? <CandidatePanel opportunity={o} mode={panel} onClose={() => setPanel(null)} /> : null}
+      {adding ? <CandidatePanel opportunity={o} onClose={() => setAdding(false)} /> : null}
       {closing ? <CloseModal opportunity={o} onClose={() => setClosing(false)} /> : null}
       {placing ? <PlaceModal opportunity={o} onClose={() => setPlacing(false)} /> : null}
     </div>

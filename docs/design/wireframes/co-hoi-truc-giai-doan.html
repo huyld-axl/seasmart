@@ -1,0 +1,186 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Trục giai đoạn cơ hội: 3 kiểu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* Wireframe trục giai đoạn của màn chi tiết cơ hội. Ba kiểu để chọn, cùng dữ liệu CH26001 (Chủ tàu đã chọn).
+     Token chép từ frontend/src/theme/tokens.js. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-light: rgba(0,51,102,.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5; --warning: #bb4d00; --warning-bg: #fffbeb; --warning-border: #fee685;
+    --error-strong: #c10007; --error-bg: #fef2f2; --ring-focus: rgba(0,51,102,.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 24px 80px; background: var(--background); color: var(--foreground); font: 14px/1.5 Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 48px; }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  .lead { margin: 0; color: var(--muted); }
+  .variant > h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 16px; }
+  .variant > h2 b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; }
+  .variant > p { margin: 0 0 12px; color: var(--muted); }
+  .variant > ul { margin: 12px 0 0; padding-left: 18px; color: var(--neutral); font-size: 13px; }
+  .page { display: grid; gap: 12px; padding: 16px; border: 1px dashed var(--border-strong); border-radius: 12px; background: var(--background); }
+  .card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+
+  /* đầu trang rút gọn, chỉ để có ngữ cảnh */
+  .head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; }
+  .head__ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--primary-light); color: var(--primary); font-size: 22px; }
+  .head__t { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 600; }
+  .head__m { color: var(--muted); font-size: 13px; }
+  .head__a { display: flex; gap: 8px; margin-left: auto; }
+  .badge { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 500; background: var(--success-bg); color: var(--success); }
+  .btn { height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--foreground); font: inherit; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: var(--neutral-bg); }
+  .btn--primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .btn--primary:hover { background: var(--primary-hover); }
+  .btn--ghost { border-color: transparent; background: transparent; color: var(--neutral); }
+  .btn--danger { color: var(--error-strong); }
+  .muted { color: var(--muted); }
+  .tabs { display: flex; gap: 8px; }
+  .tab { padding: 6px 12px; border-radius: 8px; font-weight: 500; color: var(--muted); }
+  .tab--on { background: var(--surface); border: 1px solid var(--border); color: var(--foreground); }
+
+  /* ---- Kiểu 1: đường chevron ---- */
+  .path { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .chev { display: flex; flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; }
+  .chev li { position: relative; flex: 1 1 0; min-width: 0; height: 40px; margin-left: -10px; }
+  .chev li:first-child { margin-left: 0; }
+  .chev button { width: 100%; height: 100%; padding: 0 20px 0 26px; border: 0; background: var(--neutral-bg); color: var(--muted); font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%); }
+  .chev li:first-child button { padding-left: 16px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%); border-radius: 8px 0 0 8px; }
+  .chev li:last-child button { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 14px 50%); border-radius: 0 8px 8px 0; }
+  .chev .done button { background: var(--success-bg); color: var(--success); }
+  .chev .cur button { background: var(--primary); color: #fff; font-weight: 600; }
+  .chev .act button { cursor: pointer; }
+  .chev .act button:hover { filter: brightness(.96); }
+  .chev .act:not(.done):not(.cur) button { background: var(--primary-light); color: var(--primary); }
+  .guide { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1px solid var(--border); }
+  .guide > div { padding: 14px 18px; }
+  .guide > div + div { border-left: 1px solid var(--border); background: var(--neutral-bg); border-radius: 0 0 12px 0; }
+  .guide h3 { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+  .kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; margin: 0; }
+  .kv dt { color: var(--muted); } .kv dd { margin: 0; font-weight: 500; }
+  .check { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+  .check li { display: flex; gap: 8px; align-items: center; }
+  .check i { display: inline-grid; place-items: center; width: 16px; height: 16px; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--surface); font-size: 11px; font-style: normal; color: #fff; }
+  .check .ok i { border-color: var(--success); background: var(--success); }
+  .check .ok { color: var(--muted); }
+
+  /* ---- Kiểu 2: thẻ giai đoạn ---- */
+  .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 14px; }
+  .sc { position: relative; display: grid; gap: 2px; align-content: start; min-height: 96px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); text-align: left; font: inherit; color: inherit; cursor: default; }
+  .sc__n { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 500; }
+  .sc__n i { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: var(--neutral-bg); font-size: 11px; font-style: normal; }
+  .sc b { font-size: 14px; } .sc small { color: var(--muted); font-size: 12px; }
+  .sc__go { margin-top: auto; padding-top: 6px; color: var(--primary); font-size: 12px; font-weight: 600; }
+  .sc.done { background: var(--success-bg); border-color: transparent; }
+  .sc.done .sc__n i { background: var(--success); color: #fff; }
+  .sc.done b { color: var(--success); }
+  .sc.cur { border: 2px solid var(--primary); box-shadow: 0 0 0 3px var(--ring-focus); }
+  .sc.cur .sc__n i { background: var(--primary); color: #fff; }
+  .sc.act { cursor: pointer; } .sc.act:hover { border-color: var(--primary); }
+  .strip { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-top: 1px solid var(--border); background: var(--neutral-bg); border-radius: 0 0 12px 12px; font-size: 13px; }
+  .strip .sp { margin-left: auto; display: flex; gap: 8px; }
+
+  /* ---- Kiểu 3: thanh gọn trong đầu trang ---- */
+  .meta { display: flex; flex-wrap: wrap; gap: 4px 28px; padding: 0 18px 12px 76px; font-size: 13px; }
+  .meta span { color: var(--muted); } .meta b { margin-left: 4px; color: var(--foreground); font-weight: 500; }
+  .dots { display: flex; align-items: flex-start; padding: 12px 18px 14px; border-top: 1px solid var(--border); }
+  .dots .d { position: relative; flex: 1; display: grid; justify-items: center; gap: 2px; padding: 0 4px; border: 0; background: none; font: inherit; color: var(--muted); text-align: center; cursor: default; }
+  .dots .d::before { content: ""; position: absolute; top: 9px; right: 50%; left: -50%; height: 3px; border-radius: 2px; background: var(--border); }
+  .dots .d:first-child::before { display: none; }
+  .dots .d.done::before, .dots .d.cur::before { background: var(--success); }
+  .dots .d i { position: relative; z-index: 1; display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--border-strong); border-radius: 50%; background: var(--surface); font-size: 11px; font-style: normal; color: #fff; }
+  .dots .d.done i { border-color: var(--success); background: var(--success); }
+  .dots .d.cur i { border-color: var(--primary); background: var(--primary); box-shadow: 0 0 0 4px var(--ring-focus); }
+  .dots .d span { font-size: 13px; font-weight: 500; } .dots .d.done span { color: var(--foreground); } .dots .d.cur span { color: var(--primary); font-weight: 700; }
+  .dots .d small { font-size: 12px; }
+  .dots .d.act { cursor: pointer; } .dots .d.act:hover span { text-decoration: underline; }
+  .dots .nx { align-self: center; margin-left: 12px; }
+</style></head><body>
+<div class="wrap">
+  <header>
+    <h1>Trục giai đoạn của cơ hội: 3 kiểu</h1>
+    <p class="lead">Ý tưởng lấy từ thanh "path" của Salesforce: một đường liền, nút "sang bước tiếp theo" nổi bật, đổi giai đoạn ngay tại chỗ. Cả ba dùng dữ liệu cơ hội CH26001 (đang ở Chủ tàu đã chọn). Bấm mốc vẫn là làm việc thật (gửi chủ tàu, chọn người, chốt…), giai đoạn vẫn tính từ dữ liệu.</p>
+  </header>
+
+  <!-- ============ KIỂU 1 ============ -->
+  <section class="variant">
+    <h2><b>1</b> Đường chevron + nút bước tiếp + khung "việc cần làm"</h2>
+    <p>Gần ảnh mẫu nhất. Một đường mũi tên liền, nút chính bên phải luôn là việc kế tiếp, bên dưới là khung hướng dẫn của giai đoạn hiện tại.</p>
+    <div class="page">
+      <div class="card head"><div class="head__ico">◎</div><div><div class="head__t">Thuyền trưởng <span class="badge">Chủ tàu đã chọn</span></div><div class="head__m">MV Mekong Star · Halong Maritime JSC · admin@seasmart.local</div></div><div class="head__a"><button class="btn">⋮</button><button class="btn">Sửa cơ hội</button></div></div>
+      <div class="card">
+        <div class="path">
+          <ol class="chev">
+            <li class="done act"><button title="Xem">✓ Mới</button></li>
+            <li class="done act"><button>✓ Đang chọn · 1</button></li>
+            <li class="done act"><button title="Bỏ nhãn chủ tàu đã chọn">✓ Chờ kết quả</button></li>
+            <li class="cur"><button>Chủ tàu đã chọn</button></li>
+            <li class="act"><button>Đã chốt</button></li>
+          </ol>
+          <button class="btn btn--primary">✓ Chốt người</button>
+        </div>
+        <div class="guide">
+          <div>
+            <h3>Thông tin giai đoạn</h3>
+            <dl class="kv"><dt>Chủ tàu chọn</dt><dd>Nguyễn Văn Hải</dd><dt>Gửi hồ sơ</dt><dd>12/10/2026</dd><dt>Hạn chốt</dt><dd style="color:var(--error-strong)">15/10/2026 · quá 14 ngày</dd><dt>Xuống tàu dự kiến</dt><dd>15/10/2026 · Cảng Hải Phòng</dd></dl>
+          </div>
+          <div>
+            <h3>Việc cần làm để chốt</h3>
+            <ul class="check"><li class="ok"><i>✓</i>Thêm ứng viên</li><li class="ok"><i>✓</i>Gửi hồ sơ cho chủ tàu</li><li class="ok"><i>✓</i>Chủ tàu chọn người</li><li><i></i>Chốt người: ngày xuống, nơi xuống</li></ul>
+            <div style="margin-top:12px;display:flex;gap:8px"><button class="btn btn--ghost btn--danger">Không thành</button><button class="btn btn--ghost">Huỷ cơ hội</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul><li>Mốc đã qua bấm được để lùi lại (ví dụ bỏ nhãn chủ tàu đã chọn); mốc sau bấm được để nhảy tới nếu đủ điều kiện.</li><li>Tốn chỗ nhất, nhưng người mới nhìn là biết phải làm gì tiếp.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 2 ============ -->
+  <section class="variant">
+    <h2><b>2</b> Thẻ giai đoạn: mỗi mốc một thẻ có số liệu</h2>
+    <p>Mỗi giai đoạn là một thẻ nói luôn kết quả ở giai đoạn đó (bao nhiêu người, gửi ngày nào, ai được chọn), thẻ bấm được ghi rõ sẽ làm gì.</p>
+    <div class="page">
+      <div class="card head"><div class="head__ico">◎</div><div><div class="head__t">Thuyền trưởng <span class="badge">Chủ tàu đã chọn</span></div><div class="head__m">MV Mekong Star · Halong Maritime JSC · admin@seasmart.local</div></div><div class="head__a"><button class="btn">⋮</button><button class="btn">Sửa cơ hội</button></div></div>
+      <div class="card">
+        <div class="cards">
+          <div class="sc done"><span class="sc__n"><i>✓</i>Bước 1</span><b>Mới</b><small>Tạo 05/10</small></div>
+          <button class="sc done act"><span class="sc__n"><i>✓</i>Bước 2</span><b>Đang chọn</b><small>1 ứng viên</small><span class="sc__go">+ Thêm ứng viên</span></button>
+          <button class="sc done act"><span class="sc__n"><i>✓</i>Bước 3</span><b>Chờ kết quả</b><small>Gửi 12/10</small><span class="sc__go">Bỏ nhãn chọn ←</span></button>
+          <div class="sc cur"><span class="sc__n"><i>4</i>Hiện tại</span><b>Chủ tàu đã chọn</b><small>Nguyễn Văn Hải</small></div>
+          <button class="sc act"><span class="sc__n"><i>5</i>Bước 5</span><b>Đã chốt</b><small>Ghi lên tàu</small><span class="sc__go">Chốt người →</span></button>
+        </div>
+        <div class="strip"><span class="muted">Kết thúc sớm:</span><button class="btn btn--ghost btn--danger">Không thành</button><button class="btn btn--ghost">Huỷ cơ hội</button><span class="sp"><button class="btn btn--primary">Chốt Nguyễn Văn Hải →</button></span></div>
+      </div>
+    </div>
+    <ul><li>Nhiều thông tin nhất, ít cần mở tab khác.</li><li>Trên điện thoại xếp thành cột dọc.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 3 ============ -->
+  <section class="variant">
+    <h2><b>3</b> Thanh gọn gắn liền đầu trang</h2>
+    <p>Trục là một dải mảnh nằm dưới tiêu đề, chung một khung với đầu trang, không thêm khối riêng. Nút bước tiếp nằm cuối dải.</p>
+    <div class="page">
+      <div class="card">
+        <div class="head"><div class="head__ico">◎</div><div><div class="head__t">Thuyền trưởng <span class="badge">Chủ tàu đã chọn</span></div></div><div class="head__a"><button class="btn">⋮</button><button class="btn">Sửa cơ hội</button></div></div>
+        <div class="meta"><div><span>Tàu</span><b>MV Mekong Star</b></div><div><span>Chủ tàu</span><b>Halong Maritime JSC</b></div><div><span>Phụ trách</span><b>admin@seasmart.local</b></div><div><span>Hạn chốt</span><b style="color:var(--error-strong)">quá 14 ngày</b></div></div>
+        <div class="dots">
+          <button class="d done act"><i>✓</i><span>Mới</span></button>
+          <button class="d done act"><i>✓</i><span>Đang chọn</span><small>1 ứng viên</small></button>
+          <button class="d done act"><i>✓</i><span>Chờ kết quả</span><small>Gửi 12/10</small></button>
+          <div class="d cur"><i></i><span>Chủ tàu đã chọn</span><small>Nguyễn Văn Hải</small></div>
+          <button class="d act"><i></i><span>Đã chốt</span></button>
+          <button class="btn btn--primary nx">Chốt người</button>
+          <button class="btn btn--ghost nx" style="margin-left:0" title="Không thành, Huỷ cơ hội">Kết thúc ▾</button>
+        </div>
+      </div>
+    </div>
+    <ul><li>Gọn nhất, đầu trang không dài thêm.</li><li>"Kết thúc ▾" gộp Không thành / Huỷ vào một nút (đúng thứ bạn chê là nhét vào 3 chấm, nhưng chỉ cho hai việc hiếm).</li></ul>
+  </section>
+</div>
+</body></html>

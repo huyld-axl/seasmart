@@ -22,6 +22,7 @@ import ListFooter from '../components/ds/ListFooter'
 import { actionColumn } from '../components/ds/actionColumn'
 import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
+import ConfirmGate from '../components/ds/ConfirmGate'
 import CooldownButton from '../components/ds/CooldownButton'
 import SourceChip from '../components/ds/SourceChip'
 import SparkIcon from '../components/ds/SparkIcon'
@@ -42,6 +43,7 @@ import DescriptionList from '../components/ds/DescriptionList'
 import SlidePanel from '../components/ds/SlidePanel'
 import RequirementFit from '../components/ds/RequirementFit'
 import CrewTimeline, { CrewTimelineLegend } from '../components/ds/CrewTimeline'
+import StageTrack from '../components/ds/StageTrack'
 import useToast from '../components/ds/useToast'
 import ToastContent from '../components/ds/ToastContent'
 import { EmptyState, FilterChips, ListRow, ProgressBar, SaveStatus, StatusTabs } from '../components/ds/Controls'
@@ -739,6 +741,32 @@ export default function DesignSystemPage() {
           <Demo label="CrewTimeline khi không có chuyến" wide>
             <CrewTimeline from="2026-10-01" to="2026-10-31" today="2026-10-26" rows={[]} />
           </Demo>
+          <Demo label="Đường giai đoạn (StageTrack): chevron, nút bước tiếp, khung thông tin và việc cần làm. Mốc bấm được thì làm việc luôn" wide>
+            <StageTrack
+              current={3}
+              steps={[
+                { key: 'a', label: 'Mới' },
+                { key: 'b', label: 'Đang chọn ứng viên', note: '1', onClick: () => {}, hint: 'Thêm ứng viên' },
+                { key: 'c', label: 'Chờ kết quả', onClick: () => {}, hint: 'Bỏ nhãn chủ tàu đã chọn' },
+                { key: 'd', label: 'Chủ tàu đã chọn' },
+                { key: 'e', label: 'Đã chốt', onClick: () => {} },
+              ]}
+              next={{ label: 'Chốt người', onClick: () => {} }}
+              info={[['Chủ tàu chọn', 'Nguyễn Văn Hải'], ['Gửi hồ sơ', '12/10/2026'], ['Hạn chốt', '15/10/2026 · quá 14 ngày']]}
+              todo={[{ key: 'a', label: 'Thêm ứng viên', done: true }, { key: 'b', label: 'Gửi hồ sơ cho chủ tàu', done: true }, { key: 'c', label: 'Chủ tàu chọn người', done: true }, { key: 'd', label: 'Chốt người: ngày xuống, nơi xuống', done: false }]}
+              end={<><Button danger>Không thành</Button><Button>Huỷ cơ hội</Button></>}
+            />
+          </Demo>
+          <Demo label="StageTrack khi cơ hội đã đóng: cả đường xám, giữ mốc đã tới" wide>
+            <StageTrack
+              stopped
+              current={1}
+              steps={[{ key: 'a', label: 'Mới' }, { key: 'b', label: 'Đang chọn ứng viên' }, { key: 'c', label: 'Chờ kết quả' }, { key: 'd', label: 'Chủ tàu đã chọn' }, { key: 'e', label: 'Đã chốt' }]}
+              info={[['Số ứng viên', 2]]}
+              todo={[{ key: 'a', label: 'Thêm ứng viên', done: true }, { key: 'b', label: 'Gửi hồ sơ cho chủ tàu', done: false }]}
+              end={<><StatusBadge group="opportunity" value="LOST" /><Button>Mở lại</Button></>}
+            />
+          </Demo>
         </div>
       </Section>
 
@@ -752,6 +780,7 @@ export default function DesignSystemPage() {
           <Demo label="Nút chờ · đang chờ 1:45"><CooldownButton icon={<SparkIcon />} seconds={105}>Lấy thông minh</CooldownButton></Demo>
           <Demo label="Nút chờ · đang xử lý"><CooldownButton icon={<SparkIcon />} loading>Lấy thông minh</CooldownButton></Demo>
           <Demo label="Nút chờ · khoá (IMO sai)"><CooldownButton icon={<SparkIcon />} disabled>Lấy thông minh</CooldownButton></Demo>
+          <Demo label="Cổng xác nhận (ConfirmGate): tích ô và chờ 5 giây mới mở nút đồng ý, cho cảnh báo quan trọng"><ConfirmGate label="Tôi hiểu và sẽ tự đính kèm hồ sơ còn thiếu" /></Demo>
           <Demo label="Nút chờ · chính, trong hộp xác nhận"><CooldownButton type="primary" icon={<SparkIcon />} seconds={105}>Lấy thông tin thông minh</CooldownButton></Demo>
         </div>
         <div className="dsp-states">
@@ -791,6 +820,7 @@ export default function DesignSystemPage() {
             <Demo label="Tắt"><ToggleRow label="Nồi hơi" value={false} onChange={() => {}} /></Demo>
             <Demo label="Bật"><ToggleRow label="Lạnh (Refrigeration)" value onChange={() => {}} /></Demo>
             <Demo label="Đã sửa, chưa lưu"><ToggleRow label="Nồi hơi" value changed onChange={() => {}} /></Demo>
+            <Demo label="Gọn (compact): không chữ Có / Không, dùng trong cột lọc hẹp"><ToggleRow compact label="Đủ giấy tờ" value onChange={() => {}} /></Demo>
             <Demo label="Quét mã QR cuối ô nhập (QrScanButton)"><Input style={{ maxWidth: 280 }} placeholder="WhatsApp, LINE, WeChat" suffix={<QrScanButton onText={() => {}} />} /></Demo>
             <Demo label="Liên hệ nhanh (QuickContact): chỉ hiện kênh người đó có"><QuickContact phone="+65 9123 4567" email="an@congty.com" whatsapp="+65 9123 4567" line="an.tan" wechat="an_tan" /></Demo>
             <Demo label="Liên hệ chính (PrimaryMark): chọn một trong nhiều dòng"><Space><PrimaryMark value onChange={() => {}} /><PrimaryMark value={false} onChange={() => {}} /></Space></Demo>

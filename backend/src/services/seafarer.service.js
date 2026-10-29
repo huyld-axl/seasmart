@@ -3,6 +3,7 @@ const pool = require('../config/db')
 const { withTransaction } = require('../utils/transaction')
 const XLSX = require('xlsx')
 const fs = require('fs')
+const { trashFiles } = require('../utils/file_trash')
 const path = require('path')
 const sharp = require('sharp')
 const crypto = require('crypto')
@@ -369,10 +370,7 @@ const seafarerService = {
       fs.rmSync(thumbPathOf(storagePath), { force: true })
       throw err
     }
-    if (row.photo_path) {
-      fs.rmSync(row.photo_path, { force: true })
-      fs.rmSync(thumbPathOf(row.photo_path), { force: true })
-    }
+    if (row.photo_path) await trashFiles([row.photo_path, thumbPathOf(row.photo_path)], 'Thay ảnh chân dung')
     return { has_photo: true }
   },
 
@@ -422,10 +420,7 @@ const seafarerService = {
     const [[row]] = await pool.query('SELECT photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     await pool.query('UPDATE seafarer SET photo_path = NULL, photo_mime = NULL, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [updated_by, id])
-    if (row.photo_path) {
-      fs.rmSync(row.photo_path, { force: true })
-      fs.rmSync(thumbPathOf(row.photo_path), { force: true })
-    }
+    if (row.photo_path) await trashFiles([row.photo_path, thumbPathOf(row.photo_path)], 'Gỡ ảnh chân dung')
     return { has_photo: false }
   },
 

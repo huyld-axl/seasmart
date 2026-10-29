@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const pool = require('../config/db')
 const config = require('../config')
+const { trashFiles, certificateFilePath } = require('../utils/file_trash')
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const ALLOWED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png']
@@ -111,17 +112,19 @@ const certificateService = {
     return this.getById(id, seafarerId)
   },
 
+  // Xoá mềm; tệp đính kèm vào thùng rác, 180 ngày sau mới xoá khỏi ổ đĩa (quy tắc xoá tệp).
   async softDelete(id, seafarerId, updated_by) {
-    await this.getById(id, seafarerId)
+    const row = await this.getById(id, seafarerId)
     await pool.query(
       'UPDATE seafarer_certificate SET deleted_at = NOW(), updated_by = ? WHERE id = ?',
       [updated_by, id]
     )
+    await trashFiles(certificateFilePath(seafarerId, row.document_url), 'Xoá giấy tờ')
     return { success: true }
   },
 
   async uploadFile(id, seafarerId, file, updated_by) {
-    await this.getById(id, seafarerId)
+    const current = await this.getById(id, seafarerId)
 
     const ext = path.extname(file.filename).toLowerCase()
     if (!ALLOWED_EXTS.includes(ext)) {
@@ -153,6 +156,7 @@ const certificateService = {
       'UPDATE seafarer_certificate SET document_url = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
       [document_url, updated_by, id]
     )
+    await trashFiles(certificateFilePath(seafarerId, current.document_url), 'Thay tệp giấy tờ')
 
     return this.getById(id, seafarerId)
   },

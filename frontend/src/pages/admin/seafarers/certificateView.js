@@ -3,15 +3,19 @@
 
 const toDisplayDate = (iso) => (iso ? String(iso).slice(0, 10).split('-').reverse().join('/') : '')
 
-const CATEGORY = { STCW: 'STCW', VN: 'Việt Nam', MEDICAL: 'Y tế', DOCUMENT: 'Giấy tờ', PANAMA: 'Panama', OTHER: 'Khác' }
+// Nhóm theo loại giấy; nước cấp (Việt Nam, Panama…) là thuộc tính riêng của loại giấy (certificate_country_name).
+// COMPETENCY = bằng chuyên môn (COC); STCW = chứng chỉ huấn luyện nghiệp vụ (COP). Khoá giữ nguyên, chỉ đổi nhãn.
+export const CATEGORY = { DOCUMENT: 'Tuỳ thân', COMPETENCY: 'Bằng (COC)', STCW: 'Chứng chỉ (COP)', MEDICAL: 'Y tế', OTHER: 'Khác' }
 
-// Chứng chỉ đã có bản mới thay (cùng loại, bản kia không thời hạn hoặc hết hạn muộn hơn): không còn cảnh báo, không cần cập nhật.
+// Giấy đã có bản mới thay (cùng loại): không còn cảnh báo, hiện là "Bản cũ" ở cuối bảng.
+// Bản mới = hết hạn muộn hơn (hoặc không thời hạn), hoặc nạp sau (id lớn hơn) mà hạn không sớm hơn. Giấy không ghi đè: mỗi lần nạp là một dòng.
 export function supersededIds(rows) {
   const out = new Set()
+  const end = (r) => (r.no_expiry || !r.expiry_date ? '9999-12-31' : String(r.expiry_date).slice(0, 10))
   rows.forEach((row) => {
-    if (row.no_expiry || !row.expiry_date || !row.certificate_type_id) return
+    if (!row.certificate_type_id) return
     const newer = rows.some((other) => other.id !== row.id && other.certificate_type_id === row.certificate_type_id
-      && (other.no_expiry || !other.expiry_date || String(other.expiry_date).slice(0, 10) > String(row.expiry_date).slice(0, 10)))
+      && (end(other) > end(row) || (other.id > row.id && end(other) >= end(row))))
     if (newer) out.add(row.id)
   })
   return out
@@ -37,6 +41,8 @@ export function toTableCerts(rows, { today = new Date(), dismissed } = {}) {
     expiresOn: row.no_expiry ? '' : toDisplayDate(row.expiry_date),
     status: row.expiry_status,
     category: CATEGORY[row.certificate_category] || row.certificate_category || '',
+    categoryKey: CATEGORY[row.certificate_category] ? row.certificate_category : 'OTHER',
+    country: row.certificate_country_name || '',
     noExpiry: Boolean(row.no_expiry || !row.expiry_date),
     daysLeft: daysLeft(row, today),
     alert: alertOf(row, { superseded, dismissed }),

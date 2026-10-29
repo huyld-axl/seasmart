@@ -20,17 +20,19 @@ const CONTENT_TYPE = {
 // ---------- Luật thuần (có test) ----------
 
 // Giữ đúng thứ tự mẫu, bỏ trùng; hai đơn BHXH không đi cùng nhau.
-function normalizeDocs(docs) {
+// allowEmpty: hồ sơ nộp của cơ hội có thể chỉ gồm giấy tờ, không biểu mẫu nào.
+function normalizeDocs(docs, { allowEmpty = false } = {}) {
   const keys = [...new Set(docs || [])]
   const unknown = keys.filter((key) => !TEMPLATE_KEYS.includes(key))
   if (unknown.length) throw { statusCode: 400, message: `Mẫu giấy không hợp lệ: ${unknown.join(', ')}` }
-  if (!keys.length) throw { statusCode: 400, message: 'Chọn ít nhất một giấy' }
+  if (!keys.length && !allowEmpty) throw { statusCode: 400, message: 'Chọn ít nhất một giấy' }
   if (keys.includes('bhxh') && keys.includes('kbhxh')) throw { statusCode: 400, message: 'Chỉ chọn một trong hai đơn BHXH' }
   return TEMPLATE_KEYS.filter((key) => keys.includes(key))
 }
 
 function packTitle(docs) {
   const stages = [...new Set(docs.map((key) => templateOf(key).stage))]
+  if (!docs.length) return 'Hồ sơ nộp'
   return stages.length === 1 ? STAGE_TITLE[stages[0]] : 'Bộ giấy'
 }
 
@@ -122,7 +124,7 @@ async function loadPack(pool, id, { forUpdate = false } = {}) {
      JOIN seafarer s ON s.id = p.seafarer_id
      LEFT JOIN ship_owner o ON o.id = p.ship_owner_id
      JOIN "user" u ON u.id = p.created_by
-     WHERE p.id = ? AND p.deleted_at IS NULL${forUpdate ? ' FOR UPDATE' : ''}`,
+     WHERE p.id = ? AND p.deleted_at IS NULL${forUpdate ? ' FOR UPDATE OF p' : ''}`,
     [id]
   )
   if (!row) throw { statusCode: 404, message: 'Không tìm thấy bộ giấy' }
@@ -258,7 +260,7 @@ const exportPackService = {
   },
 
   async create(pool, { seafarer_id: seafarerId, ship_owner_id: shipOwnerId = null, opportunity_id: opportunityId = null, docs, inputs, edits }, user) {
-    const keys = normalizeDocs(docs)
+    const keys = normalizeDocs(docs, { allowEmpty: Boolean(opportunityId) })
     if (opportunityId) {
       const [[candidate]] = await pool.query(
         `SELECT c.id FROM opportunity_candidate c JOIN opportunity o ON o.id = c.opportunity_id
@@ -286,7 +288,7 @@ const exportPackService = {
       if (opportunityId) {
         await conn.query('UPDATE opportunity_candidate SET export_pack_id = ? WHERE opportunity_id = ? AND seafarer_id = ?', [result.insertId, opportunityId, seafarerId])
       }
-      await conn.query('INSERT INTO export_pack_doc (pack_id, template_key, sort_order) VALUES ?', [keys.map((key, i) => [result.insertId, key, i])])
+      if (keys.length) await conn.query('INSERT INTO export_pack_doc (pack_id, template_key, sort_order) VALUES ?', [keys.map((key, i) => [result.insertId, key, i])])
       return result.insertId
     })
     return this.get(pool, id)

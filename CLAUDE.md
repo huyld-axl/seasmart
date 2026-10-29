@@ -146,6 +146,13 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 - **No raw SQL interpolation** — always `pool.query('... WHERE id = ?', [id])`
 - File uploads: validate MIME type and size before processing
 
+### 6.1 Xoá dữ liệu và tệp
+
+- **Bản ghi:** xoá mềm (`deleted_at = NOW()`), không `DELETE`.
+- **Tệp trên ổ đĩa** (ảnh, PDF, tệp tải lên, logo…): không xoá ngay. Tệp bị xoá **hoặc bị thay** thì đưa vào thùng rác bằng `trashFiles()` (`backend/src/utils/file_trash.js`); job hằng ngày xoá khỏi ổ đĩa tệp đã nằm trong thùng rác **quá 180 ngày**. Tệp tải lên (`document_upload`) đã xoá mềm quá 180 ngày cũng bị job xoá khỏi ổ đĩa cùng ảnh trang.
+- Chỉ được `fs.rmSync` ngay với tệp vừa ghi trong cùng request mà request đó lỗi (dọn rác của chính nó).
+- Giấy tờ / chứng chỉ không ghi đè: bản mới là dòng mới, bản cũ giữ lại và hiện là bản cũ.
+
 ## 7. Review Checklist
 
 Before merging any code, verify:
@@ -159,6 +166,7 @@ Before merging any code, verify:
 - [ ] Vietnamese UI text consistent with existing patterns
 - [ ] File naming follows convention (see [naming-conventions.md](docs/naming-conventions.md))
 - [ ] New DB queries use `deleted_at IS NULL` for soft-deleted tables
+- [ ] Xoá / thay tệp qua `trashFiles()`, không `fs.rmSync` ngay (mục 6.1)
 
 ## 8. Git Workflow
 

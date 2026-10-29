@@ -15,7 +15,8 @@ import VesselMatchChip from '../components/ds/VesselMatchChip'
 import DocTypeBar from '../components/ds/DocTypeBar'
 import ReviewPager from '../components/ds/ReviewPager'
 import SeaServiceTimeline from '../components/ds/SeaServiceTimeline'
-import CertificateTable from '../components/ds/CertificateTable'
+import CertificateTable, { CategoryTag } from '../components/ds/CertificateTable'
+import DocThumb from '../components/ds/DocThumb'
 import RowActions from '../components/ds/RowActions'
 import ListFooter from '../components/ds/ListFooter'
 import { actionColumn } from '../components/ds/actionColumn'
@@ -345,6 +346,11 @@ function OverlayDemos() {
     </div>
   )
 }
+
+// Ảnh giả cho minh hoạ DocThumb: một trang giấy vẽ bằng SVG, và một PDF rỗng.
+const DEMO_PAGE = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 40"><rect width="30" height="40" fill="#fff"/><rect x="3" y="3" width="24" height="3" fill="#d3d5db"/><rect x="3" y="9" width="8" height="10" fill="#e5e6ea"/><rect x="13" y="10" width="14" height="2" fill="#d3d5db"/><rect x="13" y="14" width="11" height="2" fill="#d3d5db"/><rect x="3" y="24" width="24" height="2" fill="#e5e6ea"/><rect x="3" y="29" width="20" height="2" fill="#e5e6ea"/></svg>'
+const demoImage = () => Promise.resolve(new Blob([DEMO_PAGE], { type: 'image/svg+xml' }))
+const demoPdf = () => Promise.resolve(new Blob(['%PDF-1.4'], { type: 'application/pdf' }))
 
 export default function DesignSystemPage() {
   const [template, setTemplate] = useState('cv')
@@ -690,6 +696,24 @@ export default function DesignSystemPage() {
           </Demo>
           <Demo label="Bảng chứng chỉ: còn hạn, hết hạn, không thời hạn (nhập tay)" wide>
             <CertificateTable certs={CERTS} />
+          </Demo>
+          <Demo label="Màu nhóm giấy tờ (CategoryTag, kèm nước cấp nếu có; FilterChips nhận chip.dot = ds-cat--{nhóm})">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {[['DOCUMENT', 'Tuỳ thân'], ['COMPETENCY', 'Bằng (COC)', 'Panama'], ['STCW', 'Chứng chỉ (COP)', 'Việt Nam'], ['MEDICAL', 'Y tế'], ['OTHER', 'Khác']].map(([categoryKey, category, country]) => <CategoryTag key={categoryKey} cert={{ categoryKey, category, country }} />)}
+            </div>
+          </Demo>
+          <Demo label="Ảnh thu nhỏ giấy tờ (DocThumb): có ảnh, PDF, chưa có ảnh bấm để nạp, chưa có ảnh chỉ xem; cỡ sm và md">
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>
+              <DocThumb name="Hộ chiếu" cacheKey="ds-demo-img" load={demoImage} />
+              <DocThumb name="Chứng chỉ PDF" cacheKey="ds-demo-pdf" load={demoPdf} />
+              <DocThumb name="Sổ thuyền viên" onUpload={() => {}} />
+              <DocThumb name="CCCD" />
+              <div style={{ width: 160 }}><DocThumb size="md" name="Hộ chiếu" cacheKey="ds-demo-img" load={demoImage} /></div>
+              <div style={{ width: 160 }}><DocThumb size="md" name="Sổ thuyền viên" onUpload={() => {}} /></div>
+            </div>
+          </Demo>
+          <Demo label="Bảng giấy tờ có cột ảnh (tab Giấy tờ): truyền thumb" wide>
+            <CertificateTable certs={CERTS} thumb={(cert) => <DocThumb name={cert.name} cacheKey="ds-demo-img" load={cert.hasFile ? demoImage : undefined} onUpload={() => {}} />} />
           </Demo>
         </div>
       </Section>

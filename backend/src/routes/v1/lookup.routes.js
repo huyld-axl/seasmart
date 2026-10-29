@@ -42,7 +42,7 @@ async function lookupRoutes(fastify) {
   fastify.get('/certificate-types', async () => {
     return getCached('certificate_types', async () => {
       const [rows] = await pool.query(
-        'SELECT id, code, name_vi, name_en, category FROM certificate_type ORDER BY name_vi'
+        'SELECT id, code, name_vi, name_en, category, issuing_country_id FROM certificate_type ORDER BY name_vi'
       )
       return rows
     })

@@ -568,6 +568,8 @@
 .ds-ccards { display: none; margin: 0; padding: 0; list-style: none; }
 .ds-ccards li { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
 .ds-ccards li:first-child { border-top: 0; }
+.ds-ctable__name { display: inline-flex; align-items: center; gap: 10px; min-width: 220px; }
+.ds-ctable__table td:first-child { min-width: 200px; }
 .ds-ccards__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 @media (max-width: 639px) {
   .ds-ctable__table { display: none; }
@@ -720,3 +722,30 @@
 .ds-source-chip--created { background: var(--success-bg); color: var(--success); }
 .ds-cooldown { font-variant-numeric: tabular-nums; }
 
+
+/* DocThumb: ảnh thu nhỏ giấy tờ. Bấm để xem lớn; khung nét đứt khi chưa có ảnh. */
+.ds-thumb { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; flex: none; overflow: hidden; padding: 0; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--neutral-bg); color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; }
+.ds-thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+button.ds-thumb:hover { border-color: var(--border-strong); }
+.ds-thumb:focus-visible { box-shadow: 0 0 0 2px var(--ring-focus); outline: none; }
+.ds-thumb--sm { width: 40px; height: 40px; }
+.ds-thumb--md { width: 100%; aspect-ratio: 4 / 3; font-size: 13px; }
+.ds-thumb--md img { object-fit: contain; object-position: center; }
+.ds-thumb--md .anticon { font-size: 22px; }
+.ds-thumb--empty { border-style: dashed; border-color: var(--border-strong); background: transparent; }
+span.ds-thumb--empty { cursor: default; }
+.ds-thumb__pdf { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; color: var(--error-text); font-weight: 600; }
+.ds-thumb__wait { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--border), transparent); background-size: 200% 100%; animation: ds-thumb-wait 1.2s linear infinite; }
+@keyframes ds-thumb-wait { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Màu nhóm giấy tờ (cột Loại, chấm trên chip lọc). Mỗi nhóm một màu nhạt, chữ đậm cùng tông. */
+.ds-cat { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; background: var(--cat-bg); color: var(--cat-fg); font-size: 12px; font-weight: 500; white-space: nowrap; }
+.ds-cat--document { --cat-bg: #e8f0fb; --cat-fg: #1d4f91; --cat-dot: #3b78c9; }
+.ds-cat--stcw { --cat-bg: #e3f4ef; --cat-fg: #0f6b55; --cat-dot: #1f9d7c; }
+.ds-cat--medical { --cat-bg: #fdecef; --cat-fg: #a3263f; --cat-dot: #d9476a; }
+.ds-cat--competency { --cat-bg: #efeafc; --cat-fg: #5233a8; --cat-dot: #7d5ce0; }
+.ds-cat--other { --cat-bg: var(--neutral-bg); --cat-fg: var(--neutral); --cat-dot: #a1a1aa; }
+.ds-cat-wrap { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.ds-cat-country { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ds-chip__dot { width: 8px; height: 8px; flex: none; margin-right: 6px; border-radius: 50%; background: var(--cat-dot); }
+.ds-chip[aria-pressed="true"] .ds-chip__dot { box-shadow: 0 0 0 1.5px #fff; }

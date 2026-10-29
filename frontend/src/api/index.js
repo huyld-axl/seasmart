@@ -32,6 +32,9 @@ export const seafarerApi = {
     return api.post(`/seafarers/${id}/photo`, form)
   },
   removePhoto: (id) => api.delete(`/seafarers/${id}/photo`),
+  // Tab Đã xuất: các lần nộp hồ sơ cho cơ hội, và tải lại đúng bản đã gửi.
+  sends: (id) => api.get(`/seafarers/${id}/sends`).then((r) => r.data),
+  sendDownload: (id, sendId) => api.get(`/seafarers/${id}/sends/${sendId}/download`, { responseType: 'blob', timeout: 180000 }),
   downloadTemplate: () => api.get('/import/excel/template', { responseType: 'blob' }),
   importFile: (file) => {
     const form = new FormData()
@@ -49,6 +52,7 @@ export const certificateApi = {
   update: (seafarerId, id, data) => api.put(`/seafarers/${seafarerId}/certificates/${id}`, data),
   remove: (seafarerId, id) => api.delete(`/seafarers/${seafarerId}/certificates/${id}`),
   file: (seafarerId, id) => api.get(`/seafarers/${seafarerId}/certificates/${id}/file`, { responseType: 'blob' }).then((r) => r.data),
+  bundle: (seafarerId, ids) => api.get(`/seafarers/${seafarerId}/certificates/bundle`, { params: ids ? { ids: ids.join(',') } : undefined, responseType: 'blob', timeout: 120000 }),
   upload: (seafarerId, id, file) => {
     const form = new FormData()
     form.append('file', file)

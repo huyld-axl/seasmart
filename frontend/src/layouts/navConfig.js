@@ -8,7 +8,6 @@ export const NAV_SECTIONS = [
   { key: 'seafarers', group: 1, label: 'Thuyền viên', icon: 'team', to: '/seafarers', match: ['/seafarers'], perm: 'seafarer.view' },
   { key: 'ship-owners', group: 1, label: 'Đối tác', icon: 'building', to: '/partners', match: ['/partners'], perm: 'partner.view' },
   { key: 'vessels', group: 1, label: 'Tàu', icon: 'ship', to: '/vessels', match: ['/vessels'], perm: 'vessel.view' },
-  { key: 'exports', group: 1, label: 'Bản xuất', icon: 'send', to: '/exports', match: ['/exports'], perm: 'export.view' },
   { key: 'opportunities', group: 2, label: 'Cơ hội', icon: 'target', to: '/opportunities', match: ['/opportunities'], perm: 'opportunity.view' },
   { key: 'voyages', group: 2, label: 'Chuyến tàu', icon: 'anchor', to: '/voyages', match: ['/voyages'], perm: 'voyage.view' },
   { key: 'contracts', group: 2, label: 'Hợp đồng', icon: 'file', to: '/contracts', match: ['/contracts'], perm: 'contract.view' },

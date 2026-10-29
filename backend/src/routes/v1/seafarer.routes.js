@@ -1,4 +1,6 @@
 const seafarerService = require('../../services/seafarer.service')
+const seafarerSendService = require('../../services/seafarer_send.service')
+const pool = require('../../config/db')
 const formExportService = require('../../services/form_export.service')
 const config = require('../../config')
 const fs = require('fs')
@@ -173,6 +175,25 @@ async function seafarerRoutes(fastify) {
 
   // Ảnh chân dung 4x6: GET trả ảnh, POST (multipart, field "file") thay ảnh, DELETE gỡ ảnh.
   const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
+
+  // Tab Đã xuất: các lần nộp hồ sơ của thuyền viên cho các cơ hội, và tải lại đúng bản đã gửi.
+  fastify.get('/:id/sends', {
+    onRequest: [fastify.authenticate, fastify.can('export.view')],
+    schema: { params: idParams },
+  }, async (request) => {
+    await assertSeafarerInScope(request, request.params.id)
+    return seafarerSendService.listForSeafarer(pool, request.params.id)
+  })
+  fastify.get('/:id/sends/:sendId/download', {
+    onRequest: [fastify.authenticate, fastify.can('export.view', 'export.download')],
+    schema: { params: { type: 'object', required: ['id', 'sendId'], properties: { id: { type: 'integer', minimum: 1 }, sendId: { type: 'integer', minimum: 1 } } } },
+  }, async (request, reply) => {
+    await assertSeafarerInScope(request, request.params.id)
+    const { buffer, filename } = await seafarerSendService.download(pool, request.params.id, request.params.sendId)
+    reply.header('Content-Type', 'application/zip')
+    reply.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`)
+    return reply.send(buffer)
+  })
 
   fastify.get('/:id/photo', {
     onRequest: [fastify.authenticate, fastify.can('seafarer.view')],

@@ -25,7 +25,7 @@ it('tạo thumbnail logo cũ, giữ nền trong suốt và không thay ảnh g�
   expect(fs.readFileSync(original)).toEqual(before)
   expect(await fleetService.getOwnerLogo(pool, 1)).toEqual({ path: original, mime: 'image/png' })
 })
-it('gỡ logo dọn cả thumbnail và cập nhật phiên bản ảnh', async () => {
+it('gỡ logo: logo và thumbnail vào thùng rác (chưa xoá khỏi ổ đĩa), cập nhật phiên bản ảnh', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'owner-logo-test-')); folders.push(dir)
   const original = path.join(dir, 'logo.png')
   await sharp({ create: { width: 20, height: 20, channels: 4, background: 'transparent' } }).png().toFile(original)
@@ -33,7 +33,8 @@ it('gỡ logo dọn cả thumbnail và cập nhật phiên bản ảnh', async (
   const pool = { query: async (sql) => { calls.push(sql); return sql.includes('FROM ship_owner o') ? [[{ id: 1 }]] : [[{ logo_path: original, logo_mime: 'image/png' }]] } }
   const thumb = await fleetService.getOwnerLogo(pool, 1, 'thumb')
   await fleetService.removeOwnerLogo(pool, 1)
-  expect(fs.existsSync(original)).toBe(false)
-  expect(fs.existsSync(thumb.path)).toBe(false)
+  expect(fs.existsSync(original)).toBe(true)
+  expect(fs.existsSync(thumb.path)).toBe(true)
+  expect(calls.filter((sql) => sql.includes('INSERT INTO file_trash'))).toHaveLength(2)
   expect(calls.some((sql) => sql.includes('logo_updated_at = NOW()'))).toBe(true)
 })

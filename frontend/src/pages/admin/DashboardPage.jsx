@@ -11,13 +11,13 @@ import { useCan } from '../../hooks/usePermission'
 import { deadlineLabel } from './opportunities/opportunityView'
 import './seafarers/SeafarerListPage.css'
 import './opportunities/opportunities.css'
+import { CATEGORY } from './seafarers/certificateView'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
   { value: 'EXPIRED', label: 'Quá hạn' },
   { value: 'EXPIRING', label: 'Sắp hết hạn' },
 ]
-const CATEGORY = { STCW: 'STCW', VN: 'Việt Nam', MEDICAL: 'Y tế', DOCUMENT: 'Giấy tờ', PANAMA: 'Panama', OTHER: 'Khác' }
 
 const countdown = (row) => {
   if (row.days_left < 0) return `Quá hạn ${-row.days_left} ngày`

@@ -54,7 +54,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const [form] = Form.useForm()
   const initial = useMemo(() => (opportunity ? toFormValues(opportunity) : { ...EMPTY_FORM, owner_user_id: me?.id, ...prefill }), [opportunity, prefill, me])
   const values = Form.useWatch([], form) || initial
-  const { save, savePreset } = useOpportunityMutations()
+  const { save } = useOpportunityMutations()
   const againRef = useRef(false)
   const [again, setAgain] = useState(false)
   const [vesselSearch, setVesselSearch] = useState('')
@@ -105,7 +105,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const sections = [
     { key: 'position', title: 'Vị trí', desc: 'Một cơ hội là một vị trí. Cần nhiều vị trí thì dùng "Lưu & thêm vị trí khác".' },
     { key: 'time', title: 'Thời gian dự kiến', desc: 'Bốn mốc dự kiến và hạn chủ tàu cần danh sách.' },
-    { key: 'requirements', title: 'Hồ sơ yêu cầu', desc: presetSource ? PRESET_SOURCE[presetSource] : 'Giấy tờ, chứng chỉ, kinh nghiệm ứng viên phải có, và mẫu giấy xuất kèm. Chọn chức danh thì tự điền sẵn.' },
+    { key: 'requirements', title: 'Hồ sơ yêu cầu', desc: presetSource ? PRESET_SOURCE[presetSource] : 'Giấy tờ ứng viên phải có, biểu mẫu phải nộp và kinh nghiệm. Chọn chức danh thì tự điền sẵn.' },
   ]
   const metas = [`${filled(coreFields)}/${coreFields.length}`, `${filled(timeFields)}/${timeFields.length}`, `${requirements.length}`]
   const ready = !!(values.ship_owner_id && values.rank_id && values.budget_monthly_usd != null && values.planned_join_date && values.planned_leave_date && values.deadline)
@@ -160,15 +160,6 @@ function OpportunityForm({ opportunity, prefill }) {
       // Tàu vô chủ: không có chủ tàu để chọn, bỏ chủ tàu đang chọn (nếu có) để khỏi lưu lệch.
       if (option) form.setFieldsValue({ ship_owner_id: undefined })
       setOwnerFromVessel(false)
-    }
-  }
-
-  async function saveAsPreset() {
-    try {
-      await savePreset.mutateAsync({ rankId: values.rank_id, requirements: toPayload(values, categoryOf).requirements })
-      toast.success(`Đã lưu mẫu hồ sơ yêu cầu cho ${rankName}`)
-    } catch (error) {
-      toast.error('Không lưu được mẫu', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 
@@ -263,9 +254,6 @@ function OpportunityForm({ opportunity, prefill }) {
               ranks={ranks.data || []}
               vesselTypes={vesselTypes.data || []}
               changed={changed.has('requirements')}
-              footer={values.rank_id && can('opportunity.update') ? (
-                <Button type="link" loading={savePreset.isPending} onClick={saveAsPreset}>Lưu thành mẫu cho {rankName}</Button>
-              ) : null}
             />
           </Form.Item>
         </FormSection>

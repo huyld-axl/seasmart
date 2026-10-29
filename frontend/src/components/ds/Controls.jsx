@@ -36,6 +36,7 @@ export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái
   )
 }
 
+// chip.dot (tuỳ chọn): class màu cho chấm trước nhãn, ví dụ 'ds-cat--stcw' (màu nhóm giấy tờ).
 // Chip lọc chính của màn: h-9, viên mờ foreground/5, chọn rồi tô màu nhấn. Bật/tắt nên có aria-pressed.
 export function FilterChips({ chips, selected = [], onToggle }) {
   return (
@@ -50,6 +51,7 @@ export function FilterChips({ chips, selected = [], onToggle }) {
           title={chip.label}
           onClick={() => onToggle?.(chip.value)}
         >
+          {chip.dot ? <span className={`ds-chip__dot ${chip.dot}`} aria-hidden /> : null}
           <span className="ds-chip__label">{chip.label}</span>
         </button>
       ))}

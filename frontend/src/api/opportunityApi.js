@@ -20,5 +20,8 @@ export const opportunityApi = {
   selectOwner: (id, seafarerId) => api.post(`/opportunities/${id}/candidates/${seafarerId}/owner-selected`).then(data),
   unselectOwner: (id, seafarerId) => api.delete(`/opportunities/${id}/candidates/${seafarerId}/owner-selected`).then(data),
   recordSend: (id, body) => api.post(`/opportunities/${id}/sends`, body).then(data),
+  // Hồ sơ nộp của một ứng viên; ensurePack tạo / bổ sung bộ biểu mẫu theo yêu cầu.
+  submission: (id, seafarerId) => api.get(`/opportunities/${id}/candidates/${seafarerId}/submission`).then(data),
+  ensurePack: (id, seafarerId) => api.post(`/opportunities/${id}/candidates/${seafarerId}/submission/pack`).then(data),
   place: (id, body) => api.post(`/opportunities/${id}/place`, body).then(data),
 }

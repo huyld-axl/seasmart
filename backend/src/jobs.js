@@ -2,6 +2,7 @@ const cron = require('node-cron')
 const pool = require('./config/db')
 const notificationService = require('./services/notification.service')
 const emailService = require('./services/email.service')
+const { purgeExpired } = require('./utils/file_trash')
 
 function startJobs(logger) {
   // Job 1 (daily 2:00 AM): cập nhật chứng chỉ hết hạn
@@ -30,6 +31,15 @@ function startJobs(logger) {
       logger.info({ affectedRows: result.affectedRows }, 'Job: seafarer contracts ended')
     } catch (err) {
       logger.error({ err }, 'Job: failed to end seafarer contracts')
+    }
+  })
+
+  // Job 3 (daily 3:00 AM): xoá khỏi ổ đĩa các tệp đã xoá mềm / bị thay quá 180 ngày (quy tắc xoá tệp).
+  cron.schedule('0 3 * * *', async () => {
+    try {
+      await purgeExpired(logger)
+    } catch (err) {
+      logger.error({ err }, 'Job: failed to purge trashed files')
     }
   })
 

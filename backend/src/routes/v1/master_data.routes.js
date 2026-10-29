@@ -28,7 +28,7 @@ const listQuerySchema = {
 
 // Whitelist columns cho từng table để tránh column injection
 const TABLE_COLUMNS = {
-  certificate_type: ['code', 'name_vi', 'name_en', 'validity_years', 'is_stcw', 'notes'],
+  certificate_type: ['code', 'name_vi', 'name_en', 'category', 'issuing_country_id', 'issuing_authority', 'validity_years', 'is_stcw', 'notes'],
   vessel_type: ['code', 'name_vi', 'name_en'],
   country: ['code', 'name_vi', 'name_en', 'flag_emoji'],
   contract_type: ['code', 'name_vi', 'name_en'],
@@ -51,6 +51,13 @@ function normalizeCountry(body) {
     if (value && !/^[\u{1F1E6}-\u{1F1FF}]{2}$/u.test(value)) throw { statusCode: 400, message: 'Nhập một emoji cờ quốc gia hợp lệ' }
     body.flag_emoji = value || null
   }
+}
+
+// Nhóm loại giấy (theo loại giấy, không theo nước cấp — nước cấp là issuing_country_id).
+const CERTIFICATE_CATEGORIES = ['DOCUMENT', 'COMPETENCY', 'STCW', 'MEDICAL', 'OTHER']
+function normalizeCertificateType(body) {
+  if ('category' in body && !CERTIFICATE_CATEGORIES.includes(body.category)) throw { statusCode: 400, message: 'Nhóm giấy không hợp lệ' }
+  if ('issuing_country_id' in body) body.issuing_country_id = body.issuing_country_id ? Number(body.issuing_country_id) || null : null
 }
 
 // Generic CRUD factory for simple lookup tables
@@ -104,6 +111,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     fastify.post('/', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
       if (table === 'country') normalizeCountry(body)
+      if (table === 'certificate_type') normalizeCertificateType(body)
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
       const sql = `INSERT INTO "${table}" (${cols.map((c) => `"${c}"`).join(',')}) VALUES (${cols.map(() => '?').join(',')})`
@@ -122,6 +130,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     fastify.put('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
       if (table === 'country') normalizeCountry(body)
+      if (table === 'certificate_type') normalizeCertificateType(body)
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
       const sql = `UPDATE "${table}" SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ?`

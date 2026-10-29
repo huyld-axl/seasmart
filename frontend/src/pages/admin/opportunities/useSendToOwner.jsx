@@ -3,6 +3,7 @@ import { App } from 'antd'
 import useToast from '../../../components/ds/useToast'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { exportApi } from '../../../api/exportApi'
+import { opportunityApi } from '../../../api/opportunityApi'
 import { useOpportunityMutations } from '../../../hooks/useOpportunities'
 import useAuthStore from '../../../stores/authStore'
 import apiErrorText from '../../../utils/apiError'
@@ -10,7 +11,7 @@ import { saveBlob } from '../exports/download'
 import { buildMailto, mailSubject, pickContact } from './sendToOwner'
 
 // Gửi chủ tàu (Màn 6): tải bản xuất về máy, mở app mail mặc định đã điền sẵn, rồi hỏi "Đã gửi?" để ghi nhận.
-// candidates: [{ id, full_name, export_pack: { id } }] — mọi người đều phải có bản xuất.
+// candidates: [{ id, seafarer_id, full_name, export_pack }]. Người chưa có hồ sơ nộp (bộ giấy) thì tạo trước khi tải.
 export default function useSendToOwner() {
   const toast = useToast()
   const navigate = useNavigate()
@@ -32,12 +33,13 @@ export default function useSendToOwner() {
     const files = []
     try {
       for (const c of candidates) {
-        const res = await exportApi.download(c.export_pack.id, 'pdf')
+        const packId = c.export_pack?.id || (await opportunityApi.ensurePack(opportunity.id, c.seafarer_id)).pack.id
+        const res = await exportApi.download(packId, 'pdf')
         saveBlob(res, `${c.full_name}.zip`)
         files.push(`${c.full_name}.zip`)
       }
     } catch (error) {
-      toast.error('Không tải được bản xuất', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+      toast.error('Không tải được hồ sơ', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
       return
     }
     const url = buildMailto({ opportunity, contact, people: candidates, cc: me?.email, sender: me?.email })

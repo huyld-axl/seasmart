@@ -21,7 +21,6 @@ const SEAFARER_COLUMN_DOCS = {
 
 const DEADLINE_WARN_DAYS = 7
 const LEAVE_WARN_DAYS = 30
-const MAILTO_MAX = 1800
 
 module.exports = {
   OPPORTUNITY_STATUSES,
@@ -37,5 +36,4 @@ module.exports = {
   SEAFARER_COLUMN_DOCS,
   DEADLINE_WARN_DAYS,
   LEAVE_WARN_DAYS,
-  MAILTO_MAX,
 }

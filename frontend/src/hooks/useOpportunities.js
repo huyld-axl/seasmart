@@ -60,7 +60,7 @@ export function useOpportunityMutations() {
       mutationFn: ({ id, seafarerId, selected }) => (selected ? opportunityApi.selectOwner(id, seafarerId) : opportunityApi.unselectOwner(id, seafarerId)),
       ...options,
     }),
-    recordSend: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.recordSend(id, body), ...options }),
+    sendMail: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.sendMail(id, body), ...options }),
     place: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.place(id, body), ...options }),
   }
 }

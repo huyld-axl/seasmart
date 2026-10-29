@@ -805,3 +805,18 @@ span.ds-thumb--empty { cursor: default; }
 /* ConfirmGate: ô xác nhận + đếm ngược trước khi nút đồng ý mở. */
 .ds-gate { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--warning-border); border-radius: var(--radius-md); background: var(--warning-bg); }
 .ds-gate__wait { margin-left: auto; color: var(--warning); font-size: 12px; font-weight: 500; }
+
+/* StageChips: chặng nhỏ trong dòng bảng. */
+.ds-chips-stage { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.ds-chips-stage__list { display: inline-flex; }
+.ds-chips-stage__step { display: inline-flex; align-items: center; gap: 4px; height: 28px; margin-left: -8px; padding: 0 16px 0 20px; border: 0; background: var(--neutral-bg); color: var(--muted); font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%, 10px 50%); }
+.ds-chips-stage__step:first-child { margin-left: 0; padding-left: 12px; border-radius: 6px 0 0 6px; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 0 100%); }
+.ds-chips-stage__step:last-child { border-radius: 0 6px 6px 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 10px 50%); }
+button.ds-chips-stage__step { cursor: pointer; }
+button.ds-chips-stage__step:hover:not(:disabled) { filter: brightness(.94); }
+button.ds-chips-stage__step:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
+.ds-chips-stage__step--done { background: var(--success-bg); color: var(--success); }
+.ds-chips-stage__step--next { background: var(--primary-light); color: var(--primary); }
+.ds-chips-stage__step--complete { background: var(--primary); color: #fff; }
+.ds-chips-stage__note { color: var(--muted); font-size: 11px; }

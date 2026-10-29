@@ -199,3 +199,15 @@ export function candidateTags(person, opportunity, formatDate) {
   const position = person.current_rank_id && person.current_rank_id !== opportunity.rank_id ? { tone: 'warn', label: 'Không trùng vị trí' } : null
   return { docs, availability, position, onboard, issues, required }
 }
+
+// ---------- Chặng của từng ứng viên ----------
+
+// Ba chặng: ráp hồ sơ (có bộ giấy) → gửi chủ tàu → chủ tàu chọn. states: done | next (chặng chưa xong đầu tiên) | todo | complete (xong cả ba).
+export function candidateStages(candidate) {
+  const dates = [candidate.export_pack?.created_at ?? null, candidate.last_sent_at ?? null, candidate.owner_selected_at ?? null]
+  const done = dates.map(Boolean)
+  const all = done.every(Boolean)
+  const nextIndex = done.indexOf(false)
+  const states = done.map((isDone, i) => (all ? 'complete' : isDone ? 'done' : i === nextIndex ? 'next' : 'todo'))
+  return { states, dates }
+}

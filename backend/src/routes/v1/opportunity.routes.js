@@ -1,7 +1,9 @@
 const pool = require('../../config/db')
+const config = require('../../config')
 const { opportunityService } = require('../../services/opportunity.service')
 const seafarerSendService = require('../../services/seafarer_send.service')
 const submissionService = require('../../services/submission.service')
+const opportunityMailService = require('../../services/opportunity_mail.service')
 const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
 
 const NOT_FOUND = 'Không tìm thấy cơ hội'
@@ -101,17 +103,6 @@ const addBody = {
     source: { type: 'string', enum: ['SUGGEST', 'SEARCH'] },
   },
 }
-const sendBody = {
-  type: 'object',
-  required: ['candidate_ids', 'to_email', 'subject'],
-  properties: {
-    candidate_ids: { type: 'array', minItems: 1, maxItems: 50, items: id },
-    ship_owner_contact_id: nullableId,
-    to_email: { type: 'string', minLength: 3, maxLength: 150 },
-    subject: { type: 'string', minLength: 1, maxLength: 300 },
-  },
-}
-
 const placeBody = {
   type: 'object',
   required: ['seafarer_id', 'join_date', 'join_port_id'],
@@ -210,10 +201,23 @@ async function opportunityRoutes(fastify) {
     await inScope(request)
     return submissionService.ensurePack(pool, request.params.id, request.params.seafarerId, request.user)
   })
-  fastify.post('/:id/sends', { ...can('send'), schema: { params: idParams, body: sendBody } }, async (request) => {
+  // Gửi hồ sơ cho chủ tàu bằng mail server công ty (đính kèm .zip từng người + tệp người dùng thêm), ghi nhận lần gửi khi mail đã đi.
+  // multipart: trường `payload` (JSON: candidate_ids, to[], cc[], bcc[], subject, body, ship_owner_contact_id) và các tệp `attachments`.
+  fastify.post('/:id/send-mail', { ...can('send'), schema: { params: idParams } }, async (request) => {
     await inScope(request)
-    const result = await opportunityService.recordSend(pool, request.params.id, request.body, request.user.id)
-    // Giữ bản đã gửi của từng người cho tab Đã xuất; chạy nền, lỗi chỉ ghi log.
+    let payload = null
+    const files = []
+    for await (const part of request.parts({ limits: { fileSize: config.upload.maxFileSize, files: 6, fields: 4 } })) {
+      if (part.type === 'file') {
+        const content = await part.toBuffer()
+        if (part.file.truncated) throw { statusCode: 413, message: `${part.filename} quá lớn (tối đa ${Math.round(config.upload.maxFileSize / 1048576)} MB mỗi tệp)` }
+        files.push({ filename: part.filename, content, contentType: part.mimetype })
+      } else if (part.fieldname === 'payload') {
+        payload = part.value
+      }
+    }
+    if (!payload) throw { statusCode: 400, message: 'Thiếu nội dung thư' }
+    const result = await opportunityMailService.send(pool, request.params.id, opportunityMailService.parsePayload(payload), request.user, files)
     const sendId = result.sends?.[0]?.id
     if (sendId) seafarerSendService.keepCopies(pool, sendId, request.log).catch((error) => request.log.warn({ err: error, sendId }, 'Không giữ được bản đã gửi'))
     return result

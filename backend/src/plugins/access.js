@@ -2,7 +2,7 @@ const pool = require('../config/db')
 const { ADMIN_ROLE_CODE, ALL_PERMISSIONS } = require('../constants/permissions')
 
 // Một câu SQL: trạng thái tài khoản, vai trò, phạm vi và mảng quyền.
-const ACCESS_SQL = `SELECT u.email, u.is_active, u.deleted_at, u.role_id,
+const ACCESS_SQL = `SELECT u.email, u.full_name, u.is_active, u.deleted_at, u.role_id,
         r.code AS role_code, r.name AS role_name, r.scopes AS role_scopes,
         COALESCE(array_agg(rp.permission) FILTER (WHERE rp.permission IS NOT NULL), '{}') AS permissions
  FROM "user" u
@@ -20,6 +20,7 @@ async function loadAccess(userId, db = pool) {
   return {
     userId,
     email: row.email,
+    fullName: row.full_name ?? null,
     roleId: row.role_id ?? null,
     roleCode: row.role_code ?? null,
     roleName: row.role_name ?? null,
@@ -65,6 +66,7 @@ function toClientUser(access) {
   return {
     id: access.userId,
     email: access.email,
+    full_name: access.fullName ?? null,
     is_active: true,
     role: access.roleId == null ? null : { id: access.roleId, name: access.roleName, is_system: access.isSystemRole },
     permissions: [...access.permissions],

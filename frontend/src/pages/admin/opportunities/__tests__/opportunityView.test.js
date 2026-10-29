@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { chosenCandidate, candidateTags, deadlineLabel, stageIndex, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
+import { chosenCandidate, candidateStages, candidateTags, deadlineLabel, stageIndex, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
 
 
 describe('deadlineLabel', () => {
@@ -89,5 +89,19 @@ describe('candidateTags', () => {
 
   it('khác chức danh thì Không trùng vị trí', () => {
     expect(candidateTags({ ...base, current_rank_id: 7 }, opportunity, fmt).position).toEqual({ tone: 'warn', label: 'Không trùng vị trí' })
+  })
+})
+
+describe('candidateStages', () => {
+  it('chặng chưa xong đầu tiên là next, sau nó là todo', () => {
+    expect(candidateStages({}).states).toEqual(['next', 'todo', 'todo'])
+    expect(candidateStages({ export_pack: { created_at: '2026-10-29' } }).states).toEqual(['done', 'next', 'todo'])
+    expect(candidateStages({ export_pack: { created_at: '2026-10-29' }, last_sent_at: '2026-10-29' }).states).toEqual(['done', 'done', 'next'])
+  })
+
+  it('xong cả ba thì complete', () => {
+    const full = { export_pack: { created_at: 'a' }, last_sent_at: 'b', owner_selected_at: 'c' }
+    expect(candidateStages(full).states).toEqual(['complete', 'complete', 'complete'])
+    expect(candidateStages(full).dates).toEqual(['a', 'b', 'c'])
   })
 })

@@ -39,7 +39,6 @@
 .op-sends li { display: grid; gap: 2px; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
 .op-sends li:last-child { border-bottom: 0; }
 .op-fit--ok { color: var(--success); }
-.op-star-on { color: var(--primary) !important; }
 
 /* Side panel thêm ứng viên: cột lọc trái, thanh công cụ đứng yên, danh sách cuộn riêng */
 .op-sug__split { display: grid; flex: 1; grid-template-columns: 280px minmax(0, 1fr); min-height: 0; }
@@ -105,3 +104,37 @@
 .fill-note { margin: 0; color: var(--muted); font-size: 13px; }
 .fill-src { margin-left: 6px; padding: 0 6px; border-radius: 6px; background: var(--neutral-bg); color: var(--neutral); font-size: 11px; }
 @media (max-width: 900px) { .fill-layout { grid-template-columns: 1fr; } }
+.ant-modal-footer .op-pick__clear { margin-right: auto; }
+.crew-table .op-row--chosen > td { background: var(--primary-light); }
+.crew-table .op-row--muted > td { opacity: .55; }
+
+/* Cửa sổ soạn thư gửi chủ tàu (dáng Gmail): nổi góc dưới phải, ô nhập không viền, chỉ kẻ ngang */
+.op-mail { position: fixed; right: 24px; bottom: 0; z-index: 1100; display: flex; flex-direction: column; width: 568px; max-width: calc(100vw - 16px); height: 560px; max-height: calc(100vh - 24px); border-radius: 16px 16px 0 0; background: var(--surface); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28); overflow: hidden; }
+.op-mail--min { height: auto; width: 320px; }
+.op-mail--max { right: 50%; bottom: 50%; width: min(900px, calc(100vw - 32px)); height: min(720px, calc(100vh - 32px)); border-radius: 16px; transform: translate(50%, 50%); }
+.op-mail__head { display: flex; align-items: center; gap: 2px; flex: none; padding: 8px 12px 8px 16px; background: #e9eef6; }
+.op-mail__title { flex: 1; min-width: 0; margin: 0; overflow: hidden; font-size: 14px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.op-mail__fields { flex: none; }
+.op-mail__row { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; align-items: center; padding: 0 16px; border-bottom: 1px solid var(--border); }
+.op-mail__label { color: var(--muted); font-size: 14px; }
+.op-mail__toggles { display: inline-flex; gap: 10px; }
+.op-mail__toggles button { padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 14px; cursor: pointer; }
+.op-mail__toggles button:hover { color: var(--foreground); text-decoration: underline; }
+.op-mail__row .ant-select, .op-mail__row .ant-input, .op-mail__row .ant-select-selector { padding-inline: 0 !important; }
+.op-mail__row .ant-select { width: 100%; min-width: 0; }
+.op-mail__body { flex: 1; min-height: 0; padding: 12px 16px !important; resize: none !important; border-radius: 0 !important; font-size: 14px; }
+.op-mail__err { margin: 0; padding: 2px 16px 2px 72px; color: var(--error-strong); font-size: 12px; }
+.op-mail__hint { margin: 0; padding: 4px 16px; background: var(--warning-bg); color: var(--warning); font-size: 12px; }
+.op-mail__atts { display: grid; flex: none; gap: 6px; max-height: 120px; margin: 0; padding: 8px 16px; overflow-y: auto; list-style: none; }
+.op-mail__atts li { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--neutral-bg); font-size: 13px; }
+.op-mail__atts b { flex: 1; min-width: 0; overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.op-mail__atts button { display: inline-flex; padding: 2px; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.op-mail__atts button:hover:not(:disabled) { color: var(--foreground); }
+.op-mail__atts button:disabled { cursor: not-allowed; opacity: .35; }
+.op-mail__size { color: var(--muted); }
+.op-mail__foot { display: flex; align-items: center; gap: 12px; flex: none; padding: 10px 16px 14px; }
+.op-mail__note { flex: 1; min-width: 0; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 639px) {
+  .op-mail, .op-mail--max { right: 0; bottom: 0; width: 100vw; max-width: 100vw; height: 92vh; border-radius: 16px 16px 0 0; transform: none; }
+  .op-mail--min { width: 100vw; height: auto; }
+}

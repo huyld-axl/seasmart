@@ -1,16 +1,21 @@
 import { Link } from 'react-router-dom'
 import { Button, Table, Tooltip } from 'antd'
-import { DeleteOutlined, EyeOutlined, FileTextOutlined, SendOutlined, StarFilled, StarOutlined } from '@ant-design/icons'
+import { DeleteOutlined } from '@ant-design/icons'
 import RequirementFit from '../../../components/ds/RequirementFit'
+import StageChips from '../../../components/ds/StageChips'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import { formatDate } from '../../../utils/format'
-import { fitIssues } from './opportunityView'
+import { candidateStages, fitIssues } from './opportunityView'
 
 // Bảng ứng viên của một cơ hội. selected / onSelect: chọn nhiều dòng (thanh "Đã chọn N").
-// Thao tác nằm ngoài dòng thành nút biểu tượng (cột Thao tác, theo RowActions). onMenu(action, candidate): 'select' | 'unselect' | 'submission' | 'send' | 'profile' | 'remove'. onOpenFit(candidate): mở bảng đối chiếu.
+// Cột Tiến trình: ba chặng Ráp hồ sơ → Gửi → Chủ tàu chọn, bấm chặng là làm việc. Chỉ một người được chủ tàu chọn: có người rồi thì các dòng khác mờ đi, chặng bị khoá cho tới khi bỏ chọn.
+// Cột Thao tác chỉ còn nút Bỏ khỏi danh sách. onMenu(action, candidate): 'select' | 'unselect' | 'send' | 'remove'. onOpenFit(candidate): mở bảng đối chiếu.
 // onOpenSubmission(candidate): mở bảng trượt Hồ sơ nộp (giấy tờ + biểu mẫu của người đó).
 export default function CandidateTable({ candidates, requirements, editable, selected, onSelect, onMenu, onOpenFit, onOpenSubmission }) {
+  const heldId = candidates.find((c) => c.status === 'PICKED' && c.owner_selected_at)?.seafarer_id
+  const blocked = (c) => heldId != null && c.seafarer_id !== heldId
+  const short = (value) => formatDate(value).slice(0, 5)
   const columns = [
     {
       title: 'Ứng viên',
@@ -46,33 +51,42 @@ export default function CandidateTable({ candidates, requirements, editable, sel
       },
     },
     {
-      title: 'Gửi chủ tàu',
-      key: 'sent',
-      render: (_, c) => (c.last_sent_at ? <span className="ds-num">{formatDate(c.last_sent_at)}</span> : <span className="vd-muted">Chưa gửi</span>),
+      title: 'Tiến trình',
+      key: 'progress',
+      render: (_, c) => {
+        const { states, dates } = candidateStages(c)
+        const live = c.status === 'PICKED'
+        const canAct = editable && live
+        const lock = blocked(c)
+        const steps = [
+          {
+            key: 'pack', label: 'Ráp', state: states[0], onClick: live || c.export_pack ? () => onOpenSubmission(c) : undefined,
+            hint: c.export_pack ? `Mở hồ sơ nộp · ráp ${formatDate(dates[0])}` : 'Mở hồ sơ nộp để điền biểu mẫu',
+          },
+          {
+            key: 'send', label: 'Gửi', state: states[1], onClick: canAct ? () => onMenu('send', c) : undefined, disabled: lock,
+            hint: c.last_sent_at ? `Đã gửi ${formatDate(dates[1])}, bấm để gửi lại` : 'Gửi cho chủ tàu',
+          },
+          {
+            key: 'select', label: 'Chủ tàu chọn', state: states[2], onClick: canAct ? () => onMenu(c.owner_selected_at ? 'unselect' : 'select', c) : undefined, disabled: lock,
+            hint: c.owner_selected_at ? 'Bỏ nhãn chủ tàu đã chọn' : 'Đánh dấu chủ tàu đã chọn',
+          },
+        ]
+        let note = states.map((state, i) => (dates[i] ? short(dates[i]) : null)).filter(Boolean).join(' · ')
+        if (lock) note = 'Đã có người được chọn'
+        else if (states[0] === 'next') note = 'Chưa ráp hồ sơ'
+        else if (states[1] === 'next') note = [note, 'chưa gửi'].filter(Boolean).join(' · ')
+        else if (states[2] === 'next') note = [note, 'chờ chủ tàu'].filter(Boolean).join(' · ')
+        return <StageChips steps={steps} note={note} />
+      },
     },
-    actionColumn((c) => {
-      const stop = (fn) => (e) => { e.stopPropagation(); fn() }
-      const act = (title, icon, onClick, props = {}) => (
-        <Tooltip title={title}>
-          <Button type="text" size="small" icon={icon} aria-label={`${title}: ${c.full_name}`} onClick={stop(onClick)} {...props} />
+    actionColumn((c) => (editable && c.status === 'PICKED' ? (
+      <span className="ds-row-actions">
+        <Tooltip title="Bỏ khỏi danh sách">
+          <Button type="text" size="small" danger icon={<DeleteOutlined />} aria-label={`Bỏ khỏi danh sách: ${c.full_name}`} onClick={(e) => { e.stopPropagation(); onMenu('remove', c) }} />
         </Tooltip>
-      )
-      const live = c.status === 'PICKED'
-      const submission = live || c.export_pack
-        ? act(c.export_pack ? `Hồ sơ nộp · ráp ${formatDate(c.export_pack.created_at)}` : 'Hồ sơ nộp · chưa điền biểu mẫu', <FileTextOutlined />, () => onOpenSubmission(c))
-        : null
-      return (
-        <span className="ds-row-actions">
-          {editable && live ? (c.owner_selected_at
-            ? act('Bỏ nhãn chủ tàu đã chọn', <StarFilled />, () => onMenu('unselect', c), { className: 'op-star-on' })
-            : act('Đánh dấu chủ tàu đã chọn', <StarOutlined />, () => onMenu('select', c))) : null}
-          {submission}
-          {editable && live ? act('Gửi cho chủ tàu', <SendOutlined />, () => onMenu('send', c)) : null}
-          {act('Mở hồ sơ thuyền viên', <EyeOutlined />, () => onMenu('profile', c))}
-          {editable && live ? act('Bỏ khỏi danh sách', <DeleteOutlined />, () => onMenu('remove', c), { danger: true }) : null}
-        </span>
-      )
-    }, { buttons: 5 }),
+      </span>
+    ) : null), { buttons: 1 }),
   ]
 
   return (
@@ -83,6 +97,7 @@ export default function CandidateTable({ candidates, requirements, editable, sel
       columns={columns}
       pagination={false}
       scroll={{ x: 'max-content' }}
+      rowClassName={(c) => (c.owner_selected_at && c.status === 'PICKED' ? 'op-row--chosen' : blocked(c) ? 'op-row--muted' : '')}
       rowSelection={editable ? {
         selectedRowKeys: selected,
         onChange: onSelect,

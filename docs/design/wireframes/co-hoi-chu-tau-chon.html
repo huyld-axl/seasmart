@@ -1,0 +1,141 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Chọn người chủ tàu đã chọn: 3 hướng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* Wireframe: bấm mốc "Chủ tàu chọn" (hoặc nút "Chọn người") để chọn ứng viên chủ tàu đã chọn. CH26001, 3 ứng viên. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-light: rgba(0,51,102,.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5; --warning: #bb4d00; --ring-focus: rgba(0,51,102,.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 24px 80px; background: var(--background); color: var(--foreground); font: 14px/1.5 Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1000px; margin: 0 auto; display: grid; gap: 48px; }
+  h1 { margin: 0 0 4px; font-size: 20px; } .lead { margin: 0; color: var(--muted); }
+  .variant > h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 16px; }
+  .variant > h2 b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; }
+  .variant > p { margin: 0 0 12px; color: var(--muted); }
+  .variant > ul { margin: 12px 0 0; padding-left: 18px; color: var(--neutral); font-size: 13px; }
+  .page { position: relative; min-height: 330px; padding: 16px; border: 1px dashed var(--border-strong); border-radius: 12px; background: var(--background); }
+  .card { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  .btn { height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--foreground); font: inherit; font-weight: 500; white-space: nowrap; }
+  .btn--primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .btn--ghost { border-color: transparent; background: none; color: var(--neutral); }
+  .muted { color: var(--muted); font-size: 12px; }
+
+  /* trục (rút gọn) */
+  .path { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+  .chev { display: flex; flex: 1; margin: 0; padding: 0; list-style: none; }
+  .chev li { flex: 1; height: 40px; margin-left: -10px; }
+  .chev li:first-child { margin-left: 0; }
+  .chev i { display: flex; align-items: center; justify-content: center; height: 100%; font-style: normal; font-size: 13px; font-weight: 500; background: var(--neutral-bg); color: var(--muted);
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%); }
+  .chev li:first-child i { clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%); border-radius: 8px 0 0 8px; }
+  .chev li:last-child i { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 14px 50%); border-radius: 0 8px 8px 0; }
+  .chev .done i { background: var(--success-bg); color: var(--success); }
+  .chev .cur i { background: var(--primary); color: #fff; font-weight: 600; }
+  .chev .open i { background: var(--primary-light); color: var(--primary); outline: 2px solid var(--primary); outline-offset: -2px; }
+
+  /* người */
+  .av { display: inline-grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 600; }
+  .p { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+  .p .t { flex: 1; min-width: 0; } .p .t b { display: block; font-size: 14px; font-weight: 500; } .p .t small { color: var(--muted); font-size: 12px; }
+  .fit { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .fit::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .fit--ok { color: var(--success); } .fit--warn { color: var(--warning); }
+  .radio { width: 18px; height: 18px; flex: none; border: 2px solid var(--border-strong); border-radius: 50%; background: var(--surface); display: grid; place-items: center; }
+  .radio--on { border-color: var(--primary); } .radio--on::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+  .mark { padding: 0 8px; border-radius: 9999px; background: var(--primary-light); color: var(--primary); font-size: 11px; font-weight: 600; line-height: 20px; }
+
+  /* kiểu 1: popover */
+  .pop { position: absolute; top: 74px; right: 60px; z-index: 2; width: 380px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 12px 32px rgba(0,0,0,.16); overflow: hidden; }
+  .pop h4 { margin: 0; padding: 12px 14px 4px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .pop .p { border-top: 1px solid var(--border); cursor: pointer; } .pop .p:hover { background: var(--neutral-bg); }
+  .pop .p--on { background: var(--primary-light); }
+  .pop__foot { padding: 8px 14px; border-top: 1px solid var(--border); background: var(--neutral-bg); }
+
+  /* kiểu 2: modal */
+  .scrim { position: absolute; inset: 0; border-radius: 12px; background: rgba(0,0,0,.18); display: grid; place-items: center; }
+  .dlg { width: 460px; border-radius: 12px; background: var(--surface); box-shadow: 0 16px 48px rgba(0,0,0,.24); overflow: hidden; }
+  .dlg__h { padding: 16px 20px 8px; } .dlg__h h3 { margin: 0; font-size: 16px; } .dlg__h p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .dlg__b { display: grid; gap: 8px; padding: 8px 20px 12px; }
+  .opt { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; }
+  .opt--on { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 2px var(--ring-focus); }
+  .opt .t { flex: 1; } .opt .t b { display: block; font-weight: 500; } .opt .t small { color: var(--muted); font-size: 12px; }
+  .dlg__f { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); }
+
+  /* kiểu 3: khung dưới trục */
+  .pick { padding: 14px 16px; border-top: 1px solid var(--border); display: grid; gap: 10px; }
+  .pick__h { display: flex; align-items: center; justify-content: space-between; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .pc { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); text-align: left; }
+  .pc .top { display: flex; align-items: center; gap: 10px; } .pc b { font-weight: 500; } .pc small { color: var(--muted); font-size: 12px; }
+  .pc--on { border: 2px solid var(--primary); box-shadow: 0 0 0 3px var(--ring-focus); padding: 11px; }
+</style></head><body>
+<div class="wrap">
+  <header>
+    <h1>Chọn người chủ tàu đã chọn: 3 hướng</h1>
+    <p class="lead">Hiện bấm mốc "Chủ tàu chọn" chỉ ra một menu chữ trần, thiếu thông tin để chọn đúng người. Cả ba đều: chọn xong ghi luôn nhãn "Chủ tàu đã chọn" (tối đa một người, chọn người khác thì nhãn chuyển sang), có chỗ bỏ chọn, và mỗi người hiện chức danh · tuổi · tình trạng hồ sơ.</p>
+  </header>
+
+  <!-- ============ KIỂU 1 ============ -->
+  <section class="variant">
+    <h2><b>1</b> Popover có thông tin từng người</h2>
+    <p>Giữ cách mở nhanh như hiện nay (bấm mốc là xổ ra), nhưng mỗi dòng là một người đầy đủ. Bấm dòng là chọn xong, popover đóng.</p>
+    <div class="page">
+      <div class="card"><div class="path"><ol class="chev"><li class="done"><i>✓ Mới</i></li><li class="done"><i>✓ Đang chọn · 3</i></li><li class="done"><i>✓ Chờ kết quả</i></li><li class="open"><i>Chủ tàu chọn</i></li><li><i>Đã chốt</i></li></ol></div></div>
+      <div class="pop">
+        <h4>Chủ tàu chọn ai?</h4>
+        <div class="p p--on"><span class="av">NH</span><div class="t"><b>Nguyễn Văn Hải</b><small>Thuyền trưởng · 45 tuổi · Ở bờ</small></div><span class="fit fit--ok">Đủ hồ sơ</span><span class="mark">Đang chọn</span></div>
+        <div class="p"><span class="av">PT</span><div class="t"><b>Phan Anh Tuấn</b><small>Thuyền trưởng · 41 tuổi · Ở bờ</small></div><span class="fit fit--ok">Đủ hồ sơ</span></div>
+        <div class="p"><span class="av">ĐV</span><div class="t"><b>Đỗ Quang Vinh</b><small>Thuyền trưởng · 38 tuổi · Bận</small></div><span class="fit fit--warn">Thiếu giấy · 2</span></div>
+        <div class="pop__foot"><button class="btn btn--ghost" style="height:28px;padding:0 6px">Bỏ nhãn chủ tàu đã chọn</button></div>
+      </div>
+    </div>
+    <ul><li>Ít thay đổi nhất, chọn nhanh (1 cú bấm).</li><li>Dễ bấm nhầm vì chọn là ghi luôn, không có bước xác nhận.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 2 ============ -->
+  <section class="variant">
+    <h2><b>2</b> Hộp nhỏ có nút Xác nhận</h2>
+    <p>Chọn người chủ tàu chọn là bước quan trọng (dẫn tới chốt), nên có hộp riêng: chọn thẻ, rồi bấm Xác nhận.</p>
+    <div class="page">
+      <div class="card"><div class="path"><ol class="chev"><li class="done"><i>✓ Mới</i></li><li class="done"><i>✓ Đang chọn · 3</i></li><li class="done"><i>✓ Chờ kết quả</i></li><li class="cur"><i>Chủ tàu chọn</i></li><li><i>Đã chốt</i></li></ol></div></div>
+      <div class="scrim"><div class="dlg">
+        <div class="dlg__h"><h3>Chủ tàu chọn ai?</h3><p>Halong Maritime JSC · Thuyền trưởng · MV Mekong Star</p></div>
+        <div class="dlg__b">
+          <div class="opt opt--on"><span class="radio radio--on"></span><span class="av">NH</span><div class="t"><b>Nguyễn Văn Hải</b><small>45 tuổi · Ở bờ · gửi 12/10</small></div><span class="fit fit--ok">Đủ hồ sơ</span></div>
+          <div class="opt"><span class="radio"></span><span class="av">PT</span><div class="t"><b>Phan Anh Tuấn</b><small>41 tuổi · Ở bờ · gửi 12/10</small></div><span class="fit fit--ok">Đủ hồ sơ</span></div>
+          <div class="opt"><span class="radio"></span><span class="av">ĐV</span><div class="t"><b>Đỗ Quang Vinh</b><small>38 tuổi · Bận · chưa gửi</small></div><span class="fit fit--warn">Thiếu giấy · 2</span></div>
+        </div>
+        <div class="dlg__f"><button class="btn btn--ghost" style="margin-right:auto">Bỏ nhãn</button><button class="btn">Huỷ</button><button class="btn btn--primary">Xác nhận</button></div>
+      </div></div>
+    </div>
+    <ul><li>An toàn nhất, có chỗ đọc kỹ; thêm thông tin "chưa gửi" nếu chọn người chưa được gửi hồ sơ.</li><li>Thêm một bước bấm so với hiện nay.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 3 ============ -->
+  <section class="variant">
+    <h2><b>3</b> Thẻ chọn ngay dưới trục, không popover</h2>
+    <p>Bấm mốc "Chủ tàu chọn" thì dưới trục mở một dải thẻ ứng viên, chọn một thẻ là xong. Không che màn hình, thấy cả ba người cạnh nhau.</p>
+    <div class="page" style="min-height:0">
+      <div class="card">
+        <div class="path"><ol class="chev"><li class="done"><i>✓ Mới</i></li><li class="done"><i>✓ Đang chọn · 3</i></li><li class="done"><i>✓ Chờ kết quả</i></li><li class="open"><i>Chủ tàu chọn</i></li><li><i>Đã chốt</i></li></ol></div>
+        <div class="pick">
+          <div class="pick__h"><b>Chủ tàu chọn ai?</b><button class="btn btn--ghost" style="height:28px">Bỏ nhãn</button></div>
+          <div class="grid3">
+            <button class="pc pc--on"><div class="top"><span class="av">NH</span><div><b>Nguyễn Văn Hải</b><br><small>Thuyền trưởng · 45 tuổi</small></div></div><div style="display:flex;justify-content:space-between"><span class="fit fit--ok">Đủ hồ sơ</span><span class="mark">Đang chọn</span></div></button>
+            <button class="pc"><div class="top"><span class="av">PT</span><div><b>Phan Anh Tuấn</b><br><small>Thuyền trưởng · 41 tuổi</small></div></div><span class="fit fit--ok">Đủ hồ sơ</span></button>
+            <button class="pc"><div class="top"><span class="av">ĐV</span><div><b>Đỗ Quang Vinh</b><br><small>Thuyền trưởng · 38 tuổi · Bận</small></div></div><span class="fit fit--warn">Thiếu giấy · 2</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ul><li>Trực quan nhất, nhưng tốn chiều cao và khác kiểu popover của các nút khác trên trục.</li><li>Nhiều người (hơn 4) thì thẻ xuống hàng hoặc cuộn ngang.</li></ul>
+  </section>
+</div>
+</body></html>

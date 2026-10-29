@@ -398,7 +398,7 @@ const opportunityService = {
     return this.get(pool, id)
   },
 
-  // Ghi nhận đã gửi chủ tàu (người làm gửi bằng app mail của máy rồi bấm "Đã gửi").
+  // Ghi nhận một lần gửi chủ tàu (gọi sau khi mail server đã nhận thư).
   async recordSend(pool, id, body, userId) {
     const ids = [...new Set(body.candidate_ids || [])]
     if (!ids.length) throw { statusCode: 400, message: 'Chọn ít nhất một ứng viên' }
@@ -421,6 +421,9 @@ const opportunityService = {
         ship_owner_contact_id: body.ship_owner_contact_id || null,
         to_email: body.to_email,
         subject: body.subject,
+        cc_emails: body.cc_emails || [],
+        bcc_emails: body.bcc_emails || [],
+        body: body.body || null,
         candidate_ids: rows.map((r) => r.id),
         export_pack_ids: rows.map((r) => r.export_pack_id),
         sent_by: userId,

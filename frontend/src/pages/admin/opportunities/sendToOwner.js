@@ -1,5 +1,4 @@
-// Gửi chủ tàu qua app mail mặc định của máy (mailto). Hàm thuần, có test.
-import { MAILTO_MAX } from '../../../constants/opportunityVoyage'
+// Nội dung thư gửi chủ tàu (điền sẵn trong hộp soạn thư). Hàm thuần, có test.
 
 const dmy = (iso) => (iso ? `${String(iso).slice(8, 10)}/${String(iso).slice(5, 7)}/${String(iso).slice(0, 4)}` : '')
 // Bỏ dấu tiếng Việt cho tên trong thư tiếng Anh.
@@ -12,15 +11,12 @@ export function pickContact(contacts = []) {
 
 export function mailSubject(o) {
   const rank = o.rank_name_en || o.rank_name
-  const port = o.planned_join_port_name ? ` ${ascii(o.planned_join_port_name)}` : ''
-  return `MCAH · ${rank} candidates for ${o.vessel_name || 'your vessel'} · join ${dmy(o.planned_join_date)}${port}`
+  return `${rank} candidates for ${o.vessel_name || 'your vessel'} · join ${dmy(o.planned_join_date)}`
 }
 
-export function mailBody(o, contact, people, sender, { limit = null } = {}) {
+export function mailBody(o, contact, people, sender) {
   const rank = o.rank_name_en || o.rank_name
-  const shown = limit == null ? people : people.slice(0, limit)
-  const lines = shown.map((p, i) => `${i + 1}. ${ascii(p.full_name).toUpperCase()}`)
-  if (shown.length < people.length) lines.push(`and ${people.length - shown.length} more, see attachments`)
+  const lines = people.map((p, i) => `${i + 1}. ${ascii(p.full_name).toUpperCase()}`)
   return [
     `Dear ${contact?.name ? ascii(contact.name) : 'Sir/Madam'},`,
     '',
@@ -28,25 +24,6 @@ export function mailBody(o, contact, people, sender, { limit = null } = {}) {
     ...lines,
     '',
     'Best regards,',
-    sender || 'MCAH',
+    ascii(sender) || 'MCAH',
   ].join('\n')
-}
-
-// URL mailto: tới, CC, tiêu đề, nội dung. Dài quá MAILTO_MAX thì bỏ bớt dòng tên, thêm "and N more".
-export function buildMailto({ opportunity, contact, people, cc, sender }) {
-  const make = (limit) => {
-    const query = [
-      cc ? `cc=${encodeURIComponent(cc)}` : null,
-      `subject=${encodeURIComponent(mailSubject(opportunity))}`,
-      `body=${encodeURIComponent(mailBody(opportunity, contact, people, sender, { limit }))}`,
-    ].filter(Boolean).join('&')
-    return `mailto:${encodeURIComponent(contact.email)}?${query}`
-  }
-  let limit = people.length
-  let url = make(null)
-  while (url.length > MAILTO_MAX && limit > 0) {
-    limit -= 1
-    url = make(limit)
-  }
-  return url
 }

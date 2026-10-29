@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Modal, Form, Input, Select, Checkbox, DatePicker, Space, Skeleton, Spin } from 'antd'
+import { App, Button, Modal, Form, Input, Select, Checkbox, DatePicker, Space, Skeleton, Spin } from 'antd'
 import { PlusOutlined, DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, certificateApi, certificateTypeApi, lookupApi } from '../../../api'
@@ -27,6 +27,7 @@ const fmtDate = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '')
 export default function DocumentsSection({ seafarerId, seafarer, photo, dismissed, onDismiss, onRestore }) {
   const queryClient = useQueryClient()
   const toast = useToast()
+  const { modal } = App.useApp()
   const can = useCan()
   const canEdit = can('seafarer.update')
   const [editing, setEditing] = useState(null) // null | 'new' | dòng chứng chỉ
@@ -139,7 +140,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   // Xoá mềm: giấy ẩn khỏi danh sách, tệp giữ 180 ngày rồi mới xoá khỏi ổ đĩa (quy tắc xoá tệp).
   function handleDeleteCert(row) {
     setPreviewAt(null)
-    Modal.confirm({
+    modal.confirm({
       title: `Xoá "${row.display_name}"?`,
       content: 'Giấy sẽ ẩn khỏi hồ sơ. Tệp đính kèm được giữ 180 ngày rồi mới xoá hẳn.',
       okText: 'Xoá',
@@ -170,7 +171,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
 
   function handleDeletePhoto() {
     setPreviewAt(null)
-    Modal.confirm({
+    modal.confirm({
       title: 'Gỡ ảnh thẻ?',
       content: 'Ảnh sẽ gỡ khỏi hồ sơ. Tệp được giữ 180 ngày rồi mới xoá hẳn.',
       okText: 'Gỡ ảnh',

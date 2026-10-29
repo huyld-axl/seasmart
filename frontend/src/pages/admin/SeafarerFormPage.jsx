@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import { App, AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi, certificateApi } from '../../api'
@@ -272,6 +272,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const toast = useToast()
+  const { modal } = App.useApp()
   const [form] = Form.useForm()
   const watched = Form.useWatch((all) => all, form)
   const againRef = useRef(false)
@@ -316,7 +317,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     setKeepPhotoDoc(false)
     readAsDataUrl(file).then(setPickedPhoto)
     // Ảnh thẻ mới: hỏi có lưu vào tab Giấy tờ không (thành dòng mới, ảnh trước thành Bản cũ).
-    Modal.confirm({
+    modal.confirm({
       title: 'Lưu ảnh thẻ này vào tab Giấy tờ?',
       content: 'Ảnh được lưu khi bạn lưu hồ sơ, thành một dòng "Ảnh thẻ 4x6" mới. Ảnh thẻ trước đó (nếu có) giữ lại thành Bản cũ.',
       okText: 'Lưu vào Giấy tờ',
@@ -373,7 +374,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     }
     return new Promise((resolve) => {
       if (!clash.length) return resolve(write(free))
-      Modal.confirm({
+      modal.confirm({
         title: 'Ghi đè các ô đã có dữ liệu?',
         content: `${clash.length} ô đã có dữ liệu và khác với giấy tờ: ${clash.map((row) => FIELD_LABELS[row.field] || row.field).join(', ')}.`,
         okText: 'Ghi đè',
@@ -390,7 +391,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     const found = files.map((file, i) => ({ file, type: (results[i]?.documents || []).map((d) => d.type).find((t) => IDENTITY[t]) })).filter((x) => x.type)
     for (const { file, type } of found) {
       const label = SOURCE_NAMES[type] || 'giấy tờ'
-      Modal.confirm({
+      modal.confirm({
         title: `Lưu ảnh ${label} vào tab Giấy tờ?`,
         content: `Ảnh "${file.name}" sẽ được lưu khi bạn lưu hồ sơ. Giấy cùng loại đã có (nếu có) được giữ lại và chuyển thành Bản cũ.`,
         okText: 'Lưu ảnh',

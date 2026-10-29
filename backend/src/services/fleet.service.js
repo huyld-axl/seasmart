@@ -463,7 +463,7 @@ const fleetService = {
       removeLogoFiles(storagePath)
       throw err
     }
-    if (row.logo_path) await trashFiles([row.logo_path, logoThumbPath(row.logo_path)], 'Thay logo đối tác')
+    if (row.logo_path) await trashFiles([row.logo_path, logoThumbPath(row.logo_path)], 'Thay logo đối tác', pool)
     return this.getOwner(pool, id)
   },
 
@@ -478,7 +478,7 @@ const fleetService = {
     const [[row]] = await pool.query('SELECT logo_path FROM ship_owner WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy đối tác' }
     await pool.query('UPDATE ship_owner SET logo_path = NULL, logo_mime = NULL, logo_updated_at = NOW() WHERE id = ?', [id])
-    if (row.logo_path) await trashFiles([row.logo_path, logoThumbPath(row.logo_path)], 'Gỡ logo đối tác')
+    if (row.logo_path) await trashFiles([row.logo_path, logoThumbPath(row.logo_path)], 'Gỡ logo đối tác', pool)
     return this.getOwner(pool, id)
   },
 }

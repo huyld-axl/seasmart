@@ -45,15 +45,19 @@ function shouldSend() {
   return Boolean(config.smtp.host)
 }
 
-async function send({ to, subject, html }) {
+// Thư HTML (thư mời) hoặc thư chữ thường có đính kèm (gửi hồ sơ cho chủ tàu). cc, replyTo, attachments tuỳ chọn.
+// fromName: tên người gửi, hiện là "Tên (MarinePort)"; địa chỉ gửi luôn là của công ty.
+async function send({ to, cc, bcc, replyTo, fromName: displayName, subject, html, text, attachments }) {
   if (!shouldSend()) return false
   const { fromName, fromEmail } = config.smtp
-  await getTransporter().sendMail({ from: `"${fromName}" <${fromEmail}>`, to, subject, html })
+  const name = displayName ? `${displayName} (${fromName})` : fromName
+  await getTransporter().sendMail({ from: { name, address: fromEmail }, to, cc, bcc, replyTo, subject, html, text, attachments })
   return true
 }
 
 const emailService = {
   send,
+  isConfigured: shouldSend,
 
   // Thư mời đặt mật khẩu cho tài khoản mới. `token` là mã gốc, chỉ có trong thư.
   async sendInvite({ to, fullName, roleName, token }) {

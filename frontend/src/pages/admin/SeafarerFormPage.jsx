@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
-import { seafarerApi, lookupApi } from '../../api'
+import { seafarerApi, lookupApi, certificateApi } from '../../api'
 import { documentApi } from '../../api/documentApi'
 import { withFlag } from '../../utils/flag'
 import ZaloInput from '../../components/ds/ZaloInput'
@@ -17,6 +17,7 @@ import { photoProblem } from './seafarers/photoRules'
 import { SCAN_BUTTONS, SOURCE_NAMES, matchCountry, mergeScans, sectionSummaries, summaryText } from './seafarers/scanView'
 import './seafarers/SeafarerForm.css'
 import useToast from '../../components/ds/useToast'
+import { IDENTITY } from './seafarers/scanToDoc'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
 const DATE_FIELDS = ['date_of_birth', 'passport_issued_date', 'passport_expiry', 'national_id_issued_date']
@@ -298,6 +299,8 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     enabled: isEdit && Boolean(seafarer?.has_photo),
   })
   const [photoFile, setPhotoFile] = useState(null)
+  // Ảnh giấy tuỳ thân vừa quét mà người dùng đồng ý lưu vào tab Giấy tờ: [{ type, label, file }]. Lưu khi lưu hồ sơ.
+  const [pendingDocs, setPendingDocs] = useState([])
   const [pickedPhoto, setPickedPhoto] = useState(null)
   const [photoRemoved, setPhotoRemoved] = useState(false)
   const [photoError, setPhotoError] = useState('')
@@ -371,6 +374,25 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     })
   }
 
+  // Quét xong giấy tuỳ thân (CCCD, hộ chiếu, sổ thuyền viên): hỏi có lưu ảnh vào tab Giấy tờ không. Đồng ý thì lưu khi lưu hồ sơ,
+  // thành một dòng giấy mới (giấy cũ cùng loại, nếu có, thành Bản cũ). Mỗi loại giữ một tệp, quét lại thì thay tệp chờ lưu.
+  const askToKeepScans = (files, results) => {
+    const found = files.map((file, i) => ({ file, type: (results[i]?.documents || []).map((d) => d.type).find((t) => IDENTITY[t]) })).filter((x) => x.type)
+    for (const { file, type } of found) {
+      const label = SOURCE_NAMES[type] || 'giấy tờ'
+      Modal.confirm({
+        title: `Lưu ảnh ${label} vào tab Giấy tờ?`,
+        content: `Ảnh "${file.name}" sẽ được lưu khi bạn lưu hồ sơ. Giấy cùng loại đã có (nếu có) được giữ lại và chuyển thành Bản cũ.`,
+        okText: 'Lưu ảnh',
+        cancelText: 'Không lưu',
+        onOk: () => {
+          setPendingDocs((list) => [...list.filter((d) => d.type !== type), { type, label, file }])
+          toast.success(`Ảnh ${label} sẽ được lưu vào Giấy tờ khi lưu hồ sơ`)
+        },
+      })
+    }
+  }
+
   const runScan = async (kind, files, id) => {
     setScanBusy(id)
     try {
@@ -384,6 +406,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         return
       }
       const count = await applyScan(entries)
+      askToKeepScans(files, results)
       if (count) {
         setScanDone({ id, text: `Đã điền ${count} ô` })
         clearTimeout(doneTimer.current)
@@ -440,6 +463,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     setPhotoFile(null)
     setPickedPhoto(null)
     setPhotoRemoved(false)
+    setPendingDocs([])
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -454,6 +478,30 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         saved = (await seafarerApi.update(id, payload)).data
       }
       let photoError = null
+      // Ảnh giấy tuỳ thân đã đồng ý lưu: mỗi ảnh một dòng giấy mới, số và ngày lấy từ hồ sơ vừa lưu.
+      if (pendingDocs.length) {
+        try {
+          const types = (await lookupApi.certificateTypes()).data
+          const list = types?.data || types || []
+          for (const doc of pendingDocs) {
+            const identity = IDENTITY[doc.type]
+            const type = list.find((c) => c.code === identity.code || (identity.code === 'SEAMAN_BOOK' && c.code === 'SEAMAN-BOOK'))
+            if (!type) continue
+            const day = (v) => (v ? String(v).slice(0, 10) : undefined)
+            const expiry = identity.expiry ? day(saved[identity.expiry]) : undefined
+            const cert = (await certificateApi.create(saved.id, {
+              certificate_type_id: type.id,
+              certificate_number: saved[identity.number] || undefined,
+              issued_date: identity.issued ? day(saved[identity.issued]) : undefined,
+              expiry_date: expiry,
+              no_expiry: !expiry,
+            })).data
+            await certificateApi.upload(saved.id, cert.id, doc.file)
+          }
+        } catch (err) {
+          photoError = `Chưa lưu được ảnh giấy tờ: ${err.response?.data?.error || err.response?.data?.message || 'thử lại ở tab Giấy tờ'}`
+        }
+      }
       try {
         if (photoFile) await seafarerApi.uploadPhoto(saved.id, photoFile)
         else if (photoRemoved && seafarer?.has_photo) await seafarerApi.removePhoto(saved.id)
@@ -467,8 +515,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
       queryClient.invalidateQueries({ queryKey: ['seafarer'] })
       queryClient.invalidateQueries({ queryKey: ['seafarer-contacts'] })
       queryClient.invalidateQueries({ queryKey: ['seafarer-photo'] })
+      queryClient.invalidateQueries({ queryKey: ['certificates'] })
       if (photoError) toast.warning(`Đã lưu hồ sơ ${saved.full_name}`, { description: photoError })
-      else toast.success(isEdit ? `Đã lưu hồ sơ ${saved.full_name}` : `Đã tạo hồ sơ ${saved.full_name}`)
+      else toast.success(isEdit ? `Đã lưu hồ sơ ${saved.full_name}` : `Đã tạo hồ sơ ${saved.full_name}`, pendingDocs.length ? { description: `Đã lưu ${pendingDocs.length} ảnh giấy tờ vào tab Giấy tờ` } : undefined)
+      setPendingDocs([])
       if (again) resetForNext()
       else navigate(`/seafarers/${saved.id}`)
     },

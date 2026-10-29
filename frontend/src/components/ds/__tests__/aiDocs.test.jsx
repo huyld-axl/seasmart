@@ -112,7 +112,7 @@ describe('CertificateTable và ReviewPager', () => {
     expect(screen.getAllByText('Hết hạn').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Quá hạn 12 ngày').length).toBeGreaterThan(0)
     expect(screen.getAllByRole('button', { name: 'Tắt cảnh báo AFF' }).length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('button', { name: 'Cập nhật AFF' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: 'Nạp bản mới AFF' }).length).toBeGreaterThan(0)
     expect(screen.queryByText('Nhập tay')).toBeNull()
     expect(screen.getAllByText('Không thời hạn').length).toBeGreaterThan(0)
   })

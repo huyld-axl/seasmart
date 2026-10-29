@@ -1,5 +1,5 @@
 import { Button } from 'antd'
-import { BellOutlined, CloseOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
+import { BellOutlined, CloseOutlined, DeleteOutlined, EditOutlined, SyncOutlined } from '@ant-design/icons'
 import { DownloadIcon } from './TransferIcons'
 import StatusBadge from './StatusBadge'
 import './ds.css'
@@ -27,13 +27,14 @@ export const CategoryTag = ({ cert }) => (cert.category
 
 const badge = (cert) => <StatusBadge group="cert" value={cert.replaced ? 'REPLACED' : cert.status} />
 
-export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSource, onDownload, onRenew, onDismiss, onRestore }) {
+export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSource, onDownload, onRenew, onDelete, onDismiss, onRestore }) {
   const name = (cert) => (thumb ? <span className="ds-ctable__name">{thumb(cert)}<b>{cert.name}</b></span> : <b>{cert.name}</b>)
   const source = (cert) => (thumb || !onOpenSource || !(cert.hasFile ?? !cert.manual) ? null : <button type="button" className="ds-link" onClick={() => onOpenSource?.(cert)}>Xem bản gốc</button>)
   // Các nút chỉ hiện khi truyền handler tương ứng (theo quyền) và dòng đủ điều kiện.
-  const renew = (cert) => (onRenew && cert.canRenew ? <Button type="text" size="small" icon={<SyncOutlined />} aria-label={`Cập nhật ${cert.name}`} title="Cập nhật chứng chỉ" onClick={() => onRenew(cert)} /> : null)
+  const renew = (cert) => (onRenew && cert.canRenew ? <Button type="text" size="small" icon={<SyncOutlined />} aria-label={`Nạp bản mới ${cert.name}`} title="Nạp bản mới" onClick={() => onRenew(cert)} /> : null)
   const download = (cert) => (onDownload && cert.hasFile ? <Button type="text" size="small" icon={<DownloadIcon />} aria-label={`Tải ${cert.name}`} title="Tải về" onClick={() => onDownload(cert)} /> : null)
   const edit = (cert) => (onEdit ? <Button type="text" size="small" icon={<EditOutlined />} aria-label={`Xem và sửa ${cert.name}`} title="Xem và sửa" onClick={() => onEdit(cert)} /> : null)
+  const remove = (cert) => (onDelete && cert.canDelete !== false ? <Button type="text" size="small" icon={<DeleteOutlined />} aria-label={`Xoá ${cert.name}`} title="Xoá" onClick={() => onDelete(cert)} /> : null)
   const alertNote = (cert) => (cert.alert ? (
     <span className={`ds-ctable__alert ds-ctable__alert--${cert.alert}`}>
       {alertText(cert)}
@@ -69,7 +70,7 @@ export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSour
               <td>
                 <span className="ds-ctable__state">{badge(cert)}{alertNote(cert)}</span>
               </td>
-              <td className="ds-ctable__r"><span className="ds-ctable__src">{source(cert)}{renew(cert)}{download(cert)}{edit(cert)}</span></td>
+              <td className="ds-ctable__r"><span className="ds-ctable__src">{source(cert)}{renew(cert)}{download(cert)}{edit(cert)}{remove(cert)}</span></td>
             </tr>
           ))}
         </tbody>
@@ -82,7 +83,7 @@ export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSour
               {cert.category ? <><CategoryTag cert={cert} />{' '}</> : null}<span className="ds-ctable__mono">{cert.number}</span> · Cấp {cert.issuedOn} · {cert.noExpiry ? 'Không thời hạn' : `Hết hạn ${cert.expiresOn}`}
             </span>
             {alertNote(cert)}
-            <span className="ds-ctable__src">{source(cert)}{renew(cert)}{download(cert)}{edit(cert)}</span>
+            <span className="ds-ctable__src">{source(cert)}{renew(cert)}{download(cert)}{edit(cert)}{remove(cert)}</span>
           </li>
         ))}
       </ul>

@@ -26,3 +26,14 @@ describe('chứng chỉ', () => {
     expect(bad.errors).toMatchObject({ certificateTypeId: expect.any(String), issuedOn: expect.any(String), expiresOn: expect.any(String) })
   })
 })
+
+describe('giấy không ghi đè: bản cũ', () => {
+  it('nạp sau cùng loại, hạn không sớm hơn → bản trước thành bản cũ (kể cả giấy không thời hạn)', async () => {
+    const { supersededIds } = await import('../certificateView')
+    const cccd = [{ id: 1, certificate_type_id: 9, no_expiry: 1 }, { id: 5, certificate_type_id: 9, no_expiry: 1 }]
+    expect([...supersededIds(cccd)]).toEqual([1])
+    const pp = [{ id: 7, certificate_type_id: 2, expiry_date: '2030-01-01' }, { id: 8, certificate_type_id: 2, expiry_date: '2026-01-01' }]
+    expect([...supersededIds(pp)]).toEqual([8])
+    expect([...supersededIds([{ id: 3, certificate_type_id: 4, expiry_date: '2027-01-01' }, { id: 4, certificate_type_id: 5, expiry_date: '2028-01-01' }])]).toEqual([])
+  })
+})

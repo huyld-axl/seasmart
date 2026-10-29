@@ -2,13 +2,14 @@ import { useEffect } from 'react'
 import useObjectUrl from '../../../hooks/useObjectUrl'
 import { skipToken, useQuery } from '@tanstack/react-query'
 import { Button, Modal, Skeleton, Tooltip } from 'antd'
-import { EditOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, LeftOutlined, RightOutlined, SyncOutlined } from '@ant-design/icons'
 import { DownloadIcon, UploadIcon } from '../../../components/ds/TransferIcons'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { EmptyState } from '../../../components/ds/Controls'
 
 // Xem lớn giấy tờ ở tab Giấy tờ: ảnh / PDF bên trái, thông tin và nút bên phải. ← → (hoặc nút hai bên) chuyển giấy.
-// items: [{ key, name, status, number, issuedOn, expiresOn, noExpiry, source, image: { key, load } | null, onDownload, onReplace, onEdit }]
+// items: [{ key, name, status, number, issuedOn, expiresOn, noExpiry, source, image: { key, load } | null, onDownload, onReplace, onNewVersion, onEdit, onDelete }]
+// onReplace: nạp ảnh cho giấy chưa có ảnh (hoặc ảnh thẻ). onNewVersion: giấy đã có ảnh thì nạp bản mới, không ghi đè.
 export default function DocPreview({ items, index, onIndex, onClose }) {
   const open = index !== null && index >= 0 && index < items.length
   const item = open ? items[index] : null
@@ -57,7 +58,9 @@ export default function DocPreview({ items, index, onIndex, onClose }) {
             <div className="crew-preview__acts">
               {item.image && item.onDownload ? <Button icon={<DownloadIcon />} onClick={item.onDownload}>Tải về</Button> : null}
               {item.onReplace ? <Button icon={<UploadIcon />} onClick={item.onReplace}>{item.image ? 'Thay ảnh' : 'Nạp ảnh'}</Button> : null}
+              {item.onNewVersion ? <Button icon={<SyncOutlined />} onClick={item.onNewVersion}>Nạp bản mới</Button> : null}
               {item.onEdit ? <Button icon={<EditOutlined />} onClick={item.onEdit}>Sửa thông tin</Button> : null}
+              {item.onDelete ? <Button danger type="text" icon={<DeleteOutlined />} onClick={item.onDelete}>Xoá</Button> : null}
             </div>
           </aside>
         </div>

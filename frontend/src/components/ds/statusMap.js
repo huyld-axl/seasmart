@@ -124,7 +124,7 @@ export const STATUS = {
     EXPIRING: { label: 'Sắp hết hạn', tone: 'warning', mark: 'clock' },
     EXPIRED: { label: 'Hết hạn', tone: 'error', mark: 'cross' },
     NO_EXPIRY: { label: 'Hiệu lực', tone: 'success', mark: 'check' },
-    REPLACED: { label: 'Đã cập nhật', tone: 'neutral', mark: 'ring' },
+    REPLACED: { label: 'Bản cũ', tone: 'neutral', mark: 'ring' },
   },
   // Tệp ở màn tải giấy tờ lên: người dùng chỉ cần biết đang xử lý hay xong (T1)
   upload: {

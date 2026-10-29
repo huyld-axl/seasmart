@@ -93,7 +93,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const replaceMutation = useMutation({
     mutationFn: ({ certId, file }) => certificateApi.upload(seafarerId, certId, file),
     onSuccess: () => {
-      toast.success('Đã thay ảnh')
+      toast.success('Đã nạp ảnh')
       refresh()
       queryClient.invalidateQueries({ queryKey: ['doc-preview'] })
     },
@@ -109,10 +109,12 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     onError: failed('Không lưu được ảnh thẻ'),
   })
 
+  // Xoá mềm: giấy ẩn khỏi danh sách, tệp giữ 180 ngày rồi mới xoá khỏi ổ đĩa (quy tắc xoá tệp).
   function handleDeleteCert(row) {
+    setPreviewAt(null)
     Modal.confirm({
-      title: 'Xoá giấy tờ?',
-      content: `Bạn có chắc muốn xoá "${row.display_name}"?`,
+      title: `Xoá "${row.display_name}"?`,
+      content: 'Giấy sẽ ẩn khỏi hồ sơ. Tệp đính kèm được giữ 180 ngày rồi mới xoá hẳn.',
       okText: 'Xoá',
       cancelText: 'Huỷ',
       okType: 'danger',
@@ -139,8 +141,24 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     }
   }
 
-  // Cập nhật = tạo giấy mới, điền sẵn loại và số của bản cũ. Bản mới có hạn muộn hơn thì bản cũ hết cảnh báo.
+  function handleDeletePhoto() {
+    setPreviewAt(null)
+    Modal.confirm({
+      title: 'Gỡ ảnh thẻ?',
+      content: 'Ảnh sẽ gỡ khỏi hồ sơ. Tệp được giữ 180 ngày rồi mới xoá hẳn.',
+      okText: 'Gỡ ảnh',
+      cancelText: 'Huỷ',
+      okType: 'danger',
+      onOk: () => seafarerApi.removePhoto(seafarerId).then(() => {
+        toast.success('Đã gỡ ảnh thẻ')
+        queryClient.invalidateQueries({ queryKey: ['seafarer', seafarerId] })
+      }, failed('Không gỡ được ảnh thẻ')),
+    })
+  }
+
+  // Nạp bản mới = tạo giấy mới (không ghi đè), điền sẵn loại và số của bản cũ. Bản cũ chuyển thành "Bản cũ", hết cảnh báo.
   function startRenew(cert) {
+    setPreviewAt(null)
     setRenewing(cert.raw)
     setFormInit({ certificate_type_id: cert.raw.certificate_type_id, certificate_number: cert.raw.certificate_number })
     setEditing('new')
@@ -233,7 +251,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   // Ảnh thẻ là một dòng của bảng (nhóm Tuỳ thân), lưu ở hồ sơ thuyền viên chứ không phải chứng chỉ.
   const docs = useMemo(() => {
     const photoRow = {
-      id: 'photo', isPhoto: true, name: 'Ảnh thẻ 4x6', category: CATEGORY.DOCUMENT, categoryKey: 'DOCUMENT', number: '—',
+      id: 'photo', isPhoto: true, canDelete: Boolean(photo), name: 'Ảnh thẻ 4x6', category: CATEGORY.DOCUMENT, categoryKey: 'DOCUMENT', number: '—',
       issuedOn: fmtDate(seafarer.photo_updated_at) || '—', expiresOn: '', noExpiry: true, status: 'NO_EXPIRY', manual: true, hasFile: Boolean(photo),
     }
     return [photoRow, ...toTableCerts(rows, { dismissed })]
@@ -260,8 +278,10 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     source: cert.isPhoto ? null : cert.uploadId ? `${cert.fileName || 'Bộ giấy tải lên'}${cert.raw.source_page ? ` · ${cert.raw.source_page}` : ''}` : cert.hasFile ? 'Nạp tay' : null,
     image: imageOf(cert, 'full'),
     onDownload: () => downloadCert(cert),
-    onReplace: canEdit ? (cert.isPhoto ? pickPhoto : () => { setReplaceFor(cert.id); fileInput.current?.click() }) : undefined,
+    onReplace: canEdit && (cert.isPhoto || !cert.hasFile) ? (cert.isPhoto ? pickPhoto : () => { setReplaceFor(cert.id); fileInput.current?.click() }) : undefined,
+    onNewVersion: canEdit && !cert.isPhoto && cert.hasFile && !cert.replaced ? () => startRenew(cert) : undefined,
     onEdit: canEdit && !cert.isPhoto ? () => startEdit(cert.raw) : undefined,
+    onDelete: canEdit ? (cert.isPhoto ? (cert.hasFile ? handleDeletePhoto : undefined) : () => handleDeleteCert(cert.raw)) : undefined,
   }))
 
   // Ảnh xem trước của tệp vừa chọn trong hộp thoại nạp.
@@ -355,6 +375,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
             onDismiss={(cert) => onDismiss([{ id: cert.id, expiry: String(cert.raw.expiry_date).slice(0, 10) }])}
             onRestore={(cert) => onRestore(cert.id)}
             onRenew={canEdit ? startRenew : undefined}
+            onDelete={canEdit ? (cert) => (cert.isPhoto ? (cert.hasFile ? handleDeletePhoto() : null) : handleDeleteCert(cert.raw)) : undefined}
             onEdit={(cert) => setPreviewAt(shown.indexOf(cert))}
             onDownload={downloadCert}
           />
@@ -363,7 +384,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
       )}
       <DocPreview items={previewItems} index={previewAt} onIndex={setPreviewAt} onClose={() => setPreviewAt(null)} />
       <Modal
-        title={renewing ? `Cập nhật: ${renewing.display_name}` : isNew ? 'Nạp giấy tờ' : `Sửa giấy tờ: ${editing?.display_name || ''}`}
+        title={renewing ? `Nạp bản mới: ${renewing.display_name}` : isNew ? 'Nạp giấy tờ' : `Sửa giấy tờ: ${editing?.display_name || ''}`}
         open={editing !== null}
         onCancel={close}
         footer={null}
@@ -371,19 +392,23 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         destroyOnHidden
       >
         <div className="crew-certs__scan">
-          {certFile ? (
+          {editingHasFile ? (
+            <p className="crew-certs__renew" style={{ margin: 0 }}>
+              Giấy đã có ảnh. Muốn đổi ảnh thì dùng <button type="button" className="ds-link" onClick={() => { const row = editing; close(); startRenew({ raw: row }) }}>Nạp bản mới</button> để giữ lại bản hiện tại.
+            </p>
+          ) : certFile ? (
             <div className="crew-pick" style={{ width: '100%' }}>
               {pickedUrl ? <img src={pickedUrl} alt="" /> : <span className="ds-thumb ds-thumb--sm"><UploadIcon /></span>}
               <div className="crew-pick__body">
                 <p className="crew-pick__name" title={certFile.name}>{certFile.name}</p>
-                <p className="crew-pick__meta">{(certFile.size / 1024 / 1024).toFixed(1)} MB{editingHasFile ? ' · thay cho ảnh đang có' : ''}{scanDone ? ` · ${scanDone}` : ''}</p>
+                <p className="crew-pick__meta">{(certFile.size / 1024 / 1024).toFixed(1)} MB{scanDone ? ` · ${scanDone}` : ''}</p>
               </div>
               <Button type="text" size="small" icon={<CloseOutlined />} aria-label="Bỏ tệp" onClick={() => setCertFile(null)} />
             </div>
           ) : (
             <label className="ds-drop" style={{ width: '100%' }}>
               <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="ds-sr-only" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) setCertFile(file) }} />
-              <span className="ds-drop__title">{editingHasFile ? 'Chọn ảnh mới để thay' : 'Chọn ảnh hoặc bản scan'}</span>
+              <span className="ds-drop__title">Chọn ảnh hoặc bản scan</span>
               <span className="ds-drop__hint">PDF, JPG hoặc PNG</span>
               <span className="ds-drop__button"><UploadIcon aria-hidden />Chọn tệp</span>
             </label>
@@ -392,7 +417,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
             <ScanButton label="Quét giấy tờ (AI)" loading={scanning} doneText={scanDone || undefined} onPick={(files) => scanCertificate(files[0])} />
           ) : null}
         </div>
-        {renewing ? <p className="crew-certs__renew">Nhập thông tin bản mới. Khi bản mới có hạn muộn hơn, cảnh báo của bản cũ sẽ tự tắt.</p> : null}
+        {renewing ? <p className="crew-certs__renew">Bản mới thành một dòng riêng; bản hiện tại giữ lại, chuyển thành "Bản cũ" và hết cảnh báo.</p> : null}
         <Form form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v })}>
           <Form.Item name="certificate_type_id" label="Loại giấy tờ" rules={[{ required: true, message: 'Chọn loại giấy tờ' }]}>
             <Select

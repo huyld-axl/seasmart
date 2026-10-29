@@ -11,7 +11,8 @@ const MAX_SCAN_PAGES = 8
 
 // kind của nút bấm → loại giấy. auto: để AI tự nhận loại từng trang.
 const KIND_TYPES = { cccd: 'national_id', passport: 'passport', seaman_book: 'seaman_book_info', diploma: 'diploma', certificate: 'certificate' }
-const KINDS = ['auto', ...Object.keys(KIND_TYPES)]
+// any: tab Giấy tờ — AI tự nhận loại, đọc cả giấy tuỳ thân lẫn chứng chỉ (auto chỉ đọc giấy dùng để điền form hồ sơ).
+const KINDS = ['auto', 'any', ...Object.keys(KIND_TYPES)]
 const SCAN_TYPES = ['national_id', 'passport', 'seaman_book_info', 'seaman_book_duty', 'certificate', 'diploma', 'other']
 // Thứ tự ưu tiên khi hai giấy cùng có một ô (họ tên, ngày sinh...): giấy trên thắng.
 const PRIORITY = ['national_id', 'passport', 'seaman_book_info', 'diploma']
@@ -177,7 +178,7 @@ const documentScan = {
 
     // Phân loại từng trang khi để AI tự nhận, hoặc khi quét sổ thuyền viên (lọc ra trang thông tin).
     let types
-    if (kind === 'auto' || kind === 'seaman_book') {
+    if (kind === 'auto' || kind === 'any' || kind === 'seaman_book') {
       const numbers = pages.map((p) => p.pageNo)
       const result = await ai.run({
         task: 'scan_classify',
@@ -196,7 +197,7 @@ const documentScan = {
     }
 
     // Mỗi loại một lần đọc, gom mọi trang cùng loại (CCCD hai mặt có thể là hai trang).
-    const wanted = kind === 'auto' ? PRIORITY : [KIND_TYPES[kind]]
+    const wanted = kind === 'auto' ? PRIORITY : kind === 'any' ? [...PRIORITY, 'certificate'] : [KIND_TYPES[kind]]
     const skipped = []
     const perType = []
     for (const type of new Set(types)) {
@@ -209,7 +210,8 @@ const documentScan = {
       const read = await documentReader.read(images, certificateTypes, {}, type)
       perType.push({ type, label: DOC_TYPES[type].label, fields: toFormFields(type, read.fields) })
     }
-    if (kind !== 'auto' && !perType.length) {
+    if (kind === 'any' && !perType.length) throw { statusCode: 422, message: 'AI không nhận ra giấy tờ trong tệp này. Vẫn lưu được tệp và nhập tay.' }
+    if (kind !== 'auto' && kind !== 'any' && !perType.length) {
       const label = DOC_TYPES[KIND_TYPES[kind]].label
       throw { statusCode: 422, message: `Không thấy ${label.toLowerCase()} trong tệp này. Kiểm tra lại tệp hoặc dùng "Tự điền từ giấy tờ".` }
     }

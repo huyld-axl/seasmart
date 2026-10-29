@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Modal, Form, Input, Select, Checkbox, DatePicker, Space, Dropdown, Skeleton } from 'antd'
-import { PlusOutlined, DeleteOutlined, DownOutlined, ScanOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons'
+import { Button, Modal, Form, Input, Select, Checkbox, DatePicker, Space, Skeleton, Spin } from 'antd'
+import { PlusOutlined, DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, certificateApi, certificateTypeApi, lookupApi } from '../../../api'
 import { documentApi } from '../../../api/documentApi'
@@ -9,12 +9,14 @@ import { DownloadIcon, UploadIcon } from '../../../components/ds/TransferIcons'
 import useToast from '../../../components/ds/useToast'
 import { EmptyState, FilterChips } from '../../../components/ds/Controls'
 import CertificateTable from '../../../components/ds/CertificateTable'
-import ScanButton from '../../../components/ds/ScanButton'
 import { useCan } from '../../../hooks/usePermission'
 import { saveBlob, downloadError } from '../exports/download'
 import { CATEGORY, toTableCerts } from './certificateView'
 import { certImage } from './certFiles'
 import DocPreview from './DocPreview'
+import ToggleRow from '../../../components/ds/ToggleRow'
+import Banner from '../../../components/ds/Banner'
+import { fromScan, identityOfCode, profileDiff, profileFromForm, showValue } from './scanToDoc'
 import useObjectUrl from '../../../hooks/useObjectUrl'
 
 const fmtDate = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '')
@@ -28,7 +30,6 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const can = useCan()
   const canEdit = can('seafarer.update')
   const [editing, setEditing] = useState(null) // null | 'new' | dòng chứng chỉ
-  const quickScanInput = useRef(null)
   const photoInput = useRef(null)
   const fileInput = useRef(null)
   const [replaceFor, setReplaceFor] = useState(null) // chứng chỉ đang thay ảnh (bấm Thay ảnh trong hộp thoại xem)
@@ -41,6 +42,8 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const [bundling, setBundling] = useState(false)
   const [form] = Form.useForm()
   const [formInit, setFormInit] = useState({}) // giá trị đầu của hộp thoại (Form chỉ gắn khi hộp thoại mở)
+  const [aiRead, setAiRead] = useState(null) // { profile } khi AI vừa đọc tệp: ô hồ sơ đọc thêm được (họ tên, ngày sinh…)
+  const [skipFields, setSkipFields] = useState([]) // ô hồ sơ người dùng bỏ tích, không ghi vào hồ sơ
 
   const { data, isLoading } = useQuery({
     queryKey: ['certificates', seafarerId],
@@ -52,7 +55,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     queryFn: () => lookupApi.certificateTypes().then((r) => r.data),
   })
 
-  const close = () => { setEditing(null); setRenewing(null); setCertFile(null) }
+  const close = () => { setEditing(null); setRenewing(null); setCertFile(null); setAiRead(null); setSkipFields([]) }
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
   const saved = (text) => () => {
     toast.success(text)
@@ -80,7 +83,22 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
       if (certFile && cert?.id) await certificateApi.upload(seafarerId, cert.id, certFile)
       return cert
     },
-    onSuccess: (_, { row }) => saved(row ? 'Đã lưu giấy tờ' : 'Đã thêm giấy tờ')(),
+
+    onSuccess: async (_, { row, profile }) => {
+      if (profile && Object.keys(profile).length) {
+        try {
+          await seafarerApi.update(seafarerId, { ...profile, reason: 'Cập nhật từ giấy tờ' })
+          queryClient.invalidateQueries({ queryKey: ['seafarer', seafarerId] })
+          toast.success(`Đã lưu giấy tờ và cập nhật ${Object.keys(profile).length} ô hồ sơ`)
+          close()
+          refresh()
+          return
+        } catch (e) {
+          failed('Đã lưu giấy tờ, nhưng chưa cập nhật được hồ sơ')(e)
+        }
+      }
+      saved(row ? 'Đã lưu giấy tờ' : 'Đã thêm giấy tờ')()
+    },
     onError: failed('Không lưu được giấy tờ'),
   })
 
@@ -213,32 +231,32 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
 
   const certTypeList = certTypes?.data || certTypes || []
   const [scanning, setScanning] = useState(false)
-  const [scanDone, setScanDone] = useState('')
+  // Chọn tệp là AI đọc ngay (tự nhận giấy tuỳ thân hay chứng chỉ), điền sẵn các ô; người dùng kiểm tra rồi mới Lưu.
   async function scanCertificate(file) {
+    setCertFile(file)
+    setAiRead(null)
+    setSkipFields([])
+    if (!can('seafarer.docs')) return
     setScanning(true)
     try {
-      const result = await documentApi.scan(file, 'certificate')
-      const got = Object.fromEntries((result.fields || []).map((item) => [item.field, item.value]))
-      const type = certTypeList.find((c) => c.code === got.certificate_type_code)
-      const values = {
-        ...(type ? { certificate_type_id: type.id } : {}),
-        ...(got.certificate_number ? { certificate_number: got.certificate_number } : {}),
-        ...(got.issued_date ? { issued_date: dayjs(got.issued_date) } : {}),
-        ...(got.expiry_date ? { expiry_date: dayjs(got.expiry_date) } : {}),
-        ...(got.no_expiry ? { no_expiry: true, expiry_date: null } : {}),
-      }
-      setCertFile(file)
-      if (!Object.keys(values).length) {
-        toast.warning('Không đọc được ô nào từ giấy này', { description: 'Ảnh vẫn được giữ, nhập tay các ô còn lại.' })
+      const read = fromScan(await documentApi.scan(file, 'any'), certTypeList)
+      if (!read) {
+        toast.warning('AI không nhận ra giấy này', { description: 'Tệp vẫn được giữ, nhập tay các ô.' })
         return
       }
+      const v = read.values
+      const values = {
+        ...(read.typeId ? { certificate_type_id: read.typeId } : {}),
+        ...(v.certificate_number ? { certificate_number: v.certificate_number } : {}),
+        ...(v.issued_date ? { issued_date: dayjs(v.issued_date) } : {}),
+        ...(v.expiry_date ? { expiry_date: dayjs(v.expiry_date) } : {}),
+        ...(v.no_expiry ? { no_expiry: true, expiry_date: null } : {}),
+      }
       form.setFieldsValue(values)
-      setScanDone(`Đã điền ${Object.keys(values).length} ô`)
-      setTimeout(() => setScanDone(''), 5000)
-      if (!type) toast.warning('Chưa nhận ra loại giấy', { description: 'Chọn loại tay rồi kiểm tra các ô còn lại.' })
+      setAiRead({ profile: read.profile, count: Object.keys(values).length })
+      if (!read.typeId) toast.warning('Chưa nhận ra loại giấy', { description: 'Chọn loại tay rồi kiểm tra các ô còn lại.' })
     } catch (e) {
-      setCertFile(file)
-      failed('Không đọc được giấy này')(e)
+      failed('AI không đọc được giấy này')(e)
     } finally {
       setScanning(false)
     }
@@ -247,6 +265,13 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const rows = useMemo(() => data?.data || [], [data])
   const isNew = editing === 'new'
   const noExpiry = Form.useWatch('no_expiry', form)
+  const watched = Form.useWatch([], form) || {}
+  // Giấy tuỳ thân: ô hồ sơ sẽ đổi khi lưu (số, ngày theo hộp thoại; họ tên, ngày sinh… theo AI đọc), người dùng bỏ tích được.
+  const watchedCode = certTypeList.find((c) => c.id === watched.certificate_type_id)?.code
+  const changes = editing !== null && identityOfCode(watchedCode)
+    ? profileDiff({ ...(aiRead?.profile || {}), ...profileFromForm(watchedCode, watched) }, seafarer)
+    : []
+  const chosenProfile = Object.fromEntries(changes.filter((c) => !skipFields.includes(c.field)).map((c) => [c.field, c.to]))
 
   // Ảnh thẻ là một dòng của bảng (nhóm Tuỳ thân), lưu ở hồ sơ thuyền viên chứ không phải chứng chỉ.
   const docs = useMemo(() => {
@@ -288,15 +313,6 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const pickedUrl = useObjectUrl(certFile, (f) => f.type?.startsWith('image/'))
   const editingHasFile = editing && editing !== 'new' && Boolean(editing.document_url || editing.source_document_id)
 
-  const addMenu = {
-    items: [
-      ...(can('seafarer.docs') ? [
-        { key: 'scan', icon: <ScanOutlined />, label: 'Quét giấy tờ (AI)' },
-      ] : []),
-    ],
-    onClick: () => quickScanInput.current?.click(),
-  }
-
   return (
     <section className="ct-block crew-docs-sec" aria-label="Giấy tờ">
       {/* Thanh công cụ: lọc theo loại bên trái, Tải cả bộ / Nạp giấy tờ bên phải */}
@@ -312,30 +328,8 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         </div>
         <Space wrap className="crew-docs-toolbar__acts">
           {docs.some((d) => d.hasFile) ? <Button icon={<DownloadIcon />} loading={bundling} onClick={downloadAll}>Tải cả bộ</Button> : null}
-          {canEdit && addMenu.items.length ? (
-            <Space.Compact>
-              <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button>
-              <Dropdown trigger={['click']} placement="bottomRight" menu={addMenu}>
-                <Button type="primary" icon={<DownOutlined />} aria-label="Nạp giấy tờ theo cách khác" />
-              </Dropdown>
-            </Space.Compact>
-          ) : canEdit ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : null}
+          {canEdit ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : null}
         </Space>
-        <input
-          ref={quickScanInput}
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png"
-          className="ds-sr-only"
-          tabIndex={-1}
-          aria-hidden="true"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            e.target.value = ''
-            if (!file) return
-            startNew()
-            scanCertificate(file)
-          }}
-        />
         <input
           ref={fileInput}
           type="file"
@@ -401,24 +395,22 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
               {pickedUrl ? <img src={pickedUrl} alt="" /> : <span className="ds-thumb ds-thumb--sm"><UploadIcon /></span>}
               <div className="crew-pick__body">
                 <p className="crew-pick__name" title={certFile.name}>{certFile.name}</p>
-                <p className="crew-pick__meta">{(certFile.size / 1024 / 1024).toFixed(1)} MB{scanDone ? ` · ${scanDone}` : ''}</p>
+                <p className="crew-pick__meta">{(certFile.size / 1024 / 1024).toFixed(1)} MB{scanning ? ' · AI đang đọc…' : aiRead ? ` · AI đã điền ${aiRead.count} ô` : ''}</p>
               </div>
-              <Button type="text" size="small" icon={<CloseOutlined />} aria-label="Bỏ tệp" onClick={() => setCertFile(null)} />
+              {scanning ? <Spin size="small" /> : <Button type="text" size="small" icon={<CloseOutlined />} aria-label="Bỏ tệp" onClick={() => { setCertFile(null); setAiRead(null); setSkipFields([]) }} />}
             </div>
           ) : (
             <label className="ds-drop" style={{ width: '100%' }}>
-              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="ds-sr-only" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) setCertFile(file) }} />
+              <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="ds-sr-only" onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; if (file) scanCertificate(file) }} />
               <span className="ds-drop__title">Chọn ảnh hoặc bản scan</span>
-              <span className="ds-drop__hint">PDF, JPG hoặc PNG</span>
+              <span className="ds-drop__hint">{can('seafarer.docs') ? 'PDF, JPG hoặc PNG. AI đọc và điền sẵn, bạn kiểm tra trước khi lưu.' : 'PDF, JPG hoặc PNG'}</span>
               <span className="ds-drop__button"><UploadIcon aria-hidden />Chọn tệp</span>
             </label>
           )}
-          {isNew && can('seafarer.docs') && !certFile ? (
-            <ScanButton label="Quét giấy tờ (AI)" loading={scanning} doneText={scanDone || undefined} onPick={(files) => scanCertificate(files[0])} />
-          ) : null}
         </div>
+        {aiRead ? <Banner tone="neutral" title="Thông tin AI đọc được" description="Các ô dưới đây AI điền từ ảnh. Kiểm tra và sửa nếu sai trước khi lưu." /> : null}
         {renewing ? <p className="crew-certs__renew">Bản mới thành một dòng riêng; bản hiện tại giữ lại, chuyển thành "Bản cũ" và hết cảnh báo.</p> : null}
-        <Form form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v })}>
+        <Form form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v, profile: chosenProfile })}>
           <Form.Item name="certificate_type_id" label="Loại giấy tờ" rules={[{ required: true, message: 'Chọn loại giấy tờ' }]}>
             <Select
               allowClear
@@ -449,6 +441,21 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           <Form.Item name="no_expiry" valuePropName="checked">
             <Checkbox>Không thời hạn</Checkbox>
           </Form.Item>
+          {changes.length ? (
+            <div className="crew-sync">
+              <p className="crew-sync__title">Cập nhật vào hồ sơ thuyền viên</p>
+              <p className="crew-sync__hint">Hồ sơ dùng các ô này để điền biểu mẫu và đối chiếu yêu cầu. Bỏ tích ô nào thì ô đó giữ nguyên.</p>
+              {changes.map((c) => (
+                <ToggleRow
+                  key={c.field}
+                  label={c.label}
+                  hint={`${showValue(c.field, c.from)} → ${showValue(c.field, c.to)}`}
+                  value={!skipFields.includes(c.field)}
+                  onChange={(on) => setSkipFields((list) => (on ? list.filter((f) => f !== c.field) : [...list, c.field]))}
+                />
+              ))}
+            </div>
+          ) : null}
           <Form.Item>
             <Space style={{ width: '100%', justifyContent: 'space-between' }}>
               {isNew ? <span /> : <Button danger icon={<DeleteOutlined />} onClick={() => handleDeleteCert(editing)}>Xoá giấy tờ</Button>}

@@ -136,3 +136,6 @@
   .crew-sends__files, .crew-sends__when { flex: 1 1 140px; }
   .crew-sends__detail { padding-left: 16px; }
 }
+.crew-sync { display: grid; gap: 6px; margin: 4px 0 16px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-hover); }
+.crew-sync__title { margin: 0; font-weight: 600; }
+.crew-sync__hint { margin: 0 0 4px; color: var(--muted); font-size: 12px; }

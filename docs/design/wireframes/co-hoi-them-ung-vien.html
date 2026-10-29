@@ -1,0 +1,195 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Thêm ứng viên: 3 hướng thiết kế lại</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* Wireframe side panel "Thêm ứng viên" (cơ hội CH26001, Thuyền trưởng · MV Mekong Star). Token chép từ frontend/src/theme/tokens.js. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-light: rgba(0,51,102,.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5; --warning: #bb4d00; --warning-bg: #fffbeb;
+    --error-strong: #c10007; --ring-focus: rgba(0,51,102,.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 32px 24px 80px; background: var(--background); color: var(--foreground); font: 14px/1.5 Inter, system-ui, sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 56px; }
+  h1 { margin: 0 0 4px; font-size: 20px; } .lead { margin: 0 0 6px; color: var(--muted); }
+  .rules { margin: 8px 0 0; padding: 12px 16px 12px 32px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); font-size: 13px; color: var(--neutral); }
+  .variant > h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 16px; }
+  .variant > h2 b { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 13px; }
+  .variant > p { margin: 0 0 12px; color: var(--muted); }
+  .variant > ul { margin: 12px 0 0; padding-left: 18px; color: var(--neutral); font-size: 13px; }
+  .stage { display: flex; justify-content: flex-end; padding: 16px 0 16px 60px; background: rgba(0,0,0,.18); border-radius: 12px; }
+
+  /* khung side panel */
+  .sp { display: flex; flex-direction: column; width: 100%; max-width: 720px; height: 640px; border-radius: 12px 0 0 12px; background: var(--surface); box-shadow: -8px 0 24px rgba(0,0,0,.12); overflow: hidden; }
+  .sp--wide { max-width: 940px; }
+  .sp__head { display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px 12px; border-bottom: 1px solid var(--border); }
+  .sp__head h3 { margin: 0; font-size: 16px; } .sp__head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .sp__x { margin-left: auto; width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; font-size: 16px; color: var(--neutral); }
+  .sp__bar { flex: none; display: grid; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }   /* thanh công cụ: đứng yên khi cuộn */
+  .sp__body { flex: 1; overflow: auto; }
+  .sp__foot { flex: none; display: flex; align-items: center; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); }
+  .sp__foot .grow { margin-right: auto; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 10px; }
+  .btn { height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface); color: var(--foreground); font: inherit; font-weight: 500; white-space: nowrap; }
+  .btn--primary { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .btn--primary[disabled] { opacity: .45; }
+  .btn--sm { height: 28px; padding: 0 10px; font-size: 13px; }
+  .btn--ghost { border-color: transparent; background: none; color: var(--primary); }
+  .search { flex: 1; height: 34px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 8px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 13px; background: var(--surface); font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .chip--on { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+  .chip u { text-decoration: none; opacity: .6; }
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .muted { color: var(--muted); font-size: 12px; }
+  .cb { display: inline-grid; place-items: center; width: 16px; height: 16px; flex: none; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--surface); color: #fff; font-size: 10px; }
+  .cb--on { border-color: var(--primary); background: var(--primary); }
+
+  /* trạng thái hồ sơ: MỘT nhãn duy nhất cho mỗi người */
+  .fit { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .fit::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+  .fit--ok { color: var(--success); } .fit--warn { color: var(--warning); } .fit--none { color: var(--muted); }
+
+  /* kiểu 1: bảng */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { position: sticky; top: 0; padding: 8px 12px; background: var(--neutral-bg); color: var(--muted); font-size: 12px; font-weight: 600; text-align: left; border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  td small { display: block; color: var(--muted); font-size: 12px; }
+  tr.dim td { color: var(--muted); } tr.dim td b { font-weight: 500; }
+  td.x { width: 36px; padding-right: 0; }
+  .inlist { color: var(--muted); font-size: 12px; }
+
+  /* popover bộ lọc nâng cao */
+  .pop { position: absolute; z-index: 2; width: 420px; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: 0 12px 32px rgba(0,0,0,.16); display: grid; gap: 12px; }
+  .pop .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fld { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+  .inp { height: 32px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 8px; color: var(--foreground); font-size: 13px; display: flex; align-items: center; justify-content: space-between; }
+  .pop__foot { display: flex; justify-content: space-between; padding-top: 4px; }
+  .rel { position: relative; }
+
+  /* kiểu 2: lọc bên trái */
+  .split { flex: 1; display: grid; grid-template-columns: 250px 1fr; min-height: 0; }
+  .rail { padding: 14px 16px; border-right: 1px solid var(--border); background: var(--neutral-bg); overflow: auto; display: grid; align-content: start; gap: 14px; }
+  .rail h4 { margin: 0 0 6px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  .rail .opt { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 13px; }
+  .main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .card { display: flex; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+  .card .t { flex: 1; min-width: 0; } .card .t b { font-size: 14px; } .card .t small { display: block; color: var(--muted); font-size: 12px; }
+  .card.dim { color: var(--muted); }
+  .why { margin-top: 2px; font-size: 12px; color: var(--neutral); }
+
+  /* kiểu 3: thẻ mở rộng */
+  .tabs { display: flex; gap: 4px; }
+  .tab { padding: 5px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+  .tab--on { background: var(--primary-light); color: var(--primary); }
+  .ex { padding: 0 20px 12px 56px; display: grid; gap: 4px; font-size: 13px; }
+  .ex div { display: flex; gap: 8px; } .ex .ok { color: var(--success); } .ex .no { color: var(--warning); }
+  .ex i { font-style: normal; width: 14px; }
+</style></head><body>
+<div class="wrap">
+  <header>
+    <h1>Thêm ứng viên: 3 hướng thiết kế lại side panel</h1>
+    <p class="lead">Thuật ngữ: <b>side panel</b> (drawer / slide-over); trong code là <code>SlidePanel</code>. Cả ba cùng một bộ nguyên tắc để bớt rối:</p>
+    <ol class="rules">
+      <li><b>Thanh công cụ đứng yên</b> (tìm kiếm, bộ lọc, đếm kết quả, chọn tất cả) khi danh sách cuộn.</li>
+      <li><b>Bộ lọc nâng cao</b>: chức danh, quốc tịch, tuổi từ–đến, rảnh trước ngày, đã làm cho chủ tàu, đã đi loại tàu, đủ giấy bắt buộc. Backend đã hỗ trợ sẵn, giao diện mới chỉ dùng 4 cái.</li>
+      <li><b>Mỗi người một nhãn hồ sơ duy nhất</b> thay cho hai ô "0/1": <span class="fit fit--ok">Đủ hồ sơ</span> · <span class="fit fit--warn">Thiếu 2 giấy bắt buộc</span>. Số "nên có" chỉ hiện khi mở chi tiết. Bỏ các nhãn lý do xanh/cam.</li>
+      <li>"Đã trong danh sách" / "Đang giữ cho…" thành chữ xám thường, không dùng viên thuốc.</li>
+    </ol>
+  </header>
+
+  <!-- ============ KIỂU 1 ============ -->
+  <section class="variant">
+    <h2><b>1</b> Bảng + nút Bộ lọc mở popover</h2>
+    <p>Gọn, quen mắt, đọc nhanh nhiều người. Bộ lọc nâng cao nằm trong popover; bộ lọc đang bật hiện thành chip dưới ô tìm kiếm.</p>
+    <div class="stage"><div class="sp">
+      <div class="sp__head"><div><h3>Thêm ứng viên · Thuyền trưởng · MV Mekong Star</h3><p>Rảnh trước 15/10/2026 · đối chiếu 9 yêu cầu</p></div><button class="sp__x">✕</button></div>
+      <div class="sp__bar">
+        <div class="row"><div class="search">🔍 Tìm tên, mã thuyền viên, số hộ chiếu</div><button class="btn rel">⚙ Bộ lọc <b style="color:var(--primary)">3</b></button></div>
+        <div class="chips"><span class="chip chip--on">Đủ giấy bắt buộc <u>✕</u></span><span class="chip chip--on">Chức danh: Thuyền trưởng <u>✕</u></span><span class="chip chip--on">Rảnh trước 15/10 <u>✕</u></span><button class="btn btn--ghost btn--sm">Xoá bộ lọc</button></div>
+        <div class="row"><span class="cb"></span><span class="muted">Chọn tất cả 8 người trên trang</span><span class="muted" style="margin-left:auto">12 người khớp · xếp theo mức hợp</span></div>
+      </div>
+      <div class="sp__body"><table>
+        <thead><tr><th></th><th>Thuyền viên</th><th>Hiện tại</th><th>Hồ sơ yêu cầu</th></tr></thead>
+        <tbody>
+          <tr><td class="x"><span class="cb cb--on">✓</span></td><td><b>Phan Anh Tuấn</b><small>Thuyền trưởng · 41 tuổi · 3 chuyến với Halong</small></td><td>Ở bờ<small>Rảnh ngay</small></td><td><span class="fit fit--ok">Đủ hồ sơ</span></td></tr>
+          <tr><td class="x"><span class="cb"></span></td><td><b>Nguyễn Văn Hải</b><small>Thuyền trưởng · 45 tuổi</small></td><td>MV Lotus Pearl<small>Rời dự kiến 02/10</small></td><td><span class="fit fit--warn">Thiếu 2 giấy bắt buộc</span><small>Hộ chiếu · GMDSS</small></td></tr>
+          <tr><td class="x"><span class="cb"></span></td><td><b>Đỗ Quang Vinh</b><small>Thuyền trưởng · 38 tuổi</small></td><td>Ở bờ<small>Rảnh ngay</small></td><td><span class="fit fit--warn">1 giấy hết hạn trước mốc</span><small>Sức khoẻ hết hạn 01/10</small></td></tr>
+          <tr class="dim"><td class="x"><span class="cb" style="opacity:.4"></span></td><td><b>Lê Minh Quân</b><small>Thuyền trưởng · 50 tuổi</small></td><td>Ở bờ</td><td><span class="inlist">Đã trong danh sách</span></td></tr>
+          <tr class="dim"><td class="x"><span class="cb"></span></td><td><b>Bùi Công Thành</b><small>Thuyền trưởng · 44 tuổi</small></td><td>Ở bờ</td><td><span class="inlist">Đang giữ cho CH26012</span></td></tr>
+        </tbody></table></div>
+      <div class="sp__foot"><span class="grow">Đã tích 1 người</span><button class="btn">Huỷ</button><button class="btn btn--primary">Thêm 1 ứng viên</button></div>
+    </div></div>
+    <div class="stage" style="margin-top:12px;background:rgba(0,0,0,.06)"><div class="sp" style="height:auto;box-shadow:none;border:1px solid var(--border);border-radius:12px;max-width:520px">
+      <div class="pop" style="position:static;width:auto;border:0;box-shadow:none">
+        <b>Bộ lọc nâng cao (popover khi bấm nút Bộ lọc)</b>
+        <div class="g2"><label class="fld">Chức danh<div class="inp">Thuyền trưởng ▾</div></label><label class="fld">Quốc tịch<div class="inp">Tất cả ▾</div></label></div>
+        <div class="g2"><label class="fld">Tuổi từ<div class="inp">25</div></label><label class="fld">Đến<div class="inp">55</div></label></div>
+        <div class="g2"><label class="fld">Rảnh trước ngày<div class="inp">15/10/2026 📅</div></label><label class="fld">Đã đi loại tàu<div class="inp">Tàu hàng rời ▾</div></label></div>
+        <div class="chips"><span class="chip chip--on">✓ Đủ giấy bắt buộc</span><span class="chip">Đã làm cho Halong Maritime</span><span class="chip">Đang ở bờ</span></div>
+        <div class="pop__foot"><button class="btn btn--ghost">Đặt lại</button><button class="btn btn--primary">Áp dụng · 12 người</button></div>
+      </div></div></div>
+    <ul><li>Cột "Hiện tại" gộp ở bờ / trên tàu nào / rảnh từ ngày nào thành một ô.</li><li>Gọn nhất; bộ lọc nâng cao ẩn sau một nút nên người dùng ít gặp.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 2 ============ -->
+  <section class="variant">
+    <h2><b>2</b> Panel rộng, cột lọc bên trái luôn hiện</h2>
+    <p>Mọi bộ lọc nâng cao thấy ngay, không phải mở popover, giống trang tìm kiếm. Hợp khi người dùng lọc nhiều lần mỗi cơ hội.</p>
+    <div class="stage"><div class="sp sp--wide">
+      <div class="sp__head"><div><h3>Thêm ứng viên · Thuyền trưởng · MV Mekong Star</h3><p>Rảnh trước 15/10/2026 · đối chiếu 9 yêu cầu</p></div><button class="sp__x">✕</button></div>
+      <div class="split">
+        <aside class="rail">
+          <div class="row" style="justify-content:space-between"><b>Bộ lọc</b><button class="btn btn--ghost btn--sm">Đặt lại</button></div>
+          <div><h4>Hồ sơ</h4><div class="opt"><span class="cb cb--on">✓</span>Đủ giấy bắt buộc</div></div>
+          <div><h4>Chức danh</h4><div class="inp">Thuyền trưởng ▾</div></div>
+          <div><h4>Tình trạng</h4><div class="opt"><span class="cb cb--on">✓</span>Rảnh trước 15/10</div><div class="opt"><span class="cb"></span>Chỉ người đang ở bờ</div></div>
+          <div><h4>Kinh nghiệm</h4><div class="opt"><span class="cb"></span>Đã làm cho Halong Maritime</div><div class="inp" style="margin-top:6px">Loại tàu đã đi ▾</div></div>
+          <div><h4>Cá nhân</h4><div class="inp">Quốc tịch ▾</div><div class="row" style="margin-top:6px"><div class="inp" style="flex:1">Tuổi từ</div><div class="inp" style="flex:1">đến</div></div></div>
+        </aside>
+        <div class="main">
+          <div class="sp__bar"><div class="row"><div class="search">🔍 Tìm tên, mã, số hộ chiếu</div></div><div class="row"><span class="cb"></span><span class="muted">Chọn tất cả</span><span class="muted" style="margin-left:auto">12 người khớp</span></div></div>
+          <div class="sp__body">
+            <div class="card"><span class="cb cb--on">✓</span><div class="t"><b>Phan Anh Tuấn</b><small>Thuyền trưởng · 41 tuổi · Ở bờ, rảnh ngay</small><div class="why">3 chuyến với Halong Maritime</div></div><span class="fit fit--ok">Đủ hồ sơ</span></div>
+            <div class="card"><span class="cb"></span><div class="t"><b>Nguyễn Văn Hải</b><small>Thuyền trưởng · 45 tuổi · Trên MV Lotus Pearl, rời dự kiến 02/10</small></div><span class="fit fit--warn">Thiếu 2 giấy</span></div>
+            <div class="card"><span class="cb"></span><div class="t"><b>Đỗ Quang Vinh</b><small>Thuyền trưởng · 38 tuổi · Ở bờ, rảnh ngay</small></div><span class="fit fit--warn">1 giấy hết hạn</span></div>
+            <div class="card dim"><span class="cb" style="opacity:.4"></span><div class="t"><b>Lê Minh Quân</b><small>Đã trong danh sách</small></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="sp__foot"><span class="grow">Đã tích 1 người</span><button class="btn">Huỷ</button><button class="btn btn--primary">Thêm 1 ứng viên</button></div>
+    </div></div>
+    <ul><li>Rộng 940px (hiện tại 720px); dưới màn nhỏ cột lọc thu thành nút Bộ lọc.</li><li>Nhiều lựa chọn nhất, nhưng nặng nhất và bỏ mất danh sách nền phía sau.</li></ul>
+  </section>
+
+  <!-- ============ KIỂU 3 ============ -->
+  <section class="variant">
+    <h2><b>3</b> Tab nhanh + thẻ bấm mở chi tiết hồ sơ</h2>
+    <p>Mặc định chỉ thấy ít chữ: tên, một dòng thông tin, một nhãn hồ sơ. Bấm vào người mới mở bảng đối chiếu từng mục. Bộ lọc nhanh là tab, bộ lọc nâng cao là nút phụ.</p>
+    <div class="stage"><div class="sp">
+      <div class="sp__head"><div><h3>Thêm ứng viên · Thuyền trưởng · MV Mekong Star</h3><p>Rảnh trước 15/10/2026 · đối chiếu 9 yêu cầu</p></div><button class="sp__x">✕</button></div>
+      <div class="sp__bar">
+        <div class="row"><div class="tabs"><span class="tab tab--on">Đề xuất · 12</span><span class="tab">Đã làm với chủ tàu · 4</span><span class="tab">Tất cả · 138</span></div><button class="btn btn--sm" style="margin-left:auto">⚙ Lọc thêm</button></div>
+        <div class="row"><div class="search">🔍 Tìm tên, mã thuyền viên, số hộ chiếu</div></div>
+        <div class="row"><span class="cb"></span><span class="muted">Chọn tất cả</span><span class="muted" style="margin-left:auto">Đề xuất = đúng chức danh, rảnh, đủ giấy bắt buộc</span></div>
+      </div>
+      <div class="sp__body">
+        <div class="card" style="border:0;padding-bottom:4px"><span class="cb cb--on">✓</span><div class="t"><b>Phan Anh Tuấn</b><small>41 tuổi · Ở bờ, rảnh ngay · 3 chuyến với Halong</small></div><span class="fit fit--ok">Đủ hồ sơ</span><span class="muted">▾</span></div>
+        <div class="card" style="border:0;padding-bottom:4px"><span class="cb"></span><div class="t"><b>Nguyễn Văn Hải</b><small>45 tuổi · Trên MV Lotus Pearl, rời dự kiến 02/10</small></div><span class="fit fit--warn">Thiếu 2 giấy</span><span class="muted">▴</span></div>
+        <div class="ex" style="border-bottom:1px solid var(--border)">
+          <div class="no"><i>✕</i>Hộ chiếu: chưa có</div><div class="no"><i>✕</i>GMDSS: hết hạn 01/10, trước ngày xuống tàu</div>
+          <div class="ok"><i>✓</i>Sổ thuyền viên · Sức khoẻ · STCW II/2 · 5 mục khác</div><div class="muted" style="padding-top:2px">Nên có: 2/3 · <a href="#" style="color:var(--primary)">Xem đối chiếu đầy đủ</a></div>
+        </div>
+        <div class="card" style="border:0;padding-bottom:4px"><span class="cb"></span><div class="t"><b>Đỗ Quang Vinh</b><small>38 tuổi · Ở bờ, rảnh ngay</small></div><span class="fit fit--warn">1 giấy hết hạn</span><span class="muted">▾</span></div>
+        <div class="card dim" style="border:0"><span class="cb" style="opacity:.4"></span><div class="t"><b>Lê Minh Quân</b><small>Đã trong danh sách</small></div></div>
+      </div>
+      <div class="sp__foot"><span class="grow">Đã tích 1 người</span><button class="btn">Huỷ</button><button class="btn btn--primary">Thêm 1 ứng viên</button></div>
+    </div></div>
+    <ul><li>Ít chữ nhất khi quét danh sách; chi tiết thiếu gì nằm sau một cú bấm.</li><li>Bộ lọc nâng cao vẫn là popover như kiểu 1 ("Lọc thêm").</li></ul>
+  </section>
+</div>
+</body></html>

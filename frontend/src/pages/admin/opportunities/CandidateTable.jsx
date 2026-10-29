@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
-import { Button, Dropdown, Table } from 'antd'
-import { MoreOutlined } from '@ant-design/icons'
+import { Button, Table, Tooltip } from 'antd'
+import { DeleteOutlined, EyeOutlined, FileTextOutlined, SendOutlined, StarFilled, StarOutlined } from '@ant-design/icons'
 import RequirementFit from '../../../components/ds/RequirementFit'
 import StatusBadge from '../../../components/ds/StatusBadge'
+import { actionColumn } from '../../../components/ds/actionColumn'
 import { formatDate } from '../../../utils/format'
 import { fitIssues } from './opportunityView'
 
 // Bảng ứng viên của một cơ hội. selected / onSelect: chọn nhiều dòng (thanh "Đã chọn N").
-// onMenu(action, candidate): 'select' | 'unselect' | 'submission' | 'send' | 'profile' | 'remove'. onOpenFit(candidate): mở bảng đối chiếu.
+// Thao tác nằm ngoài dòng thành nút biểu tượng (cột Thao tác, theo RowActions). onMenu(action, candidate): 'select' | 'unselect' | 'submission' | 'send' | 'profile' | 'remove'. onOpenFit(candidate): mở bảng đối chiếu.
 // onOpenSubmission(candidate): mở bảng trượt Hồ sơ nộp (giấy tờ + biểu mẫu của người đó).
 export default function CandidateTable({ candidates, requirements, editable, selected, onSelect, onMenu, onOpenFit, onOpenSubmission }) {
   const columns = [
@@ -45,44 +46,33 @@ export default function CandidateTable({ candidates, requirements, editable, sel
       },
     },
     {
-      title: 'Hồ sơ nộp',
-      key: 'pack',
-      render: (_, c) => (c.status === 'PICKED' || c.export_pack ? (
-        <span className="ds-cell2">
-          <Button size="small" onClick={(e) => { e.stopPropagation(); onOpenSubmission(c) }}>Hồ sơ nộp</Button>
-          <span className="ds-cell2__sub">{c.export_pack ? `Ráp ${formatDate(c.export_pack.created_at)}` : 'Chưa điền biểu mẫu'}</span>
-        </span>
-      ) : null),
-    },
-    {
       title: 'Gửi chủ tàu',
       key: 'sent',
       render: (_, c) => (c.last_sent_at ? <span className="ds-num">{formatDate(c.last_sent_at)}</span> : <span className="vd-muted">Chưa gửi</span>),
     },
-    {
-      title: <span className="ds-sr-only">Thao tác</span>,
-      key: 'menu',
-      align: 'right',
-      render: (_, c) => (editable && c.status === 'PICKED' ? (
-        <Dropdown
-          trigger={['click']}
-          placement="bottomRight"
-          menu={{
-            items: [
-              c.owner_selected_at ? { key: 'unselect', label: 'Bỏ nhãn chủ tàu đã chọn' } : { key: 'select', label: 'Đánh dấu chủ tàu đã chọn' },
-              { key: 'submission', label: 'Mở hồ sơ nộp' },
-              { key: 'send', label: 'Gửi cho chủ tàu' },
-              { key: 'profile', label: 'Mở hồ sơ thuyền viên' },
-              { type: 'divider' },
-              { key: 'remove', label: 'Bỏ khỏi danh sách', danger: true },
-            ],
-            onClick: ({ key, domEvent }) => { domEvent.stopPropagation(); onMenu(key, c) },
-          }}
-        >
-          <Button type="text" icon={<MoreOutlined />} aria-label={`Thao tác với ${c.full_name}`} onClick={(e) => e.stopPropagation()} />
-        </Dropdown>
-      ) : null),
-    },
+    actionColumn((c) => {
+      const stop = (fn) => (e) => { e.stopPropagation(); fn() }
+      const act = (title, icon, onClick, props = {}) => (
+        <Tooltip title={title}>
+          <Button type="text" size="small" icon={icon} aria-label={`${title}: ${c.full_name}`} onClick={stop(onClick)} {...props} />
+        </Tooltip>
+      )
+      const live = c.status === 'PICKED'
+      const submission = live || c.export_pack
+        ? act(c.export_pack ? `Hồ sơ nộp · ráp ${formatDate(c.export_pack.created_at)}` : 'Hồ sơ nộp · chưa điền biểu mẫu', <FileTextOutlined />, () => onOpenSubmission(c))
+        : null
+      return (
+        <span className="ds-row-actions">
+          {editable && live ? (c.owner_selected_at
+            ? act('Bỏ nhãn chủ tàu đã chọn', <StarFilled />, () => onMenu('unselect', c), { className: 'op-star-on' })
+            : act('Đánh dấu chủ tàu đã chọn', <StarOutlined />, () => onMenu('select', c))) : null}
+          {submission}
+          {editable && live ? act('Gửi cho chủ tàu', <SendOutlined />, () => onMenu('send', c)) : null}
+          {act('Mở hồ sơ thuyền viên', <EyeOutlined />, () => onMenu('profile', c))}
+          {editable && live ? act('Bỏ khỏi danh sách', <DeleteOutlined />, () => onMenu('remove', c), { danger: true }) : null}
+        </span>
+      )
+    }, { buttons: 5 }),
   ]
 
   return (

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { chosenCandidate, deadlineLabel, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
+import { chosenCandidate, candidateTags, deadlineLabel, stageIndex, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
 
 
 describe('deadlineLabel', () => {
@@ -44,5 +44,50 @@ describe('form cơ hội', () => {
   it('Lưu & thêm vị trí khác giữ chủ tàu, tàu, mốc, hạn chốt; xoá chức danh, budget, hồ sơ yêu cầu', () => {
     const next = nextPositionValues({ ship_owner_id: 1, vessel_id: 4, rank_id: 2, budget_monthly_usd: 4900, budget_total_usd: 44100, deadline: 'd', owner_user_id: 3, requirements: [{ kind: 'TEMPLATE' }] })
     expect(next).toMatchObject({ ship_owner_id: 1, vessel_id: 4, deadline: 'd', owner_user_id: 3, rank_id: undefined, budget_monthly_usd: null, budget_total_usd: null, requirements: [] })
+  })
+})
+
+describe('stageIndex', () => {
+  it('đang mở lấy theo display_status, đã chốt là mốc cuối', () => {
+    expect(stageIndex({ status: 'OPEN', display_status: 'NEW' })).toBe(0)
+    expect(stageIndex({ status: 'OPEN', display_status: 'WAITING' })).toBe(2)
+    expect(stageIndex({ status: 'WON', display_status: 'WON' })).toBe(4)
+  })
+
+  it('đã đóng thì lấy mốc đã tới từ ứng viên, bỏ người đã bỏ', () => {
+    const closed = (candidates) => stageIndex({ status: 'LOST', display_status: 'LOST', candidates })
+    expect(closed([])).toBe(0)
+    expect(closed([{ status: 'REMOVED', last_sent_at: '2026-10-01' }])).toBe(0)
+    expect(closed([{ status: 'PICKED' }])).toBe(1)
+    expect(closed([{ status: 'PICKED', last_sent_at: '2026-10-01' }])).toBe(2)
+    expect(closed([{ status: 'PICKED', last_sent_at: '2026-10-01', owner_selected_at: '2026-10-02' }])).toBe(3)
+  })
+})
+
+describe('candidateTags', () => {
+  const fmt = (d) => d
+  const opportunity = { rank_id: 5, planned_join_date: '2026-10-15', requirements: [{ id: 1, kind: 'CERTIFICATE', certificate_name: 'GMDSS' }] }
+  const fit = (state) => ({ required: { ok: state === 'ok' ? 1 : 0, total: 1 }, preferred: { ok: 0, total: 0 }, items: [{ requirement_id: 1, kind: 'CERTIFICATE', level: 'REQUIRED', state }] })
+  const base = { current_rank_id: 5, fit: fit('ok') }
+
+  it('đủ hồ sơ, ở bờ, đúng chức danh: không có cảnh báo', () => {
+    const tags = candidateTags(base, opportunity, fmt)
+    expect(tags.docs).toEqual({ tone: 'ok', label: 'Đủ hồ sơ' })
+    expect(tags.availability).toBeNull()
+    expect(tags.position).toBeNull()
+  })
+
+  it('thiếu giấy bắt buộc đếm số mục', () => {
+    expect(candidateTags({ ...base, fit: fit('missing') }, opportunity, fmt).docs).toEqual({ tone: 'warn', label: 'Thiếu giấy tờ · 1' })
+  })
+
+  it('đang trên tàu: bận nếu rời sau ngày xuống, kịp thì chỉ ghi chữ', () => {
+    const onboard = { ...base, onboard_voyage_id: 9, onboard_vessel_name: 'MV A' }
+    expect(candidateTags({ ...onboard, onboard_until: '2026-11-01' }, opportunity, fmt).availability).toEqual({ tone: 'warn', label: 'Bận' })
+    expect(candidateTags({ ...onboard, onboard_until: '2026-10-02' }, opportunity, fmt).availability).toBeNull()
+  })
+
+  it('khác chức danh thì Không trùng vị trí', () => {
+    expect(candidateTags({ ...base, current_rank_id: 7 }, opportunity, fmt).position).toEqual({ tone: 'warn', label: 'Không trùng vị trí' })
   })
 })

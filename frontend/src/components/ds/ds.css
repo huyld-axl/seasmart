@@ -749,3 +749,59 @@ span.ds-thumb--empty { cursor: default; }
 .ds-cat-country { color: var(--muted); font-size: 12px; white-space: nowrap; }
 .ds-chip__dot { width: 8px; height: 8px; flex: none; margin-right: 6px; border-radius: 50%; background: var(--cat-dot); }
 .ds-chip[aria-pressed="true"] .ds-chip__dot { box-shadow: 0 0 0 1.5px #fff; }
+
+/* StageTrack: đường giai đoạn dạng chevron, nút bước tiếp bên phải, khung thông tin và việc cần làm bên dưới. */
+.ds-track { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.ds-track__bar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.ds-track__list { display: flex; flex: 1; min-width: 0; margin: 0; padding: 0; list-style: none; }
+.ds-track__item { flex: 1 1 0; min-width: 0; height: 40px; margin-left: -10px; }
+.ds-track__item:first-child { margin-left: 0; }
+.ds-track__step { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; height: 100%; padding: 0 22px 0 26px; border: 0; background: var(--neutral-bg); color: var(--muted); font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%); }
+.ds-track__item:first-child .ds-track__step { padding-left: 16px; border-radius: 8px 0 0 8px; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%); }
+.ds-track__item:last-child .ds-track__step { border-radius: 0 8px 8px 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 14px 50%); }
+.ds-track__item:only-child .ds-track__step { clip-path: none; border-radius: 8px; }
+.ds-track__step--done { background: var(--success-bg); color: var(--success); }
+.ds-track__step--current { background: var(--primary); color: #fff; font-weight: 600; }
+.ds-track__step--action { cursor: pointer; }
+.ds-track__step--action:hover { filter: brightness(.95); }
+.ds-track__step--action.ds-track__step--todo { background: var(--primary-light); color: var(--primary); }
+.ds-track__step:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -3px; }
+.ds-track__label { overflow: hidden; text-overflow: ellipsis; }
+.ds-track__note { flex: none; font-weight: 400; opacity: .8; }
+.ds-track--stopped .ds-track__step, .ds-track--stopped .ds-track__step--action.ds-track__step--todo { background: var(--neutral-bg); color: var(--muted); }
+.ds-track--stopped .ds-track__step--done { background: var(--neutral-bg); color: var(--neutral); }
+.ds-track--stopped .ds-track__step--current { background: var(--secondary); color: var(--foreground); }
+.ds-track__guide { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--border); }
+.ds-track__col { min-width: 0; padding: 14px 18px; }
+.ds-track__col + .ds-track__col { border-left: 1px solid var(--border); background: var(--neutral-bg); border-radius: 0 0 var(--radius-lg) 0; }
+.ds-track__col h3 { margin: 0 0 8px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.ds-track__info { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 13px; }
+.ds-track__info dt { color: var(--muted); }
+.ds-track__info dd { margin: 0; font-weight: 500; }
+.ds-track__todo { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.ds-track__todo li { display: flex; align-items: center; gap: 8px; }
+.ds-track__todo-box { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex: none; border: 1.5px solid var(--border-strong); border-radius: 4px; background: var(--surface); color: #fff; font-size: 10px; }
+.ds-track__todo-done { color: var(--muted); }
+.ds-track__todo-done .ds-track__todo-box { border-color: var(--success); background: var(--success); }
+.ds-track__end { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+@media (max-width: 720px) {
+  .ds-track__bar { flex-direction: column; align-items: stretch; }
+  .ds-track__list { flex-direction: column; gap: 4px; }
+  .ds-track__item { height: 36px; margin-left: 0; }
+  .ds-track__step, .ds-track__item:first-child .ds-track__step, .ds-track__item:last-child .ds-track__step { justify-content: flex-start; padding: 0 12px; border-radius: 8px; clip-path: none; }
+  .ds-track__guide { grid-template-columns: 1fr; }
+  .ds-track__col + .ds-track__col { border-top: 1px solid var(--border); border-left: 0; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
+}
+.ds-track__info > div { display: contents; }
+.ds-track__toggle { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex: none; padding: 0; border: 1px solid var(--border-strong); border-radius: 50%; background: var(--surface); color: var(--neutral); font-size: 11px; cursor: pointer; }
+.ds-track__toggle:hover { background: var(--neutral-bg); }
+.ds-track__toggle:focus-visible { box-shadow: 0 0 0 2px var(--ring-focus); outline: none; }
+.ds-track__toggle .anticon { transition: transform .15s; transform: rotate(-90deg); }
+.ds-track__toggle--open .anticon { transform: none; }
+@media (max-width: 720px) { .ds-track__toggle { align-self: flex-start; } }
+.ds-panel--flush .ant-drawer-body { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.ds-toggle-row--compact { min-height: 40px; padding: 0 12px; font-size: 13px; }
+
+/* ConfirmGate: ô xác nhận + đếm ngược trước khi nút đồng ý mở. */
+.ds-gate { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin-top: 12px; padding: 10px 12px; border: 1px solid var(--warning-border); border-radius: var(--radius-md); background: var(--warning-bg); }
+.ds-gate__wait { margin-left: auto; color: var(--warning); font-size: 12px; font-weight: 500; }

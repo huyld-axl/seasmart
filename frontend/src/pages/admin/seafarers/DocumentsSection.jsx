@@ -284,7 +284,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         <div className="crew-docs-toolbar__filter">
           {!isLoading && tabs.length > 2 ? (
             <FilterChips
-              chips={tabs.map((t) => ({ value: t.value, label: `${t.label} · ${t.count}` }))}
+              chips={tabs.map((t) => ({ value: t.value, label: `${t.label} · ${t.count}`, dot: t.value === 'ALL' ? null : `ds-cat--${t.value.toLowerCase()}` }))}
               selected={[categories.includes(category) ? category : 'ALL']}
               onToggle={(v) => setCategory(v === category ? 'ALL' : v)}
             />

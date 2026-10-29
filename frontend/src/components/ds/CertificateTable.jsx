@@ -14,6 +14,11 @@ const alertText = (cert) => {
   return cert.daysLeft === 0 ? 'Hết hạn hôm nay' : `Còn ${cert.daysLeft} ngày`
 }
 
+// Nhãn loại giấy có màu theo nhóm (categoryKey: DOCUMENT, STCW, MEDICAL, VN, PANAMA, OTHER); không có khoá thì chữ thường.
+export const CategoryTag = ({ cert }) => (cert.category
+  ? <span className={`ds-cat ds-cat--${(cert.categoryKey || 'OTHER').toLowerCase()}`}>{cert.category}</span>
+  : '—')
+
 const badge = (cert) => <StatusBadge group="cert" value={cert.replaced ? 'REPLACED' : cert.status} />
 
 export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSource, onDownload, onRenew, onDismiss, onRestore }) {
@@ -51,7 +56,7 @@ export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSour
           {certs.map((cert) => (
             <tr key={cert.id} data-replaced={cert.replaced ? '' : undefined} data-tone={cert.alert === 'expired' ? 'error' : cert.alert === 'expiring' ? 'warn' : ''}>
               <td>{name(cert)}</td>
-              <td>{cert.category || '—'}</td>
+              <td><CategoryTag cert={cert} /></td>
               <td className="ds-ctable__mono">{cert.number}</td>
               <td className="ds-ctable__mono">{cert.issuedOn}</td>
               <td className={cert.noExpiry ? undefined : 'ds-ctable__mono'}>{expires(cert)}</td>
@@ -68,7 +73,7 @@ export default function CertificateTable({ certs = [], thumb, onEdit, onOpenSour
           <li key={cert.id} data-replaced={cert.replaced ? '' : undefined} data-tone={cert.alert === 'expired' ? 'error' : cert.alert === 'expiring' ? 'warn' : ''}>
             <div className="ds-ccards__top">{name(cert)}{badge(cert)}</div>
             <span className="ds-ctable__note">
-              {cert.category ? `${cert.category} · ` : ''}<span className="ds-ctable__mono">{cert.number}</span> · Cấp {cert.issuedOn} · {cert.noExpiry ? 'Không thời hạn' : `Hết hạn ${cert.expiresOn}`}
+              {cert.category ? <><CategoryTag cert={cert} />{' '}</> : null}<span className="ds-ctable__mono">{cert.number}</span> · Cấp {cert.issuedOn} · {cert.noExpiry ? 'Không thời hạn' : `Hết hạn ${cert.expiresOn}`}
             </span>
             {alertNote(cert)}
             <span className="ds-ctable__src">{source(cert)}{renew(cert)}{download(cert)}{edit(cert)}</span>

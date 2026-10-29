@@ -15,7 +15,7 @@ import VesselMatchChip from '../components/ds/VesselMatchChip'
 import DocTypeBar from '../components/ds/DocTypeBar'
 import ReviewPager from '../components/ds/ReviewPager'
 import SeaServiceTimeline from '../components/ds/SeaServiceTimeline'
-import CertificateTable from '../components/ds/CertificateTable'
+import CertificateTable, { CategoryTag } from '../components/ds/CertificateTable'
 import DocThumb from '../components/ds/DocThumb'
 import RowActions from '../components/ds/RowActions'
 import ListFooter from '../components/ds/ListFooter'
@@ -696,6 +696,11 @@ export default function DesignSystemPage() {
           </Demo>
           <Demo label="Bảng chứng chỉ: còn hạn, hết hạn, không thời hạn (nhập tay)" wide>
             <CertificateTable certs={CERTS} />
+          </Demo>
+          <Demo label="Màu nhóm giấy tờ (CategoryTag; FilterChips nhận chip.dot = ds-cat--{nhóm})">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {[['DOCUMENT', 'Tuỳ thân'], ['STCW', 'STCW'], ['MEDICAL', 'Y tế'], ['VN', 'Việt Nam'], ['PANAMA', 'Panama'], ['OTHER', 'Khác']].map(([categoryKey, category]) => <CategoryTag key={categoryKey} cert={{ categoryKey, category }} />)}
+            </div>
           </Demo>
           <Demo label="Ảnh thu nhỏ giấy tờ (DocThumb): có ảnh, PDF, chưa có ảnh bấm để nạp, chưa có ảnh chỉ xem; cỡ sm và md">
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12 }}>

@@ -13,6 +13,15 @@ export const ShipSvg = () => (
   </svg>
 )
 
+// Chuyến tàu: mỏ neo, cùng hình với mục Chuyến tàu ở menu.
+export const AnchorSvg = () => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>
+    <path d="M12 22V8" />
+    <path d="M5 12H2a10 10 0 0 0 20 0h-3" />
+    <circle cx="12" cy="5" r="3" />
+  </svg>
+)
+
 // Cơ hội: hai vòng tròn đồng tâm và chấm giữa.
 export const TargetSvg = () => (
   <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>

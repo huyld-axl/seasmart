@@ -183,7 +183,7 @@ export default function VoyageFormPage() {
               <Select {...selectProps} filterOption={false} onSearch={setVesselSearch} onChange={onVesselChange} loading={vessels.isLoading} options={vesselOptions} placeholder="Chọn tàu" />
             </Form.Item>
             <Form.Item name="ship_owner_id" className="sf-c4" label="Chủ tàu" rules={[{ required: true, message: vesselHasNoOwner ? 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng.' : 'Chọn chủ tàu' }]} extra={vesselHasNoOwner ? 'Tàu chưa có chủ tàu' : ownerFromVessel ? 'Lấy theo tàu' : undefined}>
-              <Select {...selectProps} loading={owners.isLoading} options={vesselHasNoOwner ? [] : ownerOptions} disabled={vesselHasNoOwner} placeholder="Chọn chủ tàu" onChange={onOwnerChange} />
+              <Select {...selectProps} loading={owners.isLoading} options={vesselHasNoOwner ? [] : selectedVessel?.ownerId ? ownerOptions.filter((o) => o.value === selectedVessel.ownerId) : ownerOptions} disabled={vesselHasNoOwner} placeholder="Chọn chủ tàu" onChange={onOwnerChange} />
             </Form.Item>
             <Form.Item name="budget_monthly_usd" className="sf-c4" label="Budget/tháng (USD)" extra="Không bắt buộc">
               <MoneyInput aria-label="Budget mỗi tháng" />

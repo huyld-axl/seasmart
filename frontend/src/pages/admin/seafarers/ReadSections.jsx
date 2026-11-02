@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button, Input, Skeleton, Tag } from 'antd'
 import { countFilled, filled } from './readSectionUtils'
+import useScrollSpy from '../fleet/useScrollSpy'
 
 // Các khối chỉ đọc dùng chung cho màn chi tiết thuyền viên và đối tác: mục lục bên trái, các khối đánh số bên phải.
 // Mỗi khối: { key, title, fields | groups | items, unit?, footnote? }; mỗi trường: [nhãn, giá trị, độ rộng 12 cột].
@@ -62,20 +63,7 @@ export function Panel({ index, section }) {
 
 
 export function ReadLayout({ sections, loading, label = 'hồ sơ' }) {
-  const [active, setActive] = useState(sections[0]?.key)
-  useEffect(() => {
-    const els = sections.map((s) => document.getElementById(`sf-${s.key}`)).filter(Boolean)
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const top = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-        if (top) setActive(top.target.id.slice(3))
-      },
-      { rootMargin: '-96px 0px -60% 0px' }
-    )
-    els.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading])
+  const [active, setActive] = useScrollSpy(sections.map((s) => s.key), !loading)
 
   const goTo = (key) => (event) => {
     event.preventDefault()

@@ -207,6 +207,10 @@ const voyageService = {
       if (onboard && ended && iso(onboard.join_date) <= endDate) {
         throw { statusCode: 409, message: `${person.full_name} đã có chuyến ${onboard.code} trùng thời gian` }
       }
+      const [[vessel]] = await conn.query('SELECT ship_owner_id FROM vessel WHERE id = ? AND deleted_at IS NULL', [body.vessel_id])
+      if (!vessel) throw { statusCode: 400, message: 'Không tìm thấy tàu' }
+      if (vessel.ship_owner_id == null) throw { statusCode: 400, message: 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng' }
+      if (Number(vessel.ship_owner_id) !== Number(body.ship_owner_id)) throw { statusCode: 400, message: 'Chủ tàu không khớp với chủ tàu của tàu này' }
       const code = await nextCode(conn, 'VOYAGE1', Number(body.join_date.slice(0, 4)), 'CT', 4)
       const [inserted] = await conn.query('INSERT INTO seafarer_voyage SET ?', [{
         code,

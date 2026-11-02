@@ -11,8 +11,8 @@ import { lookupApi } from '../../../api'
 import { useVoyage } from '../../../hooks/useVoyages'
 import { useCan } from '../../../hooks/usePermission'
 import { MANUAL_REASON_LABELS } from '../../../constants/opportunityVoyage'
-import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
-import { Crumb, FleetTile } from '../fleet/FleetParts'
+import { formatDate, formatUsd } from '../../../utils/format'
+import { AnchorSvg, Crumb, FleetTile } from '../fleet/FleetParts'
 import { ReadLayout } from '../seafarers/ReadSections'
 import LeaveModal from './LeaveModal'
 import { EditDatesModal, LeavePlanModal, RemoveModal } from './VoyageModals'
@@ -82,7 +82,6 @@ export default function VoyageDetailPage() {
     ? (
       <>
         {link(can('contract.view'), `/contracts/${c.id}`, c.contract_number)} <StatusBadge group="contract" value={c.status} />
-        <span className="vd-muted"> · {formatDate(c.start_date)} – {formatDate(c.end_date)} · chênh lệch {formatDiff(c.diff_monthly)} USD/tháng</span>
       </>
     )
     : (
@@ -100,8 +99,8 @@ export default function VoyageDetailPage() {
         ['Mã chuyến', v.code, 4],
         ['Chức danh', v.rank_name, 4],
         ['Thuyền viên', link(can('seafarer.view'), `/seafarers/${v.seafarer_id}`, v.seafarer_name), 4],
-        ['Tàu', link(can('vessel.view'), `/vessels/${v.vessel_id}`, v.vessel_name), 6],
-        ['Chủ tàu', link(can('partner.view'), `/partners/${v.ship_owner_id}`, v.ship_owner_name), 6],
+        ['Tàu', link(can('vessel.view'), `/vessels/${v.vessel_id}`, v.vessel_name), 4],
+        ['Chủ tàu', link(can('partner.view'), `/partners/${v.ship_owner_id}`, v.ship_owner_name), 4],
         ['Nguồn', source, 4],
         ['Budget/tháng', v.budget_monthly_usd != null ? `${formatUsd(v.budget_monthly_usd)} USD` : null, 4],
         ['Hợp đồng', contract, 4],
@@ -146,7 +145,7 @@ export default function VoyageDetailPage() {
       <div className="crew-head">
         <div className="crew-head__person">
           <div className="crew-head__photo crew-head__photo--logo">
-            <FleetTile large />
+            <FleetTile large icon={AnchorSvg} />
           </div>
           <div className="crew-head__text">
             <div className="crew-head__titlerow">
@@ -158,7 +157,7 @@ export default function VoyageDetailPage() {
               <dt>Chuyến</dt>
               <dd className="ds-mono">{v.code}</dd>
               <dt>Vị trí</dt>
-              <dd>{v.rank_name} trên {link(can('vessel.view'), `/vessels/${v.vessel_id}`, v.vessel_name)}</dd>
+              <dd><span>{v.rank_name} trên {link(can('vessel.view'), `/vessels/${v.vessel_id}`, v.vessel_name)}</span></dd>
               <dt>Nguồn</dt>
               <dd>{source}</dd>
             </dl>

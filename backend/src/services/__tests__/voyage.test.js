@@ -35,7 +35,15 @@ const body = (over = {}) => ({
 const person = ['FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', () => [[{ id: 5, full_name: 'Lê Quang Huy', status: 'ON_VESSEL' }]]]
 const onboard = ["sv.status = 'ONBOARD' AND sv.deleted_at IS NULL FOR UPDATE OF sv", () => [[{ id: 7, code: 'CT-2026-0139', status: 'ONBOARD', seafarer_id: 5, join_date: '2026-10-02', vessel_name: 'MV Ocean Pride' }]]]
 
+const vesselOwner = (ownerId) => ['SELECT ship_owner_id FROM vessel', () => [[{ ship_owner_id: ownerId }]]]
+
 describe('voyage.service: tạo chuyến tay', () => {
+  it('chủ tàu không khớp chủ của tàu thì 400, không ghi gì', async () => {
+    const pool = fakePool([todayRoute, person, vesselOwner(2)])
+    await expect(voyageService.create(pool, body(), 1)).rejects.toMatchObject({ statusCode: 400, message: 'Chủ tàu không khớp với chủ tàu của tàu này' })
+    expect(writes(pool)).toHaveLength(0)
+  })
+
   it('người đang trên tàu thì 409 với mọi lý do, không ghi gì và không ghi rời chuyến cũ', async () => {
     for (const manual_reason of ['OWNER_HIRED', 'LEGACY', 'OTHER']) {
       const pool = fakePool([todayRoute, person, onboard])
@@ -51,7 +59,7 @@ describe('voyage.service: tạo chuyến tay', () => {
 
   it('người ở bờ: tạo chuyến, không ghi transferred_from_id', async () => {
     const pool = fakePool([
-      todayRoute, person,
+      todayRoute, person, vesselOwner(1),
       ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 161 }] }]],
       ['INSERT INTO seafarer_voyage SET', () => [{ insertId: 8 }]],
       detail(voyageRow({ id: 8 })),

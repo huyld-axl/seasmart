@@ -79,7 +79,17 @@ export default function NotificationBell() {
   }
 
   const dropdownContent = (
-    <div style={{ width: 360, maxHeight: 400, overflow: 'auto' }}>
+    <div
+      style={{
+        width: 360,
+        maxHeight: 400,
+        overflow: 'auto',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: '0 6px 16px rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12)',
+      }}
+    >
       <div
         style={{
           padding: '12px 16px',

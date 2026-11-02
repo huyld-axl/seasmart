@@ -23,8 +23,8 @@ const DATE_FORMAT = 'DD/MM/YYYY'
 const selectProps = { allowClear: true, showSearch: { optionFilterProp: 'label' } }
 const REASON_OPTIONS = MANUAL_REASONS.map((value) => ({ value, label: MANUAL_REASON_LABELS[value] }))
 
-// Màn 9 · Tạo chuyến không qua cơ hội: chuyển tàu, chủ tàu tự tuyển, nhập chuyến cũ, khác.
-// Điền sẵn từ đường dẫn: /voyages/new?seafarer=&vessel=&owner=&rank=&reason= (Chuyển sang tàu khác, + Tạo chuyến trên trang tàu).
+// Màn 9 · Tạo chuyến không qua cơ hội: chủ tàu tự tuyển, nhập chuyến cũ, khác. Người đang trên tàu phải ghi rời chuyến cũ trước.
+// Điền sẵn từ đường dẫn: /voyages/new?seafarer=&vessel=&owner=&rank=&reason= (+ Tạo chuyến trên trang tàu).
 export default function VoyageFormPage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -74,9 +74,7 @@ export default function VoyageFormPage() {
 
   const current = values.seafarer_id ? onboard.data?.data?.[0] : null
   const name = person.data?.full_name || personOptions.find((o) => o.value === values.seafarer_id)?.label?.split(' · ')[0]
-  const isTransfer = values.manual_reason === 'TRANSFER'
-  const blocked = !!current && !isTransfer && !values.ended
-  const joinPort = portOptions.find((o) => o.value === values.join_port_id)?.label
+  const blocked = !!current && !values.ended
   const today = dayjs().endOf('day')
 
   const coreFields = ['seafarer_id', 'rank_id', 'manual_reason', 'vessel_id', 'ship_owner_id']
@@ -117,20 +115,19 @@ export default function VoyageFormPage() {
 
   async function submit(formValues) {
     if (blocked) {
-      toast.error(`${name} đang trên ${current.vessel_name}`, { description: 'Ghi rời tàu chuyến đó trước, hoặc chọn lý do Chuyển tàu.' })
+      toast.error(`${name} đang trên ${current.vessel_name}`, { description: 'Ghi rời tàu chuyến đó trước.' })
       return
     }
     try {
       const row = await create.mutateAsync(toVoyagePayload(formValues))
-      const closed = row.closed_voyage ? ` · đã ghi rời ${row.closed_voyage.code}` : ''
       if (againRef.current) {
-        toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}${closed}`)
+        toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}`)
         // resetFields trả về giá trị điền sẵn từ đường dẫn (có thể có người); người, chức danh phải trống cho chuyến kế tiếp.
         form.resetFields()
         form.setFieldsValue({ seafarer_id: undefined, rank_id: undefined, ...nextVoyageValues(form.getFieldsValue(true), formValues) })
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
-        toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}${closed}`)
+        toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}`)
         navigate(`/voyages/${row.id}`)
       }
     } catch (error) {
@@ -177,9 +174,7 @@ export default function VoyageFormPage() {
                   <p className="ds-banner__text">
                     {values.ended
                       ? `${name} đang trên ${current.vessel_name} (${current.code}). Chuyến đã kết thúc phải nằm trước ngày lên ${formatDate(current.join_date)}.`
-                      : isTransfer
-                        ? `${name} đang trên ${current.vessel_name} (${current.code}). Lưu chuyến này sẽ ghi rời tàu chuyến đó ngày ${values.join_date ? dayjs(values.join_date).format(DATE_FORMAT) : '{ngày lên}'} tại ${joinPort || '{nơi lên}'} và nối hai chuyến.`
-                        : `${name} đang trên ${current.vessel_name}. Ghi rời tàu chuyến đó trước, hoặc chọn lý do Chuyển tàu.`}
+                      : `${name} đang trên ${current.vessel_name}. Ghi rời tàu chuyến đó trước, rồi tạo chuyến mới.`}
                   </p>
                 </div>
               </div>
@@ -244,7 +239,7 @@ export default function VoyageFormPage() {
             <span>
               {ready
                 ? `${name} · ${selectedVessel?.label.split(' · IMO')[0] || ''} · lên ${dayjs(values.join_date).format(DATE_FORMAT)}`
-                : blocked ? `${name} đang trên tàu khác. Chọn lý do Chuyển tàu hoặc ghi rời trước.` : 'Chọn thuyền viên, chức danh, lý do, tàu, chủ tàu, ngày lên, nơi lên và ngày rời dự kiến.'}
+                : blocked ? `${name} đang trên tàu khác. Ghi rời tàu chuyến đó trước.` : 'Chọn thuyền viên, chức danh, lý do, tàu, chủ tàu, ngày lên, nơi lên và ngày rời dự kiến.'}
             </span>
           </div>
           <div className="sf-savebar__actions">

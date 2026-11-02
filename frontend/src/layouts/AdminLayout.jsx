@@ -1,3 +1,4 @@
+import HelpLink from '../components/ds/HelpLink'
 import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Dropdown, Drawer, Grid } from 'antd'
@@ -25,6 +26,9 @@ import useAuthStore from '../stores/authStore'
 import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
 import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
+
+// Trang có hướng dẫn trong app (public/huong-dan/hop-dong-va-chuyen.html): hiện link Hướng dẫn ở thanh trên.
+const GUIDE_PATHS = ['/voyages', '/contracts', '/bills']
 
 const { useBreakpoint } = Grid
 
@@ -214,6 +218,7 @@ export default function AdminLayout() {
           </h1>
 
           <div className="app-shell__right">
+            {GUIDE_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ? <HelpLink /> : null}
             <NotificationBell />
             <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
               <button type="button" className="app-shell__user" aria-haspopup="menu">

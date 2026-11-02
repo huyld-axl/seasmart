@@ -2,15 +2,16 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Dropdown, Skeleton } from 'antd'
-import { CalendarOutlined, DeleteOutlined, EditOutlined, MoreOutlined, SearchOutlined, SwapOutlined } from '@ant-design/icons'
+import { CalendarOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import AuditTimeline from '../../../components/ds/AuditTimeline'
+import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { lookupApi } from '../../../api'
 import { useVoyage } from '../../../hooks/useVoyages'
 import { useCan } from '../../../hooks/usePermission'
 import { MANUAL_REASON_LABELS } from '../../../constants/opportunityVoyage'
-import { formatDate, formatUsd } from '../../../utils/format'
+import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
 import { Crumb, FleetTile } from '../fleet/FleetParts'
 import { ReadLayout } from '../seafarers/ReadSections'
 import LeaveModal from './LeaveModal'
@@ -22,7 +23,7 @@ import '../seafarers/SeafarerForm.css'
 import '../fleet/fleet.css'
 import './voyages.css'
 
-// Màn 11 · Chi tiết chuyến: một thuyền viên đi một tàu. Ghi rời, đổi ngày rời, sửa ngày đã ghi, chuyển tàu, huỷ chốt / xoá.
+// Màn 11 · Chi tiết chuyến: một thuyền viên đi một tàu. Ghi rời, đổi ngày rời, sửa ngày đã ghi, huỷ chốt / xoá; thẻ hợp đồng của chuyến.
 export default function VoyageDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -57,16 +58,13 @@ export default function VoyageDetailPage() {
   const fromOpportunity = v.source === 'OPPORTUNITY'
   const portName = (pid) => (ports.data || []).find((p) => p.id === pid)?.name || null
   const replaceQuery = new URLSearchParams({ owner: v.ship_owner_id, vessel: v.vessel_id, rank: v.rank_id, join: String(v.planned_leave_date).slice(0, 10) })
-  const transferQuery = new URLSearchParams({ seafarer: v.seafarer_id, rank: v.rank_id, reason: 'TRANSFER' })
   const menuItems = [
-    onboard && can('voyage.create') && { key: 'transfer', icon: <SwapOutlined />, label: 'Chuyển tàu' },
     can('voyage.update') && { key: 'dates', icon: <EditOutlined />, label: 'Sửa ngày đã ghi' },
     can('opportunity.create') && { key: 'replace', icon: <SearchOutlined />, label: 'Tạo cơ hội tìm người thay' },
-    can('voyage.delete') && !v.legacy_contract && { type: 'divider' },
-    can('voyage.delete') && !v.legacy_contract && { key: 'remove', icon: <DeleteOutlined />, label: fromOpportunity ? 'Huỷ chốt' : 'Xoá chuyến', danger: true },
+    can('voyage.delete') && { type: 'divider' },
+    can('voyage.delete') && { key: 'remove', icon: <DeleteOutlined />, label: fromOpportunity ? 'Huỷ chốt' : 'Xoá chuyến', danger: true },
   ].filter(Boolean)
   const onMenu = ({ key }) => ({
-    transfer: () => navigate(`/voyages/new?${transferQuery}`),
     dates: () => setDialog('dates'),
     replace: () => navigate(`/opportunities/new?${replaceQuery}`),
     remove: () => setDialog('remove'),
@@ -79,9 +77,20 @@ export default function VoyageDetailPage() {
   const source = fromOpportunity
     ? <span>Từ cơ hội {v.opportunity ? link(can('opportunity.view'), `/opportunities/${v.opportunity.id}`, v.opportunity.code) : null}</span>
     : `Tạo tay · ${MANUAL_REASON_LABELS[v.manual_reason] || 'không rõ lý do'}`
-  const contract = v.legacy_contract
-    ? <>{link(can('contract.view'), `/contracts/${v.legacy_contract.id}`, v.legacy_contract.contract_number)} <StatusBadge group="contract" value={v.legacy_contract.status} /></>
-    : <span className="vd-muted">Hợp đồng gắn với chuyến ở giai đoạn sau</span>
+  const c = v.contract
+  const contract = c
+    ? (
+      <>
+        {link(can('contract.view'), `/contracts/${c.id}`, c.contract_number)} <StatusBadge group="contract" value={c.status} />
+        <span className="vd-muted"> · {formatDate(c.start_date)} – {formatDate(c.end_date)} · chênh lệch {formatDiff(c.diff_monthly)} USD/tháng</span>
+      </>
+    )
+    : (
+      <span>
+        <span className="vd-muted">Chưa có</span>
+        {can('contract.create') ? <> <Button size="small" icon={<PlusOutlined />} onClick={() => navigate(`/contracts/new?voyage=${v.id}`)}>Tạo hợp đồng</Button></> : null}
+      </span>
+    )
 
   const sections = [
     {
@@ -152,8 +161,6 @@ export default function VoyageDetailPage() {
               <dd>{v.rank_name} trên {link(can('vessel.view'), `/vessels/${v.vessel_id}`, v.vessel_name)}</dd>
               <dt>Nguồn</dt>
               <dd>{source}</dd>
-              {v.transferred_from ? (<><dt>Chuyển từ</dt><dd>{link(true, `/voyages/${v.transferred_from.id}`, `${v.transferred_from.code} · ${v.transferred_from.vessel_name}`)}</dd></>) : null}
-              {v.transferred_to ? (<><dt>Chuyển sang</dt><dd>{link(true, `/voyages/${v.transferred_to.id}`, `${v.transferred_to.code} · ${v.transferred_to.vessel_name}`)}</dd></>) : null}
             </dl>
           </div>
         </div>
@@ -168,6 +175,14 @@ export default function VoyageDetailPage() {
         </div>
       </div>
 
+      {v.date_mismatch && c ? (
+        <Banner
+          tone="warning"
+          title={`Đã rời tàu ${formatDate(v.date_mismatch.leave_date)}, hợp đồng ${c.contract_number} còn tới ${formatDate(v.date_mismatch.end_date)}`}
+          description="Bill vẫn sinh tới ngày kết thúc hợp đồng. Cần rút ngắn thì mở hợp đồng, đưa về Nháp, sửa ngày kết thúc rồi duyệt lại."
+          action={can('contract.view') ? <Button onClick={() => navigate(`/contracts/${c.id}`)}>Mở hợp đồng</Button> : undefined}
+        />
+      ) : null}
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
       {tab === 'overview' ? <ReadLayout sections={sections} label="chuyến" /> : null}
       {tab === 'history' ? (

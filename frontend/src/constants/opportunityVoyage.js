@@ -5,7 +5,7 @@ export const REQUIREMENT_LEVELS = ['REQUIRED', 'PREFERRED']
 export const VALID_UNTIL = ['JOIN', 'LEAVE', 'LEAVE_PLUS', 'ANY']
 export const VOYAGE_TABS = ['onboard', 'left', 'all']
 export const VOYAGE_SOURCES = ['OPPORTUNITY', 'MANUAL']
-export const MANUAL_REASONS = ['TRANSFER', 'OWNER_HIRED', 'LEGACY', 'OTHER']
+export const MANUAL_REASONS = ['OWNER_HIRED', 'LEGACY', 'OTHER']
 export const DEADLINE_WARN_DAYS = 7
 export const LEAVE_WARN_DAYS = 30
 

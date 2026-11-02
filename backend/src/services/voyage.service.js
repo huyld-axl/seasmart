@@ -20,7 +20,7 @@ const VOYAGE_SELECT = `SELECT sv.id, sv.code, sv.status, sv.source, sv.manual_re
     o.planned_join_date AS opportunity_join_date, sv.budget_monthly_usd,
     sv.join_date, sv.join_port_id, jp.name AS join_port_name, sv.planned_leave_date, sv.planned_leave_port_id, plp.name AS planned_leave_port_name,
     sv.original_leave_date, sv.leave_date, sv.leave_port_id, lp.name AS leave_port_name, sv.leave_note, sv.notes,
-    sv.transferred_from_id, sv.legacy_voyage_id, sv.legacy_contract_id, lc.contract_number AS legacy_contract_number, lc.status AS legacy_contract_status,
+    sv.legacy_voyage_id, sv.legacy_contract_id, lc.contract_number AS legacy_contract_number, lc.status AS legacy_contract_status,
     sv.created_by, sv.created_at, sv.updated_at, to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today
   FROM seafarer_voyage sv
   JOIN seafarer s ON s.id = sv.seafarer_id
@@ -32,6 +32,14 @@ const VOYAGE_SELECT = `SELECT sv.id, sv.code, sv.status, sv.source, sv.manual_re
   LEFT JOIN port plp ON plp.id = sv.planned_leave_port_id
   LEFT JOIN port lp ON lp.id = sv.leave_port_id
   LEFT JOIN seafarer_contract lc ON lc.id = sv.legacy_contract_id AND lc.deleted_at IS NULL`
+
+// Chuyến đã rời mà hợp đồng chưa kết thúc còn tới sau ngày rời: chỉ là nhãn cảnh báo.
+function dateMismatch(voyage, contract) {
+  if (!contract || voyage.status !== 'LEFT' || contract.status === 'ENDED') return null
+  const leave = iso(voyage.leave_date)
+  const end = iso(contract.end_date)
+  return end > leave ? { leave_date: leave, end_date: end } : null
+}
 
 // Lệch so với dự kiến: lên tàu so với ngày xuống dự kiến của cơ hội, rời so với ngày rời gốc.
 function decorate(row) {
@@ -83,6 +91,21 @@ async function settleSeafarer(conn, seafarerId) {
     [seafarerId, seafarerId])
 }
 
+// Hợp đồng chưa xoá của chuyến, kèm số bill chưa xoá. lock: khoá dòng khi sắp xoá.
+async function contractsOfVoyage(conn, voyageId, lock = false) {
+  const [rows] = await conn.query(
+    `SELECT c.id, c.contract_number, c.status,
+        (SELECT COUNT(*) FROM contract_bill b WHERE b.contract_id = c.id AND b.deleted_at IS NULL) AS bills
+     FROM seafarer_contract c WHERE c.seafarer_voyage_id = ? AND c.deleted_at IS NULL${lock ? ' FOR UPDATE OF c' : ''}`, [voyageId])
+  return rows.map((c) => ({ ...c, bills: Number(c.bills) }))
+}
+
+// Hợp đồng đã hiệu lực (hoặc đã có bill) thì chuyến không huỷ được; còn lại bị xoá mềm theo chuyến.
+function splitContractsForRemoval(contracts) {
+  const blocking = contracts.find((c) => ['ACTIVE', 'ENDED'].includes(c.status) || c.bills > 0)
+  return { blocking, toDelete: blocking ? [] : contracts }
+}
+
 async function lockVoyage(conn, id) {
   const [[row]] = await conn.query('SELECT * FROM seafarer_voyage WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
   if (!row) throw { statusCode: 404, message: NOT_FOUND }
@@ -114,6 +137,8 @@ const voyageService = {
       if (query[key]) { where += ` AND sv.${key} = ?`; params.push(Number(query[key])) }
     }
     if (query.source) { where += ' AND sv.source = ?'; params.push(query.source) }
+    // Ô Chuyến của form hợp đồng: chỉ chuyến chưa có hợp đồng chưa xoá.
+    if (query.no_contract) where += ' AND NOT EXISTS (SELECT 1 FROM seafarer_contract c WHERE c.seafarer_voyage_id = sv.id AND c.deleted_at IS NULL)'
     if (query.leaving_within) {
       where += ' AND sv.status = \'ONBOARD\' AND sv.planned_leave_date <= CURRENT_DATE + (? * INTERVAL \'1 day\')'
       params.push(Number(query.leaving_within))
@@ -132,23 +157,19 @@ const voyageService = {
     const [[row]] = await pool.query(`${VOYAGE_SELECT} WHERE sv.id = ? AND sv.deleted_at IS NULL`, [id])
     if (!row) throw { statusCode: 404, message: NOT_FOUND }
     const voyage = decorate(row)
-    const [links] = await pool.query(
-      `SELECT id, code, vessel_id, (SELECT vessel_name FROM vessel WHERE id = x.vessel_id) AS vessel_name, 'from' AS dir
-       FROM seafarer_voyage x WHERE x.id = ? AND x.deleted_at IS NULL
-       UNION ALL
-       SELECT id, code, vessel_id, (SELECT vessel_name FROM vessel WHERE id = x.vessel_id), 'to'
-       FROM seafarer_voyage x WHERE x.transferred_from_id = ? AND x.deleted_at IS NULL`,
-      [row.transferred_from_id || 0, id])
     const [history] = await pool.query(
       `SELECT l.id, l.action, l.payload, l.created_at, l.actor_id, u.email AS actor_email
        FROM seafarer_voyage_log l LEFT JOIN "user" u ON u.id = l.actor_id
        WHERE l.voyage_id = ? ORDER BY l.created_at DESC, l.id DESC`, [id])
-    const pick = (dir) => links.find((l) => l.dir === dir) || null
+    const [[contract]] = await pool.query(
+      `SELECT c.id, c.contract_number, c.status, c.start_date, c.end_date,
+          (SELECT COALESCE(SUM(i.receivable_usd), 0) - COALESCE(SUM(i.payable_usd), 0) FROM contract_item i WHERE i.contract_id = c.id AND i.kind = 'MONTHLY') AS diff_monthly
+       FROM seafarer_contract c WHERE c.seafarer_voyage_id = ? AND c.deleted_at IS NULL`, [id])
     return {
       ...voyage,
       opportunity: row.opportunity_id ? { id: row.opportunity_id, code: row.opportunity_code, planned_join_date: row.opportunity_join_date } : null,
-      transferred_from: pick('from'),
-      transferred_to: pick('to'),
+      contract: contract ? { ...contract, diff_monthly: Number(contract.diff_monthly) } : null,
+      date_mismatch: dateMismatch(voyage, contract),
       legacy_contract: row.legacy_contract_id
         ? { id: row.legacy_contract_id, contract_number: row.legacy_contract_number, status: row.legacy_contract_status }
         : null,
@@ -156,7 +177,7 @@ const voyageService = {
     }
   },
 
-  // Tạo chuyến không qua cơ hội (mục 1.4): chuyển tàu, chủ tàu tự tuyển, nhập chuyến cũ, khác.
+  // Tạo chuyến không qua cơ hội (mục 1.4): chủ tàu tự tuyển, nhập chuyến cũ, khác.
   async create(pool, body, userId) {
     if (!MANUAL_REASONS.includes(body.manual_reason)) throw { statusCode: 400, message: 'Chọn lý do tạo chuyến' }
     if (body.manual_reason === 'OTHER' && !String(body.notes || '').trim()) throw { statusCode: 400, message: 'Lý do Khác cần ghi chú' }
@@ -177,18 +198,13 @@ const voyageService = {
            AND sv.join_date <= ? AND sv.leave_date >= ? LIMIT 1`, [body.seafarer_id, endDate, body.join_date])
       if (overlap) throw { statusCode: 409, message: `${person.full_name} đã có chuyến ${overlap.code} trùng thời gian` }
       const [[onboard]] = await conn.query(
-        `SELECT sv.*, v.vessel_name, p.name AS join_port_name FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
-         LEFT JOIN port p ON p.id = ? WHERE sv.seafarer_id = ? AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL FOR UPDATE OF sv`,
-        [body.join_port_id, body.seafarer_id])
-      let closed = null
+        `SELECT sv.*, v.vessel_name FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
+         WHERE sv.seafarer_id = ? AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL FOR UPDATE OF sv`,
+        [body.seafarer_id])
       if (onboard && !ended) {
-        if (body.manual_reason !== 'TRANSFER') {
-          throw { statusCode: 409, message: `${person.full_name} đang trên ${onboard.vessel_name}, ghi rời tàu chuyến đó trước hoặc chọn lý do Chuyển tàu` }
-        }
-        const [[vessel]] = await conn.query('SELECT vessel_name FROM vessel WHERE id = ?', [body.vessel_id])
-        await leaveOne(conn, onboard, { leave_date: body.join_date, leave_port_id: body.join_port_id, leave_note: `Chuyển sang ${vessel?.vessel_name || 'tàu khác'}` }, userId, 'TRANSFER_OUT')
-        closed = { id: onboard.id, code: onboard.code }
-      } else if (onboard && ended && iso(onboard.join_date) <= endDate) {
+        throw { statusCode: 409, message: `${person.full_name} đang trên ${onboard.vessel_name}, ghi rời tàu chuyến đó trước` }
+      }
+      if (onboard && ended && iso(onboard.join_date) <= endDate) {
         throw { statusCode: 409, message: `${person.full_name} đã có chuyến ${onboard.code} trùng thời gian` }
       }
       const code = await nextCode(conn, 'VOYAGE1', Number(body.join_date.slice(0, 4)), 'CT', 4)
@@ -200,7 +216,6 @@ const voyageService = {
         ship_owner_id: body.ship_owner_id,
         source: 'MANUAL',
         manual_reason: body.manual_reason,
-        transferred_from_id: closed ? closed.id : null,
         budget_monthly_usd: body.budget_monthly_usd ?? null,
         join_date: body.join_date,
         join_port_id: body.join_port_id,
@@ -214,11 +229,11 @@ const voyageService = {
         created_by: actor(userId),
         updated_by: actor(userId),
       }])
-      await writeLog(conn, inserted.insertId, 'CREATE', userId, { manual_reason: body.manual_reason, transferred_from_id: closed?.id || null })
+      await writeLog(conn, inserted.insertId, 'CREATE', userId, { manual_reason: body.manual_reason })
       if (!ended) await conn.query('UPDATE seafarer SET status = \'ON_VESSEL\' WHERE id = ?', [body.seafarer_id])
-      return { id: inserted.insertId, closed }
+      return inserted.insertId
     }))
-    return { ...(await this.get(pool, result.id)), closed_voyage: result.closed }
+    return this.get(pool, result)
   },
 
   // Sửa ngày đã ghi (nhập sai).
@@ -277,34 +292,44 @@ const voyageService = {
     return { success: true, count: ids.length }
   },
 
-  // Huỷ chốt (chuyến từ cơ hội) hoặc xoá chuyến tạo tay.
+  // Xem trước huỷ chốt / xoá chuyến: hợp đồng nào bị xoá mềm, hoặc vì sao bị chặn.
+  async removePreview(pool, id) {
+    const [[row]] = await pool.query('SELECT id FROM seafarer_voyage WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!row) throw { statusCode: 404, message: NOT_FOUND }
+    const { blocking, toDelete } = splitContractsForRemoval(await contractsOfVoyage(pool, id))
+    return {
+      blocked: Boolean(blocking),
+      message: blocking ? `Chuyến có hợp đồng ${blocking.contract_number} đã hiệu lực, không huỷ được` : null,
+      blocking_contract: blocking ? { id: blocking.id, contract_number: blocking.contract_number, status: blocking.status } : null,
+      contracts: toDelete.map((c) => ({ id: c.id, contract_number: c.contract_number, status: c.status })),
+    }
+  },
+
+  // Huỷ chốt (chuyến từ cơ hội) hoặc xoá chuyến tạo tay. Hợp đồng Nháp / Chờ duyệt / Bị từ chối của chuyến bị xoá mềm theo.
   async remove(pool, id, body, userId) {
-    await withTransaction(pool, async (conn) => {
+    const deleted = await withTransaction(pool, async (conn) => {
       const current = await lockVoyage(conn, id)
-      if (current.legacy_contract_id) {
-        const [[contract]] = await conn.query('SELECT contract_number FROM seafarer_contract WHERE id = ?', [current.legacy_contract_id])
-        throw { statusCode: 409, message: `Chuyến này gắn với hợp đồng ${contract?.contract_number || ''}, không huỷ được`.trim() }
+      const { blocking, toDelete } = splitContractsForRemoval(await contractsOfVoyage(conn, id, true))
+      if (blocking) throw { statusCode: 409, message: `Chuyến có hợp đồng ${blocking.contract_number} đã hiệu lực, không huỷ được` }
+      for (const contract of toDelete) {
+        await conn.query('UPDATE seafarer_contract SET deleted_at = NOW(), updated_by = ? WHERE id = ?', [actor(userId), contract.id])
+        await conn.query('INSERT INTO contract_approval_log SET ?', [{
+          contract_id: contract.id, action: 'DELETE', actor_id: actor(userId),
+          payload: JSON.stringify({ voyage_id: id, voyage_code: current.code, status: contract.status }),
+        }])
       }
-      const [[next]] = await conn.query('SELECT code FROM seafarer_voyage WHERE transferred_from_id = ? AND deleted_at IS NULL LIMIT 1', [id])
-      if (next) throw { statusCode: 409, message: `Chuyến này đã chuyển sang ${next.code}, xoá chuyến đó trước` }
       await conn.query('UPDATE seafarer_voyage SET deleted_at = NOW(), updated_by = ? WHERE id = ?', [actor(userId), id])
-      await writeLog(conn, id, 'DELETE', userId, { note: body?.note || null })
+      await writeLog(conn, id, 'DELETE', userId, { note: body?.note || null, deleted_contracts: toDelete.map((c) => c.contract_number) })
       if (current.status === 'ONBOARD') await settleSeafarer(conn, current.seafarer_id)
-      // Chuyển tàu: chuyến trước đã bị đóng khi tạo chuyến này thì mở lại.
-      if (current.transferred_from_id && current.status === 'ONBOARD') {
-        await conn.query(
-          `UPDATE seafarer_voyage SET status = 'ONBOARD', leave_date = NULL, leave_port_id = NULL, leave_note = NULL, updated_by = ?
-           WHERE id = ? AND status = 'LEFT' AND deleted_at IS NULL`, [actor(userId), current.transferred_from_id])
-        await conn.query('UPDATE seafarer SET status = \'ON_VESSEL\' WHERE id = ? AND status <> \'INACTIVE\'', [current.seafarer_id])
-      }
       if (current.opportunity_id) {
         await conn.query('UPDATE opportunity SET status = \'OPEN\', updated_by = ? WHERE id = ? AND status = \'WON\'', [actor(userId), current.opportunity_id])
         await conn.query(
           'UPDATE opportunity_candidate SET status = \'PICKED\' WHERE opportunity_id = ? AND status IN (\'PLACED\', \'NOT_SELECTED\')',
           [current.opportunity_id])
       }
+      return toDelete
     })
-    return { success: true }
+    return { success: true, deleted_contracts: deleted.map((c) => ({ id: c.id, contract_number: c.contract_number, status: c.status })) }
   },
 
   // Thẻ Đội ngũ trên trang tàu (mục 4.8).

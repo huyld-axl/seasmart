@@ -95,7 +95,7 @@ export const STATUS = {
     PENDING: { label: 'Chờ duyệt', tone: 'warning', mark: 'clock' },
     REJECTED: { label: 'Bị từ chối', tone: 'error', mark: 'cross' },
     ACTIVE: { label: 'Hiệu lực', tone: 'success', mark: 'check' },
-    ENDED: { label: 'Hết hạn', tone: 'neutral', mark: 'ring' },
+    ENDED: { label: 'Đã kết thúc', tone: 'neutral', mark: 'ring' },
   },
   // Yêu cầu thanh toán: display_status do máy chủ tính từ ngày chốt sổ và hạn thanh toán.
   bill: {

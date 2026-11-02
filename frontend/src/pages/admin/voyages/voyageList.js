@@ -1,6 +1,6 @@
 // Hàm thuần của danh sách chuyến mới (mỗi chuyến một thuyền viên): nhãn lệch ngày lên, nhãn rời tàu, nguồn.
 import dayjs from 'dayjs'
-import { MANUAL_REASON_LABELS } from '../../../constants/opportunityVoyage'
+import { MANUAL_REASONS, MANUAL_REASON_LABELS } from '../../../constants/opportunityVoyage'
 
 // Khoảng "Trên tàu trong" mặc định: tháng này.
 export const thisMonth = () => [dayjs().startOf('month'), dayjs().endOf('month')]
@@ -52,7 +52,7 @@ export function voyagePrefill(params) {
     vessel_id: num('vessel'),
     ship_owner_id: num('owner'),
     rank_id: num('rank'),
-    manual_reason: MANUAL_REASON_LABELS[reason] ? reason : undefined,
+    manual_reason: MANUAL_REASONS.includes(reason) ? reason : undefined,
     ended: false,
   }).filter(([, v]) => v !== undefined))
 }
@@ -105,7 +105,7 @@ const HISTORY = {
   CREATE: { kind: 'edit', tone: 'success', title: 'Tạo chuyến' },
   MIGRATE: { kind: 'upload', tone: 'neutral', title: 'Chuyển từ dữ liệu chuyến cũ' },
   LEAVE: { kind: 'export', tone: 'neutral', title: 'Ghi rời tàu' },
-  TRANSFER_OUT: { kind: 'export', tone: 'neutral', title: 'Rời tàu do chuyển tàu' },
+  TRANSFER_OUT: { kind: 'export', tone: 'neutral', title: 'Rời tàu do chuyển tàu' }, // chuyến cũ (giai đoạn 1)
   LEAVE_PLAN: { kind: 'edit', tone: 'warning', title: 'Đổi ngày rời dự kiến' },
   EDIT_DATES: { kind: 'edit', tone: 'warning', title: 'Sửa ngày đã ghi' },
   DELETE: { kind: 'reject', tone: 'error', title: 'Huỷ chốt / xoá chuyến' },

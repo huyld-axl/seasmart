@@ -1,0 +1,844 @@
+<title>Hợp đồng gắn chuyến · giai đoạn 2</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe giai đoạn 2: hợp đồng gắn chuyến, đưa về Nháp, duyệt lại chỉnh bill. Một theme sáng có chủ ý, như app.
+     Token chép từ frontend/src/theme/tokens.js. Bố cục: mục lục dính bên trái, các màn xếp dọc trong khung app. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-hover: #1a4775;
+    --primary-foreground: #ffffff;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --primary-mid: rgba(0, 51, 102, 0.16);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --item-hover: #f4f4f6;
+    --surface-hover: #f8f8fa;
+    --neutral: #52525c;
+    --neutral-bg: #f4f4f5;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --error-border: #ffc9c9;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  a { color: var(--primary); }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); }
+
+  /* ---------- Trang tài liệu ---------- */
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1480px; margin: 0 auto; padding-block: 32px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .toc__group { margin: 14px 0 4px 10px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  .intro h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.2; letter-spacing: -.01em; text-wrap: balance; }
+  .intro p { max-width: 70ch; margin: 0 0 10px; color: var(--neutral); }
+  .screen { display: grid; gap: 14px; min-width: 0; scroll-margin-top: 24px; }
+  .screen__head { display: grid; gap: 4px; max-width: 80ch; }
+  .screen__kicker { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--primary); }
+  .screen__head h2 { margin: 0; font-size: 20px; text-wrap: balance; }
+  .screen__head p { margin: 0; color: var(--neutral); }
+  .notes { display: grid; gap: 6px; max-width: 86ch; margin: 0; padding-left: 18px; color: var(--neutral); font-size: 13px; }
+  .notes b { color: var(--foreground); font-weight: 600; }
+  .scroll { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border-strong); background: var(--background); }
+
+  /* ---------- Khung app ---------- */
+  .app { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-width: 1160px; min-height: 540px; position: relative; }
+  .side { display: grid; align-content: start; gap: 2px; padding: 16px 10px; background: var(--surface); border-right: 1px solid var(--border); }
+  .side__brand { display: flex; align-items: center; gap: 8px; padding: 2px 8px 14px; font-weight: 700; color: var(--primary); }
+  .side__logo { width: 26px; height: 26px; border-radius: 7px; background: var(--primary); }
+  .side__item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: var(--radius-sm); font-size: 13px; color: var(--neutral); }
+  .side__item i { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid currentColor; opacity: .55; }
+  .side__item--on { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .side__item--new::after { content: 'Mới'; margin-left: auto; padding: 0 6px; border-radius: 99px; background: var(--info-bg); color: var(--info); font-size: 10px; font-weight: 600; }
+  .side__sep { height: 1px; margin: 8px 6px; background: var(--border); }
+  .page { display: grid; align-content: start; gap: 16px; padding: 20px 24px 28px; min-width: 0; }
+  .crumb { font-size: 12px; color: var(--muted); }
+  .crumb a { color: var(--muted); }
+  .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .head h1 { margin: 0; font-size: 20px; line-height: 1.3; }
+  .head p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+  .head__badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); font-size: 13px; font-weight: 500; white-space: nowrap; cursor: default; }
+  .btn--primary { background: var(--primary); border-color: var(--primary); color: var(--primary-foreground); }
+  .btn--text { border-color: transparent; background: none; color: var(--primary); padding: 0 8px; }
+  .btn--sm { height: 28px; padding: 0 10px; font-size: 12px; }
+  .btn--danger { color: var(--error-strong); border-color: var(--error-border); }
+  .btn[disabled] { opacity: .45; }
+
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .05); font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; }
+  .badge::before { content: ''; width: 8px; height: 8px; border-radius: 99px; background: currentColor; }
+  .badge--plain::before { display: none; }
+  .b-neutral { background: var(--neutral-bg); color: var(--neutral); }
+  .b-success { background: var(--success-bg); color: var(--success); }
+  .b-warning { background: var(--warning-bg); color: var(--warning); }
+  .b-error { background: var(--error-bg); color: var(--error-strong); }
+  .b-info { background: var(--info-bg); color: var(--info); }
+  .b-primary { background: var(--primary-light); color: var(--primary); }
+  .b-ring::before { background: none; border: 1.5px solid currentColor; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); min-width: 0; }
+  .card__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .card__head h3 { margin: 0; font-size: 15px; }
+  .card__body { padding: 16px; }
+  .count { margin-left: 4px; padding: 0 7px; border-radius: 99px; background: var(--secondary); color: var(--neutral); font-size: 12px; font-weight: 500; }
+
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 8px 12px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tab--on { color: var(--primary); border-color: var(--primary); font-weight: 600; }
+  .tab span { margin-left: 4px; color: var(--muted); font-weight: 400; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; }
+  .input { display: inline-flex; align-items: center; height: 34px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: 13px; min-width: 150px; }
+  .input--search { min-width: 260px; }
+  .input--filled { color: var(--foreground); }
+  .input--sel::after { content: ''; margin-left: auto; padding-left: 10px; width: 0; height: 0; border: 4px solid transparent; border-top-color: var(--muted); transform: translateY(2px); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 9px 12px; text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); background: var(--surface-hover); border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .r { text-align: right; }
+  .cell2 { display: grid; gap: 2px; }
+  .cell2 small { color: var(--muted); font-size: 12px; }
+  .strong { font-weight: 600; }
+  .row--muted td { color: var(--muted); }
+  .row--muted td .strong { color: var(--neutral); }
+  .delta { font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 99px; }
+  .delta--early { background: var(--warning-bg); color: var(--warning); }
+  .delta--late { background: var(--error-bg); color: var(--error-strong); }
+  .delta--ext { background: var(--info-bg); color: var(--info); }
+  .link-sub { font-size: 12px; color: var(--muted); }
+
+  .banner { display: flex; gap: 12px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--warning-border); background: var(--warning-bg); font-size: 13px; }
+  .banner b { display: block; }
+  .banner--info { border-color: rgba(29, 78, 216, .2); background: var(--info-bg); }
+
+  .facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; }
+  .fact { padding: 14px 16px; border-right: 1px solid var(--border); }
+  .fact:last-child { border-right: 0; }
+  .fact dt { font-size: 12px; color: var(--muted); }
+  .fact dd { margin: 2px 0 0; font-weight: 600; }
+  .fact dd small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+
+  .sums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .sum { padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .sum p { margin: 0; }
+  .sum__label { font-size: 12px; color: var(--muted); }
+  .sum__value { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .sum__value span { font-size: 13px; font-weight: 400; color: var(--muted); }
+  .sum__sub { font-size: 12px; color: var(--muted); }
+
+  /* Form */
+  .form { display: grid; gap: 16px; max-width: 980px; }
+  .fgroup { display: grid; gap: 14px; }
+  .fgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 16px; }
+  .fgrid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field { display: grid; gap: 6px; min-width: 0; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--neutral); }
+  .field label em { color: var(--error-strong); font-style: normal; margin-left: 2px; }
+  .field .input { width: 100%; min-width: 0; }
+  .field small { font-size: 12px; color: var(--muted); }
+  .span2 { grid-column: span 2; }
+  .span3 { grid-column: 1 / -1; }
+  .choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .choice__item { display: grid; gap: 2px; padding: 12px 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); font-size: 13px; }
+  .choice__item b { display: flex; align-items: center; gap: 8px; }
+  .choice__item b::before { content: ''; width: 14px; height: 14px; border-radius: 99px; border: 1.5px solid var(--border-strong); }
+  .choice__item--on { border-color: var(--primary); box-shadow: 0 0 0 2px var(--ring, var(--primary-light)); background: var(--primary-light); }
+  .choice__item--on b::before { border: 4px solid var(--primary); }
+  .choice__item span { color: var(--muted); padding-left: 22px; }
+  .stick { position: sticky; bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+
+  /* Ứng viên trong cơ hội */
+  .slots { display: grid; gap: 0; }
+  .slot { display: grid; grid-template-columns: 220px minmax(0, 1fr); border-bottom: 1px solid var(--border); }
+  .slot:last-child { border-bottom: 0; }
+  .slot__pos { padding: 14px 16px; border-right: 1px solid var(--border); display: grid; gap: 4px; align-content: start; }
+  .slot__pos b { font-size: 14px; }
+  .slot__pos small { color: var(--muted); font-size: 12px; }
+  .slot__cands { display: grid; gap: 8px; padding: 12px 16px; align-content: start; }
+  .cand { display: grid; grid-template-columns: 28px minmax(0, 1.3fr) minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .cand--sel { border-color: rgba(0, 122, 85, .35); background: var(--success-bg); }
+  .cand--out { opacity: .6; }
+  .avatar { width: 28px; height: 28px; border-radius: 99px; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--neutral); }
+  .add-cand { justify-self: start; }
+
+  /* Gantt */
+  .gantt { display: grid; grid-template-columns: 230px minmax(0, 1fr); font-size: 12px; }
+  .gantt__names { border-right: 1px solid var(--border); }
+  .gantt__name { height: 44px; display: grid; align-content: center; padding: 0 14px; border-bottom: 1px solid var(--border); }
+  .gantt__name b { font-size: 13px; font-weight: 600; }
+  .gantt__name small { color: var(--muted); }
+  .gantt__name--head, .gantt__months { height: 32px; background: var(--surface-hover); border-bottom: 1px solid var(--border); }
+  .gantt__name--head { color: var(--muted); font-weight: 500; }
+  .gantt__chart { position: relative; }
+  .gantt__months { display: grid; }
+  .gantt__months span { padding: 8px 6px; border-left: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .gantt__row { position: relative; height: 44px; border-bottom: 1px solid var(--border); }
+  .gantt__grid { position: absolute; inset: 32px 0 0; display: grid; pointer-events: none; }
+  .gantt__grid span { border-left: 1px solid var(--border); }
+  .bar { position: absolute; top: 12px; height: 20px; border-radius: 5px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+  .bar--plan { top: 14px; height: 16px; border: 1.5px dashed var(--border-strong); background: transparent; }
+  .bar--on { background: var(--primary); color: var(--primary-foreground); }
+  .bar--left { background: var(--neutral); color: var(--primary-foreground); opacity: .7; }
+  .bar--wait { background: var(--primary-mid); color: var(--primary); }
+  .bar--ext { background: repeating-linear-gradient(135deg, var(--info-bg) 0 6px, rgba(29, 78, 216, .18) 6px 12px); color: var(--info); border: 1px solid rgba(29, 78, 216, .3); }
+  .today { position: absolute; top: 0; bottom: 0; width: 0; border-left: 2px solid var(--error-strong); z-index: 2; }
+  .today::before { content: 'Hôm nay 26/10'; position: absolute; top: 6px; left: 4px; padding: 1px 6px; border-radius: 4px; background: var(--error-strong); color: var(--primary-foreground); font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 18px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+  /* Modal */
+  .overlay { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 24px; }
+  .modal { width: 620px; max-width: 100%; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); display: grid; }
+  .modal--wide { width: 820px; }
+  .modal__head { padding: 18px 20px 6px; }
+  .modal__head h3 { margin: 0; font-size: 17px; }
+  .modal__head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .modal__body { display: grid; gap: 14px; padding: 12px 20px 16px; }
+  .modal__foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); }
+  .modal__foot .muted { margin-right: auto; align-self: center; font-size: 12px; }
+  .chk { display: inline-block; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border-strong); vertical-align: -3px; }
+  .chk--on { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px var(--primary), inset 0 0 0 5px var(--surface); }
+  .impact { display: grid; gap: 8px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-hover); border: 1px solid var(--border); font-size: 13px; }
+  .impact h4 { margin: 0; font-size: 13px; }
+  .impact ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--neutral); }
+  .seg { display: inline-flex; padding: 2px; border-radius: var(--radius-sm); background: var(--secondary); gap: 2px; flex-wrap: wrap; }
+  .seg span { padding: 5px 10px; border-radius: 6px; font-size: 12px; color: var(--neutral); }
+  .seg .on { background: var(--surface); color: var(--foreground); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+
+  /* Mô hình */
+  .flow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; align-items: stretch; min-width: 980px; padding: 20px; background: var(--surface); }
+  .node { position: relative; display: grid; gap: 6px; align-content: start; padding: 14px; margin-right: 28px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); }
+  .node:last-child { margin-right: 0; }
+  .node:not(:last-child)::after { content: ''; position: absolute; right: -24px; top: 30px; width: 20px; height: 2px; background: var(--primary); }
+  .node:not(:last-child)::before { content: ''; position: absolute; right: -25px; top: 26px; border: 5px solid transparent; border-left: 7px solid var(--primary); }
+  .node--key { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+  .node__name { font-weight: 700; font-size: 15px; }
+  .node__mult { font-size: 11px; color: var(--primary); font-weight: 600; letter-spacing: .02em; }
+  .node p { margin: 0; font-size: 12.5px; color: var(--neutral); }
+  .node ul { margin: 0; padding-left: 16px; font-size: 12px; color: var(--neutral); display: grid; gap: 2px; }
+  .states { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .state h4 { margin: 0 0 10px; font-size: 14px; }
+  .state__line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+  .state__line + .state__line { margin-top: 8px; }
+  .compare td:first-child { font-weight: 600; white-space: nowrap; }
+  .q { display: grid; gap: 10px; }
+  .q__item { padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .q__item b { display: block; margin-bottom: 4px; }
+  .q__item p { margin: 0; color: var(--neutral); font-size: 13px; }
+  .q__item .rec { margin-top: 6px; color: var(--success); font-weight: 500; }
+
+  @media (max-width: 900px) {
+    .doc { grid-template-columns: minmax(0, 1fr); }
+    .toc { position: static; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+    .toc__head, .toc__group { grid-column: 1 / -1; }
+    .states { grid-template-columns: minmax(0, 1fr); }
+  }
+  .bulk { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--primary-light); border: 1px solid var(--primary-mid); font-size: 13px; }
+  .pl-row { display: grid; grid-template-columns: 180px minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+  .pl-row__label { display: grid; font-size: 13px; }
+  .pl-row__label small { color: var(--muted); font-size: 12px; }
+  .pl-track { position: relative; height: 24px; border-radius: 6px; background: var(--surface-hover); border: 1px solid var(--border); }
+  .pl-seg { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+  .pl-seg--base { background: var(--primary); color: var(--primary-foreground); }
+  .pl-seg--adj { background: var(--success-bg); color: var(--success); border: 1px solid rgba(0, 122, 85, .3); }
+  .pl-seg--ext { background: repeating-linear-gradient(135deg, var(--info-bg) 0 6px, rgba(29, 78, 216, .18) 6px 12px); color: var(--info); border: 1px solid rgba(29, 78, 216, .3); }
+  .seg--sm span { padding: 3px 8px; font-size: 11px; }
+  .req-group td { padding: 8px 12px 4px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); background: var(--surface-hover); }
+  .fit { display: inline-flex; padding: 1px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; background: var(--neutral-bg); color: var(--neutral); white-space: nowrap; }
+  .fit--ok { background: var(--success-bg); color: var(--success); }
+  .fit--warn { background: var(--warning-bg); color: var(--warning); }
+  .warn-text { color: var(--warning); }
+  .pill { display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 12px; color: var(--neutral); white-space: nowrap; }
+  .pill--on { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .drawer-scrim { position: absolute; inset: 0; background: var(--scrim); }
+  .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 720px; max-width: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--surface); box-shadow: var(--elevation-modal); }
+  .drawer__head { display: flex; justify-content: space-between; gap: 12px; padding: 18px 20px 10px; }
+  .drawer__body { display: grid; align-content: start; gap: 12px; padding: 0 20px 16px; overflow: auto; }
+  .drawer__foot { display: flex; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--border); align-items: center; }
+  .sug { display: grid; border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .sug__row { display: grid; grid-template-columns: 16px 28px minmax(0, 1.2fr) auto minmax(0, 1.4fr); gap: 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .sug__row:last-child { border-bottom: 0; }
+  .sug__row--dim { opacity: .55; }
+  .sug__fit { display: flex; gap: 4px; }
+  .sug__why { display: flex; flex-wrap: wrap; gap: 4px; }
+  .why { padding: 1px 8px; border-radius: 6px; background: var(--info-bg); color: var(--info); font-size: 11px; }
+  .why--miss { background: var(--warning-bg); color: var(--warning); }
+  .textarea { min-height: 120px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); font-size: 13px; }
+  .pack { display: grid; grid-template-columns: 220px minmax(0, 1fr) minmax(0, 0.9fr); gap: 12px; align-items: start; }
+  .pack__people { display: grid; gap: 6px; }
+  .pack__person { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+  .pack__person--on { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+  .row--on td { background: var(--primary-light); }
+  .sheet { margin: 16px; padding: 20px; border: 1px solid var(--border); border-radius: 4px; display: grid; gap: 8px; font-size: 12px; }
+  .sheet__title { text-align: center; font-weight: 700; letter-spacing: .08em; margin-bottom: 6px; }
+  .sheet__line { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dotted var(--border-strong); padding-bottom: 4px; }
+  .sheet__line span { color: var(--muted); }
+  .sheet__bar { height: 8px; border-radius: 4px; background: var(--secondary); }
+  .phase { display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 99px; background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; white-space: nowrap; vertical-align: 1px; }
+  .sum--muted { background: var(--surface-hover); border-style: dashed; }
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; }
+  .toggle-row small { display: block; color: var(--muted); font-size: 12px; }
+  .switch { width: 36px; height: 20px; border-radius: 99px; background: var(--border-strong); position: relative; flex-shrink: 0; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 99px; background: var(--surface); }
+</style>
+<style>
+  /* Thêm cho giai đoạn 2 */
+  .sm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 16px; background: var(--surface); font-size: 13px; }
+  .sm__arrow { color: var(--muted); font-size: 12px; }
+  .lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; min-width: 900px; padding: 20px; background: var(--surface); }
+  .lane { position: relative; display: grid; gap: 6px; align-content: start; padding: 14px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); }
+  .lane h4 { margin: 0; font-size: 15px; }
+  .lane ul { margin: 0; padding-left: 16px; font-size: 12.5px; color: var(--neutral); display: grid; gap: 2px; }
+  .lane__link { position: absolute; right: -27px; top: 30px; width: 26px; text-align: center; font-size: 18px; color: var(--muted); }
+  .bill-cut td { background: var(--warning-bg); }
+  .bill-del td { background: var(--error-bg); text-decoration: line-through; color: var(--muted); }
+  .bill-new td { background: var(--info-bg); }
+  .count-box { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; color: var(--muted); }
+  .count-box b { color: var(--foreground); }
+  .tag-warn { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 6px; background: var(--warning-bg); color: var(--warning); border: 1px solid var(--warning-border); font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .tag-err { display: inline-flex; padding: 1px 8px; border-radius: 6px; background: var(--error-bg); color: var(--error-strong); border: 1px solid var(--error-border); font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .banner--error { border-color: var(--error-border); background: var(--error-bg); }
+  .banner--neutral { border-color: var(--border); background: var(--surface-hover); }
+  .two { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+  .toast { position: absolute; right: 24px; bottom: 24px; width: 380px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface); box-shadow: var(--elevation-modal); border: 1px solid var(--border); font-size: 13px; display: grid; gap: 6px; }
+  .toast b { font-size: 14px; }
+</style>
+
+<div class="doc">
+  <nav class="toc" aria-label="Các màn">
+    <p class="toc__head">Hợp đồng · giai đoạn 2</p>
+    <a href="#doc-truoc"><b>!</b>Đọc trước khi dựng</a>
+    <a href="#mo-hinh"><b>0</b>Mô hình và trạng thái</a>
+    <p class="toc__group">Từ cơ hội tới hợp đồng</p>
+    <a href="#ung-vien"><b>1</b>Ứng viên đang có hợp đồng</a>
+    <a href="#chot"><b>2</b>Chốt người</a>
+    <a href="#ct-chuyen"><b>3</b>Chi tiết chuyến</a>
+    <a href="#tao-hd"><b>4</b>Tạo hợp đồng từ chuyến</a>
+    <a href="#roi-tau"><b>5</b>Ghi rời tàu</a>
+    <p class="toc__group">Hợp đồng</p>
+    <a href="#ds-hd"><b>6</b>Danh sách hợp đồng</a>
+    <a href="#ct-hd"><b>7</b>Hợp đồng Hiệu lực</a>
+    <a href="#ve-nhap"><b>8</b>Đưa về Nháp</a>
+    <a href="#nhap-lai"><b>9</b>Nháp chờ duyệt lại</a>
+    <a href="#chan-luu"><b>10</b>Lưu ngày bị chặn</a>
+    <a href="#duyet-lai"><b>11</b>Duyệt lại: hộp xác nhận</a>
+    <a href="#duyet-bien-the"><b>12</b>Duyệt lại: đổi ngày bắt đầu, kéo dài</a>
+    <a href="#ket-thuc"><b>13</b>Kết thúc hợp đồng</a>
+    <a href="#huy-chot"><b>14</b>Huỷ chốt, xoá chuyến</a>
+    <p class="toc__group">Dựng</p>
+    <a href="#du-lieu"><b>15</b>Thay đổi dữ liệu và quyền</a>
+    <a href="#cau-hoi"><b>16</b>Còn để ngỏ</a>
+  </nav>
+
+  <main class="main">
+    <header class="intro">
+      <h1>Hợp đồng gắn chuyến, đưa về Nháp, duyệt lại chỉnh bill</h1>
+      <p>Giai đoạn 2 nối hợp đồng vào chuyến mới (mỗi chuyến một thuyền viên). <b>Chuyến</b> giữ ngày xuống J và ngày rời L. <b>Hợp đồng</b> giữ ngày bắt đầu S, ngày kết thúc E và dòng tiền. <b>Bill</b> (yêu cầu thanh toán) sinh và chỉnh theo hợp đồng, chỉ ở bước duyệt. Ba thứ này độc lập: sửa ngày chuyến không đụng hợp đồng hay tiền.</p>
+      <p>Tài liệu luồng đã thống nhất: <code>docs/mcah-ke-hoach-hop-dong-giai-doan-2.md</code>. Ca kiểm thử: <code>docs/mcah-testcase-hop-dong-giai-doan-2.xlsx</code>. Hướng dẫn cho người dùng: <code>/huong-dan/hop-dong-va-chuyen.html</code>.</p>
+      <p>Dữ liệu mẫu: thuyền viên Đỗ Văn Nam, Thủy thủ AB trên MV Ocean Pride của Hải Phong Shipping. Chuyến CT-2026-0104 lên tàu 10/03/2026. Hợp đồng HĐ-2026-0031 từ 10/03/2026 tới 31/12/2026, chốt sổ cuối tháng. Hôm nay là 30/10/2026.</p>
+    </header>
+
+    <section class="screen" id="doc-truoc">
+      <div class="screen__head">
+        <span class="screen__kicker">Đọc trước khi dựng</span>
+        <h2>Dựng trên màn và component đang có</h2>
+        <p>Wireframe chốt luồng, chữ và thứ tự khối. Hình dáng lấy theo màn đang có (CLAUDE.md mục 3.3, 3.4). Control mới phải vào <code>components/ds/</code> và <code>/design-system</code> trước.</p>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Màn</th><th>Dựng theo</th><th>Cần thêm vào design system</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">1 Ứng viên đang có hợp đồng</td><td>Dòng ứng viên đang có ở chi tiết cơ hội và bảng Thêm ứng viên</td><td>Không. Dùng <code>StatusBadge</code> tone warning</td></tr>
+            <tr><td class="strong">2 Chốt người</td><td>Hộp thoại chốt đang có, thêm <code>Banner</code> tone warning</td><td>—</td></tr>
+            <tr><td class="strong">3 Chi tiết chuyến</td><td><code>VoyageDetailPage</code>: thay thẻ "Hợp đồng · Giai đoạn 2" bằng thẻ hợp đồng thật</td><td>—</td></tr>
+            <tr><td class="strong">4 Tạo hợp đồng</td><td><code>ContractFormPage</code> đang có, đổi ô Vị trí thành ô Chuyến</td><td>—</td></tr>
+            <tr><td class="strong">5 Ghi rời tàu</td><td>Hộp thoại ghi rời đang có, chỉ thêm lối tắt trong toast</td><td>—</td></tr>
+            <tr><td class="strong">6, 7, 9 Hợp đồng</td><td><code>ContractListPage</code>, <code>ContractDetailPage</code> đang có</td><td>Nhóm <code>contract</code> trong <code>statusMap</code>: nhãn ENDED đổi thành "Đã kết thúc"</td></tr>
+            <tr><td class="strong">8, 13, 14 Hộp xác nhận thường</td><td><code>modal.confirm</code> như Xoá hợp đồng</td><td>—</td></tr>
+            <tr><td class="strong">11, 12 Duyệt lại</td><td>Mở rộng <code>ApproveModal</code> đang có</td><td><b>Checkbox khóa có đếm ngược</b> là control mới: <code>CountdownCheck</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="screen" id="mo-hinh">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 0 · mô hình</span>
+        <h2>Ba tầng độc lập, chỉ một mũi tên sao chép</h2>
+        <p>Lúc chốt, S và E của hợp đồng Nháp được chép từ J và ngày rời dự kiến. Sau đó chuyến và hợp đồng không kéo nhau. Bill chỉ đổi khi hợp đồng được duyệt.</p>
+      </div>
+      <div class="scroll"><div class="lanes">
+        <div class="lane"><span class="node__mult">CHUYẾN · 1 người, 1 tàu</span><h4>Chuyến</h4><ul><li>Ngày xuống J, nơi lên</li><li>Ngày rời dự kiến, ngày rời thực tế L</li><li>Thuyền viên: Đang trên tàu / Ở bờ</li><li>Tối đa một hợp đồng</li></ul><span class="lane__link" title="chỉ chép lúc chốt">⇢</span></div>
+        <div class="lane node--key"><span class="node__mult">HỢP ĐỒNG · thuộc 1 chuyến</span><h4>Hợp đồng</h4><ul><li>Ngày bắt đầu S, kết thúc E</li><li>Dòng tiền phải thu, phải trả</li><li>Hiệu lực thì khóa mọi trường</li></ul><span class="lane__link" title="duyệt thì sinh / chỉnh">→</span></div>
+        <div class="lane"><span class="node__mult">BILL · theo kỳ chốt sổ</span><h4>Yêu cầu thanh toán</h4><ul><li>Sinh khi duyệt lần đầu</li><li>Cắt, xóa mềm, sinh thêm khi duyệt lại</li><li>Chưa gửi / Đã gửi / Đã thu</li></ul></div>
+      </div></div>
+      <div class="states">
+        <div class="card card__body state">
+          <h4>Trạng thái hợp đồng</h4>
+          <div class="state__line"><span class="badge b-neutral">Nháp</span>→<span class="badge b-warning">Chờ duyệt</span>→<span class="badge b-success">Hiệu lực</span>→<span class="badge b-neutral b-ring">Đã kết thúc</span></div>
+          <div class="state__line">Chờ duyệt → <span class="badge b-error">Bị từ chối</span> → Chờ duyệt</div>
+          <div class="state__line"><b>Mới:</b> Hiệu lực → Nháp (nút "Đưa về Nháp"), Hiệu lực → Đã kết thúc (nút "Kết thúc hợp đồng"). Không còn job tự kết thúc.</div>
+        </div>
+        <div class="card card__body state">
+          <h4>Trạng thái bill (giữ nguyên)</h4>
+          <div class="state__line"><span class="badge b-neutral">Chưa gửi</span>⇄<span class="badge b-info">Đã gửi</span>⇄<span class="badge b-success">Đã thu</span></div>
+          <div class="state__line"><b>Mới:</b> bill có thể bị xóa mềm hoặc cắt kỳ lúc duyệt lại, chỉ khi đang Chưa gửi.</div>
+        </div>
+        <div class="card card__body state">
+          <h4>Trạng thái chuyến (giữ nguyên)</h4>
+          <div class="state__line"><span class="badge b-success">Đang trên tàu</span>→<span class="badge b-neutral">Đã rời tàu</span></div>
+          <div class="state__line"><b>Bỏ:</b> lý do Chuyển tàu. Người đang trên tàu phải ghi rời trước.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="ung-vien">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 1 · chi tiết cơ hội, khối ứng viên</span>
+        <h2>Ứng viên đang có hợp đồng nơi khác</h2>
+        <p>Người còn hợp đồng chưa kết thúc (Nháp, Chờ duyệt, Bị từ chối, Hiệu lực) mang nhãn vàng. Vẫn thêm, gửi, chốt được.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:300px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item side__item--on"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div></aside>
+        <div class="page">
+          <div class="crumb"><a>Cơ hội</a> / CH26051</div>
+          <div class="head"><div><h1>Thủy thủ AB · MV Lotus Star</h1><p>Đông Á Marine · xuống dự kiến 05/11/2026 Hải Phòng</p></div><div class="actions"><span class="btn">+ Thêm ứng viên</span></div></div>
+          <div class="card">
+            <table>
+              <thead><tr><th>Ứng viên</th><th>Hồ sơ yêu cầu</th><th>Ghi chú</th><th>Gửi chủ tàu</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><div class="cell2"><span class="strong">Đỗ Văn Nam</span><small>Thủy thủ AB · Ở bờ</small></div></td><td><span class="fit fit--ok">6/6 bắt buộc</span></td><td><span class="tag-warn">Đang có hợp đồng HĐ-2026-0031 · tới 31/12/2026</span></td><td class="num">28/10/2026</td><td class="r"><span class="btn btn--sm">…</span></td></tr>
+                <tr><td><div class="cell2"><span class="strong">Trần Minh Khoa</span><small>Thủy thủ AB · Ở bờ</small></div></td><td><span class="fit fit--ok">6/6 bắt buộc</span></td><td class="muted">—</td><td class="num">28/10/2026</td><td class="r"><span class="btn btn--sm">…</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Nhãn hiện ở cả chi tiết cơ hội, bảng Thêm ứng viên và bảng Đề xuất. Bấm nhãn mở hợp đồng đó.</li>
+        <li>Không xét ngày dự kiến của cơ hội: còn hợp đồng chưa kết thúc là hiện nhãn.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="chot">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 2 · hộp thoại Chốt người</span>
+        <h2>Chốt người, có hoặc không sinh hợp đồng</h2>
+        <p>Chốt vẫn như giai đoạn 1 và thêm việc sinh hợp đồng Nháp. Người còn hợp đồng chưa kết thúc trùng thời gian: chốt vẫn thành công nhưng không sinh hợp đồng.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:560px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item side__item--on"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div></aside>
+        <div class="page"></div>
+        <div class="overlay">
+          <div class="modal" style="width:520px">
+            <div class="modal__head"><h3>Chốt người · Thủy thủ AB · MV Lotus Star</h3><p>CH26051 · Đông Á Marine</p></div>
+            <div class="modal__body">
+              <div class="field"><label>Người<em>*</em></label><span class="input input--sel input--filled">Đỗ Văn Nam · chủ tàu đã chọn</span></div>
+              <div class="fgrid fgrid--2">
+                <div class="field"><label>Ngày xuống tàu<em>*</em></label><span class="input input--filled num">30/10/2026</span><small>Không được sau hôm nay</small></div>
+                <div class="field"><label>Nơi xuống tàu<em>*</em></label><span class="input input--sel input--filled">Hải Phòng</span></div>
+              </div>
+              <div class="banner"><div><b>Sẽ không tạo hợp đồng</b>Đỗ Văn Nam còn hợp đồng HĐ-2026-0031 tới 31/12/2026, trùng thời gian. Chốt vẫn ghi lên tàu. Muốn có hợp đồng mới thì kết thúc hoặc rút ngắn HĐ-2026-0031, rồi bấm “Tạo hợp đồng” trên chuyến.</div></div>
+            </div>
+            <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--primary">Chốt</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Không trùng:</b> không có banner. Lưu xong toast "Đã chốt Đỗ Văn Nam · CT-2026-0161 · hợp đồng nháp HĐ-2026-0044" với hai link.</li>
+        <li><b>Trùng:</b> banner như trên hiện ngay khi chọn người. Lưu xong toast vàng "Đã chốt, chưa tạo hợp đồng vì trùng HĐ-2026-0031".</li>
+        <li>Hợp đồng Nháp điền sẵn: thuyền viên, chủ tàu, tàu, chức danh từ chuyến; S = ngày xuống; E = ngày rời dự kiến; dòng tiền phải thu tháng gợi ý bằng budget của cơ hội; kỳ thanh toán mặc định.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="ct-chuyen">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 3 · /voyages/:id</span>
+        <h2>Chi tiết chuyến có thẻ hợp đồng</h2>
+        <p>Thẻ thứ ba của hàng tóm tắt là hợp đồng. Chuyến đã rời tàu mà hợp đồng còn kéo dài sau ngày rời thì hiện banner vàng.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div></aside>
+        <div class="page">
+          <div class="crumb"><a>Chuyến tàu</a> / CT-2026-0104</div>
+          <div class="head">
+            <div><h1>Đỗ Văn Nam · CT-2026-0104</h1><p>Thủy thủ AB trên <a>MV Ocean Pride</a> · Hải Phong Shipping · từ cơ hội <a>CH26012</a></p><div class="head__badges"><span class="badge b-neutral">Đã rời tàu</span><span class="badge badge--plain b-warning">Rời sớm 2,5 tháng</span></div></div>
+            <div class="actions"><span class="btn">…</span></div>
+          </div>
+          <div class="banner"><div><b>Đã rời tàu 17/10/2026, hợp đồng HĐ-2026-0031 còn tới 31/12/2026</b>Bill vẫn sinh tới ngày kết thúc hợp đồng. Cần rút ngắn thì mở hợp đồng, đưa về Nháp, sửa ngày kết thúc rồi duyệt lại. <a>Mở hợp đồng</a></div></div>
+          <div class="card"><dl class="facts">
+            <div class="fact"><dt>Lên tàu</dt><dd class="num">10/03/2026<small>Cơ hội dự kiến 05/03/2026</small></dd></div>
+            <div class="fact"><dt>Nơi lên tàu</dt><dd>Hải Phòng</dd></div>
+            <div class="fact"><dt>Rời tàu</dt><dd class="num">17/10/2026<small>Dự kiến 31/12/2026</small></dd></div>
+            <div class="fact"><dt>Nơi rời tàu</dt><dd>Singapore</dd></div>
+          </dl></div>
+          <div class="sums" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <div class="sum"><p class="sum__label">Nguồn</p><p class="sum__value" style="font-size:16px"><a>CH26012</a></p><p class="sum__sub">Chốt 10/03/2026</p></div>
+            <div class="sum"><p class="sum__label">Budget</p><p class="sum__value num">1.650 <span>USD/tháng</span></p><p class="sum__sub">Lấy từ cơ hội</p></div>
+            <div class="sum"><p class="sum__label">Hợp đồng</p><p class="sum__value" style="font-size:16px"><a>HĐ-2026-0031</a> <span class="badge b-success">Hiệu lực</span></p><p class="sum__sub num">10/03/2026 – 31/12/2026 · chênh lệch 250 USD/tháng</p></div>
+          </div>
+          <div class="sums" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <div class="sum sum--muted"><p class="sum__label">Biến thể: chưa có hợp đồng</p><p class="sum__value" style="font-size:16px">Chưa có</p><p class="sum__sub"><span class="btn btn--sm">+ Tạo hợp đồng</span></p></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Thẻ Hợp đồng: số, nhãn trạng thái, khoảng S–E, chênh lệch tháng. Chưa có hợp đồng: nút <b>Tạo hợp đồng</b> (cần quyền <code>contract.create</code>), mở Màn 4.</li>
+        <li>Banner lệch ngày chỉ hiện khi chuyến Đã rời tàu, hợp đồng chưa kết thúc và E sau L. Không có nút tự sửa.</li>
+        <li>Menu "…" bỏ mục "Chuyển tàu". Còn: Sửa ngày đã ghi · Tạo cơ hội tìm người thay · Huỷ chốt / Xoá chuyến (Màn 14).</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="tao-hd">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 4 · /contracts/new?voyage=:id</span>
+        <h2>Tạo hợp đồng từ chuyến</h2>
+        <p>Form hợp đồng đang có. Ô "Vị trí trên chuyến cũ" đổi thành ô Chuyến, chọn sẵn và khóa khi mở từ chi tiết chuyến.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:520px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page">
+          <div class="crumb"><a>Hợp đồng</a> / Thêm hợp đồng</div>
+          <div class="head"><div><h1>Thêm hợp đồng</h1><p>Hợp đồng luôn thuộc một chuyến. Mỗi chuyến tối đa một hợp đồng.</p></div></div>
+          <div class="form">
+            <div class="card card__body fgroup">
+              <div class="fgrid">
+                <div class="field span2"><label>Chuyến<em>*</em></label><span class="input input--sel input--filled">CT-2026-0161 · Đỗ Văn Nam · MV Lotus Star · lên 30/10/2026</span><small>Chỉ hiện chuyến chưa có hợp đồng</small></div>
+                <div class="field"><label>Chức danh</label><span class="input input--filled">Thủy thủ AB</span><small>Theo chuyến</small></div>
+                <div class="field"><label>Ngày bắt đầu<em>*</em></label><span class="input input--filled num">30/10/2026</span><small>Điền sẵn từ ngày xuống tàu, sửa được</small></div>
+                <div class="field"><label>Ngày kết thúc<em>*</em></label><span class="input input--filled num">30/06/2027</span><small>Điền sẵn từ ngày rời dự kiến, sửa được</small></div>
+                <div class="field"><label>Số tháng</label><span class="input input--filled num">8,0</span></div>
+              </div>
+            </div>
+            <div class="card card__body"><b>Dòng tiền</b> <span class="muted">· bảng phải thu / phải trả như hiện nay (DealTable)</span></div>
+            <div class="card card__body"><b>Kỳ thanh toán</b> <span class="muted">· như hiện nay (TermsTable)</span></div>
+            <div class="stick"><span class="muted">Chưa lưu</span><div class="actions"><span class="btn">Huỷ</span><span class="btn">Lưu &amp; thêm hợp đồng khác</span><span class="btn btn--primary">Thêm hợp đồng</span></div></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Trùng hợp đồng chưa kết thúc của cùng người: lỗi dưới ô ngày "Đỗ Văn Nam đã có hợp đồng HĐ-2026-0031 trùng thời gian" (quy tắc đang có).</li>
+        <li>Mở từ danh sách hợp đồng: ô Chuyến không khóa, tìm theo mã chuyến hoặc tên thuyền viên.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="roi-tau">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 5 · hộp thoại Ghi rời tàu (đang có)</span>
+        <h2>Ghi rời tàu không đụng hợp đồng</h2>
+        <p>Chỉ đổi chuyến và trạng thái thuyền viên. Toast có lối tắt mở hợp đồng.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:420px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item side__item--on"><i></i>Chuyến tàu</div><div class="side__item"><i></i>Hợp đồng</div></aside>
+        <div class="page"><div class="crumb"><a>Chuyến tàu</a> / CT-2026-0104</div><div class="head"><div><h1>Đỗ Văn Nam · CT-2026-0104</h1></div></div></div>
+        <div class="toast"><b>Đã ghi rời tàu Đỗ Văn Nam</b><span class="muted">Hợp đồng HĐ-2026-0031 vẫn còn tới 31/12/2026. Hệ thống không tự đổi hợp đồng.</span><span><a>Mở hợp đồng</a> · <a>Tạo cơ hội tìm người thay</a></span></div>
+      </div></div>
+      <ul class="notes">
+        <li>Bỏ lối tắt "Chuyển sang tàu khác" của giai đoạn 1.</li>
+        <li>Dòng "Hợp đồng … vẫn còn tới …" chỉ hiện khi có hợp đồng chưa kết thúc và E sau L.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="ds-hd">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 6 · /contracts</span>
+        <h2>Danh sách hợp đồng</h2>
+        <p>Thêm cột Chuyến, nhãn "Chờ duyệt lại" cho hợp đồng đã đưa về Nháp, nhãn lệch ngày.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:360px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page">
+          <div class="head"><div><h1>Hợp đồng</h1></div><div class="actions"><span class="btn btn--primary">+ Thêm hợp đồng</span></div></div>
+          <div class="tabs"><span class="tab tab--on">Tất cả<span>42</span></span><span class="tab">Nháp<span>5</span></span><span class="tab">Chờ duyệt<span>2</span></span><span class="tab">Bị từ chối<span>1</span></span><span class="tab">Hiệu lực<span>30</span></span><span class="tab">Đã kết thúc<span>4</span></span></div>
+          <div class="card">
+            <table>
+              <thead><tr><th>Số</th><th>Thuyền viên</th><th>Chuyến · tàu</th><th>Thời hạn</th><th>Trạng thái</th><th class="r">Chênh lệch / tháng</th></tr></thead>
+              <tbody>
+                <tr><td class="strong">HĐ-2026-0031</td><td>Đỗ Văn Nam</td><td><div class="cell2"><a>CT-2026-0104</a><small>MV Ocean Pride</small></div></td><td class="num">10/03/2026 – 31/12/2026</td><td><span class="badge b-success">Hiệu lực</span> <span class="tag-warn">Đã rời tàu 17/10</span></td><td class="r num">250</td></tr>
+                <tr><td class="strong">HĐ-2026-0027</td><td>Phạm Quốc Bảo</td><td><div class="cell2"><a>CT-2026-0098</a><small>MV Ocean Pride</small></div></td><td class="num">01/02/2026 – 31/01/2027</td><td><span class="badge b-neutral">Nháp</span> <span class="tag-warn">Chờ duyệt lại</span></td><td class="r num">300</td></tr>
+                <tr><td class="strong">HĐ-2026-0044</td><td>Trần Minh Khoa</td><td><div class="cell2"><a>CT-2026-0161</a><small>MV Lotus Star</small></div></td><td class="num">30/10/2026 – 30/06/2027</td><td><span class="badge b-neutral">Nháp</span></td><td class="r num">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Chờ duyệt lại</b> = hợp đồng chưa Hiệu lực (Nháp, Chờ duyệt, Bị từ chối) mà đã có bill (tức từng Hiệu lực). Tính ra, không lưu cột.</li>
+        <li>Tab "Hết hạn" đổi chữ thành "Đã kết thúc" vì giờ do người bấm.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="ct-hd">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 7 · /contracts/:id khi Hiệu lực</span>
+        <h2>Hợp đồng Hiệu lực khóa hoàn toàn</h2>
+        <p>Không có nút Sửa. Hai nút mới: Đưa về Nháp, Kết thúc hợp đồng. Khối bill liệt kê các kỳ.</p>
+      </div>
+      <div class="scroll"><div class="app">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page">
+          <div class="crumb"><a>Tàu</a> / <a>MV Ocean Pride</a> / <a>CT-2026-0104</a> / HĐ-2026-0031</div>
+          <div class="head">
+            <div><h1>HĐ-2026-0031 · Đỗ Văn Nam</h1><p>Thủy thủ AB · MV Ocean Pride · Hải Phong Shipping</p><div class="head__badges"><span class="badge b-success">Hiệu lực</span></div></div>
+            <div class="actions"><span class="btn">In hợp đồng</span><span class="btn">Kết thúc hợp đồng</span><span class="btn btn--primary">Đưa về Nháp</span></div>
+          </div>
+          <div class="banner banner--neutral"><div><b>Hiệu lực từ 10/03/2026 đến 31/12/2026</b>Duyệt bởi Nguyễn Thu Hà lúc 10/03/2026 15:20. Nội dung không sửa được. Cần sửa thì bấm Đưa về Nháp.</div></div>
+          <div class="banner"><div><b>Chuyến CT-2026-0104 đã rời tàu 17/10/2026</b>Hợp đồng còn tới 31/12/2026, bill vẫn sinh tới ngày đó.</div></div>
+          <div class="card">
+            <div class="card__head"><h3>Yêu cầu thanh toán <span class="count">10</span></h3></div>
+            <table>
+              <thead><tr><th>Kỳ</th><th>Từ – đến</th><th>Hạn</th><th>Trạng thái</th><th class="r">Số tiền (USD)</th></tr></thead>
+              <tbody>
+                <tr><td>1–7</td><td class="num">10/03/2026 – 30/09/2026</td><td class="num">…</td><td><span class="badge b-success">Đã thu</span></td><td class="r num">7 × 1.900</td></tr>
+                <tr><td>8</td><td class="num">01/10/2026 – 31/10/2026</td><td class="num">15/11/2026</td><td><span class="badge b-neutral">Chưa gửi</span></td><td class="r num">1.900</td></tr>
+                <tr><td>9</td><td class="num">01/11/2026 – 30/11/2026</td><td class="num">15/12/2026</td><td><span class="badge b-neutral">Chưa gửi</span></td><td class="r num">1.900</td></tr>
+                <tr><td>10</td><td class="num">01/12/2026 – 31/12/2026</td><td class="num">15/01/2027</td><td><span class="badge b-neutral">Chưa gửi</span></td><td class="r num">1.900</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Quyền: Đưa về Nháp cần <code>contract.update</code>; Kết thúc hợp đồng cần quyền mới <code>contract.end</code>.</li>
+        <li>Đã kết thúc: không có nút nào ngoài In hợp đồng.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="ve-nhap">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 8 · modal.confirm</span>
+        <h2>Đưa về Nháp</h2>
+        <p>Xác nhận thường, không có checkbox khóa. Chỉ đổi trạng thái, bill giữ nguyên và vẫn gửi, thu được.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:360px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page"></div>
+        <div class="overlay"><div class="modal" style="width:460px">
+          <div class="modal__head"><h3>Đưa HĐ-2026-0031 về Nháp?</h3><p>Hợp đồng mở lại để sửa. 10 yêu cầu thanh toán giữ nguyên cho tới khi duyệt lại. Sau khi sửa cần xin duyệt và duyệt lại.</p></div>
+          <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--primary">Đưa về Nháp</span></div>
+        </div></div>
+      </div></div>
+    </section>
+
+    <section class="screen" id="nhap-lai">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 9 · /contracts/:id khi Nháp, đã có bill</span>
+        <h2>Nháp chờ duyệt lại</h2>
+        <p>Banner so ngày đang lưu với khoảng bill đang có. Sửa bằng form hợp đồng đang có.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:420px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page">
+          <div class="crumb"><a>Hợp đồng</a> / HĐ-2026-0031</div>
+          <div class="head">
+            <div><h1>HĐ-2026-0031 · Đỗ Văn Nam</h1><p>Thủy thủ AB · MV Ocean Pride</p><div class="head__badges"><span class="badge b-neutral">Nháp</span><span class="tag-warn">Chờ duyệt lại</span></div></div>
+            <div class="actions"><span class="btn">Sửa hợp đồng</span><span class="btn btn--primary">Xin duyệt</span></div>
+          </div>
+          <div class="banner banner--info"><div><b>Đưa về Nháp lúc 30/10/2026 09:40 bởi Nguyễn Thu Hà</b>Ngày kết thúc: bill đang tới <b>31/12/2026</b>, hợp đồng đang lưu <b>17/10/2026</b>. Khi duyệt: kỳ 8 cắt về 17/10, kỳ 9 và 10 xóa mềm.</div></div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Ngày cũ suy ra từ bill (kỳ đầu, kỳ cuối), không lưu cột riêng.</li>
+        <li>Không có nút Xoá hợp đồng khi đã có bill. Nháp chưa từng duyệt thì giữ nút Xoá như hiện nay.</li>
+        <li>Dòng "Khi duyệt: …" là bản xem trước tính từ cùng hàm với bước duyệt (Màn 11).</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="chan-luu">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 10 · form hợp đồng, bấm Lưu</span>
+        <h2>Lưu ngày mới bị chặn</h2>
+        <p>Hợp đồng đã có bill: lưu S hoặc E mới thì kiểm tra bill bị ảnh hưởng. Có bill Đã gửi hoặc Đã thu thì không lưu.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:420px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page">
+          <div class="crumb"><a>Hợp đồng</a> / HĐ-2026-0031 / Sửa</div>
+          <div class="form">
+            <div class="card card__body fgroup"><div class="fgrid">
+              <div class="field"><label>Ngày bắt đầu<em>*</em></label><span class="input input--filled num">10/03/2026</span></div>
+              <div class="field"><label>Ngày kết thúc<em>*</em></label><span class="input input--filled num" style="border-color:var(--error-strong)">15/09/2026</span><small style="color:var(--error-strong)">Có bill đã thu nằm sau ngày này</small></div>
+            </div></div>
+            <div class="banner banner--error"><div><b>Chưa lưu được ngày kết thúc 15/09/2026</b>Các bill sau ngày này đã gửi hoặc đã thu: <a>TT2026-00412</a> kỳ 7 (Đã thu). Huỷ ghi nhận thu, thu hồi bill đó rồi lưu lại, hoặc chọn ngày từ 30/09/2026 trở đi.</div></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Bill bị ảnh hưởng: đổi S → mọi bill; chỉ đổi E sớm hơn → bill có <code>period_end</code> sau E mới; chỉ đổi E muộn hơn → không có.</li>
+        <li>Kiểm tra lại y hệt lúc duyệt (Màn 11) vì trong lúc Nháp bill vẫn gửi, thu được.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="duyet-lai">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 11 · ApproveModal khi hợp đồng đã có bill</span>
+        <h2>Duyệt lại: hộp xác nhận khóa 5 giây</h2>
+        <p>Chỉ hiện khi duyệt làm bill thay đổi. Duyệt lần đầu và duyệt lại không đổi bill dùng hộp duyệt như hiện nay.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:620px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page"></div>
+        <div class="overlay"><div class="modal" style="width:620px">
+          <div class="modal__head"><h3>Duyệt HĐ-2026-0031: yêu cầu thanh toán sẽ thay đổi</h3><p>Ngày kết thúc 31/12/2026 → 17/10/2026</p></div>
+          <div class="modal__body">
+            <div class="card">
+              <table>
+                <thead><tr><th>Kỳ</th><th>Hiện tại</th><th>Sau khi duyệt</th><th>Trạng thái</th></tr></thead>
+                <tbody>
+                  <tr class="bill-cut"><td>8</td><td class="num">01/10 – 31/10/2026</td><td class="num">01/10 – 17/10/2026 · tiền giữ đủ tháng</td><td><span class="badge b-neutral">Chưa gửi</span></td></tr>
+                  <tr class="bill-del"><td>9</td><td class="num">01/11 – 30/11/2026</td><td>Xóa mềm</td><td><span class="badge b-neutral">Chưa gửi</span></td></tr>
+                  <tr class="bill-del"><td>10</td><td class="num">01/12 – 31/12/2026</td><td>Xóa mềm</td><td><span class="badge b-neutral">Chưa gửi</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="muted" style="margin:0;font-size:12px">Kỳ 1–7 đã thu, không đổi.</p>
+            <div class="count-box"><span class="chk"></span><span>Tôi đã xem các thay đổi trên <b>(chờ 3 giây…)</b></span></div>
+          </div>
+          <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--primary" disabled>Xác nhận và duyệt</span></div>
+        </div></div>
+      </div></div>
+      <ul class="notes">
+        <li>Checkbox khóa 5 giây, có đếm ngược. Tick xong nút "Xác nhận và duyệt" mới bấm được.</li>
+        <li>Lúc bấm, server tính lại thay đổi. Khác bản xem trước (ai đó vừa gửi bill) thì báo lỗi, hộp tải lại danh sách.</li>
+        <li>Có bill bị ảnh hưởng đã gửi hoặc đã thu: hộp không có checkbox, hiện banner đỏ như Màn 10, nút duyệt tắt.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="duyet-bien-the">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 12 · hai biến thể của Màn 11</span>
+        <h2>Đổi ngày bắt đầu, kéo dài ngày kết thúc</h2>
+        <p>Cùng hộp, khác bảng thay đổi.</p>
+      </div>
+      <div class="two">
+        <div class="card">
+          <div class="card__head"><h3>S đổi 10/03 → 01/03/2026 (sinh lại)</h3></div>
+          <table>
+            <thead><tr><th>Kỳ</th><th>Thay đổi</th></tr></thead>
+            <tbody>
+              <tr class="bill-del"><td>1–10 cũ</td><td>Xóa mềm cả 10 bill</td></tr>
+              <tr class="bill-new"><td>1 mới</td><td class="num">01/03 – 31/03/2026 · gồm khoản một lần</td></tr>
+              <tr class="bill-new"><td>2–10 mới</td><td class="num">Tháng 4 … tháng 12/2026</td></tr>
+            </tbody>
+          </table>
+          <div class="card__body muted" style="font-size:12px">Bill đã sửa tay sẽ mất: nêu tên từng bill trong hộp. Chỉ duyệt được khi mọi bill Chưa gửi.</div>
+        </div>
+        <div class="card">
+          <div class="card__head"><h3>E đổi 31/12/2026 → 20/02/2027 (kéo dài)</h3></div>
+          <table>
+            <thead><tr><th>Kỳ</th><th>Thay đổi</th></tr></thead>
+            <tbody>
+              <tr><td>1–10</td><td>Giữ nguyên</td></tr>
+              <tr class="bill-new"><td>11 mới</td><td class="num">01/01 – 31/01/2027</td></tr>
+              <tr class="bill-new"><td>12 mới</td><td class="num">01/02 – 20/02/2027 · đủ tháng</td></tr>
+            </tbody>
+          </table>
+          <div class="card__body muted" style="font-size:12px">Bill mới không có khoản một lần. Không cần bill nào Chưa gửi.</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>S và E cùng đổi: theo biến thể sinh lại.</li>
+        <li>Dòng tiền đổi mà ngày không đổi: không có thay đổi bill, duyệt như hiện nay. Bill cũ giữ số cũ, người dùng tự sửa.</li>
+      </ul>
+    </section>
+
+    <section class="screen" id="ket-thuc">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 13 · modal.confirm</span>
+        <h2>Kết thúc hợp đồng</h2>
+        <p>Thay cho job tự kết thúc. Chỉ đổi trạng thái sang Đã kết thúc, không đổi ngày hay bill.</p>
+      </div>
+      <div class="scroll"><div class="app" style="min-height:360px">
+        <aside class="side" aria-hidden="true"><div class="side__brand"><span class="side__logo"></span>MCAH</div><div class="side__item"><i></i>Tổng quan</div><div class="side__item"><i></i>Thuyền viên</div><div class="side__item"><i></i>Đối tác</div><div class="side__item"><i></i>Tàu</div><div class="side__sep"></div><div class="side__item"><i></i>Cơ hội</div><div class="side__item"><i></i>Chuyến tàu</div><div class="side__item side__item--on"><i></i>Hợp đồng</div></aside>
+        <div class="page"></div>
+        <div class="overlay"><div class="modal" style="width:480px">
+          <div class="modal__head"><h3>Kết thúc HĐ-2026-0031?</h3><p>Hợp đồng chuyển sang Đã kết thúc, không mở lại được. Ngày kết thúc 17/10/2026 và 8 yêu cầu thanh toán giữ nguyên.</p></div>
+          <div class="modal__body"><div class="banner"><div><b>Ngày kết thúc còn ở tương lai</b>Biến thể khi E sau hôm nay: "Hợp đồng kết thúc sớm hơn ngày 31/12/2026 ghi trên hợp đồng. Muốn rút ngắn bill thì đưa về Nháp, sửa ngày kết thúc trước."</div></div></div>
+          <div class="modal__foot"><span class="btn">Huỷ</span><span class="btn btn--danger">Kết thúc hợp đồng</span></div>
+        </div></div>
+      </div></div>
+    </section>
+
+    <section class="screen" id="huy-chot">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 14 · hộp Huỷ chốt / Xoá chuyến (đang có)</span>
+        <h2>Huỷ chốt khi chuyến có hợp đồng</h2>
+        <p>Hộp liệt kê hợp đồng sẽ bị xóa mềm. Hợp đồng đã Hiệu lực hoặc Đã kết thúc thì chặn.</p>
+      </div>
+      <div class="two">
+        <div class="card card__body">
+          <b>Huỷ chốt Đỗ Văn Nam?</b>
+          <div class="impact" style="margin-top:10px"><h4>Sẽ xảy ra</h4><ul><li>Chuyến CT-2026-0161 bị xoá khỏi danh sách và hồ sơ.</li><li>Đỗ Văn Nam về "Ở bờ".</li><li>Cơ hội CH26051 mở lại, các ứng viên về danh sách như trước khi chốt.</li><li><b>Hợp đồng HĐ-2026-0044 (Nháp) bị xoá mềm.</b></li></ul></div>
+        </div>
+        <div class="card card__body">
+          <b>Biến thể bị chặn</b>
+          <div class="banner banner--error" style="margin-top:10px"><div><b>Không huỷ chốt được</b>Chuyến có hợp đồng HĐ-2026-0031 đã Hiệu lực. Hợp đồng đã duyệt không xoá theo chuyến.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="du-lieu">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 15 · dựng</span>
+        <h2>Thay đổi dữ liệu và quyền</h2>
+        <p>Chi tiết ở kế hoạch, mục 3.</p>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Chỗ</th><th>Thay đổi</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">seafarer_contract</td><td>Thêm <code>seafarer_voyage_id</code> (duy nhất khi chưa xoá). <code>voyage_position_id</code> cho phép rỗng (hợp đồng cũ giữ). Log thêm REVERT, END, APPLY_BILLS.</td></tr>
+            <tr><td class="strong">contract_bill</td><td>Ràng buộc kỳ duy nhất chỉ tính bill chưa xoá. Log thêm CUT, DELETE.</td></tr>
+            <tr><td class="strong">seafarer_voyage</td><td>Không cho tạo mới với lý do TRANSFER. Giữ cột cũ cho dữ liệu đã có.</td></tr>
+            <tr><td class="strong">jobs.js</td><td>Bỏ job chuyển Hiệu lực → Hết hạn.</td></tr>
+            <tr><td class="strong">Quyền</td><td>Thêm <code>contract.end</code> (Kết thúc hợp đồng). Đưa về Nháp dùng <code>contract.update</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="screen" id="cau-hoi">
+      <div class="screen__head">
+        <span class="screen__kicker">Màn 16</span>
+        <h2>Còn để ngỏ</h2>
+        <p>Giả định đang dùng trong wireframe. Người dùng sửa thì cập nhật lại.</p>
+      </div>
+      <div class="q">
+        <div class="q__item"><b>Kết thúc hợp đồng khi E còn ở tương lai</b><p>Đang cho phép, chỉ cảnh báo trong hộp. Không tự đổi E.</p></div>
+        <div class="q__item"><b>Đã kết thúc có mở lại được không</b><p>Đang không. Bấm nhầm thì sửa dữ liệu bằng tay.</p></div>
+        <div class="q__item"><b>Nhãn "Đang có hợp đồng" trên ứng viên</b><p>Đang xét mọi hợp đồng chưa kết thúc, không xét ngày dự kiến của cơ hội.</p></div>
+      </div>
+    </section>
+  </main>
+</div>

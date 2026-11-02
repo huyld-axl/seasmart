@@ -193,21 +193,74 @@ describe('chốt người', () => {
     expect(writes(pool)).toHaveLength(0)
   })
 
+  const placeRoutes = (over = {}) => [
+    lock({ budget_monthly_usd: '1650.00', planned_leave_port_id: 2 }), today, candidate,
+    ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 158 }] }]],
+    ['INSERT INTO seafarer_voyage SET', () => [{ insertId: 77 }]],
+    ['FROM seafarer_voyage sv JOIN seafarer s', () => [[{ id: 77, code: 'CT-2026-0158', seafarer_id: 5, seafarer_status: 'ON_VESSEL' }]]],
+    ['SELECT contract_number FROM seafarer_contract WHERE seafarer_voyage_id', () => [[]]],
+    ['c.contract_number, s.full_name', () => [over.overlap ?? []]],
+    ['INSERT INTO seafarer_contract SET', () => [{ insertId: 90, rows: [{ id: 90 }] }]],
+    ...detailRoutes(row({ status: 'WON' })),
+  ]
+
   it('thành công: tạo chuyến ONBOARD, ghi log PLACE, cơ hội WON, ứng viên PLACED / NOT_SELECTED, thuyền viên ON_VESSEL', async () => {
-    const pool = fakePool([
-      lock({ budget_monthly_usd: '4900.00', planned_leave_port_id: 2 }), today, candidate,
-      ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 158 }] }]],
-      ['INSERT INTO seafarer_voyage SET', () => [{ insertId: 77 }]],
-      ...detailRoutes(row({ status: 'WON' })),
-    ])
+    const pool = fakePool(placeRoutes())
     const result = await opportunityService.place(pool, 9, placeBody(), 1)
     expect(result.voyage).toEqual({ id: 77, code: 'CT-2026-0158' })
     const sv = pool.calls.find((c) => c.sql.startsWith('INSERT INTO seafarer_voyage SET')).params[0]
-    expect(sv).toMatchObject({ status: 'ONBOARD', source: 'OPPORTUNITY', opportunity_id: 9, vessel_id: 3, join_date: '2026-10-26', planned_leave_date: '2027-07-25', budget_monthly_usd: '4900.00' })
+    expect(sv).toMatchObject({ status: 'ONBOARD', source: 'OPPORTUNITY', opportunity_id: 9, vessel_id: 3, join_date: '2026-10-26', planned_leave_date: '2027-07-25', budget_monthly_usd: '1650.00' })
     const sqls = writes(pool).map((c) => c.sql)
     expect(sqls.some((q) => q.includes('seafarer_voyage_log'))).toBe(true)
     expect(sqls.some((q) => q.includes("SET status = 'WON'"))).toBe(true)
     expect(sqls.some((q) => q.includes("'PLACED' ELSE 'NOT_SELECTED'"))).toBe(true)
     expect(sqls.some((q) => q.includes("SET status = 'ON_VESSEL'"))).toBe(true)
+  })
+
+  it('chốt không trùng: sinh hợp đồng Nháp gắn chuyến, S = ngày xuống, E = ngày rời dự kiến, lương cơ bản phải thu = budget tháng', async () => {
+    const pool = fakePool(placeRoutes())
+    const result = await opportunityService.place(pool, 9, placeBody(), 1)
+    expect(result.contract).toMatchObject({ id: 90 })
+    expect(result.contract_skipped).toBeNull()
+    const contract = pool.calls.find((c) => c.sql.startsWith('INSERT INTO seafarer_contract SET')).params[0]
+    expect(contract).toMatchObject({ status: 'DRAFT', seafarer_voyage_id: 77, seafarer_id: 5, start_date: '2026-10-26', end_date: '2027-07-25' })
+    const items = pool.calls.filter((c) => c.sql.startsWith('INSERT INTO contract_item')).map((c) => c.params[0])
+    expect(items.find((i) => i.item_code === 'BASIC_WAGE').receivable_usd).toBe(1650)
+    expect(items).toHaveLength(12)
+    const logs = pool.calls.filter((c) => c.sql.startsWith('INSERT INTO contract_approval_log')).map((c) => c.params[0].action)
+    expect(logs).toEqual(['CREATE'])
+  })
+
+  it('chốt trùng hợp đồng khác: chuyến vẫn tạo, không sinh hợp đồng, trả contract_skipped', async () => {
+    const pool = fakePool(placeRoutes({ overlap: [{ id: 12, contract_number: 'HĐ-2026-0009', full_name: 'Đặng Văn Thịnh' }] }))
+    const result = await opportunityService.place(pool, 9, placeBody(), 1)
+    expect(result.voyage).toEqual({ id: 77, code: 'CT-2026-0158' })
+    expect(result.contract).toBeNull()
+    expect(result.contract_skipped).toEqual({ reason: 'OVERLAP', contract_id: 12, contract_number: 'HĐ-2026-0009' })
+    expect(pool.calls.some((c) => c.sql.startsWith('INSERT INTO seafarer_contract SET'))).toBe(false)
+    expect(pool.calls.some((c) => c.sql.startsWith('INSERT INTO seafarer_voyage SET'))).toBe(true)
+  })
+
+  it('thuyền viên tạm ngưng lúc sinh hợp đồng: lỗi khác trùng thì rollback cả chốt', async () => {
+    const routes = placeRoutes()
+    routes.splice(5, 1, ['FROM seafarer_voyage sv JOIN seafarer s', () => [[{ id: 77, code: 'CT-2026-0158', seafarer_id: 5, seafarer_status: 'INACTIVE' }]]])
+    await expect(opportunityService.place(fakePool(routes), 9, placeBody(), 1)).rejects.toMatchObject({ statusCode: 409 })
+  })
+})
+
+describe('cảnh báo đang có hợp đồng', () => {
+  it('chi tiết cơ hội gắn open_contract cho từng ứng viên bằng một truy vấn gom', async () => {
+    const pool = fakePool([
+      ['FROM opportunity_candidate c\n       JOIN seafarer s', () => [[
+        { id: 1, seafarer_id: 5, full_name: 'A', status: 'PICKED', owner_selected_at: null },
+        { id: 2, seafarer_id: 6, full_name: 'B', status: 'PICKED', owner_selected_at: null },
+      ]]],
+      ['SELECT DISTINCT ON (c.seafarer_id)', () => [[{ seafarer_id: 5, id: 40, contract_number: 'HĐ-2026-0012', start_date: '2026-03-10', end_date: '2026-12-31', status: 'ACTIVE' }]]],
+      ...detailRoutes(),
+    ])
+    const result = await opportunityService.get(pool, 9)
+    expect(result.candidates.find((c) => c.seafarer_id === 5).open_contract).toEqual({ id: 40, contract_number: 'HĐ-2026-0012', start_date: '2026-03-10', end_date: '2026-12-31', status: 'ACTIVE' })
+    expect(result.candidates.find((c) => c.seafarer_id === 6).open_contract).toBeNull()
+    expect(pool.calls.filter((c) => c.sql.includes('SELECT DISTINCT ON (c.seafarer_id)'))).toHaveLength(1)
   })
 })

@@ -397,8 +397,8 @@ const seafarerService = {
         if (row.status === 'ON_VESSEL') throw { statusCode: 409, message: 'Thuyền viên đang trên tàu, ghi rời tàu trước khi tạm ngưng' }
         const [open] = await db.query(
           `SELECT c.contract_number FROM seafarer_contract c
-           JOIN voyage_position p ON p.id = c.voyage_position_id JOIN voyage v ON v.id = p.voyage_id
-           WHERE c.seafarer_id = ? AND c.deleted_at IS NULL AND c.status IN ('DRAFT', 'PENDING', 'ACTIVE') AND v.status <> 'ENDED' LIMIT 1`,
+           LEFT JOIN voyage_position p ON p.id = c.voyage_position_id LEFT JOIN voyage v ON v.id = p.voyage_id
+           WHERE c.seafarer_id = ? AND c.deleted_at IS NULL AND c.status IN ('DRAFT', 'PENDING', 'ACTIVE') AND (v.status IS NULL OR v.status <> 'ENDED') LIMIT 1`,
           [id]
         )
         if (open.length) throw { statusCode: 409, message: `Còn hợp đồng chưa kết thúc (${open[0].contract_number}), xử lý trước khi tạm ngưng` }

@@ -4,6 +4,7 @@ import { DeleteOutlined } from '@ant-design/icons'
 import RequirementFit from '../../../components/ds/RequirementFit'
 import StageChips from '../../../components/ds/StageChips'
 import StatusBadge from '../../../components/ds/StatusBadge'
+import OpenContractBadge from './OpenContractBadge'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import { formatDate } from '../../../utils/format'
 import { candidateStages, fitIssues } from './opportunityView'
@@ -31,6 +32,7 @@ export default function CandidateTable({ candidates, requirements, editable, sel
             {c.seafarer_status === 'ON_VESSEL' ? `Đang trên tàu${c.onboard_until ? ` · rời dự kiến ${formatDate(c.onboard_until)}` : ''}` : c.seafarer_status === 'INACTIVE' ? 'Tạm ngưng' : 'Ở bờ'}
             {c.current_rank_name ? ` · ${c.current_rank_name}` : ''}
           </span>
+          {c.status === 'PICKED' && c.open_contract ? <span className="ds-cell2__sub"><OpenContractBadge contract={c.open_contract} /></span> : null}
         </span>
       ),
     },

@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
-import { SearchOutlined } from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
 import { useContractList } from '../../../hooks/useVoyages'
 import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
+import { dateMismatchText } from './contractView'
 import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
 import './contracts.css'
@@ -17,16 +18,27 @@ import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
 
+// Trạng thái hợp đồng kèm nhãn tính ra: Chờ duyệt lại (đã có bill mà chưa Hiệu lực), Đã rời tàu {ngày} (chuyến đã rời, hợp đồng còn dài hơn).
+function StatusCell({ row }) {
+  return (
+    <span className="ds-cell2">
+      <StatusBadge group="contract" value={row.status} />
+      {row.awaiting_reapproval ? <span className="ds-cell2__sub crew-docs crew-docs--warning">Chờ duyệt lại</span> : null}
+      {row.date_mismatch ? <span className="ds-cell2__sub crew-docs crew-docs--warning">{dateMismatchText(row.date_mismatch)}</span> : null}
+    </span>
+  )
+}
+
 const TABS = [
   { value: 'all', label: 'Tất cả' },
   { value: 'PENDING', label: 'Chờ duyệt' },
   { value: 'DRAFT', label: 'Nháp' },
   { value: 'REJECTED', label: 'Bị từ chối' },
   { value: 'ACTIVE', label: 'Hiệu lực' },
-  { value: 'ENDED', label: 'Hết hạn' },
+  { value: 'ENDED', label: 'Đã kết thúc' },
 ]
 
-// Danh sách hợp đồng: không có nút tạo, hợp đồng tạo từ vị trí của chuyến tàu.
+// Danh sách hợp đồng. Hợp đồng luôn thuộc một chuyến: sinh khi chốt người trên cơ hội, hoặc thêm tay từ chuyến chưa có hợp đồng.
 export default function ContractListPage() {
   const can = useCan()
   const navigate = useNavigate()
@@ -47,6 +59,9 @@ export default function ContractListPage() {
   const tabs = TABS.map((item) => ({ ...item, count: counts ? counts[item.value] : null }))
   const open = (row) => navigate(`/contracts/${row.id}`)
   const filtered = Boolean(keyword || ownerId)
+  const createButton = can('contract.create')
+    ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/contracts/new')}>Thêm hợp đồng</Button>
+    : undefined
   const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPage(1) }
 
   const columns = [
@@ -62,13 +77,13 @@ export default function ContractListPage() {
       ),
     },
     {
-      title: 'Tàu',
+      title: 'Chuyến · tàu',
       key: 'vessel',
       responsive: ['xl'],
       render: (_, row) => (
         <span className="ds-cell2">
-          <span className="ds-cell2__main">{row.vessel_name}</span>
-          <span className="ds-cell2__sub ds-mono">{row.trip ? row.trip.code : row.voyage_code}</span>
+          <span className="ds-cell2__main ds-mono">{row.trip ? row.trip.code : row.voyage_code}</span>
+          <span className="ds-cell2__sub">{row.vessel_name}</span>
         </span>
       ),
     },
@@ -86,7 +101,7 @@ export default function ContractListPage() {
       ),
     },
     { title: 'Chênh lệch', dataIndex: 'diff_monthly', align: 'right', render: (value) => <b className="ds-num">{formatDiff(value)}</b> },
-    { title: 'Trạng thái', dataIndex: 'status', render: (value) => <StatusBadge group="contract" value={value} /> },
+    { title: 'Trạng thái', key: 'status', render: (_, row) => <StatusCell row={row} /> },
     actionColumn((row) => <RowActions name={`hợp đồng ${row.contract_number}`} onView={() => open(row)} onEdit={['DRAFT', 'REJECTED'].includes(row.status) && can('contract.update') ? () => navigate(`/contracts/${row.id}/edit`) : undefined} />),
   ]
 
@@ -100,7 +115,7 @@ export default function ContractListPage() {
   } else if (!rows.length && tab !== 'all') {
     body = <EmptyState title="Không có hợp đồng nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
-    body = <EmptyState title="Chưa có hợp đồng nào" description="Tạo hợp đồng mới đang tạm khoá; hợp đồng sẽ gắn với chuyến ở giai đoạn sau." />
+    body = <EmptyState title="Chưa có hợp đồng nào" description="Hợp đồng sinh khi chốt người trên cơ hội, hoặc thêm tay cho chuyến chưa có hợp đồng." action={createButton} />
   } else if (isMobile) {
     body = (
       <ul className="crew-list">
@@ -113,7 +128,7 @@ export default function ContractListPage() {
                 <span className="ds-cell2__sub">{formatDate(row.start_date)} → {formatDate(row.end_date)}</span>
               </span>
               <span className="crew-list__meta">
-                <StatusBadge group="contract" value={row.status} />
+                <StatusCell row={row} />
                 <b className="ds-num">{formatDiff(row.diff_monthly)}</b>
               </span>
             </button>
@@ -163,6 +178,7 @@ export default function ContractListPage() {
             onChange={(value) => { setOwnerId(value); setPage(1) }}
           />
           ) : null}
+          <span className="ds-toolbar__end">{createButton}</span>
         </div>
         {body}
         {rows.length > 0 && (

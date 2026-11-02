@@ -15,7 +15,7 @@ const listQuery = {
     tab: { type: 'string', enum: ['all', ...CONTRACT_STATUSES] },
     search: { type: 'string', maxLength: 100 },
     ship_owner_id: id,
-    voyage_id: id,
+    seafarer_voyage_id: id,
     seafarer_id: id,
     page: { type: 'integer', minimum: 1 },
     limit: { type: 'integer', minimum: 1, maximum: 100 },
@@ -55,12 +55,12 @@ const contractProps = {
 }
 const createBody = {
   type: 'object',
-  required: ['voyage_position_id', 'seafarer_id', 'start_date', 'end_date'],
-  properties: { voyage_position_id: id, ...contractProps },
+  required: ['seafarer_voyage_id', 'start_date', 'end_date'],
+  properties: { seafarer_voyage_id: id, ...contractProps },
 }
-const updateBody = { type: 'object', required: ['seafarer_id', 'start_date', 'end_date'], properties: contractProps }
+const updateBody = { type: 'object', required: ['start_date', 'end_date'], properties: contractProps }
 const rejectBody = { type: 'object', required: ['reason'], properties: { reason: { type: 'string', minLength: 1, maxLength: 1000 } } }
-const approveBody = { type: ['object', 'null'], properties: {} }
+const approveBody = { type: ['object', 'null'], properties: { expected_fingerprint: { type: 'string', maxLength: 64 } } }
 
 async function seafarerContractRoutes(fastify) {
   const can = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`contract.${action}`)] })
@@ -72,9 +72,9 @@ async function seafarerContractRoutes(fastify) {
     await inScope(request)
     return seafarerContractService.get(pool, request.params.id)
   })
-  // Giai đoạn 1: khoá tạo hợp đồng mới tới khi hợp đồng gắn với chuyến (giai đoạn 2). Giữ service create để làm tiếp.
-  fastify.post('/', { ...can('create'), schema: { body: createBody } }, async () => {
-    throw { statusCode: 409, message: 'Tạm khoá tạo hợp đồng mới. Hợp đồng sẽ gắn với chuyến ở giai đoạn 2.' }
+  fastify.post('/', { ...can('create'), schema: { body: createBody } }, async (request, reply) => {
+    const row = await seafarerContractService.create(pool, request.body, request.user.id)
+    return reply.code(201).send(row)
   })
   fastify.put('/:id', { ...can('update'), schema: { params: idParams, body: updateBody } }, async (request) => {
     await inScope(request)
@@ -84,8 +84,12 @@ async function seafarerContractRoutes(fastify) {
     await inScope(request)
     return seafarerContractService.softDelete(pool, request.params.id)
   })
-  const transitionPerm = { submit: 'submit', withdraw: 'submit', reject: 'approve', approve: 'approve' }
-  for (const [action, schema] of [['submit', {}], ['withdraw', {}], ['reject', { body: rejectBody }], ['approve', { body: approveBody }]]) {
+  fastify.get('/:id/bill-plan', { ...can('view'), schema: { params: idParams } }, async (request) => {
+    await inScope(request)
+    return seafarerContractService.billPlan(pool, request.params.id)
+  })
+  const transitionPerm = { submit: 'submit', withdraw: 'submit', reject: 'approve', approve: 'approve', revert: 'update', end: 'end' }
+  for (const [action, schema] of [['submit', {}], ['withdraw', {}], ['reject', { body: rejectBody }], ['approve', { body: approveBody }], ['revert', {}], ['end', {}]]) {
     fastify.post(`/:id/${action}`, { ...can(transitionPerm[action]), schema: { params: idParams, ...schema } }, async (request) => {
       await inScope(request)
       return seafarerContractService.transition(pool, request.params.id, action, request.body || {}, request.user.id)

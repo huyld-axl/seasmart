@@ -20,6 +20,7 @@ const listQuery = {
     ship_owner_id: id,
     seafarer_id: id,
     source: { type: 'string', enum: VOYAGE_SOURCES },
+    no_contract: { type: 'boolean' },
     leaving_within: { type: 'integer', minimum: 0, maximum: 365 },
     page: { type: 'integer', minimum: 1 },
     limit: { type: 'integer', minimum: 1, maximum: 100 },
@@ -80,6 +81,10 @@ async function voyageRoutes(fastify) {
   fastify.get('/:id', { ...can('view'), schema: { params: idParams } }, async (request) => {
     await inScope(request)
     return voyageService.get(pool, request.params.id)
+  })
+  fastify.get('/:id/remove-preview', { ...can('delete'), schema: { params: idParams } }, async (request) => {
+    await inScope(request)
+    return voyageService.removePreview(pool, request.params.id)
   })
   fastify.post('/', { ...can('create'), schema: { body: createBody } }, async (request, reply) => {
     const row = await voyageService.create(pool, request.body, request.user.id)

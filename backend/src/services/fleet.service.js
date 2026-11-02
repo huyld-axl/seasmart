@@ -1,4 +1,5 @@
 const { isValidImo } = require('../utils/imo')
+const { assertOwnerData, assertVesselData } = require('../utils/field_rules')
 const fs = require('fs')
 const { trashFiles } = require('../utils/file_trash')
 const path = require('path')
@@ -80,6 +81,7 @@ async function replaceContacts(conn, ownerId, contacts) {
 }
 
 function validateVessel(data) {
+  assertVesselData(data)
   if (data.imo_number != null && !isValidImo(data.imo_number)) {
     throw { statusCode: 400, message: 'IMO sai số kiểm tra' }
   }
@@ -397,6 +399,7 @@ const fleetService = {
   },
 
   async createOwner(pool, body) {
+    assertOwnerData(body)
     const data = pickAllowed(body, OWNER_COLUMNS)
     if (!data.company_name) throw { statusCode: 400, message: 'Thiếu tên đối tác' }
     const contacts = cleanContacts(body.contacts)
@@ -413,6 +416,7 @@ const fleetService = {
   },
 
   async updateOwner(pool, id, body, actorId = null) {
+    assertOwnerData(body)
     const data = pickAllowed(body, OWNER_COLUMNS)
     const contacts = body?.contacts === undefined ? null : cleanContacts(body.contacts)
     if (!Object.keys(data).length && !contacts) throw { statusCode: 400, message: 'Không có dữ liệu hợp lệ' }

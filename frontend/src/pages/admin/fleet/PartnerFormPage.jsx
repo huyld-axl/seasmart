@@ -22,6 +22,7 @@ import { readAsDataUrl, useFleetItem, useFleetMutations, usePartnerLogo } from '
 import { EMPTY_CONTACT, PARTNER_STATUS_OPTIONS, cleanContactList, partnerToFormValues, partnerToPayload, changedKeys, filled, initialsOfName } from './fleetView'
 import { FleetTile, FormFrame, FormSection, SegmentedPick } from './FleetParts'
 import changedLabel from './changedLabel'
+import { ownerRules } from '../../../utils/fieldRules'
 
 const SECTIONS = [
   { key: 'company', title: 'Công ty', desc: 'Tên đối tác hiện ở mục “Nộp cho” của bộ giấy và trên danh sách tàu.', fields: ['company_name', 'company_name_en', 'tax_id', 'country_id', 'logo'] },
@@ -229,7 +230,7 @@ function PartnerForm({ owner }) {
             <Form.Item name="company_name_en" className={cn('company_name_en', 'sf-c6')} label={label('company_name_en', 'Tên tiếng Anh')}>
               <Input maxLength={200} />
             </Form.Item>
-            <Form.Item name="tax_id" className={cn('tax_id', 'sf-c6')} label={label('tax_id', 'Mã số thuế')}>
+            <Form.Item name="tax_id" className={cn('tax_id', 'sf-c6')} label={label('tax_id', 'Mã số thuế')} rules={ownerRules.taxId}>
               <Input maxLength={50} inputMode="numeric" />
             </Form.Item>
             <Form.Item name="country_id" className={cn('country_id', 'sf-c6')} label={label('country_id', 'Quốc gia')}>
@@ -251,19 +252,19 @@ function PartnerForm({ owner }) {
             <Form.Item name="address" className={cn('address')} label={label('address', 'Địa chỉ')}>
               <Input maxLength={500} />
             </Form.Item>
-            <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')}>
+            <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')} rules={ownerRules.phone}>
               <Input maxLength={30} inputMode="tel" />
             </Form.Item>
             <Form.Item name="zalo" className={cn('zalo', 'sf-c4')} label="Zalo công ty">
               <ZaloInput phoneName="phone" />
             </Form.Item>
-            <Form.Item name="fax" className={cn('fax', 'sf-c4')} label={label('fax', 'Fax')}>
+            <Form.Item name="fax" className={cn('fax', 'sf-c4')} label={label('fax', 'Fax')} rules={ownerRules.phone}>
               <Input maxLength={30} inputMode="tel" />
             </Form.Item>
             <Form.Item name="email" className={cn('email', 'sf-c4')} label={label('email', 'Email')} rules={[emailRule]}>
               <Input maxLength={150} inputMode="email" placeholder="ten@congty.com" />
             </Form.Item>
-            <Form.Item name="website" className={cn('website')} label={label('website', 'Website')}>
+            <Form.Item name="website" className={cn('website')} label={label('website', 'Website')} rules={ownerRules.website}>
               <Input maxLength={200} inputMode="url" placeholder="https://" />
             </Form.Item>
           </div>
@@ -291,7 +292,7 @@ function PartnerForm({ owner }) {
                       <Form.Item name={[field.name, 'position']} className="sf-c4" label="Chức vụ">
                         <Input maxLength={100} />
                       </Form.Item>
-                      <Form.Item name={[field.name, 'phone']} className="sf-c4" label="Điện thoại">
+                      <Form.Item name={[field.name, 'phone']} className="sf-c4" label="Điện thoại" rules={ownerRules.phone}>
                         <Input maxLength={30} inputMode="tel" />
                       </Form.Item>
                       <Form.Item name={[field.name, 'email']} label="Email" rules={[emailRule]}>

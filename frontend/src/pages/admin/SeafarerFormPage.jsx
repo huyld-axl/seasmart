@@ -12,6 +12,7 @@ import ScanButton from '../../components/ds/ScanButton'
 import { useCan } from '../../hooks/usePermission'
 import AutofillBanner from '../../components/ds/AutofillBanner'
 import { FIELD_LABELS } from './seafarers/fieldLabels'
+import { digitsOnly, decimalOnly, upperAlnum, fieldRules, notFuture, notBefore } from '../../utils/fieldRules'
 import { ChoiceGroup, KindToggles, ListItem, PhotoField, PhotoFrame } from './seafarers/SeafarerFormParts'
 import { photoProblem } from './seafarers/photoRules'
 import { SCAN_BUTTONS, SOURCE_NAMES, matchCountry, mergeScans, sectionSummaries, summaryText } from './seafarers/scanView'
@@ -658,7 +659,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         >
           <Section index={0} section={SECTIONS[0]} stats={stats[0]}>
             <div className="sf-grid">
-              <Field name="full_name" label="Họ và tên" span={4} required rules={[{ required: true, whitespace: true, message: 'Nhập họ và tên' }]}>
+              <Field name="full_name" label="Họ và tên" span={4} required rules={[{ required: true, whitespace: true, message: 'Nhập họ và tên' }, ...fieldRules.personName]}>
                 <Input placeholder="Nguyễn Văn A" maxLength={150} />
               </Field>
               <Field name="full_name_zh" label="Tên tiếng Trung" span={4}>
@@ -667,7 +668,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="full_name_en" label="Tên tiếng Anh" span={4}>
                 <Input placeholder="NGUYEN VAN A" maxLength={150} />
               </Field>
-              <DateField name="date_of_birth" label="Ngày sinh" span={4} />
+              <DateField name="date_of_birth" label="Ngày sinh" span={4} rules={[notFuture('Ngày sinh')]} />
               <Field name="gender" label="Giới tính" span={4}>
                 <Select allowClear options={GENDER_OPTIONS} />
               </Field>
@@ -707,11 +708,11 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           <Section index={1} section={SECTIONS[1]} stats={stats[1]}>
             <div className="sf-grid">
               <div className="sf-sub">Hộ chiếu</div>
-              <Field name="passport_number" label="Số hộ chiếu" span={4}>
+              <Field name="passport_number" label="Số hộ chiếu" span={4} normalize={upperAlnum} rules={fieldRules.passport}>
                 <Input placeholder="B1234567" maxLength={20} />
               </Field>
-              <DateField name="passport_issued_date" label="Ngày cấp hộ chiếu" span={4} />
-              <DateField name="passport_expiry" label="Ngày hết hạn hộ chiếu" span={4} />
+              <DateField name="passport_issued_date" label="Ngày cấp hộ chiếu" span={4} rules={[notFuture('Ngày cấp')]} />
+              <DateField name="passport_expiry" label="Ngày hết hạn hộ chiếu" span={4} dependencies={['passport_issued_date']} rules={[notBefore('passport_issued_date', 'Ngày hết hạn phải sau ngày cấp')]} />
               <Field name="place_of_birth" label="Nơi sinh" span={6}>
                 <Input placeholder="VD: Thanh Hóa" maxLength={200} />
               </Field>
@@ -725,15 +726,15 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                 />
               </Field>
               <div className="sf-sub">Căn cước công dân</div>
-              <Field name="national_id" label="Số CCCD" span={4}>
+              <Field name="national_id" label="Số CCCD" span={4} normalize={digitsOnly} rules={fieldRules.idNumber}>
                 <Input placeholder="012345678901" inputMode="numeric" maxLength={20} />
               </Field>
-              <DateField name="national_id_issued_date" label="Ngày cấp CCCD" span={4} />
+              <DateField name="national_id_issued_date" label="Ngày cấp CCCD" span={4} dependencies={['date_of_birth']} rules={[notFuture('Ngày cấp'), notBefore('date_of_birth', 'Ngày cấp không được trước ngày sinh')]} />
               <Field name="national_id_issued_place" label="Nơi cấp" span={4}>
                 <Input placeholder="Cục Cảnh sát QLHC về TTXH" maxLength={150} />
               </Field>
               <div className="sf-sub">Sổ thuyền viên</div>
-              <Field name="seaman_book_number" label="Số sổ thuyền viên" span={4}>
+              <Field name="seaman_book_number" label="Số sổ thuyền viên" span={4} rules={fieldRules.seamanBook}>
                 <Input maxLength={30} />
               </Field>
             </div>
@@ -742,15 +743,15 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           <Section index={2} section={SECTIONS[2]} stats={stats[2]}>
             <div className="sf-grid">
               <Field name="height_cm" label="Chiều cao" span={3}>
-                <InputNumber min={0} max={300} placeholder="170" suffix="cm" style={{ width: '100%' }} />
+                <InputNumber min={50} max={300} precision={0} placeholder="170" suffix="cm" style={{ width: '100%' }} />
               </Field>
               <Field name="weight_kg" label="Cân nặng" span={3}>
-                <InputNumber min={0} max={500} placeholder="65" suffix="kg" style={{ width: '100%' }} />
+                <InputNumber min={20} max={500} precision={0} placeholder="65" suffix="kg" style={{ width: '100%' }} />
               </Field>
               <Field name="blood_type" label="Nhóm máu" span={6}>
                 <ChoiceGroup options={BLOOD_OPTIONS} label="Nhóm máu" />
               </Field>
-              <Field name="shoe_size" label="Size giày" span={3}>
+              <Field name="shoe_size" label="Size giày" span={3} normalize={decimalOnly} rules={fieldRules.shoe}>
                 <Input placeholder="42" maxLength={10} />
               </Field>
               <Field name="ppe_size" label="Size bảo hộ" span={3}>
@@ -759,7 +760,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="shirt_size" label="Size áo" span={3}>
                 <Select allowClear placeholder="Chọn size" options={PPE_SIZES} />
               </Field>
-              <Field name="pants_size" label="Size quần" span={3}>
+              <Field name="pants_size" label="Size quần" span={3} rules={fieldRules.pants}>
                 <Input placeholder="30 / 32" maxLength={10} />
               </Field>
             </div>
@@ -767,13 +768,13 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
 
           <Section index={3} section={SECTIONS[3]} stats={stats[3]}>
             <div className="sf-grid">
-              <Field name="phone_primary" label="Số điện thoại" span={6} extra="Dùng để gửi link ký qua SMS.">
+              <Field name="phone_primary" label="Số điện thoại" span={6} extra="Dùng để gửi link ký qua SMS." rules={fieldRules.phone}>
                 <Input type="tel" placeholder="0901 234 567" maxLength={20} />
               </Field>
               <Field name="zalo" label="Zalo" span={6}>
                 <ZaloInput phoneName="phone_primary" />
               </Field>
-              <Field name="email" label="Email" span={6} rules={[{ type: 'email', message: 'Email chưa đúng dạng' }]}>
+              <Field name="email" label="Email" span={6} rules={fieldRules.email}>
                 <Input type="email" placeholder="ten@email.com" />
               </Field>
             </div>
@@ -792,10 +793,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                         <Form.Item name={[name, 'bank_name']} label="Tên ngân hàng" className="sf-c4">
                           <Input placeholder="VD: Vietcombank" maxLength={100} />
                         </Form.Item>
-                        <Form.Item name={[name, 'account_number']} label="Số tài khoản" className="sf-c4">
+                        <Form.Item name={[name, 'account_number']} label="Số tài khoản" className="sf-c4" normalize={digitsOnly} rules={fieldRules.bankAccount}>
                           <Input inputMode="numeric" maxLength={30} />
                         </Form.Item>
-                        <Form.Item name={[name, 'account_holder']} label="Tên chủ tài khoản" className="sf-c4">
+                        <Form.Item name={[name, 'account_holder']} label="Tên chủ tài khoản" className="sf-c4" rules={fieldRules.personName}>
                           <Input placeholder="NGUYEN VAN AN" maxLength={150} />
                         </Form.Item>
                       </ListItem>
@@ -811,7 +812,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="social_insurance_joined" label="Tham gia BHXH" span={4}>
                 <ChoiceGroup options={YES_NO_OPTIONS} label="Tham gia BHXH" />
               </Field>
-              <Field name="social_insurance_number" label="Số BHXH" span={4}>
+              <Field name="social_insurance_number" label="Số BHXH" span={4} normalize={digitsOnly} rules={fieldRules.socialInsurance}>
                 <Input maxLength={20} disabled={values.social_insurance_joined === 0} />
               </Field>
             </div>
@@ -840,6 +841,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                               return Promise.reject(new Error('Nhập họ tên người thân'))
                             },
                           }),
+                          ...fieldRules.personName,
                         ]}
                       >
                         <Input maxLength={150} />
@@ -848,13 +850,13 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                         <AutoComplete options={RELATIONSHIPS} placeholder="Chọn hoặc nhập" />
                       </Form.Item>
                       <Form.Item name={[name, 'zalo']} label="Zalo" className="sf-c4"><ZaloInput phoneName={['contacts', name, 'phone_primary']} /></Form.Item>
-                      <Form.Item name={[name, 'phone_primary']} label="Số điện thoại" className="sf-c4">
+                      <Form.Item name={[name, 'phone_primary']} label="Số điện thoại" className="sf-c4" rules={fieldRules.phone}>
                         <Input type="tel" maxLength={20} />
                       </Form.Item>
-                      <Form.Item name={[name, 'guarantor_id_number']} label="Số CCCD" className="sf-c4">
+                      <Form.Item name={[name, 'guarantor_id_number']} label="Số CCCD" className="sf-c4" normalize={digitsOnly} rules={fieldRules.idNumber}>
                         <Input inputMode="numeric" maxLength={20} />
                       </Form.Item>
-                      <Form.Item name={[name, 'guarantor_id_issued_date']} label="Ngày cấp CCCD" className="sf-c4">
+                      <Form.Item name={[name, 'guarantor_id_issued_date']} label="Ngày cấp CCCD" className="sf-c4" rules={[notFuture('Ngày cấp')]}>
                         <DatePicker format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
                       </Form.Item>
                       <Form.Item name={[name, 'guarantor_id_issued_place']} label="Nơi cấp CCCD" className="sf-c4">

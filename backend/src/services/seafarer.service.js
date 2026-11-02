@@ -8,6 +8,7 @@ const path = require('path')
 const sharp = require('sharp')
 const crypto = require('crypto')
 const config = require('../config')
+const { assertSeafarerData } = require('../utils/field_rules')
 
 // Whitelist các fields được phép INSERT/UPDATE từ client
 const ALLOWED_FIELDS = [
@@ -303,6 +304,7 @@ const seafarerService = {
 
   // Tạo hồ sơ: chỉ bắt buộc họ tên. Thiếu quốc tịch thì lấy Việt Nam.
   async create(data, created_by) {
+    assertSeafarerData(data)
     const id = await withTransaction(pool, async (db) => {
       const safeData = pickAllowed(data)
       if (!safeData.nationality_id) {
@@ -426,6 +428,7 @@ const seafarerService = {
 
   // Sửa hồ sơ: bắt buộc lý do, ghi lại trường nào đổi từ gì sang gì; bộ giấy chưa xong thành "Cần làm lại".
   async update(id, data, updated_by, reason) {
+    assertSeafarerData(data)
     await withTransaction(pool, (conn) => this.applyUpdate(conn, id, data, updated_by, reason))
     return this.getById(id)
   },

@@ -6,12 +6,15 @@ import ToastContent from './ToastContent'
 // Chữ: xong việc "Đã + việc + tên", lỗi "Không + việc + được + tên"; câu một dòng không chấm cuối,
 // lý do và cách sửa để ở `description`.
 
-// Giây tự tắt; 0 = không tự tắt (lỗi chờ người dùng đóng).
-const DURATION = { success: 4, info: 6, warning: 8, error: 0 }
+// Giây tự tắt; lỗi lâu hơn để kịp đọc nhưng không nằm mãi.
+const DURATION = { success: 4, info: 6, warning: 8, error: 10 }
 const CLOSABLE = { success: false, info: false, warning: true, error: true }
 
 // Cầu nối để gọi toast ở ngoài component (api/client.js). ToastHost gắn notification và vị trí vào đây.
-const host = { notification: null, placement: 'bottomRight', offlineAt: 0 }
+const host = { notification: null, placement: 'bottomRight', offlineAt: 0, opened: new Map() }
+
+// Toast mở trước lúc đổi trang ít nhất chừng này ms thì bị đóng; toast vừa mở ("Đã lưu" rồi chuyển trang) được giữ.
+const KEEP_MS = 800
 
 function show(kind, title, { description, actionLabel, onAction, duration } = {}) {
   const { notification, placement } = host
@@ -20,7 +23,11 @@ function show(kind, title, { description, actionLabel, onAction, duration } = {}
   if (kind === 'error' && Date.now() - host.offlineAt < 2000) return
   // Cùng một câu thì thay toast cũ, không chồng thêm.
   const key = `${kind}:${title}:${description || ''}`
-  const close = () => notification.destroy(key)
+  const close = () => {
+    host.opened.delete(key)
+    notification.destroy(key)
+  }
+  host.opened.set(key, Date.now())
   const seconds = duration ?? (kind === 'success' && onAction ? 8 : DURATION[kind])
   notification.open({
     key,
@@ -61,6 +68,17 @@ export const toast = {
     show('error', 'Mất kết nối tới máy chủ', { description: 'Kiểm tra mạng rồi thử lại.' })
     host.offlineAt = Date.now()
   },
+}
+
+// Đổi trang thì đóng các toast cũ (ToastHost gọi).
+export function clearStaleToasts() {
+  const { notification, opened } = host
+  if (!notification) return
+  for (const [key, at] of opened) {
+    if (Date.now() - at < KEEP_MS) continue
+    notification.destroy(key)
+    opened.delete(key)
+  }
 }
 
 // ToastHost (App.jsx) gắn notification của antd và vị trí theo bề rộng màn vào cầu nối.

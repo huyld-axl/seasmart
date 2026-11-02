@@ -4,12 +4,14 @@ import { Button, DatePicker, Form, Input, Modal, Select } from 'antd'
 import dayjs from 'dayjs'
 import useToast from '../../../components/ds/useToast'
 import { lookupApi } from '../../../api'
-import { useVoyageMutations } from '../../../hooks/useVoyages'
+import Banner from '../../../components/ds/Banner'
+import { useRemovePreview, useVoyageMutations } from '../../../hooks/useVoyages'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate } from '../../../utils/format'
 import { withFlag } from '../../../utils/flag'
 import { deltaText } from './voyageList'
 
+const CONTRACT_STATUS_LABELS = { DRAFT: 'Nháp', PENDING: 'Chờ duyệt', REJECTED: 'Bị từ chối', ACTIVE: 'Hiệu lực', ENDED: 'Đã kết thúc' }
 const DATE_FORMAT = 'DD/MM/YYYY'
 const API_DATE = 'YYYY-MM-DD'
 const selectProps = { allowClear: true, showSearch: { optionFilterProp: 'label' }, style: { width: '100%' } }
@@ -23,7 +25,7 @@ function usePortOptions() {
 }
 
 // Khung chung của ba hộp thoại: rộng 480, nút Huỷ và nút chính, gửi form khi bấm nút chính.
-function FormModal({ title, okText, danger, pending, form, onClose, onSubmit, children, description }) {
+function FormModal({ title, okText, danger, pending, okDisabled, form, onClose, onSubmit, children, description }) {
   async function submit() {
     const values = await form.validateFields().catch(() => null)
     if (values) onSubmit(values)
@@ -36,7 +38,7 @@ function FormModal({ title, okText, danger, pending, form, onClose, onSubmit, ch
       title={title}
       footer={[
         <Button key="cancel" onClick={onClose}>Huỷ</Button>,
-        <Button key="ok" type="primary" danger={danger} loading={pending} onClick={submit}>{okText}</Button>,
+        <Button key="ok" type="primary" danger={danger} loading={pending} disabled={okDisabled} onClick={submit}>{okText}</Button>,
       ]}
     >
       {description ? <p className="vd-muted">{description}</p> : null}
@@ -154,18 +156,20 @@ export function EditDatesModal({ voyage: v, onClose }) {
   )
 }
 
-// Đ4 · Huỷ chốt (chuyến từ cơ hội) / Xoá chuyến (tạo tay). Liệt kê việc sẽ xảy ra, ghi chú tuỳ chọn.
+// Đ4 · Huỷ chốt (chuyến từ cơ hội) / Xoá chuyến (tạo tay). Liệt kê việc sẽ xảy ra, gồm hợp đồng bị xoá mềm theo chuyến; hợp đồng đã hiệu lực thì chặn. Ghi chú tuỳ chọn.
 export function RemoveModal({ voyage: v, onClose }) {
   const navigate = useNavigate()
   const toast = useToast()
   const { remove } = useVoyageMutations()
   const [form] = Form.useForm()
   const fromOpportunity = v.source === 'OPPORTUNITY'
+  const preview = useRemovePreview(v.id)
+  const blocked = preview.data?.blocked
   const effects = [
-    'Chuyến bị xoá khỏi danh sách và hồ sơ.',
+    `Chuyến ${v.code} bị xoá khỏi danh sách và hồ sơ.`,
     v.status === 'ONBOARD' ? `${v.seafarer_name} về "Ở bờ".` : null,
     fromOpportunity && v.opportunity ? `Cơ hội ${v.opportunity.code} mở lại, các ứng viên về danh sách như trước khi chốt.` : null,
-    v.transferred_from && v.status === 'ONBOARD' ? `Chuyến trước ${v.transferred_from.code} mở lại "Đang trên tàu".` : null,
+    ...(preview.data?.contracts || []).map((c) => `Hợp đồng ${c.contract_number} (${CONTRACT_STATUS_LABELS[c.status]}) bị xoá mềm.`),
   ].filter(Boolean)
 
   async function onSubmit(values) {
@@ -185,11 +189,21 @@ export function RemoveModal({ voyage: v, onClose }) {
       okText={fromOpportunity ? 'Huỷ chốt' : 'Xoá chuyến'}
       danger
       pending={remove.isPending}
+      okDisabled={preview.isLoading || preview.isError || blocked}
       form={form}
       onClose={onClose}
       onSubmit={onSubmit}
     >
-      <ul className="vy-leave-list">{effects.map((text) => <li key={text}>{text}</li>)}</ul>
+      {blocked ? (
+        <Banner tone="error" title={fromOpportunity ? 'Không huỷ chốt được' : 'Không xoá được chuyến'} description={`${preview.data.message}. Hợp đồng đã duyệt không xoá theo chuyến.`} />
+      ) : preview.isError ? (
+        <Banner tone="error" title="Không kiểm tra được hợp đồng của chuyến" description="Thử lại sau ít phút." />
+      ) : (
+        <>
+          <p className="vd-muted">Sẽ xảy ra</p>
+          <ul className="vy-leave-list">{effects.map((text) => <li key={text}>{text}</li>)}</ul>
+        </>
+      )}
       <Form form={form} layout="vertical">
         <Form.Item name="note" label="Ghi chú">
           <Input.TextArea rows={2} maxLength={500} placeholder="Ví dụ: chủ tàu đổi ý" />

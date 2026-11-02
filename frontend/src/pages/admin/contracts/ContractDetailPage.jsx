@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { App, Button, Dropdown, Skeleton } from 'antd'
-import { CheckCircleOutlined, CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined, LockOutlined, MoreOutlined, PrinterOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
+import { App, Button, Dropdown, Skeleton, Table } from 'antd'
+import dayjs from 'dayjs'
+import { CheckCircleOutlined, CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined, FlagOutlined, LockOutlined, MoreOutlined, PrinterOutlined, RollbackOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
 import AuditTimeline from '../../../components/ds/AuditTimeline'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
-import { useContract, useContractMutations } from '../../../hooks/useVoyages'
+import { useBillList, useBillPlan, useContract, useContractMutations } from '../../../hooks/useVoyages'
 import { useCan } from '../../../hooks/usePermission'
 import apiErrorText from '../../../utils/apiError'
-import { formatDate, formatDateTime } from '../../../utils/format'
+import { formatDate, formatDateTime, formatUsd } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
 import ApproveModal from './ApproveModal'
 import TripLink from '../voyages/TripLink'
@@ -18,7 +19,7 @@ import BalanceCard from './BalanceCard'
 import DealTable from './DealTable'
 import RejectModal from './RejectModal'
 import TermsTable from './TermsTable'
-import { itemRows } from './contractView'
+import { itemRows, planSummary } from './contractView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
 import '../voyages/voyages.css'
@@ -31,6 +32,10 @@ const LOG_VIEW = {
   WITHDRAW: { title: 'Thôi xin duyệt', kind: 'withdraw', tone: 'neutral' },
   REJECT: { title: 'Từ chối', kind: 'reject', tone: 'error' },
   APPROVE: { title: 'Duyệt · có hiệu lực', kind: 'accept', tone: 'success' },
+  REVERT: { title: 'Đưa về Nháp', kind: 'withdraw', tone: 'warning' },
+  END: { title: 'Kết thúc hợp đồng', kind: 'accept', tone: 'neutral' },
+  APPLY_BILLS: { title: 'Áp thay đổi yêu cầu thanh toán', kind: 'edit', tone: 'warning' },
+  DELETE: { title: 'Xoá theo chuyến', kind: 'reject', tone: 'error' },
 }
 
 function Field({ label, children, span }) {
@@ -50,7 +55,11 @@ export default function ContractDetailPage() {
   const toast = useToast()
   const [dialog, setDialog] = useState(null)
   const { data, isLoading, isError, refetch } = useContract(id)
-  const { submit, withdraw, remove } = useContractMutations()
+  const awaiting = Boolean(data?.awaiting_reapproval)
+  const plan = useBillPlan(id, awaiting).data
+  const hasBills = (data?.bills_summary?.count || 0) > 0
+  const bills = useBillList({ contract_id: id, limit: 100 }, { enabled: hasBills && can('bill.view') })
+  const { submit, withdraw, remove, revert, end } = useContractMutations()
 
   if (isLoading) {
     return (
@@ -71,7 +80,12 @@ export default function ContractDetailPage() {
     )
   }
 
-  const { contract, voyage, seafarer, position, balance, log, trip } = data
+  const { contract, seafarer, position, balance, log } = data
+  // Chuyến mới (hợp đồng gắn chuyến); hợp đồng cũ chưa nối chuyến chỉ có chuyến cũ.
+  const trip = data.voyage
+  const place = data.voyage || data.legacy_voyage
+  const legacyCode = data.legacy_voyage?.code
+  const billCount = data.bills_summary.count
   const number = contract.contract_number
   const status = contract.status
   const locked = ['PENDING', 'ACTIVE', 'ENDED'].includes(status)
@@ -106,13 +120,58 @@ export default function ContractDetailPage() {
     })
   }
 
+  // Màn 8 · Đưa về Nháp: chỉ đổi trạng thái, bill giữ nguyên.
+  function handleRevert() {
+    modal.confirm({
+      title: `Đưa ${number} về Nháp?`,
+      content: `Hợp đồng mở lại để sửa. ${billCount} yêu cầu thanh toán giữ nguyên cho tới khi duyệt lại. Sau khi sửa cần xin duyệt và duyệt lại.`,
+      okText: 'Đưa về Nháp',
+      cancelText: 'Huỷ',
+      onOk: async () => {
+        try {
+          await revert.mutateAsync(contract.id)
+          toast.success(`Đã đưa hợp đồng ${number} về Nháp`)
+        } catch (error) {
+          toast.error(`Không đưa được hợp đồng ${number} về Nháp`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+        }
+      },
+    })
+  }
+
+  // Màn 13 · Kết thúc hợp đồng: thay cho job tự kết thúc. Ngày kết thúc còn ở tương lai thì cảnh báo nhưng vẫn cho kết thúc.
+  function handleEnd() {
+    const early = dayjs(contract.end_date).isAfter(dayjs(), 'day')
+    modal.confirm({
+      title: `Kết thúc ${number}?`,
+      content: (
+        <>
+          <p>Hợp đồng chuyển sang Đã kết thúc, không mở lại được. Ngày kết thúc {formatDate(contract.end_date)} và {billCount} yêu cầu thanh toán giữ nguyên.</p>
+          {early ? <Banner tone="warning" title="Ngày kết thúc còn ở tương lai" description={`Hợp đồng kết thúc sớm hơn ngày ${formatDate(contract.end_date)} ghi trên hợp đồng. Muốn rút ngắn bill thì đưa về Nháp, sửa ngày kết thúc trước.`} /> : null}
+        </>
+      ),
+      okText: 'Kết thúc hợp đồng',
+      cancelText: 'Huỷ',
+      onOk: async () => {
+        try {
+          await end.mutateAsync(contract.id)
+          toast.success(`Đã kết thúc hợp đồng ${number}`)
+        } catch (error) {
+          toast.error(`Không kết thúc được hợp đồng ${number}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+        }
+      },
+    })
+  }
+
   const edit = <Button key="edit" icon={<EditOutlined />} onClick={() => navigate(`/contracts/${contract.id}/edit`)}>Sửa hợp đồng</Button>
   const allActions = {
     DRAFT: [
-      <Dropdown key="more" menu={{ items: [{ key: 'delete', icon: <DeleteOutlined />, label: 'Xoá hợp đồng', danger: true }], onClick: handleDelete }} trigger={['click']} placement="bottomRight">
-        <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
-      </Dropdown>,
-      edit,
+      // Đã có bill (từng Hiệu lực) thì không xoá được.
+      ...(billCount ? [] : [
+        <Dropdown key="more" menu={{ items: [{ key: 'delete', icon: <DeleteOutlined />, label: 'Xoá hợp đồng', danger: true }], onClick: handleDelete }} trigger={['click']} placement="bottomRight">
+          <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
+        </Dropdown>,
+      ]),
+      ...(contract.legacy_unlinked ? [] : [edit]),
       <Button key="submit" type="primary" icon={<SendOutlined />} loading={submit.isPending} onClick={() => run(submit, contract.id, `Đã gửi xin duyệt hợp đồng ${number}`)}>Xin duyệt</Button>,
     ],
     PENDING: [
@@ -121,22 +180,34 @@ export default function ContractDetailPage() {
       <Button key="approve" type="primary" icon={<CheckOutlined />} onClick={() => setDialog('approve')}>Duyệt</Button>,
     ],
     REJECTED: [
-      edit,
+      ...(contract.legacy_unlinked ? [] : [edit]),
       <Button key="submit" type="primary" icon={<SendOutlined />} loading={submit.isPending} onClick={() => run(submit, contract.id, `Đã gửi xin duyệt lại hợp đồng ${number}`)}>Xin duyệt lại</Button>,
     ],
     ACTIVE: [
       <Button key="print" icon={<PrinterOutlined />} onClick={() => toast.info('Chưa in được hợp đồng', { description: 'Chưa có mẫu hợp đồng MLC.' })}>
         In hợp đồng <span className="ct-soon">Chưa chạy</span>
       </Button>,
+      <Button key="end" icon={<FlagOutlined />} onClick={handleEnd}>Kết thúc hợp đồng</Button>,
+      ...(contract.legacy_unlinked ? [] : [<Button key="revert" icon={<RollbackOutlined />} onClick={handleRevert}>Đưa về Nháp</Button>]),
     ],
     ENDED: [],
   }[status]
   // Nút nào cần quyền nào (xem, ẩn nút khi thiếu quyền).
-  const ACTION_PERM = { more: 'contract.delete', edit: 'contract.update', submit: 'contract.submit', withdraw: 'contract.submit', reject: 'contract.approve', approve: 'contract.approve' }
+  const ACTION_PERM = { more: 'contract.delete', edit: 'contract.update', submit: 'contract.submit', withdraw: 'contract.submit', reject: 'contract.approve', approve: 'contract.approve', end: 'contract.end', revert: 'contract.update' }
   const actions = allActions.filter((button) => !ACTION_PERM[button.key] || can(ACTION_PERM[button.key]))
 
+  const reverted = lastOf('REVERT')
   let banner = null
-  if (status === 'PENDING') {
+  if (awaiting) {
+    // Màn 9: đã từng Hiệu lực (có bill) nhưng đang không Hiệu lực. Xem trước từ cùng hàm với bước duyệt.
+    banner = (
+      <Banner
+        tone="neutral"
+        title={reverted ? `Đưa về Nháp lúc ${formatDateTime(reverted.created_at)} bởi ${reverted.actor_name || 'người dùng'}` : 'Hợp đồng chờ duyệt lại'}
+        description={planSummary(plan) || 'Sửa hợp đồng rồi xin duyệt; bill đang có giữ nguyên cho tới khi duyệt lại.'}
+      />
+    )
+  } else if (status === 'PENDING') {
     const entry = lastOf('SUBMIT')
     banner = <Banner tone="warning" icon={LockOutlined} title={`${entry?.actor_name || 'Người dùng'} xin duyệt lúc ${formatDateTime(entry?.created_at)}`} description="Nội dung khoá cho tới khi được duyệt hoặc từ chối. Cần sửa thì bấm Thôi xin duyệt, hợp đồng về Nháp." />
   } else if (status === 'REJECTED') {
@@ -144,8 +215,17 @@ export default function ContractDetailPage() {
     banner = <Banner tone="error" title={`${entry?.actor_name || 'Người dùng'} từ chối lúc ${formatDateTime(entry?.created_at)}`} description={`Lý do: ${contract.last_reject_reason || entry?.reason || '—'}`} />
   } else if (status === 'ACTIVE') {
     const entry = lastOf('APPROVE')
-    banner = <Banner tone="neutral" icon={CheckCircleOutlined} title={`Hiệu lực từ ${formatDate(contract.start_date)} đến ${formatDate(contract.end_date)}`} description={`${entry?.actor_name || 'Người dùng'} duyệt lúc ${formatDateTime(entry?.created_at)}. Nội dung không sửa được nữa.`} />
+    banner = <Banner tone="neutral" icon={CheckCircleOutlined} title={`Hiệu lực từ ${formatDate(contract.start_date)} đến ${formatDate(contract.end_date)}`} description={`${entry?.actor_name || 'Người dùng'} duyệt lúc ${formatDateTime(entry?.created_at)}. Nội dung không sửa được. Cần sửa thì bấm Đưa về Nháp.`} />
   }
+  // Màn 7: chuyến đã rời mà hợp đồng còn kéo dài sau ngày rời. Chỉ là nhãn, không tự đổi gì.
+  const mismatch = data.date_mismatch && trip ? (
+    <Banner
+      tone="warning"
+      title={`Chuyến ${trip.code} đã rời tàu ${formatDate(data.date_mismatch.leave_date)}`}
+      description={`Hợp đồng còn tới ${formatDate(data.date_mismatch.end_date)}, bill vẫn sinh tới ngày đó.`}
+      action={can('voyage.view') ? <Button onClick={() => navigate(`/voyages/${trip.id}`)}>Mở chuyến</Button> : undefined}
+    />
+  ) : null
 
   const timeline = log.map((entry) => ({
     id: entry.id,
@@ -159,21 +239,25 @@ export default function ContractDetailPage() {
     <div className="ds-page crew-profile">
       <Crumb items={[
         { label: 'Tàu', to: '/vessels' },
-        ...(voyage.vessel_id ? [{ label: voyage.vessel_name, to: `/vessels/${voyage.vessel_id}` }] : []),
-        trip ? { label: trip.code, to: `/voyages/${trip.id}` } : { label: voyage.code },
+        ...(place.vessel_id ? [{ label: place.vessel_name, to: `/vessels/${place.vessel_id}` }] : []),
+        trip ? { label: trip.code, to: `/voyages/${trip.id}` } : { label: legacyCode },
         { label: number },
       ]} />
 
       <div className="crew-head">
         <div className="crew-head__text">
           <h1 className="crew-head__title">{number} · {seafarer.full_name}</h1>
-          <p className="crew-head__desc">{position.rank_name} · {voyage.vessel_id ? <Link to={`/vessels/${voyage.vessel_id}`}>{voyage.vessel_name}</Link> : voyage.vessel_name} · chuyến <TripLink trip={trip} legacyCode={voyage.code} /></p>
-          <div className="crew-head__badges"><StatusBadge group="contract" value={status} /></div>
+          <p className="crew-head__desc">{position.rank_name} · {place.vessel_id ? <Link to={`/vessels/${place.vessel_id}`}>{place.vessel_name}</Link> : place.vessel_name} · chuyến <TripLink trip={trip} legacyCode={legacyCode} /></p>
+          <div className="crew-head__badges">
+            <StatusBadge group="contract" value={status} />
+            {awaiting ? <span className="crew-docs crew-docs--warning">Chờ duyệt lại</span> : null}
+          </div>
         </div>
         <div className="crew-head__actions">{actions}</div>
       </div>
 
       {banner}
+      {mismatch}
 
       <div className="ct-detail">
         <div className="ct-detail__main">
@@ -187,20 +271,39 @@ export default function ContractDetailPage() {
                 <Field label="Thuyền viên" span={6}>
                   <Link to={`/seafarers/${seafarer.id}`}>{seafarer.full_name}</Link>{seafarer.seafarer_code ? ` · ${seafarer.seafarer_code}` : ''}
                 </Field>
-                <Field label="Vị trí" span={6}>{position.rank_name} · dòng {position.sort_order + 1} của chuyến</Field>
+                <Field label="Chức danh" span={6}>{position.rank_name}{contract.legacy_unlinked && position.sort_order != null ? ` · dòng ${position.sort_order + 1} của chuyến cũ` : ''}</Field>
                 <Field label="Ngày bắt đầu" span={3}>{formatDate(contract.start_date)}</Field>
                 <Field label="Ngày kết thúc" span={3}>{formatDate(contract.end_date)} <span className="vd-muted">· {formatMonths(contract.months)}</span></Field>
                 <Field label="Ghi chú" span={6}>{contract.notes}</Field>
                 <Field label="Chuyến" span={6}>
-                  <TripLink trip={trip} legacyCode={voyage.code} withStatus />
+                  <TripLink trip={trip} legacyCode={legacyCode} withStatus />
                 </Field>
                 <Field label="Trạng thái thuyền viên" span={6}><StatusBadge group="crew" value={seafarer.status} /></Field>
               </dl>
             </div>
           </section>
 
-          <DealTable readOnly value={items} ownerName={voyage.ship_owner_name} seafarerName={seafarer.full_name} />
-          <TermsTable readOnly value={data.terms} ownerName={voyage.ship_owner_name} seafarerName={seafarer.full_name} />
+          {hasBills && can('bill.view') ? (
+            <section className="crew-panel">
+              <div className="crew-panel__head"><h2 className="crew-panel__title">Yêu cầu thanh toán <span className="vd-count">{billCount}</span></h2></div>
+              <Table
+                size="small"
+                rowKey="id"
+                loading={bills.isLoading}
+                pagination={false}
+                dataSource={bills.data?.data || []}
+                columns={[
+                  { title: 'Kỳ', dataIndex: 'seq', width: 56 },
+                  { title: 'Từ – đến', key: 'period', render: (_, b) => <span className="ds-num">{formatDate(b.period_start)} – {formatDate(b.period_end)}</span> },
+                  { title: 'Hạn', dataIndex: 'due_date', render: (value) => <span className="ds-num">{formatDate(value)}</span> },
+                  { title: 'Trạng thái', dataIndex: 'display_status', render: (value) => <StatusBadge group="bill" value={value} /> },
+                  { title: 'Số tiền (USD)', dataIndex: 'total_usd', align: 'right', render: (value, b) => <Link to={`/bills/${b.id}`} className="ds-num">{formatUsd(value)}</Link> },
+                ]}
+              />
+            </section>
+          ) : null}
+          <DealTable readOnly value={items} ownerName={place.ship_owner_name} seafarerName={seafarer.full_name} />
+          <TermsTable readOnly value={data.terms} ownerName={place.ship_owner_name} seafarerName={seafarer.full_name} />
         </div>
 
         <aside className="ct-detail__side">

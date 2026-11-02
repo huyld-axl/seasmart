@@ -40,7 +40,9 @@ describe('voyageList', () => {
 describe('form Tạo chuyến', () => {
   it('điền sẵn từ đường dẫn, bỏ lý do lạ', async () => {
     const { voyagePrefill } = await import('../voyageList')
-    expect(voyagePrefill(new URLSearchParams('seafarer=5&vessel=3&owner=2&reason=TRANSFER'))).toEqual({ seafarer_id: 5, vessel_id: 3, ship_owner_id: 2, manual_reason: 'TRANSFER', ended: false })
+    expect(voyagePrefill(new URLSearchParams('seafarer=5&vessel=3&owner=2&reason=OWNER_HIRED'))).toEqual({ seafarer_id: 5, vessel_id: 3, ship_owner_id: 2, manual_reason: 'OWNER_HIRED', ended: false })
+    // Chuyển tàu không còn là lý do chọn được: bỏ qua giá trị cũ trên đường dẫn.
+    expect(voyagePrefill(new URLSearchParams('seafarer=5&reason=TRANSFER'))).toEqual({ seafarer_id: 5, ended: false })
     expect(voyagePrefill(new URLSearchParams('reason=XYZ'))).toEqual({ ended: false })
   })
 

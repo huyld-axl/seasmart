@@ -46,6 +46,28 @@ export function useContract(id) {
   })
 }
 
+// Bản xem trước bill sẽ đổi thế nào khi duyệt (Màn 9, 11). Luôn lấy mới: bill có thể vừa được gửi / thu ở nơi khác.
+export function useBillPlan(id, enabled = true) {
+  return useQuery({
+    queryKey: ['contracts', 'bill-plan', id],
+    queryFn: () => seafarerContractApi.billPlan(id),
+    enabled: !!id && enabled,
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
+// Hợp đồng bị xoá mềm khi huỷ chốt: xem trước hợp đồng nào bị xoá mềm.
+export function useRemovePreview(id) {
+  return useQuery({
+    queryKey: ['voyages', 'remove-preview', String(id)],
+    queryFn: () => voyageApi.removePreview(id),
+    enabled: !!id,
+    staleTime: 0,
+    gcTime: 0,
+  })
+}
+
 // Mọi thay đổi làm mới chuyến, cơ hội, hợp đồng và thuyền viên (trạng thái thuyền viên đổi theo chuyến).
 function useRefresh() {
   const queryClient = useQueryClient()
@@ -88,6 +110,8 @@ export function useContractMutations() {
       mutationFn: ({ id, ...body }) => seafarerContractApi.reject(id, body),
       ...options,
     }),
+    revert: useMutation({ mutationFn: (id) => seafarerContractApi.revert(id), ...options }),
+    end: useMutation({ mutationFn: (id) => seafarerContractApi.end(id), ...options }),
   }
 }
 

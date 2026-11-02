@@ -133,4 +133,57 @@ function billDisplayStatus({ status, periodEnd, dueDate: due, today }) {
   return today < periodEnd ? 'UPCOMING' : 'TO_SEND'
 }
 
-module.exports = { splitPeriods, dueDate, billDisplayStatus, parseDate, addMonths, monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, round2 }
+
+// Duyệt lại hợp đồng đã có bill: tính bill nào cắt, xoá mềm, sinh thêm, bị chặn. Không chạm DB.
+// bills: bill chưa xoá của một bên, sắp theo seq: { id, code, seq, period_start, period_end, status, edited }.
+// term: { closing_day, pay_day, pay_month_offset, holiday_rule }.
+function planBillChanges({ start, end, bills, term }) {
+  const due = (periodEnd) => dueDate({ periodEnd, payDay: term.pay_day, payMonthOffset: term.pay_month_offset, holidayRule: term.holiday_rule })
+  const day = (v) => String(v).slice(0, 10)
+  const build = (periods, firstSeq, withOneTime) => periods.map((period, index) => ({
+    seq: firstSeq + index, start: period.start, end: period.end, due_date: due(period.end), with_one_time: withOneTime && index === 0,
+  }))
+  const brief = (bill) => ({ bill_id: bill.id, code: bill.code, seq: bill.seq, status: bill.status, start: day(bill.period_start), end: day(bill.period_end), edited: Boolean(bill.edited) })
+  const plan = { mode: 'NONE', cut: [], remove: [], create: [], blocked: [] }
+  const startDay = day(start)
+  const endDay = day(end)
+  if (!bills.length) {
+    return { ...plan, mode: 'FIRST', create: build(splitPeriods({ start: startDay, end: endDay, closingDay: term.closing_day }), 1, true) }
+  }
+  const oldStart = day(bills[0].period_start)
+  const oldEnd = day(bills[bills.length - 1].period_end)
+  if (startDay !== oldStart) {
+    return {
+      ...plan,
+      mode: 'REGENERATE',
+      remove: bills.map(brief),
+      create: build(splitPeriods({ start: startDay, end: endDay, closingDay: term.closing_day }), 1, true),
+      blocked: bills.filter((b) => b.status !== 'OPEN').map(brief),
+    }
+  }
+  if (endDay < oldEnd) {
+    const remove = bills.filter((b) => day(b.period_start) > endDay)
+    const cut = bills.filter((b) => day(b.period_start) <= endDay && endDay < day(b.period_end))
+    return {
+      ...plan,
+      mode: 'CUT',
+      remove: remove.map(brief),
+      cut: cut.map((b) => ({
+        ...brief(b), from: { start: day(b.period_start), end: day(b.period_end) }, to: { start: day(b.period_start), end: endDay }, due_date: due(endDay),
+      })),
+      blocked: [...remove, ...cut].filter((b) => b.status !== 'OPEN').map(brief),
+    }
+  }
+  if (endDay > oldEnd) {
+    const first = parseDate(oldEnd)
+    const next = isoOf(Date.UTC(first.y, first.m, first.d) + DAY_MS)
+    return {
+      ...plan,
+      mode: 'EXTEND',
+      create: build(splitPeriods({ start: next, end: endDay, closingDay: term.closing_day }), Math.max(...bills.map((b) => b.seq)) + 1, false),
+    }
+  }
+  return plan
+}
+
+module.exports = { planBillChanges, splitPeriods, dueDate, billDisplayStatus, parseDate, addMonths, monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, round2 }

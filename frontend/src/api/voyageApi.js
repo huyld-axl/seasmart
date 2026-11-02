@@ -9,6 +9,7 @@ export const voyageApi = {
   leavePlan: (id, body) => api.post(`/voyages/${id}/leave-plan`, body).then((r) => r.data),
   leave: (id, body) => api.post(`/voyages/${id}/leave`, body).then((r) => r.data),
   leaveMany: (body) => api.post('/voyages/leave', body).then((r) => r.data),
+  removePreview: (id) => api.get(`/voyages/${id}/remove-preview`).then((r) => r.data),
   remove: (id, body) => api.delete(`/voyages/${id}`, { data: body || {} }).then((r) => r.data),
   crewTimeline: (params) => api.get('/voyages/crew-timeline', { params }).then((r) => r.data),
 }
@@ -32,4 +33,7 @@ export const seafarerContractApi = {
   withdraw: (id) => api.post(`/contracts/${id}/withdraw`).then((r) => r.data),
   approve: (id, body) => api.post(`/contracts/${id}/approve`, body).then((r) => r.data),
   reject: (id, body) => api.post(`/contracts/${id}/reject`, body).then((r) => r.data),
+  revert: (id) => api.post(`/contracts/${id}/revert`).then((r) => r.data),
+  end: (id) => api.post(`/contracts/${id}/end`).then((r) => r.data),
+  billPlan: (id) => api.get(`/contracts/${id}/bill-plan`).then((r) => r.data),
 }

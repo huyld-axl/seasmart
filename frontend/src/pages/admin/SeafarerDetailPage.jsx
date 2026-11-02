@@ -26,6 +26,7 @@ import {
 } from '../../api'
 import FormExportTab from '../../components/seafarer/FormExportTab'
 import dayjs from 'dayjs'
+import TripLink from './voyages/TripLink'
 import StatusBadge from '../../components/ds/StatusBadge'
 import useToast from '../../components/ds/useToast'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
@@ -387,7 +388,7 @@ function ContractsSection({ seafarerId }) {
             key: 'vessel',
             render: (_, row) => (
               <span>
-                {can('vessel.view') && row.vessel_id ? <Link to={`/vessels/${row.vessel_id}`}>{row.vessel_name}</Link> : row.vessel_name} · <Link to={`/voyages/${row.voyage_id}`}>{row.voyage_code}</Link>
+                {can('vessel.view') && row.vessel_id ? <Link to={`/vessels/${row.vessel_id}`}>{row.vessel_name}</Link> : row.vessel_name} · <TripLink trip={row.trip} legacyCode={row.voyage_code} />
               </span>
             ),
           },

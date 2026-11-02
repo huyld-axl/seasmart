@@ -1,7 +1,8 @@
 const { paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
 const { nextCode } = require('../utils/code_counter')
-const { splitPeriods, dueDate, round2 } = require('../utils/voyage_math')
+const crypto = require('crypto')
+const { splitPeriods, dueDate, round2, planBillChanges } = require('../utils/voyage_math')
 const { DEFAULT_ITEMS, BILL_DISPLAY_STATUSES } = require('../constants/voyage_contract')
 
 const DEFAULT_NAME = Object.fromEntries(DEFAULT_ITEMS.map((item) => [item.code, item.name]))
@@ -19,22 +20,22 @@ const DISPLAY_SQL = `CASE
     ELSE 'TO_SEND' END`
 const TOTAL_SQL = '(SELECT COALESCE(SUM(i.amount_usd), 0) FROM contract_bill_item i WHERE i.bill_id = b.id)'
 
+// Tàu, chủ tàu, chức danh lấy từ chuyến mới; hợp đồng cũ chưa nối chuyến rơi về vị trí / chuyến cũ.
 const BILL_FROM = `FROM contract_bill b
   JOIN seafarer_contract c ON c.id = b.contract_id
   JOIN seafarer s ON s.id = c.seafarer_id
-  JOIN voyage_position p ON p.id = c.voyage_position_id
-  JOIN "rank" r ON r.id = p.rank_id
-  JOIN voyage v ON v.id = p.voyage_id
-  JOIN vessel ves ON ves.id = v.vessel_id
-  JOIN ship_owner o ON o.id = v.ship_owner_id`
+  LEFT JOIN seafarer_voyage sv ON sv.id = c.seafarer_voyage_id
+  LEFT JOIN voyage_position p ON p.id = c.voyage_position_id
+  LEFT JOIN voyage v ON v.id = p.voyage_id
+  JOIN "rank" r ON r.id = COALESCE(sv.rank_id, p.rank_id)
+  JOIN vessel ves ON ves.id = COALESCE(sv.vessel_id, v.vessel_id)
+  JOIN ship_owner o ON o.id = COALESCE(sv.ship_owner_id, v.ship_owner_id)`
 
 const BILL_SELECT = `SELECT b.id, b.code, b.contract_id, b.side, b.seq, b.period_start, b.period_end, b.due_date, b.status,
     b.sent_at, b.paid_date, b.note, b.created_at, ${DISPLAY_SQL} AS display_status, ${TOTAL_SQL} AS total_usd,
-    (SELECT COUNT(*) FROM contract_bill b2 WHERE b2.contract_id = b.contract_id AND b2.side = b.side) AS periods,
+    (SELECT COUNT(*) FROM contract_bill b2 WHERE b2.contract_id = b.contract_id AND b2.side = b.side AND b2.deleted_at IS NULL) AS periods,
     c.contract_number, c.seafarer_id, s.full_name AS seafarer_name, r.name_vi AS rank_name,
-    v.id AS voyage_id, v.code AS voyage_code,
-    (SELECT tr.id FROM seafarer_voyage tr WHERE tr.legacy_contract_id = c.id AND tr.deleted_at IS NULL) AS trip_id,
-    (SELECT tr.code FROM seafarer_voyage tr WHERE tr.legacy_contract_id = c.id AND tr.deleted_at IS NULL) AS trip_code,
+    v.id AS voyage_id, v.code AS voyage_code, sv.id AS trip_id, sv.code AS trip_code,
     ves.id AS vessel_id, ves.vessel_name, o.id AS ship_owner_id, o.company_name AS ship_owner_name`
 
 // Bên phải thu là hiện tại; giữ tham số side để làm bên phải chi sau.
@@ -55,14 +56,45 @@ function summary(row) {
     contract: { id: row.contract_id, contract_number: row.contract_number },
     seafarer: { id: row.seafarer_id, full_name: row.seafarer_name, rank_name: row.rank_name },
     vessel: { id: row.vessel_id, vessel_name: row.vessel_name },
-    voyage: { id: row.voyage_id, code: row.voyage_code },
+    voyage: row.voyage_id ? { id: row.voyage_id, code: row.voyage_code } : null,
     trip: row.trip_id ? { id: row.trip_id, code: row.trip_code } : null,
     ship_owner: { id: row.ship_owner_id, company_name: row.ship_owner_name },
   }
 }
 
-async function writeLog(conn, billId, action, actorId) {
-  await conn.query('INSERT INTO contract_bill_log SET ?', [{ bill_id: billId, action, actor_id: actorId ?? null }])
+async function writeLog(conn, billId, action, actorId, payload = null) {
+  await conn.query('INSERT INTO contract_bill_log SET ?', [{ bill_id: billId, action, actor_id: actorId ?? null, payload: payload && JSON.stringify(payload) }])
+}
+
+const iso = (v) => String(v).slice(0, 10)
+
+// Dữ liệu sinh bill của một bên: kỳ thanh toán và các dòng tiền hiện tại của hợp đồng.
+async function loadGeneration(conn, contractId, side) {
+  const [[term]] = await conn.query('SELECT closing_day, pay_day, pay_month_offset, holiday_rule FROM contract_payment_term WHERE contract_id = ? AND side = ?', [contractId, side])
+  if (!term) throw { statusCode: 409, message: 'Hợp đồng chưa có kỳ thanh toán' }
+  const [itemRows] = await conn.query('SELECT item_code, custom_name, kind, receivable_usd, payable_usd FROM contract_item WHERE contract_id = ? ORDER BY sort_order, id', [contractId])
+  const field = AMOUNT_FIELD[side]
+  const lines = itemRows
+    .map((row) => ({ item_code: row.item_code, kind: row.kind, name: row.item_code ? DEFAULT_NAME[row.item_code] || row.item_code : row.custom_name, amount: num(row[field]) }))
+    .filter((line) => line.amount > 0)
+  return { term, lines }
+}
+
+// Ghi một bill mới (kỳ, hạn, dòng tiền đủ tháng) kèm log CREATE. withOneTime: kèm các khoản một lần.
+async function insertBill(conn, { contractId, side, seq, start, end, due, lines, withOneTime, createdBy, actorId }) {
+  const code = await nextCode(conn, 'BILL', new Date().getUTCFullYear(), 'TT', 5)
+  const [result] = await conn.query('INSERT INTO contract_bill SET ?', [{
+    code, contract_id: contractId, side, seq, period_start: start, period_end: end, due_date: due, status: 'OPEN',
+    created_by: createdBy ?? null, updated_by: actorId ?? null,
+  }])
+  const billLines = lines.filter((line) => line.kind === 'MONTHLY' || withOneTime)
+  for (const [order, line] of billLines.entries()) {
+    await conn.query('INSERT INTO contract_bill_item SET ?', [{
+      bill_id: result.insertId, item_code: line.item_code, kind: line.kind, name: line.name, default_usd: line.amount, amount_usd: line.amount, sort_order: order,
+    }])
+  }
+  await writeLog(conn, result.insertId, 'CREATE', actorId)
+  return result.insertId
 }
 
 // Bảng chuyển trạng thái. `collect` cần ngày thu.
@@ -77,42 +109,68 @@ const contractBillService = {
   // Sinh đủ bill của một bên khi hợp đồng được duyệt. Chạy trong transaction của việc duyệt.
   // Đã có bill của bên này thì không làm gì (chạy lại script bù không sinh trùng). Trả số bill đã tạo.
   async generateForContract(conn, contractId, side = SIDE, actorId = null) {
-    const [existing] = await conn.query('SELECT 1 FROM contract_bill WHERE contract_id = ? AND side = ? LIMIT 1', [contractId, side])
+    const [existing] = await conn.query('SELECT 1 FROM contract_bill WHERE contract_id = ? AND side = ? AND deleted_at IS NULL LIMIT 1', [contractId, side])
     if (existing.length) return 0
     const [[contract]] = await conn.query('SELECT id, start_date, end_date, created_by FROM seafarer_contract WHERE id = ?', [contractId])
     if (!contract) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
-    const [[term]] = await conn.query('SELECT closing_day, pay_day, pay_month_offset, holiday_rule FROM contract_payment_term WHERE contract_id = ? AND side = ?', [contractId, side])
-    if (!term) throw { statusCode: 409, message: 'Hợp đồng chưa có kỳ thanh toán' }
-    const [itemRows] = await conn.query('SELECT item_code, custom_name, kind, receivable_usd, payable_usd FROM contract_item WHERE contract_id = ? ORDER BY sort_order, id', [contractId])
-    const field = AMOUNT_FIELD[side]
-    const lines = itemRows
-      .map((row) => ({ item_code: row.item_code, kind: row.kind, name: row.item_code ? DEFAULT_NAME[row.item_code] || row.item_code : row.custom_name, amount: num(row[field]) }))
-      .filter((line) => line.amount > 0)
+    const { term, lines } = await loadGeneration(conn, contractId, side)
     const periods = splitPeriods({ start: contract.start_date, end: contract.end_date, closingDay: term.closing_day })
-    const year = new Date().getUTCFullYear()
     for (const [index, period] of periods.entries()) {
-      const code = await nextCode(conn, 'BILL', year, 'TT', 5)
-      const [result] = await conn.query('INSERT INTO contract_bill SET ?', [{
-        code,
-        contract_id: contractId,
-        side,
-        seq: index + 1,
-        period_start: period.start,
-        period_end: period.end,
-        due_date: dueDate({ periodEnd: period.end, payDay: term.pay_day, payMonthOffset: term.pay_month_offset, holidayRule: term.holiday_rule }),
-        status: 'OPEN',
-        created_by: contract.created_by ?? null,
-        updated_by: actorId ?? null,
-      }])
-      const billLines = lines.filter((line) => line.kind === 'MONTHLY' || index === 0)
-      for (const [order, line] of billLines.entries()) {
-        await conn.query('INSERT INTO contract_bill_item SET ?', [{
-          bill_id: result.insertId, item_code: line.item_code, kind: line.kind, name: line.name, default_usd: line.amount, amount_usd: line.amount, sort_order: order,
-        }])
-      }
-      await writeLog(conn, result.insertId, 'CREATE', actorId)
+      await insertBill(conn, {
+        contractId, side, seq: index + 1, start: period.start, end: period.end, lines, withOneTime: index === 0,
+        due: dueDate({ periodEnd: period.end, payDay: term.pay_day, payMonthOffset: term.pay_month_offset, holidayRule: term.holiday_rule }),
+        createdBy: contract.created_by, actorId,
+      })
     }
     return periods.length
+  },
+
+  // Bill sẽ đổi thế nào nếu hợp đồng có ngày bắt đầu / kết thúc `start`, `end` (mặc định: ngày đang lưu). Chỉ đọc;
+  // lock = true khoá các dòng bill trong transaction duyệt. fingerprint đổi khi bill (kỳ, trạng thái, số tiền) hoặc ngày đổi.
+  async planFor(conn, contractId, { start, end, side = SIDE, lock = false } = {}) {
+    const [[contract]] = await conn.query('SELECT id, start_date, end_date FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL', [contractId])
+    if (!contract) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
+    const [billRows] = await conn.query(
+      `SELECT b.id, b.code, b.seq, b.period_start, b.period_end, b.due_date, b.status, b.updated_at, ${TOTAL_SQL} AS total_usd,
+          EXISTS (SELECT 1 FROM contract_bill_log l WHERE l.bill_id = b.id AND l.action = 'UPDATE') AS edited
+       FROM contract_bill b WHERE b.contract_id = ? AND b.side = ? AND b.deleted_at IS NULL ORDER BY b.seq${lock ? ' FOR UPDATE OF b' : ''}`,
+      [contractId, side])
+    const [[term]] = await conn.query('SELECT closing_day, pay_day, pay_month_offset, holiday_rule FROM contract_payment_term WHERE contract_id = ? AND side = ?', [contractId, side])
+    const target = { start: iso(start || contract.start_date), end: iso(end || contract.end_date) }
+    const bills = billRows.map((b) => ({ ...b, edited: Boolean(b.edited) }))
+    if (!term) throw { statusCode: 409, message: 'Hợp đồng chưa có kỳ thanh toán' }
+    const plan = planBillChanges({ ...target, bills, term })
+    const fingerprint = crypto.createHash('sha1').update(JSON.stringify([
+      target, bills.map((b) => [b.id, b.seq, iso(b.period_start), iso(b.period_end), b.status, Number(b.total_usd), String(b.updated_at)]),
+    ])).digest('hex')
+    return {
+      ...plan,
+      fingerprint,
+      contract_range: { start: iso(contract.start_date), end: iso(contract.end_date) },
+      bills_range: bills.length ? { start: iso(bills[0].period_start), end: iso(bills[bills.length - 1].period_end), count: bills.length } : null,
+    }
+  },
+
+  // Áp plan lên bill của một bên, trong transaction của việc duyệt. FIRST do generateForContract làm.
+  async applyPlan(conn, contractId, plan, side = SIDE, actorId = null) {
+    for (const item of plan.remove) {
+      await conn.query('UPDATE contract_bill SET deleted_at = NOW(), updated_by = ? WHERE id = ?', [actorId ?? null, item.bill_id])
+      await writeLog(conn, item.bill_id, 'DELETE', actorId, { seq: item.seq, start: item.start, end: item.end, edited: item.edited })
+    }
+    for (const item of plan.cut) {
+      await conn.query('UPDATE contract_bill SET period_end = ?, due_date = ?, updated_by = ? WHERE id = ?', [item.to.end, item.due_date, actorId ?? null, item.bill_id])
+      await writeLog(conn, item.bill_id, 'CUT', actorId, { from: item.from, to: item.to })
+    }
+    if (plan.create.length) {
+      const [[contract]] = await conn.query('SELECT created_by FROM seafarer_contract WHERE id = ?', [contractId])
+      const { lines } = await loadGeneration(conn, contractId, side)
+      for (const item of plan.create) {
+        await insertBill(conn, {
+          contractId, side, seq: item.seq, start: item.start, end: item.end, due: item.due_date, lines, withOneTime: item.with_one_time,
+          createdBy: contract.created_by, actorId,
+        })
+      }
+    }
   },
 
   async list(pool, query) {
@@ -127,7 +185,7 @@ const contractBillService = {
       where += ' AND (b.code ILIKE ? OR unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)
     }
-    for (const [key, column] of [['ship_owner_id', 'v.ship_owner_id'], ['voyage_id', 'v.id'], ['contract_id', 'b.contract_id']]) {
+    for (const [key, column] of [['ship_owner_id', 'o.id'], ['seafarer_voyage_id', 'c.seafarer_voyage_id'], ['contract_id', 'b.contract_id']]) {
       if (query[key]) {
         where += ` AND ${column} = ?`
         params.push(Number(query[key]))

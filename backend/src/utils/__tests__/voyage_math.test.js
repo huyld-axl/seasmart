@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
-const { monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, splitPeriods, dueDate, billDisplayStatus } = require('../voyage_math')
+const { monthsBetween, splitBudget, contractBalance, dueFlag, displayStatus, splitPeriods, dueDate, billDisplayStatus, planBillChanges } = require('../voyage_math')
 
 describe('monthsBetween', () => {
   it('đúng các ví dụ của kế hoạch', () => {
@@ -102,5 +102,101 @@ describe('billDisplayStatus', () => {
     expect(billDisplayStatus({ ...base, status: 'SENT', today: '2026-11-10' })).toBe('SENT')
     expect(billDisplayStatus({ ...base, status: 'SENT', today: '2026-11-11' })).toBe('OVERDUE')
     expect(billDisplayStatus({ ...base, status: 'PAID', today: '2026-12-01' })).toBe('PAID')
+  })
+})
+
+describe('planBillChanges', () => {
+  const term = { closing_day: 31, pay_day: 10, pay_month_offset: 1, holiday_rule: 'AFTER' }
+  const mk = (seq, start, end, status = 'OPEN', edited = false) => ({ id: seq * 10, code: `TT-${seq}`, seq, period_start: start, period_end: end, status, edited })
+  // HĐ-C: 10/03 → 31/12, chốt cuối tháng: 10 kỳ, kỳ 1 lẻ 10/03–31/03.
+  const bills = [
+    mk(1, '2026-03-10', '2026-03-31', 'PAID'), mk(2, '2026-04-01', '2026-04-30', 'PAID'), mk(3, '2026-05-01', '2026-05-31', 'PAID'),
+    mk(4, '2026-06-01', '2026-06-30', 'PAID'), mk(5, '2026-07-01', '2026-07-31', 'PAID'), mk(6, '2026-08-01', '2026-08-31', 'PAID'),
+    mk(7, '2026-09-01', '2026-09-30', 'PAID'), mk(8, '2026-10-01', '2026-10-31'), mk(9, '2026-11-01', '2026-11-30'), mk(10, '2026-12-01', '2026-12-31'),
+  ]
+  const plan = (start, end, list = bills) => planBillChanges({ start, end, bills: list, term })
+
+  it('chưa có bill: FIRST, sinh đủ kỳ, bill đầu có khoản một lần', () => {
+    const r = plan('2026-03-10', '2026-05-20', [])
+    expect(r.mode).toBe('FIRST')
+    expect(r.create.map((c) => [c.seq, c.start, c.end, c.with_one_time])).toEqual([
+      [1, '2026-03-10', '2026-03-31', true], [2, '2026-04-01', '2026-04-30', false], [3, '2026-05-01', '2026-05-20', false],
+    ])
+    expect(r.blocked).toEqual([])
+  })
+
+  it('không đổi ngày: NONE', () => {
+    expect(plan('2026-03-10', '2026-12-31')).toEqual({ mode: 'NONE', cut: [], remove: [], create: [], blocked: [] })
+  })
+
+  it('E rơi giữa kỳ: cắt kỳ đó, xoá các kỳ sau, tính lại hạn', () => {
+    const r = plan('2026-03-10', '2026-10-17')
+    expect(r.mode).toBe('CUT')
+    expect(r.cut).toHaveLength(1)
+    expect(r.cut[0]).toMatchObject({ code: 'TT-8', from: { start: '2026-10-01', end: '2026-10-31' }, to: { start: '2026-10-01', end: '2026-10-17' }, due_date: '2026-11-10' })
+    expect(r.remove.map((b) => b.code)).toEqual(['TT-9', 'TT-10'])
+    expect(r.blocked).toEqual([])
+  })
+
+  it('E đúng ngày chốt: không cắt, chỉ xoá kỳ sau', () => {
+    const r = plan('2026-03-10', '2026-09-30')
+    expect(r.mode).toBe('CUT')
+    expect(r.cut).toEqual([])
+    expect(r.remove.map((b) => b.code)).toEqual(['TT-8', 'TT-9', 'TT-10'])
+    expect(r.blocked).toEqual([])
+  })
+
+  it('E sớm làm đụng bill đã thu: blocked đúng tập', () => {
+    const r = plan('2026-03-10', '2026-09-15')
+    expect(r.cut.map((b) => b.code)).toEqual(['TT-7'])
+    expect(r.blocked).toEqual([expect.objectContaining({ code: 'TT-7', status: 'PAID' })])
+  })
+
+  it('E muộn hơn: EXTEND từ kỳ lẻ, số kỳ nối tiếp, không có khoản một lần, không chặn', () => {
+    const r = plan('2026-03-10', '2027-02-20')
+    expect(r.mode).toBe('EXTEND')
+    expect(r.create.map((c) => [c.seq, c.start, c.end, c.with_one_time])).toEqual([
+      [11, '2027-01-01', '2027-01-31', false], [12, '2027-02-01', '2027-02-20', false],
+    ])
+    expect(r.blocked).toEqual([])
+  })
+
+  it('EXTEND khi kỳ cuối đang lẻ: bắt đầu ngày sau E cũ', () => {
+    const odd = [mk(1, '2026-03-10', '2026-03-31'), mk(2, '2026-04-01', '2026-04-12')]
+    const r = plan('2026-03-10', '2026-05-31', odd)
+    expect(r.create.map((c) => [c.seq, c.start, c.end])).toEqual([[3, '2026-04-13', '2026-04-30'], [4, '2026-05-01', '2026-05-31']])
+  })
+
+  it('S đổi qua nhiều kỳ: REGENERATE, xoá hết, sinh lại từ 1, chặn mọi bill chưa OPEN', () => {
+    const r = plan('2026-06-15', '2026-12-31')
+    expect(r.mode).toBe('REGENERATE')
+    expect(r.remove).toHaveLength(10)
+    expect(r.create[0]).toMatchObject({ seq: 1, start: '2026-06-15', end: '2026-06-30', with_one_time: true })
+    expect(r.create.at(-1)).toMatchObject({ end: '2026-12-31' })
+    expect(r.blocked.map((b) => b.code)).toEqual(['TT-1', 'TT-2', 'TT-3', 'TT-4', 'TT-5', 'TT-6', 'TT-7'])
+  })
+
+  it('S đổi khi mọi bill còn OPEN: không bị chặn, bill sửa tay được đánh dấu', () => {
+    const open = [mk(1, '2026-03-10', '2026-03-31', 'OPEN', true), mk(2, '2026-04-01', '2026-04-30')]
+    const r = plan('2026-03-01', '2026-04-30', open)
+    expect(r.mode).toBe('REGENERATE')
+    expect(r.blocked).toEqual([])
+    expect(r.remove[0].edited).toBe(true)
+    expect(r.create[0]).toMatchObject({ start: '2026-03-01', end: '2026-03-31' })
+  })
+
+  it('ngày chốt 31 và tháng 2: E cuối tháng 2 không cắt', () => {
+    const feb = [mk(1, '2027-01-01', '2027-01-31'), mk(2, '2027-02-01', '2027-02-28'), mk(3, '2027-03-01', '2027-03-31')]
+    const r = plan('2027-01-01', '2027-02-28', feb)
+    expect(r.cut).toEqual([])
+    expect(r.remove.map((b) => b.code)).toEqual(['TT-3'])
+  })
+
+  it('ngày chốt 15: cắt kỳ giữa và hạn theo quy tắc', () => {
+    const t15 = { closing_day: 15, pay_day: 20, pay_month_offset: 1, holiday_rule: 'BEFORE' }
+    const list = [mk(1, '2026-03-10', '2026-03-15'), mk(2, '2026-03-16', '2026-04-15')]
+    const r = planBillChanges({ start: '2026-03-10', end: '2026-04-01', bills: list, term: t15 })
+    expect(r.cut[0]).toMatchObject({ code: 'TT-2', to: { start: '2026-03-16', end: '2026-04-01' } })
+    expect(r.cut[0].due_date).toBe(dueDate({ periodEnd: '2026-04-01', payDay: 20, payMonthOffset: 1, holidayRule: 'BEFORE' }))
   })
 })

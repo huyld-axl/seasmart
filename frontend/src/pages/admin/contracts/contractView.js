@@ -119,7 +119,7 @@ export function termLabel(term) {
 export function toFormValues(detail) {
   const { contract, items, terms } = detail
   return {
-    seafarer_id: contract.seafarer_id,
+    seafarer_voyage_id: contract.seafarer_voyage_id,
     start_date: contract.start_date ? dayjs(contract.start_date) : null,
     end_date: contract.end_date ? dayjs(contract.end_date) : null,
     notes: contract.notes ?? '',
@@ -128,24 +128,23 @@ export function toFormValues(detail) {
   }
 }
 
-// Giá trị mặc định của form tạo mới từ một vị trí của chuyến.
+// Giá trị mặc định của form tạo mới từ một chuyến: S = ngày xuống, E = ngày rời dự kiến (chỉ chép lúc mở form, sau đó độc lập).
 export function newFormValues(voyage) {
   return {
-    seafarer_id: undefined,
-    start_date: voyage?.planned_embark_date ? dayjs(voyage.planned_embark_date) : null,
-    end_date: voyage?.planned_disembark_date ? dayjs(voyage.planned_disembark_date) : null,
+    seafarer_voyage_id: voyage?.id,
+    start_date: voyage?.join_date ? dayjs(voyage.join_date) : null,
+    end_date: voyage?.planned_leave_date ? dayjs(voyage.planned_leave_date) : null,
     notes: '',
     items: [...itemRows().MONTHLY, ...itemRows().ONE_TIME],
     terms: structuredClone(DEFAULT_TERMS),
   }
 }
 
-// Giá trị form -> body gửi API. Bỏ dòng tự đặt tên chưa có tên; ô tiền trống gửi null.
-export function toPayload(values, { positionId } = {}) {
+// Giá trị form -> body gửi API (voyageId chỉ khi tạo mới: chuyến và thuyền viên của hợp đồng không đổi được). Bỏ dòng tự đặt tên chưa có tên; ô tiền trống gửi null.
+export function toPayload(values, { voyageId } = {}) {
   const money = (v) => (v === undefined || v === null || v === '' ? null : Number(v))
   return {
-    ...(positionId ? { voyage_position_id: positionId } : {}),
-    seafarer_id: values.seafarer_id,
+    ...(voyageId ? { seafarer_voyage_id: voyageId } : {}),
     start_date: fromDay(values.start_date),
     end_date: fromDay(values.end_date),
     notes: values.notes?.trim() || null,
@@ -160,3 +159,65 @@ export function toPayload(values, { positionId } = {}) {
     terms: values.terms,
   }
 }
+
+// ---------- Duyệt lại: bản xem trước bill (kết quả GET /contracts/:id/bill-plan) ----------
+export const BILL_STATUS_TEXT = { OPEN: 'Chưa gửi', SENT: 'Đã gửi', PAID: 'Đã thu' }
+
+const dmy = (value) => dayjs(value).format('DD/MM/YYYY')
+const dm = (value) => dayjs(value).format('DD/MM')
+
+// "01/10 – 31/10/2026"; khác năm thì ghi đủ năm hai đầu.
+export function periodText(start, end) {
+  return dayjs(start).year() === dayjs(end).year() ? `${dm(start)} – ${dmy(end)}` : `${dmy(start)} – ${dmy(end)}`
+}
+
+// Plan đổi bill (khác NONE / FIRST) thì duyệt cần hộp xác nhận.
+export const planChangesBills = (plan) => Boolean(plan) && !['NONE', 'FIRST'].includes(plan.mode)
+
+// Các dòng bảng "Kỳ | Hiện tại | Sau khi duyệt | Trạng thái" của hộp duyệt lại.
+export function planRows(plan) {
+  const rows = []
+  for (const b of plan.cut) {
+    rows.push({ key: `cut-${b.bill_id}`, label: `${b.seq}`, current: periodText(b.from.start, b.from.end), after: `${periodText(b.to.start, b.to.end)} · tiền giữ đủ tháng`, status: BILL_STATUS_TEXT[b.status] })
+  }
+  for (const b of plan.remove) {
+    rows.push({ key: `remove-${b.bill_id}`, label: `${b.seq}`, current: periodText(b.start, b.end), after: 'Xoá mềm', status: BILL_STATUS_TEXT[b.status], removed: true, edited: b.edited })
+  }
+  for (const b of plan.create) {
+    rows.push({ key: `create-${b.seq}`, label: `${b.seq} mới`, current: '—', after: `${periodText(b.start, b.end)}${b.with_one_time ? ' · gồm khoản một lần' : ' · đủ tháng'}`, status: 'Chưa gửi' })
+  }
+  return rows
+}
+
+// Dòng "Ngày kết thúc 31/12/2026 → 17/10/2026" ở đầu hộp.
+export function planHeadline(plan) {
+  const { contract_range: now, bills_range: before } = plan
+  if (!before) return null
+  const parts = []
+  if (now.start !== before.start) parts.push(`Ngày bắt đầu ${dmy(before.start)} → ${dmy(now.start)}`)
+  if (now.end !== before.end) parts.push(`Ngày kết thúc ${dmy(before.end)} → ${dmy(now.end)}`)
+  return parts.join(' · ') || null
+}
+
+// Một câu cho banner Màn 9: ngày bill đang có so với ngày đang lưu, và việc sẽ làm khi duyệt.
+export function planSummary(plan) {
+  if (!plan?.bills_range) return null
+  const { contract_range: now, bills_range: before } = plan
+  const seqs = (list) => list.map((b) => b.seq).join(', ')
+  if (plan.mode === 'REGENERATE') {
+    return `Ngày bắt đầu: bill đang từ ${dmy(before.start)}, hợp đồng đang lưu ${dmy(now.start)}. Khi duyệt: xoá mềm ${plan.remove.length} bill và sinh lại ${plan.create.length} kỳ từ ${dmy(now.start)}.`
+  }
+  const lead = `Ngày kết thúc: bill đang tới ${dmy(before.end)}, hợp đồng đang lưu ${dmy(now.end)}.`
+  if (plan.mode === 'CUT') {
+    const steps = [
+      plan.cut.length ? `kỳ ${seqs(plan.cut)} cắt về ${dm(now.end)}` : null,
+      plan.remove.length ? `kỳ ${seqs(plan.remove)} xoá mềm` : null,
+    ].filter(Boolean)
+    return `${lead} Khi duyệt: ${steps.join(', ')}.`
+  }
+  if (plan.mode === 'EXTEND') return `${lead} Khi duyệt: thêm ${plan.create.length} kỳ (${seqs(plan.create)}), chỉ khoản hằng tháng.`
+  return 'Ngày không đổi so với bill đang có: duyệt không đổi bill.'
+}
+
+// Nhãn lệch ngày ở danh sách hợp đồng: "Đã rời tàu 17/10".
+export const dateMismatchText = (mismatch) => `Đã rời tàu ${dm(mismatch.leave_date)}`

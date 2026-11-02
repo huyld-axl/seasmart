@@ -24,6 +24,7 @@ fastify.setErrorHandler((error, request, reply) => {
   // 4xx: lỗi do client, trả về message an toàn
   return reply.code(statusCode).send({
     error: error.message || 'Yêu cầu không hợp lệ',
+    ...(error.blocked_bills ? { blocked_bills: error.blocked_bills } : {}),
   })
 })
 

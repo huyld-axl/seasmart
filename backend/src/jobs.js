@@ -19,22 +19,7 @@ function startJobs(logger) {
     }
   })
 
-  // Job 2 (daily 2:10 AM): hợp đồng Hiệu lực đã qua ngày kết thúc chuyển sang Hết hạn.
-  // Trạng thái thuyền viên không đổi ở đây, chỉ đổi theo chuyến (Bắt đầu / Kết thúc chuyến).
-  cron.schedule('10 2 * * *', async () => {
-    try {
-      const [result] = await pool.query(
-        `UPDATE seafarer_contract
-         SET status = 'ENDED', updated_at = NOW()
-         WHERE status = 'ACTIVE' AND end_date < CURRENT_DATE AND deleted_at IS NULL`
-      )
-      logger.info({ affectedRows: result.affectedRows }, 'Job: seafarer contracts ended')
-    } catch (err) {
-      logger.error({ err }, 'Job: failed to end seafarer contracts')
-    }
-  })
-
-  // Job 3 (daily 3:00 AM): xoá khỏi ổ đĩa các tệp đã xoá mềm / bị thay quá 180 ngày (quy tắc xoá tệp).
+  // Job 2 (daily 3:00 AM): xoá khỏi ổ đĩa các tệp đã xoá mềm / bị thay quá 180 ngày (quy tắc xoá tệp).
   cron.schedule('0 3 * * *', async () => {
     try {
       await purgeExpired(logger)
@@ -43,7 +28,7 @@ function startJobs(logger) {
     }
   })
 
-  // Job 4 (daily 7:00 AM): notifications for cert/contract/doc expiry
+  // Job 3 (daily 7:00 AM): notifications for cert/contract/doc expiry
   cron.schedule('0 7 * * *', async () => {
     try {
       let created = 0
@@ -179,7 +164,7 @@ function startJobs(logger) {
     }
   })
 
-  // Job 6 (mỗi 5 phút): đưa vào chạy lại tệp và giấy AI đọc kẹt quá 5 phút (trước đây chỉ làm lúc khởi động).
+  // Job 4 (mỗi 5 phút): đưa vào chạy lại tệp và giấy AI đọc kẹt quá 5 phút (trước đây chỉ làm lúc khởi động).
   const documentService = require('./services/document.service').documentService
   cron.schedule('*/5 * * * *', async () => {
     try {

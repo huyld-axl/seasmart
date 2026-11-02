@@ -14,7 +14,7 @@ const listQuery = {
     tab: { type: 'string', enum: ['all', ...BILL_DISPLAY_STATUSES] },
     search: { type: 'string', maxLength: 100 },
     ship_owner_id: id,
-    voyage_id: id,
+    seafarer_voyage_id: id,
     contract_id: id,
     page: { type: 'integer', minimum: 1 },
     limit: { type: 'integer', minimum: 1, maximum: 100 },

@@ -13,6 +13,7 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate } from '../../../utils/format'
 import { withFlag } from '../../../utils/flag'
 import { candidateTags } from './opportunityView'
+import OpenContractBadge from './OpenContractBadge'
 
 const PAGE_SIZE = 20
 const age = (dob) => (dob ? Math.floor((Date.now() - new Date(dob).getTime()) / 31557600000) : null)
@@ -121,6 +122,7 @@ export default function CandidatePanel({ opportunity, onClose }) {
               {!p.in_list && tags.availability ? <Tag tag={tags.availability} /> : null}
               <span>{tags.onboard}</span>
               {!p.in_list && p.held_by ? <span>Đang giữ cho {p.held_by}</span> : null}
+              {!p.in_list && p.open_contract ? <OpenContractBadge contract={p.open_contract} /> : null}
             </div>
           )
         },

@@ -10,7 +10,7 @@ const REQUIREMENT_LEVELS = ['REQUIRED', 'PREFERRED']
 const VALID_UNTIL = ['JOIN', 'LEAVE', 'LEAVE_PLUS', 'ANY']
 const VOYAGE_STATUSES = ['ONBOARD', 'LEFT']
 const VOYAGE_SOURCES = ['OPPORTUNITY', 'MANUAL']
-const MANUAL_REASONS = ['TRANSFER', 'OWNER_HIRED', 'LEGACY', 'OTHER']
+const MANUAL_REASONS = ['OWNER_HIRED', 'LEGACY', 'OTHER']
 
 // Ba giấy đọc từ cột trên bảng seafarer thay vì seafarer_certificate (mã trong certificate_type).
 const SEAFARER_COLUMN_DOCS = {

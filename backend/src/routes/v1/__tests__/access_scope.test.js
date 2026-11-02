@@ -230,12 +230,20 @@ describe('/roles/options cho người quản lý tài khoản', () => {
   })
 })
 
-describe('giai đoạn 1: khoá tạo hợp đồng', () => {
-  it('POST /contracts trả 409 kể cả khi có quyền tạo', async () => {
-    const res = await app.inject({
-      method: 'POST', url: '/contracts', headers: as(['contract.create']),
-      payload: { voyage_position_id: 1, seafarer_id: 1, start_date: '2026-11-01', end_date: '2027-05-01' },
-    })
-    expect(res.statusCode).toBe(409)
+describe('hợp đồng gắn chuyến: quyền các thao tác mới', () => {
+  it('POST /contracts cần contract.create; có quyền thì đi vào service (chuyến không có → 404, không còn khoá 409)', async () => {
+    const payload = { seafarer_voyage_id: 1, start_date: '2026-11-01', end_date: '2027-05-01' }
+    expect((await app.inject({ method: 'POST', url: '/contracts', headers: as(['contract.view']), payload })).statusCode).toBe(403)
+    expect((await app.inject({ method: 'POST', url: '/contracts', headers: as(['contract.create']), payload })).statusCode).toBe(404)
+  })
+
+  it('revert cần contract.update, end cần contract.end, bill-plan cần contract.view', async () => {
+    const post = (action, permissions) => app.inject({ method: 'POST', url: `/contracts/9/${action}`, headers: as(permissions) })
+    expect((await post('revert', ['contract.view'])).statusCode).toBe(403)
+    expect((await post('revert', ['contract.update'])).statusCode).toBe(404)
+    expect((await post('end', ['contract.view', 'contract.update'])).statusCode).toBe(403)
+    expect((await post('end', ['contract.end'])).statusCode).toBe(404)
+    expect((await app.inject({ method: 'GET', url: '/contracts/9/bill-plan', headers: as([]) })).statusCode).toBe(403)
+    expect((await app.inject({ method: 'GET', url: '/contracts/9/bill-plan', headers: as(['contract.view']) })).statusCode).toBe(404)
   })
 })

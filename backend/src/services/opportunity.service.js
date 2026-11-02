@@ -5,6 +5,7 @@ const { monthsBetween, splitBudget, round2 } = require('../utils/voyage_math')
 const { displayStatus, deadlineFlag, requirementFit, experienceFromHistory, compareSuggestions } = require('../utils/opportunity_rules')
 const { REQUIREMENT_KINDS, REQUIREMENT_LEVELS, VALID_UNTIL } = require('../constants/opportunity_voyage')
 const { TEMPLATE_KEYS } = require('../constants/pack_templates')
+const { seafarerContractService } = require('./seafarer_contract.service')
 
 const OPPORTUNITY_COLUMNS = [
   'ship_owner_id', 'vessel_id', 'rank_id', 'budget_monthly_usd', 'budget_total_usd',
@@ -139,6 +140,16 @@ async function refGuard(promise) {
 }
 
 // Giấy tờ, chứng chỉ, kinh nghiệm của nhiều thuyền viên một lần, để đối chiếu hồ sơ yêu cầu.
+// Hợp đồng chưa kết thúc, chưa xoá, kết thúc muộn nhất của từng người (một truy vấn cho cả danh sách).
+async function loadOpenContracts(pool, seafarerIds) {
+  if (!seafarerIds.length) return new Map()
+  const [rows] = await pool.query(
+    `SELECT DISTINCT ON (c.seafarer_id) c.seafarer_id, c.id, c.contract_number, c.start_date, c.end_date, c.status
+     FROM seafarer_contract c WHERE c.seafarer_id IN (?) AND c.deleted_at IS NULL AND c.status <> 'ENDED'
+     ORDER BY c.seafarer_id, c.end_date DESC, c.id DESC`, [seafarerIds])
+  return new Map(rows.map((r) => [r.seafarer_id, { id: r.id, contract_number: r.contract_number, start_date: r.start_date, end_date: r.end_date, status: r.status }]))
+}
+
 async function loadFitInputs(pool, seafarerIds, today) {
   const ids = [...new Set(seafarerIds)].filter(Boolean)
   const out = new Map(ids.map((id) => [id, { seafarer: {}, certificates: [], experience: { rankMonths: {}, vesselTypeTrips: {} } }]))
@@ -213,9 +224,11 @@ const opportunityService = {
        WHERE c.opportunity_id = ? AND c.status <> 'REMOVED'
        ORDER BY (c.owner_selected_at IS NULL), c.created_at, c.id`, [id])
     const fits = await loadFitInputs(pool, candidateRows.map((c) => c.seafarer_id), today)
+    const openContracts = await loadOpenContracts(pool, candidateRows.map((c) => c.seafarer_id))
     const dates = { join: iso(row.planned_join_date), leave: iso(row.planned_leave_date) }
     const candidates = candidateRows.map((c) => ({
       ...c,
+      open_contract: openContracts.get(c.seafarer_id) || null,
       export_pack: c.export_pack_id && c.export_pack_created_at ? { id: c.export_pack_id, created_at: c.export_pack_created_at } : null,
       fit: requirementFit({ ...fits.get(c.seafarer_id), requirements, dates }),
     }))
@@ -480,9 +493,13 @@ const opportunityService = {
         `UPDATE opportunity_candidate SET status = CASE WHEN id = ? THEN 'PLACED' ELSE 'NOT_SELECTED' END
          WHERE opportunity_id = ? AND status = 'PICKED'`, [candidate.id, id])
       await conn.query('UPDATE seafarer SET status = \'ON_VESSEL\' WHERE id = ?', [body.seafarer_id])
-      return { id: voyageId, code }
+      const drafted = await seafarerContractService.createDraftForPlacement(conn, {
+        voyageId, startDate: joinDate, endDate: plannedLeave, budgetMonthly: opportunity.budget_monthly_usd,
+      }, userId)
+      return { id: voyageId, code, ...drafted }
     }))
-    return { opportunity: await this.get(pool, id), voyage: result }
+    const { contract, skipped, ...voyage } = result
+    return { opportunity: await this.get(pool, id), voyage, contract: contract || null, contract_skipped: skipped || null }
   },
 
   // ---------- Đề xuất ứng viên (mục 1.7) ----------
@@ -524,6 +541,7 @@ const opportunityService = {
     const ids = people.map((p) => p.id)
     const today = people[0]?.today
     const fits = await loadFitInputs(pool, ids, today)
+    const openContracts = await loadOpenContracts(pool, ids)
     const [owners] = ids.length
       ? await pool.query(
         'SELECT seafarer_id, COUNT(*) AS n FROM seafarer_voyage WHERE seafarer_id IN (?) AND ship_owner_id = ? AND deleted_at IS NULL GROUP BY seafarer_id',
@@ -559,7 +577,7 @@ const opportunityService = {
       const freeFrom = p.onboard_voyage_id ? iso(p.onboard_until) : null
       const person = { ...p }
       delete person.today
-      return { ...person, free_from: freeFrom, fit, reasons, held_by: heldBy.get(p.id) || null, in_list: inList.has(p.id), today, join: dates.join }
+      return { ...person, free_from: freeFrom, open_contract: openContracts.get(p.id) || null, fit, reasons, held_by: heldBy.get(p.id) || null, in_list: inList.has(p.id), today, join: dates.join }
     })
     if (query.required_ok) rows = rows.filter((r) => r.fit.required.ok === r.fit.required.total)
     rows.sort(compareSuggestions)

@@ -85,7 +85,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
       render: (_, row) => (
         <span className="ds-cell2">
           <span className="ds-cell2__main"><Link to={`/vessels/${row.vessel.id}`} onClick={stop}>{row.vessel.vessel_name}</Link></span>
-          <span className="ds-cell2__sub ds-mono">{row.trip ? row.trip.code : row.voyage.code}</span>
+          <span className="ds-cell2__sub ds-mono">{row.trip ? row.trip.code : row.voyage?.code}</span>
         </span>
       ),
     },

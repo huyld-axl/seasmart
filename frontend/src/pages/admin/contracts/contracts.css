@@ -77,3 +77,13 @@
 .ct-block__title { margin: 0; color: var(--foreground); font-size: 15px; font-weight: 600; }
 .ct-block__unit { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
 .ct-block + .ct-block { margin-top: 8px; }
+
+/* Màn 10: danh sách bill chặn việc lưu ngày. */
+.ct-blocked { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+
+/* Hộp duyệt lại: bảng thay đổi bill. */
+.ct-plan__head { margin: 0 0 8px; font-weight: 500; }
+.ct-plan { width: 100%; margin-bottom: 8px; border-collapse: collapse; font-size: 13px; }
+.ct-plan th, .ct-plan td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.ct-plan th { color: var(--muted); font-weight: 500; }
+.ct-plan__removed { color: var(--error, inherit); }

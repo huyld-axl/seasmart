@@ -23,6 +23,8 @@ import { actionColumn } from '../components/ds/actionColumn'
 import AuditTimeline from '../components/ds/AuditTimeline'
 import Banner from '../components/ds/Banner'
 import ConfirmGate from '../components/ds/ConfirmGate'
+import CountdownCheck from '../components/ds/CountdownCheck'
+import HelpLink from '../components/ds/HelpLink'
 import CooldownButton from '../components/ds/CooldownButton'
 import SourceChip from '../components/ds/SourceChip'
 import SparkIcon from '../components/ds/SparkIcon'
@@ -245,6 +247,17 @@ const LIST_COLUMNS = [
   { title: 'Tàu / sẵn sàng', dataIndex: 'where', key: 'where' },
   actionColumn((row) => <RowActions name={row.name} onView={() => {}} onEdit={row.status === 'ON_VESSEL' ? undefined : () => {}} />),
 ]
+
+function CountdownDemo() {
+  const [checked, setChecked] = useState(false)
+  const [round, setRound] = useState(0)
+  return (
+    <Space direction="vertical">
+      <CountdownCheck label="Tôi đã xem các thay đổi trên" checked={checked} onChange={setChecked} resetKey={round} />
+      <Button size="small" onClick={() => { setChecked(false); setRound((value) => value + 1) }}>Đếm lại</Button>
+    </Space>
+  )
+}
 
 function Section({ id, title, children }) {
   return (
@@ -789,6 +802,8 @@ export default function DesignSystemPage() {
           <Demo label="Nút chờ · đang xử lý"><CooldownButton icon={<SparkIcon />} loading>Lấy thông minh</CooldownButton></Demo>
           <Demo label="Nút chờ · khoá (IMO sai)"><CooldownButton icon={<SparkIcon />} disabled>Lấy thông minh</CooldownButton></Demo>
           <Demo label="Cổng xác nhận (ConfirmGate): tích ô và chờ 5 giây mới mở nút đồng ý, cho cảnh báo quan trọng"><ConfirmGate label="Tôi hiểu và sẽ tự đính kèm hồ sơ còn thiếu" /></Demo>
+          <Demo label="Ô tích đếm ngược (CountdownCheck): ô tắt trong 5 giây đầu, hết giờ mới tích được; dùng ở hộp duyệt lại hợp đồng"><CountdownDemo /></Demo>
+          <Demo label="Link Hướng dẫn (HelpLink): mở trang hướng dẫn trong app ở tab mới, đặt ở thanh trên các trang Chuyến tàu, Hợp đồng, Yêu cầu thanh toán"><HelpLink /></Demo>
           <Demo label="Nút chờ · chính, trong hộp xác nhận"><CooldownButton type="primary" icon={<SparkIcon />} seconds={105}>Lấy thông tin thông minh</CooldownButton></Demo>
         </div>
         <div className="dsp-states">

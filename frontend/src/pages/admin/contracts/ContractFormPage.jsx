@@ -1,20 +1,22 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, DatePicker, Form, Input, Select, Skeleton } from 'antd'
+import dayjs from 'dayjs'
+import Banner from '../../../components/ds/Banner'
 import { EmptyState } from '../../../components/ds/Controls'
-import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
-import { seafarerApi } from '../../../api'
-import { useContract, useContractMutations } from '../../../hooks/useVoyages'
+import { voyageApi } from '../../../api/voyageApi'
+import { useContract, useContractMutations, useVoyage } from '../../../hooks/useVoyages'
 import { EDITABLE_CONTRACT_STATUSES } from '../../../constants/voyageContract'
 import apiErrorText from '../../../utils/apiError'
+import { formatDate } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
 import { monthsBetween } from '../voyages/voyageView'
 import BalanceBar from './BalanceBar'
 import DealTable from './DealTable'
 import TermsTable from './TermsTable'
-import { balance, toFormValues, toPayload } from './contractView'
+import { balance, newFormValues, toFormValues, toPayload } from './contractView'
 import '../seafarers/SeafarerForm.css'
 import '../seafarers/SeafarerProfile.css'
 import '../fleet/fleet.css'
@@ -32,88 +34,145 @@ function safeMonths(start, end) {
   }
 }
 
-// ctx: { voyageId, voyageCode, vesselName, ownerName, positionId, rankName, lineNo, budgetMonthly, budgetTotal }
-function ContractForm({ contract, ctx, initial }) {
+const BILL_STATUS_LABELS = { SENT: 'Đã gửi', PAID: 'Đã thu' }
+const voyageLabel = (v) => `${v.code} · ${v.seafarer_name} · ${v.vessel_name} · lên ${formatDate(v.join_date)}`
+
+// Dòng chuyến dùng trong form: từ danh sách chuyến hoặc chi tiết hợp đồng.
+function voyageRowOfContract(detail) {
+  const v = detail.voyage
+  return {
+    id: v.id, code: v.code, seafarer_name: detail.seafarer.full_name, rank_name: v.rank_name, vessel_name: v.vessel_name, ship_owner_name: v.ship_owner_name,
+    join_date: v.join_date, planned_leave_date: v.planned_leave_date, budget_monthly_usd: detail.position.budget_monthly_usd,
+  }
+}
+
+// Màn 4 · Thêm / sửa hợp đồng. Hợp đồng luôn thuộc một chuyến (mỗi chuyến tối đa một hợp đồng); thuyền viên lấy từ chuyến.
+// lockVoyage: mở từ chi tiết chuyến (?voyage=) hoặc đang sửa thì ô Chuyến khoá.
+function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndNew }) {
   const isEdit = !!contract
   const navigate = useNavigate()
   const toast = useToast()
   const [form] = Form.useForm()
   const values = Form.useWatch([], form) || initial
   const { save } = useContractMutations()
+  const againRef = useRef(false)
+  const [again, setAgain] = useState(false)
   const [search, setSearch] = useState('')
+  const [picked, setPicked] = useState(presetVoyage || null)
+  const [blocked, setBlocked] = useState(null)
 
-  const people = useQuery({
-    queryKey: ['seafarers', 'contract-picker', search],
-    queryFn: () => seafarerApi.list({ search: search || undefined, limit: 20 }).then((r) => r.data.data),
+  const voyages = useQuery({
+    queryKey: ['voyages', 'contract-picker', search],
+    queryFn: () => voyageApi.list({ search: search || undefined, no_contract: true, limit: 20 }).then((r) => r.data),
+    enabled: !lockVoyage,
   })
-  const personRows = people.data || []
-  const options = personRows.filter((p) => p.status !== 'INACTIVE').map((p) => ({ value: p.id, label: p.seafarer_code ? `${p.full_name} · ${p.seafarer_code}` : p.full_name, status: p.status, name: p.full_name }))
-  if (contract && !options.some((o) => o.value === contract.seafarer.id)) {
-    options.unshift({ value: contract.seafarer.id, label: contract.seafarer.seafarer_code ? `${contract.seafarer.full_name} · ${contract.seafarer.seafarer_code}` : contract.seafarer.full_name, status: contract.seafarer.status, name: contract.seafarer.full_name })
-  }
-  const picked = options.find((o) => o.value === values.seafarer_id)
+  const options = (lockVoyage ? [picked] : voyages.data || []).filter(Boolean).map((v) => ({ value: v.id, label: voyageLabel(v), row: v }))
 
   const months = safeMonths(values.start_date, values.end_date)
-  const bal = useMemo(() => balance({ items: values.items || [], budgetMonthly: ctx.budgetMonthly, contractMonths: months ?? 0 }), [values.items, ctx.budgetMonthly, months])
+  const budgetMonthly = picked?.budget_monthly_usd ?? null
+  const bal = useMemo(() => balance({ items: values.items || [], budgetMonthly, contractMonths: months ?? 0 }), [values.items, budgetMonthly, months])
 
   const changed = useMemo(() => {
     if (!isEdit) return true
     return JSON.stringify(toPayload(initial)) !== JSON.stringify(toPayload(values))
   }, [isEdit, initial, values])
 
+  function onVoyageChange(_, option) {
+    const row = option?.row || null
+    setPicked(row)
+    // S, E chép từ chuyến lúc chọn; sau đó sửa tự do.
+    if (row) form.setFieldsValue({ start_date: dayjs(row.join_date), end_date: dayjs(row.planned_leave_date) })
+  }
+
+  // Lỗi 409 vì bill bị ảnh hưởng đã gửi / đã thu: lỗi dưới ô ngày và banner liệt kê bill (Màn 10).
+  function showBlocked(error, formValues) {
+    const list = error.response?.data?.blocked_bills
+    if (!list?.length) return false
+    const startChanged = isEdit && !dayjs(formValues.start_date).isSame(initial.start_date, 'day')
+    const field = startChanged ? 'start_date' : 'end_date'
+    form.setFields([{ name: field, errors: [startChanged ? 'Có bill đã gửi hoặc đã thu cần gỡ trước' : 'Có bill đã thu nằm sau ngày này'] }])
+    setBlocked({ list, field, date: formValues[field], safeFrom: startChanged ? null : list.map((b) => b.end).sort().at(-1) })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    return true
+  }
+
   async function submit(formValues) {
+    setBlocked(null)
     try {
-      const row = await save.mutateAsync({ id: contract?.contract.id, ...toPayload(formValues, { positionId: isEdit ? undefined : ctx.positionId }) })
-      toast.success(isEdit ? `Đã lưu hợp đồng ${row.contract.contract_number}` : `Đã tạo hợp đồng ${row.contract.contract_number}`)
-      navigate(`/contracts/${row.contract.id}`)
+      const row = await save.mutateAsync({ id: contract?.contract.id, ...toPayload(formValues, { voyageId: isEdit ? undefined : formValues.seafarer_voyage_id }) })
+      toast.success(isEdit ? `Đã lưu hợp đồng ${row.contract.contract_number}` : `Đã thêm hợp đồng ${row.contract.contract_number}`)
+      if (againRef.current && !isEdit) {
+        onSavedAndNew()
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        navigate(`/contracts/${row.contract.id}`)
+      }
     } catch (error) {
-      toast.error(isEdit ? 'Không lưu được hợp đồng' : 'Không tạo được hợp đồng', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+      if (showBlocked(error, formValues)) return
+      toast.error(isEdit ? 'Không lưu được hợp đồng' : 'Không thêm được hợp đồng', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
 
-  const back = isEdit ? `/contracts/${contract.contract.id}` : `/voyages/${ctx.voyageId}`
+  const back = isEdit ? `/contracts/${contract.contract.id}` : picked && lockVoyage ? `/voyages/${picked.id}` : '/contracts'
   const crumbs = isEdit
     ? [{ label: 'Hợp đồng', to: '/contracts' }, { label: contract.contract.contract_number, to: back }, { label: 'Sửa' }]
-    : [{ label: 'Chuyến tàu', to: '/voyages' }, { label: ctx.voyageCode, to: back }, { label: 'Tạo hợp đồng' }]
+    : [{ label: 'Hợp đồng', to: '/contracts' }, { label: 'Thêm hợp đồng' }]
+  const ownerName = picked?.ship_owner_name || 'Chủ tàu'
+  const seafarerName = picked?.seafarer_name || 'Thuyền viên'
 
   return (
     <div className="ds-page">
       <div>
         <Crumb items={crumbs} />
-        <h1 className="sf-head__title">{isEdit ? `Sửa hợp đồng ${contract.contract.contract_number}` : `Tạo hợp đồng · ${ctx.rankName}`}</h1>
+        <h1 className="sf-head__title">{isEdit ? `Sửa hợp đồng ${contract.contract.contract_number}` : 'Thêm hợp đồng'}</h1>
         <p className="sf-head__desc">
-          {isEdit ? `${ctx.rankName} · ${ctx.vesselName} · chuyến ${ctx.voyageCode}` : 'Hợp đồng tạo ra ở dạng nháp. Tạo xong mở hợp đồng và bấm Xin duyệt; duyệt xong mới có hiệu lực.'}
+          {isEdit ? `${picked.rank_name} · ${picked.vessel_name} · chuyến ${picked.code}` : 'Hợp đồng luôn thuộc một chuyến. Mỗi chuyến tối đa một hợp đồng. Hợp đồng tạo ra ở dạng nháp; xin duyệt và duyệt xong mới có hiệu lực.'}
         </p>
       </div>
 
-      <Form form={form} layout="vertical" requiredMark className="ct-form" initialValues={initial} onFinish={submit} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form form={form} layout="vertical" requiredMark className="ct-form" initialValues={initial} onFinish={submit} onValuesChange={() => blocked && setBlocked(null)} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+        {blocked ? (
+          <Banner
+            tone="error"
+            title={`Chưa lưu được ngày ${blocked.field === 'start_date' ? 'bắt đầu' : 'kết thúc'} ${blocked.date ? dayjs(blocked.date).format(DATE_FORMAT) : ''}`.trim()}
+            description={`Các bill ${blocked.field === 'start_date' ? 'của hợp đồng' : 'sau ngày này'} đã gửi hoặc đã thu: Huỷ ghi nhận thu, thu hồi bill đó rồi lưu lại${blocked.safeFrom ? `, hoặc chọn ngày từ ${formatDate(blocked.safeFrom)} trở đi` : ''}.`}
+          >
+            <ul className="ct-blocked">
+              {blocked.list.map((b) => (
+                <li key={b.bill_id}><Link to={`/bills/${b.bill_id}`}>{b.code}</Link> kỳ {b.seq} ({BILL_STATUS_LABELS[b.status]})</li>
+              ))}
+            </ul>
+          </Banner>
+        ) : null}
         <section className="sf-panel ct-panel" aria-labelledby="ct-general">
           <div className="sf-panel__head">
             <div>
               <h2 className="sf-panel__title" id="ct-general">Thông tin chung</h2>
-              <p className="sf-panel__desc">{ctx.vesselName} · {ctx.ownerName} · chuyến {ctx.voyageCode}</p>
+              <p className="sf-panel__desc">{picked ? `${picked.vessel_name} · ${ownerName} · chuyến ${picked.code}` : 'Chọn chuyến để điền sẵn thuyền viên, tàu, chủ tàu và ngày.'}</p>
             </div>
           </div>
           <div className="sf-panel__body">
             <div className="sf-grid">
               <Form.Item
-                name="seafarer_id"
+                name="seafarer_voyage_id"
                 className="sf-c6"
-                label="Thuyền viên"
-                rules={[{ required: true, message: 'Chọn thuyền viên' }]}
-                extra={picked?.status ? <StatusBadge group="crew" value={picked.status} /> : undefined}
+                label="Chuyến"
+                rules={[{ required: true, message: 'Chọn chuyến' }]}
+                extra={lockVoyage ? undefined : 'Chỉ hiện chuyến chưa có hợp đồng'}
               >
                 <Select
-                allowClear
+                  allowClear={!lockVoyage}
+                  disabled={lockVoyage}
                   showSearch={{ filterOption: false, onSearch: setSearch }}
-                  loading={people.isLoading}
+                  loading={voyages.isLoading}
                   options={options}
-                  placeholder="Tìm theo tên, mã, số hộ chiếu"
-                  notFoundContent={people.isLoading ? 'Đang tìm…' : 'Không có thuyền viên nào khớp'}
+                  onChange={onVoyageChange}
+                  placeholder="Tìm theo mã chuyến hoặc tên thuyền viên"
+                  notFoundContent={voyages.isLoading ? 'Đang tìm…' : 'Không có chuyến nào chưa có hợp đồng'}
                 />
               </Form.Item>
-              <Form.Item className="sf-c6 ct-pos" label="Vị trí" required extra={`Dòng ${ctx.lineNo} của chuyến`}>
-                <Input value={ctx.rankName} disabled />
+              <Form.Item className="sf-c6 ct-pos" label="Chức danh" extra="Theo chuyến">
+                <Input value={picked?.rank_name || ''} disabled />
               </Form.Item>
               <Form.Item
                 name="start_date"
@@ -121,7 +180,7 @@ function ContractForm({ contract, ctx, initial }) {
                 label="Ngày bắt đầu"
                 rules={[{ required: true, message: 'Chọn ngày bắt đầu' }]}
                 dependencies={['end_date']}
-                extra={!isEdit ? 'Mặc định: xuống tàu dự kiến' : undefined}
+                extra={!isEdit ? 'Điền sẵn từ ngày xuống tàu, sửa được' : undefined}
               >
                 <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
@@ -139,7 +198,7 @@ function ContractForm({ contract, ctx, initial }) {
                     },
                   },
                 ]}
-                extra={months != null ? formatMonths(months) : undefined}
+                extra={months != null ? formatMonths(months) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
               >
                 <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
@@ -151,16 +210,38 @@ function ContractForm({ contract, ctx, initial }) {
         </section>
 
         <Form.Item name="items" noStyle>
-          <DealTable ownerName={ctx.ownerName} seafarerName={picked?.name || (isEdit ? contract.seafarer.full_name : 'Thuyền viên')} />
+          <DealTable ownerName={ownerName} seafarerName={seafarerName} />
         </Form.Item>
         <Form.Item name="terms" noStyle>
-          <TermsTable ownerName={ctx.ownerName} seafarerName={picked?.name || (isEdit ? contract.seafarer.full_name : 'Thuyền viên')} />
+          <TermsTable ownerName={ownerName} seafarerName={seafarerName} />
         </Form.Item>
 
-        <BalanceBar balance={bal} budgetTotal={ctx.budgetTotal}>
+        <BalanceBar balance={bal} budgetTotal={null}>
           <Button onClick={() => navigate(back)}>Huỷ</Button>
-          <Button type="primary" htmlType="submit" loading={save.isPending} disabled={isEdit && !changed}>
-            {isEdit ? 'Lưu thay đổi' : 'Tạo hợp đồng'}
+          {!isEdit ? (
+            <Button
+              loading={save.isPending && again}
+              disabled={save.isPending}
+              onClick={() => {
+                againRef.current = true
+                setAgain(true)
+                form.submit()
+              }}
+            >
+              Lưu & thêm hợp đồng khác
+            </Button>
+          ) : null}
+          <Button
+            type="primary"
+            htmlType="submit"
+            loading={save.isPending && !again}
+            disabled={isEdit && !changed}
+            onClick={() => {
+              againRef.current = false
+              setAgain(false)
+            }}
+          >
+            {isEdit ? 'Lưu thay đổi' : 'Thêm hợp đồng'}
           </Button>
         </BalanceBar>
       </Form>
@@ -181,13 +262,14 @@ function EditContract({ id }) {
   const toast = useToast()
   const { data, isLoading, isError, refetch } = useContract(id)
   const locked = data && !EDITABLE_CONTRACT_STATUSES.includes(data.contract.status)
+  const legacy = data?.contract.legacy_unlinked
 
   useEffect(() => {
-    if (locked) {
-      toast.error('Hợp đồng đang khoá, không sửa được')
+    if (locked || legacy) {
+      toast.error(legacy ? 'Hợp đồng cũ chưa gắn chuyến, không sửa được' : 'Hợp đồng đang khoá, không sửa được')
       navigate(`/contracts/${id}`, { replace: true })
     }
-  }, [locked, id, navigate, toast])
+  }, [locked, legacy, id, navigate, toast])
 
   const initial = useMemo(() => (data ? toFormValues(data) : null), [data])
   if (isLoading) return <Loading />
@@ -200,30 +282,49 @@ function EditContract({ id }) {
       />
     )
   }
-  if (locked) return <Loading />
-  const ctx = {
-    voyageId: data.voyage.id,
-    voyageCode: data.voyage.code,
-    vesselName: data.voyage.vessel_name,
-    ownerName: data.voyage.ship_owner_name,
-    rankName: data.position.rank_name,
-    lineNo: data.position.sort_order + 1,
-    budgetMonthly: data.position.budget_monthly_usd,
-    budgetTotal: data.position.budget_total_usd,
+  if (locked || legacy) return <Loading />
+  return <ContractForm key={data.contract.id} contract={data} presetVoyage={voyageRowOfContract(data)} initial={initial} lockVoyage />
+}
+
+// Mở từ chi tiết chuyến (?voyage=): chuyến chọn sẵn và khoá. Chuyến đã có hợp đồng thì dẫn tới hợp đồng đó.
+function CreateFromVoyage({ voyageId, round, onSavedAndNew }) {
+  const navigate = useNavigate()
+  const { data, isLoading, isError, refetch } = useVoyage(voyageId)
+  const initial = useMemo(() => (data ? { ...newFormValues(data), notes: '' } : null), [data])
+  if (isLoading) return <Loading />
+  if (isError || !data) {
+    return (
+      <EmptyState
+        isError={isError}
+        title={isError ? 'Không tải được chuyến' : 'Không tìm thấy chuyến'}
+        action={isError ? <Button onClick={() => refetch()}>Thử lại</Button> : <Button onClick={() => navigate('/contracts')}>Về danh sách hợp đồng</Button>}
+      />
+    )
   }
-  return <ContractForm key={data.contract.id} contract={data} ctx={ctx} initial={initial} />
+  if (data.contract) {
+    return (
+      <EmptyState
+        title={`Chuyến ${data.code} đã có hợp đồng ${data.contract.contract_number}`}
+        description="Mỗi chuyến tối đa một hợp đồng."
+        action={<Button onClick={() => navigate(`/contracts/${data.contract.id}`)}>Mở hợp đồng</Button>}
+      />
+    )
+  }
+  return <ContractForm key={round} presetVoyage={data} initial={initial} lockVoyage onSavedAndNew={onSavedAndNew} />
 }
 
 export default function ContractFormPage() {
   const { id } = useParams()
+  const [params] = useSearchParams()
   const navigate = useNavigate()
+  const [round, setRound] = useState(0)
+  const voyageId = params.get('voyage')
   if (id) return <EditContract id={id} />
-  // Giai đoạn 1: khoá tạo hợp đồng mới tới khi hợp đồng gắn với chuyến.
-  return (
-    <EmptyState
-      title="Tạm khoá tạo hợp đồng mới"
-      description="Hợp đồng sẽ gắn với chuyến ở giai đoạn sau. Hợp đồng đang có vẫn sửa nháp, xin duyệt và duyệt được."
-      action={<Button onClick={() => navigate('/contracts')}>Về danh sách hợp đồng</Button>}
-    />
-  )
+  // Lưu & thêm khác: về form trống, bỏ chuyến chọn sẵn trên đường dẫn.
+  const again = () => {
+    if (voyageId) navigate('/contracts/new', { replace: true })
+    setRound((value) => value + 1)
+  }
+  if (voyageId) return <CreateFromVoyage voyageId={voyageId} round={round} onSavedAndNew={again} />
+  return <ContractForm key={round} initial={{ ...newFormValues(null), notes: '' }} onSavedAndNew={again} />
 }

@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import useToast from '../../../components/ds/useToast'
 import { lookupApi } from '../../../api'
 import { useVoyageMutations } from '../../../hooks/useVoyages'
+import { useCan } from '../../../hooks/usePermission'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate } from '../../../utils/format'
 import { withFlag } from '../../../utils/flag'
@@ -16,6 +17,7 @@ const selectProps = { allowClear: true, showSearch: { optionFilterProp: 'label' 
 // voyages: dòng chuyến từ API (id, code, seafarer_name, rank_name, vessel_id, vessel_name, ship_owner_id, rank_id, join_date, planned_leave_date, planned_leave_port_id).
 export default function LeaveModal({ voyages, onClose, onDone }) {
   const navigate = useNavigate()
+  const can = useCan()
   const toast = useToast()
   const { leave, leaveMany } = useVoyageMutations()
   const [form] = Form.useForm()
@@ -39,14 +41,22 @@ export default function LeaveModal({ voyages, onClose, onDone }) {
     if (!values) return
     const body = { leave_date: values.leave_date.format('YYYY-MM-DD'), leave_port_id: values.leave_port_id, leave_note: values.leave_note?.trim() || undefined }
     try {
-      if (single) await leave.mutateAsync({ id: single.id, ...body })
-      else await leaveMany.mutateAsync({ voyage_ids: voyages.map((v) => v.id), ...body })
+      const saved = single ? await leave.mutateAsync({ id: single.id, ...body }) : await leaveMany.mutateAsync({ voyage_ids: voyages.map((v) => v.id), ...body })
       if (single) {
         const query = new URLSearchParams({ owner: single.ship_owner_id, vessel: single.vessel_id, rank: single.rank_id })
-        toast.success(`Đã ghi rời tàu ${single.seafarer_name}`, {
-          actionLabel: 'Tạo cơ hội tìm người thay',
-          onAction: () => navigate(`/opportunities/new?${query}`),
-        })
+        // Ghi rời không đụng hợp đồng: hợp đồng còn kéo dài sau ngày rời thì nhắc, kèm lối tắt mở hợp đồng.
+        const contract = saved?.contract
+        const contractOpen = contract && contract.status !== 'ENDED' && String(contract.end_date).slice(0, 10) > body.leave_date
+        toast.success(`Đã ghi rời tàu ${single.seafarer_name}`, contractOpen && can('contract.view')
+          ? {
+            description: `Hợp đồng ${contract.contract_number} vẫn còn tới ${formatDate(contract.end_date)}. Hệ thống không tự đổi hợp đồng.`,
+            actionLabel: 'Mở hợp đồng',
+            onAction: () => navigate(`/contracts/${contract.id}`),
+          }
+          : {
+            actionLabel: 'Tạo cơ hội tìm người thay',
+            onAction: () => navigate(`/opportunities/new?${query}`),
+          })
       } else {
         toast.success(`Đã ghi rời tàu ${voyages.length} chuyến`)
       }

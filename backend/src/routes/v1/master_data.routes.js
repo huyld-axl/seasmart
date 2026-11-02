@@ -1,5 +1,6 @@
 const pool = require('../../config/db')
 const { invalidateCache } = require('./lookup.routes')
+const { assertMasterData } = require('../../utils/field_rules')
 
 const MAX_LIST_LIMIT = 100
 
@@ -110,6 +111,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     // CREATE
     fastify.post('/', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
+      assertMasterData(table, body)
       if (table === 'country') normalizeCountry(body)
       if (table === 'certificate_type') normalizeCertificateType(body)
       const cols = getAllowedCols(table, body)
@@ -129,6 +131,7 @@ function makeCrud(table, orderBy = 'name_vi') {
     // UPDATE
     fastify.put('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
       const body = request.body
+      assertMasterData(table, body)
       if (table === 'country') normalizeCountry(body)
       if (table === 'certificate_type') normalizeCertificateType(body)
       const cols = getAllowedCols(table, body)
@@ -199,6 +202,7 @@ async function portRoutes(fastify) {
   // CREATE
   fastify.post('/', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request, reply) => {
     const { name, un_locode, country_id } = request.body
+    assertMasterData('port', request.body)
     const [res] = await pool.query(
       'INSERT INTO "port" (name, un_locode, country_id) VALUES (?, ?, ?)',
       [name, un_locode || null, country_id]
@@ -213,6 +217,7 @@ async function portRoutes(fastify) {
   // UPDATE
   fastify.put('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request) => {
     const { name, un_locode, country_id } = request.body
+    assertMasterData('port', request.body)
     await pool.query('UPDATE "port" SET name = ?, un_locode = ?, country_id = ? WHERE id = ?', [
       name,
       un_locode || null,

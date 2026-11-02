@@ -30,6 +30,7 @@ import {
 import ToggleRow from '../../../components/ds/ToggleRow'
 import { FleetTile, FormFrame, FormSection, SegmentedPick } from './FleetParts'
 import changedLabel from './changedLabel'
+import { upperAlnum, vesselRules } from '../../../utils/fieldRules'
 import SmartCompareCard from './SmartCompareCard'
 import QuickAddVesselType from './QuickAddVesselType'
 import { compareRows, fillBlanks, seedFromIncoming, seedNotices, unmatchedHints } from './smartFetch'
@@ -270,7 +271,7 @@ function VesselForm({ vessel }) {
                 ) : null}
               </Space.Compact>
             </Form.Item>
-            <Form.Item name="call_sign" label={label('call_sign', 'Call Sign')} className={cn('call_sign', 'sf-c3')}>
+            <Form.Item name="call_sign" label={label('call_sign', 'Call Sign')} className={cn('call_sign', 'sf-c3')} normalize={upperAlnum} rules={vesselRules.callSign}>
               <Input maxLength={10} placeholder="Hô hiệu" />
             </Form.Item>
             <Form.Item name="mmsi" label={label('mmsi', 'MMSI')} className={cn('mmsi', 'sf-c3')} normalize={digitsOnly} rules={[{ pattern: /^\d{9}$/, message: 'MMSI có 9 chữ số' }]}>
@@ -304,7 +305,7 @@ function VesselForm({ vessel }) {
               <Select {...selectProps} loading={countries.isLoading} options={toOptions(countries.data, (row) => withFlag(row.code, row.name_vi || row.name_en, row.flag_emoji))} placeholder="Chọn quốc gia" />
             </Form.Item>
             <Form.Item name="year_built" label={label('year_built', 'Năm đóng')} className={cn('year_built', 'sf-c4')}>
-              <InputNumber min={1900} max={2100} precision={0} controls={false} style={{ width: '100%' }} placeholder="2016" />
+              <InputNumber min={1900} max={new Date().getFullYear() + 10} precision={0} controls={false} style={{ width: '100%' }} placeholder="2016" />
             </Form.Item>
             <Form.Item name="port_of_registry_id" label={label('port_of_registry_id', 'Cảng đăng ký')} className={cn('port_of_registry_id', 'sf-c6')}>
               <Select {...selectProps} loading={ports.isLoading} options={toOptions(ports.data, (row) => `${row.name}${row.country_name ? ` (${withFlag(row.country_code, row.country_name, row.country_flag_emoji)})` : ''}`)} placeholder="Chọn cảng" />
@@ -323,30 +324,30 @@ function VesselForm({ vessel }) {
 
         <FormSection index={2} section={SECTIONS[2]} meta={sectionMeta(2)}>
           <div className="sf-grid">
-            <Form.Item name="gross_tonnage" label={label('gross_tonnage', <>GRT<span className="sf-opt">Tổng dung tích đăng ký</span></>)} className={cn('gross_tonnage', 'sf-c4')}>
+            <Form.Item name="gross_tonnage" label={label('gross_tonnage', <>GRT<span className="sf-opt">Tổng dung tích đăng ký</span></>)} className={cn('gross_tonnage', 'sf-c4')} rules={vesselRules.positive('GRT', 1000000)}>
               <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="GT" />
             </Form.Item>
-            <Form.Item name="net_tonnage" label={label('net_tonnage', <>NT<span className="sf-opt">Dung tích thực</span></>)} className={cn('net_tonnage', 'sf-c4')}>
+            <Form.Item name="net_tonnage" label={label('net_tonnage', <>NT<span className="sf-opt">Dung tích thực</span></>)} className={cn('net_tonnage', 'sf-c4')} dependencies={['gross_tonnage']} rules={[...vesselRules.positive('NT', 1000000), vesselRules.netNotOverGross]}>
               <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="NT" />
             </Form.Item>
-            <Form.Item name="deadweight" label={label('deadweight', <>DWT<span className="sf-opt">Trọng tải toàn phần</span></>)} className={cn('deadweight', 'sf-c4')}>
+            <Form.Item name="deadweight" label={label('deadweight', <>DWT<span className="sf-opt">Trọng tải toàn phần</span></>)} className={cn('deadweight', 'sf-c4')} rules={vesselRules.positive('DWT', 1000000)}>
               <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="tấn" />
             </Form.Item>
-            <Form.Item name="length_overall" label={label('length_overall', <>LOA<span className="sf-opt">Chiều dài toàn bộ</span></>)} className={cn('length_overall', 'sf-c4')}>
+            <Form.Item name="length_overall" label={label('length_overall', <>LOA<span className="sf-opt">Chiều dài toàn bộ</span></>)} className={cn('length_overall', 'sf-c4')} rules={vesselRules.positive('LOA', 600)}>
               <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="m" />
             </Form.Item>
             <Form.Item name="passenger_capacity" label={label('passenger_capacity', 'Sức chứa hành khách')} className={cn('passenger_capacity', 'sf-c4')}>
-              <InputNumber min={0} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
+              <InputNumber min={0} max={20000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
             </Form.Item>
             <Form.Item name="crew_capacity" label={label('crew_capacity', 'Định biên thuyền viên')} className={cn('crew_capacity', 'sf-c4')}>
-              <InputNumber min={0} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
+              <InputNumber min={0} max={10000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
             </Form.Item>
           </div>
         </FormSection>
 
         <FormSection index={3} section={SECTIONS[3]} meta={sectionMeta(3)}>
           <div className="sf-grid">
-            <Form.Item name="engine_power_kw" label={label('engine_power_kw', 'Công suất máy')} className={cn('engine_power_kw', 'sf-c4')}>
+            <Form.Item name="engine_power_kw" label={label('engine_power_kw', 'Công suất máy')} className={cn('engine_power_kw', 'sf-c4')} rules={vesselRules.positive('Công suất máy', 500000)}>
               <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="kW" />
             </Form.Item>
             <Form.Item name="engine_type" label={label('engine_type', 'Loại động cơ')} className={cn('engine_type', 'sf-c4')}>

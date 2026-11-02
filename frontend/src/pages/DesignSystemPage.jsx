@@ -346,7 +346,7 @@ function OverlayDemos() {
           <Button onClick={() => toast.error('Không lưu được hồ sơ', { description: 'Mất kết nối tới máy chủ.' })}>Lỗi</Button>
         </div>
         <ul className="dsp-note dsp-rules">
-          <li>Xong việc tự tắt sau 4 giây (có Hoàn tác thì 8), thông tin 6, cảnh báo 8 và có nút đóng; lỗi không tự tắt, có nút đóng.</li>
+          <li>Xong việc tự tắt sau 4 giây (có Hoàn tác thì 8), thông tin 6, cảnh báo 8 và có nút đóng; lỗi 10 giây, có nút đóng. Đổi trang thì các toast cũ tự đóng.</li>
           <li>Tối đa 3 toast; cùng một câu thì thay toast cũ. Góc dưới phải, giữa đáy ở màn hẹp, luôn trên thanh lưu.</li>
           <li>Chữ: xong việc &quot;Đã + việc + tên&quot;, lỗi &quot;Không + việc + được + tên&quot;; câu một dòng không chấm cuối, lý do và cách sửa ở dòng mô tả.</li>
           <li>Lỗi máy chủ do nơi gọi báo; api/client.js chỉ báo mất kết nối, một toast cho mọi request hỏng cùng lúc.</li>

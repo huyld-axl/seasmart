@@ -166,7 +166,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={viVN} theme={antTheme}>
         <AntApp notification={{ bottom: 96, maxCount: 3, stack: false }}>
-          <ToastHost />
+          <ToastHost router={router} />
           <RouterProvider router={router} />
         </AntApp>
       </ConfigProvider>

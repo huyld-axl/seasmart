@@ -20,6 +20,7 @@ import { CATEGORY } from './seafarers/certificateView'
 import { lookupApi } from '../../api'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerForm.css'
+import { masterRules, upperCode } from '../../utils/fieldRules'
 
 const isBlank = (value) => value == null || value === ''
 const sameValue = (a, b) => (isBlank(a) && isBlank(b)) || String(a) === String(b)
@@ -252,6 +253,7 @@ function MasterTable({ resource, columns, formFields, title }) {
         title={editing?.id ? `Sửa ${title}` : `Thêm ${title}`}
         description={editing?.id ? editing.name_vi || editing.name : null}
         onClose={() => setEditing(null)}
+        hasForm={false}
         footer={
           <>
             {editing?.id && changed.size > 0 ? <span style={{ marginRight: 'auto', color: 'var(--muted)' }}>{changed.size} thay đổi</span> : null}
@@ -318,14 +320,14 @@ function CertificateTypeTab() {
       ]}
       formFields={
         <>
-          <Form.Item name="code" label="Mã" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="code" label="Mã" normalize={upperCode} rules={[{ required: true, message: 'Nhập mã' }, ...masterRules.code]}>
+            <Input maxLength={30} />
           </Form.Item>
-          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true, whitespace: true, message: 'Nhập tên tiếng Việt' }]}>
+            <Input maxLength={200} />
           </Form.Item>
           <Form.Item name="name_en" label="Tên tiếng Anh">
-            <Input />
+            <Input maxLength={200} />
           </Form.Item>
           <Form.Item name="category" label="Nhóm" initialValue="OTHER" rules={[{ required: true }]}>
             <Select options={CATEGORY_OPTIONS} aria-label="Nhóm" />
@@ -334,7 +336,7 @@ function CertificateTypeTab() {
             <Select allowClear showSearch={{ optionFilterProp: 'label' }} placeholder="Ví dụ: Panama" options={countries.map((c) => ({ value: c.id, label: c.name_vi || c.name_en }))} />
           </Form.Item>
           <Form.Item name="issuing_authority" label="Cơ quan cấp">
-            <Input />
+            <Input maxLength={200} />
           </Form.Item>
           <Form.Item name="validity_years" label="Hiệu lực (năm, để trống = vĩnh viễn)">
             <InputNumber min={1} max={99} style={{ width: '100%' }} />
@@ -360,14 +362,14 @@ function VesselTypeTab() {
       ]}
       formFields={
         <>
-          <Form.Item name="code" label="Mã" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="code" label="Mã" normalize={upperCode} rules={[{ required: true, message: 'Nhập mã' }, ...masterRules.code]}>
+            <Input maxLength={30} />
           </Form.Item>
-          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true, whitespace: true, message: 'Nhập tên tiếng Việt' }]}>
+            <Input maxLength={100} />
           </Form.Item>
           <Form.Item name="name_en" label="Tên tiếng Anh">
-            <Input />
+            <Input maxLength={100} />
           </Form.Item>
         </>
       }
@@ -396,11 +398,11 @@ function CountryTab() {
           <Form.Item noStyle shouldUpdate={(before, after) => before.code !== after.code || before.flag_emoji !== after.flag_emoji}>
             {({ getFieldValue }) => <p>Cờ hiển thị: <span style={{ fontSize: 24 }}>{getFieldValue('flag_emoji')?.trim() || flagEmoji(getFieldValue('code')) || '—'}</span></p>}
           </Form.Item>
-          <Form.Item name="name_en" label="Tên tiếng Anh" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="name_en" label="Tên tiếng Anh" rules={[{ required: true, whitespace: true, message: 'Nhập tên tiếng Anh' }]}>
+            <Input maxLength={100} />
           </Form.Item>
           <Form.Item name="name_vi" label="Tên tiếng Việt">
-            <Input />
+            <Input maxLength={100} />
           </Form.Item>
         </>
       }
@@ -420,14 +422,14 @@ function ContractTypeTab() {
       ]}
       formFields={
         <>
-          <Form.Item name="code" label="Mã" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="code" label="Mã" normalize={upperCode} rules={[{ required: true, message: 'Nhập mã' }, ...masterRules.code]}>
+            <Input maxLength={30} />
           </Form.Item>
-          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="name_vi" label="Tên tiếng Việt" rules={[{ required: true, whitespace: true, message: 'Nhập tên tiếng Việt' }]}>
+            <Input maxLength={100} />
           </Form.Item>
           <Form.Item name="name_en" label="Tên tiếng Anh">
-            <Input />
+            <Input maxLength={100} />
           </Form.Item>
         </>
       }
@@ -456,11 +458,11 @@ function PortTab() {
       ]}
       formFields={
         <>
-          <Form.Item name="un_locode" label="UN/LOCODE (5 ký tự)">
+          <Form.Item name="un_locode" label="UN/LOCODE (5 ký tự)" rules={masterRules.unLocode}>
             <Input maxLength={5} style={{ textTransform: 'uppercase' }} />
           </Form.Item>
-          <Form.Item name="name" label="Tên cảng" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="name" label="Tên cảng" rules={[{ required: true, whitespace: true, message: 'Nhập tên cảng' }]}>
+            <Input maxLength={150} />
           </Form.Item>
           <Form.Item name="country_id" label="Quốc gia" rules={[{ required: true }]}>
             <Select

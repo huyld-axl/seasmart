@@ -155,13 +155,11 @@ export default function NotificationBell() {
       trigger={['click']}
       placement="bottomRight"
     >
-      <span
-        style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', marginRight: 16 }}
-      >
+      <button type="button" className="app-shell__icon-btn" aria-label="Thông báo">
         <Badge count={count} size="small" offset={[-2, 2]}>
           <BellOutlined style={{ fontSize: 18 }} />
         </Badge>
-      </span>
+      </button>
     </Dropdown>
   )
 }

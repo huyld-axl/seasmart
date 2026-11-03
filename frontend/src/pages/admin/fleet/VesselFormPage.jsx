@@ -99,7 +99,7 @@ function VesselForm({ vessel }) {
   const types = useQuery({ queryKey: ['lookup', 'vessel-types'], queryFn: () => lookupApi.vesselTypes().then((r) => r.data) })
   const countries = useQuery({ queryKey: ['lookup', 'countries'], queryFn: () => lookupApi.countries().then((r) => r.data) })
   const ports = useQuery({ queryKey: ['lookup', 'ports'], queryFn: () => lookupApi.ports().then((r) => r.data) })
-  const owners = useQuery({ queryKey: ['fleet', 'owner-options'], queryFn: () => shipOwnerApi.list({ limit: 100 }) })
+  const owners = useQuery({ queryKey: ['fleet', 'owner-options'], queryFn: () => shipOwnerApi.list({ limit: 100 }), refetchOnWindowFocus: 'always' })
 
   const ownerRows = owners.data?.data || []
   const ownerOptions = toOptions(ownerRows, (row) => row.company_name)

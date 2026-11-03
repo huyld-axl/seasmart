@@ -31,6 +31,14 @@ export const TargetSvg = () => (
   </svg>
 )
 
+// Hợp đồng: tờ giấy gập góc có ba dòng chữ.
+export const ContractSvg = () => (
+  <svg viewBox="0 0 24 24" width="1em" height="1em" {...stroke}>
+    <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+    <path d="M14 3v5h5M9 13h6M9 17h6" />
+  </svg>
+)
+
 // Ô đầu dòng: tàu là hình tàu, đối tác là hai chữ đầu của tên.
 export function FleetTile({ text, large, src, onClick, actionLabel, icon = ShipSvg }) {
   const className = `fl-tile${large ? ' fl-tile--lg' : ''}${src ? ' fl-tile--img' : ''}`

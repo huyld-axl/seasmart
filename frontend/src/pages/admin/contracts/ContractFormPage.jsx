@@ -34,7 +34,7 @@ function safeMonths(start, end) {
   }
 }
 
-const BILL_STATUS_LABELS = { SENT: 'Đã gửi', PAID: 'Đã thu' }
+const BILL_STATUS_LABELS = { APPROVED: 'Đã duyệt', SENT: 'Đã gửi', PAID: 'Đã thu' }
 const voyageLabel = (v) => `${v.code} · ${v.seafarer_name} · ${v.vessel_name} · lên ${formatDate(v.join_date)}`
 
 // Dòng chuyến dùng trong form: từ danh sách chuyến hoặc chi tiết hợp đồng.
@@ -90,7 +90,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
     if (!list?.length) return false
     const startChanged = isEdit && !dayjs(formValues.start_date).isSame(initial.start_date, 'day')
     const field = startChanged ? 'start_date' : 'end_date'
-    form.setFields([{ name: field, errors: [startChanged ? 'Có bill đã gửi hoặc đã thu cần gỡ trước' : 'Có bill đã thu nằm sau ngày này'] }])
+    form.setFields([{ name: field, errors: [startChanged ? 'Có bill đã duyệt, đã gửi hoặc đã thu cần gỡ trước' : 'Có bill đã thu nằm sau ngày này'] }])
     setBlocked({ list, field, date: formValues[field], safeFrom: startChanged ? null : list.map((b) => b.end).sort().at(-1) })
     window.scrollTo({ top: 0, behavior: 'smooth' })
     return true
@@ -135,7 +135,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
           <Banner
             tone="error"
             title={`Chưa lưu được ngày ${blocked.field === 'start_date' ? 'bắt đầu' : 'kết thúc'} ${blocked.date ? dayjs(blocked.date).format(DATE_FORMAT) : ''}`.trim()}
-            description={`Các bill ${blocked.field === 'start_date' ? 'của hợp đồng' : 'sau ngày này'} đã gửi hoặc đã thu: Huỷ ghi nhận thu, thu hồi bill đó rồi lưu lại${blocked.safeFrom ? `, hoặc chọn ngày từ ${formatDate(blocked.safeFrom)} trở đi` : ''}.`}
+            description={`Các bill ${blocked.field === 'start_date' ? 'của hợp đồng' : 'sau ngày này'} đã duyệt, đã gửi hoặc đã thu: Huỷ ghi nhận thu, thu hồi, bỏ duyệt bill đó rồi lưu lại${blocked.safeFrom ? `, hoặc chọn ngày từ ${formatDate(blocked.safeFrom)} trở đi` : ''}.`}
           >
             <ul className="ct-blocked">
               {blocked.list.map((b) => (

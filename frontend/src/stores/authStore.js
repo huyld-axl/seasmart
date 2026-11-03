@@ -3,8 +3,18 @@ import { authApi } from '../api'
 
 const storedToken = localStorage.getItem('token') || null
 
+// Giá trị cũ hỏng (vd. chuỗi "undefined") không được làm sập cả app.
+function readStoredUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user') || 'null')
+  } catch {
+    localStorage.removeItem('user')
+    return null
+  }
+}
+
 const useAuthStore = create((set) => ({
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
+  user: readStoredUser(),
   token: storedToken,
   // false cho tới khi lấy xong quyền mới từ /auth/me (chỉ khi có token); tránh nháy trang 403 vì quyền cũ.
   ready: !storedToken,

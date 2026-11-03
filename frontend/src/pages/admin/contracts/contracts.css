@@ -87,3 +87,21 @@
 .ct-plan th, .ct-plan td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 .ct-plan th { color: var(--muted); font-weight: 500; }
 .ct-plan__removed { color: var(--error, inherit); }
+
+.ct-plain { font-weight: 400; }
+.ct-money { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 8px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.ct-money .anticon { font-size: 10px; }
+.ct-money--up { background: var(--success-bg); color: var(--success); }
+.ct-money--down { background: var(--error-bg); color: var(--error-strong); }
+.ct-money--zero { color: var(--muted); font-weight: 500; }
+.ct-money--strong { padding: 3px 10px; font-size: 14px; font-weight: 700; }
+.ct-money--strong.ct-money--up { background: var(--success); color: #fff; }
+.ct-money--strong.ct-money--down { background: var(--error-strong); color: #fff; }
+
+/* Cột phải đầu trang chi tiết: ghi chú ở trên, lý do từ chối nổi bật ở dưới. */
+.ct-head-side { display: grid; flex: 1 1 280px; gap: 12px; max-width: 480px; }
+.ct-head-side .sf-note--head { max-width: none; }
+.ct-reject { padding: 12px 16px; border: 1px solid var(--error-border); border-left-width: 4px; border-radius: 12px; background: var(--error-bg); }
+.ct-reject__title { display: flex; align-items: center; gap: 6px; color: var(--error-strong); font-size: 13px; font-weight: 600; }
+.ct-reject__body { max-height: 112px; margin-top: 4px; overflow-y: auto; font-size: 15px; font-weight: 500; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ct-reject__by { margin-top: 6px; color: var(--muted); font-size: 12px; }

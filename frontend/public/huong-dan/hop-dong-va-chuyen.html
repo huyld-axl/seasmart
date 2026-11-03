@@ -151,7 +151,7 @@
             <rect class="key" x="330" y="30" width="240" height="90" rx="8"/>
             <text class="b" x="346" y="58">Hợp đồng</text><text class="s" x="346" y="80">Ngày bắt đầu · ngày kết thúc</text><text class="s" x="346" y="98">Tiền phải thu, phải trả</text>
             <rect class="box" x="650" y="30" width="240" height="90" rx="8"/>
-            <text class="b" x="666" y="58">Yêu cầu thanh toán</text><text class="s" x="666" y="80">Các kỳ theo ngày chốt sổ</text><text class="s" x="666" y="98">Chưa gửi / Đã gửi / Đã thu</text>
+            <text class="b" x="666" y="58">Yêu cầu thanh toán</text><text class="s" x="666" y="80">Các kỳ theo ngày chốt sổ</text><text class="s" x="666" y="98">Chưa duyệt / Đã duyệt / Đã gửi / Đã thu</text>
             <line class="ln dash" x1="250" y1="75" x2="328" y2="75" marker-end="url(#a1)"/>
             <text class="s m" x="290" y="64">chép ngày</text><text class="s m" x="290" y="94">lúc chốt</text>
             <line class="ln" x1="570" y1="75" x2="648" y2="75" marker-end="url(#a1)"/>
@@ -161,6 +161,31 @@
         </div>
         <figcaption>Mũi tên nét đứt chỉ chạy một lần, lúc chốt. Sau đó chuyến và hợp đồng không kéo nhau.</figcaption>
       </figure>
+      <h3>Cách đọc mã</h3>
+      <p>Mã con nối từ mã cha, nên nhìn mã là biết nguồn.</p>
+      <table>
+        <tr><th>Loại</th><th>Ví dụ</th><th>Đọc ra</th></tr>
+        <tr><td>Cơ hội</td><td class="ui">CH2601</td><td>Cơ hội thứ 1 của năm 2026</td></tr>
+        <tr><td>Chuyến từ cơ hội</td><td class="ui">CH2601-01</td><td>Chuyến chốt từ cơ hội CH2601</td></tr>
+        <tr><td>Chuyến tạo tay</td><td class="ui">CT2601</td><td>Chuyến tạo tay thứ 1 của năm 2026</td></tr>
+        <tr><td>Hợp đồng</td><td class="ui">CH2601-01/HĐ</td><td>Hợp đồng của chuyến CH2601-01</td></tr>
+        <tr><td>Yêu cầu thanh toán</td><td class="ui">CH2601-01/HĐ/T1</td><td>Kỳ 1 bên thu của hợp đồng đó (<b>C</b> là bên chi)</td></tr>
+      </table>
+      <p>Gõ <span class="ui">CH2601</span> vào ô tìm kiếm sẽ ra cả chuỗi. Mã tạo trước ngày đổi cách đánh số vẫn giữ nguyên.</p>
+      <h3>Duyệt yêu cầu thanh toán trước khi gửi</h3>
+      <p>Yêu cầu thanh toán chỉ gửi được khi đã được <b>duyệt</b>. Người duyệt phải <b>khác người đã sửa</b> yêu cầu đó.</p>
+      <table>
+        <tr><th>Bước</th><th>Trạng thái</th><th>Ai làm / điều kiện</th></tr>
+        <tr><td>Sinh ra khi duyệt hợp đồng</td><td><span class="tag t-neutral">Chưa duyệt</span> (<span class="tag t-neutral">Chưa đến kỳ</span> tới ngày chốt sổ, sau đó <span class="tag t-warning">Cần duyệt</span>)</td><td>Tự động</td></tr>
+        <tr><td>Duyệt</td><td><span class="tag t-warning">Cần gửi</span></td><td>Người có quyền duyệt, từ ngày chốt sổ</td></tr>
+        <tr><td>Gửi cho đối tác</td><td><span class="tag t-info">Đã gửi</span></td><td>Chỉ bill đã duyệt</td></tr>
+        <tr><td>Ghi nhận đã thu</td><td><span class="tag t-success">Đã thu</span></td><td>Người có quyền thu</td></tr>
+      </table>
+      <ul>
+        <li>Bill <b>đã duyệt không sửa được</b>. Muốn sửa: <span class="ui">Bỏ duyệt</span>, sửa, rồi nhờ người khác duyệt lại.</li>
+        <li><span class="ui">Thu hồi</span> bill đã gửi đưa về <span class="tag t-neutral">Chưa duyệt</span>, phải duyệt lại mới gửi lại được.</li>
+        <li>Sửa ngày bắt đầu hoặc kết thúc hợp đồng cũng bị chặn nếu bill bị ảnh hưởng đã duyệt, giống bill đã gửi hoặc đã thu.</li>
+      </ul>
     </section>
 
     <section id="chot">
@@ -182,7 +207,7 @@
       <ol class="steps">
         <li><span>Người soạn bấm <span class="ui">Xin duyệt</span>. Hợp đồng sang <span class="tag t-warning">Chờ duyệt</span> và khoá.</span></li>
         <li><span>Người duyệt bấm <span class="ui">Duyệt</span>. Hợp đồng sang <span class="tag t-success">Hiệu lực</span>.</span></li>
-        <li><span>Hệ thống sinh đủ các yêu cầu thanh toán, mỗi kỳ chốt sổ một cái, tất cả <span class="tag t-neutral">Chưa gửi</span>. Kỳ đầu có thêm các khoản một lần.</span></li>
+        <li><span>Hệ thống sinh đủ các yêu cầu thanh toán, mỗi kỳ chốt sổ một cái, tất cả <span class="tag t-neutral">Chưa duyệt</span>. Kỳ đầu có thêm các khoản một lần.</span></li>
       </ol>
       <p>Hợp đồng <span class="tag t-success">Hiệu lực</span> không sửa được gì, kể cả ngày. Muốn sửa xem mục 5.</p>
     </section>
@@ -222,7 +247,7 @@
         <li><span>Bấm <span class="ui">Xin duyệt</span>.</span></li>
         <li><span>Người duyệt bấm <span class="ui">Duyệt</span>. Nếu yêu cầu thanh toán sẽ thay đổi, hộp duyệt liệt kê từng kỳ. Ô "Tôi đã xem các thay đổi trên" chỉ tick được sau <b>5 giây</b>. Tick xong mới bấm được <span class="ui">Xác nhận và duyệt</span>.</span></li>
       </ol>
-      <div class="note"><b>Đổi tiền không sửa yêu cầu thanh toán đã có.</b>Nếu chỉ đổi số tiền (ví dụ tăng lương), các yêu cầu thanh toán đang có giữ số cũ. Mở từng cái còn Chưa gửi để sửa tay. Kỳ sinh mới về sau mới lấy số mới.</div>
+      <div class="note"><b>Đổi tiền không sửa yêu cầu thanh toán đã có.</b>Nếu chỉ đổi số tiền (ví dụ tăng lương), các yêu cầu thanh toán đang có giữ số cũ. Mở từng cái còn Chưa duyệt để sửa tay. Kỳ sinh mới về sau mới lấy số mới.</div>
     </section>
 
     <section id="bill-doi">
@@ -232,9 +257,9 @@
         <table>
           <thead><tr><th>Bạn đã đổi</th><th>Khi duyệt lại</th><th>Cần các kỳ ở trạng thái</th></tr></thead>
           <tbody>
-            <tr><td>Ngày kết thúc sớm hơn</td><td>Kỳ chứa ngày kết thúc mới được cắt về ngày đó, <b>số tiền giữ đủ tháng</b>. Các kỳ sau đó bị xoá.</td><td>Các kỳ bị cắt hoặc xoá phải Chưa gửi</td></tr>
+            <tr><td>Ngày kết thúc sớm hơn</td><td>Kỳ chứa ngày kết thúc mới được cắt về ngày đó, <b>số tiền giữ đủ tháng</b>. Các kỳ sau đó bị xoá.</td><td>Các kỳ bị cắt hoặc xoá phải Chưa duyệt</td></tr>
             <tr><td>Ngày kết thúc muộn hơn</td><td>Giữ các kỳ cũ. Sinh thêm kỳ cho phần kéo dài, đủ tháng, không có khoản một lần.</td><td>Không cần</td></tr>
-            <tr><td>Ngày bắt đầu</td><td>Xoá mọi kỳ cũ, sinh lại từ ngày bắt đầu mới. Kỳ đầu có khoản một lần. Số tiền bạn đã sửa tay trên kỳ cũ sẽ mất.</td><td>Mọi kỳ phải Chưa gửi</td></tr>
+            <tr><td>Ngày bắt đầu</td><td>Xoá mọi kỳ cũ, sinh lại từ ngày bắt đầu mới. Kỳ đầu có khoản một lần. Số tiền bạn đã sửa tay trên kỳ cũ sẽ mất.</td><td>Mọi kỳ phải Chưa duyệt</td></tr>
             <tr><td>Chỉ tiền, không đổi ngày</td><td>Không đổi kỳ nào.</td><td>Không cần</td></tr>
           </tbody>
         </table>
@@ -247,9 +272,9 @@
             <text class="s" x="10" y="40">Tháng 3 – 9</text><text class="s" x="300" y="40">Tháng 10</text><text class="s" x="480" y="40">Tháng 11</text><text class="s" x="660" y="40">Tháng 12</text>
             <text class="s" x="10" y="82">Trước</text>
             <rect class="paid" x="100" y="58" width="180" height="40" rx="4"/><text class="m" x="190" y="83" style="font-size:12px">Đã thu</text>
-            <rect class="open" x="290" y="58" width="170" height="40" rx="4"/><text class="m" x="375" y="83" style="font-size:12px">Chưa gửi</text>
-            <rect class="open" x="470" y="58" width="170" height="40" rx="4"/><text class="m" x="555" y="83" style="font-size:12px">Chưa gửi</text>
-            <rect class="open" x="650" y="58" width="170" height="40" rx="4"/><text class="m" x="735" y="83" style="font-size:12px">Chưa gửi</text>
+            <rect class="open" x="290" y="58" width="170" height="40" rx="4"/><text class="m" x="375" y="83" style="font-size:12px">Chưa duyệt</text>
+            <rect class="open" x="470" y="58" width="170" height="40" rx="4"/><text class="m" x="555" y="83" style="font-size:12px">Chưa duyệt</text>
+            <rect class="open" x="650" y="58" width="170" height="40" rx="4"/><text class="m" x="735" y="83" style="font-size:12px">Chưa duyệt</text>
             <text class="s" x="10" y="142">Sau</text>
             <rect class="paid" x="100" y="118" width="180" height="40" rx="4"/><text class="m" x="190" y="143" style="font-size:12px">Đã thu</text>
             <rect class="open" x="290" y="118" width="95" height="40" rx="4"/><text class="m" x="337" y="143" style="font-size:12px">01–17/10</text>
@@ -266,7 +291,7 @@
       <span class="kicker">7</span>
       <h2>Khi bị chặn</h2>
       <p>Hệ thống không cho đổi ngày nếu một kỳ cần cắt hoặc xoá đã <span class="tag t-info">Đã gửi</span> hay <span class="tag t-success">Đã thu</span>. Bạn sẽ thấy khung đỏ liệt kê đúng các kỳ đó, có đường dẫn tới từng kỳ. Việc kiểm tra chạy khi bạn lưu ngày mới và chạy lại khi duyệt, vì trong lúc chờ ai đó có thể đã gửi thêm một kỳ.</p>
-      <div class="note note--error"><b>Cách gỡ</b>Mở từng kỳ trong danh sách. Kỳ <span class="tag t-success">Đã thu</span>: bấm <span class="ui">Huỷ ghi nhận thu</span> (về Đã gửi). Kỳ <span class="tag t-info">Đã gửi</span>: bấm <span class="ui">Thu hồi</span> (về Chưa gửi). Xong quay lại lưu hoặc duyệt. Nhớ báo lại chủ tàu nếu đã gửi kỳ đó cho họ.</div>
+      <div class="note note--error"><b>Cách gỡ</b>Mở từng kỳ trong danh sách. Kỳ <span class="tag t-success">Đã thu</span>: bấm <span class="ui">Huỷ ghi nhận thu</span> (về Đã gửi). Kỳ <span class="tag t-info">Đã gửi</span>: bấm <span class="ui">Thu hồi</span> (về Chưa duyệt). Kỳ <span class="tag t-neutral">Đã duyệt</span>: bấm <span class="ui">Bỏ duyệt</span> (về Chưa duyệt), hoặc bấm <span class="ui">Bỏ duyệt</span> hàng loạt ngay trong hộp duyệt hợp đồng. Xong quay lại lưu hoặc duyệt. Nhớ báo lại chủ tàu nếu đã gửi kỳ đó cho họ.</div>
       <p>Hoặc chọn ngày kết thúc khác không đụng tới các kỳ đã gửi, đã thu (ví dụ đúng ngày cuối của kỳ đã thu gần nhất).</p>
     </section>
 
@@ -317,8 +342,8 @@
       <div class="faq">
         <details><summary>Thuyền viên chuyển thẳng sang tàu khác thì làm sao?</summary><p>Ghi rời tàu chuyến cũ với ngày chuyển, rồi chốt người đó vào cơ hội của tàu mới (hoặc tạo chuyến tay). Hợp đồng cũ cần rút ngắn hoặc kết thúc trước, nếu không chuyến mới sẽ không tự có hợp đồng vì trùng thời gian.</p></details>
         <details><summary>Thuyền viên ở lại lâu hơn hợp đồng.</summary><p>Đưa hợp đồng về Nháp, sửa ngày kết thúc muộn hơn, xin duyệt và duyệt. Hệ thống sinh thêm các kỳ cho phần kéo dài. Không cần phụ lục.</p></details>
-        <details><summary>Giữa chừng tăng lương thì sao?</summary><p>Đưa về Nháp, sửa số tiền, duyệt lại. Các kỳ đã có không đổi: mở từng kỳ còn Chưa gửi để sửa tay theo số mới.</p></details>
-        <details><summary>Lỡ ghi sai ngày xuống tàu.</summary><p>Sửa trên chuyến bằng "Sửa ngày đã ghi". Việc này không đụng hợp đồng. Nếu ngày bắt đầu hợp đồng cũng sai, sửa hợp đồng theo mục 5; lưu ý đổi ngày bắt đầu cần mọi kỳ còn Chưa gửi.</p></details>
+        <details><summary>Giữa chừng tăng lương thì sao?</summary><p>Đưa về Nháp, sửa số tiền, duyệt lại. Các kỳ đã có không đổi: mở từng kỳ còn Chưa duyệt để sửa tay theo số mới.</p></details>
+        <details><summary>Lỡ ghi sai ngày xuống tàu.</summary><p>Sửa trên chuyến bằng "Sửa ngày đã ghi". Việc này không đụng hợp đồng. Nếu ngày bắt đầu hợp đồng cũng sai, sửa hợp đồng theo mục 5; lưu ý đổi ngày bắt đầu cần mọi kỳ còn Chưa duyệt.</p></details>
         <details><summary>Bấm nhầm Kết thúc hợp đồng.</summary><p>Hợp đồng đã kết thúc không mở lại được trên giao diện. Báo người quản trị hệ thống.</p></details>
         <details><summary>Vì sao hộp duyệt bắt chờ 5 giây?</summary><p>Vì duyệt lúc đó sẽ cắt hoặc xoá các yêu cầu thanh toán. Năm giây để bạn đọc danh sách trước khi đồng ý.</p></details>
       </div>

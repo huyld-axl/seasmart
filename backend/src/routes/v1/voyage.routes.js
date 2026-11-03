@@ -94,6 +94,10 @@ async function voyageRoutes(fastify) {
     await inScope(request)
     return voyageService.editDates(pool, request.params.id, request.body, request.user.id)
   })
+  fastify.patch('/:id/notes', { ...can('update'), schema: { params: idParams, body: { type: 'object', properties: { notes: note } } } }, async (request) => {
+    await inScope(request)
+    return voyageService.editNotes(pool, request.params.id, request.body, request.user.id)
+  })
   fastify.post('/:id/leave-plan', { ...can('update'), schema: { params: idParams, body: leavePlanBody } }, async (request) => {
     await inScope(request)
     return voyageService.leavePlan(pool, request.params.id, request.body, request.user.id)

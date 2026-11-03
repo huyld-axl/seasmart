@@ -5,7 +5,10 @@ import ApproveModal from '../ApproveModal'
 import { useBillPlan } from '../../../../hooks/useVoyages'
 
 const approve = { mutateAsync: vi.fn(), isPending: false }
-vi.mock('../../../../hooks/useVoyages', () => ({ useBillPlan: vi.fn(), useContractMutations: () => ({ approve }) }))
+const unapproveMany = { mutateAsync: vi.fn(), isPending: false }
+let permissions = ['bill.approve']
+vi.mock('../../../../hooks/useVoyages', () => ({ useBillPlan: vi.fn(), useContractMutations: () => ({ approve }), useBillMutations: () => ({ unapproveMany }) }))
+vi.mock('../../../../hooks/usePermission', () => ({ useCan: () => (key) => permissions.includes(key) }))
 vi.mock('../../../../components/ds/useToast', () => ({ default: () => ({ success: vi.fn(), error: vi.fn() }) }))
 
 const contract = { contract: { id: 9, contract_number: 'HĐ-2026-0031' } }
@@ -24,6 +27,8 @@ beforeEach(() => {
   vi.useFakeTimers()
   window.matchMedia = vi.fn(() => ({ matches: false, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn() }))
   approve.mutateAsync.mockReset().mockResolvedValue({})
+  unapproveMany.mutateAsync.mockReset().mockResolvedValue({})
+  permissions = ['bill.approve']
 })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
@@ -69,6 +74,19 @@ it('bill bị ảnh hưởng đã gửi hoặc đã thu: banner đỏ liệt kê
   expect(screen.getByText(/kỳ 8 \(Đã gửi\)/)).toBeInTheDocument()
   expect(screen.queryByRole('checkbox')).toBeNull()
   expect(screen.getByRole('button', { name: 'Xác nhận và duyệt' })).toBeDisabled()
+})
+
+it('bill đã duyệt chặn: có nút Bỏ duyệt hàng loạt cho người có quyền, người không có quyền thì không thấy', async () => {
+  plan(cutPlan({ blocked: [{ bill_id: 8, code: 'CH2601-01/HĐ/T8', seq: 8, status: 'APPROVED' }, { bill_id: 9, code: 'CH2601-01/HĐ/T9', seq: 9, status: 'APPROVED' }, { bill_id: 10, code: 'CH2601-01/HĐ/T10', seq: 10, status: 'SENT' }] }))
+  const { unmount } = show()
+  expect(screen.getByText(/kỳ 8 \(Đã duyệt\)/)).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /Bỏ duyệt 2 bill đã duyệt/ }))
+  await act(async () => {})
+  expect(unapproveMany.mutateAsync).toHaveBeenCalledWith([8, 9])
+  unmount()
+  permissions = []
+  show()
+  expect(screen.queryByRole('button', { name: /Bỏ duyệt/ })).toBeNull()
 })
 
 it('bill đã sửa tay trong danh sách xoá thì hộp nêu tên kỳ', () => {

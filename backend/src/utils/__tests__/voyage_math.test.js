@@ -98,7 +98,9 @@ describe('billDisplayStatus', () => {
   it('tính từ trạng thái lưu và hôm nay', () => {
     const base = { periodEnd: '2026-10-31', dueDate: '2026-11-10' }
     expect(billDisplayStatus({ ...base, status: 'OPEN', today: '2026-10-21' })).toBe('UPCOMING')
-    expect(billDisplayStatus({ ...base, status: 'OPEN', today: '2026-10-31' })).toBe('TO_SEND')
+    expect(billDisplayStatus({ ...base, status: 'OPEN', today: '2026-10-31' })).toBe('TO_APPROVE')
+    expect(billDisplayStatus({ ...base, status: 'APPROVED', today: '2026-10-31' })).toBe('TO_SEND')
+    expect(billDisplayStatus({ ...base, status: 'APPROVED', today: '2026-11-20' })).toBe('TO_SEND')
     expect(billDisplayStatus({ ...base, status: 'SENT', today: '2026-11-10' })).toBe('SENT')
     expect(billDisplayStatus({ ...base, status: 'SENT', today: '2026-11-11' })).toBe('OVERDUE')
     expect(billDisplayStatus({ ...base, status: 'PAID', today: '2026-12-01' })).toBe('PAID')
@@ -144,6 +146,14 @@ describe('planBillChanges', () => {
     expect(r.cut).toEqual([])
     expect(r.remove.map((b) => b.code)).toEqual(['TT-8', 'TT-9', 'TT-10'])
     expect(r.blocked).toEqual([])
+  })
+
+  it('bill Đã duyệt bị chặn như đã gửi; kỳ không bị đụng thì không', () => {
+    const approved = bills.map((b) => (b.seq === 9 ? { ...b, status: 'APPROVED' } : b))
+    expect(plan('2026-03-10', '2026-10-15', approved).blocked.map((b) => [b.seq, b.status])).toEqual([[9, 'APPROVED']])
+    expect(plan('2026-03-10', '2026-11-20', approved).blocked.map((b) => [b.seq, b.status])).toEqual([[9, 'APPROVED']])
+    expect(plan('2026-04-01', '2026-12-31', approved).blocked.map((b) => b.seq)).toContain(9)
+    expect(plan('2026-03-10', '2027-02-28', approved).blocked).toEqual([])
   })
 
   it('E sớm làm đụng bill đã thu: blocked đúng tập', () => {

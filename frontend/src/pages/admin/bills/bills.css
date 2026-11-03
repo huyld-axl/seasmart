@@ -31,6 +31,7 @@ button.bl-day { cursor: pointer; }
 button.bl-day:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
 .bl-due { --bl-due: var(--border-strong); position: relative; display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid var(--bl-due); border-radius: 50%; background: var(--surface); color: var(--foreground); font-weight: 600; }
 .bl-due[data-status='PAID'] { --bl-due: var(--success); color: var(--success); }
+.bl-due[data-status='TO_APPROVE'],
 .bl-due[data-status='TO_SEND'] { --bl-due: var(--warning); color: var(--warning); }
 .bl-due[data-status='SENT'] { --bl-due: var(--neutral); color: var(--neutral); }
 .bl-due[data-status='OVERDUE'] { --bl-due: var(--error-text); background: var(--error-text); color: #fff; }

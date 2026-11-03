@@ -11,4 +11,20 @@ async function nextCode(conn, kind, year, prefix, width, shortYear = false) {
   return shortYear ? `${prefix}${String(year).slice(-2)}${number}` : `${prefix}-${year}-${number}`
 }
 
-module.exports = { nextCode }
+// Mã con nối từ mã cha. Bản ghi đã xoá mềm vẫn giữ mã, nên trùng thì thêm đuôi .2, .3.
+async function uniqueCode(conn, table, column, base) {
+  const [[{ taken }]] = await conn.query(
+    `SELECT COUNT(*)::int AS taken FROM "${table}" WHERE "${column}" = ? OR "${column}" LIKE ?`,
+    [base, `${base}.%`]
+  )
+  return taken ? `${base}.${taken + 1}` : base
+}
+
+// Mã chuyến từ cơ hội: {mã cơ hội}-{nn}, nn = số lớn nhất đã dùng + 1. Gọi khi đã khoá dòng cơ hội.
+async function nextVoyageCode(conn, opportunityCode) {
+  const [rows] = await conn.query('SELECT code FROM "seafarer_voyage" WHERE code LIKE ?', [`${opportunityCode}-%`])
+  const used = rows.map((row) => Number.parseInt(row.code.slice(opportunityCode.length + 1), 10)).filter(Number.isFinite)
+  return `${opportunityCode}-${String(Math.max(0, ...used) + 1).padStart(2, '0')}`
+}
+
+module.exports = { nextCode, uniqueCode, nextVoyageCode }

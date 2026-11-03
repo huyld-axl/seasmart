@@ -139,7 +139,7 @@ export default function BillFormPage() {
     return <EmptyState isError={isError} title="Không tải được yêu cầu thanh toán" description="Mất kết nối tới máy chủ." action={<Button onClick={() => refetch()}>Thử lại</Button>} />
   }
   if (data.bill.status !== 'OPEN') {
-    return <EmptyState title="Yêu cầu thanh toán này đã gửi, không sửa được" description="Thu hồi ở trang chi tiết để về Chưa gửi rồi sửa." action={<Button onClick={() => navigate(`/bills/${id}`)}>Về trang chi tiết</Button>} />
+    return <EmptyState title="Yêu cầu thanh toán này đã duyệt hoặc đã gửi, không sửa được" description="Bỏ duyệt hoặc thu hồi ở trang chi tiết để về Chưa duyệt rồi sửa." action={<Button onClick={() => navigate(`/bills/${id}`)}>Về trang chi tiết</Button>} />
   }
   return <BillForm data={data} />
 }

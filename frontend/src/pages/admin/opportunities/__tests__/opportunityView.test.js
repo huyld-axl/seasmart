@@ -104,4 +104,9 @@ describe('candidateStages', () => {
     expect(candidateStages(full).states).toEqual(['complete', 'complete', 'complete'])
     expect(candidateStages(full).dates).toEqual(['a', 'b', 'c'])
   })
+
+  it('chủ tàu chọn khi nhảy cóc qua chặng Gửi vẫn complete', () => {
+    const skipped = { export_pack: { created_at: 'a' }, owner_selected_at: 'c' }
+    expect(candidateStages(skipped).states).toEqual(['complete', 'complete', 'complete'])
+  })
 })

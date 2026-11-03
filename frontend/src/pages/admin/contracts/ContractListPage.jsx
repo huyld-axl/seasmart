@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
-import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { ArrowDownOutlined, ArrowUpOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
+import { lookupApi, seafarerApi } from '../../../api'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
 import { useContractList } from '../../../hooks/useVoyages'
 import { formatDate, formatDiff, formatUsd } from '../../../utils/format'
-import { dateMismatchText } from './contractView'
 import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
 import './contracts.css'
@@ -17,14 +18,19 @@ import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
+import { CrewFilterButton } from '../seafarers/CrewFilters'
 
-// Trạng thái hợp đồng kèm nhãn tính ra: Chờ duyệt lại (đã có bill mà chưa Hiệu lực), Đã rời tàu {ngày} (chuyến đã rời, hợp đồng còn dài hơn).
-function StatusCell({ row }) {
+const stop = (event) => event.stopPropagation()
+
+// Ô tiền nổi bật: thu xanh mũi tên lên, chi đỏ mũi tên xuống, chênh lệch theo dấu. Số 0 để xám, không mũi tên.
+function MoneyChip({ value, children, strong = false }) {
+  const n = Number(value)
+  const tone = n > 0 ? 'up' : n < 0 ? 'down' : 'zero'
+  const Icon = n > 0 ? ArrowUpOutlined : n < 0 ? ArrowDownOutlined : null
   return (
-    <span className="ds-cell2">
-      <StatusBadge group="contract" value={row.status} />
-      {row.awaiting_reapproval ? <span className="ds-cell2__sub crew-docs crew-docs--warning">Chờ duyệt lại</span> : null}
-      {row.date_mismatch ? <span className="ds-cell2__sub crew-docs crew-docs--warning">{dateMismatchText(row.date_mismatch)}</span> : null}
+    <span className={`ct-money ct-money--${tone}${strong ? ' ct-money--strong' : ''}`}>
+      {Icon ? <Icon aria-hidden /> : null}
+      {children}
     </span>
   )
 }
@@ -45,36 +51,42 @@ export default function ContractListPage() {
   const isMobile = !Grid.useBreakpoint().md
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
-  const [ownerId, setOwnerId] = useState()
+  const [filters, setFilters] = useState({})
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [vesselSearch, setVesselSearch] = useState('')
+  const [personSearch, setPersonSearch] = useState('')
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
+  const ranks = useQuery({ queryKey: ['ranks'], queryFn: () => lookupApi.ranks().then((r) => r.data), staleTime: 300000 })
+  const vessels = useQuery({ queryKey: ['vessels-lookup', vesselSearch], queryFn: () => lookupApi.vessels(vesselSearch).then((r) => r.data), staleTime: 60000 })
+  const people = useQuery({ queryKey: ['seafarer-pick', personSearch], queryFn: () => seafarerApi.list({ search: personSearch || undefined, limit: 20 }).then((r) => r.data.data), enabled: can('seafarer.view') })
   const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: can('partner.view') })
-  const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: ownerId, page, limit: pageSize })
+  const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ...filters, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
   const tabs = TABS.map((item) => ({ ...item, count: counts ? counts[item.value] : null }))
   const open = (row) => navigate(`/contracts/${row.id}`)
-  const filtered = Boolean(keyword || ownerId)
+  const filterCount = Object.values(filters).filter(Boolean).length
+  const filtered = Boolean(keyword || filterCount)
+  const setFilter = (key, value) => { setFilters((current) => ({ ...current, [key]: value })); setPage(1) }
   const createButton = can('contract.create')
     ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/contracts/new')}>Thêm hợp đồng</Button>
     : undefined
-  const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPage(1) }
+  const resetFilters = () => { setSearch(''); setFilters({}); setPage(1) }
 
   const columns = [
     { title: 'Số hợp đồng', dataIndex: 'contract_number', render: (value) => <span className="ds-mono">{value}</span> },
+    { title: 'Bắt đầu', dataIndex: 'start_date', render: (value) => <span className="ds-num">{formatDate(value)}</span> },
+    { title: 'Kết thúc', dataIndex: 'end_date', render: (value) => <span className="ds-num">{formatDate(value)}</span> },
     {
-      title: 'Thuyền viên',
-      key: 'seafarer',
-      render: (_, row) => (
-        <span className="ds-cell2">
-          <span className="ds-cell2__main">{row.seafarer_name}</span>
-          <span className="ds-cell2__sub">{row.rank_name}</span>
-        </span>
-      ),
+      title: 'Chủ tàu',
+      key: 'owner',
+      responsive: ['lg'],
+      render: (_, row) => (can('partner.view') && row.ship_owner_id ? <Link to={`/partners/${row.ship_owner_id}`} onClick={stop}>{row.ship_owner_name}</Link> : row.ship_owner_name),
     },
     {
       title: 'Chuyến · tàu',
@@ -82,28 +94,40 @@ export default function ContractListPage() {
       responsive: ['xl'],
       render: (_, row) => (
         <span className="ds-cell2">
-          <span className="ds-cell2__main ds-mono">{row.trip ? row.trip.code : row.voyage_code}</span>
-          <span className="ds-cell2__sub">{row.vessel_name}</span>
+          <span className="ds-cell2__main ds-mono">
+            {row.trip && can('voyage.view') ? <Link to={`/voyages/${row.trip.id}`} onClick={stop}>{row.trip.code}</Link> : (row.trip ? row.trip.code : row.voyage_code)}
+          </span>
+          <span className="ds-cell2__sub">
+            {row.vessel_id && can('vessel.view') ? <Link to={`/vessels/${row.vessel_id}`} onClick={stop}>{row.vessel_name}</Link> : row.vessel_name}
+          </span>
         </span>
       ),
     },
-    { title: 'Bắt đầu → kết thúc', key: 'dates', render: (_, row) => <span className="ds-num">{formatDate(row.start_date)} → {formatDate(row.end_date)}</span> },
+    { title: 'Thu/tháng', dataIndex: 'receivable_monthly', align: 'right', responsive: ['lg'], render: (value) => <MoneyChip value={value}>{formatUsd(value)}</MoneyChip> },
     {
-      title: 'Thu · chi/tháng',
-      key: 'money',
-      align: 'right',
-      responsive: ['lg'],
+      title: 'Thuyền viên',
+      key: 'seafarer',
       render: (_, row) => (
         <span className="ds-cell2">
-          <span className="ds-cell2__main ds-num">{formatUsd(row.receivable_monthly)}</span>
-          <span className="ds-cell2__sub ds-num">chi {formatUsd(row.payable_monthly)}</span>
+          <span className="ds-cell2__main ct-plain">
+            {can('seafarer.view') ? <Link to={`/seafarers/${row.seafarer_id}`} onClick={stop}>{row.seafarer_name}</Link> : row.seafarer_name}
+          </span>
+          <span className="ds-cell2__sub">{row.rank_name}</span>
         </span>
       ),
     },
-    { title: 'Chênh lệch', dataIndex: 'diff_monthly', align: 'right', render: (value) => <b className="ds-num">{formatDiff(value)}</b> },
-    { title: 'Trạng thái', key: 'status', render: (_, row) => <StatusCell row={row} /> },
+    { title: 'Chi/tháng', dataIndex: 'payable_monthly', align: 'right', responsive: ['lg'], render: (value) => <MoneyChip value={-Number(value)}>{Number(value) > 0 ? '-' : ''}{formatUsd(value)}</MoneyChip> },
+    { title: 'Chênh lệch', dataIndex: 'diff_monthly', align: 'right', render: (value) => <MoneyChip value={value} strong>{formatDiff(value)}</MoneyChip> },
+    { title: 'Trạng thái', key: 'status', render: (_, row) => <StatusBadge group="contract" value={row.status} /> },
     actionColumn((row) => <RowActions name={`hợp đồng ${row.contract_number}`} onView={() => open(row)} onEdit={['DRAFT', 'REJECTED'].includes(row.status) && can('contract.update') ? () => navigate(`/contracts/${row.id}/edit`) : undefined} />),
   ]
+
+  const filterSelect = (key, label, props) => (
+    <label className="crew-filterbar__field crew-filterbar__field--wide">
+      <span>{label}</span>
+      <Select style={{ width: '100%' }} allowClear showSearch optionFilterProp="label" value={filters[key]} onChange={(value) => setFilter(key, value)} {...props} />
+    </label>
+  )
 
   let body
   if (list.isError) {
@@ -128,7 +152,7 @@ export default function ContractListPage() {
                 <span className="ds-cell2__sub">{formatDate(row.start_date)} → {formatDate(row.end_date)}</span>
               </span>
               <span className="crew-list__meta">
-                <StatusCell row={row} />
+                <StatusBadge group="contract" value={row.status} />
                 <b className="ds-num">{formatDiff(row.diff_monthly)}</b>
               </span>
             </button>
@@ -154,7 +178,7 @@ export default function ContractListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -164,22 +188,44 @@ export default function ContractListPage() {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
-          {can('partner.view') ? (
-          <Select
-            className="vy-owner-filter"
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Tất cả chủ tàu"
-            aria-label="Lọc theo chủ tàu"
-            value={ownerId}
-            loading={owners.isLoading}
-            options={(owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
-            onChange={(value) => { setOwnerId(value); setPage(1) }}
-          />
-          ) : null}
-          <span className="ds-toolbar__end">{createButton}</span>
+          <span className="ds-toolbar__end">
+            <CrewFilterButton count={filterCount} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+            {createButton}
+          </span>
         </div>
+        {filtersOpen ? (
+          <div className="crew-filterbar" id="crew-filter-bar">
+            {can('partner.view') ? filterSelect('ship_owner_id', 'Chủ tàu', {
+              placeholder: 'Chọn chủ tàu',
+              'aria-label': 'Lọc theo chủ tàu',
+              loading: owners.isLoading,
+              options: (owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name })),
+            }) : null}
+            {filterSelect('vessel_id', 'Tàu', {
+              placeholder: 'Chọn tàu',
+              'aria-label': 'Lọc theo tàu',
+              filterOption: false,
+              onSearch: setVesselSearch,
+              loading: vessels.isLoading,
+              options: (vessels.data || []).map((v) => ({ value: v.id, label: v.vessel_name })),
+            })}
+            {can('seafarer.view') ? filterSelect('seafarer_id', 'Thuyền viên', {
+              placeholder: 'Tìm thuyền viên',
+              'aria-label': 'Lọc theo thuyền viên',
+              filterOption: false,
+              onSearch: setPersonSearch,
+              loading: people.isLoading,
+              options: (people.data || []).map((p) => ({ value: p.id, label: p.full_name })),
+            }) : null}
+            {filterSelect('rank_id', 'Chức danh', {
+              placeholder: 'Chọn chức danh',
+              'aria-label': 'Lọc theo chức danh',
+              loading: ranks.isLoading,
+              options: (ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi })),
+            })}
+            <Button className="crew-filterbar__clear" disabled={!filterCount} onClick={() => { setFilters({}); setPage(1) }}>Xoá bộ lọc</Button>
+          </div>
+        ) : null}
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="hợp đồng" note="Số tiền tính bằng USD" onChange={(next, size) => { setPage(next); setPageSize(size) }} />

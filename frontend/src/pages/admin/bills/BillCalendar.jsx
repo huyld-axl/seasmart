@@ -7,7 +7,7 @@ import './bills.css'
 
 const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 const WEEKDAY_SHORT = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
-const STATUS_TEXT = { UPCOMING: 'chưa đến kỳ', TO_SEND: 'cần gửi', SENT: 'đã gửi', OVERDUE: 'quá hạn', PAID: 'đã thu' }
+const STATUS_TEXT = { UPCOMING: 'chưa đến kỳ', TO_APPROVE: 'cần duyệt', TO_SEND: 'cần gửi', SENT: 'đã gửi', OVERDUE: 'quá hạn', PAID: 'đã thu' }
 
 // Các tháng từ tháng bắt đầu kỳ đầu tới tháng của hạn thanh toán cuối.
 function monthsOf(periods) {

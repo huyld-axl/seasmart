@@ -100,6 +100,7 @@ export const STATUS = {
   // Yêu cầu thanh toán: display_status do máy chủ tính từ ngày chốt sổ và hạn thanh toán.
   bill: {
     UPCOMING: { label: 'Chưa đến kỳ', tone: 'neutral', mark: 'ring' },
+    TO_APPROVE: { label: 'Cần duyệt', tone: 'warning', mark: 'clock' },
     TO_SEND: { label: 'Cần gửi', tone: 'warning', mark: 'send' },
     SENT: { label: 'Đã gửi', tone: 'neutral', mark: 'ring-dot' },
     OVERDUE: { label: 'Quá hạn', tone: 'error', mark: 'clock' },

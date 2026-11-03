@@ -202,11 +202,11 @@ export function candidateTags(person, opportunity, formatDate) {
 
 // ---------- Chặng của từng ứng viên ----------
 
-// Ba chặng: ráp hồ sơ (có bộ giấy) → gửi chủ tàu → chủ tàu chọn. states: done | next (chặng chưa xong đầu tiên) | todo | complete (xong cả ba).
+// Ba chặng: ráp hồ sơ (có bộ giấy) → gửi chủ tàu → chủ tàu chọn. states: done | next (chặng chưa xong đầu tiên) | todo | complete (chủ tàu đã chọn là chặng cuối, nên nhảy cóc vẫn tính xong cả chuỗi).
 export function candidateStages(candidate) {
   const dates = [candidate.export_pack?.created_at ?? null, candidate.last_sent_at ?? null, candidate.owner_selected_at ?? null]
   const done = dates.map(Boolean)
-  const all = done.every(Boolean)
+  const all = done[2]
   const nextIndex = done.indexOf(false)
   const states = done.map((isDone, i) => (all ? 'complete' : isDone ? 'done' : i === nextIndex ? 'next' : 'todo'))
   return { states, dates }

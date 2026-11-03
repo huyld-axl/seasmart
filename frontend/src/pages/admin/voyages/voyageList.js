@@ -25,10 +25,10 @@ export function leaveCell(row, formatDate) {
   return { date: row.planned_leave_date, sub: moved ? `đã dời từ ${formatDate(row.original_leave_date)}` : 'dự kiến' }
 }
 
-// Nguồn: mã cơ hội, hoặc "Tạo tay · {lý do}".
+// Nguồn: mã cơ hội, hoặc "Tạo tay" (lý do xem ở trang chi tiết).
 export function sourceText(row) {
   if (row.source === 'OPPORTUNITY') return row.opportunity_code || 'Từ cơ hội'
-  return row.manual_reason ? `Tạo tay · ${MANUAL_REASON_LABELS[row.manual_reason] || row.manual_reason}` : 'Tạo tay'
+  return 'Tạo tay'
 }
 
 // Nhãn sớm / muộn của ngày rời so với dự kiến, hiện dưới ô ngày trong hộp Ghi rời tàu.

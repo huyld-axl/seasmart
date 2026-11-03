@@ -82,6 +82,7 @@ export function useVoyageMutations() {
   const options = { onSuccess: refresh }
   return {
     create: useMutation({ mutationFn: (values) => voyageApi.create(values), ...options }),
+    editNotes: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.editNotes(id, body), ...options }),
     editDates: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.editDates(id, body), ...options }),
     leavePlan: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.leavePlan(id, body), ...options }),
     leave: useMutation({ mutationFn: ({ id, ...body }) => voyageApi.leave(id, body), ...options }),
@@ -138,5 +139,6 @@ export function useBillMutations() {
   return {
     save: useMutation({ mutationFn: ({ id, ...body }) => billApi.update(id, body), ...options }),
     move: useMutation({ mutationFn: ({ id, action, ...body }) => billApi.move(id, action, body), ...options }),
+    unapproveMany: useMutation({ mutationFn: (ids) => billApi.unapproveMany(ids), ...options }),
   }
 }

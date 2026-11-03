@@ -78,7 +78,7 @@ export function toFormValues(voyage) {
   }
 }
 
-// Giá trị form -> body gửi API. Ngày thực tế chỉ gửi khi chuyến đã bắt đầu (`started`).
+// Giá trị form -> body gửi API. Ngày thực tế chỉ gửi khi chuyến đã bắt đầu (`started`) .
 export function toPayload(values, { started = false } = {}) {
   const payload = {
     vessel_id: values.vessel_id,

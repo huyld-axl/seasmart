@@ -1,6 +1,6 @@
 const { paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
-const { nextCode } = require('../utils/code_counter')
+const { uniqueCode } = require('../utils/code_counter')
 const crypto = require('crypto')
 const { splitPeriods, dueDate, round2, planBillChanges } = require('../utils/voyage_math')
 const { DEFAULT_ITEMS, BILL_DISPLAY_STATUSES } = require('../constants/voyage_contract')
@@ -10,14 +10,15 @@ const AMOUNT_FIELD = { RECEIVABLE: 'receivable_usd', PAYABLE: 'payable_usd' }
 const MAX_ADJUSTMENTS = 20
 const num = (v) => (v == null ? null : Number(v))
 
-const STATUS_LABELS = { OPEN: 'Chưa gửi', SENT: 'Đã gửi', PAID: 'Đã thu' }
+const STATUS_LABELS = { OPEN: 'Chưa duyệt', APPROVED: 'Đã duyệt', SENT: 'Đã gửi', PAID: 'Đã thu' }
 
 // Trạng thái hiển thị tính trong SQL để lọc tab và đếm (cùng quy tắc với billDisplayStatus).
 const DISPLAY_SQL = `CASE
     WHEN b.status = 'PAID' THEN 'PAID'
     WHEN b.status = 'SENT' THEN CASE WHEN CURRENT_DATE > b.due_date THEN 'OVERDUE' ELSE 'SENT' END
+    WHEN b.status = 'APPROVED' THEN 'TO_SEND'
     WHEN CURRENT_DATE < b.period_end THEN 'UPCOMING'
-    ELSE 'TO_SEND' END`
+    ELSE 'TO_APPROVE' END`
 const TOTAL_SQL = '(SELECT COALESCE(SUM(i.amount_usd), 0) FROM contract_bill_item i WHERE i.bill_id = b.id)'
 
 // Tàu, chủ tàu, chức danh lấy từ chuyến mới; hợp đồng cũ chưa nối chuyến rơi về vị trí / chuyến cũ.
@@ -82,7 +83,8 @@ async function loadGeneration(conn, contractId, side) {
 
 // Ghi một bill mới (kỳ, hạn, dòng tiền đủ tháng) kèm log CREATE. withOneTime: kèm các khoản một lần.
 async function insertBill(conn, { contractId, side, seq, start, end, due, lines, withOneTime, createdBy, actorId }) {
-  const code = await nextCode(conn, 'BILL', new Date().getUTCFullYear(), 'TT', 5)
+  const [[contract]] = await conn.query('SELECT contract_number FROM seafarer_contract WHERE id = ?', [contractId])
+  const code = await uniqueCode(conn, 'contract_bill', 'code', `${contract.contract_number}/${side === 'PAYABLE' ? 'C' : 'T'}${seq}`)
   const [result] = await conn.query('INSERT INTO contract_bill SET ?', [{
     code, contract_id: contractId, side, seq, period_start: start, period_end: end, due_date: due, status: 'OPEN',
     created_by: createdBy ?? null, updated_by: actorId ?? null,
@@ -99,7 +101,9 @@ async function insertBill(conn, { contractId, side, seq, start, end, due, lines,
 
 // Bảng chuyển trạng thái. `collect` cần ngày thu.
 const TRANSITIONS = {
-  send: { from: 'OPEN', to: 'SENT', log: 'SEND' },
+  approve: { from: 'OPEN', to: 'APPROVED', log: 'APPROVE' },
+  unapprove: { from: 'APPROVED', to: 'OPEN', log: 'UNAPPROVE' },
+  send: { from: 'APPROVED', to: 'SENT', log: 'SEND' },
   unsend: { from: 'SENT', to: 'OPEN', log: 'UNSEND' },
   collect: { from: 'SENT', to: 'PAID', log: 'COLLECT' },
   uncollect: { from: 'PAID', to: 'SENT', log: 'UNCOLLECT' },
@@ -288,7 +292,20 @@ const contractBillService = {
     return this.get(pool, id)
   },
 
-  // action: send | unsend | collect | uncollect. extra: { paid_date } cho collect.
+  // Bỏ duyệt nhiều bill một lần (hộp duyệt lại hợp đồng). Mọi bill phải đang Đã duyệt, không thì không bỏ bill nào.
+  async unapproveMany(pool, ids, userId) {
+    await withTransaction(pool, async (conn) => {
+      const [rows] = await conn.query('SELECT id, code, status FROM contract_bill WHERE id IN (?) AND deleted_at IS NULL FOR UPDATE', [ids])
+      if (rows.length !== new Set(ids).size) throw { statusCode: 404, message: 'Không tìm thấy yêu cầu thanh toán' }
+      const wrong = rows.filter((row) => row.status !== 'APPROVED')
+      if (wrong.length) throw { statusCode: 409, message: `Không bỏ duyệt được: ${wrong.map((b) => `${b.code} (${STATUS_LABELS[b.status]})`).join(', ')}` }
+      await conn.query('UPDATE contract_bill SET status = \'OPEN\', approved_at = NULL, approved_by = NULL, updated_by = ? WHERE id IN (?)', [userId ?? null, ids])
+      for (const row of rows) await writeLog(conn, row.id, 'UNAPPROVE', userId)
+    })
+    return { success: true, count: ids.length }
+  },
+
+  // action: approve | unapprove | send | unsend | collect | uncollect. extra: { paid_date } cho collect.
   async transition(pool, id, action, extra = {}, userId) {
     const rule = TRANSITIONS[action]
     await withTransaction(pool, async (conn) => {
@@ -297,13 +314,23 @@ const contractBillService = {
         [id]
       )
       if (!bill) throw { statusCode: 404, message: 'Không tìm thấy yêu cầu thanh toán' }
-      if (bill.status !== rule.from) throw { statusCode: 409, message: `Không thực hiện được: yêu cầu thanh toán đang ở trạng thái ${STATUS_LABELS[bill.status]}` }
+      if (bill.status !== rule.from) {
+        const hint = action === 'send' && bill.status === 'OPEN' ? '. Cần duyệt trước khi gửi' : ''
+        throw { statusCode: 409, message: `Không thực hiện được: yêu cầu thanh toán đang ở trạng thái ${STATUS_LABELS[bill.status]}${hint}` }
+      }
       const fields = { status: rule.to, updated_by: userId ?? null }
+      if (action === 'approve') {
+        if (bill.today < String(bill.period_end).slice(0, 10)) throw { statusCode: 409, message: 'Chưa đến ngày chốt sổ của kỳ này, chưa duyệt được' }
+        const [[editor]] = await conn.query('SELECT actor_id FROM contract_bill_log WHERE bill_id = ? AND action = \'UPDATE\' ORDER BY id DESC LIMIT 1', [id])
+        if (editor && userId != null && editor.actor_id === userId) throw { statusCode: 409, message: 'Người đã sửa yêu cầu thanh toán không được tự duyệt, nhờ người khác duyệt' }
+        Object.assign(fields, { approved_at: new Date(), approved_by: userId ?? null })
+      }
+      if (action === 'unapprove') Object.assign(fields, { approved_at: null, approved_by: null })
       if (action === 'send') {
         if (bill.today < String(bill.period_end).slice(0, 10)) throw { statusCode: 409, message: 'Chưa đến ngày chốt sổ của kỳ này' }
         Object.assign(fields, { sent_at: new Date(), sent_by: userId ?? null })
       }
-      if (action === 'unsend') Object.assign(fields, { sent_at: null, sent_by: null })
+      if (action === 'unsend') Object.assign(fields, { sent_at: null, sent_by: null, approved_at: null, approved_by: null })
       if (action === 'collect') {
         const paidDate = extra.paid_date || bill.today
         if (paidDate > bill.today) throw { statusCode: 400, message: 'Ngày thu không được sau hôm nay' }

@@ -46,7 +46,7 @@ const createRoutes = (over = {}) => [
   ['FROM seafarer_voyage sv JOIN seafarer s', () => [over.voyage === null ? [] : [{ id: 4, code: 'CT-2026-0004', seafarer_id: 2, seafarer_status: 'ON_VESSEL', ...over.voyage }]]],
   ['SELECT contract_number FROM seafarer_contract WHERE seafarer_voyage_id', () => [over.taken ? [{ contract_number: 'HĐ-2026-0003' }] : []]],
   ['c.contract_number, s.full_name', () => [over.overlap ?? []]],
-  ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 142 }] }]],
+  ['AS taken', () => [[{ taken: 0 }]]],
   ['INSERT INTO seafarer_contract SET', () => [{ insertId: 9, rows: [{ id: 9 }] }]],
   ...detailRoutes(),
 ]
@@ -63,13 +63,12 @@ const planRoutes = (bills = BILLS, contract = { id: 9, start_date: '2027-01-01',
 ]
 
 describe('seafarer_contract.service', () => {
-  it('tạo hợp đồng: số HĐ-năm-0142, đủ 12 khoản mặc định, 2 kỳ thanh toán, gắn chuyến, log CREATE', async () => {
+  it('tạo hợp đồng: số {mã chuyến}/HĐ, đủ 12 khoản mặc định, 2 kỳ thanh toán, gắn chuyến, log CREATE', async () => {
     const pool = fakePool(createRoutes())
     await service.create(pool, createBody({
       items: [{ item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 }, { custom_name: ' Phụ cấp tàu ', kind: 'MONTHLY', receivable_usd: 10 }],
     }), 5)
-    const year = new Date().getUTCFullYear()
-    expect(inserts(pool, 'seafarer_contract')[0].params[0]).toMatchObject({ contract_number: `HĐ-${year}-0142`, status: 'DRAFT', seafarer_voyage_id: 4, created_by: 5 })
+    expect(inserts(pool, 'seafarer_contract')[0].params[0]).toMatchObject({ contract_number: 'CT-2026-0004/HĐ', status: 'DRAFT', seafarer_voyage_id: 4, created_by: 5 })
     const items = inserts(pool, 'contract_item').map((c) => c.params[0])
     expect(items).toHaveLength(13)
     expect(items.filter((i) => i.item_code)).toHaveLength(12)
@@ -240,7 +239,8 @@ describe('seafarer_contract.service', () => {
       ...planRoutes(bills, contract),
       ['SELECT item_code, custom_name, kind', () => [[{ item_code: 'BASIC_WAGE', custom_name: null, kind: 'MONTHLY', receivable_usd: '1650', payable_usd: null }]]],
       ['SELECT created_by FROM seafarer_contract', () => [[{ created_by: 3 }]]],
-      ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 77 }] }]],
+      ['AS taken', () => [[{ taken: 0 }]]],
+      ['SELECT contract_number FROM seafarer_contract WHERE id', () => [[{ contract_number: 'CT-2026-0004/HĐ' }]]],
       ['INSERT INTO contract_bill SET', () => [{ insertId: 500, rows: [{ id: 500 }] }]],
       ...detailRoutes(),
     ])

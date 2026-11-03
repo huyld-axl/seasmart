@@ -26,7 +26,7 @@ describe('voyageList', () => {
 
   it('nguồn', () => {
     expect(sourceText({ source: 'OPPORTUNITY', opportunity_code: 'CH26004' })).toBe('CH26004')
-    expect(sourceText({ source: 'MANUAL', manual_reason: 'TRANSFER' })).toBe('Tạo tay · Chuyển tàu')
+    expect(sourceText({ source: 'MANUAL', manual_reason: 'TRANSFER' })).toBe('Tạo tay')
     expect(sourceText({ source: 'MANUAL' })).toBe('Tạo tay')
   })
 

@@ -57,7 +57,14 @@ async function contractBillRoutes(fastify) {
     await inScope(request)
     return contractBillService.update(pool, request.params.id, request.body, request.user.id)
   })
-  const perm = { send: 'send', unsend: 'send', collect: 'collect', uncollect: 'collect' }
+  fastify.post('/bulk-unapprove', {
+    ...can('approve'),
+    schema: { body: { type: 'object', required: ['ids'], properties: { ids: { type: 'array', minItems: 1, maxItems: 100, uniqueItems: true, items: id } } } },
+  }, async (request) => {
+    for (const billId of request.body.ids) await assertRecordInScope(request, 'bill', billId, NOT_FOUND)
+    return contractBillService.unapproveMany(pool, request.body.ids, request.user.id)
+  })
+  const perm = { approve: 'approve', unapprove: 'approve', send: 'send', unsend: 'send', collect: 'collect', uncollect: 'collect' }
   for (const action of Object.keys(perm)) {
     const schema = action === 'collect' ? { body: collectBody } : {}
     fastify.post(`/:id/${action}`, { ...can(perm[action]), schema: { params: idParams, ...schema } }, async (request) => {

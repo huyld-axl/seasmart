@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { App, Button, DatePicker, Dropdown, Form, Modal, Skeleton, Tooltip } from 'antd'
+import { App, Button, Dropdown, Skeleton, Tooltip } from 'antd'
 import { CheckOutlined, EditOutlined, MoreOutlined, RollbackOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import AuditTimeline from '../../../components/ds/AuditTimeline'
@@ -13,6 +13,7 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatDateTime, formatUsd } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
 import BillCalendar from './BillCalendar'
+import CollectModal from './CollectModal'
 import BillMoneyTable from './BillMoneyTable'
 import { closingLabel, groupItems, overdueLabel, payLabel } from './billView'
 import '../seafarers/SeafarerListPage.css'
@@ -26,6 +27,8 @@ const WEEKDAY = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 const LOG_VIEW = {
   CREATE: { title: 'Tạo khi duyệt hợp đồng', kind: 'upload', tone: 'neutral' },
   UPDATE: { title: 'Sửa số tiền', kind: 'edit', tone: 'neutral' },
+  APPROVE: { title: 'Duyệt', kind: 'accept', tone: 'success' },
+  UNAPPROVE: { title: 'Bỏ duyệt', kind: 'withdraw', tone: 'neutral' },
   SEND: { title: 'Đánh dấu đã gửi', kind: 'export', tone: 'warning' },
   UNSEND: { title: 'Thu hồi', kind: 'withdraw', tone: 'neutral' },
   COLLECT: { title: 'Ghi nhận đã thu', kind: 'accept', tone: 'success' },
@@ -51,34 +54,6 @@ function AmountRow({ label, value, note }) {
         {note ? <span className="ct-card-row__note">{note}</span> : null}
       </span>
     </div>
-  )
-}
-
-// Hộp thoại ghi nhận đã thu: chọn ngày tiền về, mặc định hôm nay, không sau hôm nay.
-function CollectModal({ bill, open, pending, onCancel, onConfirm }) {
-  const [form] = Form.useForm()
-  return (
-    <Modal
-      open={open}
-      title={`Ghi nhận đã thu ${bill.code}?`}
-      okText="Ghi nhận đã thu"
-      cancelText="Huỷ"
-      confirmLoading={pending}
-      onCancel={onCancel}
-      onOk={() => form.validateFields().then((values) => onConfirm(values.paid_date.format('YYYY-MM-DD')))}
-      destroyOnHidden
-    >
-      <Form form={form} layout="vertical" requiredMark initialValues={{ paid_date: dayjs() }}>
-        <Form.Item
-          name="paid_date"
-          label="Ngày thu"
-          rules={[{ required: true, message: 'Chọn ngày thu' }]}
-          extra={`${bill.ship_owner.company_name} · ${formatUsd(bill.total_usd, { fixed: true })} USD. Ghi khi đã nhận đủ tiền.`}
-        >
-          <DatePicker format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs(), 'day')} />
-        </Form.Item>
-      </Form>
-    </Modal>
   )
 }
 
@@ -130,8 +105,9 @@ export default function BillDetailPage() {
     modal.confirm({ title, content, okText, cancelText: 'Huỷ', onOk: () => run(action, message) })
   }
 
-  const unsend = () => confirm(`Thu hồi ${bill.code}?`, `Yêu cầu thanh toán về Chưa gửi để sửa. Nếu đã gửi cho ${bill.ship_owner.company_name}, báo họ bản đã gửi không còn dùng.`, 'Thu hồi', 'unsend', `Đã thu hồi ${bill.code}`)
+  const unsend = () => confirm(`Thu hồi ${bill.code}?`, `Yêu cầu thanh toán về Chưa duyệt để sửa và duyệt lại. Nếu đã gửi cho ${bill.ship_owner.company_name}, báo họ bản đã gửi không còn dùng.`, 'Thu hồi', 'unsend', `Đã thu hồi ${bill.code}`)
   const uncollect = () => confirm(`Huỷ ghi nhận đã thu ${bill.code}?`, 'Yêu cầu thanh toán về Đã gửi.', 'Huỷ ghi nhận', 'uncollect', `Đã huỷ ghi nhận đã thu ${bill.code}`)
+  const unapprove = () => confirm(`Bỏ duyệt ${bill.code}?`, 'Yêu cầu thanh toán về Chưa duyệt để sửa. Gửi lại được sau khi duyệt lại.', 'Bỏ duyệt', 'unapprove', `Đã bỏ duyệt ${bill.code}`)
   const more = (key, label, icon, onClick) => (
     <Dropdown key="more" menu={{ items: [{ key, icon, label }], onClick }} trigger={['click']} placement="bottomRight">
       <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
@@ -139,18 +115,22 @@ export default function BillDetailPage() {
   )
   const edit = can('bill.update') ? <Button key="edit" icon={<EditOutlined />} onClick={() => navigate(`/bills/${bill.id}/edit`)}>Sửa</Button> : null
   const send = can('bill.send') ? (
+    <Button key="send" type="primary" icon={<SendOutlined />} loading={move.isPending} onClick={() => run('send', `Đã đánh dấu gửi ${bill.code}`)}>Đánh dấu đã gửi</Button>
+  ) : null
+  const approve = can('bill.approve') ? (
     display === 'UPCOMING' ? (
-      <Tooltip key="send" title={`Gửi được từ ngày chốt sổ ${formatDate(bill.period_end)}`}>
-        <Button type="primary" icon={<SendOutlined />} disabled>Đánh dấu đã gửi</Button>
+      <Tooltip key="approve" title={`Duyệt được từ ngày chốt sổ ${formatDate(bill.period_end)}`}>
+        <Button type="primary" icon={<CheckOutlined />} disabled>Duyệt</Button>
       </Tooltip>
     ) : (
-      <Button key="send" type="primary" icon={<SendOutlined />} loading={move.isPending} onClick={() => run('send', `Đã đánh dấu gửi ${bill.code}`)}>Đánh dấu đã gửi</Button>
+      <Button key="approve" type="primary" icon={<CheckOutlined />} loading={move.isPending} onClick={() => run('approve', `Đã duyệt ${bill.code}`)}>Duyệt</Button>
     )
   ) : null
   const collect = can('bill.collect') ? <Button key="collect" type="primary" icon={<CheckOutlined />} onClick={() => setCollecting(true)}>Ghi nhận đã thu</Button> : null
   const actions = {
-    UPCOMING: [edit, send],
-    TO_SEND: [edit, send],
+    UPCOMING: [edit, approve],
+    TO_APPROVE: [edit, approve],
+    TO_SEND: [can('bill.approve') ? more('unapprove', 'Bỏ duyệt', <RollbackOutlined />, unapprove) : null, send],
     SENT: [can('bill.send') ? more('unsend', 'Thu hồi', <RollbackOutlined />, unsend) : null, collect],
     OVERDUE: [can('bill.send') ? more('unsend', 'Thu hồi', <RollbackOutlined />, unsend) : null, collect],
     PAID: [can('bill.collect') ? more('uncollect', 'Huỷ ghi nhận đã thu', <UndoOutlined />, uncollect) : null],

@@ -22,11 +22,11 @@ function fakePool(routes) {
 const inserts = (pool, table) => pool.calls.filter((c) => c.sql.startsWith(`INSERT INTO ${table} `)).map((c) => c.params[0])
 
 const generateRoutes = (over = {}) => {
-  let counter = 0
   let billId = 100
   return [
     ['SELECT 1 FROM contract_bill WHERE contract_id', () => [over.existing ? [{ '?column?': 1 }] : []]],
-    ['FROM seafarer_contract WHERE id', () => [[{ id: 9, start_date: '2026-03-12', end_date: '2026-06-11', created_by: 5 }]]],
+    ['FROM seafarer_contract WHERE id', () => [[{ id: 9, contract_number: 'CH2601-01/HĐ', start_date: '2026-03-12', end_date: '2026-06-11', created_by: 5 }]]],
+    ['AS taken', () => [[{ taken: 0 }]]],
     ['FROM contract_payment_term', () => [[{ closing_day: 25, pay_day: 10, pay_month_offset: 1, holiday_rule: 'AFTER' }]]],
     ['FROM contract_item WHERE', () => [[
       { item_code: 'BASIC_WAGE', kind: 'MONTHLY', receivable_usd: '1150', payable_usd: '1050' },
@@ -34,7 +34,6 @@ const generateRoutes = (over = {}) => {
       { item_code: 'FLIGHT_OUT', kind: 'ONE_TIME', receivable_usd: '650', payable_usd: null },
       { item_code: null, custom_name: 'Phụ cấp tàu', kind: 'MONTHLY', receivable_usd: '50', payable_usd: '50' },
     ]]],
-    ['INSERT INTO "code_counter"', () => { counter += 1; return [{ rows: [{ last_value: counter }] }] }],
     ['INSERT INTO contract_bill SET', () => { billId += 1; return [{ insertId: billId }] }],
   ]
 }
@@ -45,14 +44,13 @@ describe('contract_bill.service', () => {
     const made = await service.generateForContract(pool, 9, 'RECEIVABLE', 3)
     expect(made).toBe(4)
     const bills = inserts(pool, 'contract_bill')
-    const year = new Date().getUTCFullYear()
     expect(bills.map((b) => [b.seq, b.period_start, b.period_end, b.due_date])).toEqual([
       [1, '2026-03-12', '2026-03-25', '2026-04-10'],
       [2, '2026-03-26', '2026-04-25', '2026-05-11'],
       [3, '2026-04-26', '2026-05-25', '2026-06-10'],
       [4, '2026-05-26', '2026-06-11', '2026-07-10'],
     ])
-    expect(bills[0]).toMatchObject({ code: `TT-${year}-00001`, status: 'OPEN', side: 'RECEIVABLE', created_by: 5 })
+    expect(bills[0]).toMatchObject({ code: 'CH2601-01/HĐ/T1', status: 'OPEN', side: 'RECEIVABLE', created_by: 5 })
     const items = inserts(pool, 'contract_bill_item')
     expect(items.filter((i) => i.bill_id === 101).map((i) => [i.name, i.amount_usd])).toEqual([['Lương cơ bản', 1150], ['Vé máy bay đi', 650], ['Phụ cấp tàu', 50]])
     expect(items.filter((i) => i.bill_id === 102).map((i) => i.name)).toEqual(['Lương cơ bản', 'Phụ cấp tàu'])
@@ -101,7 +99,7 @@ describe('contract_bill.service', () => {
   const updated = (pool) => pool.calls.find((c) => c.sql.startsWith('UPDATE contract_bill SET'))?.params[0]
 
   it('chuyển trạng thái: gửi khi đã tới ngày chốt, thu với ngày thu, thu hồi, huỷ ghi nhận', async () => {
-    let pool = fakePool(moveRoutes({ status: 'OPEN', period_end: '2026-10-21' }))
+    let pool = fakePool(moveRoutes({ status: 'APPROVED', period_end: '2026-10-21' }))
     await service.transition(pool, 7, 'send', {}, 4).catch(() => {})
     expect(updated(pool)).toMatchObject({ status: 'SENT', sent_by: 4 })
     pool = fakePool(moveRoutes({ status: 'SENT' }))
@@ -109,14 +107,66 @@ describe('contract_bill.service', () => {
     expect(updated(pool)).toMatchObject({ status: 'PAID', paid_date: '2026-10-20', paid_by: 4 })
     pool = fakePool(moveRoutes({ status: 'SENT' }))
     await service.transition(pool, 7, 'unsend', {}, 4).catch(() => {})
-    expect(updated(pool)).toMatchObject({ status: 'OPEN', sent_at: null })
+    expect(updated(pool)).toMatchObject({ status: 'OPEN', sent_at: null, approved_at: null })
     pool = fakePool(moveRoutes({ status: 'PAID' }))
     await service.transition(pool, 7, 'uncollect', {}, 4).catch(() => {})
     expect(updated(pool)).toMatchObject({ status: 'SENT', paid_date: null })
   })
 
+  describe('duyệt bill', () => {
+    const approveRoutes = (bill, editor) => [
+      ...moveRoutes(bill),
+      ['FROM contract_bill_log WHERE bill_id = ? AND action', () => [editor ? [{ actor_id: editor }] : []]],
+    ]
+
+    it('duyệt từ ngày chốt sổ: lưu người và giờ duyệt, ghi log APPROVE', async () => {
+      const pool = fakePool(approveRoutes({ status: 'OPEN', period_end: '2026-10-21' }, 3))
+      await service.transition(pool, 7, 'approve', {}, 4).catch(() => {})
+      expect(updated(pool)).toMatchObject({ status: 'APPROVED', approved_by: 4 })
+      expect(inserts(pool, 'contract_bill_log').map((l) => l.action)).toContain('APPROVE')
+    })
+
+    it('bill chưa ai sửa thì ai có quyền cũng duyệt được', async () => {
+      const pool = fakePool(approveRoutes({ status: 'OPEN', period_end: '2026-10-21' }, null))
+      await service.transition(pool, 7, 'approve', {}, 4).catch(() => {})
+      expect(updated(pool)).toMatchObject({ status: 'APPROVED' })
+    })
+
+    it('chưa tới ngày chốt sổ thì chưa duyệt được', async () => {
+      await expect(service.transition(fakePool(approveRoutes({ status: 'OPEN' }, null)), 7, 'approve', {}, 4))
+        .rejects.toMatchObject({ statusCode: 409, message: 'Chưa đến ngày chốt sổ của kỳ này, chưa duyệt được' })
+    })
+
+    it('người đã sửa bill không được tự duyệt', async () => {
+      await expect(service.transition(fakePool(approveRoutes({ status: 'OPEN', period_end: '2026-10-21' }, 4)), 7, 'approve', {}, 4))
+        .rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('không được tự duyệt') })
+    })
+
+    it('bỏ duyệt: về Chưa duyệt, xoá người duyệt; bill đã gửi thì không bỏ duyệt được', async () => {
+      const pool = fakePool(moveRoutes({ status: 'APPROVED' }))
+      await service.transition(pool, 7, 'unapprove', {}, 4).catch(() => {})
+      expect(updated(pool)).toMatchObject({ status: 'OPEN', approved_at: null, approved_by: null })
+      await expect(service.transition(fakePool(moveRoutes({ status: 'SENT' })), 7, 'unapprove', {}, 4)).rejects.toMatchObject({ statusCode: 409 })
+    })
+
+    it('sửa số tiền chỉ khi chưa duyệt', async () => {
+      const pool = fakePool([['FROM contract_bill WHERE id', () => [[{ id: 7, status: 'APPROVED', period_start: '2026-10-01' }]]]])
+      await expect(service.update(pool, 7, { items: [] }, 4)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('Đã duyệt') })
+    })
+
+    it('bỏ duyệt hàng loạt: tất cả phải Đã duyệt, không thì không bỏ bill nào', async () => {
+      const bad = fakePool([['FROM contract_bill WHERE id IN', () => [[{ id: 1, code: 'A', status: 'APPROVED' }, { id: 2, code: 'B', status: 'SENT' }]]]])
+      await expect(service.unapproveMany(bad, [1, 2], 4)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('B (Đã gửi)') })
+      expect(bad.calls.some((c) => c.sql.startsWith('UPDATE contract_bill SET'))).toBe(false)
+      const good = fakePool([['FROM contract_bill WHERE id IN', () => [[{ id: 1, code: 'A', status: 'APPROVED' }, { id: 2, code: 'B', status: 'APPROVED' }]]]])
+      await service.unapproveMany(good, [1, 2], 4)
+      expect(good.calls.some((c) => c.sql.includes("SET status = 'OPEN', approved_at = NULL"))).toBe(true)
+    })
+  })
+
   it('chuyển trạng thái sai: chưa tới ngày chốt, ngày thu tương lai, sai trạng thái', async () => {
-    await expect(service.transition(fakePool(moveRoutes({ status: 'OPEN' })), 7, 'send')).rejects.toMatchObject({ statusCode: 409, message: 'Chưa đến ngày chốt sổ của kỳ này' })
+    await expect(service.transition(fakePool(moveRoutes({ status: 'APPROVED' })), 7, 'send')).rejects.toMatchObject({ statusCode: 409, message: 'Chưa đến ngày chốt sổ của kỳ này' })
+    await expect(service.transition(fakePool(moveRoutes({ status: 'OPEN', period_end: '2026-10-21' })), 7, 'send')).rejects.toMatchObject({ statusCode: 409, message: 'Không thực hiện được: yêu cầu thanh toán đang ở trạng thái Chưa duyệt. Cần duyệt trước khi gửi' })
     await expect(service.transition(fakePool(moveRoutes({ status: 'SENT' })), 7, 'collect', { paid_date: '2026-10-22' })).rejects.toMatchObject({ statusCode: 400 })
     await expect(service.transition(fakePool(moveRoutes({ status: 'PAID' })), 7, 'send')).rejects.toMatchObject({ statusCode: 409, message: 'Không thực hiện được: yêu cầu thanh toán đang ở trạng thái Đã thu' })
   })

@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
-import { SearchOutlined } from '@ant-design/icons'
+import { Button, Grid, Input, Select, Skeleton, Table, Tooltip } from 'antd'
+import { CheckOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
-import { useBillList } from '../../../hooks/useVoyages'
+import { useBillList, useBillMutations } from '../../../hooks/useVoyages'
+import useToast from '../../../components/ds/useToast'
+import apiErrorText from '../../../utils/apiError'
+import CollectModal from './CollectModal'
 import { formatDate, formatUsd } from '../../../utils/format'
 import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
@@ -20,6 +23,7 @@ import { overdueLabel } from './billView'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
+  { value: 'TO_APPROVE', label: 'Cần duyệt' },
   { value: 'TO_SEND', label: 'Cần gửi' },
   { value: 'OVERDUE', label: 'Quá hạn' },
   { value: 'SENT', label: 'Đã gửi' },
@@ -30,17 +34,20 @@ const TABS = [
 // Link trong dòng bảng: bấm link không mở bill.
 const stop = (event) => event.stopPropagation()
 
-// Danh sách yêu cầu thanh toán: không có nút tạo, bill sinh khi duyệt hợp đồng. Mặc định mở tab Cần gửi.
+// Danh sách yêu cầu thanh toán: không có nút tạo, bill sinh khi duyệt hợp đồng. Mặc định mở tab Cần duyệt (người có quyền duyệt) hoặc Cần gửi.
 export default function BillListPage({ shipOwnerId } = {}) {
   const can = useCan()
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
-  const [tab, setTab] = useState(shipOwnerId ? 'all' : 'TO_SEND')
+  const [tab, setTab] = useState(shipOwnerId ? 'all' : can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND')
   const [search, setSearch] = useState('')
   const [ownerId, setOwnerId] = useState()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
+  const [collecting, setCollecting] = useState(null)
   const tableScroll = useListSticky()
+  const toast = useToast()
+  const { move } = useBillMutations()
   const keyword = search.trim()
 
   const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: !shipOwnerId && can('partner.view') })
@@ -52,6 +59,44 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const open = (row) => navigate(`/bills/${row.id}`)
   const filtered = Boolean(keyword || ownerId)
   const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPage(1) }
+  async function run(row, action, message, body = {}) {
+    try {
+      await move.mutateAsync({ id: row.id, action, ...body })
+      toast.success(message)
+      return true
+    } catch (error) {
+      toast.error(`Không cập nhật được ${row.code}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+      return false
+    }
+  }
+  // Nút thao tác nhanh: Cần duyệt → Duyệt; Cần gửi → Gửi; Đã gửi / Quá hạn → Ghi nhận đã thu. Các trạng thái khác chừa ô trống cho thẳng cột.
+  const quickAction = (row) => {
+    if (row.display_status === 'TO_APPROVE' && can('bill.approve')) {
+      return (
+        <Tooltip title="Duyệt">
+          <Button type="text" size="small" icon={<CheckOutlined />} aria-label={`Duyệt ${row.code}`} disabled={move.isPending}
+            onClick={(event) => { event.stopPropagation(); run(row, 'approve', `Đã duyệt ${row.code}`) }} />
+        </Tooltip>
+      )
+    }
+    if (row.display_status === 'TO_SEND' && can('bill.send')) {
+      return (
+        <Tooltip title="Đánh dấu đã gửi">
+          <Button type="text" size="small" icon={<SendOutlined />} aria-label={`Đánh dấu đã gửi ${row.code}`} disabled={move.isPending}
+            onClick={(event) => { event.stopPropagation(); run(row, 'send', `Đã đánh dấu gửi ${row.code}`) }} />
+        </Tooltip>
+      )
+    }
+    if ((row.display_status === 'SENT' || row.display_status === 'OVERDUE') && can('bill.collect')) {
+      return (
+        <Tooltip title="Ghi nhận đã thu">
+          <Button type="text" size="small" icon={<CheckOutlined />} aria-label={`Ghi nhận đã thu ${row.code}`}
+            onClick={(event) => { event.stopPropagation(); setCollecting(row) }} />
+        </Tooltip>
+      )
+    }
+    return <span className="ds-row-actions__slot" aria-hidden />
+  }
   const badge = (row) => <StatusBadge group="bill" value={row.display_status} label={overdueLabel(row)} />
 
   const columns = [
@@ -92,7 +137,11 @@ export default function BillListPage({ shipOwnerId } = {}) {
     { title: 'Hạn thanh toán', dataIndex: 'due_date', render: (value) => <span className="ds-num bl-nowrap">{formatDate(value)}</span> },
     { title: 'Số tiền', dataIndex: 'total_usd', align: 'right', render: (value) => <b className="ds-num">{formatUsd(value, { fixed: true })}</b> },
     { title: 'Trạng thái', key: 'status', render: (_, row) => badge(row) },
-    actionColumn((row) => <RowActions name={`yêu cầu thanh toán ${row.code}`} onView={() => open(row)} onEdit={row.status === 'OPEN' && can('bill.update') ? () => navigate(`/bills/${row.id}/edit`) : undefined} />),
+    actionColumn((row) => (
+      <RowActions name={`yêu cầu thanh toán ${row.code}`} onView={() => open(row)} onEdit={row.status === 'OPEN' && can('bill.update') ? () => navigate(`/bills/${row.id}/edit`) : undefined}>
+        {quickAction(row)}
+      </RowActions>
+    ), { buttons: 3 }),
   ]
 
   let body
@@ -170,6 +219,15 @@ export default function BillListPage({ shipOwnerId } = {}) {
           ) : null}
         </div>
         {body}
+        {collecting ? (
+          <CollectModal
+            bill={collecting}
+            open
+            pending={move.isPending}
+            onCancel={() => setCollecting(null)}
+            onConfirm={async (paidDate) => { if (await run(collecting, 'collect', `Đã ghi nhận đã thu ${collecting.code}`, { paid_date: paidDate })) setCollecting(null) }}
+          />
+        ) : null}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="yêu cầu" note={`Tổng ${formatUsd(list.data?.total_usd, { fixed: true })} USD`} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}

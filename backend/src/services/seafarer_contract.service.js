@@ -1,6 +1,6 @@
 const { pickAllowed, paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
-const { nextCode } = require('../utils/code_counter')
+const { uniqueCode } = require('../utils/code_counter')
 const { monthsBetween, contractBalance } = require('../utils/voyage_math')
 const {
   CONTRACT_STATUSES, EDITABLE_CONTRACT_STATUSES, DEFAULT_ITEMS, DEFAULT_TERMS,
@@ -14,7 +14,7 @@ const MAX_ITEMS = 40
 const SIDES = ['RECEIVABLE', 'PAYABLE']
 
 const STATUS_LABELS = { DRAFT: 'Nháp', PENDING: 'Chờ duyệt', REJECTED: 'Bị từ chối', ACTIVE: 'Hiệu lực', ENDED: 'Đã kết thúc' }
-const BILL_STATUS_LABELS = { SENT: 'Đã gửi', PAID: 'Đã thu' }
+const BILL_STATUS_LABELS = { APPROVED: 'Đã duyệt', SENT: 'Đã gửi', PAID: 'Đã thu' }
 const LEGACY_MESSAGE = 'Hợp đồng cũ chưa gắn chuyến'
 
 // Bảng chuyển trạng thái dùng chung cho xin duyệt, thôi xin duyệt, từ chối, duyệt, đưa về Nháp, kết thúc.
@@ -145,6 +145,7 @@ function summaryRow(row) {
     voyage_code: row.voyage_code,
     vessel_id: row.vessel_id,
     vessel_name: row.vessel_name,
+    ship_owner_id: row.ship_owner_id,
     ship_owner_name: row.ship_owner_name,
     trip: row.trip_id ? { id: row.trip_id, code: row.trip_code, status: row.trip_status, leave_date: row.trip_leave_date } : null,
     awaiting_reapproval: Boolean(row.awaiting_reapproval),
@@ -170,7 +171,7 @@ const seafarerContractService = {
       where += ' AND (unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`)
     }
-    for (const [key, column] of [['ship_owner_id', 'o.id'], ['seafarer_voyage_id', 'c.seafarer_voyage_id'], ['seafarer_id', 'c.seafarer_id']]) {
+    for (const [key, column] of [['ship_owner_id', 'o.id'], ['vessel_id', 'ves.id'], ['rank_id', 'r.id'], ['seafarer_voyage_id', 'c.seafarer_voyage_id'], ['seafarer_id', 'c.seafarer_id']]) {
       if (query[key]) {
         where += ` AND ${column} = ?`
         params.push(Number(query[key]))
@@ -308,7 +309,7 @@ const seafarerContractService = {
     if (taken.length) throw { statusCode: 409, message: `Chuyến ${voyage.code} đã có hợp đồng ${taken[0].contract_number}` }
     if (voyage.seafarer_status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng, kích hoạt lại trước khi tạo hợp đồng' }
     await assertNoOverlap(conn, { seafarerId: voyage.seafarer_id, startDate: data.start_date, endDate: data.end_date })
-    const contractNumber = await nextCode(conn, 'CONTRACT', new Date().getUTCFullYear(), 'HĐ', 4)
+    const contractNumber = await uniqueCode(conn, 'seafarer_contract', 'contract_number', `${voyage.code}/HĐ`)
     const [result] = await conn.query('INSERT INTO seafarer_contract SET ?', [{
       ...data,
       contract_number: contractNumber,
@@ -457,7 +458,7 @@ function assertNotBlocked(plan) {
   const list = plan.blocked.map((b) => `${b.code} kỳ ${b.seq} (${BILL_STATUS_LABELS[b.status]})`).join(', ')
   throw {
     statusCode: 409,
-    message: `Các yêu cầu thanh toán sau đã gửi hoặc đã thu: ${list}. Huỷ ghi nhận thu, thu hồi rồi thử lại.`,
+    message: `Các yêu cầu thanh toán sau đã duyệt, đã gửi hoặc đã thu: ${list}. Huỷ ghi nhận thu, thu hồi, bỏ duyệt rồi thử lại.`,
     blocked_bills: plan.blocked,
   }
 }

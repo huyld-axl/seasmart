@@ -4,8 +4,9 @@ import { Button, Modal, Skeleton } from 'antd'
 import Banner from '../../../components/ds/Banner'
 import CountdownCheck from '../../../components/ds/CountdownCheck'
 import useToast from '../../../components/ds/useToast'
-import { useBillPlan, useContractMutations } from '../../../hooks/useVoyages'
+import { useBillMutations, useBillPlan, useContractMutations } from '../../../hooks/useVoyages'
 import apiErrorText from '../../../utils/apiError'
+import { useCan } from '../../../hooks/usePermission'
 import { BILL_STATUS_TEXT, planChangesBills, planHeadline, planRows } from './contractView'
 import './contracts.css'
 
@@ -15,6 +16,8 @@ import './contracts.css'
 export default function ApproveModal({ contract, open, onClose }) {
   const toast = useToast()
   const { approve } = useContractMutations()
+  const { unapproveMany } = useBillMutations()
+  const can = useCan()
   const [checked, setChecked] = useState(false)
   const [round, setRound] = useState(0)
   const id = contract.contract.id
@@ -24,6 +27,18 @@ export default function ApproveModal({ contract, open, onClose }) {
   const blocked = plan?.blocked?.length > 0
   const changes = planChangesBills(plan)
   const ready = Boolean(plan) && !blocked && (!changes || checked)
+
+  const approvedBlocked = (plan?.blocked || []).filter((b) => b.status === 'APPROVED')
+
+  async function unapproveBlocked() {
+    try {
+      await unapproveMany.mutateAsync(approvedBlocked.map((b) => b.bill_id))
+      toast.success(`Đã bỏ duyệt ${approvedBlocked.length} yêu cầu thanh toán`)
+      planQuery.refetch()
+    } catch (error) {
+      toast.error('Không bỏ duyệt được', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+    }
+  }
 
   async function submit() {
     try {
@@ -48,12 +63,15 @@ export default function ApproveModal({ contract, open, onClose }) {
     body = <Banner tone="error" title="Không tính được thay đổi yêu cầu thanh toán" description="Thử lại sau ít phút." action={<Button onClick={() => planQuery.refetch()}>Thử lại</Button>} />
   } else if (blocked) {
     body = (
-      <Banner tone="error" title="Không duyệt được: có yêu cầu thanh toán đã gửi hoặc đã thu bị ảnh hưởng" description="Huỷ ghi nhận thu, thu hồi các bill sau rồi duyệt lại.">
+      <Banner tone="error" title="Không duyệt được: có yêu cầu thanh toán đã duyệt, đã gửi hoặc đã thu bị ảnh hưởng" description="Huỷ ghi nhận thu, thu hồi, bỏ duyệt các bill sau rồi duyệt lại.">
         <ul className="ct-blocked">
           {plan.blocked.map((b) => (
             <li key={b.bill_id}><Link to={`/bills/${b.bill_id}`}>{b.code}</Link> kỳ {b.seq} ({BILL_STATUS_TEXT[b.status]})</li>
           ))}
         </ul>
+        {approvedBlocked.length && can('bill.approve') ? (
+          <Button loading={unapproveMany.isPending} onClick={unapproveBlocked}>Bỏ duyệt {approvedBlocked.length} bill đã duyệt</Button>
+        ) : null}
       </Banner>
     )
   } else if (changes) {

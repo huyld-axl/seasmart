@@ -5,7 +5,7 @@ import { App, Button, Dropdown, Input, Modal, Skeleton } from 'antd'
 import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RollbackOutlined } from '@ant-design/icons'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
-import { ReadLayout } from '../seafarers/ReadSections'
+import { NotePanel, ReadLayout } from '../seafarers/ReadSections'
 import RequirementFit from '../../../components/ds/RequirementFit'
 import StageTrack from '../../../components/ds/StageTrack'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -101,6 +101,16 @@ export default function OpportunityDetailPage() {
   const toast = useToast()
   const { data: o, isLoading, isError, refetch } = useOpportunity(id)
   const m = useOpportunityMutations()
+
+  async function saveNotes(notes) {
+    try {
+      await m.save.mutateAsync({ id: o.id, notes })
+      toast.success('Đã lưu ghi chú')
+    } catch (error) {
+      toast.error('Không lưu được ghi chú', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+      throw error
+    }
+  }
   const [selected, setSelected] = useState([])
   const [submissionFor, setSubmissionFor] = useState(null)
   const [downloadingAll, setDownloadingAll] = useState(false)
@@ -345,7 +355,6 @@ export default function OpportunityDetailPage() {
         ['Rời tàu', place(o.planned_leave_date, o.planned_leave_port_name), 6],
         ['Thời gian', formatMonths(o.months), 4],
         ['Hạn chốt', formatDate(o.deadline), 4],
-        ['Ghi chú', o.notes, 12],
       ],
     },
     {
@@ -384,6 +393,7 @@ export default function OpportunityDetailPage() {
             </dl>
           </div>
         </div>
+        <NotePanel notes={o.notes} canEdit={editable} saving={m.save.isPending} onSave={saveNotes} className="sf-note--head" />
         <div className="crew-head__actions">
           {menuItems.length ? (
             <Dropdown menu={{ items: menuItems, onClick: onMenu }} trigger={['click']} placement="bottomRight">

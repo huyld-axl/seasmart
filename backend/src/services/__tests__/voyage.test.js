@@ -60,13 +60,13 @@ describe('voyage.service: tạo chuyến tay', () => {
   it('người ở bờ: tạo chuyến, không ghi transferred_from_id', async () => {
     const pool = fakePool([
       todayRoute, person, vesselOwner(1),
-      ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 161 }] }]],
+      ['INSERT INTO "code_counter"', () => [{ rows: [{ last_value: 61 }] }]],
       ['INSERT INTO seafarer_voyage SET', () => [{ insertId: 8 }]],
       detail(voyageRow({ id: 8 })),
     ])
     await voyageService.create(pool, body(), 1)
     const inserted = pool.calls.find((c) => c.sql.startsWith('INSERT INTO seafarer_voyage SET')).params[0]
-    expect(inserted).toMatchObject({ code: 'CT-2026-0161', source: 'MANUAL', manual_reason: 'OWNER_HIRED', status: 'ONBOARD' })
+    expect(inserted).toMatchObject({ code: `CT${String(new Date().getUTCFullYear()).slice(-2)}61`, source: 'MANUAL', manual_reason: 'OWNER_HIRED', status: 'ONBOARD' })
     expect(inserted).not.toHaveProperty('transferred_from_id')
   })
 

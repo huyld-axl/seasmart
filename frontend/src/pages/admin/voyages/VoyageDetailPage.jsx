@@ -7,13 +7,15 @@ import AuditTimeline from '../../../components/ds/AuditTimeline'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
+import useToast from '../../../components/ds/useToast'
+import apiErrorText from '../../../utils/apiError'
 import { lookupApi } from '../../../api'
-import { useVoyage } from '../../../hooks/useVoyages'
+import { useVoyage, useVoyageMutations } from '../../../hooks/useVoyages'
 import { useCan } from '../../../hooks/usePermission'
 import { MANUAL_REASON_LABELS } from '../../../constants/opportunityVoyage'
 import { formatDate, formatUsd } from '../../../utils/format'
 import { AnchorSvg, Crumb, FleetTile } from '../fleet/FleetParts'
-import { ReadLayout } from '../seafarers/ReadSections'
+import { NotePanel, ReadLayout } from '../seafarers/ReadSections'
 import LeaveModal from './LeaveModal'
 import { EditDatesModal, LeavePlanModal, RemoveModal } from './VoyageModals'
 import { deltaText, historyItems, leaveFlagLabel, monthsLeft } from './voyageList'
@@ -32,6 +34,8 @@ export default function VoyageDetailPage() {
   const ports = useQuery({ queryKey: ['lookup', 'ports'], queryFn: () => lookupApi.ports().then((r) => r.data) })
   const [tab, setTab] = useState('overview')
   const [dialog, setDialog] = useState(null)
+  const toast = useToast()
+  const { editNotes } = useVoyageMutations()
 
   if (isLoading) {
     return (
@@ -51,6 +55,16 @@ export default function VoyageDetailPage() {
         action={missing ? <Button onClick={() => navigate('/voyages')}>Về danh sách</Button> : <Button onClick={() => refetch()}>Thử lại</Button>}
       />
     )
+  }
+
+  async function saveNotes(notes) {
+    try {
+      await editNotes.mutateAsync({ id: v.id, notes })
+      toast.success('Đã lưu ghi chú')
+    } catch (error) {
+      toast.error('Không lưu được ghi chú', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+      throw error
+    }
   }
 
   const onboard = v.status === 'ONBOARD'
@@ -104,7 +118,6 @@ export default function VoyageDetailPage() {
         ['Nguồn', source, 4],
         ['Budget/tháng', v.budget_monthly_usd != null ? `${formatUsd(v.budget_monthly_usd)} USD` : null, 4],
         ['Hợp đồng', contract, 4],
-        ['Ghi chú', v.notes, 12],
       ],
     },
     {
@@ -163,6 +176,7 @@ export default function VoyageDetailPage() {
             </dl>
           </div>
         </div>
+        <NotePanel notes={v.notes} canEdit={can('voyage.update')} saving={editNotes.isPending} onSave={saveNotes} className="sf-note--head" />
         <div className="crew-head__actions">
           {menuItems.length ? (
             <Dropdown menu={{ items: menuItems, onClick: onMenu }} trigger={['click']} placement="bottomRight">

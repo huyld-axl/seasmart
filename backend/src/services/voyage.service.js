@@ -211,7 +211,7 @@ const voyageService = {
       if (!vessel) throw { statusCode: 400, message: 'Không tìm thấy tàu' }
       if (vessel.ship_owner_id == null) throw { statusCode: 400, message: 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng' }
       if (Number(vessel.ship_owner_id) !== Number(body.ship_owner_id)) throw { statusCode: 400, message: 'Chủ tàu không khớp với chủ tàu của tàu này' }
-      const code = await nextCode(conn, 'VOYAGE1', Number(body.join_date.slice(0, 4)), 'CT', 4)
+      const code = await nextCode(conn, 'VOYAGE_MANUAL', new Date().getUTCFullYear(), 'CT', 2, true)
       const [inserted] = await conn.query('INSERT INTO seafarer_voyage SET ?', [{
         code,
         seafarer_id: body.seafarer_id,
@@ -258,6 +258,16 @@ const voyageService = {
       const before = { join_date: iso(current.join_date), join_port_id: current.join_port_id, leave_date: iso(current.leave_date), leave_port_id: current.leave_port_id }
       await writeLog(conn, id, 'EDIT_DATES', userId, { before, after: next })
     }))
+    return this.get(pool, id)
+  },
+
+  // Sửa ghi chú của chuyến; không đổi trạng thái hay ngày, nên không ghi nhật ký.
+  async editNotes(pool, id, body, userId) {
+    await withTransaction(pool, async (conn) => {
+      await lockVoyage(conn, id)
+      const notes = typeof body.notes === 'string' ? body.notes.trim() : ''
+      await conn.query('UPDATE seafarer_voyage SET notes = ?, updated_by = ? WHERE id = ?', [notes || null, actor(userId), id])
+    })
     return this.get(pool, id)
   },
 

@@ -161,7 +161,7 @@ export function toPayload(values, { voyageId } = {}) {
 }
 
 // ---------- Duyệt lại: bản xem trước bill (kết quả GET /contracts/:id/bill-plan) ----------
-export const BILL_STATUS_TEXT = { OPEN: 'Chưa gửi', SENT: 'Đã gửi', PAID: 'Đã thu' }
+export const BILL_STATUS_TEXT = { OPEN: 'Chưa duyệt', APPROVED: 'Đã duyệt', SENT: 'Đã gửi', PAID: 'Đã thu' }
 
 const dmy = (value) => dayjs(value).format('DD/MM/YYYY')
 const dm = (value) => dayjs(value).format('DD/MM')
@@ -184,7 +184,7 @@ export function planRows(plan) {
     rows.push({ key: `remove-${b.bill_id}`, label: `${b.seq}`, current: periodText(b.start, b.end), after: 'Xoá mềm', status: BILL_STATUS_TEXT[b.status], removed: true, edited: b.edited })
   }
   for (const b of plan.create) {
-    rows.push({ key: `create-${b.seq}`, label: `${b.seq} mới`, current: '—', after: `${periodText(b.start, b.end)}${b.with_one_time ? ' · gồm khoản một lần' : ' · đủ tháng'}`, status: 'Chưa gửi' })
+    rows.push({ key: `create-${b.seq}`, label: `${b.seq} mới`, current: '—', after: `${periodText(b.start, b.end)}${b.with_one_time ? ' · gồm khoản một lần' : ' · đủ tháng'}`, status: 'Chưa duyệt' })
   }
   return rows
 }

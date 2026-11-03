@@ -5,6 +5,7 @@ export const voyageApi = {
   list: (params) => api.get('/voyages', { params }).then((r) => r.data),
   get: (id) => api.get(`/voyages/${id}`).then((r) => r.data),
   create: (data) => api.post('/voyages', data).then((r) => r.data),
+  editNotes: (id, body) => api.patch(`/voyages/${id}/notes`, body).then((r) => r.data),
   editDates: (id, body) => api.patch(`/voyages/${id}/dates`, body).then((r) => r.data),
   leavePlan: (id, body) => api.post(`/voyages/${id}/leave-plan`, body).then((r) => r.data),
   leave: (id, body) => api.post(`/voyages/${id}/leave`, body).then((r) => r.data),
@@ -19,6 +20,7 @@ export const billApi = {
   list: (params) => api.get('/bills', { params }).then((r) => r.data),
   get: (id) => api.get(`/bills/${id}`).then((r) => r.data),
   update: (id, data) => api.put(`/bills/${id}`, data).then((r) => r.data),
+  unapproveMany: (ids) => api.post('/bills/bulk-unapprove', { ids }).then((r) => r.data),
   move: (id, action, body) => api.post(`/bills/${id}/${action}`, body || {}).then((r) => r.data),
 }
 

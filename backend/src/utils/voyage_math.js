@@ -130,7 +130,8 @@ function dueDate({ periodEnd, payDay, payMonthOffset, holidayRule }) {
 function billDisplayStatus({ status, periodEnd, dueDate: due, today }) {
   if (status === 'PAID') return 'PAID'
   if (status === 'SENT') return today > due ? 'OVERDUE' : 'SENT'
-  return today < periodEnd ? 'UPCOMING' : 'TO_SEND'
+  if (status === 'APPROVED') return 'TO_SEND'
+  return today < periodEnd ? 'UPCOMING' : 'TO_APPROVE'
 }
 
 

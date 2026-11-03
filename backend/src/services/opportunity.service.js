@@ -1,6 +1,6 @@
 const { pickAllowed, paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
-const { nextCode } = require('../utils/code_counter')
+const { nextCode, nextVoyageCode } = require('../utils/code_counter')
 const { monthsBetween, splitBudget, round2 } = require('../utils/voyage_math')
 const { displayStatus, deadlineFlag, requirementFit, experienceFromHistory, compareSuggestions } = require('../utils/opportunity_rules')
 const { REQUIREMENT_KINDS, REQUIREMENT_LEVELS, VALID_UNTIL } = require('../constants/opportunity_voyage')
@@ -275,7 +275,7 @@ const opportunityService = {
     const requirements = parseRequirements(body.requirements)
     if (!data.owner_user_id) data.owner_user_id = userId
     const id = await refGuard(withTransaction(pool, async (conn) => {
-      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 3, true)
+      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 2, true)
       const [result] = await conn.query('INSERT INTO opportunity SET ?', [{ ...data, code, status: 'OPEN', created_by: userId ?? null, updated_by: userId ?? null }])
       await writeRequirements(conn, 'opportunity_requirement', 'opportunity_id', result.insertId, requirements)
       return result.insertId
@@ -310,7 +310,7 @@ const opportunityService = {
       if (!current) throw { statusCode: 404, message: NOT_FOUND }
       const data = Object.fromEntries(OPPORTUNITY_COLUMNS.map((key) => [key, current[key]]))
       if (body?.rank_id) data.rank_id = body.rank_id
-      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 3, true)
+      const code = await nextCode(conn, 'OPPORTUNITY', new Date().getUTCFullYear(), 'CH', 2, true)
       const [result] = await conn.query('INSERT INTO opportunity SET ?', [{ ...data, code, status: 'OPEN', created_by: userId ?? null, updated_by: userId ?? null }])
       await conn.query(
         `INSERT INTO opportunity_requirement (opportunity_id, ${REQUIREMENT_COLUMNS.join(', ')}, sort_order)
@@ -465,7 +465,7 @@ const opportunityService = {
       if (onboard) throw { statusCode: 409, message: `${candidate.full_name} đang trên ${onboard.vessel_name}, ghi rời tàu chuyến đó trước` }
       const joinDate = body.join_date
       const plannedLeave = iso(opportunity.planned_leave_date) < joinDate ? joinDate : iso(opportunity.planned_leave_date)
-      const code = await nextCode(conn, 'VOYAGE1', Number(joinDate.slice(0, 4)), 'CT', 4)
+      const code = await nextVoyageCode(conn, opportunity.code)
       const [inserted] = await conn.query('INSERT INTO seafarer_voyage SET ?', [{
         code,
         seafarer_id: body.seafarer_id,

@@ -33,9 +33,9 @@ const DEFAULT_TERMS = {
 const DUE_SOON_DAYS = 3
 
 // Yêu cầu thanh toán: trạng thái lưu và trạng thái hiển thị (tính từ ngày chốt sổ, hạn thanh toán).
-const BILL_STATUSES = ['OPEN', 'SENT', 'PAID']
-const BILL_DISPLAY_STATUSES = ['UPCOMING', 'TO_SEND', 'SENT', 'OVERDUE', 'PAID']
-const BILL_LOG_ACTIONS = ['CREATE', 'UPDATE', 'SEND', 'UNSEND', 'COLLECT', 'UNCOLLECT', 'CUT', 'DELETE']
+const BILL_STATUSES = ['OPEN', 'APPROVED', 'SENT', 'PAID']
+const BILL_DISPLAY_STATUSES = ['UPCOMING', 'TO_APPROVE', 'TO_SEND', 'SENT', 'OVERDUE', 'PAID']
+const BILL_LOG_ACTIONS = ['CREATE', 'UPDATE', 'APPROVE', 'UNAPPROVE', 'SEND', 'UNSEND', 'COLLECT', 'UNCOLLECT', 'CUT', 'DELETE']
 
 module.exports = {
   VOYAGE_STATUSES,

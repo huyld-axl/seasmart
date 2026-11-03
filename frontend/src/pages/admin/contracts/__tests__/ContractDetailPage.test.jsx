@@ -82,7 +82,7 @@ it('Chờ duyệt không có contract.approve thì không thấy Duyệt', () =>
   expect(button('Thôi xin duyệt')).toBeInTheDocument()
 })
 
-it('Nháp chờ duyệt lại: nhãn, banner xem trước từ bill-plan, không có nút Xoá', () => {
+it('Nháp chờ duyệt lại: có nhãn, không có khung hướng dẫn, không có nút Xoá', () => {
   permissions = ['contract.view', 'contract.update', 'contract.submit', 'contract.delete']
   const plan = {
     mode: 'CUT', blocked: [], create: [],
@@ -95,8 +95,7 @@ it('Nháp chờ duyệt lại: nhãn, banner xem trước từ bill-plan, không
     log: [{ id: 3, action: 'REVERT', actor_name: 'Nguyễn Thu Hà', created_at: '2026-10-30T02:40:00Z' }],
   }, 'DRAFT'), plan)
   expect(screen.getAllByText('Chờ duyệt lại').length).toBeGreaterThan(0)
-  expect(screen.getByText(/Đưa về Nháp lúc .* bởi Nguyễn Thu Hà/)).toBeInTheDocument()
-  expect(screen.getByText('Ngày kết thúc: bill đang tới 31/12/2026, hợp đồng đang lưu 17/10/2026. Khi duyệt: kỳ 8 cắt về 17/10, kỳ 9, 10 xoá mềm.')).toBeInTheDocument()
+  expect(screen.queryByText(/Đưa về Nháp lúc/)).toBeNull()
   expect(button('Thao tác khác')).toBeNull()
   expect(button('Sửa hợp đồng')).toBeInTheDocument()
   expect(button('Xin duyệt')).toBeInTheDocument()

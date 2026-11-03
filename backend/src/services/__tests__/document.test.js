@@ -80,7 +80,7 @@ describe('document helpers', () => {
   })
 })
 
-describe('dòng chứng chỉ và dòng đi tàu từ giấy đã duyệt', () => {
+describe('dòng chứng chỉ từ giấy đã duyệt', () => {
   afterEach(() => vi.restoreAllMocks())
 
   const doc = { id: 7, seafarer_id: 1, file_name: 'cc.pdf' }
@@ -135,23 +135,5 @@ describe('dòng chứng chỉ và dòng đi tàu từ giấy đã duyệt', () =
     const first = await documentService.certificateRow(doc, [accepted('typeCode', 'BST'), accepted('no', 'X-9'), accepted('valid', '01/01/2031')])
     await expect(documentService.certificateRow(doc, [accepted('typeCode', 'BST'), accepted('no', 'X-9'), accepted('valid', '02/02/2032')], [first]))
       .rejects.toMatchObject({ statusCode: 409 })
-  })
-
-  it('dòng đi tàu: chữ gốc, chức danh chuẩn hoá bằng code, ngày rời tàu trống thì null', () => {
-    const ranks = [{ id: 18, code: 'OLR', name_vi: 'Thợ máy', name_en: 'Oiler' }]
-    const fields = [
-      accepted('ship', 'ATAYAL STAR'), accepted('rank', 'Oiler'), accepted('onPort', 'Singapore'), accepted('onDate', '04/01/2016'),
-      { field_key: 'offDate', value: '', state: 'UNKNOWN_KEPT' }, { field_key: 'coc', value: 'VN-123', state: 'PROPOSED' },
-    ]
-    const row = documentService.seaServiceRow({ ...doc, id: 9, vessel_id: null, vessel_match_status: null }, fields, ranks, 3)
-    expect(row).toMatchObject({
-      document_id: 9, vessel_name_raw: 'ATAYAL STAR', rank_raw: 'Oiler', rank_id: 18, sign_on_date: '2016-01-04', sign_off_date: null,
-      vessel_match_status: 'NOT_CHECKED', coc_number: null, created_by: 3,
-    })
-  })
-
-  it('dòng đi tàu thiếu cả tên tàu lẫn chức danh, hoặc ngày sai thì chặn', () => {
-    expect(() => documentService.seaServiceRow(doc, [accepted('onDate', '04/01/2016')], [], 1)).toThrow()
-    expect(() => documentService.seaServiceRow(doc, [accepted('ship', 'A'), accepted('onDate', '04/01/16')], [], 1)).toThrow()
   })
 })

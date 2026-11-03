@@ -284,20 +284,21 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const isPhotoType = watchedCode === 'PHOTO'
   const chosenProfile = Object.fromEntries(changes.filter((c) => !skipFields.includes(c.field)).map((c) => [c.field, c.to]))
 
-  // Ảnh thẻ là một dòng của bảng (nhóm Tuỳ thân), lưu ở hồ sơ thuyền viên chứ không phải chứng chỉ.
+  // Ảnh thẻ là một dòng của bảng (nhóm Tuỳ thân), lưu ở hồ sơ thuyền viên chứ không phải chứng chỉ; chưa có ảnh thì không có dòng.
   const docs = useMemo(() => {
     const photoRow = {
       id: 'photo', isPhoto: true, canDelete: Boolean(photo), name: 'Ảnh thẻ 4x6', category: CATEGORY.DOCUMENT, categoryKey: 'DOCUMENT', number: '—',
       issuedOn: fmtDate(seafarer.photo_updated_at) || '—', expiresOn: '', noExpiry: true, status: 'NO_EXPIRY', manual: true, hasFile: Boolean(photo),
     }
-    // Ảnh thẻ đã lưu thành giấy (loại PHOTO, có lịch sử) thì hiện các dòng đó; chưa có thì hiện ảnh đại diện của hồ sơ.
+    // Ảnh thẻ đã lưu thành giấy (loại PHOTO, có lịch sử) thì hiện các dòng đó; không thì hiện ảnh đại diện của hồ sơ, chỉ khi đã có ảnh.
     const hasPhotoDocs = rows.some((r) => r.certificate_type_code === 'PHOTO')
-    return [...(hasPhotoDocs ? [] : [photoRow]), ...toTableCerts(rows, { dismissed })]
+    return [...(hasPhotoDocs || !photo ? [] : [photoRow]), ...toTableCerts(rows, { dismissed })]
   }, [rows, dismissed, photo, seafarer.photo_updated_at])
 
   const categories = Object.keys(CATEGORY).filter((key) => docs.some((d) => d.categoryKey === key))
   const tabs = [{ value: 'ALL', label: 'Tất cả', count: docs.length }, ...categories.map((key) => ({ value: key, label: CATEGORY[key], count: docs.filter((d) => d.categoryKey === key).length }))]
   const shown = category === 'ALL' || !categories.includes(category) ? docs : docs.filter((d) => d.categoryKey === category)
+  const empty = rows.length === 0 && !photo
   const missing = docs.filter((d) => !d.hasFile && !d.replaced).length
 
   const imageOf = (cert, size) => {
@@ -341,7 +342,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         </div>
         <Space wrap className="crew-docs-toolbar__acts">
           {docs.some((d) => d.hasFile) ? <Button icon={<DownloadIcon />} loading={bundling} onClick={downloadAll}>Tải cả bộ</Button> : null}
-          {canEdit ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : null}
+          {canEdit && !empty ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : null}
         </Space>
         <input
           ref={fileInput}
@@ -374,18 +375,23 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
       ) : (
         <>
-          {rows.length === 0 && !photo ? (
-            <EmptyState title="Chưa có giấy tờ nào" description="Nạp ảnh hoặc bản scan CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ. Nạp cả tệp nhiều giấy thì hệ thống tự tách và đọc." />
-          ) : null}
-          <CertificateTable
-            certs={shown}
-            onDismiss={(cert) => onDismiss([{ id: cert.id, expiry: String(cert.raw.expiry_date).slice(0, 10) }])}
-            onRestore={(cert) => onRestore(cert.id)}
-            onRenew={canEdit ? startRenew : undefined}
-            onDelete={canEdit ? (cert) => (cert.isPhoto ? (cert.hasFile ? handleDeletePhoto() : null) : handleDeleteCert(cert.raw)) : undefined}
-            onEdit={(cert) => setPreviewAt(shown.indexOf(cert))}
-            onDownload={downloadCert}
-          />
+          {empty ? (
+            <EmptyState
+              title="Chưa có giấy tờ nào"
+              description="Nạp ảnh hoặc bản scan CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ. Nạp cả tệp nhiều giấy thì hệ thống tự tách và đọc."
+              action={canEdit ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : undefined}
+            />
+          ) : (
+            <CertificateTable
+              certs={shown}
+              onDismiss={(cert) => onDismiss([{ id: cert.id, expiry: String(cert.raw.expiry_date).slice(0, 10) }])}
+              onRestore={(cert) => onRestore(cert.id)}
+              onRenew={canEdit ? startRenew : undefined}
+              onDelete={canEdit ? (cert) => (cert.isPhoto ? (cert.hasFile ? handleDeletePhoto() : null) : handleDeleteCert(cert.raw)) : undefined}
+              onEdit={(cert) => setPreviewAt(shown.indexOf(cert))}
+              onDownload={downloadCert}
+            />
+          )}
           {missing && canEdit ? <p className="crew-certs__renew" style={{ margin: '12px 0 0' }}>{missing} giấy chưa có ảnh. Bấm biểu tượng bút ở dòng đó để nạp ảnh.</p> : null}
         </>
       )}

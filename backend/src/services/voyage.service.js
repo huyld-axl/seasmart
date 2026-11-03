@@ -14,7 +14,7 @@ const num = (v) => (v == null ? null : Number(v))
 const iso = (v) => (v == null ? null : String(v instanceof Date ? v.toISOString() : v).slice(0, 10))
 const actor = (userId) => userId ?? null
 
-const VOYAGE_SELECT = `SELECT sv.id, sv.code, sv.status, sv.source, sv.manual_reason, sv.seafarer_id, s.full_name AS seafarer_name, s.seafarer_code,
+const VOYAGE_SELECT = `SELECT sv.id, sv.code, sv.source, sv.manual_reason, sv.seafarer_id, s.full_name AS seafarer_name, s.seafarer_code,
     s.status AS seafarer_status, sv.rank_id, r.name_vi AS rank_name, sv.vessel_id, ves.vessel_name, ves.vessel_type_id,
     sv.ship_owner_id, so.company_name AS ship_owner_name, sv.opportunity_id, o.code AS opportunity_code,
     o.planned_join_date AS opportunity_join_date, sv.budget_monthly_usd,
@@ -35,7 +35,7 @@ const VOYAGE_SELECT = `SELECT sv.id, sv.code, sv.status, sv.source, sv.manual_re
 
 // Chuyến đã rời mà hợp đồng chưa kết thúc còn tới sau ngày rời: chỉ là nhãn cảnh báo.
 function dateMismatch(voyage, contract) {
-  if (!contract || voyage.status !== 'LEFT' || contract.status === 'ENDED') return null
+  if (!contract || voyage.leave_date == null || contract.status === 'ENDED') return null
   const leave = iso(voyage.leave_date)
   const end = iso(contract.end_date)
   return end > leave ? { leave_date: leave, end_date: end } : null
@@ -52,7 +52,7 @@ function decorate(row) {
     budget_monthly_usd: num(row.budget_monthly_usd),
     join_delta_days: opportunityJoin ? daysFrom(opportunityJoin, join) : null,
     leave_delta_days: row.leave_date ? daysFrom(baseLeave, iso(row.leave_date)) : null,
-    leave_flag: leaveFlag({ status: row.status, planned_leave_date: iso(row.planned_leave_date), today }),
+    leave_flag: leaveFlag({ leave_date: row.leave_date, planned_leave_date: iso(row.planned_leave_date), today }),
   }
 }
 
@@ -87,7 +87,7 @@ async function todayOf(conn) {
 async function settleSeafarer(conn, seafarerId) {
   await conn.query(
     `UPDATE seafarer SET status = 'AVAILABLE' WHERE id = ? AND status = 'ON_VESSEL'
-     AND NOT EXISTS (SELECT 1 FROM seafarer_voyage WHERE seafarer_id = ? AND status = 'ONBOARD' AND deleted_at IS NULL)`,
+     AND NOT EXISTS (SELECT 1 FROM seafarer_voyage WHERE seafarer_id = ? AND leave_date IS NULL AND deleted_at IS NULL)`,
     [seafarerId, seafarerId])
 }
 
@@ -112,12 +112,12 @@ async function lockVoyage(conn, id) {
   return row
 }
 
-// Ghi rời tàu một chuyến đang ONBOARD trong transaction có sẵn.
+// Ghi rời tàu một chuyến đang trên tàu (chưa có ngày rời) trong transaction có sẵn.
 async function leaveOne(conn, current, { leave_date: leaveDate, leave_port_id: leavePortId, leave_note: note }, userId, action = 'LEAVE') {
-  if (current.status !== 'ONBOARD') throw { statusCode: 409, message: `Chuyến ${current.code} đã rời tàu` }
+  if (current.leave_date != null) throw { statusCode: 409, message: `Chuyến ${current.code} đã rời tàu` }
   if (leaveDate < iso(current.join_date)) throw { statusCode: 400, message: 'Ngày rời tàu phải sau hoặc bằng ngày lên tàu' }
   await conn.query(
-    'UPDATE seafarer_voyage SET status = \'LEFT\', leave_date = ?, leave_port_id = ?, leave_note = ?, updated_by = ? WHERE id = ?',
+    'UPDATE seafarer_voyage SET leave_date = ?, leave_port_id = ?, leave_note = ?, updated_by = ? WHERE id = ?',
     [leaveDate, leavePortId, note || null, actor(userId), current.id])
   await writeLog(conn, current.id, action, userId, { leave_date: leaveDate, leave_port_id: leavePortId, note: note || null })
   await settleSeafarer(conn, current.seafarer_id)
@@ -140,16 +140,16 @@ const voyageService = {
     // Ô Chuyến của form hợp đồng: chỉ chuyến chưa có hợp đồng chưa xoá.
     if (query.no_contract) where += ' AND NOT EXISTS (SELECT 1 FROM seafarer_contract c WHERE c.seafarer_voyage_id = sv.id AND c.deleted_at IS NULL)'
     if (query.leaving_within) {
-      where += ' AND sv.status = \'ONBOARD\' AND sv.planned_leave_date <= CURRENT_DATE + (? * INTERVAL \'1 day\')'
+      where += ' AND sv.leave_date IS NULL AND sv.planned_leave_date <= CURRENT_DATE + (? * INTERVAL \'1 day\')'
       params.push(Number(query.leaving_within))
     }
     where += rangeClause(query.from, query.to, params)
-    const [rows] = await pool.query(`${VOYAGE_SELECT} ${where} ORDER BY (sv.status = 'ONBOARD') DESC, sv.planned_leave_date ASC, sv.id ASC`, params)
+    const [rows] = await pool.query(`${VOYAGE_SELECT} ${where} ORDER BY (sv.leave_date IS NULL) DESC, sv.planned_leave_date ASC, sv.id ASC`, params)
     const all = rows.map(decorate)
     const counts = { onboard: 0, left: 0, all: all.length }
-    for (const row of all) counts[row.status === 'ONBOARD' ? 'onboard' : 'left'] += 1
+    for (const row of all) counts[row.leave_date ? 'left' : 'onboard'] += 1
     const tab = query.tab || 'all'
-    const filtered = tab === 'all' ? all : all.filter((row) => (tab === 'onboard' ? row.status === 'ONBOARD' : row.status === 'LEFT'))
+    const filtered = tab === 'all' ? all : all.filter((row) => (tab === 'onboard' ? !row.leave_date : Boolean(row.leave_date)))
     return { data: filtered.slice(offset, offset + limit), total: filtered.length, counts, page, limit }
   },
 
@@ -194,12 +194,12 @@ const voyageService = {
       if (person.status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng' }
       const endDate = ended ? body.leave_date : body.planned_leave_date
       const [[overlap]] = await conn.query(
-        `SELECT sv.code FROM seafarer_voyage sv WHERE sv.seafarer_id = ? AND sv.deleted_at IS NULL AND sv.status = 'LEFT'
+        `SELECT sv.code FROM seafarer_voyage sv WHERE sv.seafarer_id = ? AND sv.deleted_at IS NULL AND sv.leave_date IS NOT NULL
            AND sv.join_date <= ? AND sv.leave_date >= ? LIMIT 1`, [body.seafarer_id, endDate, body.join_date])
       if (overlap) throw { statusCode: 409, message: `${person.full_name} đã có chuyến ${overlap.code} trùng thời gian` }
       const [[onboard]] = await conn.query(
         `SELECT sv.*, v.vessel_name FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
-         WHERE sv.seafarer_id = ? AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL FOR UPDATE OF sv`,
+         WHERE sv.seafarer_id = ? AND sv.leave_date IS NULL AND sv.deleted_at IS NULL FOR UPDATE OF sv`,
         [body.seafarer_id])
       if (onboard && !ended) {
         throw { statusCode: 409, message: `${person.full_name} đang trên ${onboard.vessel_name}, ghi rời tàu chuyến đó trước` }
@@ -228,7 +228,6 @@ const voyageService = {
         leave_date: ended ? body.leave_date : null,
         leave_port_id: ended ? body.leave_port_id : null,
         leave_note: ended ? body.leave_note || null : null,
-        status: ended ? 'LEFT' : 'ONBOARD',
         notes: body.notes || null,
         created_by: actor(userId),
         updated_by: actor(userId),
@@ -248,8 +247,8 @@ const voyageService = {
       const next = {
         join_date: body.join_date ?? iso(current.join_date),
         join_port_id: body.join_port_id ?? current.join_port_id,
-        leave_date: current.status === 'LEFT' ? body.leave_date ?? iso(current.leave_date) : null,
-        leave_port_id: current.status === 'LEFT' ? body.leave_port_id ?? current.leave_port_id : null,
+        leave_date: current.leave_date != null ? body.leave_date ?? iso(current.leave_date) : null,
+        leave_port_id: current.leave_date != null ? body.leave_port_id ?? current.leave_port_id : null,
       }
       if (next.join_date > today) throw { statusCode: 400, message: 'Ngày lên tàu không được sau hôm nay' }
       if (next.leave_date && next.leave_date < next.join_date) throw { statusCode: 400, message: 'Ngày rời tàu phải sau hoặc bằng ngày lên tàu' }
@@ -261,7 +260,7 @@ const voyageService = {
     return this.get(pool, id)
   },
 
-  // Sửa ghi chú của chuyến; không đổi trạng thái hay ngày, nên không ghi nhật ký.
+  // Sửa ghi chú của chuyến; không đổi ngày, nên không ghi nhật ký.
   async editNotes(pool, id, body, userId) {
     await withTransaction(pool, async (conn) => {
       await lockVoyage(conn, id)
@@ -275,7 +274,7 @@ const voyageService = {
   async leavePlan(pool, id, body, userId) {
     await withTransaction(pool, async (conn) => {
       const current = await lockVoyage(conn, id)
-      if (current.status !== 'ONBOARD') throw { statusCode: 409, message: 'Chỉ đổi được ngày rời của chuyến đang trên tàu' }
+      if (current.leave_date != null) throw { statusCode: 409, message: 'Chỉ đổi được ngày rời của chuyến đang trên tàu' }
       if (body.planned_leave_date < iso(current.join_date)) throw { statusCode: 400, message: 'Ngày rời dự kiến phải sau hoặc bằng ngày lên tàu' }
       await conn.query(
         'UPDATE seafarer_voyage SET planned_leave_date = ?, original_leave_date = COALESCE(original_leave_date, planned_leave_date), updated_by = ? WHERE id = ?',
@@ -299,7 +298,7 @@ const voyageService = {
         `SELECT sv.*, s.full_name FROM seafarer_voyage sv JOIN seafarer s ON s.id = sv.seafarer_id
          WHERE sv.id IN (?) AND sv.deleted_at IS NULL FOR UPDATE OF sv`, [ids])
       if (rows.length !== ids.length) throw { statusCode: 404, message: NOT_FOUND }
-      const left = rows.filter((r) => r.status !== 'ONBOARD').map((r) => r.full_name)
+      const left = rows.filter((r) => r.leave_date != null).map((r) => r.full_name)
       if (left.length) throw { statusCode: 409, message: `Đã rời tàu: ${left.join(', ')}` }
       for (const row of rows) await leaveOne(conn, row, body, userId)
     })
@@ -334,7 +333,7 @@ const voyageService = {
       }
       await conn.query('UPDATE seafarer_voyage SET deleted_at = NOW(), updated_by = ? WHERE id = ?', [actor(userId), id])
       await writeLog(conn, id, 'DELETE', userId, { note: body?.note || null, deleted_contracts: toDelete.map((c) => c.contract_number) })
-      if (current.status === 'ONBOARD') await settleSeafarer(conn, current.seafarer_id)
+      if (current.leave_date == null) await settleSeafarer(conn, current.seafarer_id)
       if (current.opportunity_id) {
         await conn.query('UPDATE opportunity SET status = \'OPEN\', updated_by = ? WHERE id = ? AND status = \'WON\'', [actor(userId), current.opportunity_id])
         await conn.query(
@@ -366,7 +365,7 @@ const voyageService = {
     const [allOpen] = await pool.query('SELECT rank_id FROM opportunity WHERE vessel_id = ? AND status = \'OPEN\' AND deleted_at IS NULL', [vesselId])
     const coveredRanks = new Set(allOpen.map((o) => o.rank_id))
     const [onboard] = await pool.query(
-      'SELECT id, rank_id, planned_leave_date FROM seafarer_voyage WHERE vessel_id = ? AND status = \'ONBOARD\' AND deleted_at IS NULL', [vesselId])
+      'SELECT id, rank_id, planned_leave_date FROM seafarer_voyage WHERE vessel_id = ? AND leave_date IS NULL AND deleted_at IS NULL', [vesselId])
     const leaving = onboard.filter((v) => iso(v.planned_leave_date) <= horizon && !coveredRanks.has(v.rank_id))
     return {
       voyages,
@@ -374,7 +373,7 @@ const voyageService = {
       summary: {
         onboard_today: onboard.length,
         voyages_in_range: voyages.length,
-        left_in_range: voyages.filter((v) => v.status === 'LEFT').length,
+        left_in_range: voyages.filter((v) => v.leave_date != null).length,
         leaving_without_cover: leaving.length,
         leaving_without_cover_ids: leaving.map((v) => v.id),
         by_source: { OPPORTUNITY: voyages.filter((v) => v.source === 'OPPORTUNITY').length, MANUAL: voyages.filter((v) => v.source === 'MANUAL').length },

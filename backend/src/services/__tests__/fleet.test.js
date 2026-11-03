@@ -31,7 +31,6 @@ describe('fleet.service', () => {
 
   it('không xoá tàu đang được dùng, báo 409', async () => {
     const pool = fakePool([
-      ['FROM sea_service', () => count(2)],
       ['FROM voyage', () => count(1)],
       ['FROM seafarer_document', () => count(0)],
     ])
@@ -41,7 +40,6 @@ describe('fleet.service', () => {
 
   it('xoá mềm tàu chưa ai dùng', async () => {
     const pool = fakePool([
-      ['FROM sea_service', () => count(0)],
       ['FROM voyage', () => count(0)],
       ['FROM seafarer_document', () => count(0)],
       ['UPDATE "vessel"', () => [{ affectedRows: 1 }]],

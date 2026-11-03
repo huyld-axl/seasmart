@@ -5,7 +5,6 @@ import {
   Button,
   Descriptions,
   Tag,
-  Table,
   Spin,
   Modal,
   Form,
@@ -31,7 +30,7 @@ import StatusBadge from '../../components/ds/StatusBadge'
 import useToast from '../../components/ds/useToast'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
 import ProfileSeaService from './seafarers/ProfileSeaService'
-import CertificateTable from '../../components/ds/CertificateTable'
+import RecordTable from '../../components/ds/RecordTable'
 import { expiryAlerts, supersededIds } from './seafarers/certificateView'
 import Banner from '../../components/ds/Banner'
 import ScanButton from '../../components/ds/ScanButton'
@@ -44,7 +43,6 @@ import { useCan } from '../../hooks/usePermission'
 import { BackButton } from './fleet/FleetParts'
 import ProfileOverview, { NoteBox } from './seafarers/ProfileOverview'
 import ProfileHistory from './seafarers/ProfileHistory'
-import ProfileExports from './seafarers/ProfileExports'
 import DocumentsSection from './seafarers/DocumentsSection'
 import CrewPhoto from './seafarers/CrewPhoto'
 import './seafarers/SeafarerListPage.css'
@@ -70,7 +68,7 @@ const PROFILE_TABS = [
   { value: 'overview', label: 'Tổng quan' },
   { value: 'docs', label: 'Giấy tờ' },
   { value: 'service', label: 'Đi tàu' },
-  { value: 'exports', label: 'Đã xuất' },
+  { value: 'contracts', label: 'Hợp đồng' },
   { value: 'history', label: 'Lịch sử' },
 ]
 
@@ -154,7 +152,7 @@ export default function SeafarerDetailPage() {
   function handleDelete() {
     modal.confirm({
       title: `Xoá thuyền viên ${seafarer?.full_name}?`,
-      content: 'Hồ sơ, giấy tờ và lịch sử đi tàu của người này sẽ bị ẩn khỏi danh sách.',
+      content: 'Hồ sơ, giấy tờ và chuyến tàu của người này sẽ bị ẩn khỏi danh sách.',
       okText: 'Xoá thuyền viên',
       okType: 'danger',
       cancelText: 'Huỷ',
@@ -211,11 +209,11 @@ export default function SeafarerDetailPage() {
     items: moreItems,
     onClick: ({ key }) => (key === 'delete' ? handleDelete() : handleToggleActive()),
   }
-  // Tab Đã xuất cần export.view; phần Hợp đồng ở tab Đi tàu cần contract.view.
-  const TAB_PERM = { exports: 'export.view' }
+  // Tab Hợp đồng cần contract.view.
+  const TAB_PERM = { contracts: 'contract.view' }
   const tabs = PROFILE_TABS.filter((item) => !TAB_PERM[item.value] || can(TAB_PERM[item.value])).map((item) => ({
     ...item,
-    count: item.value === 'docs' ? certList.length : null,
+    count: item.value === 'docs' ? certList.length : item.value === 'contracts' ? contractList.length : null,
   }))
 
   const bodies = {
@@ -227,13 +225,8 @@ export default function SeafarerDetailPage() {
     docs: (
       <DocumentsSection seafarerId={id} seafarer={seafarer} photo={photo} dismissed={dismissed} onDismiss={dismissAlerts} onRestore={restoreAlert} />
     ),
-    service: (
-      <>
-        <ProfileSeaService seafarerId={id} />
-        {can('contract.view') ? <ContractsSection seafarerId={id} /> : null}
-      </>
-    ),
-    exports: <ProfileExports seafarerId={Number(id)} />,
+    service: <ProfileSeaService seafarerId={id} />,
+    contracts: <ContractsSection seafarerId={id} />,
     history: <ProfileHistory seafarerId={id} />,
   }
 
@@ -336,18 +329,6 @@ export default function SeafarerDetailPage() {
 
 const fmt = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '-')
 
-function Section({ title, children, noPad, extra }) {
-  return (
-    <section className="crew-panel">
-      <div className="crew-panel__head">
-        <h2 className="crew-panel__title">{title}</h2>
-        {extra}
-      </div>
-      <div className={noPad ? undefined : 'crew-panel__body'}>{children}</div>
-    </section>
-  )
-}
-
 // Khung cảnh báo hạn chứng chỉ ở đầu tab. Tắt được: tắt cả các chứng chỉ đang liệt kê.
 function ExpiryAlert({ tone, items, title, line, onDismiss }) {
   if (!items.length) return null
@@ -366,36 +347,29 @@ function loadDismissed(seafarerId) {
   try { return JSON.parse(localStorage.getItem(dismissKey(seafarerId))) || {} } catch { return {} }
 }
 
-// Khối "Hợp đồng" chỉ đọc: hợp đồng tạo từ chuyến tàu (xem /voyages), ở đây chỉ liệt kê.
+// Tab Hợp đồng chỉ đọc, cùng kiểu bảng tab Giấy tờ: hợp đồng tạo từ chuyến tàu (xem /voyages), ở đây chỉ liệt kê.
 function ContractsSection({ seafarerId }) {
   const can = useCan()
   const { data, isLoading } = useContractList({ seafarer_id: Number(seafarerId), limit: 100 })
-  const rows = data?.data || []
+  const columns = [
+    { key: 'number', title: 'Số hợp đồng', card: 'title', render: (row) => <Link to={`/contracts/${row.id}`}>{row.contract_number}</Link> },
+    { key: 'vessel', title: 'Tàu', render: (row) => (can('vessel.view') && row.vessel_id ? <Link to={`/vessels/${row.vessel_id}`}>{row.vessel_name}</Link> : row.vessel_name || '—') },
+    { key: 'trip', title: 'Chuyến', mono: true, render: (row) => <TripLink trip={row.trip} legacyCode={row.voyage_code} /> },
+    { key: 'dates', title: 'Thời gian', mono: true, render: (row) => `${fmt(row.start_date)} → ${fmt(row.end_date)}` },
+    { key: 'status', title: 'Trạng thái', card: 'end', render: (row) => <StatusBadge group="contract" value={row.status} /> },
+    { key: 'open', title: 'Thao tác', right: true, render: (row) => <Link className="ds-link" to={`/contracts/${row.id}`}>Mở hợp đồng</Link> },
+  ]
   return (
-    <Section title="Hợp đồng" noPad>
-      <Table
-        rowKey="id"
-        size="small"
-        loading={isLoading}
-        dataSource={rows}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-        locale={{ emptyText: 'Chưa có hợp đồng. Hợp đồng tạo từ chuyến tàu.' }}
-        columns={[
-          { title: 'Số hợp đồng', dataIndex: 'contract_number', render: (value, row) => <Link to={`/contracts/${row.id}`}>{value}</Link> },
-          {
-            title: 'Tàu · chuyến',
-            key: 'vessel',
-            render: (_, row) => (
-              <span>
-                {can('vessel.view') && row.vessel_id ? <Link to={`/vessels/${row.vessel_id}`}>{row.vessel_name}</Link> : row.vessel_name} · <TripLink trip={row.trip} legacyCode={row.voyage_code} />
-              </span>
-            ),
-          },
-          { title: 'Thời gian', key: 'dates', render: (_, row) => `${fmt(row.start_date)} → ${fmt(row.end_date)}` },
-          { title: 'Trạng thái', dataIndex: 'status', render: (value) => <StatusBadge group="contract" value={value} /> },
-        ]}
-      />
-    </Section>
+    <section className="ct-block crew-docs-sec" aria-label="Hợp đồng">
+      {isLoading ? (
+        <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
+      ) : (
+        <RecordTable
+          rows={data?.data || []}
+          columns={columns}
+          empty={<EmptyState title="Chưa có hợp đồng nào" description="Hợp đồng được tạo từ chuyến tàu của thuyền viên." />}
+        />
+      )}
+    </section>
   )
 }

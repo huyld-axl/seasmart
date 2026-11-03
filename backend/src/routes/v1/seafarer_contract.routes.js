@@ -61,6 +61,7 @@ const createBody = {
   properties: { seafarer_voyage_id: id, ...contractProps },
 }
 const updateBody = { type: 'object', required: ['start_date', 'end_date'], properties: contractProps }
+const notesBody = { type: 'object', required: ['notes'], properties: { notes: contractProps.notes } }
 const rejectBody = { type: 'object', required: ['reason'], properties: { reason: { type: 'string', minLength: 1, maxLength: 1000 } } }
 const approveBody = { type: ['object', 'null'], properties: { expected_fingerprint: { type: 'string', maxLength: 64 } } }
 
@@ -81,6 +82,10 @@ async function seafarerContractRoutes(fastify) {
   fastify.put('/:id', { ...can('update'), schema: { params: idParams, body: updateBody } }, async (request) => {
     await inScope(request)
     return seafarerContractService.update(pool, request.params.id, request.body, request.user.id)
+  })
+  fastify.patch('/:id/notes', { ...can('update'), schema: { params: idParams, body: notesBody } }, async (request) => {
+    await inScope(request)
+    return seafarerContractService.updateNotes(pool, request.params.id, request.body.notes, request.user.id)
   })
   fastify.delete('/:id', { ...can('delete'), schema: { params: idParams } }, async (request) => {
     await inScope(request)

@@ -12,7 +12,7 @@ const require = createRequire(import.meta.url)
 const DB_NAME = process.env.INTEGRATION_DB_NAME
 const enabled = Boolean(DB_NAME) && /^seasmart_.*test/.test(DB_NAME) && DB_NAME !== process.env.DB_NAME
 
-let pool, ai, documentService, seaService, makePdf, sharp, uploadDir
+let pool, ai, documentService, makePdf, sharp, uploadDir
 
 const asFile = (buffer, filename) => ({ toBuffer: async () => buffer, filename, file: { truncated: false } })
 
@@ -48,7 +48,6 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     const [[db]] = await pool.query('SELECT current_database() AS name')
     if (db.name !== DB_NAME) throw new Error(`Đang nối nhầm DB ${db.name}`)
     ai = require('../ai')
-    seaService = require('../sea_service.service')
     ;({ documentService } = require('../document.service'))
     ;({ makePdf } = require('../../../test_support/make_pdf'))
     sharp = require('sharp')
@@ -72,7 +71,6 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
       try {
         await pool.query('DELETE FROM document_field f USING seafarer_document d WHERE d.id = f.document_id AND d.seafarer_id = ?', [seafarerId])
         await pool.query('DELETE FROM ai_call')
-        await pool.query('DELETE FROM sea_service WHERE seafarer_id = ?', [seafarerId])
         await pool.query('DELETE FROM seafarer_certificate WHERE seafarer_id = ? AND source_document_id IS NOT NULL', [seafarerId])
         await pool.query('DELETE FROM seafarer_document WHERE seafarer_id = ?', [seafarerId])
         await pool.query('DELETE FROM document_upload_page p USING document_upload u WHERE u.id = p.upload_id AND u.seafarer_id = ?', [seafarerId])
@@ -298,16 +296,10 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     expect((await documentService.get(cert2.id)).status).toBe('COMPLETED')
 
     const first = await documentService.publish(seafarerId, 1)
-    expect(first).toMatchObject({ documents: 6, certificates: 3, sea_services: 2 })
+    expect(first).toMatchObject({ documents: 6, certificates: 3 })
     // Hai lần liền nhau: lần hai không còn giấy nào, không ghi thêm gì.
     await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409 })
 
-    const services = await seaService.list(seafarerId)
-    expect(services.map((s) => [s.vessel_name_raw, s.rank_raw, s.rank_code, s.sign_on_date, s.sign_off_date, s.vessel_match_status, s.source_type])).toEqual([
-      ['ATAYAL STAR', 'OLR', 'OLR', '2016-01-04', '2016-08-02', 'MATCHED', 'DOCUMENT'],
-      ['SEA LION', 'Bosun 1st', null, '2024-02-10', null, 'NOT_CHECKED', 'DOCUMENT'],
-    ])
-    expect(services[0].vessel_id).toBe(vesselId)
     const [certs] = await pool.query(
       `SELECT sc.certificate_type_id, sc.certificate_name_raw, sc.certificate_number, TO_CHAR(sc.expiry_date, 'YYYY-MM-DD') AS expiry,
               sc.no_expiry, sc.issued_date, sc.holder_name_raw, sc.status, ct.code
@@ -319,8 +311,6 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     expect(certs[0]).toMatchObject({ code: 'BASIC_TRAINING', certificate_number: 'BT-10234', expiry: '2028-03-14', no_expiry: 0, issued_date: null, status: 'VALID' })
     expect(certs[1]).toMatchObject({ certificate_type_id: null, certificate_name_raw: 'Ship Security Awareness', expiry: null, no_expiry: 1 })
     expect(certs[2]).toMatchObject({ code: 'PSCRB', expiry: '2030-11-02' })
-    const [[counts]] = await pool.query('SELECT (SELECT COUNT(*) FROM sea_service WHERE seafarer_id = ?) AS ss', [seafarerId])
-    expect(counts.ss).toBe(2)
 
     // Giấy đã vào hồ sơ không đổi loại, không gom lại, không xoá được.
     const after = await documentService.list(seafarerId)
@@ -352,7 +342,7 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
     await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('tên khác hồ sơ') })
     await expect(documentService.confirmOwner(cert2.id, 1)).rejects.toMatchObject({ statusCode: 409 })
     expect(await documentService.confirmOwner(cert1.id, 1)).toMatchObject({ owner_mismatch: true, owner_mismatch_confirmed: true })
-    expect(await documentService.publish(seafarerId, 1)).toMatchObject({ certificates: 3, sea_services: 2 })
+    expect(await documentService.publish(seafarerId, 1)).toMatchObject({ certificates: 3 })
   })
 
   it('chứng chỉ trùng loại và số (hoặc loại và hạn) với hồ sơ đang có thì chặn, không ghi gì', async () => {
@@ -376,31 +366,11 @@ describe.skipIf(!enabled)('đường xử lý giấy tờ (DB tích hợp)', () 
       await documentService.decide(certs[1].id, 'noExpiry', 'accept', undefined, 1)
       await documentService.decide(certs[1].id, 'valid', 'keepUnknown', undefined, 1)
       await expect(documentService.publish(seafarerId, 1)).rejects.toMatchObject({ statusCode: 409, message: expect.stringContaining('đã có chứng chỉ này') })
-      const [[after]] = await pool.query('SELECT (SELECT COUNT(*) FROM sea_service WHERE seafarer_id = ?) AS ss, (SELECT COUNT(*) FROM seafarer_certificate WHERE seafarer_id = ? AND source_document_id IS NOT NULL) AS sc, (SELECT COUNT(*) FROM seafarer_document WHERE seafarer_id = ? AND status = ?) AS pub', [seafarerId, seafarerId, seafarerId, 'PUBLISHED'])
-      expect(after).toMatchObject({ ss: 0, sc: 0, pub: 0 })
+      const [[after]] = await pool.query('SELECT (SELECT COUNT(*) FROM seafarer_certificate WHERE seafarer_id = ? AND source_document_id IS NOT NULL) AS sc, (SELECT COUNT(*) FROM seafarer_document WHERE seafarer_id = ? AND status = ?) AS pub', [seafarerId, seafarerId, 'PUBLISHED'])
+      expect(after).toMatchObject({ sc: 0, pub: 0 })
     } finally {
       await pool.query("DELETE FROM seafarer_certificate WHERE seafarer_id = ? AND certificate_number = 'BT-10234' AND source_document_id IS NULL", [seafarerId])
     }
-  })
-
-  it('lịch sử đi tàu: nhập tay, sửa và xoá bắt buộc lý do và ghi vào lịch sử hồ sơ', async () => {
-    const created = await seaService.create(seafarerId, { vessel_name_raw: 'MV TEST', rank_raw: '3/E', sign_on_date: '2023-05-01', sign_on_port: 'Hai Phong' }, 1)
-    expect(created).toMatchObject({ source_type: 'MANUAL', rank_code: '3E', sign_on_date: '2023-05-01', sign_off_date: null, vessel_match_status: 'NOT_CHECKED' })
-    await expect(seaService.create(seafarerId, { sign_on_port: 'x' }, 1)).rejects.toMatchObject({ statusCode: 400 })
-    await expect(seaService.create(seafarerId, { vessel_name_raw: 'A', sign_on_date: '2023-02-30' }, 1)).rejects.toMatchObject({ statusCode: 400 })
-
-    await expect(seaService.update(created.id, { sign_off_date: '2023-11-01' }, '  ', 1)).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('lý do') })
-    const updated = await seaService.update(created.id, { sign_off_date: '2023-11-01', sign_off_port: 'Busan' }, 'Bổ sung ngày rời tàu', 1)
-    expect(updated).toMatchObject({ sign_off_date: '2023-11-01', sign_off_port: 'Busan' })
-    const [revisions] = await pool.query('SELECT reason, changes FROM seafarer_revision WHERE seafarer_id = ? ORDER BY id DESC LIMIT 1', [seafarerId])
-    expect(revisions[0].reason).toBe('Bổ sung ngày rời tàu')
-    const changes = typeof revisions[0].changes === 'string' ? JSON.parse(revisions[0].changes) : revisions[0].changes
-    expect(changes[`sea_service#${created.id}.sign_off_date`]).toEqual([null, '2023-11-01'])
-
-    await expect(seaService.remove(created.id, '', 1)).rejects.toMatchObject({ statusCode: 400 })
-    await seaService.remove(created.id, 'Nhập nhầm', 1)
-    expect(await seaService.list(seafarerId)).toHaveLength(0)
-    await expect(seaService.get(created.id)).rejects.toMatchObject({ statusCode: 404 })
   })
 
   it('đổi loại giấy thì đọc lại theo loại mới; đổi sang "Khác" thì không đọc; không đổi được giấy đã vào hồ sơ', async () => {

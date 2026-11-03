@@ -48,10 +48,10 @@ const CONTRACT_SELECT = `SELECT c.id, c.contract_number, c.status, c.voyage_posi
     p.sort_order AS position_sort_order, p.budget_total_usd, COALESCE(sv.budget_monthly_usd, p.budget_monthly_usd) AS budget_monthly_usd, r.name_vi AS rank_name,
     v.id AS voyage_id, v.code AS voyage_code, v.status AS voyage_status, v.actual_embark_date AS voyage_actual_embark_date,
     COALESCE(sv.vessel_id, v.vessel_id) AS vessel_id, ves.vessel_name, o.company_name AS ship_owner_name, o.id AS ship_owner_id,
-    sv.id AS trip_id, sv.code AS trip_code, sv.status AS trip_status, sv.join_date AS trip_join_date,
+    sv.id AS trip_id, sv.code AS trip_code, sv.join_date AS trip_join_date,
     sv.planned_leave_date AS trip_planned_leave_date, sv.leave_date AS trip_leave_date,
     (c.status IN ('DRAFT', 'PENDING', 'REJECTED') AND ${LIVE_BILL}) AS awaiting_reapproval,
-    (sv.status = 'LEFT' AND c.status <> 'ENDED' AND c.end_date > sv.leave_date) AS date_mismatch,
+    (sv.leave_date IS NOT NULL AND c.status <> 'ENDED' AND c.end_date > sv.leave_date) AS date_mismatch,
     (SELECT COUNT(*) FROM voyage_position vp WHERE vp.voyage_id = v.id AND vp.deleted_at IS NULL) AS positions_total,
     (SELECT COUNT(*) FROM voyage_position vp WHERE vp.voyage_id = v.id AND vp.deleted_at IS NULL
        AND EXISTS (SELECT 1 FROM seafarer_contract c2 WHERE c2.voyage_position_id = vp.id AND c2.deleted_at IS NULL)) AS positions_filled,
@@ -147,7 +147,7 @@ function summaryRow(row) {
     vessel_name: row.vessel_name,
     ship_owner_id: row.ship_owner_id,
     ship_owner_name: row.ship_owner_name,
-    trip: row.trip_id ? { id: row.trip_id, code: row.trip_code, status: row.trip_status, leave_date: row.trip_leave_date } : null,
+    trip: row.trip_id ? { id: row.trip_id, code: row.trip_code, leave_date: row.trip_leave_date } : null,
     awaiting_reapproval: Boolean(row.awaiting_reapproval),
     date_mismatch: row.date_mismatch ? { leave_date: String(row.trip_leave_date).slice(0, 10), end_date: String(row.end_date).slice(0, 10) } : null,
     start_date: row.start_date,
@@ -256,7 +256,6 @@ const seafarerContractService = {
         ? {
           id: row.trip_id,
           code: row.trip_code,
-          status: row.trip_status,
           join_date: row.trip_join_date,
           planned_leave_date: row.trip_planned_leave_date,
           leave_date: row.trip_leave_date,
@@ -377,6 +376,16 @@ const seafarerContractService = {
       await conn.query('DELETE FROM contract_payment_term WHERE contract_id = ?', [id])
       await writeItemsAndTerms(conn, id, items, terms)
     })
+    return this.get(pool, id)
+  },
+
+  // Chỉ đổi ghi chú, không đụng ngày, khoản mục hay điều khoản.
+  async updateNotes(pool, id, notes, userId) {
+    const [[current]] = await pool.query('SELECT status, seafarer_voyage_id FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL', [id])
+    if (!current) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
+    if (!EDITABLE_CONTRACT_STATUSES.includes(current.status)) throw { statusCode: 409, message: 'Hợp đồng đang khoá, không sửa được' }
+    if (!current.seafarer_voyage_id) throw { statusCode: 409, message: LEGACY_MESSAGE }
+    await pool.query('UPDATE seafarer_contract SET notes = ?, updated_by = ? WHERE id = ?', [notes || null, userId ?? null, id])
     return this.get(pool, id)
   },
 

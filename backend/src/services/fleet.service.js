@@ -96,8 +96,6 @@ async function duplicateGuard(promise, message) {
   }
 }
 
-const ON_BOARD = 'ss.deleted_at IS NULL AND ss.sign_off_date IS NULL AND ss.sign_on_date IS NOT NULL'
-
 const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_number, v.call_sign, v.mmsi,
     v.vessel_type_id, vt.name_vi AS vessel_type_name, v.flag_country_id, COALESCE(c.name_vi, c.name_en) AS flag_name, c.code AS flag_code, c.flag_emoji AS flag_emoji,
     v.year_built, v.port_of_registry_id, p.name AS port_of_registry_name, v.classification_society, v.status, v.class_status,
@@ -105,7 +103,7 @@ const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_num
     v.engine_power_kw, v.engine_type, v.dp_class, v.has_boiler, v.has_refrigeration,
     v.ship_owner_id, o.company_name AS ship_owner_name,
     v.technical_manager, v.commercial_manager, v.notes, v.updated_at,
-    (SELECT COUNT(*) FROM seafarer_voyage sv WHERE sv.vessel_id = v.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL) AS crew_on_board
+    (SELECT COUNT(*) FROM seafarer_voyage sv WHERE sv.vessel_id = v.id AND sv.leave_date IS NULL AND sv.deleted_at IS NULL) AS crew_on_board
   FROM vessel v
   LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
   LEFT JOIN country c ON c.id = v.flag_country_id
@@ -169,21 +167,6 @@ const fleetService = {
   },
 
   // Các chuyến đi tàu đã khớp với tàu này, mới nhất trước. Đang trên tàu là chuyến chưa có ngày rời.
-  async listVesselService(pool, id) {
-    await this.getVessel(pool, id)
-    const [rows] = await pool.query(
-      `SELECT ss.id, ss.seafarer_id, s.full_name AS seafarer_name, COALESCE(r.name_vi, ss.rank_raw) AS rank_name,
-              ss.sign_on_date, ss.sign_off_date, (${ON_BOARD}) AS on_board
-       FROM sea_service ss
-       JOIN seafarer s ON s.id = ss.seafarer_id AND s.deleted_at IS NULL
-       LEFT JOIN "rank" r ON r.id = ss.rank_id
-       WHERE ss.vessel_id = ? AND ss.deleted_at IS NULL
-       ORDER BY ss.sign_on_date DESC NULLS LAST, ss.id DESC LIMIT 200`,
-      [id]
-    )
-    return { data: rows, total: rows.length }
-  },
-
   async createVessel(pool, body) {
     const data = pickAllowed(body, VESSEL_COLUMNS)
     if (!data.vessel_name) throw { statusCode: 400, message: 'Thiếu tên tàu' }
@@ -225,15 +208,14 @@ const fleetService = {
   },
 
   async vesselUsage(pool, id) {
-    const [[a]] = await pool.query('SELECT COUNT(*) AS n FROM sea_service WHERE vessel_id = ? AND deleted_at IS NULL', [id])
     // Chuyến cũ (hợp đồng còn đọc), chuyến mới và cơ hội đều chặn xoá tàu.
     const [[b]] = await pool.query(
       `SELECT (SELECT COUNT(*) FROM voyage WHERE vessel_id = ? AND deleted_at IS NULL)
         + (SELECT COUNT(*) FROM seafarer_voyage WHERE vessel_id = ? AND deleted_at IS NULL)
         + (SELECT COUNT(*) FROM opportunity WHERE vessel_id = ? AND deleted_at IS NULL) AS n`, [id, id, id])
     const [[c]] = await pool.query('SELECT COUNT(*) AS n FROM seafarer_document WHERE vessel_id = ? AND deleted_at IS NULL', [id])
-    const usage = { sea_service: Number(a.n), voyages: Number(b.n), documents: Number(c.n) }
-    return { ...usage, total: usage.sea_service + usage.voyages + usage.documents }
+    const usage = { voyages: Number(b.n), documents: Number(c.n) }
+    return { ...usage, total: usage.voyages + usage.documents }
   },
 
   async ownerUsage(pool, id) {
@@ -304,7 +286,7 @@ const fleetService = {
     const owner = await this.getOwner(pool, id)
     const [vessels] = await pool.query(
       `SELECT v.id, v.vessel_name, v.imo_number, vt.name_vi AS vessel_type_name, v.status,
-              (SELECT COUNT(*) FROM seafarer_voyage sv WHERE sv.vessel_id = v.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL) AS crew_on_board
+              (SELECT COUNT(*) FROM seafarer_voyage sv WHERE sv.vessel_id = v.id AND sv.leave_date IS NULL AND sv.deleted_at IS NULL) AS crew_on_board
        FROM vessel v LEFT JOIN vessel_type vt ON vt.id = v.vessel_type_id
        WHERE v.ship_owner_id = ? AND v.deleted_at IS NULL ORDER BY v.vessel_name`,
       [id]
@@ -381,20 +363,13 @@ const fleetService = {
       SELECT sv.seafarer_id, sv.vessel_id, r.name_vi AS rank_name, sv.join_date AS sign_on_date
       FROM seafarer_voyage sv
       LEFT JOIN "rank" r ON r.id = sv.rank_id
-      WHERE sv.status = 'ONBOARD' AND sv.deleted_at IS NULL
+      WHERE sv.leave_date IS NULL AND sv.deleted_at IS NULL
     ), current_crew AS (
       SELECT seafarer_id, rank_name, sign_on_date FROM active_assignments WHERE vessel_id = ?
-      UNION ALL
-      (SELECT DISTINCT ON (ss.seafarer_id) ss.seafarer_id, COALESCE(r.name_vi, ss.rank_raw), ss.sign_on_date
-      FROM sea_service ss LEFT JOIN "rank" r ON r.id = ss.rank_id
-      WHERE ss.vessel_id = ? AND ss.deleted_at IS NULL AND ss.sign_on_date <= CURRENT_DATE
-        AND (ss.sign_off_date IS NULL OR ss.sign_off_date > CURRENT_DATE)
-        AND NOT EXISTS (SELECT 1 FROM active_assignments aa WHERE aa.seafarer_id = ss.seafarer_id)
-      ORDER BY ss.seafarer_id, ss.sign_on_date DESC, ss.id DESC)
     )
     SELECT s.id, s.full_name, s.seafarer_code, cc.rank_name, cc.sign_on_date
     FROM current_crew cc JOIN seafarer s ON s.id = cc.seafarer_id AND s.deleted_at IS NULL
-    ${createdBy !== null ? 'WHERE s.created_by = ?' : ''}`, [vesselId, vesselId, ...(createdBy !== null ? [createdBy] : [])])
+    ${createdBy !== null ? 'WHERE s.created_by = ?' : ''}`, [vesselId, ...(createdBy !== null ? [createdBy] : [])])
     return { data: rows.sort((a, b) => a.full_name.localeCompare(b.full_name, 'vi')) }
   },
 

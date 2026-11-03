@@ -30,6 +30,7 @@ export const seafarerContractApi = {
   get: (id) => api.get(`/contracts/${id}`).then((r) => r.data),
   create: (data) => api.post('/contracts', data).then((r) => r.data),
   update: (id, data) => api.put(`/contracts/${id}`, data).then((r) => r.data),
+  updateNotes: (id, notes) => api.patch(`/contracts/${id}/notes`, { notes }).then((r) => r.data),
   remove: (id) => api.delete(`/contracts/${id}`).then((r) => r.data),
   submit: (id) => api.post(`/contracts/${id}/submit`).then((r) => r.data),
   withdraw: (id) => api.post(`/contracts/${id}/withdraw`).then((r) => r.data),

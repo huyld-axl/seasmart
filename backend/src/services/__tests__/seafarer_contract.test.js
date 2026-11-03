@@ -27,7 +27,7 @@ const logActions = (pool) => inserts(pool, 'contract_approval_log').map((c) => c
 const detailRow = (over = {}) => ({
   id: 9, contract_number: 'HĐ-2026-0001', status: 'DRAFT', voyage_position_id: null, seafarer_voyage_id: 4, seafarer_id: 2, start_date: '2026-11-05', end_date: '2027-08-05',
   seafarer_name: 'An', rank_name: 'Master', budget_total_usd: null, budget_monthly_usd: '1900',
-  voyage_id: null, trip_id: 4, trip_code: 'CT-2026-0004', trip_status: 'ONBOARD', trip_join_date: '2026-11-05', trip_planned_leave_date: '2027-08-05', trip_leave_date: null,
+  voyage_id: null, trip_id: 4, trip_code: 'CT-2026-0004', trip_join_date: '2026-11-05', trip_planned_leave_date: '2027-08-05', trip_leave_date: null,
   vessel_id: 3, vessel_name: 'MV A', ship_owner_id: 1, ship_owner_name: 'Owner',
   awaiting_reapproval: false, date_mismatch: false,
   positions_total: '0', positions_filled: '0', receivable_monthly: '0', payable_monthly: '0',
@@ -344,7 +344,7 @@ describe('seafarer_contract.service', () => {
 
   it('chi tiết trả chuyến mới, tóm tắt bill, cờ chờ duyệt lại, lệch ngày và balance theo budget của chuyến', async () => {
     const pool = fakePool([
-      ['FROM seafarer_contract c\n  JOIN seafarer s', () => [[detailRow({ status: 'DRAFT', awaiting_reapproval: true, date_mismatch: true, trip_status: 'LEFT', trip_leave_date: '2027-06-01' })]]],
+      ['FROM seafarer_contract c\n  JOIN seafarer s', () => [[detailRow({ status: 'DRAFT', awaiting_reapproval: true, date_mismatch: true, trip_leave_date: '2027-06-01' })]]],
       ['FROM contract_item WHERE', () => [[
         { id: 1, kind: 'MONTHLY', item_code: 'BASIC_WAGE', custom_name: null, receivable_usd: '1900.00', payable_usd: '1650.00' },
         { id: 2, kind: 'MONTHLY', item_code: null, custom_name: 'Khác', receivable_usd: null, payable_usd: null },
@@ -358,7 +358,7 @@ describe('seafarer_contract.service', () => {
     expect(result.terms.PAYABLE.pay_day).toBe(15)
     expect(result.contract.months).toBe(9)
     expect(result.contract).toMatchObject({ seafarer_voyage_id: 4, legacy_unlinked: false })
-    expect(result.voyage).toMatchObject({ id: 4, code: 'CT-2026-0004', status: 'LEFT', leave_date: '2027-06-01', vessel_name: 'MV A' })
+    expect(result.voyage).toMatchObject({ id: 4, code: 'CT-2026-0004', leave_date: '2027-06-01', vessel_name: 'MV A' })
     expect(result.legacy_voyage).toBeNull()
     expect(result.bills_summary).toEqual({ count: 9, first_start: '2026-11-05', last_end: '2027-08-05', has_sent_or_paid: true })
     expect(result.awaiting_reapproval).toBe(true)

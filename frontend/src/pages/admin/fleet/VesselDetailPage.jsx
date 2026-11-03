@@ -100,7 +100,6 @@ export default function VesselDetailPage() {
       content: (
         <>
           <ul className="fl-rows">
-            <li><span className="fl-rows__main">Chuyến đi tàu đã khớp</span><span className="ds-num">{vessel.usage.sea_service}</span></li>
             <li><span className="fl-rows__main">Chuyến tàu</span><span className="ds-num">{vessel.usage.voyages}</span></li>
             <li><span className="fl-rows__main">Giấy tờ thuyền viên gắn với tàu</span><span className="ds-num">{vessel.usage.documents}</span></li>
           </ul>
@@ -185,21 +184,28 @@ export default function VesselDetailPage() {
 
       <div className="crew-head">
         <div className="crew-head__person">
-          <FleetTile large />
+          <div className="crew-head__photo crew-head__photo--logo">
+            <FleetTile large />
+          </div>
           <div className="crew-head__text">
-            <h1 className="crew-head__title">{vessel.vessel_name}</h1>
-            {description || vessel.ship_owner_name ? (
-              <p className="crew-head__desc">
-                {description}
-                {description && vessel.ship_owner_name ? ' · ' : ''}
-                {vessel.ship_owner_name ? <Link to={`/partners/${vessel.ship_owner_id}`}>{vessel.ship_owner_name}</Link> : null}
-              </p>
-            ) : null}
-            <div className="crew-head__badges">
+            <div className="crew-head__titlerow">
+              <h1 className="crew-head__title">{vessel.vessel_name}</h1>
               <StatusBadge group="vesselStatus" value={vessel.status} />
-              <span className="ds-role">{vessel.imo_number ? <span className="fl-mono" style={{ fontSize: 12 }}>IMO {vessel.imo_number}</span> : 'Không có IMO'}</span>
-              <span className="fl-head-meta">{can('voyage.view') ? (crew.data?.counts?.onboard ?? onBoard.length) : Number(vessel.crew_on_board)} thuyền viên đang trên tàu</span>
             </div>
+            <dl className="crew-head__meta">
+              {description ? (
+                <>
+                  <dt>Loại tàu</dt>
+                  <dd>{description}</dd>
+                </>
+              ) : null}
+              <dt>Chủ tàu</dt>
+              <dd>{vessel.ship_owner_name ? <Link to={`/partners/${vessel.ship_owner_id}`}>{vessel.ship_owner_name}</Link> : '—'}</dd>
+              <dt>Số IMO</dt>
+              <dd>{vessel.imo_number ? <span className="fl-mono">{vessel.imo_number}</span> : 'Không có IMO'}</dd>
+              <dt>Trên tàu</dt>
+              <dd>{can('voyage.view') ? (crew.data?.counts?.onboard ?? onBoard.length) : Number(vessel.crew_on_board)} thuyền viên</dd>
+            </dl>
           </div>
         </div>
         <NotePanel notes={vessel.notes} canEdit={can('vessel.update')} saving={save.isPending} onSave={saveNotes} className="sf-note--head" />

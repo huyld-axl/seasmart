@@ -76,9 +76,8 @@ export default function ReviewPage() {
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ['seafarer', id] })
       qc.invalidateQueries({ queryKey: ['certificates', id] })
-      qc.invalidateQueries({ queryKey: ['sea-services', id] })
       refresh()
-      toast.success(`Đã đưa ${res.documents} giấy vào hồ sơ${res.certificates ? `, thêm ${res.certificates} chứng chỉ` : ''}${res.sea_services ? `, ${res.sea_services} chuyến đi tàu` : ''}`)
+      toast.success(`Đã đưa ${res.documents} giấy vào hồ sơ${res.certificates ? `, thêm ${res.certificates} chứng chỉ` : ''}`)
       navigate(`/seafarers/${id}`)
     },
     onError: fail,

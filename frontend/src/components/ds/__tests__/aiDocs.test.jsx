@@ -4,7 +4,6 @@ import UploadPanel from '../UploadPanel'
 import FieldInput from '../FieldInput'
 import VesselMatchChip from '../VesselMatchChip'
 import DocumentViewer from '../DocumentViewer'
-import SeaServiceTimeline from '../SeaServiceTimeline'
 import CertificateTable from '../CertificateTable'
 import ReviewPager from '../ReviewPager'
 
@@ -85,21 +84,6 @@ describe('DocumentViewer', () => {
     expect(region).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(region)
     expect(onRegionClick).toHaveBeenCalledWith('ship')
-  })
-})
-
-describe('SeaServiceTimeline', () => {
-  it('chỉ chuyến chưa khớp hoặc trùng mới có nhãn', () => {
-    const trips = [
-      { id: '1', vessel: 'A', signOn: '01/01/2020', signOff: null, ongoing: true, rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'VERIFIED', source: { type: 'manual' } },
-      { id: '2', vessel: 'B', signOn: '01/01/2019', signOff: '01/02/2019', rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'NOT_FOUND', overlapNote: 'Trùng', source: { type: 'document', label: 'Từ sổ, tr.4' } },
-    ]
-    render(<SeaServiceTimeline trips={trips} />)
-    expect(screen.getByText('Đang trên tàu')).toBeInTheDocument()
-    expect(screen.getByText('Trùng thời gian')).toBeInTheDocument()
-    expect(screen.getByText('Không tìm thấy')).toBeInTheDocument()
-    expect(screen.queryByText('Đã đối chiếu')).toBeNull()
-    expect(screen.getByText('Nhập tay')).toBeInTheDocument()
   })
 })
 

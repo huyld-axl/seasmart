@@ -9,27 +9,27 @@ const {
 } = require('../permissions')
 
 describe('danh mục quyền', () => {
-  it('có 47 quyền, 11 mục', () => {
-    expect(ALL_PERMISSIONS).toHaveLength(47)
+  it('có 46 quyền, 11 mục', () => {
+    expect(ALL_PERMISSIONS).toHaveLength(46)
     expect(new Set(ALL_PERMISSIONS.map((c) => c.split('.')[0])).size).toBe(11)
-    expect(new Set(ALL_PERMISSIONS).size).toBe(47)
+    expect(new Set(ALL_PERMISSIONS).size).toBe(46)
   })
 
   it('role.manage chỉ Quản trị viên, không cấp được', () => {
     expect(ALL_PERMISSIONS).toContain('role.manage')
     expect(GRANTABLE_PERMISSIONS).not.toContain('role.manage')
-    expect(GRANTABLE_PERMISSIONS).toHaveLength(46)
+    expect(GRANTABLE_PERMISSIONS).toHaveLength(45)
   })
 
   it('6 mục có phạm vi', () => {
     expect(SCOPED_MODULES).toEqual(['seafarer', 'export', 'opportunity', 'voyage', 'contract', 'bill'])
   })
 
-  it('catalog cho giao diện đủ 47 quyền, đánh dấu admin_only', () => {
+  it('catalog cho giao diện đủ 46 quyền, đánh dấu admin_only', () => {
     const c = catalogForClient()
-    expect(c.total).toBe(47)
+    expect(c.total).toBe(46)
     const all = c.modules.flatMap((m) => m.permissions)
-    expect(all).toHaveLength(47)
+    expect(all).toHaveLength(46)
     expect(all.find((p) => p.code === 'role.manage').admin_only).toBe(true)
     expect(all.find((p) => p.code === 'seafarer.update').description).toMatch(/ảnh chân dung/)
   })

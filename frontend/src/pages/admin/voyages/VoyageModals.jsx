@@ -94,7 +94,7 @@ export function EditDatesModal({ voyage: v, onClose }) {
   const { editDates } = useVoyageMutations()
   const [form] = Form.useForm()
   const ports = usePortOptions()
-  const left = v.status === 'LEFT'
+  const left = Boolean(v.leave_date)
   const today = dayjs().endOf('day')
   const initialValues = {
     join_date: dayjs(v.join_date),
@@ -167,7 +167,7 @@ export function RemoveModal({ voyage: v, onClose }) {
   const blocked = preview.data?.blocked
   const effects = [
     `Chuyến ${v.code} bị xoá khỏi danh sách và hồ sơ.`,
-    v.status === 'ONBOARD' ? `${v.seafarer_name} về "Ở bờ".` : null,
+    !v.leave_date ? `${v.seafarer_name} về "Ở bờ".` : null,
     fromOpportunity && v.opportunity ? `Cơ hội ${v.opportunity.code} mở lại, các ứng viên về danh sách như trước khi chốt.` : null,
     ...(preview.data?.contracts || []).map((c) => `Hợp đồng ${c.contract_number} (${CONTRACT_STATUS_LABELS[c.status]}) bị xoá mềm.`),
   ].filter(Boolean)

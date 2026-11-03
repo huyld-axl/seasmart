@@ -82,9 +82,9 @@ export function voyageNow(rows = []) {
     start_date: row.join_date,
     end_date: row.leave_date || row.planned_leave_date,
   })
-  const current = rows.find((row) => row.status === 'ONBOARD')
+  const current = rows.find((row) => !row.leave_date)
   if (current) return { kind: 'current', row: shape(current) }
-  const last = rows.filter((row) => row.status === 'LEFT').sort((a, b) => String(b.leave_date).localeCompare(String(a.leave_date)))[0]
+  const last = rows.filter((row) => row.leave_date).sort((a, b) => String(b.leave_date).localeCompare(String(a.leave_date)))[0]
   return last ? { kind: 'last', row: shape(last) } : null
 }
 

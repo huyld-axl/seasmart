@@ -15,11 +15,11 @@ const PENDING_EXPR = '(SELECT COUNT(*) FROM seafarer_certificate sc WHERE sc.sea
 // Tàu đang làm: chuyến mới đang trên tàu (seafarer_voyage, mỗi người tối đa một).
 const onboardVoyage = (column) =>
   `(SELECT ${column} FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
-    WHERE sv.seafarer_id = s.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL LIMIT 1)`
+    WHERE sv.seafarer_id = s.id AND sv.leave_date IS NULL AND sv.deleted_at IS NULL LIMIT 1)`
 // Hết hạn: hợp đồng Hiệu lực gắn với chuyến đó (dữ liệu cũ), không có thì ngày rời dự kiến của chuyến.
 const CONTRACT_END = `(SELECT COALESCE(ec.end_date, sv.planned_leave_date) FROM seafarer_voyage sv
     LEFT JOIN seafarer_contract ec ON ec.id = sv.legacy_contract_id AND ec.status = 'ACTIVE' AND ec.deleted_at IS NULL
-    WHERE sv.seafarer_id = s.id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL LIMIT 1)`
+    WHERE sv.seafarer_id = s.id AND sv.leave_date IS NULL AND sv.deleted_at IS NULL LIMIT 1)`
 
 const OVERVIEW_FIELDS = `${onboardVoyage('v.vessel_name')} AS vessel_name,
   ${onboardVoyage('v.id')} AS vessel_id,

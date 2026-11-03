@@ -19,9 +19,9 @@ describe('voyageList', () => {
   })
 
   it('ô rời tàu theo trạng thái', () => {
-    expect(leaveCell({ status: 'LEFT', leave_date: '2026-09-01', leave_port_name: 'Hải Phòng' }, fmt)).toEqual({ date: '2026-09-01', sub: 'Hải Phòng' })
-    expect(leaveCell({ status: 'ONBOARD', planned_leave_date: '2027-01-01', original_leave_date: '2027-01-01' }, fmt).sub).toBe('dự kiến')
-    expect(leaveCell({ status: 'ONBOARD', planned_leave_date: '2027-02-01', original_leave_date: '2027-01-01' }, fmt).sub).toBe('đã dời từ 01/01/2027')
+    expect(leaveCell({ leave_date: '2026-09-01', leave_port_name: 'Hải Phòng' }, fmt)).toEqual({ date: '2026-09-01', sub: 'Hải Phòng' })
+    expect(leaveCell({ planned_leave_date: '2027-01-01', original_leave_date: '2027-01-01' }, fmt).sub).toBe('dự kiến')
+    expect(leaveCell({ planned_leave_date: '2027-02-01', original_leave_date: '2027-01-01' }, fmt).sub).toBe('đã dời từ 01/01/2027')
   })
 
   it('nguồn', () => {
@@ -107,8 +107,8 @@ describe('thẻ Đội ngũ', () => {
       today: '2026-10-27',
       formatDate: fmt,
       voyages: [
-        { id: 1, seafarer_name: 'A', rank_name: 'Máy hai', code: 'CT-1', status: 'ONBOARD', join_date: '2026-06-05', planned_leave_date: '2027-04-05', original_leave_date: '2027-03-05', join_port_name: 'Hải Phòng', join_delta_days: 13 },
-        { id: 2, seafarer_name: 'B', rank_name: 'Thợ máy', code: 'CT-2', status: 'LEFT', join_date: '2026-06-05', planned_leave_date: '2027-02-05', leave_date: '2026-09-14', leave_delta_days: -144 },
+        { id: 1, seafarer_name: 'A', rank_name: 'Máy hai', code: 'CT-1', join_date: '2026-06-05', planned_leave_date: '2027-04-05', original_leave_date: '2027-03-05', join_port_name: 'Hải Phòng', join_delta_days: 13 },
+        { id: 2, seafarer_name: 'B', rank_name: 'Thợ máy', code: 'CT-2', join_date: '2026-06-05', planned_leave_date: '2027-02-05', leave_date: '2026-09-14', leave_delta_days: -144 },
       ],
       openings: [{ id: 9, code: 'CH26047', rank_name: 'Thủy thủ', planned_join_date: '2026-11-08', planned_leave_date: '2027-08-08', selected_name: 'K' }],
     })

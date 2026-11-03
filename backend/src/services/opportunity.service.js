@@ -163,13 +163,9 @@ async function loadFitInputs(pool, seafarerIds, today) {
      WHERE seafarer_id IN (?) AND deleted_at IS NULL`, [ids])
   for (const c of certs) out.get(c.seafarer_id).certificates.push(c)
   const [history] = await pool.query(
-    `SELECT ss.seafarer_id, ss.rank_id, v.vessel_type_id, ss.sign_on_date AS start, ss.sign_off_date AS "end"
-     FROM sea_service ss LEFT JOIN vessel v ON v.id = ss.vessel_id
-     WHERE ss.seafarer_id IN (?) AND ss.deleted_at IS NULL
-     UNION ALL
-     SELECT sv.seafarer_id, sv.rank_id, v.vessel_type_id, sv.join_date, sv.leave_date
+    `SELECT sv.seafarer_id, sv.rank_id, v.vessel_type_id, sv.join_date AS start, sv.leave_date AS "end"
      FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
-     WHERE sv.seafarer_id IN (?) AND sv.deleted_at IS NULL`, [ids, ids])
+     WHERE sv.seafarer_id IN (?) AND sv.deleted_at IS NULL`, [ids])
   const bySeafarer = new Map()
   for (const h of history) bySeafarer.set(h.seafarer_id, [...(bySeafarer.get(h.seafarer_id) || []), h])
   for (const [id, rows] of bySeafarer) out.get(id).experience = experienceFromHistory(rows, today)
@@ -216,7 +212,7 @@ const opportunityService = {
               cr.name_vi AS current_rank_name, c.status, c.source, c.owner_selected_at, c.owner_selected_by,
               c.export_pack_id, ep.created_at AS export_pack_created_at, c.last_sent_at, c.created_at,
               (SELECT sv.planned_leave_date FROM seafarer_voyage sv
-                 WHERE sv.seafarer_id = c.seafarer_id AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL LIMIT 1) AS onboard_until
+                 WHERE sv.seafarer_id = c.seafarer_id AND sv.leave_date IS NULL AND sv.deleted_at IS NULL LIMIT 1) AS onboard_until
        FROM opportunity_candidate c
        JOIN seafarer s ON s.id = c.seafarer_id
        LEFT JOIN "rank" cr ON cr.id = s.current_rank_id
@@ -461,7 +457,7 @@ const opportunityService = {
       if (candidate.seafarer_status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng' }
       const [[onboard]] = await conn.query(
         `SELECT sv.code, v.vessel_name FROM seafarer_voyage sv JOIN vessel v ON v.id = sv.vessel_id
-         WHERE sv.seafarer_id = ? AND sv.status = 'ONBOARD' AND sv.deleted_at IS NULL`, [body.seafarer_id])
+         WHERE sv.seafarer_id = ? AND sv.leave_date IS NULL AND sv.deleted_at IS NULL`, [body.seafarer_id])
       if (onboard) throw { statusCode: 409, message: `${candidate.full_name} đang trên ${onboard.vessel_name}, ghi rời tàu chuyến đó trước` }
       const joinDate = body.join_date
       const plannedLeave = iso(opportunity.planned_leave_date) < joinDate ? joinDate : iso(opportunity.planned_leave_date)
@@ -479,7 +475,6 @@ const opportunityService = {
         join_port_id: body.join_port_id,
         planned_leave_date: plannedLeave,
         planned_leave_port_id: opportunity.planned_leave_port_id,
-        status: 'ONBOARD',
         created_by: userId ?? null,
         updated_by: userId ?? null,
       }])
@@ -524,9 +519,8 @@ const opportunityService = {
       params.push(opportunity.ship_owner_id)
     }
     if (query.vessel_type_id) {
-      where += ` AND (EXISTS (SELECT 1 FROM seafarer_voyage w JOIN vessel v ON v.id = w.vessel_id WHERE w.seafarer_id = s.id AND w.deleted_at IS NULL AND v.vessel_type_id = ?)
-        OR EXISTS (SELECT 1 FROM sea_service w JOIN vessel v ON v.id = w.vessel_id WHERE w.seafarer_id = s.id AND w.deleted_at IS NULL AND v.vessel_type_id = ?))`
-      params.push(Number(query.vessel_type_id), Number(query.vessel_type_id))
+      where += ' AND EXISTS (SELECT 1 FROM seafarer_voyage w JOIN vessel v ON v.id = w.vessel_id WHERE w.seafarer_id = s.id AND w.deleted_at IS NULL AND v.vessel_type_id = ?)'
+      params.push(Number(query.vessel_type_id))
     }
     const [people] = await pool.query(
       `SELECT s.id, s.full_name, s.seafarer_code, s.status, s.current_rank_id, r.name_vi AS rank_name, s.date_of_birth,
@@ -534,7 +528,7 @@ const opportunityService = {
               to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
-       LEFT JOIN seafarer_voyage ob ON ob.seafarer_id = s.id AND ob.status = 'ONBOARD' AND ob.deleted_at IS NULL
+       LEFT JOIN seafarer_voyage ob ON ob.seafarer_id = s.id AND ob.leave_date IS NULL AND ob.deleted_at IS NULL
        LEFT JOIN vessel obv ON obv.id = ob.vessel_id
        ${where}
        ORDER BY s.full_name LIMIT ${SUGGEST_POOL}`, params)

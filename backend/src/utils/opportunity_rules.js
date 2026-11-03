@@ -28,8 +28,8 @@ function deadlineFlag({ status, deadline, today }) {
 }
 
 // Cảnh báo ngày rời của chuyến đang trên tàu: còn 0–30 ngày (SOON) hoặc đã qua mà chưa ghi rời (LATE).
-function leaveFlag({ status, planned_leave_date: planned, today }) {
-  if (status !== 'ONBOARD' || !planned) return null
+function leaveFlag({ leave_date: left, planned_leave_date: planned, today }) {
+  if (left || !planned) return null
   const days = daysFrom(today, planned)
   if (days < 0) return { kind: 'LATE', days: -days }
   if (days <= LEAVE_WARN_DAYS) return { kind: 'SOON', days }

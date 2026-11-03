@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { Table } from 'antd'
-import StatusBadge from '../../../components/ds/StatusBadge'
 import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import { useCan } from '../../../hooks/usePermission'
@@ -74,7 +73,6 @@ export default function VoyageTable({ rows, scroll, selected = null, onSelect, o
         ? <RowLink to={`/opportunities/${row.opportunity_id}`}><span className="ds-mono">{row.opportunity_code}</span></RowLink>
         : <span className={row.source === 'OPPORTUNITY' ? 'ds-mono' : 'vd-muted'}>{sourceText(row)}</span>),
     },
-    { title: 'Trạng thái', dataIndex: 'status', render: (value) => <StatusBadge group="voyage" value={value} /> },
     actionColumn((row) => <RowActions name={`chuyến ${row.code}`} onView={() => open(row)} />),
   ].filter(Boolean)
 
@@ -90,7 +88,7 @@ export default function VoyageTable({ rows, scroll, selected = null, onSelect, o
       rowSelection={selected ? {
         selectedRowKeys: selected,
         onChange: (keys) => onSelect(keys),
-        getCheckboxProps: (row) => ({ disabled: row.status !== 'ONBOARD', 'aria-label': `Chọn ${row.seafarer_name}` }),
+        getCheckboxProps: (row) => ({ disabled: Boolean(row.leave_date), 'aria-label': `Chọn ${row.seafarer_name}` }),
       } : undefined}
       onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
     />

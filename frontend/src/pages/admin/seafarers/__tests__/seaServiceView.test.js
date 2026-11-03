@@ -1,50 +1,19 @@
 import { describe, it, expect } from 'vitest'
-import { isOngoing, sortNewestFirst, findOverlap, toTimelineTrips } from '../seaServiceView'
+import { voyageTrips } from '../seaServiceView'
 
-const trip = (id, on, off, extra = {}) => ({ id, sign_on_date: on, sign_off_date: off, vessel_name_raw: `TÀU ${id}`, rank_raw: 'OLR', rank_name: 'Thợ máy', vessel_match_status: 'NOT_CHECKED', source_type: 'DOCUMENT', ...extra })
-
-describe('chuyến đi tàu', () => {
-  it('đang trên tàu khi có ngày xuống mà chưa có ngày rời', () => {
-    expect(isOngoing(trip(1, '2020-03-15', null))).toBe(true)
-    expect(isOngoing(trip(1, '2020-03-15', '2020-04-01'))).toBe(false)
-    expect(isOngoing(trip(1, null, null))).toBe(false)
+describe('chuyến tàu trên tab Đi tàu', () => {
+  it('đổi chuyến sang props của dòng thời gian, đang trên tàu khi chưa có ngày rời', () => {
+    const out = voyageTrips([{ id: 6, code: 'CT-2026-0006', vessel_name: 'MV Ocean Glory', ship_owner_name: 'Lotus', rank_name: 'Đại phó', join_date: '2026-09-17' }])
+    expect(out[0]).toMatchObject({ id: 'v6', vessel: 'MV Ocean Glory', signOn: '17/09/2026', signOff: null, ongoing: true, source: { label: 'CT-2026-0006' } })
   })
 
-  it('mới nhất trước, chuyến chưa có ngày xuống ở cuối', () => {
-    const out = sortNewestFirst([trip(1, '2019-01-01', '2019-05-01'), trip(2, null, null), trip(3, '2020-01-01', null)])
-    expect(out.map((t) => t.id)).toEqual([3, 1, 2])
-  })
-
-  it('trùng thời gian khi hai khoảng có phần chung; chạm đầu mút thì không', () => {
-    const all = [trip(1, '2019-08-09', '2020-01-21'), trip(2, '2020-03-15', null), trip(3, '2020-01-10', '2020-03-20'), trip(4, '2020-01-21', '2020-02-01')]
-    expect(findOverlap(all[0], all)?.id).toBe(3)
-    expect(findOverlap(all[1], all)?.id).toBe(3)
-    expect(findOverlap(trip(9, '2018-01-01', '2018-02-01'), all)).toBeNull()
-    expect(findOverlap(trip(10, null, null), all)).toBeNull()
-    // chạm đầu mút: 1 rời 21/01, 4 xuống 21/01: không trùng với nhau
-    expect(findOverlap(all[0], [all[0], all[3]])).toBeNull()
-  })
-
-  it('đổi sang props của dòng thời gian', () => {
-    const out = toTimelineTrips([
-      trip(1, '2019-08-09', '2020-01-21', { vessel_type_raw: 'Container', flag_raw: 'Panama', gross_tonnage_raw: '18.230', vessel_match_status: 'NOT_FOUND' }),
-      trip(2, '2020-03-15', null, { source_type: 'MANUAL', vessel_match_status: 'MATCHED', vessel_name: 'Pacific Arrow 2' }),
+  it('mới nhất trước theo ngày lên tàu', () => {
+    const out = voyageTrips([
+      { id: 1, code: 'A', vessel_name: 'A', join_date: '2025-01-01', leave_date: '2025-06-01' },
+      { id: 2, code: 'B', vessel_name: 'B', join_date: '2027-01-01' },
+      { id: 3, code: 'C', vessel_name: 'C', join_date: '2026-01-01', leave_date: '2026-05-01' },
     ])
-    expect(out[0]).toMatchObject({ id: 2, vessel: 'Pacific Arrow 2', signOn: '15/03/2020', signOff: null, ongoing: true, vesselStatus: 'VERIFIED', source: { type: 'manual' } })
-    expect(out[1]).toMatchObject({ vesselSub: 'Container · Panama · 18.230 GT', vesselStatus: 'NOT_FOUND', signOn: '09/08/2019', source: { type: 'document' } })
-    expect(out[1].overlapNote).toBeNull()
-  })
-})
-
-describe('chuyến hệ thống trên tab Đi tàu', () => {
-  it('đổi chuyến sang trip nguồn voyage và xếp chung với lịch sử khai', async () => {
-    const { voyageTrips, mergeTrips, toTimelineTrips } = await import('../seaServiceView')
-    const voyages = voyageTrips([{ id: 6, code: 'CT-2026-0006', vessel_name: 'MV Ocean Glory', ship_owner_name: 'Lotus', rank_name: 'Đại phó', status: 'ONBOARD', join_date: '2026-09-17' }])
-    expect(voyages[0]).toMatchObject({ id: 'v6', signOn: '17/09/2026', signOff: null, ongoing: true, source: { type: 'voyage', label: 'CT-2026-0006' } })
-    const declared = toTimelineTrips([
-      { id: 1, vessel_name_raw: 'A', sign_on_date: '2025-01-01', sign_off_date: '2025-06-01', source_type: 'MANUAL' },
-      { id: 2, vessel_name_raw: 'B', sign_on_date: '2027-01-01', sign_off_date: null, source_type: 'MANUAL' },
-    ])
-    expect(mergeTrips(declared, voyages).map((t) => t.id)).toEqual([2, 'v6', 1])
+    expect(out.map((t) => t.id)).toEqual(['v2', 'v3', 'v1'])
+    expect(out[2]).toMatchObject({ signOff: '01/06/2025', ongoing: false })
   })
 })

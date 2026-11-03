@@ -6,7 +6,6 @@ vi.mock('../client', () => ({
 
 const api = (await import('../client')).default
 const { documentApi } = await import('../documentApi')
-const { seaServiceApi } = await import('../seaServiceApi')
 
 describe('lớp gọi API giấy tờ, đi tàu, chứng chỉ', () => {
   beforeEach(() => {
@@ -25,15 +24,5 @@ describe('lớp gọi API giấy tờ, đi tàu, chứng chỉ', () => {
     expect(api.get).toHaveBeenCalledWith('/documents/uploads/3/pages/2/image', { params: { size: 'thumb' }, responseType: 'blob' })
     await documentApi.decide(7, 'coc', 'edit', 'A1')
     expect(api.put).toHaveBeenCalledWith('/documents/7/fields/coc', { action: 'edit', value: 'A1' })
-  })
-
-  it('đi tàu: sửa và xoá luôn kèm lý do', async () => {
-    await seaServiceApi.update(5, { rank_raw: '2/E' }, 'Sổ ghi nhầm')
-    expect(api.put).toHaveBeenCalledWith('/sea-services/5', { rank_raw: '2/E', reason: 'Sổ ghi nhầm' })
-    await seaServiceApi.remove(5, 'Nhập trùng')
-    expect(api.delete).toHaveBeenCalledWith('/sea-services/5', { data: { reason: 'Nhập trùng' } })
-    await seaServiceApi.create(2, { vessel_name_raw: 'A' })
-    expect(api.post).toHaveBeenCalledWith('/seafarers/2/sea-services', { vessel_name_raw: 'A' })
-    await expect(seaServiceApi.list(2)).resolves.toEqual([])
   })
 })

@@ -15,6 +15,7 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatDateTime, formatUsd } from '../../../utils/format'
 import { ContractSvg, Crumb, FleetTile } from '../fleet/FleetParts'
 import ApproveModal from './ApproveModal'
+import { NotePanel } from '../seafarers/ReadSections'
 import TripLink from '../voyages/TripLink'
 import BalanceCard from './BalanceCard'
 import DealTable from './DealTable'
@@ -67,7 +68,7 @@ export default function ContractDetailPage() {
   const awaiting = Boolean(data?.awaiting_reapproval)
   const hasBills = (data?.bills_summary?.count || 0) > 0
   const bills = useBillList({ contract_id: id, limit: 100 }, { enabled: hasBills && can('bill.view') })
-  const { submit, withdraw, remove, revert, end } = useContractMutations()
+  const { submit, withdraw, remove, revert, end, saveNotes } = useContractMutations()
 
   if (isLoading) {
     return (
@@ -205,6 +206,15 @@ export default function ContractDetailPage() {
   const actions = allActions.filter((button) => !ACTION_PERM[button.key] || can(ACTION_PERM[button.key]))
 
   const canEditNote = ['DRAFT', 'REJECTED'].includes(status) && !contract.legacy_unlinked && can('contract.update')
+  async function onSaveNotes(notes) {
+    try {
+      await saveNotes.mutateAsync({ id: contract.id, notes })
+      toast.success('Đã lưu ghi chú')
+    } catch (error) {
+      toast.error('Không lưu được ghi chú', { description: apiErrorText(error) })
+      throw error
+    }
+  }
   const rejected = status === 'REJECTED' ? lastOf('REJECT') : null
   // Màn 7: chuyến đã rời mà hợp đồng còn kéo dài sau ngày rời. Chỉ là nhãn, không tự đổi gì.
   const mismatch = data.date_mismatch && trip ? (
@@ -316,18 +326,12 @@ export default function ContractDetailPage() {
             <dt>Chuyến</dt>
             <dd><TripLink trip={trip} legacyCode={legacyCode} /></dd>
             <dt>Thời gian</dt>
-            <dd>{formatDate(contract.start_date)} → {formatDate(contract.end_date)} · {formatMonths(contract.months)}</dd>
+            <dd><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)} · {formatMonths(contract.months)}</span></dd>
           </dl>
         </div>
         </div>
         <div className="ct-head-side">
-            <div className="sf-note sf-note--head" role="note">
-              <div className="sf-note__head">
-                <span className="sf-note__title">Ghi chú</span>
-                {canEditNote ? <Button type="link" size="small" onClick={() => navigate(`/contracts/${contract.id}/edit`)}>{contract.notes ? 'Sửa' : 'Thêm'}</Button> : null}
-              </div>
-              {contract.notes ? <div className="sf-note__body">{contract.notes}</div> : <div className="sf-ro__empty">Chưa có ghi chú.</div>}
-            </div>
+            <NotePanel notes={contract.notes} canEdit={canEditNote} saving={saveNotes.isPending} onSave={onSaveNotes} className="sf-note--head" />
             {rejected ? (
               <div className="ct-reject" role="alert">
                 <div className="ct-reject__title"><CloseCircleFilled aria-hidden /> Lý do từ chối</div>

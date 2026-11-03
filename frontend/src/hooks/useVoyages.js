@@ -100,6 +100,7 @@ export function useContractMutations() {
         id ? seafarerContractApi.update(id, values) : seafarerContractApi.create(values),
       ...options,
     }),
+    saveNotes: useMutation({ mutationFn: ({ id, notes }) => seafarerContractApi.updateNotes(id, notes), ...options }),
     remove: useMutation({ mutationFn: (id) => seafarerContractApi.remove(id), ...options }),
     submit: useMutation({ mutationFn: (id) => seafarerContractApi.submit(id), ...options }),
     withdraw: useMutation({ mutationFn: (id) => seafarerContractApi.withdraw(id), ...options }),

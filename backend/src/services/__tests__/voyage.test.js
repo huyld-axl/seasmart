@@ -23,7 +23,7 @@ const writes = (pool) => pool.calls.filter((c) => /^(INSERT|UPDATE|DELETE)/.test
 
 const todayRoute = ["SELECT to_char(CURRENT_DATE, 'YYYY-MM-DD') AS today", () => [[{ today: '2026-10-26' }]]]
 const voyageRow = (over = {}) => ({
-  id: 7, code: 'CT-2026-0139', status: 'ONBOARD', seafarer_id: 5, join_date: '2026-10-02', planned_leave_date: '2027-07-02',
+  id: 7, code: 'CT-2026-0139', seafarer_id: 5, join_date: '2026-10-02', planned_leave_date: '2027-07-02',
   original_leave_date: null, leave_date: null, opportunity_join_date: null, today: '2026-10-26',
   legacy_contract_id: null, opportunity_id: null, ...over,
 })
@@ -33,7 +33,7 @@ const body = (over = {}) => ({
   join_date: '2026-10-26', join_port_id: 9, planned_leave_date: '2027-07-02', ...over,
 })
 const person = ['FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', () => [[{ id: 5, full_name: 'Lê Quang Huy', status: 'ON_VESSEL' }]]]
-const onboard = ["sv.status = 'ONBOARD' AND sv.deleted_at IS NULL FOR UPDATE OF sv", () => [[{ id: 7, code: 'CT-2026-0139', status: 'ONBOARD', seafarer_id: 5, join_date: '2026-10-02', vessel_name: 'MV Ocean Pride' }]]]
+const onboard = ["sv.leave_date IS NULL AND sv.deleted_at IS NULL FOR UPDATE OF sv", () => [[{ id: 7, code: 'CT-2026-0139', seafarer_id: 5, join_date: '2026-10-02', vessel_name: 'MV Ocean Pride' }]]]
 
 const vesselOwner = (ownerId) => ['SELECT ship_owner_id FROM vessel', () => [[{ ship_owner_id: ownerId }]]]
 
@@ -66,12 +66,12 @@ describe('voyage.service: tạo chuyến tay', () => {
     ])
     await voyageService.create(pool, body(), 1)
     const inserted = pool.calls.find((c) => c.sql.startsWith('INSERT INTO seafarer_voyage SET')).params[0]
-    expect(inserted).toMatchObject({ code: `CT${String(new Date().getUTCFullYear()).slice(-2)}61`, source: 'MANUAL', manual_reason: 'OWNER_HIRED', status: 'ONBOARD' })
+    expect(inserted).toMatchObject({ code: `CT${String(new Date().getUTCFullYear()).slice(-2)}61`, source: 'MANUAL', manual_reason: 'OWNER_HIRED' })
     expect(inserted).not.toHaveProperty('transferred_from_id')
   })
 
   it('nhập chuyến cũ trùng thời gian chuyến đã rời thì 409', async () => {
-    const pool = fakePool([todayRoute, person, ["sv.status = 'LEFT'", () => [[{ code: 'CT-2025-0310' }]]]])
+    const pool = fakePool([todayRoute, person, ["sv.leave_date IS NOT NULL", () => [[{ code: 'CT-2025-0310' }]]]])
     await expect(voyageService.create(pool, body({ manual_reason: 'LEGACY', ended: true, join_date: '2025-09-01', leave_date: '2026-01-01', leave_port_id: 9 }), 1))
       .rejects.toMatchObject({ statusCode: 409, message: 'Lê Quang Huy đã có chuyến CT-2025-0310 trùng thời gian' })
   })
@@ -90,7 +90,7 @@ describe('voyage.service: danh sách', () => {
   })
 
   it('chi tiết trả hợp đồng của chuyến và cờ lệch ngày khi đã rời mà hợp đồng còn dài hơn', async () => {
-    const left = voyageRow({ status: 'LEFT', leave_date: '2026-10-17' })
+    const left = voyageRow({ leave_date: '2026-10-17' })
     const pool = fakePool([
       detail(left),
       ['FROM seafarer_contract c WHERE c.seafarer_voyage_id = ?', () => [[{ id: 3, contract_number: 'HĐ-2026-0031', status: 'ACTIVE', start_date: '2026-03-10', end_date: '2026-12-31', diff_monthly: '250' }]]],
@@ -118,14 +118,14 @@ describe('voyage.service: rời tàu, đổi ngày', () => {
     const pool = fakePool([lock(), detail()])
     await voyageService.leave(pool, 7, { leave_date: '2026-10-26', leave_port_id: 9, leave_note: 'Sức khoẻ' }, 1)
     const sqls = writes(pool).map((c) => c.sql)
-    expect(sqls[0]).toContain("SET status = 'LEFT'")
+    expect(sqls[0]).toContain('SET leave_date = ?')
     expect(sqls[1]).toContain('seafarer_voyage_log')
     expect(sqls[2]).toContain("SET status = 'AVAILABLE'")
   })
 
   it('ghi rời nhiều chuyến: có một chuyến đã rời thì 409, không chuyến nào đổi', async () => {
     const pool = fakePool([['FROM seafarer_voyage sv JOIN seafarer s', () => [[
-      voyageRow({ id: 7, full_name: 'A' }), voyageRow({ id: 8, status: 'LEFT', full_name: 'Trần Văn Bình' }),
+      voyageRow({ id: 7, full_name: 'A' }), voyageRow({ id: 8, leave_date: '2026-10-17', full_name: 'Trần Văn Bình' }),
     ]]]])
     await expect(voyageService.leaveMany(pool, { voyage_ids: [7, 8], leave_date: '2026-10-26', leave_port_id: 9 }, 1))
       .rejects.toMatchObject({ statusCode: 409, message: 'Đã rời tàu: Trần Văn Bình' })
@@ -188,7 +188,7 @@ describe('voyage.service: huỷ chốt, xoá', () => {
 describe('voyage.service: đội ngũ trên tàu', () => {
   it('đếm người sắp rời trong 6 tháng mà tàu chưa có cơ hội mở cùng chức danh', async () => {
     const pool = fakePool([
-      ['FROM seafarer_voyage sv\n  JOIN seafarer s', () => [[voyageRow({ id: 1, source: 'OPPORTUNITY' }), voyageRow({ id: 2, status: 'LEFT', leave_date: '2026-09-14', source: 'MANUAL' })]]],
+      ['FROM seafarer_voyage sv\n  JOIN seafarer s', () => [[voyageRow({ id: 1, source: 'OPPORTUNITY' }), voyageRow({ id: 2, leave_date: '2026-09-14', source: 'MANUAL' })]]],
       ['FROM opportunity o JOIN "rank" r', () => [[{ id: 50, code: 'CH26047', rank_id: 3 }]]],
       ['AS horizon', () => [[{ today: '2026-10-26', horizon: '2027-04-26' }]]],
       ["SELECT rank_id FROM opportunity", () => [[{ rank_id: 3 }]]],

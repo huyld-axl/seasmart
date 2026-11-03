@@ -9,7 +9,6 @@ const PERMISSION_MODULES = [
     ['update', 'Sửa hồ sơ', 'Gồm ảnh chân dung, gia quyến, tài khoản ngân hàng'],
     ['delete', 'Xoá thuyền viên'],
     ['docs', 'Tải giấy tờ và đọc bằng AI', 'CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ'],
-    ['sea', 'Sửa lịch sử đi tàu'],
   ] },
   { key: 'partner', group: 'Hồ sơ', label: 'Đối tác', permissions: [['view', 'Xem danh sách và chi tiết'], ['create', 'Thêm đối tác'], ['update', 'Sửa đối tác'], ['delete', 'Xoá đối tác']] },
   { key: 'vessel', group: 'Hồ sơ', label: 'Tàu', permissions: [['view', 'Xem danh sách và chi tiết'], ['create', 'Thêm tàu', 'Gồm tra cứu theo số IMO'], ['update', 'Sửa tàu'], ['delete', 'Xoá tàu']] },

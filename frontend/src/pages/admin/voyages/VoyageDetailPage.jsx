@@ -67,7 +67,7 @@ export default function VoyageDetailPage() {
     }
   }
 
-  const onboard = v.status === 'ONBOARD'
+  const onboard = !v.leave_date
   const flag = leaveFlagLabel(v.leave_flag)
   const fromOpportunity = v.source === 'OPPORTUNITY'
   const portName = (pid) => (ports.data || []).find((p) => p.id === pid)?.name || null
@@ -163,7 +163,6 @@ export default function VoyageDetailPage() {
           <div className="crew-head__text">
             <div className="crew-head__titlerow">
               <h1 className="crew-head__title">{v.seafarer_name}</h1>
-              <StatusBadge group="voyage" value={v.status} />
               {flag ? <span className={`crew-docs crew-docs--${flag.tone}`}>{flag.text}</span> : null}
             </div>
             <dl className="crew-head__meta">

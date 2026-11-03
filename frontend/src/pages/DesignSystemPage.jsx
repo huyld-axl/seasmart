@@ -14,7 +14,8 @@ import FieldInput from '../components/ds/FieldInput'
 import VesselMatchChip from '../components/ds/VesselMatchChip'
 import DocTypeBar from '../components/ds/DocTypeBar'
 import ReviewPager from '../components/ds/ReviewPager'
-import SeaServiceTimeline from '../components/ds/SeaServiceTimeline'
+import RecordTable from '../components/ds/RecordTable'
+import VoyageTimeline from '../components/ds/VoyageTimeline'
 import CertificateTable, { CategoryTag } from '../components/ds/CertificateTable'
 import DocThumb from '../components/ds/DocThumb'
 import RowActions from '../components/ds/RowActions'
@@ -129,11 +130,23 @@ const UPLOAD_PROBLEMS = [
   { id: 'p6', name: 'IMG_2050.jpg', kind: 'image', state: 'unsent' },
   { id: 'p7', name: 'IMG_2051.jpg', kind: 'image', state: 'saved' },
 ]
+const VOYAGE_TL = [
+  { id: 1, start: '2026-05-05', end: null, vessel: 'MV Lotus Pearl', owner: 'Lotus Shipping', rank: 'Oiler', code: 'CT-2026-018' },
+  { id: 2, start: '2025-06-02', end: '2026-02-28', vessel: 'MV Halong Spirit', owner: 'Halong Marine', rank: 'Oiler', code: 'CT-2025-031' },
+  { id: 3, start: '2024-03-10', end: '2024-12-20', vessel: 'MV Ocean Glory', owner: 'Ocean Fleet', rank: 'AB', code: 'CT-2024-009' },
+]
 const TRIPS = [
-  { id: 't0', vessel: 'MV Ocean Pride', vesselSub: 'Hàng rời · Panama · Hải Phong Shipping', signOn: '02/10/2026', signOff: null, ongoing: true, rank: 'Thợ máy', vesselStatus: 'VERIFIED', source: { type: 'voyage', label: 'CT-2026-0139' } },
-  { id: 't1', vessel: 'PACIFIC ARROW 2', vesselSub: 'Hàng rời · Marshall Islands · 35.410 GT', signOn: '15/03/2020', signOff: null, ongoing: true, rank: '2/E', rankName: 'Máy hai', vesselStatus: 'NOT_CHECKED', source: { type: 'document', label: 'Từ sổ thuyền viên, tr.5' } },
-  { id: 't2', vessel: 'SEA ORCHID', vesselSub: 'Container · Panama · 18.230 GT', signOn: '09/08/2019', signOff: '21/01/2020', rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'NOT_FOUND', overlapNote: 'Trùng với chuyến PACIFIC ARROW 2 từ 15/03/2020', source: { type: 'document', label: 'Từ sổ thuyền viên, tr.4' } },
-  { id: 't3', vessel: 'MV Halong Spirit', vesselSub: 'Hàng rời · Việt Nam · 4.120 GT', signOn: '03/12/2018', signOff: '17/06/2019', rank: 'OLR', rankName: 'Thợ máy', vesselStatus: 'VERIFIED', source: { type: 'manual' } },
+  { id: 't0', vessel: 'MV Ocean Pride', owner: 'Hải Phong Shipping', rank: 'Thợ máy', join: '02/10/2026', leave: 'Đang trên tàu', code: 'CT-2026-0139' },
+  { id: 't1', vessel: 'MV Halong Spirit', owner: 'Hải Phong Shipping', rank: 'Thợ máy', join: '03/12/2025', leave: '17/06/2026', code: 'CT-2025-0088' },
+]
+const TRIP_COLUMNS = [
+  { key: 'vessel', title: 'Tàu', card: 'title', render: (t) => t.vessel },
+  { key: 'owner', title: 'Chủ tàu', render: (t) => t.owner },
+  { key: 'rank', title: 'Chức danh', render: (t) => t.rank },
+  { key: 'join', title: 'Lên tàu', mono: true, render: (t) => t.join },
+  { key: 'leave', title: 'Rời tàu', mono: true, card: 'end', render: (t) => t.leave },
+  { key: 'code', title: 'Chuyến', mono: true, render: (t) => t.code },
+  { key: 'open', title: 'Thao tác', right: true, render: () => <a className="ds-link" href="#ho-so-giay-to">Mở chuyến</a> },
 ]
 // Đội ngũ MV Ocean Pride, mỗi hàng một chuyến (wireframe co-hoi-chuyen-tau, Màn 10).
 const CREW_ROWS = [
@@ -705,10 +718,14 @@ export default function DesignSystemPage() {
         </Demo>
       </Section>
 
-      <Section id="ho-so-giay-to" title="Chuyến đi tàu và chứng chỉ">
+      <Section id="ho-so-giay-to" title="Chuyến tàu và chứng chỉ">
         <div className="dsp-states">
-          <Demo label="Chuyến đi tàu: đang trên tàu, trùng thời gian, nhập tay" wide>
-            <SeaServiceTimeline trips={TRIPS} />
+          <Demo label="Bảng bản ghi (RecordTable): cùng kiểu bảng chứng chỉ, hẹp thì thành thẻ; không có dòng thì chỉ hiện trạng thái trống, không có tiêu đề cột" wide>
+            <RecordTable rows={TRIPS} columns={TRIP_COLUMNS} />
+            <RecordTable rows={[]} columns={TRIP_COLUMNS} empty={<EmptyState title="Chưa có chuyến tàu nào" description="Chuyến sinh ra khi chốt người trên cơ hội." />} />
+          </Demo>
+          <Demo label="Dòng thời gian chuyến tàu (VoyageTimeline): mới nhất trước, năm ở mép trái, khoảng ở bờ nét đứt, chuyến đang đi chấm xanh" wide>
+            <VoyageTimeline today="2026-11-03" items={VOYAGE_TL} />
           </Demo>
           <Demo label="Bảng chứng chỉ: còn hạn, hết hạn, không thời hạn (nhập tay)" wide>
             <CertificateTable certs={CERTS} />

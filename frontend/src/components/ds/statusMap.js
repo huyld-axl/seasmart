@@ -46,7 +46,6 @@ export const STATUS = {
   },
   seaService: {
     ONGOING: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
-    OVERLAP: { label: 'Trùng thời gian', tone: 'warning', mark: 'overlap' },
   },
   // Bộ giấy tờ xuất (nhóm C đã chốt: đơn vị xuất là bộ giấy, có bước ký)
   export: {
@@ -83,11 +82,6 @@ export const STATUS = {
     PLACED: { label: 'Được chốt', tone: 'success', mark: 'check' },
     NOT_SELECTED: { label: 'Không được chọn', tone: 'neutral', mark: 'minus' },
     REMOVED: { label: 'Đã bỏ', tone: 'neutral', mark: 'minus' },
-  },
-  // Chuyến: một thuyền viên đi một tàu (seafarer_voyage.status).
-  voyage: {
-    ONBOARD: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
-    LEFT: { label: 'Đã rời tàu', tone: 'neutral', mark: 'ring' },
   },
   // Hợp đồng thuyền viên (seafarer_contract.status).
   contract: {
@@ -147,7 +141,6 @@ export const STATUS_GROUP_LABELS = {
   crew: 'Tình trạng thuyền viên',
   opportunity: 'Cơ hội',
   candidate: 'Ứng viên',
-  voyage: 'Chuyến tàu',
   contract: 'Hợp đồng',
   bill: 'Yêu cầu thanh toán',
   vesselStatus: 'Trạng thái tàu',

@@ -1,5 +1,5 @@
 // CV chủ tàu Trung Quốc: mẫu này không dùng mã HDxx mà điền thẳng vào ô theo địa chỉ.
-// Sheet chính: thông tin cá nhân (dòng 5-14), giấy tờ và chứng chỉ (17-41), 5 lần đi tàu gần nhất (cột C-G, dòng 43-57).
+// Sheet chính: thông tin cá nhân (dòng 5-14), giấy tờ và chứng chỉ (17-41), 5 chuyến tàu gần nhất (cột C-G, dòng 43-57).
 // Sheet "CREW LIST": một dòng thuyền viên.
 
 const SERVICE_COLUMNS = ['C', 'D', 'E', 'F', 'G']
@@ -71,9 +71,17 @@ async function loadCvData(pool, seafarerId) {
     [seafarerId]
   )
   const [services] = await pool.query(
-    `SELECT ss.*, r.name_en AS rank_name_en FROM sea_service ss LEFT JOIN rank r ON r.id = ss.rank_id
-     WHERE ss.seafarer_id = ? AND ss.deleted_at IS NULL
-     ORDER BY ss.sign_on_date DESC, ss.id DESC LIMIT ?`,
+    `SELECT o.company_name AS owner_raw, ves.vessel_name AS vessel_name_raw, r.name_en AS rank_name_en, vt.name_en AS vessel_type_raw,
+            c.name_en AS flag_raw, ves.gross_tonnage AS gross_tonnage_raw, ves.engine_power_kw AS engine_power_raw,
+            sv.join_date AS sign_on_date, sv.leave_date AS sign_off_date
+     FROM seafarer_voyage sv
+     JOIN vessel ves ON ves.id = sv.vessel_id
+     LEFT JOIN ship_owner o ON o.id = sv.ship_owner_id
+     LEFT JOIN "rank" r ON r.id = sv.rank_id
+     LEFT JOIN vessel_type vt ON vt.id = ves.vessel_type_id
+     LEFT JOIN country c ON c.id = ves.flag_country_id
+     WHERE sv.seafarer_id = ? AND sv.deleted_at IS NULL
+     ORDER BY sv.join_date DESC, sv.id DESC LIMIT ?`,
     [seafarerId, SERVICE_COLUMNS.length]
   )
   const [contacts] = await pool.query(

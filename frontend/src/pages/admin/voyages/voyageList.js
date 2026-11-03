@@ -20,7 +20,7 @@ export function leaveFlagLabel(flag) {
 
 // Ô Rời tàu: ngày chính và dòng phụ ("dự kiến" / "đã dời từ {ngày}" / nơi thực tế).
 export function leaveCell(row, formatDate) {
-  if (row.status === 'LEFT') return { date: row.leave_date, sub: row.leave_port_name || '—' }
+  if (row.leave_date) return { date: row.leave_date, sub: row.leave_port_name || '—' }
   const moved = row.original_leave_date && row.original_leave_date !== row.planned_leave_date
   return { date: row.planned_leave_date, sub: moved ? `đã dời từ ${formatDate(row.original_leave_date)}` : 'dự kiến' }
 }
@@ -149,7 +149,7 @@ export function crewRows({ voyages = [], openings = [], today, formatDate, onVoy
   const rows = voyages.map((v) => {
     const original = iso(v.original_leave_date) || iso(v.planned_leave_date)
     const bars = [{ kind: 'planned', start: iso(v.join_date), end: original }]
-    if (v.status === 'LEFT') {
+    if (v.leave_date) {
       const delta = deltaText(v.leave_delta_days)
       bars.push({ kind: 'left', start: iso(v.join_date), end: iso(v.leave_date), label: [v.leave_port_name, delta].filter(Boolean).join(' · ') })
     } else {

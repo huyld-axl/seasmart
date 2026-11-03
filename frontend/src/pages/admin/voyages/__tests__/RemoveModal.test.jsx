@@ -8,7 +8,7 @@ vi.mock('../../../../hooks/useVoyages', () => ({ useRemovePreview: vi.fn(), useV
 vi.mock('../../../../components/ds/useToast', () => ({ default: () => ({ success: vi.fn(), error: vi.fn() }) }))
 vi.mock('../../../../api', () => ({ lookupApi: { ports: async () => ({ data: [] }) } }))
 
-const voyage = { id: 7, code: 'CT-2026-0161', source: 'OPPORTUNITY', status: 'ONBOARD', seafarer_name: 'Đỗ Văn Nam', opportunity: { id: 3, code: 'CH26051' } }
+const voyage = { id: 7, code: 'CT-2026-0161', source: 'OPPORTUNITY', seafarer_name: 'Đỗ Văn Nam', opportunity: { id: 3, code: 'CH26051' } }
 const show = (preview) => {
   useRemovePreview.mockReturnValue({ data: preview, isLoading: false, isError: false })
   render(<MemoryRouter><RemoveModal voyage={voyage} onClose={vi.fn()} /></MemoryRouter>)

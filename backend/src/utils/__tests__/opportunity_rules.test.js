@@ -33,9 +33,9 @@ describe('deadlineFlag', () => {
 
 describe('leaveFlag', () => {
   it('chỉ chuyến đang trên tàu', () => {
-    expect(leaveFlag({ status: 'ONBOARD', planned_leave_date: '2026-11-25', today: '2026-10-26' })).toEqual({ kind: 'SOON', days: 30 })
-    expect(leaveFlag({ status: 'ONBOARD', planned_leave_date: '2026-10-20', today: '2026-10-26' })).toEqual({ kind: 'LATE', days: 6 })
-    expect(leaveFlag({ status: 'LEFT', planned_leave_date: '2026-10-20', today: '2026-10-26' })).toBeNull()
+    expect(leaveFlag({ planned_leave_date: '2026-11-25', today: '2026-10-26' })).toEqual({ kind: 'SOON', days: 30 })
+    expect(leaveFlag({ planned_leave_date: '2026-10-20', today: '2026-10-26' })).toEqual({ kind: 'LATE', days: 6 })
+    expect(leaveFlag({ leave_date: '2026-10-25', planned_leave_date: '2026-10-20', today: '2026-10-26' })).toBeNull()
   })
 })
 

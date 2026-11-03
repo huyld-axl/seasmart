@@ -219,18 +219,16 @@ const seafarerService = {
       params.push(rank_id)
     }
 
-    // Bộ lọc nâng cao. Chức danh: hiện tại, từng đi tàu (sea_service) hoặc có chuyến ở chức danh đó.
+    // Bộ lọc nâng cao. Chức danh: hiện tại hoặc có chuyến ở chức danh đó.
     if (rankIds.length) {
       where.push(`(s.current_rank_id IN (?)
-        OR EXISTS (SELECT 1 FROM sea_service ss WHERE ss.seafarer_id = s.id AND ss.deleted_at IS NULL AND ss.rank_id IN (?))
         OR EXISTS (SELECT 1 FROM seafarer_voyage sv WHERE sv.seafarer_id = s.id AND sv.deleted_at IS NULL AND sv.rank_id IN (?)))`)
-      params.push(rankIds, rankIds, rankIds)
+      params.push(rankIds, rankIds)
     }
-    // Tàu đã từng đi: lịch sử đi tàu đã khớp tàu hoặc chuyến trên tàu đó.
+    // Tàu đã từng đi: có chuyến trên tàu đó.
     if (vesselIds.length) {
-      where.push(`(EXISTS (SELECT 1 FROM sea_service ss WHERE ss.seafarer_id = s.id AND ss.deleted_at IS NULL AND ss.vessel_id IN (?))
-        OR EXISTS (SELECT 1 FROM seafarer_voyage sv WHERE sv.seafarer_id = s.id AND sv.deleted_at IS NULL AND sv.vessel_id IN (?)))`)
-      params.push(vesselIds, vesselIds)
+      where.push('EXISTS (SELECT 1 FROM seafarer_voyage sv WHERE sv.seafarer_id = s.id AND sv.deleted_at IS NULL AND sv.vessel_id IN (?))')
+      params.push(vesselIds)
     }
     // Tuổi tính từ ngày sinh; thiếu ngày sinh thì loại khi có lọc tuổi.
     if (ageMin !== null) {

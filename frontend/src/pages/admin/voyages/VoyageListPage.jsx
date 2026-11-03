@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Button, DatePicker, Grid, Input, Select, Skeleton } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
-import StatusBadge from '../../../components/ds/StatusBadge'
 import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import { CrewFilterButton } from '../seafarers/CrewFilters'
@@ -96,9 +95,6 @@ export default function VoyageListPage() {
                   <span className="ds-cell2__main">{row.seafarer_name} · <span className="ds-mono">{row.code}</span></span>
                   <span className="ds-cell2__sub">{row.rank_name} · {row.vessel_name}</span>
                   <span className="ds-cell2__sub">Lên {formatDate(row.join_date)} · rời {formatDate(leaveCell(row, formatDate).date)}{flag ? ` · ${flag.text}` : ''}</span>
-                </span>
-                <span className="crew-list__meta">
-                  <StatusBadge group="voyage" value={row.status} />
                 </span>
               </button>
             </li>

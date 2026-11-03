@@ -206,12 +206,12 @@ describe('chốt người', () => {
     ...detailRoutes(row({ status: 'WON' })),
   ]
 
-  it('thành công: tạo chuyến ONBOARD, ghi log PLACE, cơ hội WON, ứng viên PLACED / NOT_SELECTED, thuyền viên ON_VESSEL', async () => {
+  it('thành công: tạo chuyến đang trên tàu, ghi log PLACE, cơ hội WON, ứng viên PLACED / NOT_SELECTED, thuyền viên ON_VESSEL', async () => {
     const pool = fakePool(placeRoutes())
     const result = await opportunityService.place(pool, 9, placeBody(), 1)
     expect(result.voyage).toEqual({ id: 77, code: 'CH26044-01' })
     const sv = pool.calls.find((c) => c.sql.startsWith('INSERT INTO seafarer_voyage SET')).params[0]
-    expect(sv).toMatchObject({ status: 'ONBOARD', source: 'OPPORTUNITY', opportunity_id: 9, vessel_id: 3, join_date: '2026-10-26', planned_leave_date: '2027-07-25', budget_monthly_usd: '1650.00' })
+    expect(sv).toMatchObject({ source: 'OPPORTUNITY', opportunity_id: 9, vessel_id: 3, join_date: '2026-10-26', planned_leave_date: '2027-07-25', budget_monthly_usd: '1650.00' })
     const sqls = writes(pool).map((c) => c.sql)
     expect(sqls.some((q) => q.includes('seafarer_voyage_log'))).toBe(true)
     expect(sqls.some((q) => q.includes("SET status = 'WON'"))).toBe(true)

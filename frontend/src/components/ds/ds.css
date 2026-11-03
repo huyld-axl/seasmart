@@ -521,12 +521,6 @@
 .ds-viewer__region--active, .ds-viewer__region--active:hover { background: var(--primary-light); box-shadow: 0 0 0 2px var(--primary); }
 
 /* Chuyến đi tàu trên đường dọc */
-.ds-trips { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
-.ds-trip { position: relative; display: grid; gap: 8px; margin-left: 20px; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface); }
-.ds-trip::before { content: ""; position: absolute; top: 20px; left: -20px; width: 10px; height: 10px; border-radius: 9999px; background: var(--border-strong); box-shadow: 0 0 0 3px var(--background); }
-.ds-trip[data-now="true"]::before { background: var(--success); }
-.ds-trip::after { content: ""; position: absolute; top: 34px; bottom: -14px; left: -16px; width: 2px; background: var(--border-strong); }
-.ds-trip:last-child::after { display: none; }
 .ds-trip__head { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; }
 .ds-trip__vessel { flex: 1 1 80px; min-width: 0; overflow-wrap: anywhere; }
 .ds-trip__sub { margin: 0; color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
@@ -563,7 +557,7 @@
 .ds-ccards li[data-tone="warn"] { box-shadow: inset 3px 0 0 var(--warning); }
 .ds-ctable__mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-variant-numeric: slashed-zero tabular-nums; white-space: nowrap; }
 .ds-ctable__note { color: var(--muted); font-size: 12px; }
-.ds-ctable__src .ds-link, .ds-trip__source .ds-link { font-size: 13px; }
+.ds-ctable__src .ds-link { font-size: 13px; }
 .ds-ctable__src { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; white-space: nowrap; }
 .ds-ccards { display: none; margin: 0; padding: 0; list-style: none; }
 .ds-ccards li { display: grid; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
@@ -834,3 +828,31 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-chips-stage__step--next { background: var(--primary-light); color: var(--primary); }
 .ds-chips-stage__step--complete { background: var(--primary); color: #fff; }
 .ds-chips-stage__note { color: var(--muted); font-size: 11px; }
+
+/* ---------- Dòng thời gian chuyến tàu (VoyageTimeline) ---------- */
+.ds-vt { display: grid; gap: 12px; padding: 16px; }
+.ds-vt__sum { margin: 0; color: var(--muted); font-size: 13px; }
+.ds-vt__sum b { color: var(--foreground); font-weight: 600; }
+.ds-vt__list { position: relative; display: grid; gap: 12px; margin: 0; padding: 0 0 0 64px; list-style: none; }
+.ds-vt__list::before { content: ''; position: absolute; top: 8px; bottom: 8px; left: 52px; width: 2px; background: var(--border-strong); }
+.ds-vt__item { position: relative; display: grid; gap: 8px; }
+.ds-vt__year { position: absolute; top: 12px; left: -64px; width: 40px; color: var(--muted); font-size: 12px; font-weight: 600; text-align: right; }
+.ds-vt__dot { position: absolute; top: 16px; left: -17px; width: 10px; height: 10px; border: 2px solid var(--border-strong); border-radius: 50%; background: var(--surface); }
+.ds-vt__item[data-now='true'] .ds-vt__dot { border-color: var(--success); background: var(--success); box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 20%, transparent); }
+.ds-vt__ashore { position: relative; }
+.ds-vt__ashore-dot { position: absolute; top: 50%; left: -17px; width: 10px; height: 10px; margin-top: -5px; border: 2px solid var(--warning); border-radius: 50%; background: var(--surface); }
+.ds-vt__ashore-box { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 16px; border: 1.5px dashed var(--warning); border-radius: 12px; background: var(--warning-bg); color: var(--warning); }
+.ds-vt__ashore-box b { font-size: 14px; font-weight: 600; }
+.ds-vt__ashore-box span { font-size: 12px; font-variant-numeric: tabular-nums; }
+.ds-vt__ashore[data-now='true'] .ds-vt__ashore-box { border-style: solid; }
+.ds-vt__card { display: grid; gap: 4px; padding: 12px 16px; border: 1px solid var(--border-strong); border-radius: 16px; background: var(--surface); }
+.ds-vt__item[data-now='true'] .ds-vt__card { border-color: var(--primary); }
+.ds-vt__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.ds-vt__top b { font-weight: 600; }
+.ds-vt__live { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px; background: var(--success-bg); color: var(--success); font-size: 12px; font-weight: 500; }
+.ds-vt__live::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.ds-vt__sub { color: var(--muted); }
+.ds-vt__meta { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; color: var(--muted); font-size: 12px; }
+.ds-vt__dates { color: var(--foreground); font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; }
+.ds-vt__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; }
+.ds-vt__code { color: var(--muted); font-family: var(--font-mono, ui-monospace, monospace); }

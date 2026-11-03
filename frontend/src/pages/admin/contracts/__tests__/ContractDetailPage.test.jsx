@@ -12,14 +12,14 @@ vi.mock('../../../../hooks/useVoyages', () => ({
   useContract: vi.fn(),
   useBillPlan: vi.fn(),
   useBillList: vi.fn(),
-  useContractMutations: () => ({ submit: mutation, withdraw: mutation, remove: mutation, revert: mutation, end: mutation, approve: mutation, reject: mutation }),
+  useContractMutations: () => ({ submit: mutation, withdraw: mutation, remove: mutation, revert: mutation, end: mutation, saveNotes: mutation, approve: mutation, reject: mutation }),
 }))
 vi.mock('../../../../components/ds/useToast', () => ({ default: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }) }))
 
 const detail = (over = {}) => ({
   contract: { id: 9, contract_number: 'HĐ-2026-0031', status: 'ACTIVE', start_date: '2026-03-10', end_date: '2026-12-31', months: 9.7, legacy_unlinked: false, notes: null, last_reject_reason: null },
   position: { rank_name: 'Thủy thủ AB', budget_monthly_usd: 1650, budget_total_usd: null, sort_order: null },
-  voyage: { id: 4, code: 'CT-2026-0104', status: 'LEFT', vessel_id: 3, vessel_name: 'MV Ocean Pride', ship_owner_name: 'Hải Phong Shipping', join_date: '2026-03-10', leave_date: '2026-10-17' },
+  voyage: { id: 4, code: 'CT-2026-0104', vessel_id: 3, vessel_name: 'MV Ocean Pride', ship_owner_name: 'Hải Phong Shipping', join_date: '2026-03-10', leave_date: '2026-10-17' },
   legacy_voyage: null,
   seafarer: { id: 2, full_name: 'Đỗ Văn Nam', seafarer_code: 'TV1', status: 'AVAILABLE' },
   items: [], terms: {}, balance: { budgetMonthly: 1650, receivableMonthly: 0, payableMonthly: 0, diffMonthly: 0, receivableOnce: 0, payableOnce: 0, diffOnce: 0, diffContract: 0, receivableOk: true, payableOk: true, diffOk: true },

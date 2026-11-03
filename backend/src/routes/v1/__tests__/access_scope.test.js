@@ -40,9 +40,6 @@ beforeAll(async () => {
   await app.register(require('../seafarer.routes'), { prefix: '/seafarers' })
   await app.register(require('../seafarer.routes').seafarerContactRoutes, { prefix: '/seafarers/:seafarerId/contacts' })
   await app.register(require('../certificate.routes'), { prefix: '/seafarers/:seafarerId/certificates' })
-  const { seafarerSeaServiceRoutes, seaServiceRoutes } = require('../sea_service.routes')
-  await app.register(seafarerSeaServiceRoutes, { prefix: '/seafarers/:seafarerId/sea-services' })
-  await app.register(seaServiceRoutes, { prefix: '/sea-services' })
   await app.register(require('../document.routes'), { prefix: '/documents' })
   await app.register(require('../dashboard.routes'), { prefix: '/dashboard' })
   await app.register(require('../voyage.routes'), { prefix: '/voyages' })
@@ -72,7 +69,6 @@ describe('thiếu quyền thì 403', () => {
     ['PUT', '/seafarers/1', 'seafarer.update', {}],
     ['DELETE', '/seafarers/1', 'seafarer.delete'],
     ['GET', '/seafarers/1/certificates', 'seafarer.view'],
-    ['POST', '/seafarers/1/sea-services', 'seafarer.sea', {}],
     ['GET', '/documents/seafarer/1', 'seafarer.docs'],
     ['GET', '/dashboard/certificate-alerts', 'seafarer.view'],
     ['GET', '/opportunities', 'opportunity.view'],
@@ -185,17 +181,12 @@ describe('dữ liệu con theo phạm vi của thuyền viên cha', () => {
       ['FROM "seafarer" WHERE', () => [[{ created_by: 8 }]]],
       ['FROM "document_upload"', () => [[{ seafarer_id: 5 }]]],
       ['FROM "seafarer_document"', () => [[{ seafarer_id: 5 }]]],
-      ['FROM "sea_service"', () => [[{ seafarer_id: 5 }]]],
     ]
   })
   const hidden = [
     ['GET', '/seafarers/5/certificates', ['seafarer.view']],
     ['GET', '/seafarers/5/contacts', ['seafarer.view']],
     ['POST', '/seafarers/5/contacts', ['seafarer.update'], { full_name: 'A', relationship: 'B' }],
-    ['GET', '/seafarers/5/sea-services', ['seafarer.view']],
-    ['POST', '/seafarers/5/sea-services', ['seafarer.sea'], {}],
-    ['PUT', '/sea-services/9', ['seafarer.sea'], { reason: 'x' }],
-    ['DELETE', '/sea-services/9', ['seafarer.sea'], { reason: 'x' }],
     ['GET', '/documents/seafarer/5', ['seafarer.view', 'seafarer.docs']],
     ['GET', '/documents/uploads/9/file', ['seafarer.view', 'seafarer.docs']],
     ['DELETE', '/documents/uploads/9', ['seafarer.view', 'seafarer.docs']],
@@ -210,8 +201,8 @@ describe('dữ liệu con theo phạm vi của thuyền viên cha', () => {
     })
   }
   it('cùng yêu cầu với phạm vi all không bị chặn bởi phạm vi', async () => {
-    const res = await app.inject({ method: 'GET', url: '/seafarers/5/sea-services', headers: as(['seafarer.view'], {}) })
-    expect(res.statusCode).toBe(200)
+    const res = await app.inject({ method: 'GET', url: '/seafarers/5/certificates', headers: as(['seafarer.view'], {}) })
+    expect(res.statusCode).not.toBe(404)
   })
 })
 

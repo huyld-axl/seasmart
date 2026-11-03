@@ -16,7 +16,6 @@ const opportunityRoutes = require('./opportunity.routes')
 const seafarerContractRoutes = require('./seafarer_contract.routes')
 const dashboardRoutes = require('./dashboard.routes')
 const contractBillRoutes = require('./contract_bill.routes')
-const { seafarerSeaServiceRoutes, seaServiceRoutes } = require('./sea_service.routes')
 
 async function v1Routes(fastify) {
   fastify.register(authRoutes, { prefix: '/auth' })
@@ -32,8 +31,6 @@ async function v1Routes(fastify) {
   fastify.register(notificationRoutes, { prefix: '/notifications' })
   fastify.register(exportPackRoutes, { prefix: '/exports' })
   fastify.register(documentRoutes, { prefix: '/documents' })
-  fastify.register(seafarerSeaServiceRoutes, { prefix: '/seafarers/:seafarerId/sea-services' })
-  fastify.register(seaServiceRoutes, { prefix: '/sea-services' })
   fastify.register(opportunityRoutes, { prefix: '/opportunities' })
   fastify.register(voyageRoutes, { prefix: '/voyages' })
   fastify.register(seafarerContractRoutes, { prefix: '/contracts' })

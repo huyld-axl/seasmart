@@ -33,7 +33,6 @@ function assertSeafarerInScope(request, seafarerId, db = pool) {
 const CHILD_TABLES = {
   upload: 'document_upload',
   document: 'seafarer_document',
-  sea_service: 'sea_service',
 }
 
 async function assertChildInScope(request, kind, id, db = pool) {

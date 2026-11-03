@@ -61,11 +61,11 @@ describe('profileView', () => {
 
 describe('voyageNow', () => {
   const rows = [
-    { id: 1, code: 'CT-2026-0001', status: 'LEFT', join_date: '2025-01-01', leave_date: '2025-06-01', planned_leave_date: '2025-07-01', vessel_id: 3, vessel_name: 'MV A' },
-    { id: 2, code: 'CT-2026-0002', status: 'LEFT', join_date: '2025-08-01', leave_date: '2026-02-01', planned_leave_date: '2026-02-01', vessel_id: 3, vessel_name: 'MV A' },
-    { id: 3, code: 'CT-2026-0003', status: 'ONBOARD', join_date: '2026-06-05', leave_date: null, planned_leave_date: '2027-03-05', vessel_id: 4, vessel_name: 'MV B' },
+    { id: 1, code: 'CT-2026-0001', join_date: '2025-01-01', leave_date: '2025-06-01', planned_leave_date: '2025-07-01', vessel_id: 3, vessel_name: 'MV A' },
+    { id: 2, code: 'CT-2026-0002', join_date: '2025-08-01', leave_date: '2026-02-01', planned_leave_date: '2026-02-01', vessel_id: 3, vessel_name: 'MV A' },
+    { id: 3, code: 'CT-2026-0003', join_date: '2026-06-05', leave_date: null, planned_leave_date: '2027-03-05', vessel_id: 4, vessel_name: 'MV B' },
   ]
-  it('đang trên tàu thì lấy chuyến ONBOARD, hạn là ngày rời dự kiến', () => {
+  it('đang trên tàu thì lấy chuyến chưa có ngày rời, hạn là ngày rời dự kiến', () => {
     expect(voyageNow(rows)).toMatchObject({ kind: 'current', row: { voyage_id: 3, voyage_code: 'CT-2026-0003', vessel_name: 'MV B', end_date: '2027-03-05' } })
   })
   it('đã rời hết thì lấy chuyến rời gần nhất; không có chuyến thì null', () => {

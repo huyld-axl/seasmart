@@ -16,7 +16,7 @@ describe('navConfig', () => {
   it('đủ quyền thì thấy đủ mục và tab', () => {
     const sections = sectionsFor({ permissions: ALL })
     expect(sections.map((s) => s.key)).toEqual(NAV_SECTIONS.map((s) => s.key))
-    expect(sections.at(-1).tabs.map((t) => t.label)).toEqual(['Tài khoản', 'Vai trò và quyền'])
+    expect(sections.at(-1).tabs.map((t) => t.label)).toEqual(['Tài khoản', 'Vai trò và quyền', 'Mục tiêu tháng'])
   })
 
   it('chưa đăng nhập hoặc chưa có quyền nào thì không có mục nào', () => {

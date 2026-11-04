@@ -44,6 +44,7 @@ import UploadPage from './pages/admin/UploadPage'
 import StandaloneError from './pages/errors/StandaloneError'
 import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
+import KpiTargetPage from './pages/admin/settings/KpiTargetPage'
 import ToastHost from './components/ds/ToastHost'
 
 const queryClient = new QueryClient({
@@ -148,6 +149,7 @@ function AppRoutes() {
         <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
         <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
         <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />
+        <Route path="/admin/kpi-targets" element={guard('kpi.manage', <KpiTargetPage />)} />
       </Route>
 
       <Route path="/403" element={<StandaloneError code={403} />} />

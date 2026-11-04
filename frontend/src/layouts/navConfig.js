@@ -39,6 +39,7 @@ export const NAV_SECTIONS = [
     tabs: [
       { to: '/admin/users', label: 'Tài khoản', perm: 'account.view' },
       { to: '/admin/roles', label: 'Vai trò và quyền', perm: 'role.manage' },
+      { to: '/admin/kpi-targets', label: 'Mục tiêu tháng', perm: 'kpi.manage' },
     ],
   },
 ]

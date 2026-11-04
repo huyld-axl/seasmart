@@ -1,0 +1,6 @@
+.kt-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.kt-cell .ant-input-number, .kt-cell .ds-money { width: 100%; }
+.kt-err { margin: 4px 0 0; color: var(--error-text); font-size: 12px; }
+.kt-name { font-weight: 500; }
+.kt-actual { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kt-total td { font-weight: 600; background: var(--surface-hover, #f8f8fa); }

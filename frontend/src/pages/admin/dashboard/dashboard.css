@@ -1,5 +1,5 @@
 /* Tổng quan: desktop (từ 1024px) vừa khung nhìn, không cuộn trang; hàng trên : hàng dưới = 1 : 1,2. Dưới 1024px xếp dọc. */
-.dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; height: max(620px, calc(100vh - 64px - 48px)); }
+.dash { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; height: max(520px, calc(100vh - 64px - 48px)); }
 .dash--no-kpi { grid-template-rows: auto minmax(0, 1fr); }
 .dash--no-att { grid-template-rows: auto minmax(0, 1fr); }
 .dash-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }

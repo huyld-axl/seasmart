@@ -5,6 +5,9 @@ import { DownloadIcon, UploadIcon } from '../components/ds/TransferIcons'
 import ProductBrand from '../components/common/ProductBrand'
 import MoneyInput from '../components/ds/MoneyInput'
 import StatusBadge from '../components/ds/StatusBadge'
+import KpiBars from '../components/ds/KpiBars'
+import ProgressMeter from '../components/ds/ProgressMeter'
+import DueTag from '../components/ds/DueTag'
 import { STATUS, STATUS_GROUP_LABELS } from '../components/ds/statusMap'
 import ReviewField from '../components/ds/ReviewField'
 import DocumentViewer from '../components/ds/DocumentViewer'
@@ -385,6 +388,7 @@ export default function DesignSystemPage() {
   const [template, setTemplate] = useState('cv')
   const [contactPolicy, setContactPolicy] = useState('replace')
   const [statusTab, setStatusTab] = useState('review')
+  const [kpiTab, setKpiTab] = useState('opp')
   const [chips, setChips] = useState(['blocked'])
 
   return (
@@ -928,6 +932,56 @@ export default function DesignSystemPage() {
             <p><span className="ds-aitag">AI</span> <span className="ds-aitag ds-aitag--warn">AI ?</span></p>
           </Demo>
         </div>
+      </Section>
+
+      <Section id="kpi" title="KPI Tổng quan">
+        <Demo label="Biểu đồ cột 6 tháng: tháng này gạch chéo, mục tiêu nét đứt" wide>
+          <div style={{ height: 220, display: 'flex' }}>
+            <KpiBars
+              target={28000}
+              format={(v) => `${(v / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}k`}
+              data={[['T6', 19200], ['T7', 21400], ['T8', 22900], ['T9', 24600], ['T10', 26300], ['Tháng này', 26900, true]].map(([label, value, projected]) => ({ label, value, projected }))}
+            />
+          </div>
+        </Demo>
+        <Demo label="Biểu đồ chưa đặt mục tiêu">
+          <div style={{ height: 160, display: 'flex' }}>
+            <KpiBars data={[['T9', 4], ['T10', 2], ['Tháng này', 1, true]].map(([label, value, projected]) => ({ label, value, projected }))} />
+          </div>
+        </Demo>
+        <Demo label="Thanh tiến độ: đúng tiến độ, chậm (đỏ), có phần sắp vào, đạt, cỡ nhỏ">
+          <div style={{ display: 'grid', gap: 18, width: 320 }}>
+            <ProgressMeter done={1} target={3} pace={0.4} />
+            <ProgressMeter done={1} target={3} pace={2} />
+            <ProgressMeter done={1} target={3} pace={0.4} pending={3} />
+            <ProgressMeter done={3} target={3} pace={2} />
+            <ProgressMeter done={0} target={2} pace={0.27} size="sm" />
+          </div>
+        </Demo>
+        <Demo label="Nhãn KPI cỡ lớn">
+          <Space wrap>
+            <StatusBadge group="kpi" value="DONE" size="lg" />
+            <StatusBadge group="kpi" value="ON_TRACK" size="lg" />
+            <StatusBadge group="kpi" value="BEHIND" size="lg" />
+            <StatusBadge group="kpi" value="SHORT" size="lg" label="Thiếu 1.100 USD" />
+          </Space>
+        </Demo>
+        <Demo label="Nhãn đếm ngày cuối dòng cảnh báo">
+          <Space wrap>
+            <DueTag days={4} late />
+            <DueTag days={0} />
+            <DueTag days={5} />
+            <DueTag late text="2 việc" />
+          </Space>
+        </Demo>
+        <Demo label="Tab có chấm đỏ (tab có việc quá hạn)" wide>
+          <StatusTabs value={kpiTab} onChange={setKpiTab} mobileLabel="Mục:" tabs={[
+            { value: 'opp', label: 'Hạn chốt cơ hội', count: 6, dot: true },
+            { value: 'cert', label: 'Chứng chỉ', count: 9, dot: true },
+            { value: 'cal', label: 'Xuống / rời tàu', count: 5 },
+            { value: 'work', label: 'Chờ xử lý', count: 6, dot: true },
+          ]} />
+        </Demo>
       </Section>
 
       <Section id="tab" title="Tab, chip lọc, phân trang">

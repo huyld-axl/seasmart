@@ -4,7 +4,8 @@
 export const NAV_GROUP_LABELS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
 
 export const NAV_SECTIONS = [
-  { key: 'dashboard', group: 1, label: 'Tổng quan', icon: 'dashboard', to: '/dashboard', match: ['/dashboard'], perm: 'seafarer.view' },
+  // Tổng quan: có một trong các quyền xem là vào được (`anyPerm`); trang tự ẩn khối không có quyền.
+  { key: 'dashboard', group: 1, label: 'Tổng quan', icon: 'dashboard', to: '/dashboard', match: ['/dashboard'], anyPerm: ['seafarer.view', 'opportunity.view', 'voyage.view', 'contract.view', 'bill.view'] },
   { key: 'seafarers', group: 1, label: 'Thuyền viên', icon: 'team', to: '/seafarers', match: ['/seafarers'], perm: 'seafarer.view' },
   { key: 'ship-owners', group: 1, label: 'Đối tác', icon: 'building', to: '/partners', match: ['/partners'], perm: 'partner.view' },
   { key: 'vessels', group: 1, label: 'Tàu', icon: 'ship', to: '/vessels', match: ['/vessels'], perm: 'vessel.view' },
@@ -50,6 +51,7 @@ export function sectionsFor(user) {
       const tabs = section.tabs.filter((tab) => has(tab.perm))
       return tabs.length && has(section.perm) ? [{ ...section, tabs, to: tabs[0].to }] : []
     }
+    if (section.anyPerm && !section.anyPerm.some(has)) return []
     return has(section.perm) ? [section] : []
   })
 }

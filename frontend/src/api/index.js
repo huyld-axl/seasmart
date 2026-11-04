@@ -77,4 +77,13 @@ export const lookupApi = {
 // Màn Tổng quan: số liệu gộp của mọi thuyền viên trong phạm vi người dùng.
 export const dashboardApi = {
   certificateAlerts: () => api.get('/dashboard/certificate-alerts').then((r) => r.data),
+  kpi: (month) => api.get('/dashboard/kpi', month ? { params: { month } } : {}).then((r) => r.data.data),
+  attention: () => api.get('/dashboard/attention').then((r) => r.data.data),
+}
+
+// Mục tiêu tháng (Quản trị → Mục tiêu tháng).
+export const kpiTargetApi = {
+  list: (month) => api.get('/kpi-targets', { params: { month } }).then((r) => r.data.data),
+  save: (data) => api.put('/kpi-targets', data).then((r) => r.data.data),
+  copy: (data) => api.post('/kpi-targets/copy', data).then((r) => r.data.data),
 }

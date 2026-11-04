@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Button, Grid, Input, Select, Skeleton, Table, Tooltip } from 'antd'
 import { CheckOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
@@ -39,7 +39,10 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const can = useCan()
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
-  const [tab, setTab] = useState(shipOwnerId ? 'all' : can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND')
+  // ?tab= mở sẵn một tab (link từ Tổng quan).
+  const [searchParams] = useSearchParams()
+  const urlTab = TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : null
+  const [tab, setTab] = useState(shipOwnerId ? 'all' : urlTab || (can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND'))
   const [search, setSearch] = useState('')
   const [ownerId, setOwnerId] = useState()
   const [page, setPage] = useState(1)

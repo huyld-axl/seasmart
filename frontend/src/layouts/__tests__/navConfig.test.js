@@ -28,6 +28,11 @@ describe('navConfig', () => {
     expect(keys({ permissions: ['seafarer.view', 'contract.view'] })).toEqual(['dashboard', 'seafarers', 'contracts'])
   })
 
+  it('Tổng quan hiện khi có một trong các quyền xem số liệu, kể cả không xem thuyền viên', () => {
+    expect(keys({ permissions: ['bill.view'] })).toEqual(['dashboard', 'bills'])
+    expect(keys({ permissions: ['catalog.view'] })).not.toContain('dashboard')
+  })
+
   it('mục có tab: lọc tab theo quyền, to trỏ tới tab đầu còn lại, ẩn khi hết tab', () => {
     const [admin] = sectionsFor({ permissions: ['role.manage'] })
     expect(admin.tabs.map((t) => t.to)).toEqual(['/admin/roles'])

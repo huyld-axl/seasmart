@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   Button,
@@ -78,7 +78,9 @@ export default function SeafarerDetailPage() {
   const queryClient = useQueryClient()
   const toast = useToast()
   const { modal } = App.useApp()
-  const [tab, setTab] = useState('overview')
+  // ?tab= mở sẵn một tab (vd. Giấy tờ khi bấm chứng chỉ ở Tổng quan).
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState(() => (PROFILE_TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : 'overview'))
   const pageRef = useRef(null)
   const can = useCan()
   const [dismissed, setDismissed] = useState(() => loadDismissed(id))

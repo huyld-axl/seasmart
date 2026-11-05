@@ -20,9 +20,33 @@ export function timelineLayout({ from, to, today, rows = [] }) {
     m += 1
     if (m === 12) { m = 0; y += 1 }
   }
+  // Khoảng ngắn (đến 10 tuần): mỗi ngày một cột có thứ và số ngày; thứ Hai kẻ đậm, cuối tuần tô nhạt, ngày 1 ghi cả tháng.
+  const DOW = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+  const days = Math.round(span / DAY)
+  const ticks = []
+  if (days <= 70) {
+    for (let t = start; t < end; t += DAY) {
+      const date = new Date(t)
+      const dow = date.getUTCDay()
+      const first = date.getUTCDate() === 1
+      ticks.push({
+        key: t,
+        left: pct(t),
+        width: 100 / days,
+        major: dow === 1,
+        weekend: dow === 0 || dow === 6,
+        monthStart: first,
+        today: t === (today ? ms(today) : null),
+        dow: DOW[dow],
+        label: first ? `${date.getUTCDate()}/${pad(date.getUTCMonth() + 1)}` : String(date.getUTCDate()),
+      })
+    }
+  }
   const todayMs = today ? ms(today) : null
   return {
     months,
+    ticks,
+    days,
     todayLeft: todayMs !== null && todayMs >= start && todayMs < end ? pct(todayMs) : null,
     rows: rows.map((row) => ({
       ...row,

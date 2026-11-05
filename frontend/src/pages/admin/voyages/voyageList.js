@@ -146,33 +146,62 @@ const iso = (v) => (v ? String(v).slice(0, 10) : null)
 // Hàng cho CrewTimeline: mỗi chuyến một hàng, rồi các cơ hội đang mở (nhạt). Biểu đồ cần ít nhất vài ngày nên
 // khoảng "Hôm nay" được nới ra ±1 tháng ở trang gọi.
 export function crewRows({ voyages = [], openings = [], today, formatDate, onVoyage, onOpening }) {
+  const dayDiff = (a, b) => Math.round((Date.parse(`${a}T00:00:00Z`) - Date.parse(`${b}T00:00:00Z`)) / 86400000)
   const rows = voyages.map((v) => {
     const original = iso(v.original_leave_date) || iso(v.planned_leave_date)
-    const bars = [{ kind: 'planned', start: iso(v.join_date), end: original }]
+    const planned = iso(v.planned_leave_date)
+    const join = iso(v.join_date)
+    const joinLine = `Lên tàu ${formatDate(join)}${v.join_port_name ? ` tại ${v.join_port_name}` : ''}`
+    const bars = [{ kind: 'planned', start: join, end: original, label: `rời ${formatDate(original)}`, tip: `Dự kiến rời ban đầu ${formatDate(original)}` }]
+    let subtitle = `${v.rank_name} · ${v.code}`
+    let warn = false
     if (v.leave_date) {
       const delta = deltaText(v.leave_delta_days)
-      bars.push({ kind: 'left', start: iso(v.join_date), end: iso(v.leave_date), label: [v.leave_port_name, delta].filter(Boolean).join(' · ') })
+      bars.push({
+        kind: 'left', start: join, end: iso(v.leave_date),
+        label: [v.leave_port_name, delta].filter(Boolean).join(' · '),
+        tip: [joinLine, `Rời tàu ${formatDate(v.leave_date)}${v.leave_port_name ? ` tại ${v.leave_port_name}` : ''}`, delta].filter(Boolean).join('\n'),
+      })
     } else {
       const delta = deltaText(v.join_delta_days)
-      bars.push({ kind: 'onboard', start: iso(v.join_date), end: today, label: [v.join_port_name, delta].filter(Boolean).join(' · ') })
-      if (iso(v.planned_leave_date) !== original) {
-        const [a, b] = [original, iso(v.planned_leave_date)].sort()
-        bars.push({ kind: 'moved', start: a, end: b, label: `dời tới ${formatDate(v.planned_leave_date)}` })
+      bars.push({
+        kind: 'onboard', start: join, end: today,
+        label: [v.join_port_name, delta].filter(Boolean).join(' · '),
+        tip: [joinLine, delta, `Dự kiến rời ${formatDate(planned)}`].filter(Boolean).join('\n'),
+      })
+      if (planned !== original) {
+        const [a, b] = [original, planned].sort()
+        bars.push({ kind: 'moved', start: a, end: b, label: `dời tới ${formatDate(planned)}`, tip: `Ngày rời dời từ ${formatDate(original)} tới ${formatDate(planned)}` })
+      }
+      // Đã quá ngày rời dự kiến mà chuyến vẫn đang trên tàu: tô cảnh báo từ ngày đó tới hôm nay.
+      if (planned && today && planned < today) {
+        const late = dayDiff(today, planned)
+        bars.push({ kind: 'overdue', start: planned, end: today, label: `quá ${late} ngày`, tip: `Dự kiến rời ${formatDate(planned)}, quá ${late} ngày mà chưa ghi rời tàu` })
+        subtitle += ` · quá hạn rời ${late} ngày`
+        warn = true
       }
     }
-    return { id: `v${v.id}`, title: v.seafarer_name, subtitle: `${v.rank_name} · ${v.code}`, onClick: onVoyage ? () => onVoyage(v) : undefined, bars }
+    return { id: `v${v.id}`, title: v.seafarer_name, subtitle, warn, onClick: onVoyage ? () => onVoyage(v) : undefined, bars }
   })
-  const opens = openings.map((o) => ({
-    id: `o${o.id}`,
-    title: o.code,
-    subtitle: `${o.rank_name} · cơ hội, chưa chốt`,
-    onClick: onOpening ? () => onOpening(o) : undefined,
-    bars: [{
-      kind: 'opening',
-      start: iso(o.planned_join_date),
-      end: iso(o.planned_leave_date),
-      label: `Dự kiến ${formatDate(o.planned_join_date)}${o.selected_name ? ` · chủ tàu đã chọn ${o.selected_name}` : ''}`,
-    }],
-  }))
+  const opens = openings.map((o) => {
+    const join = iso(o.planned_join_date)
+    // Cơ hội còn mở mà ngày lên dự kiến đã qua: chưa chốt kịp.
+    const late = join && today && join < today ? dayDiff(today, join) : 0
+    const chosen = o.selected_name ? ` · chủ tàu đã chọn ${o.selected_name}` : ''
+    return {
+      id: `o${o.id}`,
+      title: o.code,
+      subtitle: `${o.rank_name} · cơ hội, chưa chốt${late ? ` · quá ngày lên ${late} ngày` : ''}`,
+      warn: late > 0,
+      onClick: onOpening ? () => onOpening(o) : undefined,
+      bars: [{
+        kind: 'opening',
+        start: join,
+        end: iso(o.planned_leave_date),
+        label: `Dự kiến lên ${formatDate(o.planned_join_date)}${chosen}`,
+        tip: [`Dự kiến lên ${formatDate(o.planned_join_date)}`, `Dự kiến rời ${formatDate(o.planned_leave_date)}`, o.selected_name ? `Chủ tàu đã chọn ${o.selected_name}` : null, late ? `Đã quá ngày lên dự kiến ${late} ngày` : null].filter(Boolean).join('\n'),
+      }],
+    }
+  })
   return [...rows, ...opens]
 }

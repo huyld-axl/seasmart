@@ -117,6 +117,23 @@ describe('thẻ Đội ngũ', () => {
     expect(rows[0].bars[2]).toMatchObject({ start: '2027-03-05', end: '2027-04-05' })
     expect(rows[1].bars[1]).toMatchObject({ kind: 'left', end: '2026-09-14', label: 'sớm 4,8 tháng' })
     expect(rows[2]).toMatchObject({ id: 'o9', title: 'CH26047' })
-    expect(rows[2].bars[0].label).toBe('Dự kiến 08/11/2026 · chủ tàu đã chọn K')
+    expect(rows[0].bars[0]).toMatchObject({ label: 'rời 05/03/2027' })
+    expect(rows[0].warn).toBe(false)
+    expect(rows[2].bars[0].label).toBe('Dự kiến lên 08/11/2026 · chủ tàu đã chọn K')
+  })
+
+  it('chuyến quá ngày rời dự kiến và cơ hội quá ngày lên được cảnh báo', async () => {
+    const { crewRows } = await import('../voyageList')
+    const rows = crewRows({
+      today: '2026-11-05',
+      formatDate: fmt,
+      voyages: [{ id: 1, seafarer_name: 'A', rank_name: 'Máy hai', code: 'CT-1', join_date: '2026-06-05', planned_leave_date: '2026-11-02', original_leave_date: '2026-11-02' }],
+      openings: [{ id: 9, code: 'CH2608', rank_name: 'Thủy thủ', planned_join_date: '2026-11-02', planned_leave_date: '2027-05-02' }],
+    })
+    expect(rows[0].warn).toBe(true)
+    expect(rows[0].subtitle).toContain('quá hạn rời 3 ngày')
+    expect(rows[0].bars.map((b) => b.kind)).toEqual(['planned', 'onboard', 'overdue'])
+    expect(rows[1].warn).toBe(true)
+    expect(rows[1].subtitle).toContain('quá ngày lên 3 ngày')
   })
 })

@@ -143,6 +143,7 @@ export default function UserListPage() {
           onEdit={openPanel}
           onDelete={confirmDelete}
           onResendInvite={handleResend}
+          resendingId={resendInvite.isPending ? resendInvite.variables : null}
         />
         <ListFooter
           total={total}

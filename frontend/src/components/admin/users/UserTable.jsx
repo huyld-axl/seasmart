@@ -17,6 +17,7 @@ export default function UserTable({
   onEdit,
   onDelete,
   onResendInvite,
+  resendingId,
 }) {
   const navigate = useNavigate()
   const rights = useAccountRights()
@@ -46,7 +47,7 @@ export default function UserTable({
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
           <StatusBadge group="account" value={value} />
           {value === 'PENDING' && rights.canEdit(user) ? (
-            <Button type="link" size="small" onClick={() => onResendInvite(user)}>
+            <Button type="link" size="small" loading={resendingId === user.id} disabled={!!resendingId} onClick={() => onResendInvite(user)}>
               Gửi lại lời mời
             </Button>
           ) : null}

@@ -32,4 +32,19 @@ describe('timelineLayout', () => {
     expect(cut.width).toBeCloseTo((30 / 61) * 100)
     expect(single.left + single.width).toBeCloseTo(100)
   })
+
+  it('khoảng ngắn có một cột cho mỗi ngày: thứ, số ngày, cuối tuần, hôm nay', () => {
+    const out = timelineLayout({ from: '2026-10-22', to: '2026-11-19', today: '2026-11-05', rows: [] })
+    expect(out.days).toBe(29)
+    expect(out.ticks).toHaveLength(29)
+    expect(out.ticks[0]).toMatchObject({ dow: 'T5', label: '22', weekend: false })
+    expect(out.ticks.filter((t) => t.major).map((t) => t.label)).toEqual(['26', '2', '9', '16'])
+    expect(out.ticks.filter((t) => t.weekend).map((t) => t.label)).toEqual(['24', '25', '31', '1/11', '7', '8', '14', '15'])
+    expect(out.ticks.filter((t) => t.monthStart).map((t) => t.label)).toEqual(['1/11'])
+    expect(out.ticks.filter((t) => t.today).map((t) => t.dow)).toEqual(['T5'])
+  })
+
+  it('khoảng dài không có vạch ngày', () => {
+    expect(timelineLayout({ from: '2026-01-01', to: '2026-12-31', today: '2026-11-05', rows: [] }).ticks).toEqual([])
+  })
 })

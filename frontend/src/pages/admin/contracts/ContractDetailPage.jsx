@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { App, Button, Dropdown, Skeleton, Table } from 'antd'
+import { App, Button, Dropdown, Skeleton } from 'antd'
 import dayjs from 'dayjs'
 import { CloseCircleFilled } from '@ant-design/icons'
 import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined, FlagOutlined, LockOutlined, MoreOutlined, PrinterOutlined, RollbackOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
 import AuditTimeline from '../../../components/ds/AuditTimeline'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
+import RecordTable from '../../../components/ds/RecordTable'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import useToast from '../../../components/ds/useToast'
 import { useBillList, useContract, useContractMutations } from '../../../hooks/useVoyages'
@@ -95,6 +96,8 @@ export default function ContractDetailPage() {
   const place = data.voyage || data.legacy_voyage
   const legacyCode = data.legacy_voyage?.code
   const billCount = data.bills_summary.count
+  const billRows = bills.data?.data || []
+  const billTotal = billRows.reduce((sum, b) => sum + Math.round(Number(b.total_usd || 0) * 100), 0) / 100
   const number = contract.contract_number
   const status = contract.status
   const locked = ['PENDING', 'ACTIVE', 'ENDED'].includes(status)
@@ -270,22 +273,24 @@ export default function ContractDetailPage() {
       </div>
     ),
     bills: (
-      <section className="crew-panel">
-        <div className="crew-panel__head"><h2 className="crew-panel__title">Yêu cầu thanh toán <span className="vd-count">{billCount}</span></h2></div>
-        <Table
-          size="small"
-          rowKey="id"
-          loading={bills.isLoading}
-          pagination={false}
-          dataSource={bills.data?.data || []}
-          columns={[
-            { title: 'Kỳ', dataIndex: 'seq', width: 56 },
-            { title: 'Từ – đến', key: 'period', render: (_, b) => <span className="ds-num">{formatDate(b.period_start)} – {formatDate(b.period_end)}</span> },
-            { title: 'Hạn', dataIndex: 'due_date', render: (value) => <span className="ds-num">{formatDate(value)}</span> },
-            { title: 'Trạng thái', dataIndex: 'display_status', render: (value) => <StatusBadge group="bill" value={value} /> },
-            { title: 'Số tiền (USD)', dataIndex: 'total_usd', align: 'right', render: (value, b) => <Link to={`/bills/${b.id}`} className="ds-num">{formatUsd(value)}</Link> },
-          ]}
-        />
+      <section className="ct-block crew-docs-sec" aria-label="Yêu cầu thanh toán">
+        {bills.isLoading ? (
+          <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 3 }} /></div>
+        ) : (
+          <RecordTable
+            rows={billRows}
+            columns={[
+              { key: 'seq', title: 'Kỳ', card: 'title', mono: true, render: (b) => `${b.seq}/${b.periods}` },
+              { key: 'period', title: 'Từ – đến', mono: true, render: (b) => `${formatDate(b.period_start)} – ${formatDate(b.period_end)}` },
+              { key: 'due', title: 'Hạn', mono: true, render: (b) => formatDate(b.due_date) },
+              { key: 'amount', title: 'Số tiền (USD)', mono: true, render: (b) => formatUsd(b.total_usd, { fixed: true }) },
+              { key: 'status', title: 'Trạng thái', card: 'end', render: (b) => <StatusBadge group="bill" value={b.display_status} /> },
+              { key: 'open', title: 'Thao tác', right: true, render: (b) => <Link className="ds-link" to={`/bills/${b.id}`}>Mở yêu cầu</Link> },
+            ]}
+            empty={<EmptyState title="Chưa có yêu cầu thanh toán nào" description="Yêu cầu thanh toán tự tạo khi duyệt hợp đồng." />}
+          />
+        )}
+        {billRows.length ? <p className="crew-muted" style={{ padding: '12px 16px' }}>Tổng cộng {billRows.length} kỳ: <b className="ds-num">{formatUsd(billTotal, { fixed: true })}</b> USD</p> : null}
       </section>
     ),
     history: (
@@ -326,7 +331,7 @@ export default function ContractDetailPage() {
             <dt>Chuyến</dt>
             <dd><TripLink trip={trip} legacyCode={legacyCode} /></dd>
             <dt>Thời gian</dt>
-            <dd><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)} · {formatMonths(contract.months)}</span></dd>
+            <dd style={{ columnGap: 6 }}><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)}</span><span style={{ whiteSpace: 'nowrap' }}>· {formatMonths(contract.months)}</span></dd>
           </dl>
         </div>
         </div>

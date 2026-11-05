@@ -155,3 +155,20 @@ describe('danh sách / chi tiết', () => {
     expect(calls[0].params).toEqual([2])
   })
 })
+
+describe('passwordUsesEmail', () => {
+  it('bắt mật khẩu trùng email hoặc chứa tên email, không phân biệt hoa thường', () => {
+    const email = 'lel2910200510@gmail.com'
+    expect(userService.passwordUsesEmail('lel2910200510@gmail.com', email)).toBe(true)
+    expect(userService.passwordUsesEmail('lel2910200510', email)).toBe(true)
+    expect(userService.passwordUsesEmail('LEL2910200510!', email)).toBe(true)
+    expect(userService.passwordUsesEmail('abc-lel2910200510-x', email)).toBe(true)
+    expect(userService.passwordUsesEmail('Khac2910xyz', email)).toBe(false)
+  })
+
+  it('tên email quá ngắn (dưới 3 ký tự) chỉ bắt khi trùng cả email', () => {
+    expect(userService.passwordUsesEmail('ab123456', 'ab@x.vn')).toBe(false)
+    expect(userService.passwordUsesEmail('Xhuy12345', 'huy@x.vn')).toBe(true)
+    expect(userService.passwordUsesEmail('ab@x.vn1', 'ab@x.vn')).toBe(true)
+  })
+})

@@ -181,9 +181,17 @@ async function getInviteByToken(token, db = pool) {
 }
 
 // Người dùng đặt mật khẩu lần đầu qua liên kết trong thư mời.
+// Cùng luật với giao diện (passwordRules.js): trùng cả email, hoặc chứa phần trước @ từ 3 ký tự (cùng số với MIN_LOCAL_LENGTH ở giao diện), không phân biệt hoa thường.
+function passwordUsesEmail(password, email) {
+  const pass = String(password).toLowerCase()
+  const mail = String(email).toLowerCase()
+  const local = mail.split('@')[0]
+  return pass.includes(mail) || (local.length >= 3 && pass.includes(local))
+}
+
 async function setPasswordByToken({ token, password }, db = pool) {
   const user = await findPendingByToken(db, token)
-  if (password.toLowerCase() === String(user.email).toLowerCase()) throw fail(400, 'Mật khẩu không được trùng email')
+  if (passwordUsesEmail(password, user.email)) throw fail(400, 'Mật khẩu không được trùng hoặc chứa tên email')
   const hash = await bcrypt.hash(password, SALT_ROUNDS)
   await db.query(
     'UPDATE "user" SET password_hash = ?, activated_at = NOW(), invite_token_hash = NULL, updated_at = NOW() WHERE id = ?',
@@ -243,6 +251,7 @@ module.exports = {
   createUser,
   resendInvite,
   setPasswordByToken,
+  passwordUsesEmail,
   getInviteByToken,
   updateUser,
   softDeleteUser,

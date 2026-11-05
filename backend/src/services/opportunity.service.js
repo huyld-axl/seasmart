@@ -587,4 +587,4 @@ const opportunityService = {
   },
 }
 
-module.exports = { opportunityService, OPPORTUNITY_COLUMNS, parseRequirements, loadFitInputs }
+module.exports = { opportunityService, OPPORTUNITY_COLUMNS, parseRequirements, loadFitInputs, LIST_SELECT, decorate }

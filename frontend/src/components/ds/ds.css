@@ -856,3 +856,30 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-vt__dates { color: var(--foreground); font-family: var(--font-mono, ui-monospace, monospace); font-variant-numeric: tabular-nums; }
 .ds-vt__foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 12px; }
 .ds-vt__code { color: var(--muted); font-family: var(--font-mono, ui-monospace, monospace); }
+
+/* ===== KPI Tổng quan: biểu đồ cột, thanh tiến độ, nhãn đếm ngày, nhãn KPI cỡ lớn ===== */
+.ds-kpibars { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.ds-kpibars__plot { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: end; gap: 14px; flex: 1; min-height: 64px; padding-top: 22px; border-bottom: 1px solid var(--border-strong); background: repeating-linear-gradient(to top, transparent 0 39px, var(--border) 39px 40px); }
+.ds-kpibars__bar { position: relative; display: flex; align-items: flex-end; justify-content: center; height: 100%; }
+.ds-kpibars__bar i { display: block; width: min(56px, 72%); border-radius: 6px 6px 0 0; background: var(--primary); }
+.ds-kpibars__bar--projected i { background: repeating-linear-gradient(135deg, var(--primary) 0 4px, rgb(255 255 255 / 0.55) 4px 7px); outline: 1px solid var(--primary); outline-offset: -1px; }
+.ds-kpibars__bar b { position: absolute; left: 0; right: 0; color: var(--foreground); font-size: 14px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+.ds-kpibars__target { position: absolute; left: 0; right: 0; z-index: 1; border-top: 2px dashed var(--warning); pointer-events: none; }
+.ds-kpibars__labels { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 14px; margin-top: 6px; color: var(--muted); font-size: 13px; text-align: center; }
+.ds-kpibars__labels span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.ds-meter { position: relative; display: block; width: 100%; height: 12px; border-radius: 6px; background: var(--secondary); }
+.ds-meter--sm { height: 8px; border-radius: 4px; }
+.ds-meter__done { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--primary); }
+.ds-meter--behind .ds-meter__done { background: var(--error-strong); }
+.ds-meter__pending { position: absolute; top: 0; bottom: 0; border-radius: 0 6px 6px 0; background: repeating-linear-gradient(135deg, var(--primary) 0 4px, transparent 4px 8px); opacity: 0.55; }
+.ds-meter__pace { position: absolute; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--foreground); }
+
+.ds-due { display: inline-grid; place-items: center; min-width: 104px; height: 32px; padding: 0 12px; border-radius: 16px; color: var(--foreground); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ds-due--late { background: var(--error-bg); color: var(--error-strong); font-weight: 600; }
+@media (max-width: 639px) { .ds-due { min-width: 0; font-size: 13px; } }
+
+.ds-badge--lg { gap: 6px; padding: 0 12px; height: 32px; border-radius: 16px; font-size: 14px; font-weight: 600; line-height: 32px; }
+.ds-badge--lg .ds-badge__icon { font-size: 16px; }
+
+.ds-tabs-boxed__dot { width: 7px; height: 7px; margin-left: -2px; border-radius: 50%; background: var(--error-strong); }

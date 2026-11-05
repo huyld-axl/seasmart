@@ -1,4 +1,4 @@
-import HelpLink from '../components/ds/HelpLink'
+import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL } from '../components/ds/HelpLink'
 import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Dropdown, Drawer, Grid } from 'antd'
@@ -27,8 +27,11 @@ import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } f
 import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 
-// Trang có hướng dẫn trong app (public/huong-dan/hop-dong-va-chuyen.html): hiện link Hướng dẫn ở thanh trên.
-const GUIDE_PATHS = ['/voyages', '/contracts', '/bills']
+// Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng trang theo đường dẫn.
+const GUIDE_PATHS = [
+  ['/voyages', GUIDE_CONTRACT_URL], ['/contracts', GUIDE_CONTRACT_URL], ['/bills', GUIDE_CONTRACT_URL],
+  ['/dashboard', GUIDE_DASHBOARD_URL], ['/admin/kpi-targets', GUIDE_DASHBOARD_URL],
+]
 
 const { useBreakpoint } = Grid
 
@@ -164,6 +167,7 @@ export default function AdminLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const guide = GUIDE_PATHS.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1]
   const { user, logout } = useAuthStore()
   const screens = useBreakpoint()
   const isMobile = !screens.md
@@ -218,7 +222,7 @@ export default function AdminLayout() {
           </h1>
 
           <div className="app-shell__right">
-            {GUIDE_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ? <HelpLink /> : null}
+            {guide ? <HelpLink href={guide} /> : null}
             <NotificationBell />
             <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
               <button type="button" className="app-shell__user" aria-haspopup="menu">

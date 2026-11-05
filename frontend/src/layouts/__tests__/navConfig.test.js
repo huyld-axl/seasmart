@@ -16,7 +16,7 @@ describe('navConfig', () => {
   it('đủ quyền thì thấy đủ mục và tab', () => {
     const sections = sectionsFor({ permissions: ALL })
     expect(sections.map((s) => s.key)).toEqual(NAV_SECTIONS.map((s) => s.key))
-    expect(sections.at(-1).tabs.map((t) => t.label)).toEqual(['Tài khoản', 'Vai trò và quyền'])
+    expect(sections.at(-1).tabs.map((t) => t.label)).toEqual(['Tài khoản', 'Vai trò và quyền', 'Mục tiêu tháng'])
   })
 
   it('chưa đăng nhập hoặc chưa có quyền nào thì không có mục nào', () => {
@@ -26,6 +26,11 @@ describe('navConfig', () => {
 
   it('chỉ thấy mục có quyền xem', () => {
     expect(keys({ permissions: ['seafarer.view', 'contract.view'] })).toEqual(['dashboard', 'seafarers', 'contracts'])
+  })
+
+  it('Tổng quan hiện khi có một trong các quyền xem số liệu, kể cả không xem thuyền viên', () => {
+    expect(keys({ permissions: ['bill.view'] })).toEqual(['dashboard', 'bills'])
+    expect(keys({ permissions: ['catalog.view'] })).not.toContain('dashboard')
   })
 
   it('mục có tab: lọc tab theo quyền, to trỏ tới tab đầu còn lại, ẩn khi hết tab', () => {

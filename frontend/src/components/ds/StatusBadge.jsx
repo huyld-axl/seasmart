@@ -31,14 +31,14 @@ const MARK_ICONS = {
 }
 
 // Badge trạng thái (M7): pill nền nhạt, dấu đầu + chữ cùng tông. Một hình cho mọi bề mặt (D2).
-// `label`: thay nhãn mặc định khi cần kèm số (vd. "Quá hạn 9 ngày").
-export default function StatusBadge({ group, value, title, label }) {
+// `label`: thay nhãn mặc định khi cần kèm số (vd. "Quá hạn 9 ngày"). `size="lg"`: nhãn to trên thẻ KPI Tổng quan.
+export default function StatusBadge({ group, value, title, label, size }) {
   const status = STATUS[group]?.[value]
   if (!status) return null
 
   const Icon = MARK_ICONS[status.mark]
   return (
-    <span className={`ds-badge ds-badge--${status.tone}`} title={title}>
+    <span className={`ds-badge ds-badge--${status.tone}${size === 'lg' ? ' ds-badge--lg' : ''}`} title={title}>
       {Icon ? (
         <Icon className="ds-badge__icon" aria-hidden />
       ) : (

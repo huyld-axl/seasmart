@@ -100,6 +100,13 @@ export const STATUS = {
     OVERDUE: { label: 'Quá hạn', tone: 'error', mark: 'clock' },
     PAID: { label: 'Đã thu', tone: 'success', mark: 'check' },
   },
+  // Nhãn KPI trên thẻ Tổng quan (label từ GET /dashboard/kpi). SHORT kèm số: label="Thiếu 1.100 USD".
+  kpi: {
+    DONE: { label: 'Đạt mục tiêu', tone: 'success', mark: 'check' },
+    ON_TRACK: { label: 'Đúng tiến độ', tone: 'success', mark: 'check' },
+    BEHIND: { label: 'Chậm tiến độ', tone: 'error', mark: 'clock' },
+    SHORT: { label: 'Thiếu mục tiêu', tone: 'warning', mark: 'clock' },
+  },
   // Trạng thái tàu (cột vessel.status) và đối tác (ship_owner.is_active).
   vesselStatus: {
     ACTIVE: { label: 'Hoạt động', tone: 'success', mark: 'check' },
@@ -143,6 +150,7 @@ export const STATUS_GROUP_LABELS = {
   candidate: 'Ứng viên',
   contract: 'Hợp đồng',
   bill: 'Yêu cầu thanh toán',
+  kpi: 'KPI Tổng quan',
   vesselStatus: 'Trạng thái tàu',
   ownership: 'Tình trạng sở hữu tàu',
   partner: 'Tình trạng đối tác',

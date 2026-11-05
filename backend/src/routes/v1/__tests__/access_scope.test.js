@@ -70,7 +70,7 @@ describe('thiếu quyền thì 403', () => {
     ['DELETE', '/seafarers/1', 'seafarer.delete'],
     ['GET', '/seafarers/1/certificates', 'seafarer.view'],
     ['GET', '/documents/seafarer/1', 'seafarer.docs'],
-    ['GET', '/dashboard/certificate-alerts', 'seafarer.view'],
+    ['GET', '/dashboard/kpi', 'contract.view'],
     ['GET', '/opportunities', 'opportunity.view'],
     ['POST', '/opportunities/1/place', 'opportunity.close', { seafarer_id: 1, join_date: '2026-01-01', join_port_id: 1 }],
     ['GET', '/voyages', 'voyage.view'],

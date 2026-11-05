@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
 import { ArrowDownOutlined, ArrowUpOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
@@ -49,7 +49,9 @@ export default function ContractListPage() {
   const can = useCan()
   const navigate = useNavigate()
   const isMobile = !Grid.useBreakpoint().md
-  const [tab, setTab] = useState('all')
+  // ?tab= mở sẵn một tab (link từ Tổng quan).
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState(() => (TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : 'all'))
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({})
   const [filtersOpen, setFiltersOpen] = useState(false)

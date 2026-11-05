@@ -12,7 +12,7 @@ import { sectionsFor } from './layouts/navConfig'
 import AdminLayout from './layouts/AdminLayout'
 import LoginPage from './pages/admin/LoginPage'
 import SetPasswordPage from './pages/admin/SetPasswordPage'
-import DashboardPage from './pages/admin/DashboardPage'
+import DashboardPage from './pages/admin/dashboard/DashboardPage'
 import SeafarerListPage from './pages/admin/SeafarerListPage'
 import SeafarerDetailPage from './pages/admin/SeafarerDetailPage'
 import SeafarerImportPage from './pages/admin/SeafarerImportPage'
@@ -44,6 +44,7 @@ import UploadPage from './pages/admin/UploadPage'
 import StandaloneError from './pages/errors/StandaloneError'
 import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
+import KpiTargetPage from './pages/admin/settings/KpiTargetPage'
 import ToastHost from './components/ds/ToastHost'
 
 const queryClient = new QueryClient({
@@ -101,7 +102,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path="/dashboard" element={guard('seafarer.view', <DashboardPage />)} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/seafarers" element={guard('seafarer.view', <SeafarerListPage />)} />
         <Route path="/seafarers/new" element={guard('seafarer.create', <SeafarerFormPage />)} />
         <Route
@@ -148,6 +149,7 @@ function AppRoutes() {
         <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
         <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
         <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />
+        <Route path="/admin/kpi-targets" element={guard('kpi.manage', <KpiTargetPage />)} />
       </Route>
 
       <Route path="/403" element={<StandaloneError code={403} />} />

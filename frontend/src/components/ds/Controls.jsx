@@ -6,6 +6,7 @@ import './ds.css'
 
 // Tab trạng thái trên bảng, variant `boxed`: đang chọn nền --secondary, mọi tab luôn có viền trong suốt.
 // `compact`: luôn là nút dropdown, cho thanh công cụ ít chỗ (danh sách thuyền viên). Dưới sm hàng tab thành nút dropdown có nhãn "Trạng thái:" (luật chốt #7, layouts/app.md "Bảng dữ liệu").
+// tab.dot: chấm đỏ nhỏ sau số đếm (tab có việc quá hạn, màn Tổng quan).
 export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:', compact = false }) {
   return (
     <>
@@ -21,6 +22,7 @@ export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái
         >
           {tab.label}
           {tab.count != null ? <span className="ds-tabs-boxed__count">{tab.count}</span> : null}
+          {tab.dot ? <span className="ds-tabs-boxed__dot" title={typeof tab.dot === 'string' ? tab.dot : 'Có việc quá hạn'} /> : null}
         </button>
       ))}
       </div>
@@ -30,7 +32,7 @@ export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái
         value={value}
         onChange={onChange}
         popupMatchSelectWidth={false}
-        options={tabs.map((tab) => ({ value: tab.value, label: tab.count != null ? `${tab.label} · ${tab.count}` : tab.label }))}
+        options={tabs.map((tab) => ({ value: tab.value, label: `${tab.count != null ? `${tab.label} · ${tab.count}` : tab.label}${tab.dot ? ' •' : ''}` }))}
       />
     </>
   )

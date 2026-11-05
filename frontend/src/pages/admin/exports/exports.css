@@ -39,7 +39,7 @@
 .pk-who .ant-select { width: 100%; }
 .pk-add { width: 100%; }
 .pk-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
-@media (min-width: 1200px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */ .pk-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } .pk-preview { position: sticky; top: 88px; } }
+@media (min-width: 1200px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */ .pk-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } .pk-preview { position: sticky; top: calc(var(--topbar-h) + 24px); } }
 .pk-left { display: grid; gap: 16px; min-width: 0; }
 .pk-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .pk-count { margin: 0; color: var(--muted); }

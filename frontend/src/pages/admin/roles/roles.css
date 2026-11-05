@@ -8,12 +8,12 @@
   display: grid;
   gap: 12px;
 }
-/* Máy tính: cả trang vừa khung nhìn (dưới topbar 64, trừ lề trên dưới 24), khung ma trận co giãn, thanh lưu nằm ngay dưới. */
+/* Máy tính: cả trang vừa khung nhìn (dưới topbar --topbar-h, trừ lề trên dưới 24), khung ma trận co giãn, thanh lưu nằm ngay dưới. */
 @media (min-width: 640px) {
   .rm-page {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - 112px);
+    height: calc(100dvh - var(--topbar-h) - 48px);
     min-height: 640px;
   }
   .rm-page > * {

@@ -401,7 +401,7 @@
 .ds-card:has(> .ds-toolbar) > .ds-table-foot { border-top: 1px solid var(--border); }
 /* .ds-card--fixed (trang danh sách): cả khung dính dưới topbar (64 + khe 12) và cao tối đa bằng phần còn lại của màn hình: toolbar, bảng, dòng chân đứng yên,
    giữ khe 12px; chỉ thân bảng cuộn bên trong (antd scroll.y do useListSticky tính). */
-.ds-card--fixed { position: sticky; top: 76px; max-height: calc(100dvh - 88px); }
+.ds-card--fixed { position: sticky; top: calc(var(--topbar-h) + 12px); max-height: calc(100dvh - var(--topbar-h) - 24px); }
 .ds-card:has(> .ds-toolbar) > .ds-toolbar,
 .ds-card:has(> .ds-toolbar) > .ds-table-foot { flex: none; }
 /* Dòng tiêu đề bảng (mọi bảng): nền --table-header, chữ navy (theme Table trong tokens.js), kẻ dọc đủ cao giữa các cột, vạch navy dưới. */

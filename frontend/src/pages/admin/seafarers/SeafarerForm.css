@@ -14,7 +14,7 @@
 .sf-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; align-items: start; }
 
 /* Cột trái: ảnh, tên, tiến độ, mục lục. Dính khi cuộn (topbar 64px + 24px). */
-.sf-aside { position: sticky; top: 88px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.sf-aside { position: sticky; top: calc(var(--topbar-h) + 24px); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 .sf-who { display: flex; gap: 16px; padding: 20px; }
 .sf-who__text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .sf-who__name { margin: 0; overflow-wrap: anywhere; font-size: 16px; font-weight: 600; }
@@ -52,7 +52,7 @@
 
 /* Cột phải: các khối. */
 .sf-sections { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.sf-panel { scroll-margin-top: 88px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.sf-panel { scroll-margin-top: calc(var(--topbar-h) + 24px); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 .sf-panel__head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 20px 24px 0; }
 .sf-panel__text { flex: 1 1 220px; min-width: 0; }
 .sf-panel__scans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

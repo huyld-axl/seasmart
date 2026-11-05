@@ -1,7 +1,7 @@
 import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL } from '../components/ds/HelpLink'
 import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Dropdown, Drawer } from 'antd'
+import { Button, Dropdown, Drawer } from 'antd'
 import Icon from '@ant-design/icons'
 import {
   DashboardOutlined,
@@ -174,6 +174,11 @@ export default function AdminLayout() {
   const current = activeSection(sections, pathname)
   const currentTab = activeTab(current, pathname)
 
+  const signOut = () => {
+    logout()
+    navigate('/login')
+  }
+
   const userMenu = {
     items: [
       { key: 'meta', type: 'group', label: `${user?.email || ''} · ${user?.role?.name || 'Chưa có vai trò'}` },
@@ -181,10 +186,7 @@ export default function AdminLayout() {
       { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true },
     ],
     onClick: ({ key }) => {
-      if (key === 'logout') {
-        logout()
-        navigate('/login')
-      }
+      if (key === 'logout') signOut()
     },
   }
 
@@ -247,6 +249,21 @@ export default function AdminLayout() {
         closable={false}
         rootClassName="app-shell__drawer"
         title={<ProductBrand />}
+        footer={
+          // Ở ngăn kéo hiện luôn tài khoản và Đăng xuất, khỏi mở thêm menu avatar.
+          <div className="app-shell__drawer-foot">
+            <div className="app-shell__me">
+              <span className="app-shell__avatar">{initialsOf(user?.email)}</span>
+              <span className="app-shell__me-text">
+                <span className="app-shell__me-email">{user?.email}</span>
+                <span className="app-shell__me-role">{user?.role?.name || 'Chưa có vai trò'}</span>
+              </span>
+            </div>
+            <Button type="text" block icon={<LogoutOutlined />} onClick={signOut}>
+              Đăng xuất
+            </Button>
+          </div>
+        }
       >
         <SideNav sections={sections} current={current} currentTab={currentTab} onNavigate={() => setDrawerOpen(false)} />
       </Drawer>

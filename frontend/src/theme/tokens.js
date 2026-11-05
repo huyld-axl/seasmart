@@ -166,3 +166,22 @@ export const antTheme = {
     Tooltip: { colorBgSpotlight: COLORS.foreground },
   },
 }
+
+// Theme ở điện thoại (< 640px, docs/mcah-ke-hoach-responsive-mobile.md mục 4.2): ô nhập, ô chọn, ô ngày, ô số cao 44px
+// và chữ gõ 16px (dưới 16px Safari iOS tự phóng to cả trang khi chạm vào ô). Nút giữ 40px. Desktop dùng antTheme.
+const PHONE_FIELD = { controlHeight: 44, fontSize: 16 }
+const phoneField = (name) => ({ ...antTheme.components[name], ...PHONE_FIELD })
+
+export const antThemePhone = {
+  ...antTheme,
+  components: {
+    ...antTheme.components,
+    Input: phoneField('Input'),
+    InputNumber: phoneField('InputNumber'),
+    // Select tính khoảng đệm theo chữ 14px; dòng 22px (16 × 1,375) để ô vẫn đúng 44px (cỡ nhỏ 32px).
+    Select: { ...phoneField('Select'), lineHeight: 1.375 },
+    DatePicker: phoneField('DatePicker'),
+    Cascader: phoneField('Cascader'),
+    Mentions: phoneField('Mentions'),
+  },
+}

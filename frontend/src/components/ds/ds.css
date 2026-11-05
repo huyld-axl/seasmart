@@ -919,3 +919,32 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-ct__name.is-hover, .ds-ct__name:hover { background: rgba(0, 51, 102, 0.07); }
 .ds-ct__row.is-hover { background: rgba(0, 51, 102, 0.07); }
 .ds-ct__row.is-hover .ds-ct__bar:not(.ds-ct__bar--planned) { box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.25); }
+
+/* Dialog ở điện thoại thành sheet từ đáy (docs/mcah-ke-hoach-responsive-mobile.md mục 4.3): bám đáy, rộng hết màn,
+   bo trên 20px, thân cuộn khi dài, chân dính đáy, nút chia đều 44px, chừa vùng an toàn đáy iPhone. Một quy tắc cho
+   mọi Modal và Modal.confirm, không sửa từng dialog. Desktop giữ dialog giữa màn. */
+@keyframes ds-sheet-in { from { opacity: 1; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ds-sheet-out { from { opacity: 1; transform: translateY(0); } to { opacity: 1; transform: translateY(100%); } }
+@media (max-width: 639px) {
+  .ant-modal-wrap { display: flex; align-items: flex-end; overflow: hidden; }
+  .ant-modal-wrap::before { display: none; }
+  .ant-modal-wrap .ant-modal { top: 0; flex: 1 1 100%; width: 100% !important; max-width: 100%; margin: 0; padding: 0; vertical-align: bottom; }
+  .ant-modal-wrap .ant-modal-container {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 24px);
+    padding: 20px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-radius: 20px 20px 0 0;
+  }
+  .ant-modal-wrap .ant-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .ant-modal-wrap .ant-modal-footer { display: flex; flex: none; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .ant-modal-wrap .ant-modal-footer > .ant-btn,
+  .ant-modal-wrap .ant-modal-confirm-btns > .ant-btn { flex: 1 1 0; min-width: 0; height: 44px; margin: 0 !important; }
+  /* Ba nút trở lên không chia một hàng (R3): xếp dọc, nút chính (cuối) lên trên. */
+  .ant-modal-wrap .ant-modal-footer:has(> .ant-btn:nth-child(3)) { flex-direction: column-reverse; }
+  .ant-modal-wrap .ant-modal-footer .op-pick__clear { margin-right: 0; }
+  .ant-modal-wrap .ant-modal-confirm-btns { display: flex; gap: 8px; }
+  .ant-modal.ant-zoom-appear.ant-zoom-appear-active,
+  .ant-modal.ant-zoom-enter.ant-zoom-enter-active { animation-name: ds-sheet-in; }
+  .ant-modal.ant-zoom-leave.ant-zoom-leave-active { animation-name: ds-sheet-out; }
+}

@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, App as AntApp } from 'antd'
 // Bản ESM: bản CommonJS 'antd/locale/vi_VN' qua Vite thành { default: … }, ConfigProvider rơi về tiếng Anh.
 import viVN from 'antd/es/locale/vi_VN'
-import { antTheme } from './theme/tokens'
+import { antTheme, antThemePhone } from './theme/tokens'
+import useViewport from './hooks/useViewport'
 
 import ProtectedRoute from './components/common/ProtectedRoute'
 import useAuthStore from './stores/authStore'
@@ -162,16 +163,26 @@ function AppRoutes() {
 // Router kiểu "data router" (không dùng <BrowserRouter>) để trang có thay đổi chưa lưu chặn được việc rời trang (useBlocker).
 const router = createBrowserRouter([{ path: '*', element: <AppRoutes /> }])
 
+// Điện thoại dùng theme có ô nhập 44px, chữ gõ 16px (theme/tokens.js); xoay máy / kéo cửa sổ qua mốc 640px thì đổi theo.
+function ThemeProvider({ children }) {
+  const { isPhone } = useViewport()
+  return (
+    <ConfigProvider locale={viVN} theme={isPhone ? antThemePhone : antTheme}>
+      {children}
+    </ConfigProvider>
+  )
+}
+
 export default function App() {
   useRefreshAccess()
   return (
     <QueryClientProvider client={queryClient}>
-      <ConfigProvider locale={viVN} theme={antTheme}>
+      <ThemeProvider>
         <AntApp notification={{ bottom: 96, maxCount: 3, stack: false }}>
           <ToastHost router={router} />
           <RouterProvider router={router} />
         </AntApp>
-      </ConfigProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

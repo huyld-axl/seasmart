@@ -1,0 +1,873 @@
+<title>MCAH trên điện thoại</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe revamp responsive của MCAH (05/11/2026). Một theme sáng có chủ ý, như app.
+     Token chép từ frontend/src/theme/tokens.js. Mỗi màn: khung 375px "Hiện tại" (chụp lại từ app thật, đánh dấu lỗi)
+     cạnh "Đề xuất" (đánh số, khớp danh sách thay đổi bên dưới và các bước trong docs/mcah-ke-hoach-responsive-mobile.md). */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6; --surface: #ffffff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --secondary: #e7e8ec; --item-hover: #f4f4f6;
+    --table-header: #e9eef5;
+    --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5;
+    --warning: #bb4d00; --warning-bg: #fffbeb; --warning-border: #fee685;
+    --error-strong: #c10007; --error-bg: #fef2f2; --error-border: #ffc9c9; --error: #fb2c36;
+    --overlay: rgba(20, 24, 32, 0.45);
+    --page: #ebecef; /* nền của trang wireframe, tách khỏi nền app trong khung điện thoại */
+    --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --r-sm: 8px; --r-md: 12px; --r-lg: 16px;
+    --pop: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--foreground); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  svg.i { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  svg.i--s { width: 14px; height: 14px; }
+  svg.i--l { width: 22px; height: 22px; }
+
+  /* ---------- Khung trang wireframe ---------- */
+  .wf { max-width: 1320px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .wf-head { display: grid; gap: 6px; margin-bottom: 16px; }
+  .wf-head h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+  .wf-head p { margin: 0; max-width: 78ch; color: var(--neutral); }
+  .wf-nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; gap: 6px; overflow-x: auto; margin: 0 0 24px; padding: 10px 0; background: var(--page); scrollbar-width: none; }
+  .wf-nav a { flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--foreground); font-size: 13px; font-weight: 500; text-decoration: none; }
+  .wf-nav a:hover { background: var(--secondary); }
+  .wf-nav a:focus-visible, .wf button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .wf-sec { display: grid; gap: 16px; margin-bottom: 56px; scroll-margin-top: 64px; }
+  .wf-sec > header { display: grid; gap: 4px; }
+  .wf-sec h2 { font-size: 20px; font-weight: 700; }
+  .wf-sec h2 small { margin-left: 8px; color: var(--muted); font-size: 13px; font-weight: 500; }
+  .wf-sec > header p { margin: 0; max-width: 80ch; color: var(--neutral); }
+  .wf-row { display: flex; flex-wrap: wrap; gap: 28px 24px; align-items: flex-start; }
+  .wf-col { display: grid; gap: 10px; width: 375px; max-width: 100%; }
+  .wf-cap { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+  .tag { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .tag--now { background: var(--error-bg); color: var(--error-strong); }
+  .tag--new { background: var(--success-bg); color: var(--success); }
+  .tag--alt { background: var(--neutral-bg); color: var(--neutral); }
+  .tag--rec { background: var(--primary-light); color: var(--primary); }
+  .wf-notes { margin: 0; padding: 14px 16px 14px 34px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); font-size: 13px; }
+  .wf-notes li + li { margin-top: 6px; }
+  .wf-notes li::marker { font-weight: 700; }
+  .wf-notes--bad li::marker { color: var(--error-strong); }
+  .wf-notes--good li::marker { color: var(--success); }
+  .wf-notes b { font-weight: 600; }
+  .wf-notes code, .wf-table code, .wf-card code { padding: 0 4px; border-radius: 4px; background: var(--neutral-bg); font-size: 12px; }
+
+  /* Bảng tổng hợp của trang wireframe */
+  .wf-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); }
+  .wf-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 13px; }
+  .wf-table th { padding: 10px 12px; border-bottom: 2px solid var(--primary); background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 600; text-align: left; white-space: nowrap; }
+  .wf-table td { padding: 10px 12px; border-top: 1px solid var(--border); vertical-align: top; }
+  .wf-table td.num { font-variant-numeric: tabular-nums; }
+  .wf-table--issues td:nth-child(2) { width: 34%; }
+  .wf-table--issues td:nth-child(3) { width: 26%; }
+  .sev { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .sev--hi { background: var(--error-bg); color: var(--error-strong); }
+  .sev--mid { background: var(--warning-bg); color: var(--warning); }
+  .sev--lo { background: var(--neutral-bg); color: var(--neutral); }
+  .wf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 16px; }
+  .wf-card { display: grid; align-content: start; gap: 10px; padding: 16px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); }
+  .wf-card h3 { font-size: 15px; font-weight: 600; }
+  .wf-card p { margin: 0; color: var(--neutral); font-size: 13px; }
+  .wf-card .kind { justify-self: start; }
+  .wf-demo { padding: 12px; border-radius: var(--r-md); background: var(--background); }
+
+  /* ---------- Khung điện thoại (375px, như iPhone 12–15) ---------- */
+  .ph { width: 375px; max-width: 100%; border: 1px solid #cfd1d7; border-radius: 28px; overflow: hidden; background: var(--background); box-shadow: 0 1px 2px rgb(0 0 0 / 0.04); }
+  .ph__scr { position: relative; height: 720px; overflow: hidden; }
+  .ph__scr--short { height: 560px; }
+  .ph__scr::after { content: ""; position: absolute; inset: auto 0 0; height: 28px; background: linear-gradient(transparent, var(--background)); pointer-events: none; }
+  .ph__scr--nofade::after { display: none; }
+
+  /* ---------- Mảnh app ---------- */
+  .tg { position: relative; } /* đặt trước các mảnh để mảnh nổi (fab, sheet, thanh lưu) giữ position: absolute */
+  .m-top { display: flex; align-items: center; gap: 4px; height: 56px; padding: 0 8px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .m-top--old { height: 64px; padding: 0 12px 0 8px; }
+  .m-top__title { flex: 1; min-width: 0; overflow: hidden; font-size: 16px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .m-top__title span { color: var(--muted); font-weight: 400; }
+  .m-ib { display: inline-grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 0; border-radius: var(--r-md); background: transparent; color: var(--foreground); }
+  .m-ib--box { border: 1px solid var(--border-strong); background: var(--surface); }
+  .m-av { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 999px; background: var(--secondary); color: var(--primary); font-size: 12px; font-weight: 600; }
+  .m-user-old { display: inline-flex; align-items: center; gap: 6px; padding: 0 6px 0 4px; height: 40px; border-radius: var(--r-md); color: var(--muted); }
+  .m-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; padding: 12px 16px 24px; }
+  .m-bar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .m-back { display: inline-flex; align-items: center; gap: 2px; height: 32px; color: var(--muted); font-size: 13px; font-weight: 500; }
+  .m-crumb-old { display: flex; flex-wrap: wrap; gap: 4px 6px; color: var(--muted); font-size: 13px; }
+  .m-card { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); }
+  .m-card--p { padding: 16px; }
+  .m-card__h { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 16px; font-weight: 600; }
+  .m-card__h small { color: var(--muted); font-size: 12px; font-weight: 500; }
+  .m-input { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface); color: var(--muted); font-size: 16px; white-space: nowrap; overflow: hidden; }
+  .m-input b { color: var(--foreground); font-weight: 400; }
+  .m-input--old { height: 40px; font-size: 14px; }
+  .m-input--err { border-color: var(--error); }
+  .m-input .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .m-field { display: grid; gap: 6px; }
+  .m-field > label { font-size: 14px; font-weight: 500; }
+  .m-field > label i { color: var(--error-strong); font-style: normal; }
+  .m-field > .err { color: #e7000b; font-size: 13px; }
+  .m-field > .hint { color: var(--muted); font-size: 13px; }
+  .m-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface); color: var(--foreground); font: 500 14px/1 var(--font); white-space: nowrap; }
+  .m-btn--p { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .m-btn--d { border-color: transparent; background: rgba(255, 32, 86, 0.1); color: #c70036; }
+  .m-btn--g { border-color: transparent; background: transparent; color: var(--muted); }
+  .m-btn--lg { height: 44px; }
+  .m-btn--sm { height: 32px; padding: 0 10px; font-size: 13px; }
+  .m-btn--dis { border-color: var(--border); background: var(--neutral-bg); color: #a1a1aa; }
+  .m-btns { display: flex; gap: 8px; }
+  .m-btns > .m-btn--grow, .m-savebar > .m-btn--grow { flex: 1; min-width: 0; }
+  .m-select { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: var(--r-md); background: var(--surface); font-size: 14px; white-space: nowrap; }
+  .m-select span { color: var(--muted); }
+  .m-badge { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: 999px; background: var(--neutral-bg); color: var(--neutral); font-size: 12px; font-weight: 500; white-space: nowrap; }
+  .m-badge--ok { background: var(--success-bg); color: var(--success); }
+  .m-badge--warn { background: var(--warning-bg); color: var(--warning); }
+  .m-badge--err { background: var(--error-bg); color: var(--error-strong); }
+  .m-badge--blue { background: var(--primary-light); color: var(--primary); }
+  .m-muted { color: var(--muted); }
+  .m-small { font-size: 13px; }
+  .m-xs { font-size: 12px; }
+  .m-link { color: var(--primary); font-weight: 500; }
+  .m-num { font-variant-numeric: tabular-nums; }
+  .m-mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; }
+
+  /* Dòng danh sách */
+  .m-list { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
+  .m-li { display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 12px 10px 16px; }
+  .m-li + .m-li { border-top: 1px solid var(--border); }
+  .m-li__main { display: grid; flex: 1; gap: 2px; min-width: 0; }
+  .m-li__t { overflow: hidden; font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .m-li__s { overflow: hidden; color: var(--muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .m-li__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; color: var(--muted); font-size: 12px; }
+  .m-li__end { display: grid; justify-items: end; gap: 4px; color: var(--muted); }
+  .m-ph { display: grid; place-items: end center; width: 40px; height: 48px; flex-shrink: 0; overflow: hidden; border-radius: 6px; background: #dfe6ef; }
+  .m-ph::before { content: ""; width: 26px; height: 30px; margin-bottom: -6px; border-radius: 13px 13px 4px 4px; background: #b5c3d4; box-shadow: 0 -20px 0 -6px #b5c3d4; }
+  .m-tile { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--r-md); background: #dfe6ef; color: var(--primary); }
+  .m-tile--lg { width: 130px; height: 130px; border-radius: var(--r-lg); }
+  .m-tile--lg svg { width: 44px; height: 44px; }
+
+  /* Khối nhãn — giá trị */
+  .m-dl { display: grid; margin: 0; }
+  .m-dl > div { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 10px 0; }
+  .m-dl > div + div { border-top: 1px solid var(--border); }
+  .m-dl dt { color: var(--muted); font-size: 13px; }
+  .m-dl dd { min-width: 0; margin: 0; overflow-wrap: anywhere; font-weight: 500; }
+  .m-dl dd.empty { color: var(--muted); font-weight: 400; }
+  .m-dl--stack > div { grid-template-columns: 1fr; gap: 2px; padding: 8px 0; border: 0 !important; }
+  .m-dl--squeeze > div { grid-template-columns: max-content minmax(0, 1fr); gap: 12px; padding: 2px 0; border: 0 !important; }
+  .m-dl--squeeze dd { overflow-wrap: normal; word-break: normal; font-weight: 400; color: var(--primary); }
+
+  /* Chip, hàng cuộn có mép mờ */
+  .m-chips { display: flex; gap: 8px; overflow: hidden; }
+  .m-chips--fade { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent); }
+  .m-chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; flex-shrink: 0; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); font-size: 14px; white-space: nowrap; }
+  .m-chip--on { border-color: transparent; background: var(--secondary); font-weight: 500; }
+  .m-chip--x { height: 32px; padding: 0 6px 0 12px; border-color: transparent; background: var(--primary-light); color: var(--primary); font-size: 13px; }
+  .m-track { position: relative; height: 3px; margin-top: 6px; border-radius: 999px; background: rgba(44, 44, 44, 0.06); }
+  .m-track i { position: absolute; inset: 0 auto 0 0; width: 42%; border-radius: 999px; background: rgba(44, 44, 44, 0.18); }
+
+  /* Lớp nổi: FAB, sheet, thanh lưu, menu kéo */
+  .m-fab { position: absolute; right: 16px; bottom: 20px; z-index: 6; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; background: var(--primary); color: #fff; box-shadow: var(--pop); }
+  .m-fab svg { width: 24px; height: 24px; }
+  .m-scrim { position: absolute; inset: 0; z-index: 7; background: var(--overlay); }
+  .m-sheet { position: absolute; inset: auto 0 0; z-index: 8; display: grid; gap: 14px; max-height: 88%; padding: 8px 16px 20px; border-radius: 20px 20px 0 0; background: var(--surface); box-shadow: var(--pop); }
+  .m-sheet__grab { justify-self: center; width: 36px; height: 4px; border-radius: 999px; background: var(--border-strong); }
+  .m-sheet__h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .m-sheet__h h3 { font-size: 17px; font-weight: 600; }
+  .m-sheet__sub { margin: -8px 0 0; color: var(--muted); font-size: 13px; }
+  .m-sheet__foot { display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .m-sheet__foot .m-btn { flex: 1; height: 44px; }
+  .m-modal-old { position: absolute; top: 112px; left: 16px; right: 16px; z-index: 8; display: grid; gap: 12px; padding: 20px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--pop); }
+  .m-modal-old h3 { font-size: 17px; font-weight: 600; }
+  .m-savebar { position: absolute; inset: auto 0 0; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 12px 16px 16px; border-top: 1px solid var(--border); background: var(--surface); }
+  .m-savebar--old { display: grid; gap: 10px; padding: 14px 16px 18px; }
+  .m-drawer { position: absolute; inset: 0 auto 0 0; z-index: 8; display: flex; flex-direction: column; width: 300px; background: var(--surface); }
+  .m-drawer__brand { display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--border); font-weight: 700; }
+  .m-logo { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; }
+  .m-nav { display: grid; gap: 2px; padding: 8px 12px; }
+  .m-nav__g { padding: 12px 12px 4px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .m-nav__i { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 12px; border-radius: var(--r-md); color: rgba(44, 44, 44, 0.8); font-size: 15px; }
+  .m-nav__i--on { background: var(--secondary); color: var(--foreground); font-weight: 600; }
+  .m-drawer__me { display: flex; align-items: center; gap: 10px; margin-top: auto; padding: 12px 16px 20px; border-top: 1px solid var(--border); }
+  .m-tabbar { position: absolute; inset: auto 0 0; z-index: 6; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 4px 18px; border-top: 1px solid var(--border); background: var(--surface); }
+  .m-tabbar a { display: grid; justify-items: center; gap: 2px; padding: 4px 0; color: var(--muted); font-size: 11px; font-weight: 500; text-decoration: none; }
+  .m-tabbar a.on { color: var(--primary); font-weight: 600; }
+
+  /* Header trang chi tiết */
+  .m-head { display: grid; gap: 12px; padding: 16px; }
+  .m-head__top { display: flex; gap: 12px; align-items: flex-start; }
+  .m-head__txt { display: grid; gap: 4px; min-width: 0; }
+  .m-head__t { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 18px; font-weight: 600; line-height: 1.3; }
+  .m-head__s { color: var(--muted); font-size: 13px; }
+  .m-photo { position: relative; width: 60px; height: 80px; flex-shrink: 0; overflow: hidden; border-radius: var(--r-sm); background: #dfe6ef; }
+  .m-photo::before { content: ""; position: absolute; left: 50%; bottom: -10px; width: 42px; height: 46px; margin-left: -21px; border-radius: 21px 21px 6px 6px; background: #b5c3d4; box-shadow: 0 -30px 0 -9px #b5c3d4; }
+  .m-photo--old { width: 130px; height: 175px; border-radius: 0; }
+  .m-photo--old::before { width: 96px; height: 100px; margin-left: -48px; bottom: -14px; border-radius: 48px 48px 8px 8px; box-shadow: 0 -66px 0 -20px #b5c3d4; }
+  .m-sticky { position: relative; z-index: 2; display: flex; align-items: center; gap: 8px; margin: 0 -16px; padding: 8px 16px; border-block: 1px solid var(--border); background: var(--background); }
+  .m-banner { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--warning-border); border-radius: var(--r-md); background: var(--warning-bg); color: #7a3300; font-size: 13px; }
+  .m-banner--err { border-color: var(--error-border); background: var(--error-bg); color: var(--error-strong); }
+  .m-banner b { font-weight: 600; }
+  .m-sec-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .m-sec-label::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+  /* Bảng cũ và dòng thay bảng */
+  .m-tablewrap { overflow: hidden; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); }
+  .m-table { width: 640px; border-collapse: collapse; font-size: 13px; }
+  .m-table th { padding: 8px 10px; border-bottom: 2px solid var(--primary); background: var(--table-header); color: var(--primary); font-size: 12px; font-weight: 600; text-align: left; white-space: nowrap; }
+  .m-table td { padding: 10px; border-top: 1px solid var(--border); white-space: nowrap; }
+  .m-money { display: grid; gap: 2px; padding: 12px 16px; }
+  .m-money + .m-money { border-top: 1px solid var(--border); }
+  .m-money__r { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .m-money__r b { font-weight: 600; }
+  .m-money--total { background: var(--neutral-bg); }
+
+  /* Đánh dấu trên wireframe */
+  .bad { outline: 2px dashed var(--error); outline-offset: 2px; border-radius: 6px; }
+  .pin { position: absolute; top: -9px; right: -9px; z-index: 9; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 999px; background: var(--error-strong); color: #fff; font-size: 11px; font-weight: 700; font-style: normal; box-shadow: 0 0 0 2px var(--surface); }
+  .pin--g { background: var(--success); }
+  .pin--l { right: auto; left: -9px; }
+  .over { position: absolute; top: 0; bottom: 0; right: -1px; width: 3px; background: repeating-linear-gradient(var(--error) 0 6px, transparent 6px 10px); z-index: 9; }
+
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  @media (max-width: 439px) { .ph { border-radius: 20px; } .wf-head h1 { font-size: 22px; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+  <symbol id="i-vmore" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-anchor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><path d="M12 22V8M5 12H2a10 10 0 0 0 20 0h-3"/></symbol>
+  <symbol id="i-ship" viewBox="0 0 24 24"><path d="M12 3v9M12 5h5l-5 4M3 15l2 4h14l2-4-9-3z"/><path d="M2 21c2 0 2-1 5-1s3 1 5 1 3-1 5-1 3 1 5 1"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-dash" viewBox="0 0 24 24"><path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/></symbol>
+  <symbol id="i-team" viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><circle cx="6" cy="6" r="1.5"/><circle cx="12" cy="6" r="1.5"/><circle cx="18" cy="6" r="1.5"/><circle cx="6" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="18" cy="12" r="1.5"/><circle cx="6" cy="18" r="1.5"/><circle cx="12" cy="18" r="1.5"/><circle cx="18" cy="18" r="1.5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-bill" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5l9-2v18M13 9l7 2v10M2 21h20M8 8h1M8 12h1M8 16h1M16 15h1M16 18h1"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4M4 4h13l-2 4 2 4H4"/></symbol>
+</svg>
+
+<div class="wf">
+  <header class="wf-head">
+    <h1>MCAH trên điện thoại</h1>
+    <p>Wireframe revamp responsive, 05/11/2026. Mỗi màn có khung <b>Hiện tại</b> (chụp lại từ app thật ở 375px, chỗ lỗi đánh số đỏ) cạnh khung <b>Đề xuất</b> (đánh số xanh, khớp danh sách thay đổi bên dưới). Dữ liệu là dữ liệu demo trên máy dev. Kế hoạch: <code>docs/mcah-ke-hoach-responsive-mobile.md</code>. <b>Đã duyệt 05/11/2026, giữ cả 7 đề xuất ở mục 9 của kế hoạch.</b></p>
+  </header>
+
+  <nav class="wf-nav" aria-label="Các phần">
+    <a href="#hien-trang">0 · Hiện trạng</a>
+    <a href="#khung">1 · Khung app</a>
+    <a href="#danh-sach">2 · Danh sách</a>
+    <a href="#loc">3 · Bộ lọc &amp; ngày</a>
+    <a href="#chi-tiet">4 · Chi tiết</a>
+    <a href="#form">5 · Form</a>
+    <a href="#dialog">6 · Dialog</a>
+    <a href="#bang">7 · Bảng trong trang</a>
+    <a href="#quan-tri">8 · Quản trị</a>
+    <a href="#ds">9 · Design system</a>
+  </nav>
+
+  <!-- ===================================================== 0 -->
+  <section class="wf-sec" id="hien-trang">
+    <header>
+      <h2>0 · Hiện trạng ở 375px <small>đo trên app thật</small></h2>
+      <p>Danh sách đã có bản dòng cho điện thoại và menu đã thành ngăn kéo, nên phần lớn lỗi nằm ở <b>trang chi tiết, form, bảng, ô ngày và các lớp nổi</b>. Mỗi lỗi dưới đây đến từ một component dùng chung, nên sửa ở design system là các trang cùng lành.</p>
+    </header>
+    <div class="wf-scroll">
+      <table class="wf-table wf-table--issues">
+        <thead><tr><th>Mức</th><th>Lỗi</th><th>Đo được</th><th>Gốc ở đâu</th><th>Sửa ở phần</th></tr></thead>
+        <tbody>
+          <tr><td><span class="sev sev--hi">Nặng</span></td><td>Cả trang cuộn ngang</td><td class="num">Chi tiết Hợp đồng 466px · Cơ hội 425px · Sửa YCTT 397px</td><td>Giá trị không xuống dòng trong <code>crew-head__meta</code>; bảng tiền 363px trong khung 343px</td><td>4, 7</td></tr>
+          <tr><td><span class="sev sev--hi">Nặng</span></td><td>Ô chọn khoảng ngày rộng 744px, mở ra là cả trang giãn gấp đôi</td><td class="num">Danh sách Chuyến tàu: khung nhìn 375 → 777px</td><td><code>DatePicker.RangePicker</code> của antd, 39 chỗ dùng DatePicker</td><td>3</td></tr>
+          <tr><td><span class="sev sev--hi">Nặng</span></td><td>Chữ trong ô nhập 14px: iOS tự phóng to cả trang khi chạm vào ô</td><td class="num">Form thuyền viên 49 ô · Đối tác 24 · Tàu 23 · mọi ô tìm kiếm</td><td><code>fontSize: 14</code> trong theme antd, không hạ bậc theo màn</td><td>9</td></tr>
+          <tr><td><span class="sev sev--hi">Nặng</span></td><td>Header trang chi tiết: ảnh/tile 130px chiếm nửa ngang, cột giá trị còn ~150px, chữ vỡ từng từ</td><td class="num">6 trang chi tiết dùng chung <code>crew-head</code></td><td><code>crew-head</code> nằm trong <code>SeafarerProfile.css</code>, không có bản điện thoại</td><td>4</td></tr>
+          <tr><td><span class="sev sev--mid">Vừa</span></td><td>Thanh công cụ danh sách cao 170px (21% màn); nút "Thêm thuyền viên" bị cắt mép phải</td><td class="num">Nút kết thúc ở 375px, khung kết thúc ở 359px</td><td><code>ds-toolbar</code> chỉ <code>flex-wrap</code></td><td>2</td></tr>
+          <tr><td><span class="sev sev--mid">Vừa</span></td><td>Bảng còn nguyên dạng máy tính: Tài khoản, Mục tiêu tháng, bảng khoản tiền hợp đồng, bảng chứng chỉ</td><td class="num">Tài khoản 857px, Mục tiêu 640px, bảng HĐ 640px; cuộn ngang không ghim cột</td><td>Trang tự dựng <code>Table</code>, không có bản dòng</td><td>7, 8</td></tr>
+          <tr><td><span class="sev sev--mid">Vừa</span></td><td>Breadcrumb xuống 4 dòng; nút hành động rớt hàng 2 + 1</td><td class="num">Chi tiết YCTT, Hợp đồng</td><td><code>Crumb</code>, <code>crew-head__actions</code></td><td>4</td></tr>
+          <tr><td><span class="sev sev--mid">Vừa</span></td><td>Nút và ô bấm nhỏ hơn 32px</td><td class="num">Vai trò 49 · Tài khoản 9 · Form thuyền viên 10 · Đối tác 8</td><td>Nút icon <code>size="small"</code>, link chữ trong dòng</td><td>9</td></tr>
+          <tr><td><span class="sev sev--lo">Nhẹ</span></td><td>Topbar 64px, tiêu đề bị cắt ("Quản trị / Mục tiêu …"), nút tài khoản có mũi tên thừa</td><td class="num">Mọi trang</td><td><code>AdminLayout</code></td><td>1</td></tr>
+          <tr><td><span class="sev sev--lo">Nhẹ</span></td><td>Thanh lưu form 2 tầng (~110px); hàng mục cắt ngang, không báo còn mục bên phải</td><td class="num">Mọi form dùng <code>FormFrame</code></td><td><code>sf-savebar</code>, <code>sf-toc</code></td><td>5</td></tr>
+          <tr><td><span class="sev sev--lo">Nhẹ</span></td><td>Trang chi tiết đọc: nhãn trên giá trị dưới, mỗi trường ~60px, "Chưa có" lặp lại</td><td class="num">Hộ chiếu 6 trường = ~360px</td><td><code>DescriptionList</code> chỉ chia 2 cột từ 384px</td><td>4</td></tr>
+          <tr><td><span class="sev sev--lo">Nhẹ</span></td><td>14 mốc breakpoint khác nhau trong CSS (575, 599, 600, 639, 640, 720, 767, 899, 900, 991, 1023, 1099, 1199…)</td><td class="num">JS dùng <code>md</code> (768) còn CSS phần lớn 639 → dải 640–767 lệch nhau</td><td>Mỗi trang tự chọn mốc</td><td>9</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================================================== 1 -->
+  <section class="wf-sec" id="khung">
+    <header>
+      <h2>1 · Khung app: topbar và menu</h2>
+      <p>Giữ ngăn kéo menu đang có (phương án A, khuyên dùng). Phương án B (thanh tab dưới) để chủ dự án cân nhắc: tiện một tay hơn nhưng mục trên thanh thay đổi theo quyền của từng người.</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--now">Hiện tại</span> Quản trị → Mục tiêu tháng</div>
+        <div class="ph"><div class="ph__scr ph__scr--short">
+          <div class="m-top m-top--old">
+            <span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span>
+            <span class="tg bad" style="flex:1;min-width:0;display:flex"><span class="m-top__title"><span>Quản trị /</span> Mục tiêu th…</span><i class="pin">1</i></span>
+            <span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span>
+            <span class="m-user-old tg bad"><span class="m-av">AD</span><svg class="i i--s"><use href="#i-down"/></svg><i class="pin">2</i></span>
+          </div>
+          <div class="m-body">
+            <div><div style="font-size:18px;font-weight:600">Mục tiêu tháng</div><div class="m-muted m-small">Mỗi môi giới viên một mục tiêu số hợp đồng ký mới và doanh thu. Ô để trống là chưa đặt.</div></div>
+            <div class="m-btns"><span class="m-select m-input--old">11/2026 <svg class="i i--s m-muted"><use href="#i-cal"/></svg></span><span class="m-btn m-btn--sm">Chép từ tháng trước</span></div>
+            <div class="m-tablewrap tg bad" style="position:relative"><i class="pin">3</i>
+              <table class="m-table"><thead><tr><th style="width:130px">Môi giới viên</th><th style="width:110px">Hợp đồng</th><th>Doanh thu</th></tr></thead>
+                <tbody>
+                  <tr><td style="white-space:normal">huyld@axalize.vn</td><td><span class="m-input m-input--old" style="width:90px;height:32px;font-size:13px">Chưa đặt</span></td><td><span class="m-input m-input--old" style="width:90px;height:32px;font-size:13px">Chưa đặt</span></td></tr>
+                  <tr><td style="white-space:normal">Nguyễn Quang<br>Dương</td><td><span class="m-input m-input--old" style="width:90px;height:32px;font-size:13px">Chưa đặt</span></td><td></td></tr>
+                  <tr><td>test</td><td><span class="m-input m-input--old" style="width:90px;height:32px;font-size:13px">Chưa đặt</span></td><td></td></tr>
+                  <tr><td><b>Cả công ty</b></td><td><b>Chưa đặt</b></td><td><b>Chưa…</b></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--bad"><li>Tiêu đề kèm tên mục cha nên bị cắt.</li><li>Nút tài khoản 64px có mũi tên, chiếm chỗ của tiêu đề.</li><li>Bảng giữ dạng máy tính, cuộn ngang không ghim cột (xem phần 8).</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất A</span><span class="tag tag--rec">Đã chọn</span> Topbar gọn + ngăn kéo</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top">
+            <span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span>
+            <span class="m-top__title">Mục tiêu tháng</span>
+            <span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span>
+            <span class="m-ib tg"><span class="m-av">AD</span><i class="pin pin--g" style="z-index:11">1</i></span>
+          </div>
+          <div class="m-scrim"></div>
+          <aside class="m-drawer">
+            <div class="m-drawer__brand"><span class="m-logo">M</span> MCAH</div>
+            <div class="m-nav">
+              <div class="m-nav__g">Hồ sơ</div>
+              <span class="m-nav__i"><svg class="i"><use href="#i-dash"/></svg>Tổng quan</span>
+              <span class="m-nav__i"><svg class="i"><use href="#i-team"/></svg>Thuyền viên</span>
+              <span class="m-nav__i"><svg class="i"><use href="#i-building"/></svg>Đối tác</span>
+              <span class="m-nav__i"><svg class="i"><use href="#i-ship"/></svg>Tàu</span>
+              <div class="m-nav__g">Vận hành</div>
+              <span class="m-nav__i"><svg class="i"><use href="#i-target"/></svg>Cơ hội</span>
+              <span class="m-nav__i"><svg class="i"><use href="#i-anchor"/></svg>Chuyến tàu</span>
+              <span class="m-nav__i"><svg class="i"><use href="#i-file"/></svg>Hợp đồng</span>
+              <span class="m-nav__i"><svg class="i"><use href="#i-bill"/></svg>Yêu cầu thanh toán</span>
+              <div class="m-nav__g">Hệ thống</div>
+              <span class="m-nav__i"><svg class="i"><use href="#i-db"/></svg>Danh mục</span>
+              <span class="m-nav__i m-nav__i--on tg"><svg class="i"><use href="#i-shield"/></svg>Quản trị · Mục tiêu tháng<i class="pin pin--g">2</i></span>
+            </div>
+            <div class="m-drawer__me tg"><span class="m-av">AD</span><span style="min-width:0;flex:1"><b style="display:block;font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis">admin@seasmart.local</b><span class="m-muted m-xs">Quản trị viên</span></span><span class="m-btn m-btn--g m-btn--sm">Đăng xuất</span><i class="pin pin--g">3</i></div>
+          </aside>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Topbar 56px, tiêu đề chỉ là trang đang xem (như "Mục tiêu tháng" phía sau ngăn kéo; xem rõ ở các khung đề xuất bên dưới). Nút tài khoản còn avatar 40×40, bỏ mũi tên.</li><li>Mục 44px, mục cha mở sẵn ở phân hệ đang xem (giữ hành vi hiện tại).</li><li>Email, vai trò và Đăng xuất có ở đáy ngăn kéo, khỏi mở thêm menu.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--alt">Phương án B</span> Thanh tab dưới · không làm</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top" style="padding-left:16px">
+            <span class="m-top__title">Thuyền viên</span>
+            <span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span>
+            <span class="m-ib"><span class="m-av">AD</span></span>
+          </div>
+          <div class="m-body">
+            <div class="m-input"><svg class="i m-muted"><use href="#i-search"/></svg><span class="grow">Tìm tên, CCCD, số sổ</span></div>
+            <div class="m-list">
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Lê Văn Đức</span><span class="m-li__s">Đại phó</span><span class="m-li__meta"><span class="m-badge m-badge--ok">Đang trên tàu</span>MV Mekong Star</span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Vũ Đình Nam</span><span class="m-li__s">Thủy thủ trưởng</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span></span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Trần Minh Khoa</span><span class="m-li__s">Máy hai</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span></span></span></div>
+            </div>
+          </div>
+          <nav class="m-tabbar tg">
+            <a><svg class="i"><use href="#i-dash"/></svg>Tổng quan</a>
+            <a class="on"><svg class="i"><use href="#i-team"/></svg>Thuyền viên</a>
+            <a><svg class="i"><use href="#i-anchor"/></svg>Chuyến tàu</a>
+            <a><svg class="i"><use href="#i-file"/></svg>Hợp đồng</a>
+            <a><svg class="i"><use href="#i-grid"/></svg>Khác</a>
+            <i class="pin pin--g" style="top:-10px;right:8px">1</i>
+          </nav>
+        </div></div>
+        <ol class="wf-notes"><li>4 mục dùng nhiều nhất + "Khác" (mở sheet chứa các mục còn lại). Người không có quyền một mục thì mục kế tiếp theo thứ tự nav lấp vào.</li><li>Bỏ nút ☰. Trả giá: thêm một component nav mới, thanh chiếm 64px đáy, đè lên thanh lưu và FAB nên phải chừa chỗ ở mọi trang.</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 2 -->
+  <section class="wf-sec" id="danh-sach">
+    <header>
+      <h2>2 · Trang danh sách <small>Thuyền viên; áp cho 8 danh sách và Danh mục</small></h2>
+      <p>Giữ dòng danh sách đang có (đã ổn). Sửa thanh công cụ: từ 3 tầng 170px xuống 2 tầng ~100px, dính dưới topbar khi cuộn; nút "Thêm" thành nút nổi góc phải dưới.</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--now">Hiện tại</span></div>
+        <div class="ph"><div class="ph__scr">
+          <div class="m-top m-top--old"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Thuyền viên</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-user-old"><span class="m-av">AD</span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+          <div class="m-body">
+            <div class="m-card m-card--p tg bad" style="display:grid;gap:12px;overflow:hidden"><i class="pin pin--l">1</i>
+              <span class="m-select" style="justify-self:start"><span>Trạng thái:</span> Tất cả · 57 <svg class="i i--s m-muted"><use href="#i-down"/></svg></span>
+              <span class="m-input m-input--old tg"><svg class="i m-muted"><use href="#i-search"/></svg>Tìm tên, CCCD, số sổ<i class="pin">3</i></span>
+              <div class="m-btns" style="position:relative;margin-right:-30px"><span class="m-btn"><svg class="i i--s"><use href="#i-filter"/></svg>Bộ lọc <svg class="i i--s"><use href="#i-down"/></svg></span><span class="m-btn" style="padding:0 10px"><svg class="i"><use href="#i-vmore"/></svg></span><span class="m-btn m-btn--p tg"><svg class="i i--s"><use href="#i-plus"/></svg>Thêm thuyền viên<i class="pin" style="right:24px">2</i></span><span class="over" style="right:29px"></span></div>
+            </div>
+            <div class="m-list">
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">huy</span><span class="m-li__s">Chưa có chức danh</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span></span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">[KT-HĐ2] H-onboard</span><span class="m-li__s">Chưa có chức danh</span><span class="m-li__meta"><span class="m-badge m-badge--ok">Đang trên tàu</span>MV Mekong Star</span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">[KT-HĐ2] G-manual</span><span class="m-li__s">Chưa có chức danh</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span></span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">[KT-HĐ2] G-awaiting</span><span class="m-li__s">Chưa có chức danh</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span></span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">[KT-HĐ2] G-end</span><span class="m-li__s">Chưa có chức danh</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span></span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">[KT-HĐ2] G-act</span><span class="m-li__s">Chưa có chức danh</span></span></div>
+            </div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--bad"><li>Thanh công cụ 3 tầng, 170px: mở trang chỉ thấy 5 dòng.</li><li>Nút "Thêm thuyền viên" tràn khỏi khung 16px, bị cắt chữ.</li><li>Ô tìm 14px: chạm vào là iOS phóng to trang.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Đang lọc 2 điều kiện</div>
+        <div class="ph"><div class="ph__scr">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Thuyền viên</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div class="m-bar tg"><i class="pin pin--g pin--l" style="top:6px;left:4px">1</i>
+            <div class="m-btns"><span class="m-input tg" style="flex:1;min-width:0"><svg class="i m-muted"><use href="#i-search"/></svg><span class="grow">Tìm tên, CCCD, số sổ</span><i class="pin pin--g">2</i></span><span class="m-ib m-ib--box tg" style="width:44px;height:44px"><svg class="i"><use href="#i-filter"/></svg><i class="pin pin--g" style="background:var(--primary);top:-6px;right:-6px">2</i></span><span class="m-ib m-ib--box" style="width:44px;height:44px"><svg class="i"><use href="#i-vmore"/></svg></span></div>
+            <div class="m-btns" style="align-items:center"><span class="m-select tg" style="flex-shrink:0"><span>Trạng thái:</span> Tất cả <svg class="i i--s m-muted"><use href="#i-down"/></svg><i class="pin pin--g">3</i></span><span class="m-chips m-chips--fade" style="flex:1;min-width:0"><span class="m-chip m-chip--x">Thuyền trưởng <svg class="i i--s"><use href="#i-close"/></svg></span><span class="m-chip m-chip--x">Ở bờ <svg class="i i--s"><use href="#i-close"/></svg></span></span><span class="m-btn m-btn--g m-btn--sm" style="flex-shrink:0;padding:0 4px">Xoá lọc</span></div>
+          </div>
+          <div class="m-body">
+            <div class="m-list">
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Lê Văn Đức</span><span class="m-li__s">Thuyền trưởng · HP-0098765</span><span class="m-li__meta"><span class="m-badge m-badge--ok">Đang trên tàu</span>MV Mekong Star</span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Phạm Quốc Bảo</span><span class="m-li__s">Thuyền trưởng · HP-0102231</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span><span class="m-badge m-badge--err">2 giấy tờ hết hạn</span></span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Ngô Thành Trung</span><span class="m-li__s">Thuyền trưởng · HP-0077120</span><span class="m-li__meta"><span class="m-badge m-badge--ok">Đang trên tàu</span>MV Ocean Glory</span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Đỗ Văn Hải</span><span class="m-li__s">Thuyền trưởng · HP-0091002</span><span class="m-li__meta"><span class="m-badge">Ở bờ</span></span></span></div>
+              <div class="m-li"><span class="m-ph"></span><span class="m-li__main"><span class="m-li__t">Bùi Anh Tuấn</span><span class="m-li__s">Thuyền trưởng · HP-0065533</span><span class="m-li__meta"><span class="m-badge m-badge--warn">Tạm ngưng</span></span></span></div>
+            </div>
+            <div class="tg" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 4px 0"><span class="m-muted m-small m-num">1–20 / 57 thuyền viên</span><span class="m-btns"><span class="m-ib m-ib--box"><svg class="i"><use href="#i-back"/></svg></span><span class="m-select m-num">1 / 3</span><span class="m-ib m-ib--box"><svg class="i"><use href="#i-right"/></svg></span></span><i class="pin pin--g">5</i></div>
+          </div>
+          <span class="m-fab tg"><svg class="i"><use href="#i-plus"/></svg><i class="pin pin--g">4</i></span>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Thanh công cụ không còn là card: nền trắng sát mép, <b>dính dưới topbar</b> khi cuộn, 2 tầng ~100px.</li><li>Tầng 1: ô tìm (44px, chữ 16px) + nút Lọc có số điều kiện đang lọc + nút ⋯ (Xuất, Nhập Excel…).</li><li>Tầng 2: ô chọn trạng thái đang có (<code>StatusTabs</code> bản điện thoại) + chip đang lọc cuộn ngang (bấm × để gỡ) + "Xoá lọc" đứng ngoài vùng cuộn nên luôn thấy. Không lọc gì thì tầng 2 chỉ có ô trạng thái.</li><li>"Thêm thuyền viên" thành nút nổi 56px góc phải dưới, nhãn đọc bằng <code>aria-label</code>. Chỉ ở điện thoại.</li><li>Dòng chân gọn: tổng số + ‹ trang ›. Bỏ ô "Số dòng/trang" ở điện thoại (giữ 20).</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 3 -->
+  <section class="wf-sec" id="loc">
+    <header>
+      <h2>3 · Bộ lọc và chọn ngày</h2>
+      <p>Bộ lọc mở thành <b>sheet từ đáy</b>. Ô ngày ở điện thoại dùng <b>bảng chọn ngày của máy</b> (iOS / Android), theo nguyên tắc dùng mặc định của hệ điều hành; khoảng ngày tách thành hai ô Từ / Đến.</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--now">Hiện tại</span> Chuyến tàu, bấm ô khoảng ngày</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top m-top--old"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Chuyến tàu</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-user-old"><span class="m-av">AD</span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+          <div class="m-body">
+            <div class="m-card m-card--p" style="display:grid;gap:12px">
+              <span class="m-select" style="justify-self:start"><span>Trạng thái:</span> Đang trên tàu · 17</span>
+              <span class="m-input m-input--old"><svg class="i m-muted"><use href="#i-search"/></svg>Tìm thuyền viên, mã chuyến</span>
+              <span class="m-input m-input--old"><b>01/11/2026</b> → <b>30/11/2026</b></span>
+            </div>
+            <div class="tg bad" style="position:relative;display:grid;grid-template-columns:1fr 1fr;gap:16px;width:600px;margin-left:16px;padding:14px;border-radius:12px;background:var(--surface);box-shadow:var(--pop);font-size:12px"><i class="pin pin--l">1</i>
+              <div><b>Tháng 11 2026</b><div class="m-muted" style="margin-top:8px;letter-spacing:6px">T2 T3 T4 T5 T6 T7 CN</div><div style="margin-top:6px;letter-spacing:10px">1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16</div></div>
+              <div><b>Tháng 12 2026</b><div class="m-muted" style="margin-top:8px;letter-spacing:6px">T2 T3 T4 T5 T6 T7 CN</div></div>
+            </div>
+            <div class="m-banner m-banner--err"><b>Khung chọn rộng 744px.</b> Trình duyệt điện thoại nới khung nhìn ra 777px để vừa nó: cả trang thu nhỏ, chữ còn một nửa, phải phóng to lại bằng tay.</div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Sheet Bộ lọc</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Chuyến tàu</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div class="m-scrim"></div>
+          <div class="m-sheet tg"><i class="pin pin--g" style="top:8px;right:12px">1</i>
+            <span class="m-sheet__grab"></span>
+            <div class="m-sheet__h"><h3>Bộ lọc</h3><span class="m-ib"><svg class="i"><use href="#i-close"/></svg></span></div>
+            <div class="m-field"><label>Tàu</label><span class="m-input"><span class="grow"><b>MV Mekong Star</b></span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+            <div class="m-field"><label>Chức danh</label><span class="m-input"><span class="grow">Tất cả</span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+            <div class="m-field tg"><label>Lên tàu trong khoảng</label><div class="m-btns"><span class="m-input" style="flex:1"><span class="grow"><b>01/11/2026</b></span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span><span class="m-input" style="flex:1"><span class="grow"><b>30/11/2026</b></span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span></div><span class="hint">Chạm vào ô mở bảng chọn ngày của máy.</span><i class="pin pin--g">2</i></div>
+            <div class="m-sheet__foot tg"><span class="m-btn">Xoá lọc</span><span class="m-btn m-btn--p">Xem 12 chuyến</span><i class="pin pin--g">3</i></div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Sheet từ đáy, cao theo nội dung, tối đa 88% màn; kéo xuống hoặc chạm nền mờ để đóng. Desktop giữ popover bộ lọc như cũ.</li><li>Ô ngày ở điện thoại là <code>&lt;input type="date"&gt;</code> (bảng chọn của máy), hiện dạng DD/MM/YYYY. Khoảng ngày = hai ô Từ / Đến. Áp cho mọi DatePicker và RangePicker qua một component mới <code>DateField</code>.</li><li>Nút chính ghi số kết quả sẽ thấy; điều kiện chỉ áp khi bấm.</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 4 -->
+  <section class="wf-sec" id="chi-tiet">
+    <header>
+      <h2>4 · Trang chi tiết <small>Hợp đồng, Thuyền viên; áp cho cả 6 trang chi tiết</small></h2>
+      <p>Một header chung <code>DetailHead</code> thay cho <code>crew-head</code> chép ở từng trang: tile nhỏ cạnh tên, khối thông tin xuống dưới dài hết ngang, tối đa 2 nút + ⋯. Breadcrumb ở điện thoại còn một nấc "‹ Hợp đồng".</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--now">Hiện tại</span> Hợp đồng HĐ-2026-0057</div>
+        <div class="ph"><div class="ph__scr">
+          <div class="m-top m-top--old"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Hợp đồng</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-user-old"><span class="m-av">AD</span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+          <div class="m-body">
+            <div class="m-crumb-old">Hợp đồng › HĐ-2026-0057</div>
+            <div style="display:flex;gap:16px">
+              <span class="m-tile m-tile--lg tg bad"><svg class="i"><use href="#i-file"/></svg><i class="pin">1</i></span>
+              <div style="display:grid;gap:4px;min-width:0">
+                <b style="font-size:18px">HĐ-2026-0057</b>
+                <span class="m-badge m-badge--ok" style="justify-self:start">Hiệu lực</span>
+                <span class="m-muted">Chức danh Thuyền trưởng</span>
+                <dl class="m-dl m-dl--squeeze tg bad" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+                  <div><dt>Thuyền viên</dt><dd>huy</dd></div>
+                  <div><dt>Chủ tàu</dt><dd>Halong<br>Maritime<br>JSC</dd></div>
+                  <div><dt>Tàu</dt><dd>MV<br>Mekong<br>Star</dd></div>
+                  <div><dt>Chuyến</dt><dd>CT-2026-<br>0053</dd></div>
+                  <div><dt>Thời gian</dt><dd style="color:var(--foreground)">01/09/2026<br>· 7 tháng</dd></div>
+                  <i class="pin">2</i>
+                </dl>
+              </div>
+            </div>
+            <div class="tg bad" style="display:grid;gap:8px"><span class="m-btn" style="justify-self:start"><svg class="i i--s"><use href="#i-print"/></svg>In hợp đồng <span class="m-badge" style="height:18px">Chưa chạy</span></span><div class="m-btns"><span class="m-btn"><svg class="i i--s"><use href="#i-flag"/></svg>Kết thúc hợp đồng</span><span class="m-btn">Đưa về Nháp</span></div><i class="pin">3</i></div>
+            <div class="m-banner"><span><b>Chuyến CT-2026-0053 đã rời tàu 02/11/2026</b></span><span>Hợp đồng còn tới 31/03/2027, bill vẫn sinh tới ngày đó.</span></div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--bad"><li>Tile 130×130 chiếm 40% ngang chỉ để hiện icon.</li><li>Khối thông tin còn ~150px: "MV / Mekong / Star" vỡ từng chữ; giá trị dài không xuống dòng đẩy trang rộng 466px.</li><li>Ba nút rớt hàng 1 + 2.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Hợp đồng HĐ-2026-0057</div>
+        <div class="ph"><div class="ph__scr">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Hợp đồng</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div class="m-body" style="padding-top:4px">
+            <span class="m-back tg"><svg class="i i--s"><use href="#i-back"/></svg>Hợp đồng<i class="pin pin--g" style="right:-24px;top:4px">1</i></span>
+            <div class="m-card">
+              <div class="m-head">
+                <div class="m-head__top tg"><span class="m-tile"><svg class="i"><use href="#i-file"/></svg></span><div class="m-head__txt"><div class="m-head__t">HĐ-2026-0057 <span class="m-badge m-badge--ok">Hiệu lực</span></div><div class="m-head__s">Thuyền trưởng · 01/09/2026 → 31/03/2027 · 7 tháng</div></div><i class="pin pin--g">2</i></div>
+                <dl class="m-dl tg" style="border-top:1px solid var(--border)">
+                  <div><dt>Thuyền viên</dt><dd class="m-link">huy</dd></div>
+                  <div><dt>Chủ tàu</dt><dd class="m-link">Halong Maritime JSC</dd></div>
+                  <div><dt>Tàu</dt><dd class="m-link">MV Mekong Star</dd></div>
+                  <div><dt>Chuyến</dt><dd class="m-link">CT-2026-0053</dd></div>
+                  <i class="pin pin--g">3</i>
+                </dl>
+                <div class="m-btns tg"><span class="m-ib m-ib--box"><svg class="i"><use href="#i-vmore"/></svg></span><span class="m-btn m-btn--grow"><svg class="i i--s"><use href="#i-print"/></svg>In hợp đồng</span><span class="m-btn m-btn--grow">Kết thúc HĐ</span><i class="pin pin--g">4</i></div>
+              </div>
+            </div>
+            <div class="m-banner"><span><b>Chuyến CT-2026-0053 đã rời tàu 02/11/2026</b></span><span>Hợp đồng còn tới 31/03/2027, bill vẫn sinh tới ngày đó.</span><span class="m-link">Mở chuyến ›</span></div>
+            <div class="m-sticky tg"><span class="m-select" style="flex:1"><span>Mục:</span> Tổng quan <svg class="i i--s m-muted" style="margin-left:auto"><use href="#i-down"/></svg></span><i class="pin pin--g" style="right:8px">5</i></div>
+            <div class="m-card"><div class="m-card__h">Khoản tiền <small>USD / tháng</small></div><div class="m-money"><div class="m-money__r"><span>Lương thuyền viên</span><b class="m-num">Chênh 300</b></div><div class="m-money__r m-muted m-small"><span>Hằng tháng</span><span class="m-num">Thu 1.500 · Chi 1.200</span></div></div></div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Breadcrumb ở điện thoại còn một nấc về trang cha, một dòng, vùng bấm 32px cao.</li><li>Tile 44px cạnh tên + trạng thái; dòng phụ gom chức danh và thời gian.</li><li>Khối thông tin nằm dưới, dài hết ngang: nhãn 38% trái, giá trị phải, giá trị dài thì xuống dòng (không còn đẩy trang).</li><li>Tối đa 2 nút hiện, chia đều; phần còn lại (Đưa về Nháp…) vào ⋯. Không bao giờ rớt hàng 2 + 1.</li><li>Ô chọn "Mục:" dính dưới topbar khi cuộn, đổi mục không phải cuộn ngược lên.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Thuyền viên (có ảnh)</div>
+        <div class="ph"><div class="ph__scr">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Thuyền viên</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div class="m-body" style="padding-top:4px">
+            <span class="m-back"><svg class="i i--s"><use href="#i-back"/></svg>Thuyền viên</span>
+            <div class="m-card">
+              <div class="m-head">
+                <div class="m-head__top tg"><span class="m-photo"></span><div class="m-head__txt"><div class="m-head__t">Lê Văn Đức <span class="m-badge m-badge--ok">Đang trên tàu</span></div><div class="m-head__s">Đại phó · HP-0098765</div><span class="m-badge m-badge--err" style="justify-self:start">1 giấy tờ hết hạn</span></div><i class="pin pin--g">1</i></div>
+                <dl class="m-dl tg" style="border-top:1px solid var(--border)">
+                  <div><dt>Tàu</dt><dd class="m-link">MV Mekong Star</dd></div>
+                  <div><dt>Chuyến hiện tại</dt><dd><span class="m-link">DEMO-TL-2</span> · đến 02/11/2026</dd></div>
+                  <div style="align-items:center"><dt>Điện thoại</dt><dd style="display:flex;align-items:center;gap:4px"><span class="m-num" style="flex:1">0912 345 678</span><span class="m-ib m-ib--box" style="width:36px;height:36px"><svg class="i i--s"><use href="#i-phone"/></svg></span><span class="m-ib m-ib--box" style="width:36px;height:36px"><svg class="i i--s"><use href="#i-chat"/></svg></span></dd></div>
+                  <i class="pin pin--g">2</i>
+                </dl>
+                <div class="m-btns"><span class="m-ib m-ib--box"><svg class="i"><use href="#i-vmore"/></svg></span><span class="m-btn m-btn--grow"><svg class="i i--s"><use href="#i-edit"/></svg>Sửa thông tin</span></div>
+              </div>
+            </div>
+            <div class="m-sticky"><span class="m-select" style="flex:1"><span>Mục:</span> Hồ sơ cá nhân <svg class="i i--s m-muted" style="margin-left:auto"><use href="#i-down"/></svg></span></div>
+            <div class="m-card tg"><div class="m-card__h">Hộ chiếu</div><dl class="m-dl" style="padding:0 16px">
+              <div><dt>Số hộ chiếu</dt><dd>B1234567</dd></div>
+              <div><dt>Ngày cấp</dt><dd class="m-num">12/03/2022</dd></div>
+              <div><dt>Ngày hết hạn</dt><dd class="m-num">12/03/2032</dd></div>
+              <div><dt>Nơi sinh</dt><dd class="empty">—</dd></div>
+              <div><dt>Quốc tịch</dt><dd>Việt Nam</dd></div>
+            </dl><i class="pin pin--g">3</i></div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Ảnh chân dung 60×80 (giữ tỉ lệ 3:4 của ảnh thẻ); bấm ảnh mở xem lớn và tải ảnh, thay cho nút "Tải ảnh" đè trên ảnh.</li><li>Gọi, Zalo là nút 36px cạnh số; giữ <code>ContactActions</code> đang có.</li><li><code>DescriptionList</code> chia 2 cột từ 280px (đang là 384px): mỗi trường còn ~40px thay vì ~60px; trường trống hiện "—".</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 5 -->
+  <section class="wf-sec" id="form">
+    <header>
+      <h2>5 · Form thêm / sửa <small>áp cho mọi form dùng <code>FormFrame</code></small></h2>
+      <p>Giữ nguyên quy ước lưu (mục 3.3 CLAUDE.md). Ở điện thoại: ô nhập 44px chữ 16px, hàng mục có mép mờ, thanh lưu còn một hàng 68px.</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--now">Hiện tại</span> Sửa thuyền viên</div>
+        <div class="ph"><div class="ph__scr ph__scr--nofade">
+          <div class="m-top m-top--old"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Thuyền viên</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-user-old"><span class="m-av">AD</span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+          <div class="m-body">
+            <div class="m-chips tg bad" style="margin-right:-16px"><span class="m-chip m-chip--on">Thông tin cá nhân</span><span class="m-chip">Giấy tờ tuỳ thân</span><span class="m-chip">Liên lạc</span><i class="pin pin--l">3</i></div>
+            <div class="m-card m-card--p" style="display:grid;gap:14px">
+              <div class="m-sec-label">Hộ chiếu</div>
+              <div class="m-field"><label>Số hộ chiếu</label><span class="m-input m-input--old tg bad"><b>B1234567</b><i class="pin">1</i></span></div>
+              <div class="m-field"><label>Ngày cấp hộ chiếu</label><span class="m-input m-input--old">DD/MM/YYYY</span></div>
+              <div class="m-field"><label>Ngày hết hạn hộ chiếu</label><span class="m-input m-input--old">DD/MM/YYYY</span></div>
+              <div class="m-field"><label>Nơi sinh</label><span class="m-input m-input--old">VD: Thanh Hóa</span></div>
+              <div class="m-field"><label>Quốc tịch</label><span class="m-input m-input--old">Việt Nam</span></div>
+            </div>
+          </div>
+          <div class="m-savebar m-savebar--old tg bad"><span class="m-muted">Chưa có thay đổi</span><div class="m-btns"><span class="m-btn">Hủy</span><span class="m-btn m-btn--dis m-btn--grow">Lưu thay đổi</span></div><i class="pin pin--l" style="top:-10px;left:12px">2</i></div>
+        </div></div>
+        <ol class="wf-notes wf-notes--bad"><li>Ô 40px chữ 14px: iOS phóng to trang mỗi lần chạm ô.</li><li>Thanh lưu 2 tầng ~110px che gần 1/6 màn.</li><li>Hàng mục cắt ngang ở mép, không báo còn mục bên phải.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Sửa (đã đổi 3 trường)</div>
+        <div class="ph"><div class="ph__scr ph__scr--nofade">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Thuyền viên</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div style="padding:8px 16px 10px;border-bottom:1px solid var(--border);background:var(--background)" class="tg">
+            <span class="m-back"><svg class="i i--s"><use href="#i-back"/></svg>Lê Văn Đức</span>
+            <div class="m-chips m-chips--fade"><span class="m-chip">Thông tin cá nhân</span><span class="m-chip m-chip--on">Giấy tờ tuỳ thân · 2</span><span class="m-chip">Liên lạc</span><span class="m-chip">Gia quyến</span></div>
+            <div class="m-track"><i style="left:22%"></i></div>
+            <i class="pin pin--g">1</i>
+          </div>
+          <div class="m-body">
+            <div class="m-card m-card--p" style="display:grid;gap:16px">
+              <div class="m-sec-label">Hộ chiếu</div>
+              <div class="m-field tg"><label>Số hộ chiếu</label><span class="m-input" style="border-color:var(--primary)"><span class="grow"><b>B7654321</b></span><span class="m-badge m-badge--blue">Đã sửa</span></span><i class="pin pin--g">2</i></div>
+              <div class="m-field"><label>Ngày cấp hộ chiếu</label><span class="m-input" style="border-color:var(--primary)"><span class="grow"><b>12/03/2022</b></span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span></div>
+              <div class="m-field"><label>Ngày hết hạn hộ chiếu <i>*</i></label><span class="m-input m-input--err"><span class="grow">DD/MM/YYYY</span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span><span class="err">Nhập ngày hết hạn hộ chiếu</span></div>
+              <div class="m-field"><label>Nơi sinh</label><span class="m-input">VD: Thanh Hóa</span></div>
+            </div>
+          </div>
+          <div class="m-savebar tg"><span class="m-btn">Huỷ</span><span class="m-btn m-btn--p m-btn--grow m-btn--lg">Lưu thay đổi · 3</span><i class="pin pin--g" style="top:-10px;right:12px">3</i></div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Hàng mục dính dưới topbar, mép phải mờ + vạch mảnh báo còn mục; mục đang xem tự cuộn vào giữa.</li><li>Ô 44px, chữ gõ 16px. Viền nhấn + chip "Đã sửa" giữ như desktop.</li><li>Thanh lưu một hàng: Huỷ + nút chính dài, số thay đổi nằm trong nút. Chưa đổi gì thì nút chính khoá (giữ quy ước). Chừa vùng an toàn đáy iPhone.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Thêm mới</div>
+        <div class="ph"><div class="ph__scr ph__scr--nofade">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Thuyền viên</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div style="padding:8px 16px 10px;border-bottom:1px solid var(--border);background:var(--background)">
+            <span class="m-back tg"><svg class="i i--s"><use href="#i-back"/></svg>Thuyền viên<i class="pin pin--g" style="right:-24px;top:4px">1</i></span>
+            <div class="m-chips m-chips--fade"><span class="m-chip m-chip--on">Thông tin cá nhân</span><span class="m-chip">Giấy tờ tuỳ thân</span><span class="m-chip">Liên lạc</span></div>
+          </div>
+          <div class="m-body">
+            <div class="m-card m-card--p" style="display:grid;gap:16px">
+              <div class="m-sec-label">Thông tin cá nhân</div>
+              <div class="m-field"><label>Họ và tên <i>*</i></label><span class="m-input">VD: Nguyễn Văn An</span></div>
+              <div class="m-field"><label>Chức danh <i>*</i></label><span class="m-input"><span class="grow">Chọn chức danh</span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+              <div class="m-field"><label>Ngày sinh</label><span class="m-input"><span class="grow">DD/MM/YYYY</span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span></div>
+              <div class="m-field"><label>Giới tính</label><div class="m-btns"><span class="m-btn m-btn--grow">Nam</span><span class="m-btn m-btn--grow">Nữ</span></div></div>
+            </div>
+          </div>
+          <div class="m-savebar tg"><span class="m-btn m-btn--grow m-btn--lg">Lưu &amp; thêm khác</span><span class="m-btn m-btn--p m-btn--grow m-btn--lg">Thêm thuyền viên</span><i class="pin pin--g" style="top:-10px;right:12px">2</i></div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Ba nút không vừa một hàng 343px, nên "Huỷ" chuyển thành link "‹ Thuyền viên" đầu form (hỏi lại nếu đã nhập dở).</li><li>Hai nút chia đều; nút chính luôn bấm được, thiếu trường thì báo lỗi và cuộn tới ô đầu tiên (giữ quy ước).</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 6 -->
+  <section class="wf-sec" id="dialog">
+    <header>
+      <h2>6 · Dialog thành sheet <small>mọi <code>Modal</code> trong app</small></h2>
+      <p>Ở điện thoại, mọi dialog trượt lên từ đáy: ngón cái với tới nút, bàn phím ảo không che nút vì sheet tự đẩy lên. Một quy tắc CSS chung cho <code>.ant-modal</code>, không sửa từng dialog.</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--now">Hiện tại</span> Ghi rời tàu</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top m-top--old"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Chuyến tàu</span></div>
+          <div class="m-scrim"></div>
+          <div class="m-modal-old">
+            <div style="display:flex;justify-content:space-between"><h3>Ghi rời tàu · Lê Văn Đức</h3><svg class="i m-muted"><use href="#i-close"/></svg></div>
+            <span class="m-muted m-small">Đại phó · MV Mekong Star · lên 19/04/2026 · rời dự kiến 02/11/2026</span>
+            <div class="m-field"><label><i>*</i> Ngày rời tàu</label><span class="m-input m-input--old tg bad"><b>02/11/2026</b><i class="pin">1</i></span></div>
+            <div class="m-field"><label><i>*</i> Nơi rời tàu</label><span class="m-input m-input--old">Chọn cảng</span></div>
+            <div class="m-field"><label>Ghi chú</label><span class="m-input m-input--old" style="height:64px;align-items:flex-start;padding-top:8px">Ví dụ: về sớm vì việc gia đình</span></div>
+            <div class="m-btns tg bad" style="justify-content:flex-end"><span class="m-btn">Huỷ</span><span class="m-btn m-btn--p">Ghi rời tàu</span><i class="pin">2</i></div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--bad"><li>Ô 14px, ô ngày mở bảng chọn của antd.</li><li>Nút nhỏ dồn góc phải; dialog giữa màn, bàn phím mở là che nút.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Ghi rời tàu</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Chuyến tàu</span></div>
+          <div class="m-scrim"></div>
+          <div class="m-sheet tg"><i class="pin pin--g" style="top:8px;right:12px">1</i>
+            <span class="m-sheet__grab"></span>
+            <div class="m-sheet__h"><h3>Ghi rời tàu · Lê Văn Đức</h3><span class="m-ib"><svg class="i"><use href="#i-close"/></svg></span></div>
+            <p class="m-sheet__sub">Đại phó · MV Mekong Star · lên 19/04/2026 · rời dự kiến 02/11/2026</p>
+            <div class="m-field"><label>Ngày rời tàu <i>*</i></label><span class="m-input"><span class="grow"><b>02/11/2026</b></span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span><span class="hint">Đúng ngày rời dự kiến</span></div>
+            <div class="m-field"><label>Nơi rời tàu <i>*</i></label><span class="m-input"><span class="grow">Chọn cảng</span><svg class="i i--s"><use href="#i-down"/></svg></span></div>
+            <div class="m-field"><label>Ghi chú</label><span class="m-input" style="height:72px;align-items:flex-start;padding-top:10px">Ví dụ: về sớm vì việc gia đình</span></div>
+            <div class="m-sheet__foot tg"><span class="m-btn">Huỷ</span><span class="m-btn m-btn--p">Ghi rời tàu</span><i class="pin pin--g">2</i></div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Sheet bo 20px ở trên, có tay kéo; thân cuộn được khi dài, chân dính đáy.</li><li>Hai nút chia đều 44px, nút chính bên phải (cùng thứ tự với desktop). Dialog xác nhận (Xoá, Đưa về Nháp…) cùng kiểu, chỉ ngắn hơn.</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 7 -->
+  <section class="wf-sec" id="bang">
+    <header>
+      <h2>7 · Bảng nằm trong trang chi tiết <small>khoản tiền HĐ, tiền YCTT, chứng chỉ, giấy tờ</small></h2>
+      <p>Bảng ít cột mà mỗi dòng là một "thứ" thì ở điện thoại thành <b>dòng hai tầng</b>: tên trái, số chính phải, chi tiết nhỏ ở dưới. Bảng thật sự nhiều cột (ma trận) thì cuộn ngang trong khung và ghim cột đầu.</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--now">Hiện tại</span> Khoản tiền hợp đồng</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top m-top--old"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Hợp đồng</span></div>
+          <div class="m-body">
+            <div class="m-card"><div class="m-card__h">Khoản tiền</div>
+              <div style="overflow:hidden" class="tg bad"><i class="pin pin--l" style="top:4px;left:4px">1</i>
+                <table class="m-table"><thead><tr><th style="width:150px">Khoản</th><th style="width:120px">Kiểu</th><th>Phải thu · Halong Maritime JSC</th><th>Phải chi · Thuyền viên</th></tr></thead>
+                  <tbody><tr><td>Lương thuyền viên</td><td>Hằng tháng</td><td>1.500</td><td>1.200</td></tr><tr><td>Phí tuyển dụng</td><td>Một lần</td><td>800</td><td>0</td></tr><tr><td>Vé máy bay</td><td>Một lần</td><td>450</td><td>450</td></tr><tr><td><b>Chênh lệch</b></td><td></td><td></td><td></td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--bad"><li>Bảng 640px cuộn ngang, không ghim cột "Khoản": cuộn một nhịp là không biết số nào của khoản nào; 3 bảng như vậy trên một trang.</li></ol>
+      </div>
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Dòng hai tầng</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Hợp đồng</span></div>
+          <div class="m-body">
+            <div class="m-card tg"><div class="m-card__h">Khoản tiền <small>USD</small></div>
+              <div class="m-money"><div class="m-money__r"><span>Lương thuyền viên</span><b class="m-num">+300 / tháng</b></div><div class="m-money__r m-muted m-small"><span>Hằng tháng</span><span class="m-num">Thu 1.500 · Chi 1.200</span></div></div>
+              <div class="m-money"><div class="m-money__r"><span>Phí tuyển dụng</span><b class="m-num">+800</b></div><div class="m-money__r m-muted m-small"><span>Một lần</span><span class="m-num">Thu 800 · Chi 0</span></div></div>
+              <div class="m-money"><div class="m-money__r"><span>Vé máy bay</span><b class="m-num">0</b></div><div class="m-money__r m-muted m-small"><span>Một lần</span><span class="m-num">Thu 450 · Chi 450</span></div></div>
+              <div class="m-money m-money--total"><div class="m-money__r"><b>Chênh lệch</b><b class="m-num">300 / tháng · 800 một lần</b></div></div>
+              <i class="pin pin--g">1</i>
+            </div>
+            <div class="m-card tg"><div class="m-card__h">Chứng chỉ <small>6</small></div>
+              <div class="m-li"><span class="m-li__main"><span class="m-li__t" style="font-size:14px">Huấn luyện an toàn cơ bản</span><span class="m-li__s">BST · số 012345</span></span><span class="m-badge m-badge--err">Hết hạn 3 ngày</span></div>
+              <div class="m-li"><span class="m-li__main"><span class="m-li__t" style="font-size:14px">Bằng chuyên môn Panama</span><span class="m-li__s">PANAMA_COC</span></span><span class="m-badge m-badge--warn">Còn 40 ngày</span></div>
+              <i class="pin pin--g">2</i>
+            </div>
+          </div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Mỗi khoản một dòng: tên + số chênh lệch nổi bên phải, thu/chi nhỏ dưới. Tổng ở dòng cuối nền xám. Cùng cách cho bảng tiền YCTT và bảng sửa YCTT (đang làm trang rộng 397px).</li><li>Bảng chứng chỉ, giấy tờ: tên + mã, hạn bằng <code>DueTag</code> đang có ở bên phải.</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 8 -->
+  <section class="wf-sec" id="quan-tri">
+    <header>
+      <h2>8 · Quản trị <small>Tài khoản, Mục tiêu tháng</small></h2>
+      <p>Hai trang còn bảng desktop. Vai trò và quyền đã có bản điện thoại riêng (<code>RolePhoneView</code>), chỉ cần nới vùng bấm.</p>
+    </header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Tài khoản</div>
+        <div class="ph"><div class="ph__scr ph__scr--short">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Tài khoản</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div class="m-bar">
+            <div class="m-btns"><span class="m-input" style="flex:1;min-width:0"><svg class="i m-muted"><use href="#i-search"/></svg><span class="grow">Tìm tên, email</span></span><span class="m-ib m-ib--box" style="width:44px;height:44px"><svg class="i"><use href="#i-filter"/></svg></span></div>
+            <span class="m-select" style="justify-self:start"><span>Trạng thái:</span> Tất cả · 3 <svg class="i i--s m-muted"><use href="#i-down"/></svg></span>
+          </div>
+          <div class="m-body">
+            <div class="m-list tg">
+              <div class="m-li"><span class="m-av" style="width:40px;height:40px">HU</span><span class="m-li__main"><span class="m-li__t">huyld@axalize.vn</span><span class="m-li__s">huyld@axalize.vn</span><span class="m-li__meta"><span class="m-badge m-badge--blue">Môi giới viên</span><span class="m-badge m-badge--ok">Đang dùng</span></span></span><span class="m-ib"><svg class="i"><use href="#i-vmore"/></svg></span></div>
+              <div class="m-li"><span class="m-av" style="width:40px;height:40px">TE</span><span class="m-li__main"><span class="m-li__t">test</span><span class="m-li__s">leduchuy.me@gmail.com</span><span class="m-li__meta"><span class="m-badge m-badge--blue">Kế toán</span><span class="m-badge m-badge--warn">Chờ kích hoạt</span></span></span><span class="m-ib"><svg class="i"><use href="#i-vmore"/></svg></span></div>
+              <div class="m-li"><span class="m-av" style="width:40px;height:40px">NQ</span><span class="m-li__main"><span class="m-li__t">Nguyễn Quang Dương</span><span class="m-li__s">admin@seasmart.local</span><span class="m-li__meta"><span class="m-badge m-badge--blue">Quản trị viên</span><span class="m-badge m-badge--ok">Đang dùng</span></span></span><span class="m-ib"><svg class="i"><use href="#i-vmore"/></svg></span></div>
+              <i class="pin pin--g">1</i>
+            </div>
+          </div>
+          <span class="m-fab"><svg class="i"><use href="#i-plus"/></svg></span>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Bảng 857px thành dòng: tên, email, vai trò, trạng thái. Ba nút icon (xem, sửa, xoá) gom vào ⋯ 40px; bấm dòng mở chi tiết. Thêm tài khoản = nút nổi.</li></ol>
+      </div>
+
+      <div class="wf-col">
+        <div class="wf-cap"><span class="tag tag--new">Đề xuất</span> Mục tiêu tháng</div>
+        <div class="ph"><div class="ph__scr ph__scr--short ph__scr--nofade">
+          <div class="m-top"><span class="m-ib"><svg class="i"><use href="#i-menu"/></svg></span><span class="m-top__title">Mục tiêu tháng</span><span class="m-ib"><svg class="i"><use href="#i-bell"/></svg></span><span class="m-ib"><span class="m-av">AD</span></span></div>
+          <div class="m-body" style="padding-bottom:90px">
+            <div class="m-btns"><span class="m-input" style="flex:1"><span class="grow"><b>Tháng 11/2026</b></span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span><span class="m-btn m-btn--lg">Chép tháng trước</span></div>
+            <div class="m-card m-card--p" style="display:flex;justify-content:space-between;gap:12px;background:var(--neutral-bg)"><b>Cả công ty</b><span class="m-num m-small">12 HĐ · 18.000 USD</span></div>
+            <div class="m-card m-card--p tg" style="display:grid;gap:10px"><b>Nguyễn Quang Dương</b><div class="m-btns"><div class="m-field" style="flex:1"><label class="m-small m-muted" style="font-weight:400">Hợp đồng</label><span class="m-input"><b>8</b></span></div><div class="m-field" style="flex:1.4"><label class="m-small m-muted" style="font-weight:400">Doanh thu (USD)</label><span class="m-input"><b class="m-num">12.000</b></span></div></div><i class="pin pin--g">1</i></div>
+            <div class="m-card m-card--p" style="display:grid;gap:10px"><b>huyld@axalize.vn</b><div class="m-btns"><div class="m-field" style="flex:1"><label class="m-small m-muted" style="font-weight:400">Hợp đồng</label><span class="m-input">Chưa đặt</span></div><div class="m-field" style="flex:1.4"><label class="m-small m-muted" style="font-weight:400">Doanh thu (USD)</label><span class="m-input">Chưa đặt</span></div></div></div>
+          </div>
+          <div class="m-savebar"><span class="m-btn">Huỷ</span><span class="m-btn m-btn--p m-btn--grow m-btn--lg">Lưu thay đổi · 2</span></div>
+        </div></div>
+        <ol class="wf-notes wf-notes--good"><li>Mỗi người một card, hai ô cạnh nhau 44px, bàn phím số (<code>inputmode="numeric"</code>). Dòng "Cả công ty" lên đầu.</li></ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 9 -->
+  <section class="wf-sec" id="ds">
+    <header>
+      <h2>9 · Design system cho điện thoại</h2>
+      <p>Những gì thêm hoặc đổi trong <code>components/ds/</code>, <code>theme/tokens.js</code> và trang <code>/design-system</code>. Mỗi control vẫn chỉ một kiểu: bản điện thoại là <b>cùng một component</b> đổi khuôn theo bề rộng, không phải component thứ hai.</p>
+    </header>
+
+    <div class="wf-scroll">
+      <table class="wf-table">
+        <thead><tr><th>Mốc</th><th>Tên</th><th>Dưới mốc này thì</th><th>Thay các mốc đang có</th></tr></thead>
+        <tbody>
+          <tr><td class="num"><b>640px</b></td><td><code>sm</code> · điện thoại</td><td>Form, lưới, chi tiết 1 cột; dialog thành sheet; nút nổi "Thêm"; thanh lưu 1 hàng; ô 44px chữ 16px; ô ngày của máy; bảng nhỏ thành dòng; breadcrumb một nấc</td><td class="num">575, 599, 600, 639, 640, 720</td></tr>
+          <tr><td class="num"><b>768px</b></td><td><code>md</code> · khớp <code>Grid.useBreakpoint().md</code> của antd</td><td>Sidebar thành ngăn kéo; bảng danh sách thành dòng (như hiện tại); thanh công cụ danh sách 2 tầng</td><td class="num">767, 899, 900</td></tr>
+          <tr><td class="num"><b>1024px</b></td><td><code>lg</code></td><td>Tổng quan xếp dọc; trang chi tiết và form bỏ cột phụ bên cạnh</td><td class="num">991, 1023, 1099, 1199 (min 1100 / 1200 đổi thành min 1024 hoặc giữ nếu là bố cục 3 cột)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wf-scroll">
+      <table class="wf-table">
+        <thead><tr><th>Kích thước</th><th>Điện thoại (&lt; 640)</th><th>Từ 640</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <tr><td>Ô nhập, Select, DatePicker: cao</td><td class="num">44px</td><td class="num">40px</td><td>Token antd <code>controlHeight</code> đổi theo màn bằng <code>ConfigProvider</code> lồng</td></tr>
+          <tr><td>Chữ trong ô gõ được</td><td class="num"><b>16px</b></td><td class="num">14px</td><td>Dưới 16px iOS tự phóng to trang</td></tr>
+          <tr><td>Nút thường</td><td class="num">40px (44px trong thanh lưu, sheet)</td><td class="num">40px</td><td>Không dùng <code>size="small"</code> cho nút bấm được ở điện thoại</td></tr>
+          <tr><td>Vùng bấm tối thiểu</td><td class="num">40 × 40px</td><td class="num">32 × 32px</td><td>Nút icon trong dòng, link "Sửa", chip</td></tr>
+          <tr><td>Topbar</td><td class="num">56px</td><td class="num">64px</td><td></td></tr>
+          <tr><td>Lề trang / lề card</td><td class="num">16 / 16px</td><td class="num">24 / 20px</td><td>Đã đúng ở trang, sửa card còn 20px</td></tr>
+          <tr><td>Khoảng giữa các khối</td><td class="num">12px</td><td class="num">16px</td><td></td></tr>
+          <tr><td>Vùng an toàn</td><td colspan="2">Thanh lưu, nút nổi, sheet cộng <code>env(safe-area-inset-bottom)</code></td><td><code>index.html</code> thêm <code>viewport-fit=cover</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="wf-grid">
+      <article class="wf-card"><span class="tag tag--new kind">Mới</span><h3><code>useViewport()</code></h3><p>Một hook trả <code>{ isPhone, isCompact, isWide }</code> theo 3 mốc trên. Thay 13 chỗ <code>!Grid.useBreakpoint().md</code> và các <code>useMediaQuery('(max-width: 639px)')</code> rời rạc.</p></article>
+      <article class="wf-card"><span class="tag tag--new kind">Mới</span><h3><code>Fab</code></h3><div class="wf-demo" style="display:flex;justify-content:flex-end"><span class="m-fab" style="position:static"><svg class="i"><use href="#i-plus"/></svg></span></div><p>Nút nổi 56px, bo 18px, nền nhấn. Chỉ cho "Thêm …" của trang danh sách, chỉ ở điện thoại; desktop giữ nút trong thanh công cụ.</p></article>
+      <article class="wf-card"><span class="tag tag--new kind">Mới</span><h3><code>BottomSheet</code></h3><div class="wf-demo"><div style="display:grid;gap:8px;padding:8px 12px 12px;border-radius:16px 16px 0 0;background:var(--surface)"><span class="m-sheet__grab"></span><b>Tiêu đề</b><div class="m-btns"><span class="m-btn m-btn--grow">Huỷ</span><span class="m-btn m-btn--p m-btn--grow">Lưu</span></div></div></div><p>Bộ lọc dùng trực tiếp. Mọi <code>Modal</code> tự thành sheet ở điện thoại bằng một quy tắc CSS chung; không đổi code dialog.</p></article>
+      <article class="wf-card"><span class="tag tag--new kind">Mới</span><h3><code>DateField</code> / <code>DateRangeField</code></h3><div class="wf-demo m-btns"><span class="m-input" style="flex:1"><span class="grow"><b>01/11/2026</b></span><svg class="i i--s m-muted"><use href="#i-cal"/></svg></span><span class="m-input" style="flex:1"><span class="grow"><b>30/11/2026</b></span></span></div><p>Desktop: <code>DatePicker</code> antd như cũ. Điện thoại: ô ngày của máy. Cùng giá trị dayjs, form không đổi. Thay 39 chỗ dùng DatePicker.</p></article>
+      <article class="wf-card"><span class="tag tag--new kind">Mới</span><h3><code>ScrollRow</code></h3><div class="wf-demo"><div class="m-chips m-chips--fade"><span class="m-chip m-chip--on">Thông tin</span><span class="m-chip">Giấy tờ</span><span class="m-chip">Liên lạc</span><span class="m-chip">Gia quyến</span></div><div class="m-track"><i></i></div></div><p>Hàng cuộn ngang có mép mờ phía còn mục, vạch mảnh dưới hàng, nút mũi tên khi dùng chuột, tự cuộn mục đang chọn vào giữa. Dùng cho hàng mục form (<code>sf-toc</code>) và chip.</p></article>
+      <article class="wf-card"><span class="tag tag--new kind">Mới</span><h3><code>RowList</code></h3><div class="wf-demo"><div class="m-list"><div class="m-li" style="min-height:52px"><span class="m-li__main"><span class="m-li__t" style="font-size:14px">Tên dòng</span><span class="m-li__s">Dòng phụ</span></span><b class="m-num">1.500</b></div></div></div><p>Bảng ít cột ở điện thoại thành dòng hai tầng (tên + số chính, chi tiết nhỏ). Nhận cùng <code>columns</code> với <code>Table</code>, khai báo cột nào là tiêu đề, phụ, số, hành động.</p></article>
+      <article class="wf-card"><span class="tag tag--alt kind">Đổi</span><h3><code>DetailHead</code> (tách từ <code>crew-head</code>)</h3><p>Chuyển CSS <code>crew-head*</code> từ <code>SeafarerProfile.css</code> vào <code>ds.css</code> thành component. Điện thoại: tile 44px / ảnh 60×80, khối thông tin dưới tên, tối đa 2 nút + ⋯. Dùng ở 6 trang chi tiết và trang Tải giấy tờ.</p></article>
+      <article class="wf-card"><span class="tag tag--alt kind">Đổi</span><h3><code>ListToolbar</code> + <code>ListFooter</code></h3><p>Thanh công cụ ở điện thoại: 2 tầng, dính dưới topbar, nút Lọc có số điều kiện. Dòng chân: tổng + ‹ trang ›, ẩn số dòng/trang.</p></article>
+      <article class="wf-card"><span class="tag tag--alt kind">Đổi</span><h3><code>DescriptionList</code></h3><p>Chia 2 cột từ 280px (đang 384px), nhãn <code>minmax(96px, 38%)</code>, kẻ mảnh giữa dòng.</p></article>
+      <article class="wf-card"><span class="tag tag--alt kind">Đổi</span><h3><code>FormFrame</code> thanh lưu</h3><p>Điện thoại: một hàng. Sửa: Huỷ + "Lưu thay đổi · n". Thêm: "Lưu &amp; thêm khác" + "Thêm …", Huỷ thành link đầu form. Hàng mục dùng <code>ScrollRow</code>, dính dưới topbar.</p></article>
+      <article class="wf-card"><span class="tag tag--alt kind">Đổi</span><h3><code>Crumb</code>, <code>StatusTabs</code></h3><p><code>Crumb</code> ở điện thoại còn "‹ {nấc cha}". <code>StatusTabs</code> bản ô chọn "Mục:" của trang chi tiết dính dưới topbar.</p></article>
+      <article class="wf-card"><span class="tag tag--alt kind">Đổi</span><h3><code>AdminLayout</code></h3><p>Topbar 56px, tiêu đề chỉ trang đang xem, avatar không mũi tên; ngăn kéo có email, vai trò, Đăng xuất ở đáy; mục 44px.</p></article>
+    </div>
+  </section>
+</div>

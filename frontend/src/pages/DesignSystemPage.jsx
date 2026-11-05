@@ -52,6 +52,13 @@ import CrewTimeline, { CrewTimelineLegend } from '../components/ds/CrewTimeline'
 import StageChips from '../components/ds/StageChips'
 import StageTrack from '../components/ds/StageTrack'
 import useToast from '../components/ds/useToast'
+import Fab from '../components/ds/Fab'
+import BottomSheet from '../components/ds/BottomSheet'
+import DateField, { DateRangeField } from '../components/ds/DateField'
+import ScrollRow from '../components/ds/ScrollRow'
+import RowList from '../components/ds/RowList'
+import useViewport from '../hooks/useViewport'
+import dayjs from 'dayjs'
 import ToastContent from '../components/ds/ToastContent'
 import { EmptyState, FilterChips, ListRow, ProgressBar, SaveStatus, StatusTabs } from '../components/ds/Controls'
 import { COLORS, ELEVATION, RADIUS } from '../theme/tokens'
@@ -272,6 +279,83 @@ function CountdownDemo() {
       <CountdownCheck label="Tôi đã xem các thay đổi trên" checked={checked} onChange={setChecked} resetKey={round} />
       <Button size="small" onClick={() => { setChecked(false); setRound((value) => value + 1) }}>Đếm lại</Button>
     </Space>
+  )
+}
+
+// Bảng khoản tiền minh hoạ RowList: desktop là bảng, điện thoại là dòng hai tầng.
+const MONEY_COLUMNS = [
+  { title: 'Khoản', dataIndex: 'name', mobile: 'title' },
+  { title: 'Kiểu', dataIndex: 'kind', mobile: 'sub' },
+  { title: 'Phải thu', dataIndex: 'in', align: 'right', render: (value) => value.toLocaleString('vi-VN') },
+  { title: 'Phải chi', dataIndex: 'out', align: 'right', render: (value) => value.toLocaleString('vi-VN') },
+  { title: 'Chênh lệch', key: 'diff', align: 'right', mobile: 'value', render: (_, row) => (row.in - row.out).toLocaleString('vi-VN') },
+  { title: 'Thu / chi', key: 'both', hidden: true, mobile: 'meta', render: (_, row) => `Thu ${row.in.toLocaleString('vi-VN')} · Chi ${row.out.toLocaleString('vi-VN')}` },
+]
+const MONEY_ROWS = [
+  { id: 1, name: 'Lương thuyền viên', kind: 'Hằng tháng', in: 1500, out: 1200 },
+  { id: 2, name: 'Phí tuyển dụng', kind: 'Một lần', in: 800, out: 0 },
+  { id: 3, name: 'Vé máy bay', kind: 'Một lần', in: 450, out: 450 },
+]
+const FORM_SECTIONS = ['Thông tin cá nhân', 'Giấy tờ tuỳ thân', 'Liên lạc', 'Gia quyến', 'Tài khoản ngân hàng', 'Chứng chỉ']
+
+// Mục "Điện thoại" (kế hoạch responsive mục 4.3). Component đổi khuôn theo bề rộng màn nên khung 375px là chính trang
+// này nhúng lại (iframe); ở điện thoại không nhúng nữa.
+function PhoneDemos() {
+  const { isPhone } = useViewport()
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [day, setDay] = useState(dayjs('2026-11-05'))
+  const [range, setRange] = useState([dayjs('2026-11-01'), dayjs('2026-11-30')])
+  const [month, setMonth] = useState(dayjs('2026-11-01'))
+  const [section, setSection] = useState(FORM_SECTIONS[1])
+  return (
+    <div className={isPhone ? 'dsp-phone' : 'dsp-phone dsp-phone--split'}>
+      <div className="dsp-grid-2">
+        <Demo label="Fab: nút nổi Thêm … của danh sách, chỉ ở điện thoại (ở đây đứng tại chỗ để xem)">
+          <div className="dsp-fab-stage"><Fab inline label="Thêm thuyền viên" /></div>
+        </Demo>
+        <Demo label="BottomSheet: bộ lọc ở điện thoại; kéo tay kéo xuống, chạm nền mờ hoặc × để đóng">
+          <div><Button onClick={() => setSheetOpen(true)}>Mở sheet Bộ lọc</Button></div>
+          <BottomSheet
+            open={sheetOpen}
+            title="Bộ lọc"
+            onClose={() => setSheetOpen(false)}
+            footer={<><Button onClick={() => setSheetOpen(false)}>Xoá lọc</Button><Button type="primary" onClick={() => setSheetOpen(false)}>Xem 12 chuyến</Button></>}
+          >
+            <Form layout="vertical" requiredMark={false}>
+              <Form.Item label="Tàu"><Select placeholder="Tất cả" options={[{ value: 1, label: 'MV Mekong Star' }, { value: 2, label: 'MV Ocean Glory' }]} /></Form.Item>
+              <Form.Item label="Lên tàu trong khoảng"><DateRangeField value={range} onChange={setRange} format="DD/MM/YYYY" /></Form.Item>
+            </Form>
+          </BottomSheet>
+        </Demo>
+        <Demo label="DateField: desktop là DatePicker, điện thoại là bảng chọn ngày của máy">
+          <DateField value={day} onChange={setDay} format="DD/MM/YYYY" style={{ width: '100%' }} />
+        </Demo>
+        <Demo label="DateRangeField: điện thoại tách hai ô Từ / Đến">
+          <DateRangeField value={range} onChange={setRange} format="DD/MM/YYYY" style={{ width: '100%' }} />
+        </Demo>
+        <Demo label="DateField chọn tháng">
+          <DateField picker="month" value={month} onChange={setMonth} format="MM/YYYY" style={{ width: '100%' }} />
+        </Demo>
+        <Demo label="ScrollRow: hàng mục form / chip cuộn ngang, mép mờ, vạch chỉ, mục đang chọn vào giữa">
+          <div className="dsp-scrollrow-stage">
+            <ScrollRow label="Mục của form" activeKey={section}>
+              {FORM_SECTIONS.map((name) => (
+                <button key={name} type="button" className="dsp-chip" aria-current={name === section ? 'true' : undefined} onClick={() => setSection(name)}>{name}</button>
+              ))}
+            </ScrollRow>
+          </div>
+        </Demo>
+        <Demo label="RowList: bảng ít cột, điện thoại thành dòng hai tầng" wide>
+          <div className="dsp-box"><RowList columns={MONEY_COLUMNS} dataSource={MONEY_ROWS} pagination={false} size="middle" /></div>
+        </Demo>
+      </div>
+      {isPhone ? null : (
+        <figure className="dsp-phone__frame">
+          <iframe title="Design system ở khổ điện thoại 375px" src="/design-system#dien-thoai" width="375" height="760" loading="lazy" />
+          <figcaption>Cùng mục này ở khổ 375px</figcaption>
+        </figure>
+      )}
+    </div>
   )
 }
 
@@ -982,6 +1066,11 @@ export default function DesignSystemPage() {
             { value: 'work', label: 'Chờ xử lý', count: 6, dot: true },
           ]} />
         </Demo>
+      </Section>
+
+      <Section id="dien-thoai" title="Điện thoại">
+        <p className="dsp-note">Dưới 640px: ô nhập 44px chữ 16px, nút nhỏ có vùng bấm 40×40, dialog thành sheet từ đáy (quy tắc chung, không cần component). Năm component dưới đây chỉ đổi khuôn ở điện thoại; desktop giữ như cũ.</p>
+        <PhoneDemos />
       </Section>
 
       <Section id="tab" title="Tab, chip lọc, phân trang">

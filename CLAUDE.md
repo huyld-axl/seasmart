@@ -115,6 +115,23 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 | Chọn **một** trong vài giá trị | Nhóm nút `ChoiceGroup` (cho phép bỏ chọn) hoặc `SegmentedPick` (luôn có một giá trị) | Radio, nhiều `ToggleRow` thay cho một lựa chọn |
 | Chọn từ danh sách dài | `Select` có tìm kiếm | Ô nhập tự do khi đã có danh mục |
 | Tích quyền trong lưới nhiều cột (ma trận vai trò) | `PermissionCheck` (`components/ds/PermissionCheck.jsx`) | `Checkbox` của antd hay `ToggleRow` trong lưới |
+| Chọn ngày / tháng / khoảng ngày | `DateField` / `DateRangeField` (`components/ds/DateField.jsx`): desktop là DatePicker antd, điện thoại là bảng chọn ngày của máy | `DatePicker`, `DatePicker.RangePicker` dùng thẳng trong trang |
+| Nút "Thêm …" của trang danh sách ở điện thoại | `Fab` (`components/ds/Fab.jsx`), desktop vẫn để nút trong thanh công cụ | Nút thêm tự đặt `position: fixed` trong trang |
+| Lớp chọn / lọc ở điện thoại | `BottomSheet` (`components/ds/BottomSheet.jsx`) | Popover, dropdown rộng hơn màn |
+| Bảng ít cột (khoản tiền, chứng chỉ, tài khoản) | `RowList` (`components/ds/RowList.jsx`), khai báo `mobile` cho từng cột | `Table` trần cuộn ngang ở điện thoại |
+| Hàng chip / hàng mục / tab cuộn ngang | `ScrollRow` (`components/ds/ScrollRow.jsx`) | `overflow-x: auto` tự dựng, `flex-wrap` cho hàng có thứ tự |
+
+### 3.5 Màn hẹp (điện thoại)
+
+Kế hoạch đầy đủ: `docs/mcah-ke-hoach-responsive-mobile.md`. Mọi màn mới phải dùng được ở 375px trước khi báo xong.
+
+- **Ba mốc:** dưới 640px là điện thoại, dưới 768px sidebar thành ngăn kéo và bảng danh sách thành dòng, từ 1024px là màn rộng. CSS chỉ dùng `max-width: 639 / 767 / 1023px` hoặc `min-width: 640 / 768 / 1024px`; mốc khác phải có comment `mốc riêng: <lý do>` (test `src/__tests__/breakpoints.test.js` chặn). JS dùng `useViewport()` (`hooks/useViewport.js`), không gọi `Grid.useBreakpoint()` của antd.
+- **Ô gõ được** cao 44px, chữ 16px ở điện thoại (dưới 16px iOS tự phóng to trang): đã có qua `antThemePhone` và lưới an toàn trong `index.css`, không tự hạ cỡ chữ ô nhập.
+- **Vùng bấm** tối thiểu 40×40px ở điện thoại; nút antd nhỏ đã được nới sẵn trong `index.css`. Không dùng nút tự dựng nhỏ hơn mà không nới.
+- **Dialog** (`Modal`, `modal.confirm`) tự thành sheet từ đáy ở điện thoại (quy tắc chung trong `ds.css`), không viết CSS riêng cho từng dialog.
+- **Không cuộn ngang cả trang.** Con của flex / grid chứa chữ dài có `min-width: 0`; không đặt `min-width` cố định lớn hơn 343px ngoài khung cuộn riêng.
+- **Không để cụm nút rớt hàng lẻ** (2 nút trên, 1 nút dưới): tối đa 2 nút hiện, phần còn lại vào menu ⋯, hoặc xếp dọc cả cụm.
+- Kiểm ở 375px (và 1440px không đổi) trước khi báo xong.
 
 ## 4. API Conventions
 

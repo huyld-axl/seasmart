@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
+import { Button, Input, Select, Skeleton, Table } from 'antd'
 import { ArrowDownOutlined, ArrowUpOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -19,6 +19,7 @@ import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
 import { CrewFilterButton } from '../seafarers/CrewFilters'
+import useViewport from '../../../hooks/useViewport'
 
 const stop = (event) => event.stopPropagation()
 
@@ -48,7 +49,7 @@ const TABS = [
 export default function ContractListPage() {
   const can = useCan()
   const navigate = useNavigate()
-  const isMobile = !Grid.useBreakpoint().md
+  const isMobile = useViewport().isCompact
   // ?tab= mở sẵn một tab (link từ Tổng quan).
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState(() => (TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : 'all'))

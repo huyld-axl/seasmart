@@ -35,11 +35,11 @@
 .pk-draft { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; padding: 10px 12px; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--surface); font-size: 12px; }
 .pk-draft span { flex: 1 1 240px; }
 .pk-who { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 0 16px; }
-@media (max-width: 899px) { .pk-who { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 1023px) { .pk-who { grid-template-columns: minmax(0, 1fr); } }
 .pk-who .ant-select { width: 100%; }
 .pk-add { width: 100%; }
 .pk-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; align-items: start; }
-@media (min-width: 1200px) { .pk-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } .pk-preview { position: sticky; top: 88px; } }
+@media (min-width: 1200px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */ .pk-layout { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } .pk-preview { position: sticky; top: 88px; } }
 .pk-left { display: grid; gap: 16px; min-width: 0; }
 .pk-quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .pk-count { margin: 0; color: var(--muted); }
@@ -92,7 +92,7 @@
 
 /* Bộ giấy đã tạo (B4). */
 .ps-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (min-width: 1200px) { .ps-layout { grid-template-columns: 260px minmax(0, 1fr); } }
+@media (min-width: 1200px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */ .ps-layout { grid-template-columns: 260px minmax(0, 1fr); } }
 .ps-docs { display: grid; gap: 2px; margin: 0; padding: 4px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); list-style: none; }
 .ps-docs button { display: grid; width: 100%; padding: 10px 12px; border: 0; border-radius: 12px; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .ps-docs button:hover { background: var(--item-hover); }

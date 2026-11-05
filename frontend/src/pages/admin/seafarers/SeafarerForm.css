@@ -132,7 +132,7 @@
 .sf-savebar__note { display: flex; flex-basis: 100%; align-items: center; gap: 8px; margin: 0; color: var(--warning); font-size: 12px; }
 
 /* Màn hẹp: mục lục thành hàng chip cuộn ngang ở trên, lưới co lại. */
-@media (max-width: 1099px) {
+@media (max-width: 1099px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */
   .sf-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .sf-aside { position: static; }
   .sf-progress { display: none; }
@@ -141,11 +141,11 @@
   .sf-toc a[aria-current='true'] { border-color: transparent; }
   .sf-toc__n, .sf-toc__cnt { display: none; }
 }
-@media (max-width: 899px) {
+@media (max-width: 1023px) {
   .sf-grid > .sf-c3, .sf-grid > .sf-c4, .sf-grid > .sf-c5 { grid-column: span 6; }
   .sf-grid > .sf-c6, .sf-grid > .sf-c8 { grid-column: 1 / -1; }
 }
-@media (max-width: 599px) {
+@media (max-width: 639px) {
   .sf-grid > .sf-c3, .sf-grid > .sf-c4, .sf-grid > .sf-c5 { grid-column: 1 / -1; }
   .sf-panel__head { padding: 16px 16px 0; }
   .sf-panel__body { padding: 16px; }
@@ -178,4 +178,4 @@
 .sf-ai--check .ant-input, .sf-ai--check .ant-input-affix-wrapper, .sf-ai--check .ant-input-number, .sf-ai--check .ant-picker, .sf-ai--check .ant-select-selector { border-color: var(--warning-border) !important; background: var(--warning-bg) !important; }
 .sf-ai--ok .sf-seg { box-shadow: 0 0 0 1px var(--primary); }
 .sf-aicheck { margin-left: 6px; color: var(--primary); font-size: 12px; font-weight: 600; }
-@media (max-width: 640px) { .sf-panel__scans { margin-left: 40px; } }
+@media (max-width: 639px) { .sf-panel__scans { margin-left: 40px; } }

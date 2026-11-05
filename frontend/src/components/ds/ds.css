@@ -587,7 +587,7 @@
 .ds-money .ant-input-number-suffix { color: var(--muted); font-size: 12px; }
 
 /* Toast ở màn hẹp: nằm trên thanh lưu / thanh cân đối dính đáy (cao hơn khi các nút xuống nhiều hàng). */
-@media (max-width: 575px) { .ant-notification-bottom { bottom: 190px !important; } }
+@media (max-width: 639px) { .ant-notification-bottom { bottom: 190px !important; } }
 /* Thân bảng trong khung đứng yên: chỉ hiện thanh cuộn dọc khi thật sự tràn (antd mặc định luôn hiện). */
 .ds-card--fixed .ant-table-wrapper .ant-table-body { overflow-y: auto !important; }
 /* Chiều cao dòng lẻ pixel (72.8px) làm làm tròn scrollHeight dư 1px và hiện thanh cuộn thừa: chừa 1px đệm. */
@@ -805,7 +805,7 @@ span.ds-thumb--empty { cursor: default; }
 .ds-track__todo-done { color: var(--muted); }
 .ds-track__todo-done .ds-track__todo-box { border-color: var(--success); background: var(--success); }
 .ds-track__end { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .ds-track__bar { flex-direction: column; align-items: stretch; }
   .ds-track__list { flex-direction: column; gap: 4px; }
   .ds-track__item { height: 36px; margin-left: 0; }
@@ -819,7 +819,7 @@ span.ds-thumb--empty { cursor: default; }
 .ds-track__toggle:focus-visible { box-shadow: 0 0 0 2px var(--ring-focus); outline: none; }
 .ds-track__toggle .anticon { transition: transform .15s; transform: rotate(-90deg); }
 .ds-track__toggle--open .anticon { transform: none; }
-@media (max-width: 720px) { .ds-track__toggle { align-self: flex-start; } }
+@media (max-width: 767px) { .ds-track__toggle { align-self: flex-start; } }
 .ds-panel--flush .ant-drawer-body { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .ds-toggle-row--compact { min-height: 40px; padding: 0 12px; font-size: 13px; }
 
@@ -836,7 +836,7 @@ span.ds-thumb--empty { cursor: default; }
 .ds-help-link:hover { color: var(--text); background: var(--neutral-bg); }
 .ds-help-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-@media (max-width: 600px) {
+@media (max-width: 639px) {
   .ds-help-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .ds-help-link { position: relative; padding: 0 6px; }
 }

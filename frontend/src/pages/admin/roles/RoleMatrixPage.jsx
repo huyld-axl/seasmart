@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
-import useMediaQuery from '../../../hooks/useMediaQuery'
+import useViewport from '../../../hooks/useViewport'
 import {
   useDeleteRole,
   useRoleCatalog,
@@ -56,7 +56,7 @@ export default function RoleMatrixPage() {
   const [deleting, setDeleting] = useState(null)
   const [saveOpen, setSaveOpen] = useState(false)
   const [phoneRoleId, setPhoneRoleId] = useState(null)
-  const isPhone = useMediaQuery('(max-width: 639px)')
+  const { isPhone } = useViewport()
   const scrollRef = useRef(null)
 
   const modules = catalogQuery.data?.modules

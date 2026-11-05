@@ -103,7 +103,7 @@
 .fill-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .fill-note { margin: 0; color: var(--muted); font-size: 13px; }
 .fill-src { margin-left: 6px; padding: 0 6px; border-radius: 6px; background: var(--neutral-bg); color: var(--neutral); font-size: 11px; }
-@media (max-width: 900px) { .fill-layout { grid-template-columns: 1fr; } }
+@media (max-width: 1023px) { .fill-layout { grid-template-columns: 1fr; } }
 .ant-modal-footer .op-pick__clear { margin-right: auto; }
 .crew-table .op-row--chosen > td { background: var(--primary-light); }
 .crew-table .op-row--muted > td { opacity: .55; }

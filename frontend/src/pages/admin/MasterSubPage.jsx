@@ -1,7 +1,7 @@
 import { flagEmoji, withFlag } from '../../utils/flag'
 import { useParams, Navigate } from 'react-router-dom'
 import { Children, cloneElement, isValidElement, useState } from 'react'
-import { App, Table, Button, Form, Grid, Input, InputNumber, Select, Skeleton } from 'antd'
+import { App, Table, Button, Form, Input, InputNumber, Select, Skeleton } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/client'
@@ -21,6 +21,7 @@ import { lookupApi } from '../../api'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerForm.css'
 import { masterRules, upperCode } from '../../utils/fieldRules'
+import useViewport from '../../hooks/useViewport'
 
 const isBlank = (value) => value == null || value === ''
 const sameValue = (a, b) => (isBlank(a) && isBlank(b)) || String(a) === String(b)
@@ -114,7 +115,7 @@ function MasterTable({ resource, columns, formFields, title }) {
   const tableScroll = useListSticky()
   const [form] = Form.useForm()
   const [changed, setChanged] = useState(new Set())
-  const isMobile = !Grid.useBreakpoint().md
+  const isMobile = useViewport().isCompact
   const toast = useToast()
   const { modal } = App.useApp()
   const { data, isLoading, isError, refetch, create, update, remove } = useMasterData(resource)

@@ -1,7 +1,7 @@
 import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Grid, Input, Skeleton, Table, Tooltip } from 'antd'
+import { Button, Input, Skeleton, Table, Tooltip } from 'antd'
 import { GlobalOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -17,6 +17,7 @@ import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
+import useViewport from '../../../hooks/useViewport'
 
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
 
@@ -37,7 +38,7 @@ function VesselCell({ row }) {
 export default function VesselListPage() {
   const navigate = useNavigate()
   const can = useCan()
-  const isMobile = !Grid.useBreakpoint().md
+  const isMobile = useViewport().isCompact
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)

@@ -1,7 +1,7 @@
 import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL } from '../components/ds/HelpLink'
 import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Dropdown, Drawer, Grid } from 'antd'
+import { Dropdown, Drawer } from 'antd'
 import Icon from '@ant-design/icons'
 import {
   DashboardOutlined,
@@ -26,14 +26,13 @@ import useAuthStore from '../stores/authStore'
 import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
 import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
+import useViewport from '../hooks/useViewport'
 
 // Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng trang theo đường dẫn.
 const GUIDE_PATHS = [
   ['/voyages', GUIDE_CONTRACT_URL], ['/contracts', GUIDE_CONTRACT_URL], ['/bills', GUIDE_CONTRACT_URL],
   ['/dashboard', GUIDE_DASHBOARD_URL], ['/admin/kpi-targets', GUIDE_DASHBOARD_URL],
 ]
-
-const { useBreakpoint } = Grid
 
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
 const ShipSvg = () => (
@@ -169,8 +168,7 @@ export default function AdminLayout() {
   const { pathname } = useLocation()
   const guide = GUIDE_PATHS.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1]
   const { user, logout } = useAuthStore()
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
+  const isMobile = useViewport().isCompact
 
   const sections = sectionsFor(user)
   const current = activeSection(sections, pathname)

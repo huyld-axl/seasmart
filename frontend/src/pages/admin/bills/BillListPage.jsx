@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Button, Grid, Input, Select, Skeleton, Table, Tooltip } from 'antd'
+import { Button, Input, Select, Skeleton, Table, Tooltip } from 'antd'
 import { CheckOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -20,6 +20,7 @@ import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
 import { overdueLabel } from './billView'
+import useViewport from '../../../hooks/useViewport'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
@@ -38,7 +39,7 @@ const stop = (event) => event.stopPropagation()
 export default function BillListPage({ shipOwnerId } = {}) {
   const can = useCan()
   const navigate = useNavigate()
-  const isMobile = !Grid.useBreakpoint().md
+  const isMobile = useViewport().isCompact
   // ?tab= mở sẵn một tab (link từ Tổng quan).
   const [searchParams] = useSearchParams()
   const urlTab = TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : null

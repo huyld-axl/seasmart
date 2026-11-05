@@ -5,7 +5,7 @@ import { lookupApi } from '../../../api'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge, Button, Grid, Input, Select, Skeleton, Table } from 'antd'
+import { Badge, Button, Input, Select, Skeleton, Table } from 'antd'
 import { DownOutlined, FilterOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { shipOwnerApi } from '../../../api/fleetApi'
@@ -19,6 +19,7 @@ import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
+import useViewport from '../../../hooks/useViewport'
 
 const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
@@ -39,7 +40,7 @@ function PartnerCell({ row }) {
 export default function PartnerListPage() {
   const navigate = useNavigate()
   const can = useCan()
-  const isMobile = !Grid.useBreakpoint().md
+  const isMobile = useViewport().isCompact
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)

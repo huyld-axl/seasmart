@@ -53,7 +53,7 @@
 /* Chi tiết hợp đồng */
 .ct-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 .ct-detail__main, .ct-detail__side { display: grid; gap: 16px; min-width: 0; }
-@media (min-width: 1100px) {
+@media (min-width: 1100px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */
   .ct-detail { grid-template-columns: minmax(0, 1fr) 340px; }
   .ct-detail__side { position: sticky; top: 16px; }
 }

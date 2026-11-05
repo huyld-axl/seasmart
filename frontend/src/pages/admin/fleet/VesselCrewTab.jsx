@@ -8,7 +8,7 @@ import CrewTimeline, { CrewTimelineLegend } from '../../../components/ds/CrewTim
 import { EmptyState } from '../../../components/ds/Controls'
 import { lookupApi } from '../../../api'
 import { useCrewTimeline } from '../../../hooks/useVoyages'
-import useMediaQuery from '../../../hooks/useMediaQuery'
+import useViewport from '../../../hooks/useViewport'
 import { useCan } from '../../../hooks/usePermission'
 import { formatDate } from '../../../utils/format'
 import LeaveModal from '../voyages/LeaveModal'
@@ -28,7 +28,7 @@ export default function VesselCrewTab({ vessel }) {
   const [rankId, setRankId] = useState()
   const [chosenView, setView] = useState('chart')
   // Điện thoại: biểu đồ khó đọc nên luôn là dạng bảng, không có nút chuyển.
-  const phone = useMediaQuery('(max-width: 639px)')
+  const phone = useViewport().isPhone
   const view = phone ? 'table' : chosenView
   const [selected, setSelected] = useState([])
   const [leaving, setLeaving] = useState(null)

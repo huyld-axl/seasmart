@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Grid, Input, Select, Skeleton, Table } from 'antd'
+import { Button, Input, Select, Skeleton, Table } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -21,6 +21,7 @@ import { chosenCandidate, deadlineLabel } from './opportunityView'
 import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
 import './opportunities.css'
+import useViewport from '../../../hooks/useViewport'
 
 const TABS = OPPORTUNITY_TABS.map((value) => ({ value, label: OPPORTUNITY_TAB_LABELS[value] }))
 
@@ -52,7 +53,7 @@ function Place({ date, port }) {
 export default function OpportunityListPage() {
   const can = useCan()
   const navigate = useNavigate()
-  const isMobile = !Grid.useBreakpoint().md
+  const isMobile = useViewport().isCompact
   const [tab, setTab] = useState('open')
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({})

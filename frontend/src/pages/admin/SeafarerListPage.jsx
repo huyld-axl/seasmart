@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, Dropdown, Grid, Input, Skeleton, Table } from 'antd'
+import { App, Button, Dropdown, Input, Skeleton, Table } from 'antd'
 import { EllipsisOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import { seafarerApi } from '../../api'
@@ -19,8 +19,8 @@ import useListSticky from '../../components/ds/useListSticky'
 import ListFooter from '../../components/ds/ListFooter'
 import { useCan } from '../../hooks/usePermission'
 import useToast from '../../components/ds/useToast'
+import useViewport from '../../hooks/useViewport'
 
-const { useBreakpoint } = Grid
 const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 
 function Person({ row }) {
@@ -45,8 +45,7 @@ export default function SeafarerListPage() {
   const navigate = useNavigate()
   const can = useCan()
   const toast = useToast()
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
+  const isMobile = useViewport().isCompact
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('newest') // newest | name_asc | name_desc

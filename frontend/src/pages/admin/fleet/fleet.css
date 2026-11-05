@@ -59,7 +59,7 @@
 .partner-primary > .ds-quick { grid-column: 2; }
 .partner-profile .crew-head__meta dt, .partner-primary h2 { font-size: 12px; }
 .partner-profile .crew-head__text { font-size: 14px; }
-@media (max-width: 640px) {
+@media (max-width: 639px) {
   .partner-primary { grid-template-columns: minmax(0, 1fr); }
   .partner-primary > .ds-quick { grid-column: 1; }
   .partner-profile .crew-head__meta { grid-template-columns: minmax(0, 1fr); gap: 6px; }

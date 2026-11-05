@@ -305,6 +305,10 @@ const seafarerService = {
     assertSeafarerData(data)
     const id = await withTransaction(pool, async (db) => {
       const safeData = pickAllowed(data)
+      if (!String(safeData.seafarer_code || '').trim()) {
+        const book = String(safeData.seaman_book_number || '').trim()
+        if (book) safeData.seafarer_code = book
+      }
       if (!safeData.nationality_id) {
         const [[vn]] = await db.query('SELECT id FROM country WHERE code = ?', ['VN'])
         if (!vn) throw { statusCode: 400, message: 'Chọn quốc tịch' }
@@ -448,6 +452,12 @@ const seafarerService = {
       delete safeData.bank_name
       delete safeData.bank_account_number
       delete safeData.bank_account_holder
+    }
+    // Mã thuyền viên là số sổ thuyền viên: đi theo số sổ khi mã đang trống hoặc đang bằng số sổ cũ.
+    const book = String(safeData.seaman_book_number || '').trim()
+    const code = String(before.seafarer_code || '').trim()
+    if (book && !('seafarer_code' in safeData) && (!code || code === String(before.seaman_book_number || '').trim())) {
+      safeData.seafarer_code = book
     }
     const changes = diffFields(before, safeData)
     Object.assign(changes, await this.saveLists(db, id, data))

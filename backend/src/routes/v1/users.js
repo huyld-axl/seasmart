@@ -31,7 +31,16 @@ async function usersRoutes(fastify) {
   })
 
   // POST /api/v1/users/:id/resend-invite
-  fastify.post('/:id/resend-invite', guard(fastify, 'account.update'), async (request, reply) => {
+  // Mỗi tài khoản chỉ gửi lại 1 thư / phút để bấm liên tục không gửi nhiều thư.
+  const resendLimit = {
+    rateLimit: {
+      max: 1,
+      timeWindow: '1 minute',
+      keyGenerator: (request) => `resend-invite:${request.params.id}`,
+      errorResponseBuilder: () => ({ statusCode: 429, message: 'Vừa gửi lời mời cho tài khoản này, thử lại sau 1 phút' }),
+    },
+  }
+  fastify.post('/:id/resend-invite', { ...guard(fastify, 'account.update'), config: resendLimit }, async (request, reply) => {
     await userService.resendInvite(request.params.id)
     return reply.code(204).send()
   })

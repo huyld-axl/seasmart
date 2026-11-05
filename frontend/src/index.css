@@ -79,3 +79,6 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* Nút dạng link: màu rê gần trùng màu gốc nên gạch chân để thấy được trạng thái rê. */
+.ant-btn-variant-link:not(:disabled):hover { text-decoration: underline; text-underline-offset: 2px; }

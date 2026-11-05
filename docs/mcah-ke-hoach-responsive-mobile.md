@@ -1,0 +1,322 @@
+# MCAH — Kế hoạch revamp responsive cho điện thoại
+
+- **Ngày lập:** 2026-11-05
+- **Trạng thái:** wireframe đã duyệt, mục 9 đã chốt theo đề xuất (2026-11-05). **Chưa viết code**, chờ người dùng bảo bắt đầu.
+- **Người làm:** một agent lập trình đọc file này từ đầu đến cuối rồi làm theo thứ tự. Mọi quyết định cần cho việc dựng đã chép vào mục 1–6.
+- **Wireframe:** `docs/design/wireframes/responsive-mobile.html` (10 phần: hiện trạng, 8 nhóm màn, design system), cũng ở https://claude.ai/artifact/MAVGYpKKuLGX5ziskgH6j9.
+- **Testcase tay:** `docs/mcah-testcase-responsive-mobile.md`.
+- **Hướng dẫn trong app:** `frontend/public/huong-dan/dien-thoai.html` (viết ở bước 12, khi hành vi đã chốt).
+- **Nhánh:** `dev` (dự án chỉ dùng `main` và `dev`, mọi sửa code làm trên `dev`, không tạo nhánh mới). `dev` tạo từ `origin/main` ngày 05/11/2026 (đã có PR #40 Tổng quan và PR #42 Đội ngũ tàu và mật khẩu). Khi commit bước responsive chỉ `git add` file của bước đó, không gom thay đổi chưa commit của việc khác.
+
+---
+
+## 0. Cách làm việc với file này
+
+1. Đọc `CLAUDE.md` ở thư mục gốc repo trước khi viết dòng code nào. Mọi quy ước trong đó vẫn áp dụng.
+2. Làm **đúng thứ tự các bước ở mục 8**. Mỗi bước có phần "Xong khi"; chỉ sang bước sau khi mọi ý trong đó đúng.
+3. Sau mỗi bước: chạy lint và test frontend, rồi commit **một commit cho một bước**, message tiếng Việt, thể mệnh lệnh. Gộp các sửa nhỏ trong cùng bước trước khi push. Không push khi chưa được bảo.
+4. Gặp dòng **⛔ DỪNG** thì dừng, báo người dùng đúng điều được yêu cầu và chờ trả lời.
+5. Không làm những việc ở mục 2.2 "Không làm".
+6. Ghi tiến độ vào mục 10 "Nhật ký" sau mỗi bước.
+7. Chi tiết trong file mâu thuẫn với code đang có (tên class, tên component đã đổi…) thì ưu tiên code, sửa cho khớp, ghi một dòng vào Nhật ký.
+8. **Sửa ở component dùng chung, không vá từng trang.** Thứ gì lặp ở hai trang trở lên thì đưa vào `frontend/src/components/ds/`, minh hoạ ở `/design-system` **trước**, rồi mới dùng ở trang (CLAUDE.md mục 3.4).
+9. **Desktop không được đổi.** Mọi thay đổi chỉ áp dưới mốc của nó (mục 4.1). Mỗi bước chụp 1440px trước và sau ở các trang đã sửa; khác nhau thì là lỗi, trừ khi mục 5 nói rõ.
+
+---
+
+## 1. Mục tiêu
+
+### 1.1 Mục đích
+
+Môi giới viên mở MCAH trên điện thoại để **tra cứu và làm việc nhanh ngoài văn phòng**: tìm thuyền viên, gọi / Zalo, xem chuyến và hợp đồng, ghi rời tàu, duyệt yêu cầu thanh toán, sửa vài trường hồ sơ. Mỗi việc đó phải làm được bằng một tay trên màn 375px mà **không phóng to, không cuộn ngang, không bấm trượt**.
+
+Không đặt mục tiêu làm mọi việc trên điện thoại dễ như desktop. Việc dài (nhập cả hồ sơ, soát giấy tờ quét, ma trận quyền, xuất bộ hồ sơ) chỉ cần **dùng được, không vỡ**.
+
+### 1.2 Thiết bị đích
+
+| Nhóm | Bề rộng | Trình duyệt | Mức |
+|---|---|---|---|
+| Điện thoại dọc | 360, 375, 390, 414, 430px | Safari iOS 16+, Chrome Android | Thiết kế riêng (wireframe) |
+| Điện thoại ngang, máy tính bảng | 640–1023px | như trên | Không vỡ, dùng luật của mốc tương ứng (mục 4.1) |
+| Desktop | từ 1024px | Chrome, Edge, Safari | Giữ nguyên |
+
+### 1.3 Thế nào là xong (đo được)
+
+Ở mọi route trong mục 5, bề rộng 360 và 375px:
+
+1. `document.documentElement.scrollWidth` = bề rộng màn, kể cả khi đang mở dropdown, ô ngày, dialog.
+2. Không có ô gõ được (`input`, `textarea`, ô Select có tìm kiếm) nào chữ dưới 16px.
+3. Không có thứ bấm được nào nhỏ hơn 40×40px (tính cả vùng bấm mở rộng bằng padding / pseudo-element), trừ link chữ nằm trong câu.
+4. Không có cụm nút nào rớt hàng lẻ (2 + 1), không có chữ bị cắt mất phần nghĩa.
+5. Mọi dialog mở thành sheet từ đáy; mọi ô ngày mở bảng chọn của máy.
+6. Ở 1440px, ảnh chụp trước và sau giống nhau.
+
+---
+
+## 2. Phạm vi
+
+### 2.1 Làm
+
+- Gom mốc breakpoint về 3 mốc, thêm hook `useViewport`.
+- Kích thước control, chữ ô nhập, vùng bấm, vùng an toàn đáy cho điện thoại.
+- Component mới: `Fab`, `BottomSheet`, `DateField` / `DateRangeField`, `ScrollRow`, `RowList`.
+- Component đổi: `AdminLayout`, `DetailHead` (tách từ `crew-head`), `ListToolbar`, `ListFooter`, `DescriptionList`, `FormFrame` (thanh lưu, hàng mục), `Crumb`, `StatusTabs`.
+- Áp vào mọi trang trong mục 5.
+- Cập nhật CLAUDE.md (mục 3.4 thêm dòng, thêm mục 3.5 "Màn hẹp") và trang `/design-system`.
+- Một test chặn mốc breakpoint lạ trong CSS.
+- Hướng dẫn trong app cho môi giới viên.
+
+### 2.2 Không làm
+
+- Không làm app native, không offline / service worker. Chỉ manifest + icon + `theme-color` để thêm ra màn hình chính (mục 9 câu 7, bước 12).
+- Không thiết kế lại desktop, không đổi màu, font, bo góc.
+- Không đổi nghiệp vụ, API, quyền.
+- Không thêm tính năng mới chỉ có trên điện thoại (quét QR, chụp ảnh giấy tờ… ngoài cái đang có).
+- Không dark mode.
+- Không làm thanh tab dưới (mục 9 câu 1 chọn A).
+- Không tự cài thư viện UI mới. `DateField` dùng `<input type="date">` của trình duyệt, `BottomSheet` dựng trên `Drawer` của antd.
+
+---
+
+## 3. Hiện trạng (đo 05/11/2026, app dev, tài khoản demo, 375×812)
+
+Chi tiết và ảnh vẽ lại ở wireframe phần 0. Tóm tắt:
+
+| # | Lỗi | Gốc |
+|---|---|---|
+| H1 | Cuộn ngang cả trang: chi tiết Hợp đồng 466px, chi tiết Cơ hội 425px, sửa YCTT 397px | Giá trị không xuống dòng trong `crew-head__meta`; bảng tiền 363px trong khung 343px |
+| H2 | Ô khoảng ngày rộng 744px, mở ra khung nhìn bị nới lên 777px | `DatePicker.RangePicker` (14 file dùng DatePicker) |
+| H3 | Chữ ô nhập 14px → iOS tự phóng to | `fontSize: 14` chung trong `theme/tokens.js` |
+| H4 | Header chi tiết: tile/ảnh 130px, cột giá trị ~150px, chữ vỡ từng từ | `crew-head` trong `SeafarerProfile.css`, chép ở 6 trang |
+| H5 | Thanh công cụ danh sách 170px, nút Thêm bị cắt | `ds-toolbar` chỉ có `flex-wrap` |
+| H6 | Bảng còn dạng desktop: Tài khoản 857px, Mục tiêu tháng 640px, bảng khoản tiền HĐ 640px (×3), không ghim cột | Trang dùng `Table` / `<table>` trực tiếp |
+| H7 | Breadcrumb 4 dòng, nút rớt hàng 2 + 1 | `Crumb`, `crew-head__actions` |
+| H8 | Vùng bấm < 32px: Vai trò 49, Tài khoản 9, form thuyền viên 10 | Nút `size="small"`, link chữ |
+| H9 | Topbar 64px, tiêu đề bị cắt vì kèm mục cha | `AdminLayout` |
+| H10 | Thanh lưu 2 tầng ~110px, hàng mục không báo còn mục | `sf-savebar`, `sf-toc` |
+| H11 | Chi tiết đọc: mỗi trường ~60px | `DescriptionList` chỉ chia 2 cột từ 384px |
+| H12 | 14 mốc breakpoint khác nhau; JS đổi ở 768 còn CSS phần lớn ở 639 | Mỗi trang tự chọn |
+
+Đã ổn, giữ: danh sách dạng dòng ở 8 trang danh sách (`crew-list`), menu ngăn kéo, ô chọn "Mục:" / "Trạng thái:" thay hàng tab, bản điện thoại của Vai trò và quyền (`RolePhoneView`), Tổng quan xếp dọc dưới 1024px.
+
+---
+
+## 4. Design system cho điện thoại
+
+### 4.1 Ba mốc
+
+| Mốc | Tên | Dưới mốc này |
+|---|---|---|
+| 640px | `sm`, "điện thoại" | Form / lưới / chi tiết 1 cột; dialog → sheet; nút nổi "Thêm"; thanh lưu 1 hàng; control 44px chữ 16px; ô ngày của máy; bảng nhỏ → `RowList`; breadcrumb một nấc |
+| 768px | `md` (trùng `Grid.useBreakpoint().md` của antd) | Sidebar → ngăn kéo; bảng danh sách → dòng; thanh công cụ danh sách 2 tầng |
+| 1024px | `lg` | Tổng quan xếp dọc; trang chi tiết / form bỏ cột phụ |
+
+- CSS chỉ được dùng `@media (max-width: 639px)`, `(max-width: 767px)`, `(max-width: 1023px)` và các bản `min-width: 640px / 768px / 1024px`. Container query (`@container`) không bị giới hạn.
+- Quy đổi mốc cũ: 575, 599, 600, 640 (max), 720 → 639; 899, 900 → 767; 991, 1099, 1199 → 1023; `min-width: 1100px / 1200px` → giữ nếu là bố cục 3 cột rộng (exports, hồ sơ 2 cột), ghi lý do bằng một dòng comment cạnh `@media`.
+- Hook mới `frontend/src/hooks/useViewport.js`: `{ isPhone, isCompact, isWide }` = `< 640`, `< 768`, `≥ 1024`, dùng `useMediaQuery` đang có. Thay mọi `!Grid.useBreakpoint().md` (13 chỗ) bằng `isCompact` và mọi `useMediaQuery('(max-width: 639px)')` bằng `isPhone`.
+- Test `frontend/src/__tests__/breakpoints.test.js`: đọc mọi `*.css` trong `src/`, lỗi nếu gặp `@media` có `max-width` / `min-width` ngoài danh sách trên (trừ dòng có comment `/* mốc riêng: … */`).
+
+### 4.2 Kích thước
+
+| | Điện thoại (< 640) | Từ 640 |
+|---|---|---|
+| Ô nhập, Select, DatePicker, InputNumber: cao | 44px | 40px |
+| Chữ trong ô gõ được | **16px** | 14px |
+| Nút thường | 40px; 44px trong thanh lưu và chân sheet | 40px |
+| Vùng bấm tối thiểu | 40×40px | 32×32px |
+| Topbar | 56px | 64px |
+| Lề trang / lề card | 16 / 16px | 24 / 20px |
+| Khoảng giữa các khối | 12px | 16px |
+
+Cách làm:
+
+- `App.jsx`: bọc thêm một `ConfigProvider` lồng, khi `isPhone` thì đè `controlHeight: 44`, `fontSize` của `Input` / `Select` / `DatePicker` / `InputNumber` = 16 (component token), `Button.controlHeight` giữ 40. Không đổi token desktop.
+- `index.css`: dưới 640px, `input, textarea, select, .ant-select-selection-search-input { font-size: 16px }` làm lưới an toàn cho ô tự dựng.
+- Nút `size="small"` có thể bấm (không phải nhãn): dưới 640px nới vùng bấm bằng `::after` âm lề tới 40×40 (`.ds-hit` trong `ds.css`), không đổi hình.
+- `index.html`: `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`, thêm `<meta name="theme-color" content="#ffffff">`.
+- Vùng an toàn: thanh lưu, `Fab`, chân sheet cộng `env(safe-area-inset-bottom)`.
+
+### 4.3 Component mới (`components/ds/`, minh hoạ ở `/design-system` trước khi dùng)
+
+| Component | Làm gì | Ghi chú |
+|---|---|---|
+| `Fab` | Nút nổi 56px, bo 18px, nền nhấn, góc phải dưới, cách đáy 16px + vùng an toàn | Prop `label` → `aria-label` và tooltip. Chỉ render khi `isPhone`; desktop trang vẫn có nút trong thanh công cụ. Chỉ dùng cho "Thêm …" của trang danh sách |
+| `BottomSheet` | Sheet từ đáy: tay kéo, tiêu đề + nút đóng, thân cuộn, chân dính đáy hai nút chia đều 44px | Dựng trên `Drawer placement="bottom"` của antd, cao theo nội dung, tối đa `88dvh`. Dùng cho Bộ lọc ở điện thoại |
+| Modal → sheet | Mọi `Modal` antd ở dưới 640px tự thành sheet | **Một quy tắc CSS chung** trong `ds.css` cho `.ant-modal-wrap` / `.ant-modal` / `.ant-modal-footer` (bám đáy, rộng 100%, bo trên 20px, chân dính, nút chia đều). Không sửa 31 file dialog. `Modal.confirm` cũng theo |
+| `DateField`, `DateRangeField` | Desktop: `DatePicker` / `RangePicker` antd như cũ. Điện thoại: `<input type="date">` (bảng chọn của máy); khoảng ngày = hai ô Từ / Đến | Cùng giá trị `dayjs` vào ra, dùng được trong `Form.Item` như DatePicker. Hỗ trợ `disabledDate` bằng `min` / `max`; trường hợp chặn ngày lẻ (không phải khoảng) thì kiểm lúc chọn và báo lỗi dưới ô |
+| `ScrollRow` | Hàng cuộn ngang: mép mờ 32px phía còn mục, vạch mảnh 3px dưới hàng khi tràn, nút mũi tên khi dùng chuột (`any-pointer: fine`), tự cuộn mục đang chọn vào giữa (tính `scrollLeft`, không `scrollIntoView`) | Theo luật R6, R10 của skill ui-ux (`.claude/skills/ui-ux/references/responsive.md`) |
+| `RowList` | Bảng ít cột → dòng hai tầng ở điện thoại: tiêu đề + số chính bên phải, dòng phụ nhỏ, hành động vào ⋯ 40px | Nhận `columns` kiểu antd kèm `mobile: 'title' \| 'sub' \| 'value' \| 'meta' \| 'actions' \| false`. Từ 640px render `Table` như cũ |
+
+### 4.4 Component đổi
+
+| Component | Đổi gì ở dưới 640px (desktop giữ nguyên) |
+|---|---|
+| `AdminLayout` | Topbar 56px; tiêu đề chỉ là trang đang xem (bỏ "Quản trị /"); nút tài khoản còn avatar 40×40, bỏ mũi tên; link "Hướng dẫn" (`HelpLink`) còn icon 40×40; ngăn kéo: mục 44px, đáy có email · vai trò · Đăng xuất. Dưới 768px vẫn là ngăn kéo như hiện tại |
+| `DetailHead` (mới, tách từ `crew-head*` ở `SeafarerProfile.css` sang `ds.css`) | Tile 44px hoặc ảnh 60×80 cạnh tên + trạng thái + dòng phụ; khối thông tin (`dl`) xuống dưới, dài hết ngang, nhãn `minmax(96px, 38%)`, giá trị xuống dòng được; tối đa 2 nút hiện chia đều + ⋯ chứa phần còn lại; ghi chú đặt dưới khối thông tin. Bấm ảnh thuyền viên mở xem lớn (thay nút "Tải ảnh" đè trên ảnh, nút tải nằm trong khung xem) |
+| `ListToolbar` (gom `ds-toolbar` của các trang danh sách thành component) | Không còn là card: nền trắng sát mép, dính dưới topbar. Tầng 1: ô tìm + nút Lọc (badge số điều kiện) + ⋯. Tầng 2: `StatusTabs` bản ô chọn + chip đang lọc trong `ScrollRow` + "Xoá lọc" ngoài vùng cuộn. Nút "Thêm …" thành `Fab`. Dưới 768px đã 2 tầng |
+| `ListFooter` | Tổng số + ‹ trang hiện tại / tổng › ; ẩn "Số dòng/trang" (giữ 20) |
+| `DescriptionList` | Chia 2 cột từ container 280px (đang 384px), nhãn `minmax(96px, 38%)`, gap 12px, kẻ mảnh giữa các dòng |
+| `FormFrame` + `sf-savebar` + `sf-toc` | Hàng mục dùng `ScrollRow`, dính dưới topbar. Thanh lưu một hàng: **Sửa** = "Huỷ" + "Lưu thay đổi · n" (nút chính dài, khoá khi chưa đổi); **Thêm** = "Lưu & thêm {đối tượng} khác" + "Thêm {đối tượng}" chia đều, "Huỷ" chuyển thành link "‹ {danh sách}" đầu form (hỏi lại nếu đã nhập dở) — đã chốt ở mục 9 câu 4 |
+| `Crumb` | Còn một nấc: "‹ {nấc cha}", một dòng, vùng bấm 32px cao |
+| `StatusTabs` (bản ô chọn "Mục:" của trang chi tiết) | Dính dưới topbar khi cuộn (prop `sticky`) |
+
+### 4.5 Ghi vào quy ước
+
+- CLAUDE.md mục 3.4: thêm dòng "Ngày / khoảng ngày → `DateField` / `DateRangeField`, không dùng `DatePicker` trực tiếp", "Nút thêm ở danh sách điện thoại → `Fab`", "Bảng ít cột trong trang → `RowList`", "Lớp nổi chọn / lọc ở điện thoại → `BottomSheet`".
+- CLAUDE.md thêm mục **3.5 Màn hẹp**: 3 mốc; ô gõ 16px; vùng bấm 40px; không `min-width` cố định lớn hơn 343px ngoài khung cuộn; không cụm nút rớt hàng lẻ; kiểm 375px trước khi báo xong.
+- `/design-system`: mỗi component mới / đổi có khung xem 375px cạnh bản desktop.
+
+---
+
+## 5. Màn hình
+
+Mỗi dòng: route, việc phải làm, component dùng. "—" = chỉ hưởng thay đổi chung (mục 4.2, Modal → sheet), kiểm lại là đủ.
+
+| Nhóm | Route | Việc | Bước |
+|---|---|---|---|
+| Khung | mọi route trong `AdminLayout` | Topbar, ngăn kéo | 4 |
+| Danh sách | `/seafarers`, `/partners`, `/vessels`, `/opportunities`, `/voyages`, `/contracts`, `/bills`, `/master-data/:tab` | `ListToolbar`, `ListFooter`, `Fab`, Bộ lọc trong `BottomSheet` | 5 |
+| Danh sách | `/admin/users` | Như trên + `UserTable` → `RowList` (xem / sửa / xoá vào ⋯) | 5 |
+| Ô ngày | 14 file dùng `DatePicker` (danh sách Chuyến tàu, form Thuyền viên / Cơ hội / Chuyến / Hợp đồng / YCTT, `LeaveModal`, `VoyageModals`, `PlaceModal`, `CollectModal`, `CandidatePanel`, `DocumentsSection`, chi tiết Thuyền viên, Mục tiêu tháng) | `DateField` / `DateRangeField` | 6 |
+| Chi tiết | `/seafarers/:id`, `/partners/:id`, `/vessels/:id`, `/opportunities/:id`, `/voyages/:id`, `/contracts/:id`, `/bills/:id`, `/admin/users/:id`, `/seafarers/:id/upload` | `DetailHead`, `Crumb`, `DescriptionList`, `StatusTabs sticky` | 7 |
+| Bảng trong trang | `TermsTable`, `DealTable` (HĐ), `BillMoneyTable` + bảng trong `BillFormPage`, `CertificateTable`, `RecordTable`, `CandidateTable`, `RequirementTable`, bảng thuyền viên ở `VesselDetailPage` / `VesselCrewTab`, `SmartCompareCard` | `RowList`; bảng nhiều cột thật (so sánh) thì cuộn trong khung + ghim cột đầu | 8 |
+| Quản trị | `/admin/kpi-targets` | Mỗi người một card, 2 ô `inputmode="numeric"`, "Cả công ty" lên đầu | 8 |
+| Form | `/seafarers/new`, `/seafarers/:id/edit`, `/partners/*`, `/vessels/*`, `/opportunities/*`, `/voyages/new`, `/contracts/*`, `/bills/:id/edit`, `UserForm`, `RoleFormModal` | `FormFrame` mới; form chưa dùng `FormFrame` (thuyền viên, hợp đồng, YCTT) dùng chung `sf-savebar` / `sf-toc` nên hưởng cùng thay đổi, kiểm từng form | 9 |
+| Còn lại | `/dashboard` | Nhãn trục "Tháng này" bị cắt thành "Thá…", tên người cắt quá sớm | 10 |
+| Còn lại | `/seafarers/:id/review` | Soát giấy tờ: ảnh trên, ô dưới, thanh chuyển trang dính đáy; chỉ cần không vỡ | 10 |
+| Còn lại | `/seafarers/import`, màn xuất bộ hồ sơ (`exports/*`) | Không vỡ; bản xem trước A4 thu vừa ngang màn | 10 |
+| Còn lại | `/admin/roles` | Giữ `RolePhoneView`; nới vùng bấm 49 chỗ | 10 |
+| Còn lại | `/login`, `/dat-mat-khau`, trang lỗi, `/no-role` | Ô 16px, kiểm | 10 |
+
+---
+
+## 6. Quy ước khi code
+
+- Chỉ dùng 3 mốc (mục 4.1). Trong JS chỉ dùng `useViewport()`; không gọi `Grid.useBreakpoint()` trực tiếp trong trang.
+- Không render hai cây DOM (desktop + mobile) cùng lúc rồi ẩn bằng CSS cho khối lớn; khối lớn thì rẽ nhánh bằng `useViewport()`. Khối nhỏ (một nút, một nhãn) thì ẩn / hiện bằng CSS được.
+- Con của flex / grid chứa chữ dài: `min-width: 0`. Lưới: `grid-template-columns: minmax(0, 1fr)`.
+- Giá trị dài (tên công ty, email, mã) trong khối thông tin: `overflow-wrap: anywhere`, không `white-space: nowrap`.
+- Ngày tháng, số tiền, mã, tên người trong dòng: `white-space: nowrap` + cắt `…` ở cuối, có `title` đầy đủ.
+- Không thêm `size="small"` cho nút bấm được trên trang điện thoại.
+- Chữ trên nút giữ nguyên như desktop; chỉ rút gọn khi mục 5 / wireframe ghi rõ (ví dụ "Kết thúc HĐ").
+
+---
+
+## 7. Testcase
+
+Chạy tay theo `docs/mcah-testcase-responsive-mobile.md` ở bước 13, trên **máy thật**: một iPhone (Safari) và một Android (Chrome). Ngoài ra mỗi bước tự kiểm bằng `.claude/skills/ui-ux/scripts/probe.mjs` ở 375 và 1440 (`--widths 360,375,1440`), bước 11 chạy `--sweep 1440,360,20`.
+
+---
+
+## 8. Các bước
+
+### Bước 0 — Chốt câu hỏi mở
+
+Đã xong 2026-11-05: người dùng giữ cả 7 đề xuất ở mục 9 (điều hướng A, nút nổi, ô ngày của máy, Huỷ thành link đầu form thêm mới, không ẩn trường trống, máy tính bảng chỉ cần không vỡ, có "Thêm vào màn hình chính" bản nhẹ). Không cần hỏi lại.
+
+**Xong khi:** (đã xong).
+
+### Bước 1 — Mốc và hook
+
+Thêm `useViewport`, test chặn mốc, quy đổi 14 mốc về 3 (mục 4.1), thay 13 chỗ `useBreakpoint().md`, sửa `index.html` (viewport-fit, theme-color).
+
+**Xong khi:** test mốc qua; `grep -rn "useBreakpoint" frontend/src/pages` rỗng; chụp 1440 ở 8 danh sách + 6 chi tiết giống trước; ở 700px (giữa 640 và 767) danh sách là dòng và form vẫn 2 cột như trước bước này.
+
+### Bước 2 — Kích thước và CSS chung
+
+`ConfigProvider` lồng cho điện thoại, lưới an toàn 16px trong `index.css`, `.ds-hit`, quy tắc Modal → sheet, vùng an toàn.
+
+**Xong khi:** probe ở 375px báo 0 ô chữ dưới 16px trên mọi route mục 5; dialog Ghi rời tàu, Duyệt YCTT, Xoá thuyền viên mở thành sheet, bàn phím mở không che nút (thử trên Chrome DevTools thiết bị iPhone 12); 1440px không đổi.
+
+### Bước 3 — Component mới
+
+`Fab`, `BottomSheet`, `DateField` / `DateRangeField`, `ScrollRow`, `RowList` vào `components/ds/` kèm test; thêm vào `/design-system` với khung 375px; cập nhật CLAUDE.md mục 3.4 và thêm 3.5.
+
+**Xong khi:** `/design-system` hiện đủ 5 component ở cả hai bề rộng; test component qua (`DateField` vào / ra `dayjs` đúng ở cả hai chế độ; `ScrollRow` báo đúng cờ mép trái / phải; `RowList` rẽ đúng theo bề rộng); lint sạch.
+
+### Bước 4 — Khung app
+
+`AdminLayout` theo mục 4.4.
+
+**Xong khi:** ở 375px topbar 56px, tiêu đề không còn tên mục cha, nút tài khoản 40×40; ngăn kéo có email, vai trò, Đăng xuất; 1440px không đổi.
+
+**⛔ DỪNG:** gửi ảnh 375px (topbar + ngăn kéo mở), chờ duyệt trước khi áp xuống các trang.
+
+### Bước 5 — Trang danh sách
+
+`ListToolbar`, `ListFooter`, `Fab`, bộ lọc trong `BottomSheet` cho 8 danh sách + Danh mục; `UserTable` → `RowList`.
+
+**Xong khi:** ở 375px thanh công cụ ≤ 104px khi không lọc, dính dưới topbar khi cuộn; nút Thêm là `Fab` và mở đúng trang thêm; bộ lọc mở thành sheet, nút "Xem n …" đúng số; Tài khoản không còn bảng cuộn ngang; 1440px không đổi.
+
+### Bước 6 — Ô ngày
+
+Thay mọi `DatePicker` / `RangePicker` trong 14 file bằng `DateField` / `DateRangeField`.
+
+**Xong khi:** `grep -rn "DatePicker" frontend/src/pages` chỉ còn trong `components/ds/DateField.jsx`; ở 375px chạm ô ngày mở bảng chọn của máy, khung nhìn không giãn; lưu form có ngày ra đúng giá trị như trước (so DB một bản ghi sửa ở desktop và điện thoại); 1440px vẫn là DatePicker antd.
+
+### Bước 7 — Trang chi tiết
+
+`DetailHead`, `Crumb` một nấc, `DescriptionList` mới, `StatusTabs sticky` cho 9 route chi tiết ở mục 5.
+
+**Xong khi:** ở 360 và 375px không trang chi tiết nào cuộn ngang (hết H1 phần header); không giá trị nào vỡ từng chữ; không cụm nút 2 + 1; 1440px không đổi.
+
+**⛔ DỪNG:** gửi ảnh 375px của Thuyền viên, Hợp đồng, YCTT, Cơ hội (đầu trang + một mục cuộn xuống), chờ duyệt.
+
+### Bước 8 — Bảng trong trang và Mục tiêu tháng
+
+`RowList` cho các bảng ở mục 5; Mục tiêu tháng thành card.
+
+**Xong khi:** ở 375px không còn bảng nào cuộn ngang mà không ghim cột; sửa YCTT không còn rộng 397px (hết H1); tổng tiền trong `RowList` khớp bảng desktop trên cùng bản ghi.
+
+### Bước 9 — Form
+
+`FormFrame` theo mục 4.4; kiểm từng form ở mục 5.
+
+**Xong khi:** ở 375px mọi form: thanh lưu một hàng ≤ 72px (chưa tính vùng an toàn), hàng mục có mép mờ khi tràn; thêm mới bấm lưu khi thiếu trường thì cuộn tới ô lỗi đầu tiên và ô đó không bị thanh lưu hay hàng mục che; "Lưu & thêm khác" ở lại trang, form trống, cuộn lên đầu; sửa rồi bấm "‹" / Huỷ khi đã đổi thì hỏi lại.
+
+### Bước 10 — Trang còn lại
+
+Các dòng "Còn lại" ở mục 5.
+
+**Xong khi:** từng route ở 375px đạt 1.3 (1)–(4).
+
+### Bước 11 — Quét toàn bộ
+
+Chạy probe `--sweep 1440,360,20` trên mọi route mục 5 (một bản ghi có nhiều dữ liệu cho mỗi trang chi tiết: tên dài, nhiều chứng chỉ, hợp đồng nhiều khoản); sửa chỗ lỗi; chụp 1440 so với trước bước 1.
+
+**Xong khi:** probe không báo cuộn ngang, nút rớt hàng, chữ trong nút xuống dòng ở mọi bề rộng; 1440 giống trước.
+
+### Bước 12 — Hướng dẫn trong app
+
+`frontend/public/huong-dan/dien-thoai.html`, cùng kiểu các trang hướng dẫn đang có, viết cho môi giới viên, không bảng, không API: mở menu; tìm và lọc; thêm mới bằng nút tròn; gọi / Zalo từ hồ sơ; ghi rời tàu và duyệt YCTT trên điện thoại; thêm MCAH ra màn hình chính (Safari: Chia sẻ → Thêm vào MH chính; Chrome: ⋮ → Thêm vào màn hình chính). Thêm link "Dùng MCAH trên điện thoại" ở đáy ngăn kéo, cạnh email và Đăng xuất.
+
+**Xong khi:** trang mở được từ ngăn kéo, đọc tốt ở 375px.
+
+### Bước 13 — Chạy testcase tay
+
+Chạy `docs/mcah-testcase-responsive-mobile.md` trên iPhone Safari và Android Chrome thật (cùng mạng LAN với máy dev, mở bằng IP; thêm IP vào `VITE_DEMO_LOGIN_HOSTS` nếu cần nút Nhập nhanh TK demo).
+
+**Xong khi:** mọi case Đạt, hoặc case Không đạt đã sửa và chạy lại; **⛔ DỪNG** báo người dùng danh sách case còn lỗi nếu có.
+
+---
+
+## 9. Câu hỏi đã chốt (2026-11-05: giữ cả 7 đề xuất)
+
+| # | Câu hỏi | Đề xuất | Trả lời |
+|---|---|---|---|
+| 1 | Điều hướng trên điện thoại: **A** giữ ngăn kéo (☰) làm gọn, hay **B** thanh tab dưới 4 mục + "Khác"? | **A.** Đã có sẵn, mục không đổi theo quyền, không chiếm đáy màn (đáy dành cho thanh lưu và nút nổi). B tiện một tay hơn, làm sau nếu cần | Theo đề xuất (05/11/2026) |
+| 2 | Nút "Thêm …" ở danh sách điện thoại thành **nút tròn nổi** góc phải dưới? | Có. Giải phóng một tầng thanh công cụ, ngón cái với tới | Theo đề xuất (05/11/2026) |
+| 3 | Ô ngày trên điện thoại dùng **bảng chọn ngày của máy** thay bảng của antd? | Có. Không giãn trang, quen tay người dùng. Trả giá: giao diện chọn theo máy (iOS cuộn bánh xe), không tô xám từng ngày bị chặn, chỉ chặn được khoảng min / max | Theo đề xuất (05/11/2026) |
+| 4 | Form **thêm mới** trên điện thoại: thanh lưu chỉ còn "Lưu & thêm khác" + "Thêm …", **"Huỷ" chuyển thành link "‹ Thuyền viên" ở đầu form**? (Lệch CLAUDE.md 3.3 ở điện thoại) | Có. Ba nút không vừa một hàng 343px; xếp 3 hàng thì thanh lưu cao ~170px | Theo đề xuất (05/11/2026) |
+| 5 | Trang chi tiết đọc trên điện thoại có **ẩn trường trống** không? | Không. Giữ "—" để môi giới thấy hồ sơ còn thiếu gì; chia 2 cột nên mỗi trường chỉ còn ~40px | Theo đề xuất (05/11/2026) |
+| 6 | Máy tính bảng / điện thoại ngang (640–1023px): **chỉ cần không vỡ**, không thiết kế riêng? | Có | Theo đề xuất (05/11/2026) |
+| 7 | Có làm **"Thêm vào màn hình chính"** bản nhẹ (manifest, icon 192/512, `theme-color`), không offline? | Có, gộp vào bước 12. Mở từ màn hình chính sẽ không có thanh địa chỉ, rộng thêm ~60px chiều cao | Theo đề xuất (05/11/2026) |
+
+---
+
+## 10. Nhật ký
+
+| Ngày | Bước | Commit | Ghi chú |
+|---|---|---|---|
+| 2026-11-05 | Lập kế hoạch | — | Đo app dev ở 375×812 bằng tài khoản demo: 3 trang cuộn ngang (HĐ 466px, Cơ hội 425px, sửa YCTT 397px), RangePicker 744px nới khung nhìn lên 777px, ô nhập 14px ở mọi form, 14 mốc breakpoint. Vẽ wireframe 10 phần, viết plan và testcase. Chưa sửa code. |
+| 2026-11-05 | Bước 0 | — | Người dùng chốt "Theo đề xuất" cho cả 7 câu ở mục 9. Ghi vào plan. Chưa sửa code, chờ lệnh bắt đầu bước 1. |

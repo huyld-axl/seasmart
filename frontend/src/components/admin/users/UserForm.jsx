@@ -137,6 +137,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
       open={open}
       onClose={onClose}
       title="Sửa tài khoản"
+      hasForm={false}
       description={initialValues.email}
       footer={
         <>

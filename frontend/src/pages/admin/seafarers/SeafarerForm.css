@@ -196,7 +196,14 @@
 .sf-ai--check .ant-input, .sf-ai--check .ant-input-affix-wrapper, .sf-ai--check .ant-input-number, .sf-ai--check .ant-picker, .sf-ai--check .ant-select-selector { border-color: var(--warning-border) !important; background: var(--warning-bg) !important; }
 .sf-ai--ok .sf-seg { box-shadow: 0 0 0 1px var(--primary); }
 .sf-aicheck { margin-left: 6px; color: var(--primary); font-size: 12px; font-weight: 600; }
-@media (max-width: 639px) { .sf-panel__scans { margin-left: 40px; } }
+/* Điện thoại: hai nút quét chia đôi một hàng; ba nút (Giấy tờ tùy thân) xếp dọc cả cụm, không để 2 trên 1 dưới. */
+@media (max-width: 639px) {
+  .sf-panel__scans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex-basis: 100%; margin-left: 40px; }
+  .sf-panel__scans:has(> button:nth-of-type(3)) { grid-template-columns: minmax(0, 1fr); }
+  /* Nhóm chọn nhỏ (Bắt buộc / Nên có ở yêu cầu cơ hội): nút 36px, vùng bấm phủ cả đệm 2px của khung thành 40px. */
+  .sf-seg--sm button { position: relative; height: 36px; font-size: 13px; }
+  .sf-seg--sm button::after { content: ''; position: absolute; inset: -2px 0; }
+}
 
 /* Khối chỉ đọc ở điện thoại (trang chi tiết thuyền viên, đối tác): nhãn trái giá trị phải, kẻ mảnh giữa các trường,
    mỗi trường ~40px thay vì ~60px (kế hoạch responsive mục 4.4). */

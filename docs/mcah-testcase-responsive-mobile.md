@@ -7,6 +7,18 @@
 - **Cách kiểm cuộn ngang:** vuốt ngang ở giữa trang; trang không được trôi sang bên. Kiểm thêm bằng Chrome DevTools (thiết bị iPhone 12, 390px và Galaxy S8, 360px): `document.documentElement.scrollWidth === innerWidth`.
 - **Ghi kết quả:** Đạt / Không đạt + ghi chú ngắn.
 
+## Chạy trước bằng giả lập (06/11/2026)
+
+Chạy tự động trên Chrome giả lập iPhone 12 (390×844) và Galaxy S8 (360×740), chỉ đọc (không lưu, duyệt, ghi, xoá). Cột Kết quả bên dưới vẫn để trống cho lượt chạy trên máy thật.
+
+- **Đạt trên cả hai giả lập:** A1, A3 (cỡ chữ ô gõ, chưa phải hành vi phóng to thật), A4, A6, B1–B6, C1–C5, C9 (chạm nền mờ), C10–C13, D1–D3, E1–E4, E8, E9, E11, F1, F4, F6, F7, G1–G6, G8, H1, H4, H5, I1, I5, I6, J1. A7, A8 (desktop) đạt ở bước 11.
+- **Sửa trong lượt này:** 3 nút Quét ở Giấy tờ tùy thân rớt 2 + 1 (A6) → xếp dọc; nút tròn "+" che nút "›" sang trang ở cuối danh sách (C3, C10) → trang có nút tròn chừa đáy; chặng của thanh tiến trình Cơ hội cao 20px, nút ">" 28px, nút chọn Bắt buộc / Nên có 24px, nút xoá ngày 32px (A4) → đủ 40px; ô ngày điện thoại chọn Đến trước Từ vẫn nhận nếu bảng ngày của máy không chặn (D3, D7) → kiểm lại sau khi chọn, báo "Chọn từ … trở đi".
+- **G2:** số thay đổi hiện bên trái thanh lưu ("3 thay đổi"), không nằm trong nút; đã ghi là lệch có chủ ý ở bước 9.
+- **Phải chạy trên máy thật:** A2, A3 (trang có tự phóng to không), A5 (xoay ngang), C3 (thanh Home iPhone), C9 (kéo tay kéo), G9, G11, H2 (bàn phím), E7 (mở ứng dụng gọi / Zalo), J2, J3 (thêm ra màn hình chính).
+- **Chưa chạy được vì ghi dữ liệu hoặc thiếu dữ liệu dev:** D4, D5, D8, E10, F3, F8, G7 (lưu thật); C14 (cần vai trò chỉ xem); E5, E6 (DB dev không có thuyền viên có ảnh), E7 (không có thuyền viên có số điện thoại), E12, F5 (tàu 21 chưa có thuyền viên), H3 (cần hợp đồng chờ duyệt), I2 (không có giấy chờ duyệt). Chưa tự động: C6–C8, D6, F2, G10, H6, I3, I4, I7.
+
+**Mở trên điện thoại:** máy dev và điện thoại cùng Wi-Fi; trên máy dev chạy cấu hình preview `frontend-lan` (cổng 5174, gọi API qua chính dev server, có nút "Nhập nhanh TK demo"); trên điện thoại mở `http://<IP máy dev>:5174`. Tường lửa của máy dev phải mở cổng 5174.
+
 ## A. Chung cho mọi trang
 
 | # | Bước | Mong đợi | Kết quả |

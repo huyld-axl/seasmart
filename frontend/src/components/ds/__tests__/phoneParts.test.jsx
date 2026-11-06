@@ -104,6 +104,17 @@ describe('DateRangeField', () => {
     const [range] = onChange.mock.calls[0]
     expect(range.map((day) => day.format('YYYY-MM-DD'))).toEqual(['2026-11-01', '2026-11-30'])
   })
+
+  it('điện thoại: bảng của máy vẫn cho chọn Đến trước Từ thì báo lỗi, không lọc', () => {
+    screenAs(true)
+    const onChange = vi.fn()
+    const { container } = render(<DateRangeField format="DD/MM/YYYY" onChange={onChange} />)
+    const [from, to] = container.querySelectorAll('input[type="date"]')
+    fireEvent.change(from, { target: { value: '2026-11-30' } })
+    fireEvent.change(to, { target: { value: '2026-11-01' } })
+    expect(onChange).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent('Chọn từ 30/11/2026 trở đi')
+  })
 })
 
 describe('RowList', () => {

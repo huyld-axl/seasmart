@@ -8,7 +8,8 @@ import './ds.css'
 // Ô ngày (kế hoạch responsive mục 4.3). Desktop: DatePicker / RangePicker của antd như cũ. Điện thoại (< 640px): bảng
 // chọn ngày của máy — một <input type="date"> trong suốt phủ lên ô hiện ngày theo `format` — vì bảng lịch của antd rộng
 // hơn màn (khoảng ngày 744px) và kéo giãn cả trang. Giá trị vào ra là dayjs như DatePicker, dùng thẳng trong Form.Item.
-// Ở điện thoại `disabledDate` chỉ kiểm sau khi chọn (bảng của máy không tô xám từng ngày); `minDate` / `maxDate` thì chặn ngay.
+// Ở điện thoại `disabledDate` chỉ kiểm sau khi chọn (bảng của máy không tô xám từng ngày); `minDate` / `maxDate` chặn ngay
+// bằng min / max của ô và kiểm lại sau khi chọn (bảng của vài máy vẫn cho chọn ngoài khoảng).
 const NATIVE = {
   date: { type: 'date', iso: 'YYYY-MM-DD', show: 'DD/MM/YYYY' },
   month: { type: 'month', iso: 'YYYY-MM', show: 'MM/YYYY' },
@@ -45,6 +46,15 @@ function NativeDate({ id, value, onChange, onBlur, picker = 'date', format, plac
       return
     }
     const next = dayjs(raw)
+    const unit = picker === 'month' ? 'month' : 'day'
+    if (minDate && next.isBefore(minDate, unit)) {
+      setError(`Chọn từ ${dayjs(minDate).format(shown)} trở đi`)
+      return
+    }
+    if (maxDate && next.isAfter(maxDate, unit)) {
+      setError(`Chọn đến ${dayjs(maxDate).format(shown)} trở về trước`)
+      return
+    }
     if (disabledDate?.(next, { type: picker })) {
       setError(BLOCKED)
       return

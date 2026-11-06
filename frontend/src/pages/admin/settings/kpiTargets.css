@@ -4,3 +4,14 @@
 .kt-name { font-weight: 500; }
 .kt-actual { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .kt-total td { font-weight: 600; background: var(--surface-hover, #f8f8fa); }
+
+/* Điện thoại: mỗi môi giới viên một card (kế hoạch responsive bước 8). */
+.kt-cards { display: grid; gap: 12px; }
+/* Card không nằm trong card: bỏ khung .ds-card bọc ngoài. */
+.ds-card:has(> .kt-cards) { overflow: visible; border: 0; background: transparent; }
+.kt-card { display: grid; gap: 4px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.kt-card--total { background: var(--surface-hover, #f8f8fa); }
+.kt-card__fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 8px; margin-top: 8px; }
+.kt-card__field { display: grid; gap: 4px; min-width: 0; }
+.kt-card__field > span { color: var(--muted); font-size: 12px; }
+.kt-card .kt-actual { font-size: 13px; white-space: normal; }

@@ -74,8 +74,8 @@ export default function DealTable({ value = [], onChange, ownerName, seafarerNam
                         custom ? row.custom_name : NAME_OF[row.item_code]
                       )}
                     </th>
-                    <td>{money(row, index, 'receivable_usd', `Phải thu: ${custom ? row.custom_name || 'khoản tự đặt tên' : NAME_OF[row.item_code]}`)}</td>
-                    <td>{money(row, index, 'payable_usd', `Phải chi: ${custom ? row.custom_name || 'khoản tự đặt tên' : NAME_OF[row.item_code]}`)}</td>
+                    <td data-label="Phải thu">{money(row, index, 'receivable_usd', `Phải thu: ${custom ? row.custom_name || 'khoản tự đặt tên' : NAME_OF[row.item_code]}`)}</td>
+                    <td data-label="Phải chi">{money(row, index, 'payable_usd', `Phải chi: ${custom ? row.custom_name || 'khoản tự đặt tên' : NAME_OF[row.item_code]}`)}</td>
                   </tr>
                 )
               })}
@@ -88,8 +88,8 @@ export default function DealTable({ value = [], onChange, ownerName, seafarerNam
               )}
               <tr className={group.kind === 'MONTHLY' ? 'ct-total' : 'ct-total ct-total--once'}>
                 <th scope="row">{group.kind === 'MONTHLY' ? 'Tổng mỗi tháng' : 'Tổng một lần'}</th>
-                <td className="ds-num">{formatUsd(sum(only, 'receivable_usd'), { fixed: true })}</td>
-                <td className="ds-num">{formatUsd(sum(only, 'payable_usd'), { fixed: true })}</td>
+                <td className="ds-num" data-label="Phải thu">{formatUsd(sum(only, 'receivable_usd'), { fixed: true })}</td>
+                <td className="ds-num" data-label="Phải chi">{formatUsd(sum(only, 'payable_usd'), { fixed: true })}</td>
               </tr>
             </tbody>
           </table>

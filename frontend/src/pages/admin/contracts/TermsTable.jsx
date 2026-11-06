@@ -36,18 +36,18 @@ export default function TermsTable({ value, onChange, ownerName, seafarerName, r
         <tbody>
           <tr>
             <th scope="row" className="ct-name">Ngày chốt sổ</th>
-            <td>{cell('RECEIVABLE', 'closing')}</td>
-            <td>{cell('PAYABLE', 'closing')}</td>
+            <td data-label="Phải thu">{cell('RECEIVABLE', 'closing')}</td>
+            <td data-label="Phải chi">{cell('PAYABLE', 'closing')}</td>
           </tr>
           <tr>
             <th scope="row" className="ct-name">Ngày thanh toán</th>
-            <td>{cell('RECEIVABLE', 'pay')}</td>
-            <td>{cell('PAYABLE', 'pay')}</td>
+            <td data-label="Phải thu">{cell('RECEIVABLE', 'pay')}</td>
+            <td data-label="Phải chi">{cell('PAYABLE', 'pay')}</td>
           </tr>
           <tr>
             <th scope="row" className="ct-name">Gặp ngày nghỉ<span className="ct-name__hint">Ngày nghỉ, lễ của ngân hàng</span></th>
-            <td>{cell('RECEIVABLE', 'holiday')}</td>
-            <td>{cell('PAYABLE', 'holiday')}</td>
+            <td data-label="Phải thu">{cell('RECEIVABLE', 'holiday')}</td>
+            <td data-label="Phải chi">{cell('PAYABLE', 'holiday')}</td>
           </tr>
         </tbody>
       </table>

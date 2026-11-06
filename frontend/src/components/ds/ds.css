@@ -1101,3 +1101,5 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 /* Ô hai dòng (tên + dòng phụ) đặt làm tiêu đề của RowList: dòng phụ không đậm theo tiêu đề. */
 .ds-rowlist__title .ds-cell2__sub { font-weight: 400; }
 .ds-rowlist__check { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; margin-left: -10px; }
+/* Nút "Dùng số điện thoại này cho Zalo" dưới ô Zalo: cột hẹp (form 3 cột ở 1100–1160px, điện thoại) thì xuống dòng, không tràn. */
+.ds-zalo-use.ant-btn { max-width: 100%; height: auto; min-height: var(--ant-control-height-sm); padding-left: 0; white-space: normal; text-align: left; }

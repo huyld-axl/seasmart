@@ -10,7 +10,7 @@ export function CrewFilterButton({ value, count = filterCount(value), open, onTo
   return (
     <Badge count={count} size="small" offset={[-4, 4]}>
       <Button className="crew-filter-btn" icon={<FilterOutlined />} aria-label="Bộ lọc" aria-expanded={open} aria-controls="crew-filter-bar" onClick={onToggle}>
-        <span className="crew-filter-btn__label">Bộ lọc</span> <DownOutlined className="crew-filter-btn__chev" />
+        <span className="crew-filter-btn__label">Bộ lọc</span><DownOutlined className="crew-filter-btn__chev" />
       </Button>
     </Badge>
   )

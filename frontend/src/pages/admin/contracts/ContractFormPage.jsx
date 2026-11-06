@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Form, Input, Select, Skeleton } from 'antd'
+import { Button, Form, Input, Select, Skeleton } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -182,7 +183,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                 dependencies={['end_date']}
                 extra={!isEdit ? 'Điền sẵn từ ngày xuống tàu, sửa được' : undefined}
               >
-                <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+                <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
               <Form.Item
                 name="end_date"
@@ -200,7 +201,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                 ]}
                 extra={months != null ? formatMonths(months) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
               >
-                <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+                <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
               <Form.Item name="notes" className="sf-c6" label="Ghi chú">
                 <Input.TextArea rows={1} autoSize={{ minRows: 1, maxRows: 4 }} maxLength={2000} placeholder="Ghi chú cho hợp đồng này" />

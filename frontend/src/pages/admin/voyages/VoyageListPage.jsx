@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Input, Select, Skeleton } from 'antd'
+import { Button, Input, Select, Skeleton } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import useListSticky from '../../../components/ds/useListSticky'
@@ -144,7 +144,7 @@ export default function VoyageListPage() {
           />
           {/* Điện thoại: khoảng ngày nằm trong sheet Bộ lọc, thanh công cụ còn 2 tầng. */}
           {isPhone ? null : (
-            <DatePicker.RangePicker
+            <DateRangeField
               className="vy-range"
               format="DD/MM/YYYY"
               value={range}

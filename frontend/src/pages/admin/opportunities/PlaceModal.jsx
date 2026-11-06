@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Form, Modal, Select } from 'antd'
+import { Button, Form, Modal, Select } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import Banner from '../../../components/ds/Banner'
 import useToast from '../../../components/ds/useToast'
@@ -105,7 +106,7 @@ export default function PlaceModal({ opportunity: o, onClose }) {
           </Form.Item>
         ) : null}
         <Form.Item name="join_date" label="Ngày xuống tàu" rules={[{ required: true, message: 'Chọn ngày xuống tàu' }]} extra="Không được sau hôm nay.">
-          <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today, 'day')} />
+          <DateField format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today, 'day')} />
         </Form.Item>
         <Form.Item name="join_port_id" label="Nơi xuống tàu" rules={[{ required: true, message: 'Chọn nơi xuống tàu' }]}>
           <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />

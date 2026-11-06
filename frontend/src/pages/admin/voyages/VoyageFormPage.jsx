@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Form, Input, Select } from 'antd'
+import { Button, Form, Input, Select } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, ExclamationCircleOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import MoneyInput from '../../../components/ds/MoneyInput'
@@ -194,13 +195,13 @@ export default function VoyageFormPage() {
         <FormSection index={1} section={sections[1]} meta={metas[1]}>
           <div className="sf-grid">
             <Form.Item name="join_date" className="sf-c3" label="Ngày lên tàu" rules={[{ required: true, message: 'Chọn ngày lên tàu' }]} extra="Không được sau hôm nay">
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
             </Form.Item>
             <Form.Item name="join_port_id" className="sf-c3" label="Nơi lên tàu" rules={[{ required: true, message: 'Chọn nơi lên tàu' }]}>
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
             </Form.Item>
             <Form.Item name="planned_leave_date" className="sf-c3" label="Ngày rời dự kiến" dependencies={['join_date']} rules={[{ required: true, message: 'Chọn ngày rời dự kiến' }, afterJoin('Ngày rời dự kiến phải sau hoặc bằng ngày lên tàu')]}>
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="planned_leave_port_id" className="sf-c3" label="Nơi rời dự kiến">
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
@@ -211,7 +212,7 @@ export default function VoyageFormPage() {
             {values.ended ? (
               <>
                 <Form.Item name="leave_date" className="sf-c3" label="Ngày rời tàu" dependencies={['join_date']} rules={[{ required: true, message: 'Chọn ngày rời tàu' }, afterJoin('Ngày rời tàu phải sau hoặc bằng ngày lên tàu')]}>
-                  <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
+                  <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
                 </Form.Item>
                 <Form.Item name="leave_port_id" className="sf-c3" label="Nơi rời tàu" rules={[{ required: true, message: 'Chọn nơi rời tàu' }]}>
                   <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Button, DatePicker, InputNumber, Skeleton, Table, Tooltip } from 'antd'
+import { Button, InputNumber, Skeleton, Table, Tooltip } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import { CopyOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -116,7 +117,7 @@ export default function KpiTargetPage() {
         </div>
       </div>
       <div className="kt-toolbar">
-        <DatePicker
+        <DateField
           picker="month"
           format="MM/YYYY"
           allowClear={false}

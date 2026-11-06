@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Card, DatePicker, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Space, Steps, Table, Tabs, Tooltip } from 'antd'
+import { Button, Card, Form, Input, Menu, Modal, Pagination, Select, Skeleton, Space, Steps, Table, Tabs, Tooltip } from 'antd'
 import { DeleteOutlined, FileTextOutlined, DatabaseOutlined, MoreOutlined, PlusOutlined, ReloadOutlined, SafetyCertificateOutlined, SearchOutlined, SendOutlined, TeamOutlined } from '@ant-design/icons'
 import { DownloadIcon, UploadIcon } from '../components/ds/TransferIcons'
 import ProductBrand from '../components/common/ProductBrand'
@@ -634,7 +634,7 @@ export default function DesignSystemPage() {
               <Form.Item label="Lương cơ bản"><MoneyInput defaultValue={1150} /></Form.Item>
             </Demo>
             <Demo label="Ô chọn ngày">
-              <Form.Item label="Sign off"><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
+              <Form.Item label="Sign off"><DateField format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
             </Demo>
           </div>
         </Form>
@@ -689,7 +689,7 @@ export default function DesignSystemPage() {
             }
           >
             <Form layout="vertical" requiredMark>
-              <Form.Item label="Sign on" required><DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
+              <Form.Item label="Sign on" required><DateField format="DD/MM/YYYY" style={{ width: '100%' }} /></Form.Item>
               <Form.Item label="Lý do sửa" required extra="Lý do lưu vào lịch sử hồ sơ, ai xem hồ sơ cũng thấy.">
                 <Input.TextArea rows={3} placeholder="Ví dụ: AI đọc nhầm tháng, đối chiếu dấu xuất cảnh" />
               </Form.Item>

@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Modal, Form, Input, Select, Checkbox, DatePicker, Space, Skeleton, Spin } from 'antd'
+import { App, Button, Modal, Form, Input, Select, Checkbox, Space, Skeleton, Spin } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import { PlusOutlined, DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, certificateApi, certificateTypeApi, lookupApi } from '../../../api'
@@ -452,10 +453,10 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
             <Input />
           </Form.Item>
           <Form.Item name="issued_date" label="Ngày cấp" rules={[{ required: true, message: 'Nhập ngày cấp' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+            <DateField format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
           <Form.Item name="expiry_date" label="Có giá trị đến" rules={[{ required: !noExpiry, message: 'Nhập hạn hoặc đánh dấu không thời hạn' }]}>
-            <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabled={Boolean(noExpiry)} />
+            <DateField format="DD/MM/YYYY" style={{ width: '100%' }} disabled={Boolean(noExpiry)} />
           </Form.Item>
           <Form.Item name="no_expiry" valuePropName="checked">
             <Checkbox>Không thời hạn</Checkbox>

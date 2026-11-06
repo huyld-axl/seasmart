@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import DateInput from '../../components/ds/DateField'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi, certificateApi } from '../../api'
@@ -199,7 +200,7 @@ function Field({ name, label, span, required, children, ...rest }) {
 function DateField(props) {
   return (
     <Field {...props}>
-      <DatePicker format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
+      <DateInput format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
     </Field>
   )
 }
@@ -857,7 +858,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                         <Input inputMode="numeric" maxLength={20} />
                       </Form.Item>
                       <Form.Item name={[name, 'guarantor_id_issued_date']} label="Ngày cấp CCCD" className="sf-c4" rules={[notFuture('Ngày cấp')]}>
-                        <DatePicker format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
+                        <DateInput format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
                       </Form.Item>
                       <Form.Item name={[name, 'guarantor_id_issued_place']} label="Nơi cấp CCCD" className="sf-c4">
                         <Input maxLength={150} />

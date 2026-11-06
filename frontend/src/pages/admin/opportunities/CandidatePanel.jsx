@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { Button, DatePicker, Input, InputNumber, Pagination, Select, Skeleton, Table, Tooltip } from 'antd'
+import { Button, Input, InputNumber, Pagination, Select, Skeleton, Table, Tooltip } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import { FilterOutlined, SearchOutlined } from '@ant-design/icons'
 import SlidePanel from '../../../components/ds/SlidePanel'
 import ToggleRow from '../../../components/ds/ToggleRow'
@@ -188,7 +189,7 @@ export default function CandidatePanel({ opportunity, onClose }) {
           <ToggleRow compact label="Từng làm cho chủ tàu" value={filters.workedWithOwner} onChange={(v) => setFilter({ workedWithOwner: v })} />
           <label className="op-sug__field">
             <span>Rảnh trước ngày</span>
-            <DatePicker allowClear format="DD/MM/YYYY" placeholder="Chọn ngày" value={filters.freeBefore} onChange={(d) => setFilter({ freeBefore: d })} />
+            <DateField allowClear format="DD/MM/YYYY" placeholder="Chọn ngày" value={filters.freeBefore} onChange={(d) => setFilter({ freeBefore: d })} />
           </label>
           <label className="op-sug__field">
             <span>Chức danh hiện tại</span>

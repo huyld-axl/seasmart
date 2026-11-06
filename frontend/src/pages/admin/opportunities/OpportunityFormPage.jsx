@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, DatePicker, Form, Input, Select, Skeleton } from 'antd'
+import { App, Button, Form, Input, Select, Skeleton } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -227,19 +228,19 @@ function OpportunityForm({ opportunity, prefill }) {
         <FormSection index={1} section={sections[1]} meta={metas[1]}>
           <div className="sf-grid">
             <Form.Item name="planned_join_date" className={cn('planned_join_date', 'sf-c3')} label={label('planned_join_date', 'Ngày xuống tàu')} rules={[{ required: true, message: 'Chọn ngày xuống tàu' }]} dependencies={['planned_leave_date']}>
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="planned_join_port_id" className={cn('planned_join_port_id', 'sf-c3')} label={label('planned_join_port_id', 'Nơi xuống tàu')}>
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
             </Form.Item>
             <Form.Item name="planned_leave_date" className={cn('planned_leave_date', 'sf-c3')} label={label('planned_leave_date', 'Ngày rời tàu')} rules={[{ required: true, message: 'Chọn ngày rời tàu' }, leaveRule]} dependencies={['planned_join_date']}>
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="planned_leave_port_id" className={cn('planned_leave_port_id', 'sf-c3')} label={label('planned_leave_port_id', 'Nơi rời tàu')}>
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
             </Form.Item>
             <Form.Item name="deadline" className={cn('deadline', 'sf-c3')} label={label('deadline', 'Hạn chốt')} rules={[{ required: true, message: 'Chọn hạn chốt' }]} extra="Ngày chủ tàu cần danh sách">
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')}>
               <Input.TextArea rows={2} maxLength={2000} showCount placeholder="Yêu cầu riêng của chủ tàu, ưu tiên…" />

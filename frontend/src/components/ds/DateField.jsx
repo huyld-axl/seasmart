@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DatePicker } from 'antd'
+import { DatePicker, Form } from 'antd'
 import { CalendarOutlined, CloseCircleFilled } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import useViewport from '../../hooks/useViewport'
@@ -33,6 +33,9 @@ const isoOf = (value, kind) => (value ? dayjs(value).format(NATIVE[kind].iso) : 
 
 function NativeDate({ id, value, onChange, onBlur, picker = 'date', format, placeholder, disabled, allowClear = true, minDate, maxDate, disabledDate, status, className = '', style, 'aria-label': ariaLabel }) {
   const [error, setError] = useState(null)
+  // Trong Form.Item: lấy trạng thái lỗi của ô (thiếu trường bắt buộc…) để viền đỏ như ô của antd.
+  const itemStatus = Form.Item.useStatus().status
+  const invalid = status === 'error' || itemStatus === 'error' || !!error
   const shown = showFormat(format, picker)
   const pick = (event) => {
     const raw = event.target.value
@@ -49,7 +52,7 @@ function NativeDate({ id, value, onChange, onBlur, picker = 'date', format, plac
     setError(null)
     onChange?.(next, next.format(shown))
   }
-  const classes = ['ds-date', status === 'error' || error ? 'ds-date--error' : '', disabled ? 'ds-date--disabled' : '', className].filter(Boolean).join(' ')
+  const classes = ['ds-date', invalid ? 'ds-date--error' : '', disabled ? 'ds-date--disabled' : '', className].filter(Boolean).join(' ')
   return (
     <span className="ds-date-wrap" style={style}>
       <span className={classes}>
@@ -64,7 +67,7 @@ function NativeDate({ id, value, onChange, onBlur, picker = 'date', format, plac
           max={isoOf(maxDate, picker) || undefined}
           disabled={disabled}
           aria-label={ariaLabel || placeholder || shown}
-          aria-invalid={status === 'error' || !!error || undefined}
+          aria-invalid={invalid || undefined}
           onChange={pick}
           onBlur={onBlur}
         />

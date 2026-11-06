@@ -1,4 +1,5 @@
-import { DatePicker, Form, Modal } from 'antd'
+import { Form, Modal } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import { formatUsd } from '../../../utils/format'
 
@@ -23,7 +24,7 @@ export default function CollectModal({ bill, open, pending, onCancel, onConfirm 
           rules={[{ required: true, message: 'Chọn ngày thu' }]}
           extra={`${bill.ship_owner.company_name} · ${formatUsd(bill.total_usd, { fixed: true })} USD. Ghi khi đã nhận đủ tiền.`}
         >
-          <DatePicker format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs(), 'day')} />
+          <DateField format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(dayjs(), 'day')} />
         </Form.Item>
       </Form>
     </Modal>

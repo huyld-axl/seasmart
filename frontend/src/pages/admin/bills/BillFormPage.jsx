@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, DatePicker, Form, Input, Skeleton } from 'antd'
+import { Button, Form, Input, Skeleton } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -88,7 +89,7 @@ function BillForm({ data }) {
                 rules={[{ required: true, message: 'Chọn hạn thanh toán' }]}
                 extra="Tính tự động theo kỳ thanh toán của hợp đồng. Cần dời (ngày lễ…) thì sửa ở đây."
               >
-                <DatePicker format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(bill.period_start), 'day')} />
+                <DateField format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(bill.period_start), 'day')} />
               </Form.Item>
               <Form.Item
                 name="note"

@@ -98,14 +98,20 @@ body {
   .ant-btn-icon-only,
   .ant-btn-variant-link,
   .ant-btn-variant-text,
-  .ant-switch {
+  .ant-switch,
+  .ant-input-clear-icon,
+  .rm-rh__menu {
     position: relative;
   }
+  /* .ant-select-clear đã position: absolute, không đổi. */
   .ant-btn-sm::after,
   .ant-btn-icon-only::after,
   .ant-btn-variant-link::after,
   .ant-btn-variant-text::after,
-  .ant-switch::after {
+  .ant-switch::after,
+  .ant-input-clear-icon::after,
+  .ant-select-clear::after,
+  .rm-rh__menu::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -113,5 +119,16 @@ body {
     width: max(100%, 40px);
     height: max(100%, 40px);
     transform: translate(-50%, -50%);
+  }
+}
+
+/* Link đứng riêng (không nằm trong câu) ở điện thoại: cao đủ 40px để bấm (link hành động của trạng thái rỗng, "Về đăng nhập"). */
+@media (max-width: 639px) {
+  .ds-empty__action > a,
+  .login__card > a,
+  a.sub-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
   }
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Skeleton, Tooltip } from 'antd'
+import HeadActions from '../../../components/ds/HeadActions'
 import { CheckOutlined, EditOutlined, MoreOutlined, RollbackOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import AuditTimeline from '../../../components/ds/AuditTimeline'
@@ -154,7 +155,7 @@ export default function BillDetailPage() {
           <p className="crew-head__desc">{formatDate(bill.period_start)} → {formatDate(bill.period_end)} · hạn thanh toán {formatDate(bill.due_date)}</p>
           <div className="crew-head__badges"><StatusBadge group="bill" value={display} label={overdueLabel(bill)} /></div>
         </div>
-        <div className="crew-head__actions">{actions}</div>
+        <HeadActions>{actions}</HeadActions>
       </div>
 
       <div className="ct-detail">

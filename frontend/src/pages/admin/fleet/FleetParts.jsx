@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon, { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import useScrollSpy from './useScrollSpy'
+import useViewport from '../../../hooks/useViewport'
 import '../seafarers/SeafarerForm.css'
 import '../seafarers/SeafarerProfile.css'
 import './fleet.css'
@@ -71,10 +72,21 @@ export function BackButton() {
 }
 
 // Breadcrumb theo cấu trúc dữ liệu (chủ tàu › tàu › chuyến › hợp đồng), không theo đường người dùng vừa đi.
-export function Crumb({ items }) {
+// Điện thoại (< 640px): còn một nấc "‹ {nấc cha}" (nấc cuối có link), một dòng, thay cho cả chuỗi dễ xuống nhiều dòng.
+// `back`: hiện nút Quay lại ở desktop (mặc định có).
+export function Crumb({ items, back = true }) {
+  const { isPhone } = useViewport()
+  if (isPhone) {
+    const parent = [...items].reverse().find((item) => item.to)
+    return parent ? (
+      <nav className="crew-crumb crew-crumb--up" aria-label="Đường dẫn">
+        <Link to={parent.to}><LeftOutlined aria-hidden /> {parent.label}</Link>
+      </nav>
+    ) : null
+  }
   return (
     <nav className="crew-crumb" aria-label="Đường dẫn">
-      <BackButton />
+      {back ? <BackButton /> : null}
       {items.map((item, index) => (
         <span key={`${index}-${item.label}`} style={{ display: 'contents' }}>
           {index > 0 ? <RightOutlined aria-hidden /> : null}

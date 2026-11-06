@@ -62,8 +62,6 @@
 @media (max-width: 639px) {
   .partner-primary { grid-template-columns: minmax(0, 1fr); }
   .partner-primary > .ds-quick { grid-column: 1; }
-  .partner-profile .crew-head__meta { grid-template-columns: minmax(0, 1fr); gap: 6px; }
-  .partner-profile .crew-head__meta dd + dt { margin-top: 8px; }
 }
 
 .pv-section { display: grid; gap: 12px; }

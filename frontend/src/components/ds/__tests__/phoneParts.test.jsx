@@ -5,6 +5,7 @@ import Fab from '../Fab'
 import BottomSheet from '../BottomSheet'
 import DateField, { DateRangeField } from '../DateField'
 import RowList from '../RowList'
+import HeadActions from '../HeadActions'
 import { centerLeft, scrollFlags } from '../scrollRow'
 
 // Điện thoại: mọi truy vấn max-width khớp, min-width không. Desktop: ngược lại (hooks/useViewport.js).
@@ -154,5 +155,28 @@ describe('scrollRow', () => {
     expect(centerLeft({ itemLeft: 400, itemWidth: 100, clientWidth: 300, scrollWidth: 1000 })).toBe(300)
     expect(centerLeft({ itemLeft: 20, itemWidth: 100, clientWidth: 300, scrollWidth: 1000 })).toBe(0)
     expect(centerLeft({ itemLeft: 950, itemWidth: 50, clientWidth: 300, scrollWidth: 1000 })).toBe(700)
+  })
+})
+
+describe('HeadActions', () => {
+  const buttons = (onEnd) => [
+    <button key="print" type="button">In hợp đồng</button>,
+    <button key="end" type="button" data-main onClick={onEnd}>Kết thúc hợp đồng</button>,
+    <button key="revert" type="button">Đưa về Nháp</button>,
+  ]
+
+  it('desktop giữ đủ các nút', () => {
+    screenAs(false)
+    render(<HeadActions>{buttons()}</HeadActions>)
+    expect(screen.getAllByRole('button')).toHaveLength(3)
+  })
+
+  it('điện thoại: nút chính + ⋯, nút còn lại vào menu', () => {
+    screenAs(true)
+    render(<HeadActions>{buttons()}</HeadActions>)
+    expect(screen.getByRole('button', { name: 'Kết thúc hợp đồng' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Thao tác khác' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Đưa về Nháp' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'In hợp đồng' })).toBeNull()
   })
 })

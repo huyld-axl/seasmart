@@ -179,3 +179,12 @@
 .sf-ai--ok .sf-seg { box-shadow: 0 0 0 1px var(--primary); }
 .sf-aicheck { margin-left: 6px; color: var(--primary); font-size: 12px; font-weight: 600; }
 @media (max-width: 639px) { .sf-panel__scans { margin-left: 40px; } }
+
+/* Khối chỉ đọc ở điện thoại (trang chi tiết thuyền viên, đối tác): nhãn trái giá trị phải, kẻ mảnh giữa các trường,
+   mỗi trường ~40px thay vì ~60px (kế hoạch responsive mục 4.4). */
+@media (max-width: 639px) {
+  .sf-grid:has(> .sf-ro) { row-gap: 0; }
+  .sf-ro { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); align-items: baseline; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .sf-grid > .sf-ro:first-child { border-top: 0; padding-top: 0; }
+  .sf-ro__label { margin: 0; }
+}

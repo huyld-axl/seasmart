@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Dropdown, Skeleton, Table } from 'antd'
+import HeadActions from '../../../components/ds/HeadActions'
 import { DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import Banner from '../../../components/ds/Banner'
@@ -209,7 +210,7 @@ export default function VesselDetailPage() {
           </div>
         </div>
         <NotePanel notes={vessel.notes} canEdit={can('vessel.update')} saving={save.isPending} onSave={saveNotes} className="sf-note--head" />
-        <div className="crew-head__actions">
+        <HeadActions>
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending || save.isPending} />
@@ -217,7 +218,7 @@ export default function VesselDetailPage() {
           )}
           {can('voyage.create') && <Button icon={<PlusOutlined />} onClick={() => navigate(`/voyages/new?${new URLSearchParams({ vessel: vessel.id, owner: vessel.ship_owner_id || '' })}`)}>Tạo chuyến</Button>}
           {can('vessel.update') && <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/vessels/${vessel.id}/edit`)}>Sửa thông tin</Button>}
-        </div>
+        </HeadActions>
       </div>
 
       {missing.length > 0 && (
@@ -229,7 +230,7 @@ export default function VesselDetailPage() {
         />
       )}
 
-      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
+      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky />
       {tab === 'overview' && overview}
       {tab === 'crew' && <VesselCrewTab vessel={vessel} />}
       {tab === 'service' && <PeopleTable rows={serviceRows} showStatus loading={service.isLoading} />}

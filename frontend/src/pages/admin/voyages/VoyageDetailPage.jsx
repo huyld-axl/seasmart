@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Dropdown, Skeleton } from 'antd'
+import HeadActions from '../../../components/ds/HeadActions'
 import { CalendarOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import AuditTimeline from '../../../components/ds/AuditTimeline'
 import Banner from '../../../components/ds/Banner'
@@ -176,7 +177,7 @@ export default function VoyageDetailPage() {
           </div>
         </div>
         <NotePanel notes={v.notes} canEdit={can('voyage.update')} saving={editNotes.isPending} onSave={saveNotes} className="sf-note--head" />
-        <div className="crew-head__actions">
+        <HeadActions>
           {menuItems.length ? (
             <Dropdown menu={{ items: menuItems, onClick: onMenu }} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
@@ -184,7 +185,7 @@ export default function VoyageDetailPage() {
           ) : null}
           {onboard && can('voyage.update') ? <Button icon={<CalendarOutlined />} onClick={() => setDialog('plan')}>Đổi ngày rời dự kiến</Button> : null}
           {onboard && can('voyage.run') ? <Button type="primary" onClick={() => setDialog('leave')}>Ghi rời tàu</Button> : null}
-        </div>
+        </HeadActions>
       </div>
 
       {v.date_mismatch && c ? (
@@ -195,7 +196,7 @@ export default function VoyageDetailPage() {
           action={can('contract.view') ? <Button onClick={() => navigate(`/contracts/${c.id}`)}>Mở hợp đồng</Button> : undefined}
         />
       ) : null}
-      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
+      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky />
       {tab === 'overview' ? <ReadLayout sections={sections} label="chuyến" /> : null}
       {tab === 'history' ? (
         <section className="crew-panel">

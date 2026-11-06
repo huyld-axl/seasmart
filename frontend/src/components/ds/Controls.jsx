@@ -7,7 +7,8 @@ import './ds.css'
 // Tab trạng thái trên bảng, variant `boxed`: đang chọn nền --secondary, mọi tab luôn có viền trong suốt.
 // `compact`: luôn là nút dropdown, cho thanh công cụ ít chỗ (danh sách thuyền viên). Dưới sm hàng tab thành nút dropdown có nhãn "Trạng thái:" (luật chốt #7, layouts/app.md "Bảng dữ liệu").
 // tab.dot: chấm đỏ nhỏ sau số đếm (tab có việc quá hạn, màn Tổng quan).
-export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:', compact = false }) {
+// `sticky`: ô chọn ở điện thoại dính dưới topbar khi cuộn (ô "Mục:" của trang chi tiết).
+export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:', compact = false, sticky = false }) {
   return (
     <>
       <div className="ds-tabs-boxed" role="tablist" hidden={compact}>
@@ -27,7 +28,7 @@ export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái
       ))}
       </div>
       <Select
-        className={compact ? 'ds-tabs-select ds-tabs-select--always' : 'ds-tabs-select'}
+        className={['ds-tabs-select', compact ? 'ds-tabs-select--always' : '', sticky ? 'ds-tabs-select--sticky' : ''].filter(Boolean).join(' ')}
         prefix={<span className="ds-tabs-select__prefix">{mobileLabel}</span>}
         value={value}
         onChange={onChange}

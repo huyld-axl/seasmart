@@ -265,6 +265,10 @@
 .ds-dl__value--empty { color: var(--muted); font-weight: 400; }
 @container (min-width: 384px) { .ds-dl__row { grid-template-columns: 7rem minmax(0, 1fr); align-items: baseline; gap: 24px; } }
 @container (min-width: 576px) { .ds-dl__row { grid-template-columns: 10rem minmax(0, 1fr); } }
+/* Điện thoại: chia 2 cột sớm hơn (từ khối 280px), nhãn tối đa 38% (kế hoạch responsive mục 4.4). Desktop giữ mốc 384px. */
+@media (max-width: 639px) {
+  @container (min-width: 280px) { .ds-dl__row { grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); align-items: baseline; gap: 12px; } }
+}
 
 /* ---------- Tab boxed, chip lọc ---------- */
 .ds-tabs-boxed { display: flex; gap: 4px; }
@@ -272,6 +276,11 @@
 .ds-tabs-select--always { display: inline-flex !important; }
 .ds-tabs-boxed[hidden] { display: none; }
 .ds-tabs-select__prefix { color: var(--muted); }
+/* Ô "Mục:" của trang chi tiết (StatusTabs sticky): ở điện thoại dài hết ngang và dính dưới topbar khi cuộn; viền nền 8px
+   che phần nội dung cuộn qua sau nó. */
+@media (max-width: 639px) {
+  .ds-tabs-select--sticky { position: sticky !important; top: calc(var(--topbar-h) + 8px); z-index: 5; width: 100% !important; box-shadow: 0 0 0 8px var(--background); }
+}
 @media (max-width: 639px) {
   .ds-tabs-boxed { display: none; }
   .ds-tabs-select { display: inline-flex !important; }

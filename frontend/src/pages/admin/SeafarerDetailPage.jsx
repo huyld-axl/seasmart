@@ -11,12 +11,12 @@ import {
   Input,
   Select,
   Checkbox,
-  DatePicker,
   Space,
   App,
   Dropdown,
   Skeleton,
 } from 'antd'
+import HeadActions from '../../components/ds/HeadActions'
 import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, CloseOutlined, DownOutlined, ScanOutlined, PauseCircleOutlined, PlayCircleOutlined, EditOutlined, EllipsisOutlined, MoreOutlined, RightOutlined, SendOutlined } from '@ant-design/icons'
 import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import {
@@ -40,7 +40,7 @@ import { useContractList, useVoyageList } from '../../hooks/useVoyages'
 import { readinessLevel, readinessRules } from './exports/packModel'
 import './exports/exports.css'
 import { useCan } from '../../hooks/usePermission'
-import { BackButton } from './fleet/FleetParts'
+import { Crumb } from './fleet/FleetParts'
 import ProfileOverview, { NoteBox } from './seafarers/ProfileOverview'
 import ProfileHistory from './seafarers/ProfileHistory'
 import DocumentsSection from './seafarers/DocumentsSection'
@@ -234,12 +234,7 @@ export default function SeafarerDetailPage() {
 
   return (
     <div className="ds-page crew-profile" ref={pageRef}>
-      <nav className="crew-crumb" aria-label="Đường dẫn">
-        <BackButton />
-        <Link to="/seafarers">Thuyền viên</Link>
-        <RightOutlined aria-hidden />
-        <span aria-current="page">{seafarer.full_name}</span>
-      </nav>
+      <Crumb items={[{ label: 'Thuyền viên', to: '/seafarers' }, { label: seafarer.full_name }]} />
 
       <div className="crew-head">
         <div className="crew-head__person">
@@ -288,14 +283,14 @@ export default function SeafarerDetailPage() {
           </div>
         </div>
         <NoteBox seafarer={seafarer} seafarerId={id} className="sf-note--head" />
-        <div className="crew-head__actions">
+        <HeadActions>
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending || activeMutation.isPending} />
             </Dropdown>
           )}
           {can('seafarer.update') && <Button icon={<EditOutlined />} onClick={() => navigate(`/seafarers/${id}/edit`)}>Sửa thông tin</Button>}
-        </div>
+        </HeadActions>
       </div>
 
       {readiness !== 'READY_IN_SCOPE' && (
@@ -323,7 +318,7 @@ export default function SeafarerDetailPage() {
       <ExpiryAlert tone="error" onDismiss={dismissAlerts} items={certAlerts.expired} title={(n) => `${n} chứng chỉ đã quá hạn`} line={(i) => `quá hạn ${-i.days} ngày (hết hạn ${i.expiresOn})`} />
       <ExpiryAlert tone="warning" onDismiss={dismissAlerts} items={certAlerts.expiring} title={(n) => `${n} chứng chỉ sắp hết hạn trong 60 ngày tới`} line={(i) => (i.days === 0 ? `hết hạn hôm nay (${i.expiresOn})` : `còn ${i.days} ngày (hết hạn ${i.expiresOn})`)} />
 
-      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
+      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky />
       {bodies[tab]}
     </div>
   )

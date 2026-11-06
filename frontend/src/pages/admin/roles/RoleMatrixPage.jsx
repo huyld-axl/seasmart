@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useBlocker, useNavigate } from 'react-router-dom'
-import { App, Button, Input, Skeleton } from 'antd'
+import { useNavigate } from 'react-router-dom'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
+import { Button, Input, Skeleton } from 'antd'
 import {
   CheckCircleFilled,
   ExpandAltOutlined,
@@ -11,7 +12,7 @@ import {
 } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
-import useMediaQuery from '../../../hooks/useMediaQuery'
+import useViewport from '../../../hooks/useViewport'
 import {
   useDeleteRole,
   useRoleCatalog,
@@ -42,7 +43,6 @@ import './roles.css'
 export default function RoleMatrixPage() {
   const navigate = useNavigate()
   const toast = useToast()
-  const { modal } = App.useApp()
   const catalogQuery = useRoleCatalog()
   const rolesQuery = useRoles()
   const save = useSaveRolePermissions()
@@ -56,7 +56,7 @@ export default function RoleMatrixPage() {
   const [deleting, setDeleting] = useState(null)
   const [saveOpen, setSaveOpen] = useState(false)
   const [phoneRoleId, setPhoneRoleId] = useState(null)
-  const isPhone = useMediaQuery('(max-width: 639px)')
+  const { isPhone } = useViewport()
   const scrollRef = useRef(null)
 
   const modules = catalogQuery.data?.modules
@@ -81,28 +81,7 @@ export default function RoleMatrixPage() {
   )
 
   // Rời trang khi còn thay đổi chưa lưu thì hỏi xác nhận.
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      dirty && currentLocation.pathname !== nextLocation.pathname
-  )
-  useEffect(() => {
-    if (blocker.state !== 'blocked') return
-    modal.confirm({
-      title: 'Rời trang này?',
-      content: `Còn ${count} thay đổi quyền chưa lưu. Rời trang sẽ mất các thay đổi này.`,
-      okText: 'Rời trang',
-      cancelText: 'Ở lại',
-      okButtonProps: { danger: true },
-      onOk: () => blocker.proceed(),
-      onCancel: () => blocker.reset(),
-    })
-  }, [blocker, modal, count])
-  useEffect(() => {
-    if (!dirty) return undefined
-    const warn = (event) => event.preventDefault()
-    window.addEventListener('beforeunload', warn)
-    return () => window.removeEventListener('beforeunload', warn)
-  }, [dirty])
+  useLeaveGuard(dirty, { content: `Còn ${count} thay đổi quyền chưa lưu. Rời trang sẽ mất các thay đổi này.` })
 
   // Vai trò mới tạo: cuộn ngang tới cột cuối, đầu cột nháy sáng.
   useEffect(() => {

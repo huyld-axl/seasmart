@@ -1,7 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, DatePicker, Form, Input, Select, Skeleton } from 'antd'
+import { App, Button, Form, Input, Select, Skeleton } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
+import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -17,7 +19,7 @@ import useAuthStore from '../../../stores/authStore'
 import apiErrorText from '../../../utils/apiError'
 import { formatUsd } from '../../../utils/format'
 import { withFlag } from '../../../utils/flag'
-import { FleetTile, TargetSvg, FormFrame, FormSection } from '../fleet/FleetParts'
+import { FleetTile, TargetSvg, FormFrame, FormSection, AddAnotherLabel } from '../fleet/FleetParts'
 import changedLabel from '../fleet/changedLabel'
 import { monthsBetween, splitBudget } from '../voyages/voyageView'
 import RequirementTable from './RequirementTable'
@@ -98,6 +100,8 @@ function OpportunityForm({ opportunity, prefill }) {
   const cn = (name, base) => [base, changed.has(name) && 'sf-changed'].filter(Boolean).join(' ') || undefined
   const label = (name, text) => changedLabel(text, changed.has(name))
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(isEdit ? changed.size > 0 : form.isFieldsTouched())
 
   const coreFields = ['ship_owner_id', 'vessel_id', 'rank_id', 'budget_monthly_usd', 'owner_user_id']
   const timeFields = ['planned_join_date', 'planned_join_port_id', 'planned_leave_date', 'planned_leave_port_id', 'deadline']
@@ -173,6 +177,7 @@ function OpportunityForm({ opportunity, prefill }) {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         toast.success(isEdit ? `Đã lưu cơ hội ${row.code}` : `Đã tạo ${row.code} · ${row.rank_name}`)
+        leave.allow()
         navigate(`/opportunities/${row.id}`)
       }
     } catch (error) {
@@ -227,19 +232,19 @@ function OpportunityForm({ opportunity, prefill }) {
         <FormSection index={1} section={sections[1]} meta={metas[1]}>
           <div className="sf-grid">
             <Form.Item name="planned_join_date" className={cn('planned_join_date', 'sf-c3')} label={label('planned_join_date', 'Ngày xuống tàu')} rules={[{ required: true, message: 'Chọn ngày xuống tàu' }]} dependencies={['planned_leave_date']}>
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="planned_join_port_id" className={cn('planned_join_port_id', 'sf-c3')} label={label('planned_join_port_id', 'Nơi xuống tàu')}>
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
             </Form.Item>
             <Form.Item name="planned_leave_date" className={cn('planned_leave_date', 'sf-c3')} label={label('planned_leave_date', 'Ngày rời tàu')} rules={[{ required: true, message: 'Chọn ngày rời tàu' }, leaveRule]} dependencies={['planned_join_date']}>
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="planned_leave_port_id" className={cn('planned_leave_port_id', 'sf-c3')} label={label('planned_leave_port_id', 'Nơi rời tàu')}>
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
             </Form.Item>
             <Form.Item name="deadline" className={cn('deadline', 'sf-c3')} label={label('deadline', 'Hạn chốt')} rules={[{ required: true, message: 'Chọn hạn chốt' }]} extra="Ngày chủ tàu cần danh sách">
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')}>
               <Input.TextArea rows={2} maxLength={2000} showCount placeholder="Yêu cầu riêng của chủ tàu, ưu tiên…" />
@@ -275,7 +280,7 @@ function OpportunityForm({ opportunity, prefill }) {
             </div>
           )}
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate(isEdit ? `/opportunities/${opportunity.id}` : '/opportunities')}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate(isEdit ? `/opportunities/${opportunity.id}` : '/opportunities')}>Huỷ</Button>
             {isEdit ? null : (
               <Button
                 loading={save.isPending && again}
@@ -286,7 +291,7 @@ function OpportunityForm({ opportunity, prefill }) {
                   form.submit()
                 }}
               >
-                Lưu & thêm vị trí khác
+                <AddAnotherLabel noun="vị trí" />
               </Button>
             )}
             <Button

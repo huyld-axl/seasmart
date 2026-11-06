@@ -1,5 +1,10 @@
-/* Khung app theo UI Kit (docs/design/ui-kit): sidebar sáng 240px (thu gọn 64px), topbar 64px,
-   mục đang chọn nền --secondary, không màu nhấn. Màu lấy biến từ theme/tokens.js. */
+/* Khung app theo UI Kit (docs/design/ui-kit): sidebar sáng 240px (thu gọn 64px), topbar 64px (56px khi sidebar thành
+   ngăn kéo), mục đang chọn nền --secondary, không màu nhấn. Màu lấy biến từ theme/tokens.js. */
+
+/* Chiều cao topbar: khối dính dưới topbar (khung danh sách, mục lục form) đọc biến này. */
+:root {
+  --topbar-h: 64px;
+}
 
 .app-shell {
   display: flex;
@@ -164,7 +169,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  height: 64px;
+  height: var(--topbar-h);
   padding: 0 16px 0 24px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -262,7 +267,8 @@
 }
 
 .app-shell__drawer .ant-drawer-header {
-  height: 64px;
+  /* min-height, không height: antd đặt chiều cao header của Drawer đè lên. Khớp topbar. */
+  min-height: var(--topbar-h);
   padding: 0 16px;
   border-bottom: 1px solid var(--border);
 }
@@ -271,13 +277,90 @@
   padding: 0;
 }
 
+/* Ngăn kéo menu: mục 44px cho ngón cái; đáy là tài khoản đang đăng nhập và Đăng xuất. */
+.app-shell__drawer .app-shell__nav-item {
+  height: 44px;
+  font-size: 15px;
+}
+
+.app-shell__drawer .app-shell__nav-item--sub {
+  height: 40px;
+}
+
+.app-shell__drawer .ant-drawer-footer {
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+}
+
+.app-shell__drawer-foot {
+  display: grid;
+  gap: 8px;
+}
+
+.app-shell__drawer-foot .ant-btn {
+  justify-content: flex-start;
+  padding-inline: 8px;
+}
+
+.app-shell__me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-shell__me-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.app-shell__me-email {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell__me-role {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Màn hẹp (sidebar thành ngăn kéo, kế hoạch responsive mục 4.4): topbar 56px, tiêu đề chỉ là trang đang xem,
+   nút tài khoản còn avatar, nút icon 40×40. */
 @media (max-width: 767px) {
-  .app-shell__topbar {
-    padding-left: 8px;
+  :root {
+    --topbar-h: 56px;
   }
 
-  .app-shell__user-name {
+  .app-shell__topbar {
+    gap: 4px;
+    padding: 0 8px;
+  }
+
+  .app-shell__title-parent,
+  .app-shell__user-name,
+  .app-shell__user-caret {
     display: none;
+  }
+
+  .app-shell__icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .app-shell__right {
+    gap: 4px;
+  }
+
+  .app-shell__user {
+    justify-content: center;
+    width: 40px;
+    padding: 0;
   }
 
   .app-shell__content {

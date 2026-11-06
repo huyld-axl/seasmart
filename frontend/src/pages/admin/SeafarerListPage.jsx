@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, Dropdown, Grid, Input, Skeleton, Table } from 'antd'
+import { App, Button, Dropdown, Input, Skeleton, Table } from 'antd'
 import { EllipsisOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import { seafarerApi } from '../../api'
@@ -10,7 +10,9 @@ import { EmptyState, StatusTabs } from '../../components/ds/Controls'
 import { CREW_TABS, vesselNow } from './seafarers/crewView'
 import StatusBadge from '../../components/ds/StatusBadge'
 import CrewThumb from './seafarers/CrewThumb'
-import { CrewFilterBar, CrewFilterButton } from './seafarers/CrewFilters'
+import { CrewFilterFields, CrewFilterButton } from './seafarers/CrewFilters'
+import ListFilters from '../../components/ds/ListFilters'
+import Fab from '../../components/ds/Fab'
 import { EMPTY_FILTERS, filterCount, filterParams } from './seafarers/crewFilters'
 import './seafarers/SeafarerListPage.css'
 import RowActions from '../../components/ds/RowActions'
@@ -19,8 +21,8 @@ import useListSticky from '../../components/ds/useListSticky'
 import ListFooter from '../../components/ds/ListFooter'
 import { useCan } from '../../hooks/usePermission'
 import useToast from '../../components/ds/useToast'
+import useViewport from '../../hooks/useViewport'
 
-const { useBreakpoint } = Grid
 const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 
 function Person({ row }) {
@@ -45,8 +47,7 @@ export default function SeafarerListPage() {
   const navigate = useNavigate()
   const can = useCan()
   const toast = useToast()
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
+  const isMobile = useViewport().isCompact
   const [tab, setTab] = useState('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('newest') // newest | name_asc | name_desc
@@ -193,18 +194,29 @@ export default function SeafarerListPage() {
               <Button icon={<MoreOutlined />} aria-label="Nhập, xuất Excel" />
             </Dropdown>
             {can('seafarer.create') ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
+              <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
                 Thêm thuyền viên
               </Button>
             ) : null}
           </span>
         </div>
-        {filtersOpen ? <CrewFilterBar value={filters} onChange={(next) => { setFilters(next); setPage(1) }} /> : null}
+        <ListFilters
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          count={filterCount(filters)}
+          onClear={() => { setFilters(EMPTY_FILTERS); setPage(1) }}
+          total={total}
+          unit="thuyền viên"
+          loading={isLoading}
+        >
+          <CrewFilterFields value={filters} onChange={(next) => { setFilters(next); setPage(1) }} />
+        </ListFilters>
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="thuyền viên" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
+      {can('seafarer.create') ? <Fab label="Thêm thuyền viên" onClick={() => navigate('/seafarers/new')} /> : null}
     </div>
   )
 }

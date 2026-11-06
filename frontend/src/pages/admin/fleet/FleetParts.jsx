@@ -1,6 +1,8 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon, { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import useScrollSpy from './useScrollSpy'
+import useViewport from '../../../hooks/useViewport'
+import ScrollRow from '../../../components/ds/ScrollRow'
 import '../seafarers/SeafarerForm.css'
 import '../seafarers/SeafarerProfile.css'
 import './fleet.css'
@@ -71,10 +73,21 @@ export function BackButton() {
 }
 
 // Breadcrumb theo cấu trúc dữ liệu (chủ tàu › tàu › chuyến › hợp đồng), không theo đường người dùng vừa đi.
-export function Crumb({ items }) {
+// Điện thoại (< 640px): còn một nấc "‹ {nấc cha}" (nấc cuối có link), một dòng, thay cho cả chuỗi dễ xuống nhiều dòng.
+// `back`: hiện nút Quay lại ở desktop (mặc định có).
+export function Crumb({ items, back = true }) {
+  const { isPhone } = useViewport()
+  if (isPhone) {
+    const parent = [...items].reverse().find((item) => item.to)
+    return parent ? (
+      <nav className="crew-crumb crew-crumb--up" aria-label="Đường dẫn">
+        <Link to={parent.to}><LeftOutlined aria-hidden /> {parent.label}</Link>
+      </nav>
+    ) : null
+  }
   return (
     <nav className="crew-crumb" aria-label="Đường dẫn">
-      <BackButton />
+      {back ? <BackButton /> : null}
       {items.map((item, index) => (
         <span key={`${index}-${item.label}`} style={{ display: 'contents' }}>
           {index > 0 ? <RightOutlined aria-hidden /> : null}
@@ -87,17 +100,50 @@ export function Crumb({ items }) {
 
 // ---- Form: khung giống form thuyền viên (mục lục bên trái, khối đánh số bên phải) ----
 
+// Đường dẫn đầu form. Điện thoại: một nấc "‹ {nấc cha}" — ở form thêm mới đây cũng là lối Huỷ (thanh lưu ẩn nút Huỷ cho vừa một hàng).
+export function FormCrumb({ items }) {
+  const { isPhone } = useViewport()
+  if (isPhone) {
+    const parent = [...items].reverse().find((item) => item.to)
+    return parent ? (
+      <nav className="sf-crumb sf-crumb--up" aria-label="Đường dẫn">
+        <Link to={parent.to}><LeftOutlined aria-hidden /> {parent.label}</Link>
+      </nav>
+    ) : null
+  }
+  return (
+    <nav className="sf-crumb" aria-label="Đường dẫn">
+      {items.map((item, index) => (
+        <span key={item.label} style={{ display: 'contents' }}>
+          {index > 0 ? <RightOutlined aria-hidden /> : null}
+          {item.to ? <Link to={item.to}>{item.label}</Link> : <span aria-current="page">{item.label}</span>}
+        </span>
+      ))}
+    </nav>
+  )
+}
+
+// Hàng mục của form: desktop là danh sách (dọc ở màn rộng, chip ở màn vừa); điện thoại là ScrollRow (mép mờ, vạch chỉ,
+// mục đang xem tự vào giữa). `activeKey` để ScrollRow cuộn theo mục đang xem.
+export function FormToc({ activeKey, children }) {
+  const { isPhone } = useViewport()
+  return (
+    <nav className="sf-toc" aria-label="Các mục của form">
+      {isPhone ? <ScrollRow activeKey={activeKey}>{children}</ScrollRow> : children}
+    </nav>
+  )
+}
+
+// Nhãn nút "Lưu & thêm {đối tượng} khác"; điện thoại rút còn "Lưu & thêm khác" cho hai nút vừa một hàng.
+export function AddAnotherLabel({ noun }) {
+  // Một span bọc ngoài: nút antd tách mỗi con thành một mục có khoảng cách, nhiều con thì chữ bị giãn.
+  return <span>Lưu & thêm<span className="sf-noun"> {noun}</span> khác</span>
+}
+
 export function FormHead({ crumbs, title, description }) {
   return (
     <div>
-      <nav className="sf-crumb" aria-label="Đường dẫn">
-        {crumbs.map((item, index) => (
-          <span key={item.label} style={{ display: 'contents' }}>
-            {index > 0 ? <RightOutlined aria-hidden /> : null}
-            {item.to ? <Link to={item.to}>{item.label}</Link> : <span aria-current="page">{item.label}</span>}
-          </span>
-        ))}
-      </nav>
+      <FormCrumb items={crumbs} />
       <h1 className="sf-head__title">{title}</h1>
       {description ? <p className="sf-head__desc">{description}</p> : null}
     </div>
@@ -120,7 +166,7 @@ export function FormAside({ tile, name, sub, note, done, total, sections, stats,
         <div className="sf-progress__top"><span>Đã điền</span><span>{done}/{total}</span></div>
         <div className="sf-bar"><span style={{ width: `${percent}%` }} /></div>
       </div>
-      <nav className="sf-toc" aria-label="Các mục của form">
+      <FormToc activeKey={active}>
         {sections.map((section, index) => (
           <a key={section.key} href={`#sf-${section.key}`} aria-current={active === section.key ? 'true' : undefined} onClick={onGo(section.key)}>
             <span className="sf-toc__n">{index + 1}</span>
@@ -128,7 +174,7 @@ export function FormAside({ tile, name, sub, note, done, total, sections, stats,
             <span className="sf-toc__cnt">{stats[index]}</span>
           </a>
         ))}
-      </nav>
+      </FormToc>
     </aside>
   )
 }

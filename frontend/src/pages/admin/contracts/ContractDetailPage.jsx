@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Skeleton } from 'antd'
+import HeadActions from '../../../components/ds/HeadActions'
 import dayjs from 'dayjs'
 import { CloseCircleFilled } from '@ant-design/icons'
 import { CheckOutlined, CloseOutlined, DeleteOutlined, EditOutlined, FlagOutlined, LockOutlined, MoreOutlined, PrinterOutlined, RollbackOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
@@ -199,7 +200,7 @@ export default function ContractDetailPage() {
       <Button key="print" icon={<PrinterOutlined />} onClick={() => toast.info('Chưa in được hợp đồng', { description: 'Chưa có mẫu hợp đồng MLC.' })}>
         In hợp đồng <span className="ct-soon">Chưa chạy</span>
       </Button>,
-      <Button key="end" icon={<FlagOutlined />} onClick={handleEnd}>Kết thúc hợp đồng</Button>,
+      <Button key="end" data-main icon={<FlagOutlined />} onClick={handleEnd}>Kết thúc hợp đồng</Button>,
       ...(contract.legacy_unlinked ? [] : [<Button key="revert" icon={<RollbackOutlined />} onClick={handleRevert}>Đưa về Nháp</Button>]),
     ],
     ENDED: [],
@@ -345,12 +346,12 @@ export default function ContractDetailPage() {
               </div>
             ) : null}
           </div>
-        <div className="crew-head__actions">{actions}</div>
+        <HeadActions>{actions}</HeadActions>
       </div>
 
       {mismatch}
 
-      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
+      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky />
       {bodies[tab]}
 
       {dialog === 'approve' ? <ApproveModal contract={data} open onClose={() => setDialog(null)} /> : null}

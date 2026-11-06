@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Button, Table, Tooltip } from 'antd'
+import { Button, Tooltip } from 'antd'
+import RowList from '../../../components/ds/RowList'
 import { DeleteOutlined } from '@ant-design/icons'
 import RequirementFit from '../../../components/ds/RequirementFit'
 import StageChips from '../../../components/ds/StageChips'
@@ -13,6 +14,7 @@ import { candidateStages, fitIssues } from './opportunityView'
 // Cột Tiến trình: ba chặng Ráp hồ sơ → Gửi → Chủ tàu chọn, bấm chặng là làm việc. Chỉ một người được chủ tàu chọn: có người rồi thì các dòng khác mờ đi, chặng bị khoá cho tới khi bỏ chọn.
 // Cột Thao tác chỉ còn nút Bỏ khỏi danh sách. onMenu(action, candidate): 'select' | 'unselect' | 'send' | 'remove'. onOpenFit(candidate): mở bảng đối chiếu.
 // onOpenSubmission(candidate): mở bảng trượt Hồ sơ nộp (giấy tờ + biểu mẫu của người đó).
+// Điện thoại (RowList): ô tích, tên + tình trạng, Hồ sơ yêu cầu và Tiến trình ở dưới, nút Bỏ khỏi danh sách cuối dòng.
 export default function CandidateTable({ candidates, requirements, editable, selected, onSelect, onMenu, onOpenFit, onOpenSubmission }) {
   const heldId = candidates.find((c) => c.status === 'PICKED' && c.owner_selected_at)?.seafarer_id
   const blocked = (c) => heldId != null && c.seafarer_id !== heldId
@@ -21,6 +23,7 @@ export default function CandidateTable({ candidates, requirements, editable, sel
     {
       title: 'Ứng viên',
       key: 'name',
+      mobile: 'title',
       render: (_, c) => (
         <span className="ds-cell2">
           <span className="ds-cell2__main op-cand">
@@ -36,7 +39,7 @@ export default function CandidateTable({ candidates, requirements, editable, sel
         </span>
       ),
     },
-    { title: 'Hồ sơ yêu cầu', key: 'fit', render: (_, c) => <RequirementFit fit={c.fit} onOpen={() => onOpenFit(c)} /> },
+    { title: 'Hồ sơ yêu cầu', key: 'fit', mobile: 'meta', render: (_, c) => <RequirementFit fit={c.fit} onOpen={() => onOpenFit(c)} /> },
     {
       title: 'Thiếu hoặc sắp hết hạn',
       key: 'issues',
@@ -55,6 +58,7 @@ export default function CandidateTable({ candidates, requirements, editable, sel
     {
       title: 'Tiến trình',
       key: 'progress',
+      mobile: 'meta',
       render: (_, c) => {
         const { states, dates } = candidateStages(c)
         const live = c.status === 'PICKED'
@@ -90,9 +94,10 @@ export default function CandidateTable({ candidates, requirements, editable, sel
       </span>
     ) : null), { buttons: 1 }),
   ]
+  columns[columns.length - 1].mobile = 'actions'
 
   return (
-    <Table
+    <RowList
       rowKey="seafarer_id"
       className="crew-table"
       dataSource={candidates}

@@ -1,7 +1,10 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, AutoComplete, Button, DatePicker, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import useLeaveGuard from '../../hooks/useLeaveGuard'
+import { FormCrumb, FormToc, AddAnotherLabel } from './fleet/FleetParts'
+import DateInput from '../../components/ds/DateField'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import { seafarerApi, lookupApi, certificateApi } from '../../api'
@@ -199,7 +202,7 @@ function Field({ name, label, span, required, children, ...rest }) {
 function DateField(props) {
   return (
     <Field {...props}>
-      <DatePicker format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
+      <DateInput format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
     </Field>
   )
 }
@@ -534,7 +537,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
       setPendingDocs([])
       setKeepPhotoDoc(false)
       if (again) resetForNext()
-      else navigate(`/seafarers/${saved.id}`)
+      else {
+        leave.allow()
+        navigate(`/seafarers/${saved.id}`)
+      }
     },
     onError: (err) => {
       toast.error(isEdit ? 'Không lưu được hồ sơ' : 'Không tạo được hồ sơ', { description: err.response?.data?.error || err.response?.data?.message })
@@ -564,6 +570,9 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   const cancelTo = isEdit ? `/seafarers/${id}` : '/seafarers'
   const name = values.full_name?.trim() || seafarer?.full_name || ''
   const canSave = !isEdit || changedKeys.length > 0 || photoChanged
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  // Thêm mới: tính cả giấy tờ đã quét đang chờ lưu (tự điền từ giấy tờ không đánh dấu ô là đã chạm).
+  const leave = useLeaveGuard(isEdit ? changedKeys.length > 0 || photoChanged : form.isFieldsTouched() || photoChanged || pendingDocs.length > 0)
 
   return (
     <ChangedContext.Provider value={changedSet}>
@@ -571,19 +580,11 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
      <ScanContext.Provider value={scanContext}>
       <div className="sf-head">
         <div>
-          <nav className="sf-crumb" aria-label="Vị trí">
-            <Link to="/seafarers">Thuyền viên</Link>
-            <RightOutlined aria-hidden />
-            {isEdit ? (
-              <>
-                <Link to={`/seafarers/${id}`}>{seafarer.full_name}</Link>
-                <RightOutlined aria-hidden />
-                <span aria-current="page">Chỉnh sửa</span>
-              </>
-            ) : (
-              <span aria-current="page">Thêm mới</span>
-            )}
-          </nav>
+          <FormCrumb
+            items={isEdit
+              ? [{ label: 'Thuyền viên', to: '/seafarers' }, { label: seafarer.full_name, to: `/seafarers/${id}` }, { label: 'Chỉnh sửa' }]
+              : [{ label: 'Thuyền viên', to: '/seafarers' }, { label: 'Thêm mới' }]}
+          />
           <h2 className="sf-head__title">{isEdit ? 'Chỉnh sửa hồ sơ' : 'Thêm thuyền viên mới'}</h2>
         </div>
         <div className="sf-head__actions">
@@ -629,7 +630,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <span style={{ width: `${(sectionsWithInfo / SECTIONS.length) * 100}%` }} />
             </div>
           </div>
-          <nav className="sf-toc" aria-label="Các mục của form">
+          <FormToc activeKey={active}>
             {SECTIONS.map((s, i) => {
               const changes = changedKeys.filter((k) => s.fields.includes(k) || k === s.list).length + (s.photo && photoChanged ? 1 : 0)
               return (
@@ -644,7 +645,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                 </a>
               )
             })}
-          </nav>
+          </FormToc>
         </aside>
 
         <Form
@@ -857,7 +858,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                         <Input inputMode="numeric" maxLength={20} />
                       </Form.Item>
                       <Form.Item name={[name, 'guarantor_id_issued_date']} label="Ngày cấp CCCD" className="sf-c4" rules={[notFuture('Ngày cấp')]}>
-                        <DatePicker format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
+                        <DateInput format={DATE_FORMAT} placeholder="DD/MM/YYYY" style={{ width: '100%' }} />
                       </Form.Item>
                       <Form.Item name={[name, 'guarantor_id_issued_place']} label="Nơi cấp CCCD" className="sf-c4">
                         <Input maxLength={150} />
@@ -941,7 +942,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               </div>
             )}
             <div className="sf-savebar__actions">
-              <Button onClick={() => navigate(cancelTo)}>Hủy</Button>
+              <Button className="sf-savebar__cancel" onClick={() => navigate(cancelTo)}>Hủy</Button>
               {isEdit ? null : (
                 <Button
                   loading={mutation.isPending && mutation.variables?.again}
@@ -951,7 +952,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                     form.submit()
                   }}
                 >
-                  Lưu & thêm người khác
+                  <AddAnotherLabel noun="người" />
                 </Button>
               )}
               <Button

@@ -1,7 +1,7 @@
 import './ds.css'
 
 // Biểu đồ cột KPI theo tháng (Tổng quan). Tự vẽ bằng CSS, repo không dùng thư viện biểu đồ.
-// data: [{ key, label, value, projected }] — cột projected (tháng đang chạy) gạch chéo.
+// data: [{ key, label, short?, value, projected }] — cột projected (tháng đang chạy) gạch chéo. `short`: nhãn trục ở điện thoại.
 // target: đường mục tiêu nét đứt (null thì không vẽ). format: số trên đầu cột.
 // Cột co theo chiều cao khung cha (đặt chiều cao cho khung hoặc để flex: 1).
 export default function KpiBars({ data, target = null, format = (v) => String(v), label }) {
@@ -19,7 +19,11 @@ export default function KpiBars({ data, target = null, format = (v) => String(v)
         ))}
       </div>
       <div className="ds-kpibars__labels" aria-hidden>
-        {data.map((d) => <span key={d.key ?? d.label}>{d.label}</span>)}
+        {data.map((d) => (
+          <span key={d.key ?? d.label}>
+            {d.short ? <><span className="ds-kpibars__long">{d.label}</span><span className="ds-kpibars__short">{d.short}</span></> : d.label}
+          </span>
+        ))}
       </div>
     </div>
   )

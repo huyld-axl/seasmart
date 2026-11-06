@@ -1,7 +1,7 @@
-import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL } from '../components/ds/HelpLink'
+import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL, GUIDE_PHONE_URL } from '../components/ds/HelpLink'
 import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
-import { Dropdown, Drawer, Grid } from 'antd'
+import { Button, Dropdown, Drawer } from 'antd'
 import Icon from '@ant-design/icons'
 import {
   DashboardOutlined,
@@ -13,6 +13,7 @@ import {
   BookOutlined,
   LogoutOutlined,
   MenuOutlined,
+  MobileOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DownOutlined,
@@ -26,14 +27,13 @@ import useAuthStore from '../stores/authStore'
 import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } from './navConfig'
 import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
+import useViewport from '../hooks/useViewport'
 
 // Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng trang theo đường dẫn.
 const GUIDE_PATHS = [
   ['/voyages', GUIDE_CONTRACT_URL], ['/contracts', GUIDE_CONTRACT_URL], ['/bills', GUIDE_CONTRACT_URL],
   ['/dashboard', GUIDE_DASHBOARD_URL], ['/admin/kpi-targets', GUIDE_DASHBOARD_URL],
 ]
-
-const { useBreakpoint } = Grid
 
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
 const ShipSvg = () => (
@@ -169,12 +169,16 @@ export default function AdminLayout() {
   const { pathname } = useLocation()
   const guide = GUIDE_PATHS.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1]
   const { user, logout } = useAuthStore()
-  const screens = useBreakpoint()
-  const isMobile = !screens.md
+  const isMobile = useViewport().isCompact
 
   const sections = sectionsFor(user)
   const current = activeSection(sections, pathname)
   const currentTab = activeTab(current, pathname)
+
+  const signOut = () => {
+    logout()
+    navigate('/login')
+  }
 
   const userMenu = {
     items: [
@@ -183,10 +187,7 @@ export default function AdminLayout() {
       { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true },
     ],
     onClick: ({ key }) => {
-      if (key === 'logout') {
-        logout()
-        navigate('/login')
-      }
+      if (key === 'logout') signOut()
     },
   }
 
@@ -249,6 +250,24 @@ export default function AdminLayout() {
         closable={false}
         rootClassName="app-shell__drawer"
         title={<ProductBrand />}
+        footer={
+          // Ở ngăn kéo hiện luôn tài khoản và Đăng xuất, khỏi mở thêm menu avatar.
+          <div className="app-shell__drawer-foot">
+            <div className="app-shell__me">
+              <span className="app-shell__avatar">{initialsOf(user?.email)}</span>
+              <span className="app-shell__me-text">
+                <span className="app-shell__me-email">{user?.email}</span>
+                <span className="app-shell__me-role">{user?.role?.name || 'Chưa có vai trò'}</span>
+              </span>
+            </div>
+            <Button type="text" block icon={<MobileOutlined />} href={GUIDE_PHONE_URL} target="_blank" rel="noopener noreferrer">
+              Dùng MCAH trên điện thoại
+            </Button>
+            <Button type="text" block icon={<LogoutOutlined />} onClick={signOut}>
+              Đăng xuất
+            </Button>
+          </div>
+        }
       >
         <SideNav sections={sections} current={current} currentTab={currentTab} onNavigate={() => setDrawerOpen(false)} />
       </Drawer>

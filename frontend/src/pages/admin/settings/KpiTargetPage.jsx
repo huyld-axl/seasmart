@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Button, DatePicker, InputNumber, Skeleton, Table, Tooltip } from 'antd'
+import { Button, InputNumber, Skeleton, Table, Tooltip } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
+import DateField from '../../../components/ds/DateField'
 import { CopyOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -7,6 +9,7 @@ import { kpiTargetApi } from '../../../api'
 import MoneyInput from '../../../components/ds/MoneyInput'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
+import useViewport from '../../../hooks/useViewport'
 import apiErrorText from '../../../utils/apiError'
 import { changedCells, changedRows, cellErrors, prevMonth, totals } from './kpiTargets'
 import '../seafarers/SeafarerForm.css'
@@ -18,6 +21,7 @@ const monthLabel = (m) => `${m.slice(5, 7)}/${m.slice(0, 4)}`
 // Quản trị → Mục tiêu tháng: mỗi môi giới viên hai số (hợp đồng, doanh thu USD). Form sửa theo CLAUDE.md mục 3.3.
 export default function KpiTargetPage() {
   const toast = useToast()
+  const { isPhone } = useViewport()
   const queryClient = useQueryClient()
   const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
   const query = useQuery({ queryKey: ['kpi-targets', month], queryFn: () => kpiTargetApi.list(month) })
@@ -63,7 +67,7 @@ export default function KpiTargetPage() {
     { title: 'Môi giới viên', dataIndex: 'name', render: (name) => <span className="kt-name">{name}</span> },
     {
       title: 'Hợp đồng', key: 'contracts', width: 150,
-      render: (_, row) => cell(row, 'contracts', <InputNumber min={0} max={1000} precision={0} controls={false} value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
+      render: (_, row) => cell(row, 'contracts', <InputNumber min={0} max={1000} precision={0} controls={false} inputMode="numeric" value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
     },
     {
       title: 'Doanh thu', key: 'revenue_usd', width: 200,
@@ -85,7 +89,28 @@ export default function KpiTargetPage() {
   if (query.isLoading) body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
   else if (query.isError) body = <EmptyState isError title="Không tải được mục tiêu" action={<Button onClick={() => query.refetch()}>Thử lại</Button>} />
   else if (!draft.length) body = <EmptyState title="Chưa có tài khoản nào đang hoạt động" />
-  else {
+  else if (isPhone) {
+    // Điện thoại: "Cả công ty" lên đầu, mỗi môi giới viên một card hai ô (cùng ô nhập với bảng desktop).
+    body = (
+      <div className="kt-cards">
+        <div className="kt-card kt-card--total">
+          <b>Cả công ty</b>
+          <span className="kt-actual">Mục tiêu: {sum.contracts ?? 'chưa đặt'}{sum.contracts != null ? ' HĐ' : ''} · {sum.revenue_usd != null ? `${usd(sum.revenue_usd)} USD` : 'chưa đặt'}</span>
+          <span className="kt-actual">Tháng này: {sum.done} HĐ · {usd(sum.revenue)} USD</span>
+        </div>
+        {draft.map((row) => (
+          <div key={row.user_id} className="kt-card">
+            <span className="kt-name">{row.name}</span>
+            <span className="kt-actual">Tháng này: {row.done} HĐ · {usd(row.revenue)} USD</span>
+            <div className="kt-card__fields">
+              <label className="kt-card__field"><span>Hợp đồng</span>{columns[1].render(null, row)}</label>
+              <label className="kt-card__field"><span>Doanh thu (USD)</span>{columns[2].render(null, row)}</label>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  } else {
     body = (
       <Table
         rowKey="user_id"
@@ -107,6 +132,8 @@ export default function KpiTargetPage() {
   }
 
   const dirty = changed.size > 0
+  // Rời trang khi còn mục tiêu chưa lưu thì hỏi lại.
+  useLeaveGuard(dirty)
   return (
     <div className="ds-page">
       <div className="ds-page__head">
@@ -116,7 +143,7 @@ export default function KpiTargetPage() {
         </div>
       </div>
       <div className="kt-toolbar">
-        <DatePicker
+        <DateField
           picker="month"
           format="MM/YYYY"
           allowClear={false}

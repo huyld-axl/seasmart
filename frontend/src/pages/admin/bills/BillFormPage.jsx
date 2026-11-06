@@ -1,6 +1,8 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Button, DatePicker, Form, Input, Skeleton } from 'antd'
+import { Button, Form, Input, Skeleton } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
+import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -37,6 +39,8 @@ function BillForm({ data }) {
   const { bill } = data
   const back = `/bills/${bill.id}`
   const changes = countChanges(initial, { ...initial, ...values })
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại.
+  const leave = useLeaveGuard(changes > 0)
   const { totals } = groupItems(values.items || [])
   const negative = totals.all < 0
 
@@ -50,6 +54,7 @@ function BillForm({ data }) {
     try {
       await save.mutateAsync({ id: bill.id, ...payload })
       toast.success(`Đã lưu ${bill.code}`)
+      leave.allow()
       navigate(back)
     } catch (error) {
       toast.error(`Không lưu được ${bill.code}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
@@ -88,7 +93,7 @@ function BillForm({ data }) {
                 rules={[{ required: true, message: 'Chọn hạn thanh toán' }]}
                 extra="Tính tự động theo kỳ thanh toán của hợp đồng. Cần dời (ngày lễ…) thì sửa ở đây."
               >
-                <DatePicker format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(bill.period_start), 'day')} />
+                <DateField format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(bill.period_start), 'day')} />
               </Form.Item>
               <Form.Item
                 name="note"
@@ -121,7 +126,7 @@ function BillForm({ data }) {
             <p className="sf-savebar__msg bl-bar-msg"><b>{changes} thay đổi</b></p>
           ) : null}
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate(back)}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate(back)}>Huỷ</Button>
             <Button type="primary" htmlType="submit" loading={save.isPending} disabled={!changes || negative}>Lưu thay đổi</Button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Input, Modal, Skeleton } from 'antd'
+import HeadActions from '../../../components/ds/HeadActions'
 import { CopyOutlined, DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, RollbackOutlined } from '@ant-design/icons'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
@@ -394,7 +395,7 @@ export default function OpportunityDetailPage() {
           </div>
         </div>
         <NotePanel notes={o.notes} canEdit={editable} saving={m.save.isPending} onSave={saveNotes} className="sf-note--head" />
-        <div className="crew-head__actions">
+        <HeadActions>
           {menuItems.length ? (
             <Dropdown menu={{ items: menuItems, onClick: onMenu }} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
@@ -402,14 +403,14 @@ export default function OpportunityDetailPage() {
           ) : null}
           {editable ? <Button icon={<EditOutlined />} onClick={() => navigate(`/opportunities/${o.id}/edit`)}>Sửa cơ hội</Button> : null}
           {o.voyage && can('voyage.view') ? <Button type="primary" onClick={() => navigate(`/voyages/${o.voyage.id}`)}>Mở chuyến {o.voyage.code}</Button> : null}
-        </div>
+        </HeadActions>
       </div>
 
       <StageTrack steps={stageSteps} current={stage} stopped={!['OPEN', 'WON'].includes(o.status)} next={nextAction} info={stageInfo} todo={stageTodo} end={stageEnd} />
 
       {o.status === 'LOST' && o.close_reason ? <Banner tone="neutral" title="Không thành" description={o.close_reason} /> : null}
 
-      {tabs.length > 1 ? <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" /> : null}
+      {tabs.length > 1 ? <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky /> : null}
       {tab === 'overview' ? <ReadLayout sections={sections} label="cơ hội" /> : null}
       {tab === 'candidates' ? (
         <section className="crew-panel">

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Button, Skeleton } from 'antd'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import DueTag from '../../../components/ds/DueTag'
-import useMediaQuery from '../../../hooks/useMediaQuery'
+import useViewport from '../../../hooks/useViewport'
 import { attentionTabs, defaultTab } from './attentionRows'
 
 const MOBILE_ROWS = 5
@@ -34,7 +34,7 @@ function useFitCount(ref, hasRows, enabled) {
 // Khối Cần chú ý: tab theo loại cảnh báo, quá hạn trước, đỏ chỉ cho quá hạn.
 export default function AttentionCard({ query, own }) {
   const navigate = useNavigate()
-  const fill = useMediaQuery('(min-width: 1024px)')
+  const fill = useViewport().isWide
   const listRef = useRef(null)
   const [picked, setPicked] = useState(null)
   const tabs = query.data ? attentionTabs(query.data.tabs, own) : []

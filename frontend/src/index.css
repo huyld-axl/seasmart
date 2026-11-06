@@ -82,3 +82,53 @@ body {
 
 /* Nút dạng link: màu rê gần trùng màu gốc nên gạch chân để thấy được trạng thái rê. */
 .ant-btn-variant-link:not(:disabled):hover { text-decoration: underline; text-underline-offset: 2px; }
+
+/* Điện thoại (docs/mcah-ke-hoach-responsive-mobile.md mục 4.2). */
+@media (max-width: 639px) {
+  /* Chữ ô gõ được không dưới 16px: dưới mức đó Safari iOS tự phóng to cả trang khi chạm vào ô. Ô của antd đã 16px
+     qua antThemePhone; dòng này là lưới an toàn cho ô tự dựng và ô tìm trong Select. */
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='color'], [type='file'], [type='hidden']),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  /* Vùng bấm tối thiểu 40×40px cho nút nhỏ (size small, chỉ icon, dạng link / chữ) mà không đổi hình của nút. */
+  .ant-btn-sm,
+  .ant-btn-icon-only,
+  .ant-btn-variant-link,
+  .ant-btn-variant-text,
+  .ant-switch,
+  .ant-input-clear-icon,
+  .rm-rh__menu {
+    position: relative;
+  }
+  /* .ant-select-clear đã position: absolute, không đổi. */
+  .ant-btn-sm::after,
+  .ant-btn-icon-only::after,
+  .ant-btn-variant-link::after,
+  .ant-btn-variant-text::after,
+  .ant-switch::after,
+  .ant-input-clear-icon::after,
+  .ant-select-clear::after,
+  .rm-rh__menu::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 40px);
+    height: max(100%, 40px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Link đứng riêng (không nằm trong câu) ở điện thoại: cao đủ 40px để bấm (link hành động của trạng thái rỗng, "Về đăng nhập"). */
+@media (max-width: 639px) {
+  .ds-empty__action > a,
+  .login__card > a,
+  a.sub-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+}

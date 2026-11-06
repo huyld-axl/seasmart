@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Form, Input, Select, Skeleton } from 'antd'
+import { Button, Form, Input, Select, Skeleton } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
+import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -11,7 +13,7 @@ import { useContract, useContractMutations, useVoyage } from '../../../hooks/use
 import { EDITABLE_CONTRACT_STATUSES } from '../../../constants/voyageContract'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate } from '../../../utils/format'
-import { Crumb } from '../fleet/FleetParts'
+import { Crumb, AddAnotherLabel } from '../fleet/FleetParts'
 import { monthsBetween } from '../voyages/voyageView'
 import BalanceBar from './BalanceBar'
 import DealTable from './DealTable'
@@ -76,6 +78,8 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
     if (!isEdit) return true
     return JSON.stringify(toPayload(initial)) !== JSON.stringify(toPayload(values))
   }, [isEdit, initial, values])
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(isEdit ? changed : form.isFieldsTouched())
 
   function onVoyageChange(_, option) {
     const row = option?.row || null
@@ -105,6 +109,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         onSavedAndNew()
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
+        leave.allow()
         navigate(`/contracts/${row.contract.id}`)
       }
     } catch (error) {
@@ -182,7 +187,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                 dependencies={['end_date']}
                 extra={!isEdit ? 'Điền sẵn từ ngày xuống tàu, sửa được' : undefined}
               >
-                <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+                <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
               <Form.Item
                 name="end_date"
@@ -200,7 +205,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                 ]}
                 extra={months != null ? formatMonths(months) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
               >
-                <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+                <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
               <Form.Item name="notes" className="sf-c6" label="Ghi chú">
                 <Input.TextArea rows={1} autoSize={{ minRows: 1, maxRows: 4 }} maxLength={2000} placeholder="Ghi chú cho hợp đồng này" />
@@ -217,7 +222,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         </Form.Item>
 
         <BalanceBar balance={bal} budgetTotal={null}>
-          <Button onClick={() => navigate(back)}>Huỷ</Button>
+          <Button className="sf-savebar__cancel" onClick={() => navigate(back)}>Huỷ</Button>
           {!isEdit ? (
             <Button
               loading={save.isPending && again}
@@ -228,7 +233,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                 form.submit()
               }}
             >
-              Lưu & thêm hợp đồng khác
+              <AddAnotherLabel noun="hợp đồng" />
             </Button>
           ) : null}
           <Button

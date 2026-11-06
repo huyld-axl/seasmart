@@ -265,6 +265,10 @@
 .ds-dl__value--empty { color: var(--muted); font-weight: 400; }
 @container (min-width: 384px) { .ds-dl__row { grid-template-columns: 7rem minmax(0, 1fr); align-items: baseline; gap: 24px; } }
 @container (min-width: 576px) { .ds-dl__row { grid-template-columns: 10rem minmax(0, 1fr); } }
+/* Điện thoại: chia 2 cột sớm hơn (từ khối 280px), nhãn tối đa 38% (kế hoạch responsive mục 4.4). Desktop giữ mốc 384px. */
+@media (max-width: 639px) {
+  @container (min-width: 280px) { .ds-dl__row { grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); align-items: baseline; gap: 12px; } }
+}
 
 /* ---------- Tab boxed, chip lọc ---------- */
 .ds-tabs-boxed { display: flex; gap: 4px; }
@@ -272,6 +276,11 @@
 .ds-tabs-select--always { display: inline-flex !important; }
 .ds-tabs-boxed[hidden] { display: none; }
 .ds-tabs-select__prefix { color: var(--muted); }
+/* Ô "Mục:" của trang chi tiết (StatusTabs sticky): ở điện thoại dài hết ngang và dính dưới topbar khi cuộn; viền nền 8px
+   che phần nội dung cuộn qua sau nó. */
+@media (max-width: 639px) {
+  .ds-tabs-select--sticky { position: sticky !important; top: calc(var(--topbar-h) + 8px); z-index: 5; width: 100% !important; box-shadow: 0 0 0 8px var(--background); }
+}
 @media (max-width: 639px) {
   .ds-tabs-boxed { display: none; }
   .ds-tabs-select { display: inline-flex !important; }
@@ -401,7 +410,7 @@
 .ds-card:has(> .ds-toolbar) > .ds-table-foot { border-top: 1px solid var(--border); }
 /* .ds-card--fixed (trang danh sách): cả khung dính dưới topbar (64 + khe 12) và cao tối đa bằng phần còn lại của màn hình: toolbar, bảng, dòng chân đứng yên,
    giữ khe 12px; chỉ thân bảng cuộn bên trong (antd scroll.y do useListSticky tính). */
-.ds-card--fixed { position: sticky; top: 76px; max-height: calc(100dvh - 88px); }
+.ds-card--fixed { position: sticky; top: calc(var(--topbar-h) + 12px); max-height: calc(100dvh - var(--topbar-h) - 24px); }
 .ds-card:has(> .ds-toolbar) > .ds-toolbar,
 .ds-card:has(> .ds-toolbar) > .ds-table-foot { flex: none; }
 /* Dòng tiêu đề bảng (mọi bảng): nền --table-header, chữ navy (theme Table trong tokens.js), kẻ dọc đủ cao giữa các cột, vạch navy dưới. */
@@ -587,7 +596,7 @@
 .ds-money .ant-input-number-suffix { color: var(--muted); font-size: 12px; }
 
 /* Toast ở màn hẹp: nằm trên thanh lưu / thanh cân đối dính đáy (cao hơn khi các nút xuống nhiều hàng). */
-@media (max-width: 575px) { .ant-notification-bottom { bottom: 190px !important; } }
+@media (max-width: 639px) { .ant-notification-bottom { bottom: 190px !important; } }
 /* Thân bảng trong khung đứng yên: chỉ hiện thanh cuộn dọc khi thật sự tràn (antd mặc định luôn hiện). */
 .ds-card--fixed .ant-table-wrapper .ant-table-body { overflow-y: auto !important; }
 /* Chiều cao dòng lẻ pixel (72.8px) làm làm tròn scrollHeight dư 1px và hiện thanh cuộn thừa: chừa 1px đệm. */
@@ -805,10 +814,13 @@ span.ds-thumb--empty { cursor: default; }
 .ds-track__todo-done { color: var(--muted); }
 .ds-track__todo-done .ds-track__todo-box { border-color: var(--success); background: var(--success); }
 .ds-track__end { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .ds-track__bar { flex-direction: column; align-items: stretch; }
   .ds-track__list { flex-direction: column; gap: 4px; }
-  .ds-track__item { height: 36px; margin-left: 0; }
+  /* Xếp dọc: bỏ flex-basis 0 (ở cột dọc nó ép chặng về cao bằng chữ ~20px), mỗi chặng cao 40px để bấm được. */
+  .ds-track__item { flex: none; height: 40px; margin-left: 0; }
+  .ds-track__toggle { position: relative; }
+  .ds-track__toggle::after { content: ''; position: absolute; inset: -7px; }
   .ds-track__step, .ds-track__item:first-child .ds-track__step, .ds-track__item:last-child .ds-track__step { justify-content: flex-start; padding: 0 12px; border-radius: 8px; clip-path: none; }
   .ds-track__guide { grid-template-columns: 1fr; }
   .ds-track__col + .ds-track__col { border-top: 1px solid var(--border); border-left: 0; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
@@ -819,7 +831,7 @@ span.ds-thumb--empty { cursor: default; }
 .ds-track__toggle:focus-visible { box-shadow: 0 0 0 2px var(--ring-focus); outline: none; }
 .ds-track__toggle .anticon { transition: transform .15s; transform: rotate(-90deg); }
 .ds-track__toggle--open .anticon { transform: none; }
-@media (max-width: 720px) { .ds-track__toggle { align-self: flex-start; } }
+@media (max-width: 767px) { .ds-track__toggle { align-self: flex-start; } }
 .ds-panel--flush .ant-drawer-body { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .ds-toggle-row--compact { min-height: 40px; padding: 0 12px; font-size: 13px; }
 
@@ -836,7 +848,7 @@ span.ds-thumb--empty { cursor: default; }
 .ds-help-link:hover { color: var(--text); background: var(--neutral-bg); }
 .ds-help-link:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-@media (max-width: 600px) {
+@media (max-width: 639px) {
   .ds-help-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .ds-help-link { position: relative; padding: 0 6px; }
 }
@@ -894,6 +906,12 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-kpibars__target { position: absolute; left: 0; right: 0; z-index: 1; border-top: 2px dashed var(--warning); pointer-events: none; }
 .ds-kpibars__labels { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 14px; margin-top: 6px; color: var(--muted); font-size: 13px; text-align: center; }
 .ds-kpibars__labels span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ds-kpibars__short { display: none; }
+/* Điện thoại: cột hẹp, "Tháng này" thành nhãn ngắn T11 (cột gạch chéo đã báo là tháng đang chạy). */
+@media (max-width: 639px) {
+  .ds-kpibars__long { display: none; }
+  .ds-kpibars__short { display: inline; }
+}
 
 .ds-meter { position: relative; display: block; width: 100%; height: 12px; border-radius: 6px; background: var(--secondary); }
 .ds-meter--sm { height: 8px; border-radius: 4px; }
@@ -919,3 +937,175 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-ct__name.is-hover, .ds-ct__name:hover { background: rgba(0, 51, 102, 0.07); }
 .ds-ct__row.is-hover { background: rgba(0, 51, 102, 0.07); }
 .ds-ct__row.is-hover .ds-ct__bar:not(.ds-ct__bar--planned) { box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.25); }
+
+/* Dialog ở điện thoại thành sheet từ đáy (docs/mcah-ke-hoach-responsive-mobile.md mục 4.3): bám đáy, rộng hết màn,
+   bo trên 20px, thân cuộn khi dài, chân dính đáy, nút chia đều 44px, chừa vùng an toàn đáy iPhone. Một quy tắc cho
+   mọi Modal và Modal.confirm, không sửa từng dialog. Desktop giữ dialog giữa màn. */
+@keyframes ds-sheet-in { from { opacity: 1; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+@keyframes ds-sheet-out { from { opacity: 1; transform: translateY(0); } to { opacity: 1; transform: translateY(100%); } }
+@media (max-width: 639px) {
+  .ant-modal-wrap { display: flex; align-items: flex-end; overflow: hidden; }
+  .ant-modal-wrap::before { display: none; }
+  .ant-modal-wrap .ant-modal { top: 0; flex: 1 1 100%; width: 100% !important; max-width: 100%; margin: 0; padding: 0; vertical-align: bottom; }
+  .ant-modal-wrap .ant-modal-container {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 24px);
+    padding: 20px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-radius: 20px 20px 0 0;
+  }
+  .ant-modal-wrap .ant-modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .ant-modal-wrap .ant-modal-footer { display: flex; flex: none; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .ant-modal-wrap .ant-modal-footer > .ant-btn,
+  .ant-modal-wrap .ant-modal-confirm-btns > .ant-btn { flex: 1 1 0; min-width: 0; height: 44px; margin: 0 !important; }
+  /* Ba nút trở lên không chia một hàng (R3): xếp dọc, nút chính (cuối) lên trên. */
+  .ant-modal-wrap .ant-modal-footer:has(> .ant-btn:nth-child(3)) { flex-direction: column-reverse; }
+  .ant-modal-wrap .ant-modal-footer .op-pick__clear { margin-right: 0; }
+  .ant-modal-wrap .ant-modal-confirm-btns { display: flex; gap: 8px; }
+  .ant-modal.ant-zoom-appear.ant-zoom-appear-active,
+  .ant-modal.ant-zoom-enter.ant-zoom-enter-active { animation-name: ds-sheet-in; }
+  .ant-modal.ant-zoom-leave.ant-zoom-leave-active { animation-name: ds-sheet-out; }
+}
+
+/* ---------- Component cho điện thoại (kế hoạch responsive mục 4.3) ---------- */
+
+/* Fab: nút nổi "Thêm …" của trang danh sách, chỉ ở điện thoại. */
+.ds-fab {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 900;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 22px;
+  box-shadow: var(--elevation-popover);
+  cursor: pointer;
+}
+.ds-fab:hover { background: var(--primary-hover); }
+.ds-fab:active { transform: scale(0.96); }
+.ds-fab:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.ds-fab--inline { position: static; }
+/* Trang có Fab: chừa đáy để cuộn hết thì dòng cuối và nút "›" sang trang không nằm dưới Fab (56px + cách đáy 16px + 8px,
+   trừ 16px đệm sẵn của main). Fab chỉ có ở điện thoại nên desktop không đổi. */
+.ds-page:has(.ds-fab:not(.ds-fab--inline)) { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+
+/* BottomSheet: Drawer đáy cao theo nội dung, bo trên 20px, chân dính đáy với nút chia đều 44px. */
+.ds-sheet .ant-drawer-content-wrapper { height: auto !important; max-height: calc(100dvh - 24px); }
+.ds-sheet .ant-drawer-content-wrapper, .ds-sheet .ant-drawer-section, .ds-sheet .ant-drawer-content { border-radius: 20px 20px 0 0; }
+.ds-sheet .ant-drawer-body { padding: 0 16px 16px; overscroll-behavior: contain; }
+.ds-sheet .ant-drawer-footer { display: flex; gap: 8px; padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--border); }
+.ds-sheet .ant-drawer-footer > .ant-btn { flex: 1 1 0; min-width: 0; height: 44px; }
+.ds-sheet__head { position: sticky; top: 0; z-index: 1; padding-bottom: 12px; background: var(--surface); }
+.ds-sheet__grab { display: grid; place-items: center; width: 100%; height: 24px; padding: 0; border: 0; background: none; cursor: grab; touch-action: none; }
+.ds-sheet__grab::before { content: ''; width: 36px; height: 4px; border-radius: 999px; background: var(--border-strong); }
+.ds-sheet__titlerow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.ds-sheet__heading { display: grid; gap: 2px; min-width: 0; padding-top: 4px; }
+.ds-sheet__title { margin: 0; font-size: 17px; font-weight: 600; text-wrap: balance; }
+.ds-sheet__desc { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* DateField ở điện thoại: ô 44px hiện ngày theo format, <input type="date"> trong suốt phủ lên để mở bảng chọn của máy. */
+.ds-date-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 4px; width: 100%; min-width: 0; }
+.ds-date { position: relative; display: flex; min-width: 0; align-items: center; gap: 8px; height: 44px; padding: 0 12px 0 16px; border: 1px solid var(--border-strong); border-radius: var(--radius-md); background: var(--surface); font-size: 16px; }
+.ds-date:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--ring-focus); }
+.ds-date--error { border-color: var(--error); }
+.ds-date--disabled { background: var(--neutral-bg); color: #a1a1aa; }
+.ds-date__text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ds-date__text--empty { color: var(--muted); }
+.ds-date__icon { color: var(--muted); }
+.ds-date__native { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: pointer; -webkit-appearance: none; appearance: none; }
+.ds-date__native:disabled { cursor: not-allowed; }
+.ds-date__clear { position: relative; z-index: 1; display: grid; place-items: center; width: 40px; height: 40px; margin-right: -10px; padding: 0; border: 0; background: none; color: var(--muted); cursor: pointer; }
+.ds-date__err { color: var(--error-text); font-size: 13px; }
+.ds-date-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; }
+/* Hai ô cạnh nhau ở 375px chỉ còn ~165px: bỏ icon lịch, thu đệm để ngày DD/MM/YYYY không bị cắt. */
+.ds-date-range .ds-date { gap: 4px; padding: 0 6px 0 12px; }
+.ds-date-range .ds-date__icon { display: none; }
+
+/* ScrollRow: hàng cuộn ngang, mép mờ phía còn mục, vạch mảnh dưới hàng, nút mũi tên khi có chuột. */
+.ds-scrollrow { position: relative; min-width: 0; }
+.ds-scrollrow__track { position: relative; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.ds-scrollrow__track::-webkit-scrollbar { display: none; }
+.ds-scrollrow__track > * { flex-shrink: 0; }
+.ds-scrollrow__track[data-end] { mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent); }
+.ds-scrollrow__track[data-start] { mask-image: linear-gradient(to right, transparent, #000 32px); }
+.ds-scrollrow__track[data-start][data-end] { mask-image: linear-gradient(to right, transparent, #000 32px, #000 calc(100% - 32px), transparent); }
+.ds-scrollrow__arrow { position: absolute; top: 0; bottom: 0; display: none; place-items: center; width: 32px; height: 32px; margin: auto 0; padding: 0; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--foreground); cursor: pointer; }
+.ds-scrollrow__arrow--left { left: 0; }
+.ds-scrollrow__arrow--right { right: 0; }
+.ds-scrollrow__arrow:hover { background: var(--button-hover); }
+@media (any-pointer: fine) { .ds-scrollrow__arrow { display: grid; } }
+.ds-scrollrow__bar { position: absolute; top: 100%; right: 0; left: 0; height: 3px; margin-top: 4px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--foreground) 5%, transparent); pointer-events: none; }
+.ds-scrollrow__bar i { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: color-mix(in srgb, var(--foreground) 18%, transparent); }
+
+/* RowList ở điện thoại: dòng hai tầng thay bảng ít cột. */
+.ds-rowlist { margin: 0; padding: 0; list-style: none; }
+.ds-rowlist--loading, .ds-rowlist--empty { padding: 16px; }
+.ds-rowlist--empty { color: var(--muted); text-align: center; }
+.ds-rowlist__row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 16px; }
+.ds-rowlist__row + .ds-rowlist__row { border-top: 1px solid var(--border); }
+.ds-rowlist__row--link { cursor: pointer; }
+.ds-rowlist__row--link:hover { background: var(--item-hover); }
+.ds-rowlist__row--link:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.ds-rowlist__main { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.ds-rowlist__title { display: flex; flex-wrap: wrap; gap: 0 6px; font-weight: 600; overflow-wrap: anywhere; }
+.ds-rowlist__sub { display: flex; flex-wrap: wrap; gap: 0 6px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.ds-rowlist__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; color: var(--muted); font-size: 12px; }
+.ds-rowlist__values { display: grid; flex-shrink: 0; justify-items: end; gap: 2px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.ds-rowlist__actions { display: flex; flex-shrink: 0; align-items: center; gap: 4px; }
+
+/* Thanh công cụ danh sách khi sidebar thành ngăn kéo (< 768px; kế hoạch responsive mục 4.4). Không phải card nữa: nền trắng
+   sát mép, dính dưới topbar. Tầng 1: ô tìm + nút Lọc / ⋯ / Thêm. Tầng 2: ô trạng thái và các ô lọc phụ. Desktop không đổi. */
+@media (max-width: 767px) {
+  .ds-card--fixed { position: static; max-height: none; }
+  .ds-card:has(> .ds-toolbar) > .ds-toolbar {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 6;
+    margin: -16px -16px 0;
+    padding: 12px 16px;
+    overflow: visible;
+    border-width: 0 0 1px;
+    border-radius: 0;
+  }
+  .ds-toolbar { column-gap: 8px; row-gap: 0; }
+  /* Lặp class để thắng giới hạn bề rộng ô tìm riêng của trang (vd. .crew-toolbar .ds-toolbar__search 320px). */
+  .ds-toolbar.ds-toolbar > .ds-toolbar__search,
+  .ds-toolbar.ds-toolbar > .fl-searchgroup { order: 0; flex: 1 1 0; min-width: 0; max-width: none; }
+  .ds-toolbar > .ds-toolbar__end { order: 1; margin-left: 0; }
+  /* Ngắt dòng: mọi thứ còn lại xuống tầng 2. */
+  .ds-toolbar::after { content: ''; order: 2; flex-basis: 100%; height: 0; }
+  .ds-toolbar > :not(.ds-toolbar__search, .fl-searchgroup, .ds-toolbar__end) { order: 3; margin-top: 8px; }
+  .ds-toolbar > .ds-tabs-boxed { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  /* Ô chọn ở tầng 2 (trạng thái, chủ tàu, vai trò) chia đều một hàng thay vì rớt thêm tầng. */
+  .ds-toolbar > .ant-select { flex: 1 1 0; width: auto !important; min-width: 0; }
+  /* Nút Bộ lọc còn icon + số điều kiện đang bật. */
+  .ds-toolbar .crew-filter-btn { width: 40px; padding-inline: 0; }
+  .ds-toolbar .crew-filter-btn__label,
+  .ds-toolbar .crew-filter-btn__chev { display: none; }
+}
+@media (max-width: 639px) {
+  /* Ô tìm cao 44px ở điện thoại: nút cùng hàng cao theo. Nút Thêm thành Fab. */
+  .ds-toolbar__end .ant-btn { height: 44px; min-width: 44px; }
+  .ds-toolbar .crew-filter-btn { width: 44px; }
+  .ds-toolbar .ds-toolbar__add { display: none !important; }
+}
+
+/* Ô lọc trong sheet Bộ lọc (ListFilters ở điện thoại): xếp dọc, nhãn rõ. */
+.ds-filter-sheet { display: grid; gap: 16px; }
+.ds-filter-sheet .crew-filterbar__field { display: grid; gap: 6px; min-width: 0; }
+.ds-filter-sheet .crew-filterbar__field > span:first-child { color: var(--foreground); font-size: 14px; font-weight: 500; }
+.ds-filter-sheet .crew-filterbar__age .ant-input-number { flex: 1; width: auto; }
+/* Ô khoảng ngày nằm trong nhãn hàng lọc: không ăn kiểu chữ nhãn (xám 12px) của .crew-filterbar__field > span. */
+.crew-filterbar__field > .ds-date-range { color: var(--foreground); font-size: 16px; }
+/* Ô hai dòng (tên + dòng phụ) đặt làm tiêu đề của RowList: dòng phụ không đậm theo tiêu đề. */
+.ds-rowlist__title .ds-cell2__sub { font-weight: 400; }
+.ds-rowlist__check { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; margin-left: -10px; }
+/* Nút "Dùng số điện thoại này cho Zalo" dưới ô Zalo: cột hẹp (form 3 cột ở 1100–1160px, điện thoại) thì xuống dòng, không tràn. */
+.ds-zalo-use.ant-btn { max-width: 100%; height: auto; min-height: var(--ant-control-height-sm); padding-left: 0; white-space: normal; text-align: left; }

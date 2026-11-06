@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Checkbox, Skeleton } from 'antd'
 import { CheckOutlined, ReloadOutlined, RightOutlined } from '@ant-design/icons'
+import { Crumb } from '../fleet/FleetParts'
 import { seafarerApi } from '../../../api'
 import { documentApi } from '../../../api/documentApi'
 import Banner from '../../../components/ds/Banner'
@@ -85,13 +86,7 @@ export default function ReviewPage() {
 
   const name = seafarer?.full_name || ''
   const crumb = (
-    <nav className="crew-crumb" aria-label="Đường dẫn">
-      <Link to="/seafarers">Thuyền viên</Link>
-      <RightOutlined aria-hidden />
-      {loadingSeafarer ? <span>…</span> : <Link to={`/seafarers/${id}`}>{name}</Link>}
-      <RightOutlined aria-hidden />
-      <span aria-current="page">Duyệt giấy tờ</span>
-    </nav>
+    <Crumb back={false} items={[{ label: 'Thuyền viên', to: '/seafarers' }, loadingSeafarer ? { label: '…' } : { label: name, to: `/seafarers/${id}` }, { label: 'Duyệt giấy tờ' }]} />
   )
 
   if (docsQuery.isLoading) return <div className="ds-page rv">{crumb}<Skeleton active paragraph={{ rows: 8 }} /></div>

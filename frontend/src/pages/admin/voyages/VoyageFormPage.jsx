@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Form, Input, Select } from 'antd'
+import { Button, Form, Input, Select } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
+import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, ExclamationCircleOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import MoneyInput from '../../../components/ds/MoneyInput'
@@ -86,6 +88,8 @@ export default function VoyageFormPage() {
   ]
   const metas = [`${filled(coreFields)}/${coreFields.length}`, `${filled(timeFields)}/${timeFields.length}`]
   const ready = filled(coreFields) === coreFields.length && filled(timeFields) === timeFields.length && !blocked
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(form.isFieldsTouched())
   const selectedVessel = vesselOptions.find((o) => o.value === values.vessel_id)
   const vesselHasNoOwner = Boolean(selectedVessel) && !selectedVessel.ownerId
 
@@ -128,6 +132,7 @@ export default function VoyageFormPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}`)
+        leave.allow()
         navigate(`/voyages/${row.id}`)
       }
     } catch (error) {
@@ -194,13 +199,13 @@ export default function VoyageFormPage() {
         <FormSection index={1} section={sections[1]} meta={metas[1]}>
           <div className="sf-grid">
             <Form.Item name="join_date" className="sf-c3" label="Ngày lên tàu" rules={[{ required: true, message: 'Chọn ngày lên tàu' }]} extra="Không được sau hôm nay">
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
             </Form.Item>
             <Form.Item name="join_port_id" className="sf-c3" label="Nơi lên tàu" rules={[{ required: true, message: 'Chọn nơi lên tàu' }]}>
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
             </Form.Item>
             <Form.Item name="planned_leave_date" className="sf-c3" label="Ngày rời dự kiến" dependencies={['join_date']} rules={[{ required: true, message: 'Chọn ngày rời dự kiến' }, afterJoin('Ngày rời dự kiến phải sau hoặc bằng ngày lên tàu')]}>
-              <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="planned_leave_port_id" className="sf-c3" label="Nơi rời dự kiến">
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
@@ -211,7 +216,7 @@ export default function VoyageFormPage() {
             {values.ended ? (
               <>
                 <Form.Item name="leave_date" className="sf-c3" label="Ngày rời tàu" dependencies={['join_date']} rules={[{ required: true, message: 'Chọn ngày rời tàu' }, afterJoin('Ngày rời tàu phải sau hoặc bằng ngày lên tàu')]}>
-                  <DatePicker format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
+                  <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
                 </Form.Item>
                 <Form.Item name="leave_port_id" className="sf-c3" label="Nơi rời tàu" rules={[{ required: true, message: 'Chọn nơi rời tàu' }]}>
                   <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
@@ -243,7 +248,7 @@ export default function VoyageFormPage() {
             </span>
           </div>
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate('/voyages')}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate('/voyages')}>Huỷ</Button>
             <Button
               loading={create.isPending && again}
               disabled={create.isPending}

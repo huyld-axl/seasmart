@@ -14,7 +14,7 @@
 .sf-layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 24px; align-items: start; }
 
 /* Cột trái: ảnh, tên, tiến độ, mục lục. Dính khi cuộn (topbar 64px + 24px). */
-.sf-aside { position: sticky; top: 88px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.sf-aside { position: sticky; top: calc(var(--topbar-h) + 24px); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 .sf-who { display: flex; gap: 16px; padding: 20px; }
 .sf-who__text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .sf-who__name { margin: 0; overflow-wrap: anywhere; font-size: 16px; font-weight: 600; }
@@ -52,7 +52,7 @@
 
 /* Cột phải: các khối. */
 .sf-sections { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.sf-panel { scroll-margin-top: 88px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
+.sf-panel { scroll-margin-top: calc(var(--topbar-h) + 24px); border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); }
 .sf-panel__head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; padding: 20px 24px 0; }
 .sf-panel__text { flex: 1 1 220px; min-width: 0; }
 .sf-panel__scans { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -132,7 +132,7 @@
 .sf-savebar__note { display: flex; flex-basis: 100%; align-items: center; gap: 8px; margin: 0; color: var(--warning); font-size: 12px; }
 
 /* Màn hẹp: mục lục thành hàng chip cuộn ngang ở trên, lưới co lại. */
-@media (max-width: 1099px) {
+@media (max-width: 1099px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */
   .sf-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .sf-aside { position: static; }
   .sf-progress { display: none; }
@@ -141,19 +141,37 @@
   .sf-toc a[aria-current='true'] { border-color: transparent; }
   .sf-toc__n, .sf-toc__cnt { display: none; }
 }
-@media (max-width: 899px) {
+@media (max-width: 1023px) {
   .sf-grid > .sf-c3, .sf-grid > .sf-c4, .sf-grid > .sf-c5 { grid-column: span 6; }
   .sf-grid > .sf-c6, .sf-grid > .sf-c8 { grid-column: 1 / -1; }
 }
-@media (max-width: 599px) {
+@media (max-width: 639px) {
   .sf-grid > .sf-c3, .sf-grid > .sf-c4, .sf-grid > .sf-c5 { grid-column: 1 / -1; }
   .sf-panel__head { padding: 16px 16px 0; }
   .sf-panel__body { padding: 16px; }
   .sf-panel__desc { display: none; }
   .sf-seg { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .sf-savebar { bottom: 0; margin: 0 -16px; border-radius: 0; border-width: 1px 0 0; }
-  .sf-savebar__actions { width: 100%; }
-  .sf-savebar__actions .ant-btn-primary { flex: 1; }
+  /* Thanh lưu ở điện thoại (kế hoạch responsive mục 4.4): một hàng, sát đáy, chừa vùng an toàn iPhone. Chỉ còn số thay đổi
+     (không danh sách trường, không câu nhắc) và các nút; form thêm mới ẩn Huỷ (lối Huỷ là "‹ …" đầu form). */
+  .sf-savebar { bottom: 0; flex-wrap: nowrap; gap: 8px; margin: 0 -16px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: 0; border-width: 1px 0 0; }
+  .sf-savebar__msg, .sf-savebar__note, .sf-savebar__count > span { display: none; }
+  .sf-savebar__count { flex: 0 1 auto; min-width: 0; min-height: 0; }
+  .sf-savebar__count b { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .sf-savebar__actions { flex: 1 1 auto; flex-wrap: nowrap; width: auto; min-width: 0; margin-left: 0; }
+  .sf-savebar__actions > .ant-btn { flex: 1 1 auto; min-width: 0; height: 44px; }
+  .sf-savebar__actions > .sf-savebar__cancel { flex: 0 0 auto; }
+  .sf-savebar__actions:has(> .ant-btn:nth-child(3)) > .sf-savebar__cancel { display: none; }
+  /* Câu báo lỗi (vd. tổng âm ở sửa YCTT) vẫn hiện, một hàng riêng. */
+  .sf-savebar:has(.sf-savebar__msg--err) { flex-wrap: wrap; }
+  .sf-savebar .sf-savebar__msg--err { display: flex; flex: 1 1 100%; }
+  .sf-noun { display: none; }
+  /* Đầu form: một nấc về trang cha. */
+  .sf-crumb--up a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted); font-weight: 500; }
+  /* Hàng mục dính dưới topbar; bỏ khối tên + ảnh của cột tóm tắt (tiêu đề form đã có). */
+  .sf-aside { position: sticky; top: var(--topbar-h); z-index: 6; margin: 0 -16px; border-width: 0 0 1px; border-radius: 0; }
+  .sf-aside .sf-who { display: none; }
+  .sf-toc { padding: 8px 16px 12px; border-top: 0; }
+  .sf-panel { scroll-margin-top: calc(var(--topbar-h) + 72px); }
 }
 .sf-photo--btn { padding: 0; border: 0; cursor: pointer; }
 .sf-photo--btn:hover { box-shadow: 0 0 0 2px var(--primary); }
@@ -178,4 +196,20 @@
 .sf-ai--check .ant-input, .sf-ai--check .ant-input-affix-wrapper, .sf-ai--check .ant-input-number, .sf-ai--check .ant-picker, .sf-ai--check .ant-select-selector { border-color: var(--warning-border) !important; background: var(--warning-bg) !important; }
 .sf-ai--ok .sf-seg { box-shadow: 0 0 0 1px var(--primary); }
 .sf-aicheck { margin-left: 6px; color: var(--primary); font-size: 12px; font-weight: 600; }
-@media (max-width: 640px) { .sf-panel__scans { margin-left: 40px; } }
+/* Điện thoại: hai nút quét chia đôi một hàng; ba nút (Giấy tờ tùy thân) xếp dọc cả cụm, không để 2 trên 1 dưới. */
+@media (max-width: 639px) {
+  .sf-panel__scans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); flex-basis: 100%; margin-left: 40px; }
+  .sf-panel__scans:has(> button:nth-of-type(3)) { grid-template-columns: minmax(0, 1fr); }
+  /* Nhóm chọn nhỏ (Bắt buộc / Nên có ở yêu cầu cơ hội): nút 36px, vùng bấm phủ cả đệm 2px của khung thành 40px. */
+  .sf-seg--sm button { position: relative; height: 36px; font-size: 13px; }
+  .sf-seg--sm button::after { content: ''; position: absolute; inset: -2px 0; }
+}
+
+/* Khối chỉ đọc ở điện thoại (trang chi tiết thuyền viên, đối tác): nhãn trái giá trị phải, kẻ mảnh giữa các trường,
+   mỗi trường ~40px thay vì ~60px (kế hoạch responsive mục 4.4). */
+@media (max-width: 639px) {
+  .sf-grid:has(> .sf-ro) { row-gap: 0; }
+  .sf-ro { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); align-items: baseline; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+  .sf-grid > .sf-ro:first-child { border-top: 0; padding-top: 0; }
+  .sf-ro__label { margin: 0; }
+}

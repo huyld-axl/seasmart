@@ -25,6 +25,8 @@ export default function MoneyInput({ suffix = 'USD', className, allowNegative = 
       parser={parse}
       suffix={suffix}
       placeholder="0,00"
+      // Điện thoại mở bàn phím số; ô cho số âm giữ bàn phím thường vì bàn phím số của iOS không có dấu trừ.
+      inputMode={allowNegative ? 'text' : 'decimal'}
       className={['ds-money', className].filter(Boolean).join(' ')}
       {...props}
     />

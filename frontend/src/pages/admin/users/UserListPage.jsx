@@ -7,6 +7,7 @@ import UserForm from '../../../components/admin/users/UserForm'
 import useToast from '../../../components/ds/useToast'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import ListFooter from '../../../components/ds/ListFooter'
+import Fab from '../../../components/ds/Fab'
 import useListSticky from '../../../components/ds/useListSticky'
 import useAccountRights from '../../../hooks/useAccountRights'
 import { useRoleOptions } from '../../../hooks/useRoles'
@@ -194,7 +195,7 @@ export default function UserListPage() {
           />
           {rights.canCreate ? (
             <span className="ds-toolbar__end">
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
+              <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
                 Thêm tài khoản
               </Button>
             </span>
@@ -210,6 +211,7 @@ export default function UserListPage() {
         loading={createUser.isPending || updateUser.isPending}
         resetKey={formKey}
       />
+      {rights.canCreate ? <Fab label="Thêm tài khoản" onClick={() => openPanel(null)} /> : null}
     </div>
   )
 }

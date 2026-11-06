@@ -53,7 +53,7 @@
 /* Chi tiết hợp đồng */
 .ct-detail { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
 .ct-detail__main, .ct-detail__side { display: grid; gap: 16px; min-width: 0; }
-@media (min-width: 1100px) {
+@media (min-width: 1100px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */
   .ct-detail { grid-template-columns: minmax(0, 1fr) 340px; }
   .ct-detail__side { position: sticky; top: 16px; }
 }
@@ -105,3 +105,44 @@
 .ct-reject__title { display: flex; align-items: center; gap: 6px; color: var(--error-strong); font-size: 13px; font-weight: 600; }
 .ct-reject__body { max-height: 112px; margin-top: 4px; overflow-y: auto; font-size: 15px; font-weight: 500; white-space: pre-wrap; overflow-wrap: anywhere; }
 .ct-reject__by { margin-top: 6px; color: var(--muted); font-size: 12px; }
+
+/* Điện thoại (kế hoạch responsive bước 8): bảng khoản tiền / kỳ thanh toán thôi là bảng 640px cuộn ngang. Mỗi dòng một khối:
+   tên khoản trên, "Phải thu" / "Phải chi" hai cột dưới (nhãn từ data-label); đầu bảng ẩn. Desktop giữ bảng. Bảng hai cột của YCTT (.ct-table--two) đã vừa màn, giữ nguyên. */
+@media (max-width: 639px) {
+  .ct-table:not(.ct-table--two) { display: block; min-width: 0; }
+  .ct-table:not(.ct-table--two) colgroup, .ct-table:not(.ct-table--two) thead { display: none; }
+  .ct-table:not(.ct-table--two) tbody { display: block; }
+  .ct-table:not(.ct-table--two) tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 12px; padding: 12px 16px; border-top: 1px solid var(--border); }
+  .ct-table:not(.ct-table--two) tbody tr:first-child { border-top: 0; }
+  .ct-table:not(.ct-table--two) th, .ct-table:not(.ct-table--two) td { display: block; min-width: 0; padding: 0; border: 0 !important; text-align: left; }
+  .ct-table:not(.ct-table--two) tbody th { grid-column: 1 / -1; }
+  .ct-table:not(.ct-table--two) td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--muted); font-size: 12px; font-weight: 400; }
+  .ct-table:not(.ct-table--two) .ct-ro { text-align: left; }
+  .ct-table:not(.ct-table--two) .ct-add td { grid-column: 1 / -1; }
+  .ct-table:not(.ct-table--two) .ct-total th, .ct-table:not(.ct-table--two) .ct-total td { text-align: left; }
+  /* Chỉ xem (không có ô nhập): ba cột gọn tên | Phải thu | Phải chi, hàng đầu bảng còn hai nhãn làm chú thích. */
+  .ct-table:not(.ct-table--two):not(:has(input)) thead { display: block; }
+  .ct-table:not(.ct-table--two):not(:has(input)) tr { grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 1fr)); align-items: baseline; padding: 10px 16px; }
+  .ct-table:not(.ct-table--two):not(:has(input)) thead tr { padding: 8px 16px; background: var(--table-header); border-bottom: 2px solid var(--primary); }
+  .ct-table:not(.ct-table--two):not(:has(input)) thead th { padding: 0; background: none; border: 0; }
+  .ct-table:not(.ct-table--two):not(:has(input)) .ct-side__name { display: none; }
+  .ct-table:not(.ct-table--two):not(:has(input)) tbody th { grid-column: auto; }
+  .ct-table:not(.ct-table--two):not(:has(input)) td[data-label]::before { display: none; }
+  .ct-table:not(.ct-table--two):not(:has(input)) td, .ct-table:not(.ct-table--two):not(:has(input)) .ct-ro { text-align: right; }
+  .ct-table:not(.ct-table--two):not(:has(input)) thead th:not(:first-child) { display: flex; justify-content: flex-end; }
+  .ct-table:not(.ct-table--two):not(:has(input)) .ct-total td { text-align: right; }
+  /* Kỳ thanh toán khi sửa: ô chọn dài, mỗi bên một hàng. */
+  .ct-table--terms tr:has(.ant-select) { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Thanh cân đối (Hợp đồng) và thanh tổng (sửa YCTT) ở điện thoại: khối budget / tổng còn một dòng, ba số một hàng, nút một
+   hàng; thay cho khối cao ~250px. */
+@media (max-width: 639px) {
+  .sf-savebar.ct-bar { flex-wrap: wrap; row-gap: 8px; }
+  .ct-bar .ct-budget { display: flex; flex: 1 1 100%; align-items: baseline; justify-content: space-between; padding: 4px 12px; }
+  .ct-bar .ct-budget__value b { font-size: 16px; }
+  .ct-bar .ct-figs { flex: 1 1 100%; flex-wrap: nowrap; justify-content: space-between; gap: 8px; }
+  .ct-bar .ct-fig__value b { font-size: 15px; }
+  .ct-bar .ct-fig__label, .ct-bar .ct-fig__unit { font-size: 11px; }
+  .ct-bar .sf-savebar__actions { flex: 1 1 100%; }
+}

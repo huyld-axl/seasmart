@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Skeleton } from 'antd'
+import HeadActions from '../../../components/ds/HeadActions'
 import { DeleteOutlined, EditOutlined, MoreOutlined, PauseCircleOutlined, PlayCircleOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import CopyButton from '../../../components/ds/CopyButton'
@@ -181,17 +182,17 @@ export default function PartnerDetailPage() {
           </div>
         </div>
         <NotePanel notes={owner.notes} canEdit={can('partner.update')} saving={save.isPending} onSave={saveNotes} className="sf-note--head" />
-        <div className="crew-head__actions">
+        <HeadActions>
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending || save.isPending} />
             </Dropdown>
           )}
           {can('partner.update') && <Button icon={<EditOutlined />} onClick={() => navigate(`/partners/${owner.id}/edit`)}>Sửa thông tin</Button>}
-        </div>
+        </HeadActions>
       </div>
 
-      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
+      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky />
       {tab === 'overview' && overview}
       {tab === 'history' && <ProfileHistory partnerId={id} />}
       {tab === 'bills' && can('bill.view') && <BillListPage shipOwnerId={owner.id} />}

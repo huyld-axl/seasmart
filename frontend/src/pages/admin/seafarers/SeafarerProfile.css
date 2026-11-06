@@ -50,7 +50,7 @@
 .crew-panel .ant-descriptions-bordered .ant-descriptions-item-label { background: var(--background) !important; color: var(--muted); }
 
 .crew-two-col { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (min-width: 1200px) { .crew-two-col { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
+@media (min-width: 1200px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */ .crew-two-col { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); } }
 .crew-profile > *, .crew-two-col > * { min-width: 0; }
 
 .crew-attention { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
@@ -67,9 +67,31 @@
 .crew-wow__files { margin: 0; padding: 4px 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
 .crew-wow__error { color: var(--error-text); }
 
+/* Đầu trang chi tiết ở điện thoại (kế hoạch responsive mục 4.4, dùng cho mọi trang có .crew-head): ảnh 60×80 hoặc tile 44px
+   cạnh tên + trạng thái; khối thông tin xuống dưới, dài hết ngang, nhãn trái giá trị phải; hàng nút một hàng (HeadActions). */
 @media (max-width: 639px) {
-  .crew-head__actions { width: 100%; }
-  .crew-head__actions .ant-btn-primary { flex: 1; }
+  /* Grid một cột, không flex dọc: các khối con có flex-basis 280–320px (ghi chú, cột phụ) sẽ thành chiều cao. */
+  .crew-head { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .crew-head__person { display: grid; flex: none; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 4px 12px; }
+  .crew-head__photo { grid-row: span 3; width: 60px; height: 80px; }
+  .crew-head__photo.crew-head__photo--logo { width: 44px; height: 44px; }
+  .crew-head .crew-head__photo--logo .fl-tile { border-radius: 12px; font-size: 15px; }
+  .crew-head .crew-head__photo--logo .fl-tile .anticon { font-size: 22px; }
+  .crew-head__download { display: none; }
+  /* Chỉ header có ảnh / tile (.crew-head__person): tên, dòng phụ ở cột 2, khối thông tin trải hết hai cột. */
+  .crew-head__person > .crew-head__text { display: contents; }
+  .crew-head__person .crew-head__titlerow, .crew-head__person .crew-head__desc, .crew-head__person .crew-head__badges { grid-column: 2; }
+  .crew-head__desc { margin: 0; font-size: 13px; }
+  .crew-head__person .crew-head__meta { grid-column: 1 / -1; }
+  .crew-head__meta { grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); align-items: stretch; gap: 0; margin: 8px 0 0; padding-top: 0; border-top: 0; }
+  .crew-head__meta dt, .crew-head__meta dd { padding: 10px 0; border-top: 1px solid var(--border); }
+  .crew-head__meta dd { padding-left: 12px; }
+  .crew-head__meta dd { overflow-wrap: anywhere; }
+  .crew-head__actions { flex-wrap: nowrap; width: 100%; }
+  .crew-head__actions > .ant-btn:not(.ant-btn-icon-only), .crew-head__actions > .ant-tooltip-open { flex: 1 1 0; min-width: 0; }
+  .ct-head-side { flex: none; max-width: none; }
+  /* Breadcrumb điện thoại: một nấc về trang cha. */
+  .crew-crumb--up a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; font-weight: 500; }
 }
 .rev-changes { display: grid; gap: 2px; margin: 6px 0 0; padding-left: 16px; color: var(--muted); font-size: 13px; }
 .rev-changes b { color: var(--foreground); font-weight: 500; }

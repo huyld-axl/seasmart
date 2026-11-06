@@ -24,7 +24,7 @@
 .rv-seg button[aria-pressed='true'] { background: var(--surface); color: var(--foreground); font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 0 0 1px rgb(0 0 0 / 0.04); }
 
 .rv-cmp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
-@media (max-width: 1199px) {
+@media (max-width: 1199px) { /* mốc riêng: bố cục 2 cột cần khung nội dung rộng (màn trừ sidebar 240px), hạ về 1024 thì chật */
   .rv-seg { display: inline-flex; }
   .rv-cmp { grid-template-columns: minmax(0, 1fr); }
   .rv-cmp[data-view='so'] .rv-pane--goc,

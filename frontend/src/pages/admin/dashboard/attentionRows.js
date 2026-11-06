@@ -63,9 +63,10 @@ export function attentionTabs(tabs, own) {
 // Tab mở sẵn: tab đầu tiên có việc quá hạn, không có thì tab đầu tiên.
 export const defaultTab = (list) => (list.find((t) => t.late > 0) || list[0])?.key ?? null
 
-// Nhãn trục tháng: T6, T7… tháng đang chạy là "Tháng này".
+// Nhãn trục tháng: T6, T7… tháng đang chạy là "Tháng này" (điện thoại dùng nhãn ngắn T11, cột gạch chéo đã báo là dự kiến).
 export const monthBars = (months, currentIsRunning) =>
   months.map((m, i) => {
     const running = currentIsRunning && i === months.length - 1
-    return { key: m.month, label: running ? 'Tháng này' : `T${Number(m.month.slice(5, 7))}`, value: m.value, projected: running }
+    const short = `T${Number(m.month.slice(5, 7))}`
+    return { key: m.month, label: running ? 'Tháng này' : short, short: running ? short : undefined, value: m.value, projected: running }
   })

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { App, Button, Spin } from 'antd'
 import { EditOutlined } from '@ant-design/icons'
 import { useUser, useUpdateUser, useToggleActive, useDeleteUser } from '../../../hooks/useUsers'
@@ -8,6 +8,7 @@ import UserForm from '../../../components/admin/users/UserForm'
 import DescriptionList from '../../../components/ds/DescriptionList'
 import useToast from '../../../components/ds/useToast'
 import useAccountRights from '../../../hooks/useAccountRights'
+import { Crumb } from '../fleet/FleetParts'
 import { EmptyState } from '../../../components/ds/Controls'
 
 const formatDateTime = (value) => (value ? new Date(value).toLocaleString('vi-VN') : null)
@@ -55,11 +56,7 @@ export default function UserDetailPage() {
 
   return (
     <div className="ds-page" style={{ maxWidth: 720 }}>
-      <nav aria-label="Đường dẫn" style={{ color: 'var(--muted)' }}>
-        <Link to="/admin/users" style={{ color: 'var(--muted)' }}>
-          Tài khoản
-        </Link>
-      </nav>
+      <Crumb back={false} items={[{ label: 'Tài khoản', to: '/admin/users' }]} />
       <div className="ds-page__head">
         <div>
           <h1 className="ds-page__title">{user.email}</h1>

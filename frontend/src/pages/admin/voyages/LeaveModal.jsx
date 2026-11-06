@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, DatePicker, Form, Input, Modal, Select } from 'antd'
+import { Button, Form, Input, Modal, Select } from 'antd'
+import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import useToast from '../../../components/ds/useToast'
 import { lookupApi } from '../../../api'
@@ -92,7 +93,7 @@ export default function LeaveModal({ voyages, onClose, onDone }) {
           rules={[{ required: true, message: 'Chọn ngày rời tàu' }]}
           extra={single ? leaveHint(leaveDate, single.planned_leave_date) : 'Không được trước ngày lên tàu hay sau hôm nay.'}
         >
-          <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today, 'day') || d.isBefore(latestJoin, 'day')} />
+          <DateField format="DD/MM/YYYY" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today, 'day') || d.isBefore(latestJoin, 'day')} />
         </Form.Item>
         <Form.Item name="leave_port_id" label="Nơi rời tàu" rules={[{ required: true, message: 'Chọn nơi rời tàu' }]}>
           <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />

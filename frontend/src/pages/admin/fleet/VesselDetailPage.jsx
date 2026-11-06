@@ -2,7 +2,9 @@ import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { App, Button, Dropdown, Skeleton, Table } from 'antd'
+import { App, Button, Dropdown, Skeleton } from 'antd'
+import RowList from '../../../components/ds/RowList'
+import HeadActions from '../../../components/ds/HeadActions'
 import { DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import Banner from '../../../components/ds/Banner'
@@ -25,7 +27,7 @@ const KEY_FIELDS = ['Số IMO', 'Call Sign', 'Cảng đăng ký', 'Trạng thái
 function PeopleTable({ rows, showStatus, loading }) {
   return (
     <section className="crew-panel">
-      <Table
+      <RowList
         rowKey="id"
         loading={loading}
         dataSource={rows}
@@ -33,13 +35,15 @@ function PeopleTable({ rows, showStatus, loading }) {
         scroll={{ x: 'max-content' }}
         locale={{ emptyText: <EmptyState title={showStatus ? 'Chưa có chuyến đi tàu nào khớp với tàu này' : 'Hiện chưa có thuyền viên nào trên tàu'} /> }}
         columns={[
-          { title: 'Thuyền viên', key: 'who', render: (_, row) => <Link to={`/seafarers/${row.seafarer_id}`}>{row.seafarer_name}</Link> },
-          { title: 'Chức danh', dataIndex: 'rank_name', render: (value) => value || '—' },
+          { title: 'Thuyền viên', key: 'who', mobile: 'title', render: (_, row) => <Link to={`/seafarers/${row.seafarer_id}`}>{row.seafarer_name}</Link> },
+          { title: 'Chức danh', dataIndex: 'rank_name', mobile: 'sub', render: (value) => value || '—' },
           { title: 'Ngày lên tàu', dataIndex: 'sign_on_date', render: (value) => <span className="ds-num">{date(value)}</span> },
+          // Điện thoại: một dòng ngày lên → rời thay cho hai cột.
+          { title: 'Thời gian', key: 'dates', hidden: true, mobile: 'meta', render: (_, row) => <span className="ds-num">{date(row.sign_on_date)}{showStatus ? ` → ${row.sign_off_date ? date(row.sign_off_date) : 'nay'}` : ''}</span> },
           ...(showStatus
             ? [
                 { title: 'Ngày rời tàu', dataIndex: 'sign_off_date', render: (value) => <span className="ds-num">{date(value)}</span> },
-                { title: 'Tình trạng', key: 'state', render: (_, row) => row.on_board ? <StatusBadge group="seaService" value="ONGOING" /> : <span className="ds-role">Đã rời tàu</span> },
+                { title: 'Tình trạng', key: 'state', mobile: 'value', render: (_, row) => row.on_board ? <StatusBadge group="seaService" value="ONGOING" /> : <span className="ds-role">Đã rời tàu</span> },
               ]
             : []),
         ]}
@@ -209,7 +213,7 @@ export default function VesselDetailPage() {
           </div>
         </div>
         <NotePanel notes={vessel.notes} canEdit={can('vessel.update')} saving={save.isPending} onSave={saveNotes} className="sf-note--head" />
-        <div className="crew-head__actions">
+        <HeadActions>
           {moreItems.length > 0 && (
             <Dropdown menu={moreMenu} trigger={['click']} placement="bottomRight">
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={remove.isPending || save.isPending} />
@@ -217,7 +221,7 @@ export default function VesselDetailPage() {
           )}
           {can('voyage.create') && <Button icon={<PlusOutlined />} onClick={() => navigate(`/voyages/new?${new URLSearchParams({ vessel: vessel.id, owner: vessel.ship_owner_id || '' })}`)}>Tạo chuyến</Button>}
           {can('vessel.update') && <Button type="primary" icon={<EditOutlined />} onClick={() => navigate(`/vessels/${vessel.id}/edit`)}>Sửa thông tin</Button>}
-        </div>
+        </HeadActions>
       </div>
 
       {missing.length > 0 && (
@@ -229,7 +233,7 @@ export default function VesselDetailPage() {
         />
       )}
 
-      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" />
+      <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky />
       {tab === 'overview' && overview}
       {tab === 'crew' && <VesselCrewTab vessel={vessel} />}
       {tab === 'service' && <PeopleTable rows={serviceRows} showStatus loading={service.isLoading} />}

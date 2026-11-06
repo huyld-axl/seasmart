@@ -10,13 +10,14 @@ vi.mock('../../../../components/ds/useListSticky', () => ({ default: () => ({}) 
 vi.mock('../../../../api', () => ({ lookupApi: { countries: async () => ({ data: [{ id: 7, code: 'SG', name_vi: 'Singapore' }] }) } }))
 vi.mock('antd', async (original) => {
   const actual = await original()
-  return { ...actual, Grid: { useBreakpoint: () => ({ md: true }) },
+  return { ...actual,
     Select: ({ options, onChange, value, mode, 'aria-label': label }) => <select aria-label={label} multiple={mode === 'multiple'} value={value || (mode === 'multiple' ? [] : '')} onChange={(event) => onChange(mode === 'multiple' ? Array.from(event.target.selectedOptions, (option) => option.value).filter(Boolean) : Number(event.target.value) || undefined)}><option value="">Tất cả</option>{options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select>,
     Table: ({ columns, dataSource }) => <table><thead><tr>{columns.map((column) => <th key={column.key || column.dataIndex}>{column.title}</th>)}</tr></thead><tbody>{dataSource.map((row) => <tr key={row.id}>{columns.map((column) => <td key={column.key || column.dataIndex}>{column.render?.(row[column.dataIndex], row)}</td>)}</tr>)}</tbody></table>,
   }
 })
 beforeEach(() => {
-  window.matchMedia = vi.fn(() => ({ matches: true, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn() }))
+  // Màn desktop: truy vấn min-width khớp, max-width không (useViewport → bảng, không phải danh sách dòng).
+  window.matchMedia = vi.fn((query) => ({ matches: !query.includes('max-width'), addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn() }))
   useFleetList.mockReturnValue({ data: { data: [{ id: 9, company_name: 'Lotus', is_active: 1, contacts: [{ name: 'Other contact' }, { name: 'Primary contact', is_primary: true, phone: '0901', position: 'Crewing Manager' }] }], total: 1, counts: { all: 1, active: 1, inactive: 0 } } })
 })
 afterEach(cleanup)

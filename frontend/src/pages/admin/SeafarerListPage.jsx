@@ -10,7 +10,9 @@ import { EmptyState, StatusTabs } from '../../components/ds/Controls'
 import { CREW_TABS, vesselNow } from './seafarers/crewView'
 import StatusBadge from '../../components/ds/StatusBadge'
 import CrewThumb from './seafarers/CrewThumb'
-import { CrewFilterBar, CrewFilterButton } from './seafarers/CrewFilters'
+import { CrewFilterFields, CrewFilterButton } from './seafarers/CrewFilters'
+import ListFilters from '../../components/ds/ListFilters'
+import Fab from '../../components/ds/Fab'
 import { EMPTY_FILTERS, filterCount, filterParams } from './seafarers/crewFilters'
 import './seafarers/SeafarerListPage.css'
 import RowActions from '../../components/ds/RowActions'
@@ -192,18 +194,29 @@ export default function SeafarerListPage() {
               <Button icon={<MoreOutlined />} aria-label="Nhập, xuất Excel" />
             </Dropdown>
             {can('seafarer.create') ? (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
+              <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>
                 Thêm thuyền viên
               </Button>
             ) : null}
           </span>
         </div>
-        {filtersOpen ? <CrewFilterBar value={filters} onChange={(next) => { setFilters(next); setPage(1) }} /> : null}
+        <ListFilters
+          open={filtersOpen}
+          onClose={() => setFiltersOpen(false)}
+          count={filterCount(filters)}
+          onClear={() => { setFilters(EMPTY_FILTERS); setPage(1) }}
+          total={total}
+          unit="thuyền viên"
+          loading={isLoading}
+        >
+          <CrewFilterFields value={filters} onChange={(next) => { setFilters(next); setPage(1) }} />
+        </ListFilters>
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="thuyền viên" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
+      {can('seafarer.create') ? <Fab label="Thêm thuyền viên" onClick={() => navigate('/seafarers/new')} /> : null}
     </div>
   )
 }

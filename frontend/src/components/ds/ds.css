@@ -1038,3 +1038,50 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-rowlist__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 2px; color: var(--muted); font-size: 12px; }
 .ds-rowlist__values { display: grid; flex-shrink: 0; justify-items: end; gap: 2px; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
 .ds-rowlist__actions { display: flex; flex-shrink: 0; align-items: center; gap: 4px; }
+
+/* Thanh công cụ danh sách khi sidebar thành ngăn kéo (< 768px; kế hoạch responsive mục 4.4). Không phải card nữa: nền trắng
+   sát mép, dính dưới topbar. Tầng 1: ô tìm + nút Lọc / ⋯ / Thêm. Tầng 2: ô trạng thái và các ô lọc phụ. Desktop không đổi. */
+@media (max-width: 767px) {
+  .ds-card--fixed { position: static; max-height: none; }
+  .ds-card:has(> .ds-toolbar) > .ds-toolbar {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 6;
+    margin: -16px -16px 0;
+    padding: 12px 16px;
+    overflow: visible;
+    border-width: 0 0 1px;
+    border-radius: 0;
+  }
+  .ds-toolbar { column-gap: 8px; row-gap: 0; }
+  /* Lặp class để thắng giới hạn bề rộng ô tìm riêng của trang (vd. .crew-toolbar .ds-toolbar__search 320px). */
+  .ds-toolbar.ds-toolbar > .ds-toolbar__search,
+  .ds-toolbar.ds-toolbar > .fl-searchgroup { order: 0; flex: 1 1 0; min-width: 0; max-width: none; }
+  .ds-toolbar > .ds-toolbar__end { order: 1; margin-left: 0; }
+  /* Ngắt dòng: mọi thứ còn lại xuống tầng 2. */
+  .ds-toolbar::after { content: ''; order: 2; flex-basis: 100%; height: 0; }
+  .ds-toolbar > :not(.ds-toolbar__search, .fl-searchgroup, .ds-toolbar__end) { order: 3; margin-top: 8px; }
+  .ds-toolbar > .ds-tabs-boxed { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  /* Ô chọn ở tầng 2 (trạng thái, chủ tàu, vai trò) chia đều một hàng thay vì rớt thêm tầng. */
+  .ds-toolbar > .ant-select { flex: 1 1 0; width: auto !important; min-width: 0; }
+  /* Nút Bộ lọc còn icon + số điều kiện đang bật. */
+  .ds-toolbar .crew-filter-btn { width: 40px; padding-inline: 0; }
+  .ds-toolbar .crew-filter-btn__label,
+  .ds-toolbar .crew-filter-btn__chev { display: none; }
+}
+@media (max-width: 639px) {
+  /* Ô tìm cao 44px ở điện thoại: nút cùng hàng cao theo. Nút Thêm thành Fab. */
+  .ds-toolbar__end .ant-btn { height: 44px; min-width: 44px; }
+  .ds-toolbar .crew-filter-btn { width: 44px; }
+  .ds-toolbar .ds-toolbar__add { display: none !important; }
+}
+
+/* Ô lọc trong sheet Bộ lọc (ListFilters ở điện thoại): xếp dọc, nhãn rõ. */
+.ds-filter-sheet { display: grid; gap: 16px; }
+.ds-filter-sheet .crew-filterbar__field { display: grid; gap: 6px; min-width: 0; }
+.ds-filter-sheet .crew-filterbar__field > span:first-child { color: var(--foreground); font-size: 14px; font-weight: 500; }
+.ds-filter-sheet .crew-filterbar__age .ant-input-number { flex: 1; width: auto; }
+/* Ô khoảng ngày nằm trong nhãn hàng lọc: không ăn kiểu chữ nhãn (xám 12px) của .crew-filterbar__field > span. */
+.crew-filterbar__field > .ds-date-range { color: var(--foreground); font-size: 16px; }
+/* Ô hai dòng (tên + dòng phụ) đặt làm tiêu đề của RowList: dòng phụ không đậm theo tiêu đề. */
+.ds-rowlist__title .ds-cell2__sub { font-weight: 400; }

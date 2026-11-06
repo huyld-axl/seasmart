@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 const BOTTOM = 24 // lề dưới của vùng nội dung (padding 24 trong AdminLayout.css)
-const TOP_MIN = 76 // topbar 64 + khe 12, khớp `top` dính của khung trong ds.css
+const GAP_TOP = 12 // khe dưới topbar, khớp `top` dính của khung trong ds.css
 const GAP = 12 // khe giữa toolbar, bảng, dòng chân
 const MIN_BODY = 160
 
@@ -18,7 +18,9 @@ export default function useListSticky() {
     const height = (selector) => Math.ceil(card.querySelector(selector)?.getBoundingClientRect().height || 0)
     const update = () => {
       const foot = height(':scope > .ds-table-foot')
-      const top = Math.max(TOP_MIN, Math.round(card.getBoundingClientRect().top + window.scrollY))
+      // Chiều cao topbar đọc từ biến --topbar-h (AdminLayout.css), mặc định 64.
+      const topbar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) || 64
+      const top = Math.max(topbar + GAP_TOP, Math.round(card.getBoundingClientRect().top + window.scrollY))
       const used = top + BOTTOM + height(':scope > .ds-toolbar') + GAP + (foot ? foot + GAP : 0) + height('.ant-table-header') + 2
       const next = Math.max(MIN_BODY, window.innerHeight - used)
       setY((current) => (current === next ? current : next))

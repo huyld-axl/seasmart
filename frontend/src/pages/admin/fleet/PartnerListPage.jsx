@@ -5,8 +5,8 @@ import { lookupApi } from '../../../api'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge, Button, Input, Select, Skeleton, Table } from 'antd'
-import { DownOutlined, FilterOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Input, Select, Skeleton, Table } from 'antd'
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList, usePartnerLogo } from '../../../hooks/useFleet'
@@ -20,6 +20,9 @@ import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import useViewport from '../../../hooks/useViewport'
+import ListFilters from '../../../components/ds/ListFilters'
+import Fab from '../../../components/ds/Fab'
+import { CrewFilterButton } from '../seafarers/CrewFilters'
 
 const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
@@ -147,13 +150,11 @@ export default function PartnerListPage() {
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
           <span className="ds-toolbar__end">
-            <Badge count={filterCount} size="small" offset={[-4, 4]}>
-              <Button className="crew-filter-btn" icon={<FilterOutlined />} aria-expanded={filtersOpen} aria-controls="partner-filter-bar" onClick={() => setFiltersOpen((open) => !open)}>Bộ lọc <DownOutlined className="crew-filter-btn__chev" /></Button>
-            </Badge>
-            {can('partner.create') && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button>}
+            <CrewFilterButton count={filterCount} open={filtersOpen} onToggle={() => setFiltersOpen((open) => !open)} />
+            {can('partner.create') && <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button>}
           </span>
         </div>
-        {filtersOpen && <div className="crew-filterbar" id="partner-filter-bar">
+        <ListFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} count={filterCount} onClear={clearFilters} total={total} unit="đối tác" loading={list.isLoading}>
           <label className="crew-filterbar__field crew-filterbar__field--wide">
             <span>Quốc gia</span>
             <Select aria-label="Lọc theo quốc gia" allowClear showSearch optionFilterProp="label" placeholder="Tất cả quốc gia" loading={countries.isLoading} value={countryId} onChange={(value) => { setCountryId(value); setPage(1) }} options={(countries.data || []).map((country) => ({ value: country.id, label: withFlag(country.code, country.name_vi || country.name_en, country.flag_emoji) }))} />
@@ -163,13 +164,13 @@ export default function PartnerListPage() {
             <span>Kênh liên hệ đang có</span>
             <Select aria-label="Lọc kênh liên hệ" mode="multiple" allowClear maxTagCount="responsive" placeholder="Có đủ các kênh đã chọn" value={channels} onChange={(value) => { setChannels(value); setPage(1) }} options={[{ value: 'zalo', label: 'Zalo' }, { value: 'whatsapp', label: 'WhatsApp' }, { value: 'line', label: 'LINE' }, { value: 'wechat', label: 'WeChat' }]} />
           </label>
-          <Button className="crew-filterbar__clear" disabled={!filterCount} onClick={clearFilters}>Xoá bộ lọc</Button>
-        </div>}
+        </ListFilters>
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="đối tác" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
+      {can('partner.create') ? <Fab label="Thêm đối tác" onClick={() => navigate('/partners/new')} /> : null}
     </div>
   )
 }

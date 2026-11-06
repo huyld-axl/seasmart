@@ -3,22 +3,22 @@ import { useQuery } from '@tanstack/react-query'
 import { Badge, Button, InputNumber, Select } from 'antd'
 import { DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { lookupApi } from '../../../api'
-import { EMPTY_FILTERS, filterCount } from './crewFilters'
+import { filterCount } from './crewFilters'
 
 // Nút mở / đóng hàng bộ lọc nâng cao; số trên nút là số nhóm lọc đang bật (`count` ghi đè khi màn khác dùng bộ lọc riêng).
 export function CrewFilterButton({ value, count = filterCount(value), open, onToggle }) {
   return (
     <Badge count={count} size="small" offset={[-4, 4]}>
-      <Button className="crew-filter-btn" icon={<FilterOutlined />} aria-expanded={open} aria-controls="crew-filter-bar" onClick={onToggle}>
-        Bộ lọc <DownOutlined className="crew-filter-btn__chev" />
+      <Button className="crew-filter-btn" icon={<FilterOutlined />} aria-label="Bộ lọc" aria-expanded={open} aria-controls="crew-filter-bar" onClick={onToggle}>
+        <span className="crew-filter-btn__label">Bộ lọc</span> <DownOutlined className="crew-filter-btn__chev" />
       </Button>
     </Badge>
   )
 }
 
-// Hàng bộ lọc nâng cao mở rộng ngay dưới thanh công cụ: chức danh (từng giữ), tàu đã từng đi, tuổi, chứng chỉ còn hiệu lực.
-// value / onChange: đối tượng dạng EMPTY_FILTERS; áp dụng ngay khi đổi.
-export function CrewFilterBar({ value, onChange }) {
+// Các ô bộ lọc nâng cao của danh sách thuyền viên: chức danh (từng giữ), tàu đã từng đi, tuổi, chứng chỉ còn hiệu lực.
+// Đặt trong ListFilters (hàng lọc ở desktop, sheet ở điện thoại). value / onChange: đối tượng dạng EMPTY_FILTERS; áp dụng ngay khi đổi.
+export function CrewFilterFields({ value, onChange }) {
   const [vesselSearch, setVesselSearch] = useState('')
   const [debounced, setDebounced] = useState('')
   useEffect(() => {
@@ -33,7 +33,7 @@ export function CrewFilterBar({ value, onChange }) {
   const multi = { mode: 'multiple', maxTagCount: 'responsive', allowClear: true, style: { width: '100%' } }
 
   return (
-    <div className="crew-filterbar" id="crew-filter-bar">
+    <>
       <label className="crew-filterbar__field crew-filterbar__field--wide">
         <span>Chức danh (từng giữ)</span>
         <Select {...multi} placeholder="Chọn chức danh" optionFilterProp="label" loading={ranks.isLoading} value={value.ranks} onChange={(v) => set({ ranks: v })} options={(ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi }))} />
@@ -54,7 +54,6 @@ export function CrewFilterBar({ value, onChange }) {
         <span>Chứng chỉ còn hiệu lực</span>
         <Select {...multi} placeholder="Chọn loại chứng chỉ" optionFilterProp="label" loading={certTypes.isLoading} value={value.certs} onChange={(v) => set({ certs: v })} options={(certTypes.data || []).map((c) => ({ value: c.id, label: c.name_vi }))} />
       </label>
-      <Button className="crew-filterbar__clear" disabled={!filterCount(value)} onClick={() => onChange(EMPTY_FILTERS)}>Xoá bộ lọc</Button>
-    </div>
+    </>
   )
 }

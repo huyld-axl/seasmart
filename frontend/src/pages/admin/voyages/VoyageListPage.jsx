@@ -21,6 +21,9 @@ import '../seafarers/SeafarerListPage.css'
 import '../opportunities/opportunities.css'
 import './voyages.css'
 import useViewport from '../../../hooks/useViewport'
+import ListFilters from '../../../components/ds/ListFilters'
+import Fab from '../../../components/ds/Fab'
+import { DateRangeField } from '../../../components/ds/DateField'
 
 const TABS = VOYAGE_TABS.map((value) => ({ value, label: VOYAGE_TAB_LABELS[value] }))
 const SOURCE_OPTIONS = VOYAGE_SOURCES.map((value) => ({ value, label: SOURCE_LABELS[value] }))
@@ -30,7 +33,7 @@ const LEAVING_OPTIONS = [{ value: 30, label: 'Sắp rời trong 30 ngày' }]
 export default function VoyageListPage() {
   const can = useCan()
   const navigate = useNavigate()
-  const isMobile = useViewport().isCompact
+  const { isCompact: isMobile, isPhone } = useViewport()
   const [tab, setTab] = useState('onboard')
   const [search, setSearch] = useState('')
   const [range, setRange] = useState(thisMonth)
@@ -65,12 +68,15 @@ export default function VoyageListPage() {
   const filtered = Boolean(keyword || filterCount)
   const reset = (fn) => (...args) => { fn(...args); setPage(1); setSelected([]) }
   const setFilter = (key, value) => reset(setFilters)((prev) => ({ ...prev, [key]: value }))
+  // Ở điện thoại khoảng ngày nằm trong sheet Bộ lọc nên tính vào số điều kiện và bị Xoá lọc gỡ cùng.
+  const sheetCount = filterCount + (isPhone && range ? 1 : 0)
+  const clearSheet = () => { reset(setFilters)({}); if (isPhone) reset(setRange)(null) }
   const resetFilters = () => { setSearch(''); setFilters({}); setRange(null); setPage(1); setSelected([]) }
   const mayLeave = can('voyage.run')
   const picked = rows.filter((row) => selected.includes(row.id))
 
   const createButton = can('voyage.create')
-    ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến</Button>
+    ? <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/voyages/new')}>Tạo chuyến</Button>
     : undefined
 
   let body
@@ -136,21 +142,29 @@ export default function VoyageListPage() {
             value={search}
             onChange={(event) => reset(setSearch)(event.target.value)}
           />
-          <DatePicker.RangePicker
-            className="vy-range"
-            format="DD/MM/YYYY"
-            value={range}
-            onChange={reset(setRange)}
-            placeholder={['Trên tàu từ', 'đến']}
-            aria-label="Trên tàu trong khoảng"
-          />
+          {/* Điện thoại: khoảng ngày nằm trong sheet Bộ lọc, thanh công cụ còn 2 tầng. */}
+          {isPhone ? null : (
+            <DatePicker.RangePicker
+              className="vy-range"
+              format="DD/MM/YYYY"
+              value={range}
+              onChange={reset(setRange)}
+              placeholder={['Trên tàu từ', 'đến']}
+              aria-label="Trên tàu trong khoảng"
+            />
+          )}
           <span className="ds-toolbar__end">
-            <CrewFilterButton count={filterCount} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+            <CrewFilterButton count={sheetCount} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
             {createButton}
           </span>
         </div>
-        {filtersOpen ? (
-          <div className="crew-filterbar" id="crew-filter-bar">
+        <ListFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} count={sheetCount} onClear={clearSheet} total={total} unit="chuyến" loading={list.isLoading}>
+          {isPhone ? (
+            <label className="crew-filterbar__field crew-filterbar__field--wide">
+              <span>Trên tàu trong khoảng</span>
+              <DateRangeField value={range} onChange={reset(setRange)} format="DD/MM/YYYY" placeholder={['Trên tàu từ', 'đến']} />
+            </label>
+          ) : null}
             {filterSelect('vessel_id', 'Tàu', {
               placeholder: 'Chọn tàu',
               'aria-label': 'Lọc theo tàu',
@@ -173,9 +187,7 @@ export default function VoyageListPage() {
             })}
             {filterSelect('source', 'Nguồn', { placeholder: 'Chọn nguồn', 'aria-label': 'Lọc theo nguồn', options: SOURCE_OPTIONS })}
             {filterSelect('leaving_within', 'Rời tàu', { placeholder: 'Bất kỳ', 'aria-label': 'Lọc sắp rời tàu', options: LEAVING_OPTIONS })}
-            <Button className="crew-filterbar__clear" disabled={!filterCount} onClick={() => reset(setFilters)({})}>Xoá bộ lọc</Button>
-          </div>
-        ) : null}
+        </ListFilters>
         {picked.length ? (
           <div className="op-bulk">
             <b>Đã chọn {picked.length} chuyến</b>
@@ -188,6 +200,7 @@ export default function VoyageListPage() {
           <ListFooter total={total} page={page} pageSize={pageSize} unit="chuyến" onChange={(next, size) => { setPage(next); setPageSize(size); setSelected([]) }} />
         )}
       </div>
+      {can('voyage.create') ? <Fab label="Tạo chuyến" onClick={() => navigate('/voyages/new')} /> : null}
       {leaving ? <LeaveModal voyages={leaving} onClose={() => setLeaving(null)} onDone={() => setSelected([])} /> : null}
     </div>
   )

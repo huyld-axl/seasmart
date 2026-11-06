@@ -20,6 +20,8 @@ import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
 import { CrewFilterButton } from '../seafarers/CrewFilters'
 import useViewport from '../../../hooks/useViewport'
+import ListFilters from '../../../components/ds/ListFilters'
+import Fab from '../../../components/ds/Fab'
 
 const stop = (event) => event.stopPropagation()
 
@@ -77,7 +79,7 @@ export default function ContractListPage() {
   const filtered = Boolean(keyword || filterCount)
   const setFilter = (key, value) => { setFilters((current) => ({ ...current, [key]: value })); setPage(1) }
   const createButton = can('contract.create')
-    ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/contracts/new')}>Thêm hợp đồng</Button>
+    ? <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/contracts/new')}>Thêm hợp đồng</Button>
     : undefined
   const resetFilters = () => { setSearch(''); setFilters({}); setPage(1) }
 
@@ -196,8 +198,7 @@ export default function ContractListPage() {
             {createButton}
           </span>
         </div>
-        {filtersOpen ? (
-          <div className="crew-filterbar" id="crew-filter-bar">
+        <ListFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} count={filterCount} onClear={() => { setFilters({}); setPage(1) }} total={total} unit="hợp đồng" loading={list.isLoading}>
             {can('partner.view') ? filterSelect('ship_owner_id', 'Chủ tàu', {
               placeholder: 'Chọn chủ tàu',
               'aria-label': 'Lọc theo chủ tàu',
@@ -226,14 +227,13 @@ export default function ContractListPage() {
               loading: ranks.isLoading,
               options: (ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi })),
             })}
-            <Button className="crew-filterbar__clear" disabled={!filterCount} onClick={() => { setFilters({}); setPage(1) }}>Xoá bộ lọc</Button>
-          </div>
-        ) : null}
+        </ListFilters>
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="hợp đồng" note="Số tiền tính bằng USD" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
+      {can('contract.create') ? <Fab label="Thêm hợp đồng" onClick={() => navigate('/contracts/new')} /> : null}
     </div>
   )
 }

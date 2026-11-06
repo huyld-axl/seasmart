@@ -22,6 +22,7 @@ import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerForm.css'
 import { masterRules, upperCode } from '../../utils/fieldRules'
 import useViewport from '../../hooks/useViewport'
+import Fab from '../../components/ds/Fab'
 
 const isBlank = (value) => value == null || value === ''
 const sameValue = (a, b) => (isBlank(a) && isBlank(b)) || String(a) === String(b)
@@ -241,7 +242,7 @@ function MasterTable({ resource, columns, formFields, title }) {
           <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => { setPage(1); setSearch(event.target.value) }} />
           {canEdit ? (
             <span className="ds-toolbar__end">
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
+              <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
                 Thêm {title}
               </Button>
             </span>
@@ -280,6 +281,7 @@ function MasterTable({ resource, columns, formFields, title }) {
           {fields}
         </Form>
       </SlidePanel>
+      {canEdit ? <Fab label={`Thêm ${title}`} onClick={() => openPanel(null)} /> : null}
     </>
   )
 }

@@ -22,6 +22,8 @@ import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
 import './opportunities.css'
 import useViewport from '../../../hooks/useViewport'
+import ListFilters from '../../../components/ds/ListFilters'
+import Fab from '../../../components/ds/Fab'
 
 const TABS = OPPORTUNITY_TABS.map((value) => ({ value, label: OPPORTUNITY_TAB_LABELS[value] }))
 
@@ -116,7 +118,7 @@ export default function OpportunityListPage() {
   ]
 
   const createButton = can('opportunity.create')
-    ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/opportunities/new')}>Tạo cơ hội</Button>
+    ? <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/opportunities/new')}>Tạo cơ hội</Button>
     : undefined
 
   let body
@@ -197,8 +199,7 @@ export default function OpportunityListPage() {
             {createButton}
           </span>
         </div>
-        {filtersOpen ? (
-        <div className="crew-filterbar" id="crew-filter-bar">
+        <ListFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} count={filterCount} onClear={() => setFilters({})} total={total} unit="cơ hội" loading={list.isLoading}>
           {filterSelect('vessel_id', 'Tàu', {
             placeholder: 'Chọn tàu',
             'aria-label': 'Lọc theo tàu',
@@ -219,14 +220,13 @@ export default function OpportunityListPage() {
             loading: ranks.isLoading,
             options: (ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi })),
           })}
-          <Button className="crew-filterbar__clear" disabled={!filterCount} onClick={() => setFilters({})}>Xoá bộ lọc</Button>
-        </div>
-        ) : null}
+        </ListFilters>
         {body}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="cơ hội" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}
       </div>
+      {can('opportunity.create') ? <Fab label="Tạo cơ hội" onClick={() => navigate('/opportunities/new')} /> : null}
     </div>
   )
 }

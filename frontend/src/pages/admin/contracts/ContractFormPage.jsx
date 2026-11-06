@@ -12,7 +12,7 @@ import { useContract, useContractMutations, useVoyage } from '../../../hooks/use
 import { EDITABLE_CONTRACT_STATUSES } from '../../../constants/voyageContract'
 import apiErrorText from '../../../utils/apiError'
 import { formatDate } from '../../../utils/format'
-import { Crumb } from '../fleet/FleetParts'
+import { Crumb, AddAnotherLabel } from '../fleet/FleetParts'
 import { monthsBetween } from '../voyages/voyageView'
 import BalanceBar from './BalanceBar'
 import DealTable from './DealTable'
@@ -218,7 +218,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         </Form.Item>
 
         <BalanceBar balance={bal} budgetTotal={null}>
-          <Button onClick={() => navigate(back)}>Huỷ</Button>
+          <Button className="sf-savebar__cancel" onClick={() => navigate(back)}>Huỷ</Button>
           {!isEdit ? (
             <Button
               loading={save.isPending && again}
@@ -229,7 +229,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                 form.submit()
               }}
             >
-              Lưu & thêm hợp đồng khác
+              <AddAnotherLabel noun="hợp đồng" />
             </Button>
           ) : null}
           <Button

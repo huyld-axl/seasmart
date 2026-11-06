@@ -134,3 +134,15 @@
   /* Kỳ thanh toán khi sửa: ô chọn dài, mỗi bên một hàng. */
   .ct-table--terms tr:has(.ant-select) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Thanh cân đối (Hợp đồng) và thanh tổng (sửa YCTT) ở điện thoại: khối budget / tổng còn một dòng, ba số một hàng, nút một
+   hàng; thay cho khối cao ~250px. */
+@media (max-width: 639px) {
+  .sf-savebar.ct-bar { flex-wrap: wrap; row-gap: 8px; }
+  .ct-bar .ct-budget { display: flex; flex: 1 1 100%; align-items: baseline; justify-content: space-between; padding: 4px 12px; }
+  .ct-bar .ct-budget__value b { font-size: 16px; }
+  .ct-bar .ct-figs { flex: 1 1 100%; flex-wrap: nowrap; justify-content: space-between; gap: 8px; }
+  .ct-bar .ct-fig__value b { font-size: 15px; }
+  .ct-bar .ct-fig__label, .ct-bar .ct-fig__unit { font-size: 11px; }
+  .ct-bar .sf-savebar__actions { flex: 1 1 100%; }
+}

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import { FormCrumb, FormToc, AddAnotherLabel } from './fleet/FleetParts'
 import DateInput from '../../components/ds/DateField'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -572,19 +573,11 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
      <ScanContext.Provider value={scanContext}>
       <div className="sf-head">
         <div>
-          <nav className="sf-crumb" aria-label="Vị trí">
-            <Link to="/seafarers">Thuyền viên</Link>
-            <RightOutlined aria-hidden />
-            {isEdit ? (
-              <>
-                <Link to={`/seafarers/${id}`}>{seafarer.full_name}</Link>
-                <RightOutlined aria-hidden />
-                <span aria-current="page">Chỉnh sửa</span>
-              </>
-            ) : (
-              <span aria-current="page">Thêm mới</span>
-            )}
-          </nav>
+          <FormCrumb
+            items={isEdit
+              ? [{ label: 'Thuyền viên', to: '/seafarers' }, { label: seafarer.full_name, to: `/seafarers/${id}` }, { label: 'Chỉnh sửa' }]
+              : [{ label: 'Thuyền viên', to: '/seafarers' }, { label: 'Thêm mới' }]}
+          />
           <h2 className="sf-head__title">{isEdit ? 'Chỉnh sửa hồ sơ' : 'Thêm thuyền viên mới'}</h2>
         </div>
         <div className="sf-head__actions">
@@ -630,7 +623,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <span style={{ width: `${(sectionsWithInfo / SECTIONS.length) * 100}%` }} />
             </div>
           </div>
-          <nav className="sf-toc" aria-label="Các mục của form">
+          <FormToc activeKey={active}>
             {SECTIONS.map((s, i) => {
               const changes = changedKeys.filter((k) => s.fields.includes(k) || k === s.list).length + (s.photo && photoChanged ? 1 : 0)
               return (
@@ -645,7 +638,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                 </a>
               )
             })}
-          </nav>
+          </FormToc>
         </aside>
 
         <Form
@@ -942,7 +935,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               </div>
             )}
             <div className="sf-savebar__actions">
-              <Button onClick={() => navigate(cancelTo)}>Hủy</Button>
+              <Button className="sf-savebar__cancel" onClick={() => navigate(cancelTo)}>Hủy</Button>
               {isEdit ? null : (
                 <Button
                   loading={mutation.isPending && mutation.variables?.again}
@@ -952,7 +945,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                     form.submit()
                   }}
                 >
-                  Lưu & thêm người khác
+                  <AddAnotherLabel noun="người" />
                 </Button>
               )}
               <Button

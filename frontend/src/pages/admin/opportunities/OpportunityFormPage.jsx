@@ -18,7 +18,7 @@ import useAuthStore from '../../../stores/authStore'
 import apiErrorText from '../../../utils/apiError'
 import { formatUsd } from '../../../utils/format'
 import { withFlag } from '../../../utils/flag'
-import { FleetTile, TargetSvg, FormFrame, FormSection } from '../fleet/FleetParts'
+import { FleetTile, TargetSvg, FormFrame, FormSection, AddAnotherLabel } from '../fleet/FleetParts'
 import changedLabel from '../fleet/changedLabel'
 import { monthsBetween, splitBudget } from '../voyages/voyageView'
 import RequirementTable from './RequirementTable'
@@ -276,7 +276,7 @@ function OpportunityForm({ opportunity, prefill }) {
             </div>
           )}
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate(isEdit ? `/opportunities/${opportunity.id}` : '/opportunities')}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate(isEdit ? `/opportunities/${opportunity.id}` : '/opportunities')}>Huỷ</Button>
             {isEdit ? null : (
               <Button
                 loading={save.isPending && again}
@@ -287,7 +287,7 @@ function OpportunityForm({ opportunity, prefill }) {
                   form.submit()
                 }}
               >
-                Lưu & thêm vị trí khác
+                <AddAnotherLabel noun="vị trí" />
               </Button>
             )}
             <Button

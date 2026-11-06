@@ -122,7 +122,7 @@ function BillForm({ data }) {
             <p className="sf-savebar__msg bl-bar-msg"><b>{changes} thay đổi</b></p>
           ) : null}
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate(back)}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate(back)}>Huỷ</Button>
             <Button type="primary" htmlType="submit" loading={save.isPending} disabled={!changes || negative}>Lưu thay đổi</Button>
           </div>
         </div>

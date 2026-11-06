@@ -20,7 +20,7 @@ import { withFlag } from '../../../utils/flag'
 import { logoProblem } from '../../../components/ds/logoRules'
 import { readAsDataUrl, useFleetItem, useFleetMutations, usePartnerLogo } from '../../../hooks/useFleet'
 import { EMPTY_CONTACT, PARTNER_STATUS_OPTIONS, cleanContactList, partnerToFormValues, partnerToPayload, changedKeys, filled, initialsOfName } from './fleetView'
-import { FleetTile, FormFrame, FormSection, SegmentedPick } from './FleetParts'
+import { FleetTile, FormFrame, FormSection, SegmentedPick, AddAnotherLabel } from './FleetParts'
 import changedLabel from './changedLabel'
 import { ownerRules } from '../../../utils/fieldRules'
 
@@ -351,7 +351,7 @@ function PartnerForm({ owner }) {
             </div>
           )}
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate(isEdit ? `/partners/${owner.id}` : '/partners')}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate(isEdit ? `/partners/${owner.id}` : '/partners')}>Huỷ</Button>
             {isEdit ? null : (
               <Button
                 loading={(save.isPending || submitting) && again}
@@ -362,7 +362,7 @@ function PartnerForm({ owner }) {
                   form.submit()
                 }}
               >
-                Lưu & thêm đối tác khác
+                <AddAnotherLabel noun="đối tác" />
               </Button>
             )}
             <Button

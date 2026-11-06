@@ -151,9 +151,27 @@
   .sf-panel__body { padding: 16px; }
   .sf-panel__desc { display: none; }
   .sf-seg { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .sf-savebar { bottom: 0; margin: 0 -16px; border-radius: 0; border-width: 1px 0 0; }
-  .sf-savebar__actions { width: 100%; }
-  .sf-savebar__actions .ant-btn-primary { flex: 1; }
+  /* Thanh lưu ở điện thoại (kế hoạch responsive mục 4.4): một hàng, sát đáy, chừa vùng an toàn iPhone. Chỉ còn số thay đổi
+     (không danh sách trường, không câu nhắc) và các nút; form thêm mới ẩn Huỷ (lối Huỷ là "‹ …" đầu form). */
+  .sf-savebar { bottom: 0; flex-wrap: nowrap; gap: 8px; margin: 0 -16px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); border-radius: 0; border-width: 1px 0 0; }
+  .sf-savebar__msg, .sf-savebar__note, .sf-savebar__count > span { display: none; }
+  .sf-savebar__count { flex: 0 1 auto; min-width: 0; min-height: 0; }
+  .sf-savebar__count b { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+  .sf-savebar__actions { flex: 1 1 auto; flex-wrap: nowrap; width: auto; min-width: 0; margin-left: 0; }
+  .sf-savebar__actions > .ant-btn { flex: 1 1 auto; min-width: 0; height: 44px; }
+  .sf-savebar__actions > .sf-savebar__cancel { flex: 0 0 auto; }
+  .sf-savebar__actions:has(> .ant-btn:nth-child(3)) > .sf-savebar__cancel { display: none; }
+  /* Câu báo lỗi (vd. tổng âm ở sửa YCTT) vẫn hiện, một hàng riêng. */
+  .sf-savebar:has(.sf-savebar__msg--err) { flex-wrap: wrap; }
+  .sf-savebar .sf-savebar__msg--err { display: flex; flex: 1 1 100%; }
+  .sf-noun { display: none; }
+  /* Đầu form: một nấc về trang cha. */
+  .sf-crumb--up a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--muted); font-weight: 500; }
+  /* Hàng mục dính dưới topbar; bỏ khối tên + ảnh của cột tóm tắt (tiêu đề form đã có). */
+  .sf-aside { position: sticky; top: var(--topbar-h); z-index: 6; margin: 0 -16px; border-width: 0 0 1px; border-radius: 0; }
+  .sf-aside .sf-who { display: none; }
+  .sf-toc { padding: 8px 16px 12px; border-top: 0; }
+  .sf-panel { scroll-margin-top: calc(var(--topbar-h) + 72px); }
 }
 .sf-photo--btn { padding: 0; border: 0; cursor: pointer; }
 .sf-photo--btn:hover { box-shadow: 0 0 0 2px var(--primary); }

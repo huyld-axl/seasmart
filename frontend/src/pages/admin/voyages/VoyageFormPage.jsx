@@ -244,7 +244,7 @@ export default function VoyageFormPage() {
             </span>
           </div>
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate('/voyages')}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate('/voyages')}>Huỷ</Button>
             <Button
               loading={create.isPending && again}
               disabled={create.isPending}

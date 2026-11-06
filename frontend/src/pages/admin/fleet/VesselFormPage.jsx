@@ -28,7 +28,7 @@ import {
   filled,
 } from './fleetView'
 import ToggleRow from '../../../components/ds/ToggleRow'
-import { FleetTile, FormFrame, FormSection, SegmentedPick } from './FleetParts'
+import { FleetTile, FormFrame, FormSection, SegmentedPick, AddAnotherLabel } from './FleetParts'
 import changedLabel from './changedLabel'
 import { upperAlnum, vesselRules } from '../../../utils/fieldRules'
 import SmartCompareCard from './SmartCompareCard'
@@ -398,7 +398,7 @@ function VesselForm({ vessel }) {
             </div>
           )}
           <div className="sf-savebar__actions">
-            <Button onClick={() => navigate(cancelTo)}>Huỷ</Button>
+            <Button className="sf-savebar__cancel" onClick={() => navigate(cancelTo)}>Huỷ</Button>
             {isEdit ? null : (
               <Button
                 loading={save.isPending && again}
@@ -409,7 +409,7 @@ function VesselForm({ vessel }) {
                   form.submit()
                 }}
               >
-                Lưu & thêm tàu khác
+                <AddAnotherLabel noun="tàu" />
               </Button>
             )}
             <Button

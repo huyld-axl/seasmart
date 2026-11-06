@@ -1,4 +1,4 @@
-import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL } from '../components/ds/HelpLink'
+import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL, GUIDE_PHONE_URL } from '../components/ds/HelpLink'
 import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Button, Dropdown, Drawer } from 'antd'
@@ -13,6 +13,7 @@ import {
   BookOutlined,
   LogoutOutlined,
   MenuOutlined,
+  MobileOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DownOutlined,
@@ -259,6 +260,9 @@ export default function AdminLayout() {
                 <span className="app-shell__me-role">{user?.role?.name || 'Chưa có vai trò'}</span>
               </span>
             </div>
+            <Button type="text" block icon={<MobileOutlined />} href={GUIDE_PHONE_URL} target="_blank" rel="noopener noreferrer">
+              Dùng MCAH trên điện thoại
+            </Button>
             <Button type="text" block icon={<LogoutOutlined />} onClick={signOut}>
               Đăng xuất
             </Button>

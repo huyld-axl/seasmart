@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Form, Input, Skeleton } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
@@ -38,6 +39,8 @@ function BillForm({ data }) {
   const { bill } = data
   const back = `/bills/${bill.id}`
   const changes = countChanges(initial, { ...initial, ...values })
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại.
+  const leave = useLeaveGuard(changes > 0)
   const { totals } = groupItems(values.items || [])
   const negative = totals.all < 0
 
@@ -51,6 +54,7 @@ function BillForm({ data }) {
     try {
       await save.mutateAsync({ id: bill.id, ...payload })
       toast.success(`Đã lưu ${bill.code}`)
+      leave.allow()
       navigate(back)
     } catch (error) {
       toast.error(`Không lưu được ${bill.code}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })

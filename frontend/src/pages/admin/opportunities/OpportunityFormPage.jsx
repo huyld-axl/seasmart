@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Form, Input, Select, Skeleton } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -99,6 +100,8 @@ function OpportunityForm({ opportunity, prefill }) {
   const cn = (name, base) => [base, changed.has(name) && 'sf-changed'].filter(Boolean).join(' ') || undefined
   const label = (name, text) => changedLabel(text, changed.has(name))
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(isEdit ? changed.size > 0 : form.isFieldsTouched())
 
   const coreFields = ['ship_owner_id', 'vessel_id', 'rank_id', 'budget_monthly_usd', 'owner_user_id']
   const timeFields = ['planned_join_date', 'planned_join_port_id', 'planned_leave_date', 'planned_leave_port_id', 'deadline']
@@ -174,6 +177,7 @@ function OpportunityForm({ opportunity, prefill }) {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         toast.success(isEdit ? `Đã lưu cơ hội ${row.code}` : `Đã tạo ${row.code} · ${row.rank_name}`)
+        leave.allow()
         navigate(`/opportunities/${row.id}`)
       }
     } catch (error) {

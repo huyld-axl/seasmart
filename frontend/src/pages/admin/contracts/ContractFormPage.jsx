@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Form, Input, Select, Skeleton } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import Banner from '../../../components/ds/Banner'
@@ -77,6 +78,8 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
     if (!isEdit) return true
     return JSON.stringify(toPayload(initial)) !== JSON.stringify(toPayload(values))
   }, [isEdit, initial, values])
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(isEdit ? changed : form.isFieldsTouched())
 
   function onVoyageChange(_, option) {
     const row = option?.row || null
@@ -106,6 +109,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         onSavedAndNew()
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
+        leave.allow()
         navigate(`/contracts/${row.contract.id}`)
       }
     } catch (error) {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Form, Input, Select } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, ExclamationCircleOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -87,6 +88,8 @@ export default function VoyageFormPage() {
   ]
   const metas = [`${filled(coreFields)}/${coreFields.length}`, `${filled(timeFields)}/${timeFields.length}`]
   const ready = filled(coreFields) === coreFields.length && filled(timeFields) === timeFields.length && !blocked
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(form.isFieldsTouched())
   const selectedVessel = vesselOptions.find((o) => o.value === values.vessel_id)
   const vesselHasNoOwner = Boolean(selectedVessel) && !selectedVessel.ownerId
 
@@ -129,6 +132,7 @@ export default function VoyageFormPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
         toast.success(`Đã tạo ${row.code} · ${row.seafarer_name}`)
+        leave.allow()
         navigate(`/voyages/${row.id}`)
       }
     } catch (error) {

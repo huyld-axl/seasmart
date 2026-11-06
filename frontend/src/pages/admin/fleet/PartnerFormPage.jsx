@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button, Form, Input, Select, Skeleton } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
@@ -131,6 +132,8 @@ function PartnerForm({ owner }) {
   const changed = new Set(isEdit ? changedKeys(initial, values, partnerToPayload) : [])
   if (isEdit && logoChanged) changed.add('logo')
   if (vesselDraft !== null) changed.add('vessels')
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(isEdit ? changed.size > 0 : form.isFieldsTouched() || changed.size > 0)
   const cn = (name, base) => [base, changed.has(name) && 'sf-changed'].filter(Boolean).join(' ') || undefined
   const label = (name, text) => changedLabel(text, changed.has(name))
   const isFilled = (name) => {
@@ -180,6 +183,7 @@ function PartnerForm({ owner }) {
         setLogoError('')
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
+        leave.allow()
         navigate(`/partners/${row.id}`)
       }
     } catch (error) {

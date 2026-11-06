@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import useLeaveGuard from '../../hooks/useLeaveGuard'
 import { FormCrumb, FormToc, AddAnotherLabel } from './fleet/FleetParts'
 import DateInput from '../../components/ds/DateField'
 import { CheckCircleFilled, DeleteOutlined, InfoCircleOutlined, PlusOutlined, RightOutlined, WarningOutlined } from '@ant-design/icons'
@@ -536,7 +537,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
       setPendingDocs([])
       setKeepPhotoDoc(false)
       if (again) resetForNext()
-      else navigate(`/seafarers/${saved.id}`)
+      else {
+        leave.allow()
+        navigate(`/seafarers/${saved.id}`)
+      }
     },
     onError: (err) => {
       toast.error(isEdit ? 'Không lưu được hồ sơ' : 'Không tạo được hồ sơ', { description: err.response?.data?.error || err.response?.data?.message })
@@ -566,6 +570,9 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   const cancelTo = isEdit ? `/seafarers/${id}` : '/seafarers'
   const name = values.full_name?.trim() || seafarer?.full_name || ''
   const canSave = !isEdit || changedKeys.length > 0 || photoChanged
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  // Thêm mới: tính cả giấy tờ đã quét đang chờ lưu (tự điền từ giấy tờ không đánh dấu ô là đã chạm).
+  const leave = useLeaveGuard(isEdit ? changedKeys.length > 0 || photoChanged : form.isFieldsTouched() || photoChanged || pendingDocs.length > 0)
 
   return (
     <ChangedContext.Provider value={changedSet}>

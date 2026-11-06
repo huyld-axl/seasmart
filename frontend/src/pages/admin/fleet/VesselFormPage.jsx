@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Button, Form, Input, InputNumber, Select, Skeleton, Space } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import Banner from '../../../components/ds/Banner'
@@ -116,6 +117,8 @@ function VesselForm({ vessel }) {
   const hints = unmatchedHints(unmatched, values)
 
   const changed = new Set(isEdit ? changedKeys(initial, values, vesselToPayload) : [])
+  // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const leave = useLeaveGuard(isEdit ? changed.size > 0 : form.isFieldsTouched())
   const stats = SECTIONS.map((section) => section.fields.filter((name) => filled(values[name])).length)
   const done = stats.reduce((sum, count) => sum + count, 0)
   const total = SECTIONS.reduce((sum, section) => sum + section.fields.length, 0)
@@ -205,6 +208,7 @@ function VesselForm({ vessel }) {
         navigate(location.pathname, { replace: true, state: null })
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
+        leave.allow()
         navigate(`/vessels/${row.id}`)
       }
     } catch (error) {

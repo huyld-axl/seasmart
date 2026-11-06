@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Button, InputNumber, Skeleton, Table, Tooltip } from 'antd'
+import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CopyOutlined } from '@ant-design/icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -131,6 +132,8 @@ export default function KpiTargetPage() {
   }
 
   const dirty = changed.size > 0
+  // Rời trang khi còn mục tiêu chưa lưu thì hỏi lại.
+  useLeaveGuard(dirty)
   return (
     <div className="ds-page">
       <div className="ds-page__head">

@@ -64,6 +64,18 @@
   svg text { font-family: var(--font); font-size: 12px; fill: var(--fg); }
   svg .s { font-size: 11px; fill: var(--muted); }
   svg .b { font-weight: 700; }
+  .mock { display: grid; gap: 8px; max-width: 340px; padding: 12px 14px 0; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+  .mock__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 16px; }
+  .mock__head--sub { align-items: center; color: var(--muted); font-size: 13px; }
+  .mock__fig { font-variant-numeric: tabular-nums; font-size: 17px; }
+  .mock__fig small { color: var(--muted); font-size: 11px; font-weight: 500; }
+  .mock__badge { padding: 1px 9px; border: 1px solid #ffc9c9; border-radius: 99px; background: #fef2f2; color: #c10007; font-size: 12px; font-weight: 500; }
+  .mock__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; margin: 0; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .mock__fields dt { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
+  .mock__fields dd { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.35; }
+  .mock__red { color: #c10007; }
+  .mock__alert { margin: 2px -14px 0; padding: 8px 14px; background: #fef2f2; color: #c10007; font-size: 13px; font-weight: 500; }
+  .mock__act { margin: 0 -14px; padding: 12px; border-top: 1px solid var(--border); color: var(--primary); font-weight: 600; font-size: 14px; text-align: center; }
   .faq { display: grid; gap: 10px; max-width: 64ch; }
   .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; }
   .faq summary { cursor: pointer; font-weight: 600; min-height: 28px; }
@@ -79,7 +91,7 @@
     .two { grid-template-columns: minmax(0, 1fr); }
   }
 </style>
-<!-- Viết theo plan docs/mcah-ke-hoach-responsive-mobile.md bước 12, khi hành vi điện thoại đã chốt (bước 1–11). -->
+<!-- Viết theo plan docs/mcah-ke-hoach-responsive-mobile.md bước 12; mục 3 "Đọc thẻ trong danh sách" thêm theo docs/mcah-ke-hoach-danh-sach-mobile.md bước 7. -->
 </head>
 <body>
 <div class="wrap">
@@ -87,14 +99,15 @@
     <p>Hướng dẫn</p>
     <a href="#menu"><b>1</b>Mở menu</a>
     <a href="#tim-loc"><b>2</b>Tìm và lọc</a>
-    <a href="#them-moi"><b>3</b>Thêm mới bằng nút tròn</a>
-    <a href="#chi-tiet"><b>4</b>Trang chi tiết và nút ⋯</a>
-    <a href="#lien-he"><b>5</b>Gọi, nhắn tin, Zalo</a>
-    <a href="#roi-tau"><b>6</b>Ghi rời tàu</a>
-    <a href="#duyet-yctt"><b>7</b>Duyệt yêu cầu thanh toán</a>
-    <a href="#dien-form"><b>8</b>Điền form</a>
-    <a href="#man-hinh-chinh"><b>9</b>Thêm MCAH ra màn hình chính</a>
-    <a href="#hoi-dap"><b>10</b>Hỏi đáp</a>
+    <a href="#the-danh-sach"><b>3</b>Đọc thẻ trong danh sách</a>
+    <a href="#them-moi"><b>4</b>Thêm mới bằng nút tròn</a>
+    <a href="#chi-tiet"><b>5</b>Trang chi tiết và nút ⋯</a>
+    <a href="#lien-he"><b>6</b>Gọi, nhắn tin, Zalo</a>
+    <a href="#roi-tau"><b>7</b>Ghi rời tàu</a>
+    <a href="#duyet-yctt"><b>8</b>Duyệt yêu cầu thanh toán</a>
+    <a href="#dien-form"><b>9</b>Điền form</a>
+    <a href="#man-hinh-chinh"><b>10</b>Thêm MCAH ra màn hình chính</a>
+    <a href="#hoi-dap"><b>11</b>Hỏi đáp</a>
   </nav>
 
   <main>
@@ -102,7 +115,7 @@
       <span class="kicker">Hướng dẫn sử dụng</span>
       <h1>Dùng MCAH trên điện thoại</h1>
       <p>MCAH dùng được trên điện thoại như trên máy tính, cùng tài khoản và cùng dữ liệu. Mở trình duyệt (Safari trên iPhone, Chrome trên Android), vào địa chỉ MCAH công ty đang dùng và đăng nhập như thường.</p>
-      <p>Trên điện thoại, màn hình được sắp lại cho vừa một tay: menu gọn vào nút ☰, danh sách thành từng dòng, nút thêm mới thành nút tròn ở góc dưới. Việc làm được thì giống hệt máy tính.</p>
+      <p>Trên điện thoại, màn hình được sắp lại cho vừa một tay: menu gọn vào nút ☰, danh sách thành từng thẻ, nút thêm mới thành nút tròn ở góc dưới. Việc làm được thì giống hệt máy tính.</p>
     </header>
 
     <section id="menu">
@@ -143,18 +156,44 @@
         <li><span>Cần lọc kỹ hơn thì bấm <span class="ui">Bộ lọc</span>. Một bảng trượt lên từ đáy màn hình với các ô lọc xếp dọc. Số trên nút là số điều kiện đang bật.</span></li>
         <li><span>Mỗi lần đổi điều kiện, kết quả cập nhật ngay. Bấm <span class="ui">Xem 12 thuyền viên</span> (số theo kết quả) để đóng bảng và xem danh sách, hoặc <span class="ui">Xoá lọc</span> để bỏ hết.</span></li>
       </ol>
-      <p>Các tab trạng thái (Tất cả, Nháp, Chờ duyệt…) trên điện thoại là một ô chọn; bấm vào để đổi tab. Hết trang thì dùng <span class="ui">‹</span> <span class="ui">›</span> ở cuối danh sách.</p>
+      <p>Các tab trạng thái (Tất cả, Nháp, Chờ duyệt…) ở danh sách là hàng nút tròn có số đếm, vuốt ngang để xem hết và bấm một lần là đổi. Ở trang chi tiết thì vẫn là ô <span class="ui">Mục:</span> để chọn. Hết trang thì dùng <span class="ui">‹</span> <span class="ui">›</span> ở cuối danh sách.</p>
+    </section>
+
+    <section id="the-danh-sach">
+      <span class="kicker">3</span>
+      <h2>Đọc thẻ trong danh sách</h2>
+      <p>Mỗi dòng của danh sách là một thẻ. Thông tin nào cũng có nhãn nhỏ ngay phía trên, nên bạn không phải đoán đâu là tàu, đâu là chủ tàu, đâu là hạn thanh toán.</p>
+      <div class="mock" role="img" aria-label="Ví dụ một thẻ yêu cầu thanh toán quá hạn">
+        <div class="mock__head"><b>Đỗ Mạnh Cường</b><b class="mock__fig">1.595 <small>USD</small></b></div>
+        <div class="mock__head mock__head--sub"><span>Kỳ 3/10 · TT-2026-00060</span><span class="mock__badge">Quá hạn</span></div>
+        <dl class="mock__fields">
+          <div><dt>Tàu</dt><dd>MV Ocean Glory</dd></div>
+          <div><dt>Chủ tàu</dt><dd>Lotus Shipping Pte. Ltd.</dd></div>
+          <div><dt>Kỳ thu</dt><dd>01/09–30/09/2026</dd></div>
+          <div><dt>Hạn thanh toán</dt><dd class="mock__red">04/11/2026</dd></div>
+        </dl>
+        <div class="mock__alert">Quá hạn 5 ngày, chưa thu</div>
+        <div class="mock__act">Ghi nhận đã thu</div>
+      </div>
+      <ul>
+        <li><b>Dòng đầu:</b> tên người hoặc đối tượng của thẻ ở bên trái; con số chính ở bên phải và luôn ghi đơn vị (<span class="ui">USD</span>, <span class="ui">USD/th</span> là mỗi tháng).</li>
+        <li><b>Dòng thứ hai:</b> mã và một thông tin ngắn (kỳ, chức danh), cùng nhãn trạng thái ở góc phải.</li>
+        <li><b>Các ô có nhãn:</b> tối đa 4 ô. Chữ dài tự xuống dòng. Muốn xem thêm thì bấm vào thẻ để mở trang chi tiết.</li>
+        <li><b>Dải màu:</b> dải <b>đỏ</b> là đã quá hạn (quá hạn thanh toán, quá ngày kết thúc hợp đồng, quá hạn chốt cơ hội, quá ngày rời tàu); dải <b>cam</b> là sắp tới hạn hoặc cần xem lại (hợp đồng sắp hết hạn, giấy tờ chờ duyệt).</li>
+        <li><b>Nút ở chân thẻ:</b> việc nên làm tiếp theo, như <span class="ui">Duyệt</span>, <span class="ui">Từ chối</span>, <span class="ui">Đánh dấu đã gửi</span>, <span class="ui">Ghi nhận đã thu</span>, <span class="ui">Ghi rời tàu</span>, <span class="ui">Sửa nháp</span>. Nút chỉ hiện khi bạn có quyền làm việc đó. Bấm nút thì làm việc đó; bấm chỗ khác trên thẻ thì mở trang chi tiết.</li>
+      </ul>
+      <div class="note note--info"><b>Số tiền của hợp đồng</b><span>Thẻ hợp đồng có dải <b>Thu 2.250 − Chi 2.000 = +250 USD/tháng</b>: số tiền thu của chủ tàu trừ số tiền chi cho thuyền viên mỗi tháng. Số dương màu xanh, số âm màu đỏ, chưa nhập tiền thì ghi "Chưa nhập tiền".</span></div>
     </section>
 
     <section id="them-moi">
-      <span class="kicker">3</span>
+      <span class="kicker">4</span>
       <h2>Thêm mới bằng nút tròn</h2>
       <p>Ở các danh sách có thể thêm (thuyền viên, tàu, cơ hội, hợp đồng, đối tác…), nút tròn <span class="ui">+</span> nằm ở góc dưới bên phải, chỗ ngón cái dễ chạm. Bấm vào là mở form thêm mới, giống nút <span class="ui">Thêm …</span> trên máy tính.</p>
       <p>Không thấy nút tròn nghĩa là tài khoản của bạn chưa được cấp quyền thêm ở mục đó.</p>
     </section>
 
     <section id="chi-tiet">
-      <span class="kicker">4</span>
+      <span class="kicker">5</span>
       <h2>Trang chi tiết và nút ⋯</h2>
       <ul>
         <li>Đầu trang chỉ hiện việc hay làm nhất (ví dụ <span class="ui">Sửa</span>, <span class="ui">Duyệt</span>). Các việc còn lại nằm trong nút <span class="ui">⋯</span> bên cạnh.</li>
@@ -164,7 +203,7 @@
     </section>
 
     <section id="lien-he">
-      <span class="kicker">5</span>
+      <span class="kicker">6</span>
       <h2>Gọi, nhắn tin, Zalo từ hồ sơ</h2>
       <p>Trong hồ sơ thuyền viên và trang đối tác, cạnh mỗi số điện thoại có các nút nhỏ:</p>
       <div class="two">
@@ -177,11 +216,10 @@
     </section>
 
     <section id="roi-tau">
-      <span class="kicker">6</span>
+      <span class="kicker">7</span>
       <h2>Ghi rời tàu</h2>
       <ol class="steps">
-        <li><span>Vào <span class="ui">Chuyến tàu</span>, gõ tên thuyền viên vào ô tìm rồi bấm vào dòng chuyến đang trên tàu.</span></li>
-        <li><span>Bấm <span class="ui">Ghi rời tàu</span> ở đầu trang.</span></li>
+        <li><span>Vào <span class="ui">Chuyến tàu</span>, gõ tên thuyền viên vào ô tìm. Thẻ của chuyến đang trên tàu có nút <span class="ui">Ghi rời tàu</span> ở chân thẻ; bấm nút đó. (Hoặc bấm vào thẻ rồi bấm <span class="ui">Ghi rời tàu</span> ở đầu trang chi tiết.)</span></li>
         <li><span>Chọn ngày rời: điện thoại mở bảng chọn ngày quen thuộc của máy. Chọn nơi rời tàu, thêm ghi chú nếu cần.</span></li>
         <li><span>Bấm <span class="ui">Ghi rời tàu</span> ở đáy bảng. Hợp đồng và các yêu cầu thanh toán chưa gửi tự điều chỉnh theo ngày rời.</span></li>
       </ol>
@@ -189,7 +227,7 @@
     </section>
 
     <section id="duyet-yctt">
-      <span class="kicker">7</span>
+      <span class="kicker">8</span>
       <h2>Duyệt yêu cầu thanh toán</h2>
       <ol class="steps">
         <li><span>Vào <span class="ui">Yêu cầu thanh toán</span>. Người có quyền duyệt sẽ thấy sẵn tab <span class="ui">Cần duyệt</span>; nếu không, đổi tab trong ô chọn tab.</span></li>
@@ -197,11 +235,11 @@
         <li><span>Đúng thì bấm <span class="ui">Duyệt</span> ở đầu trang. Sai thì bấm <span class="ui">Sửa</span>, lưu, rồi duyệt.</span></li>
       </ol>
       <div class="note"><b>Bấm Duyệt là duyệt luôn, không hỏi lại.</b><span>Lỡ bấm nhầm thì mở <span class="ui">⋯</span> → <span class="ui">Bỏ duyệt</span> để đưa về Cần duyệt (làm được khi chưa đánh dấu đã gửi cho chủ tàu).</span></div>
-      <p>Duyệt hợp đồng cũng tương tự: mở hợp đồng chờ duyệt, bấm <span class="ui">Duyệt</span>; hộp xác nhận trượt lên từ đáy.</p>
+      <p>Duyệt hợp đồng cũng tương tự: ở tab <span class="ui">Chờ duyệt</span>, thẻ hợp đồng có hai nút <span class="ui">Duyệt</span> và <span class="ui">Từ chối</span>; bấm vào là hộp xác nhận trượt lên từ đáy. Từ chối thì phải ghi lý do.</p>
     </section>
 
     <section id="dien-form">
-      <span class="kicker">8</span>
+      <span class="kicker">9</span>
       <h2>Điền form trên điện thoại</h2>
       <ul>
         <li><b>Hàng mục</b> trên đầu form (Thông tin cá nhân, Giấy tờ…) dính lại khi cuộn; bấm một mục để nhảy tới.</li>
@@ -213,7 +251,7 @@
     </section>
 
     <section id="man-hinh-chinh">
-      <span class="kicker">9</span>
+      <span class="kicker">10</span>
       <h2>Thêm MCAH ra màn hình chính</h2>
       <p>Thêm một lần, sau đó MCAH có biểu tượng riêng trên màn hình điện thoại như một ứng dụng: bấm là mở thẳng, không có thanh địa chỉ nên màn hình rộng hơn. Không cần tải gì từ App Store hay CH Play.</p>
       <div class="two">
@@ -238,7 +276,7 @@
     </section>
 
     <section id="hoi-dap">
-      <span class="kicker">10</span>
+      <span class="kicker">11</span>
       <h2>Hỏi đáp</h2>
       <div class="faq">
         <details><summary>Chữ nhỏ quá, phóng to được không?</summary><p>Được. Dùng hai ngón tay để phóng to như mọi trang web, hoặc tăng cỡ chữ trong cài đặt của điện thoại.</p></details>
@@ -248,7 +286,7 @@
       </div>
     </section>
 
-    <footer>Cập nhật 06/11/2026.</footer>
+    <footer>Cập nhật 09/11/2026.</footer>
   </main>
 </div>
 </body>

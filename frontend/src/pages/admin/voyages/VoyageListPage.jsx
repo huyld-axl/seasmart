@@ -16,7 +16,9 @@ import { SOURCE_LABELS, VOYAGE_SOURCES, VOYAGE_TABS, VOYAGE_TAB_LABELS } from '.
 import { formatDate } from '../../../utils/format'
 import LeaveModal from './LeaveModal'
 import VoyageTable from './VoyageTable'
-import { leaveCell, leaveFlagLabel, thisMonth } from './voyageList'
+import { leaveAlert, leaveField, thisMonth } from './voyageList'
+import ListCard, { ListCardList } from '../../../components/ds/ListCard'
+import StatusBadge from '../../../components/ds/StatusBadge'
 import '../seafarers/SeafarerListPage.css'
 import '../opportunities/opportunities.css'
 import './voyages.css'
@@ -92,22 +94,29 @@ export default function VoyageListPage() {
     body = <EmptyState title="Chưa có chuyến nào" description="Chuyến sinh ra khi chốt người trên cơ hội, hoặc tạo tay khi không qua tuyển." action={createButton} />
   } else if (isMobile) {
     body = (
-      <ul className="crew-list">
+      <ListCardList label="Chuyến">
         {rows.map((row) => {
-          const flag = leaveFlagLabel(row.leave_flag)
+          const leave = leaveField(row, formatDate)
+          const alert = leaveAlert(row.leave_flag)
           return (
-            <li key={row.id}>
-              <button type="button" className="crew-list__row" onClick={() => open(row)}>
-                <span className="ds-cell2">
-                  <span className="ds-cell2__main">{row.seafarer_name} · <span className="ds-mono">{row.code}</span></span>
-                  <span className="ds-cell2__sub">{row.rank_name} · {row.vessel_name}</span>
-                  <span className="ds-cell2__sub">Lên {formatDate(row.join_date)} · rời {formatDate(leaveCell(row, formatDate).date)}{flag ? ` · ${flag.text}` : ''}</span>
-                </span>
-              </button>
-            </li>
+            <ListCard
+              key={row.id}
+              title={row.seafarer_name}
+              sub={<>{row.rank_name} · <span className="ds-mono">{row.code}</span></>}
+              badge={<StatusBadge group="voyage" value={row.leave_date ? 'LEFT' : 'ONBOARD'} />}
+              fields={[
+                { label: 'Tàu', value: row.vessel_name },
+                { label: 'Lên tàu', value: formatDate(row.join_date) },
+                { ...leave, wide: true, tone: alert?.tone },
+              ]}
+              alert={alert}
+              actions={mayLeave && !row.leave_date ? [{ label: 'Ghi rời tàu', onClick: () => setLeaving([row]) }] : []}
+              onOpen={() => open(row)}
+              openLabel={`Mở chuyến ${row.code}`}
+            />
           )
         })}
-      </ul>
+      </ListCardList>
     )
   } else {
     body = (

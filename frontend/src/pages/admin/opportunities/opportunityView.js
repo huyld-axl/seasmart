@@ -9,6 +9,22 @@ export function deadlineLabel(flag) {
   return { tone: 'warning', text: flag.days === 0 ? 'hôm nay' : `còn ${flag.days} ngày` }
 }
 
+// Dải cảnh báo hạn chốt trên thẻ danh sách (điện thoại): quá hạn đỏ, sắp tới hạn cam, không có cờ thì null.
+export function deadlineAlert(flag) {
+  if (!flag) return null
+  if (flag.kind === 'LATE') return { tone: 'err', text: `Hạn chốt quá ${flag.days} ngày` }
+  return { tone: 'warn', text: flag.days === 0 ? 'Hạn chốt hôm nay' : `Hạn chốt còn ${flag.days} ngày` }
+}
+
+// Ô thứ tư của thẻ cơ hội: đã có người chọn / chốt thì tên người, chưa thì số ứng viên.
+export function candidateField(row) {
+  const chosen = chosenCandidate(row)
+  if (chosen) return { label: row.placed_name ? 'Người được chốt' : 'Người được chọn', value: chosen.name }
+  const count = Number(row.candidates_count)
+  if (Number.isNaN(count)) return null
+  return { label: 'Ứng viên', value: count ? `${count} người` : 'Chưa có' }
+}
+
 // Ứng viên được chốt của cơ hội (đã chốt, hoặc chủ tàu đã chọn); chưa có thì null.
 export function chosenCandidate(row) {
   if (row.placed_name) return { name: row.placed_name, seafarerId: row.placed_seafarer_id }

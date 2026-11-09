@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { chosenCandidate, candidateStages, candidateTags, deadlineLabel, stageIndex, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
+import { candidateField, deadlineAlert, chosenCandidate, candidateStages, candidateTags, deadlineLabel, stageIndex, nextPositionValues, toFormValues, toPayload, toRequirementPayload } from '../opportunityView'
 
 
 describe('deadlineLabel', () => {
@@ -108,5 +108,26 @@ describe('candidateStages', () => {
   it('chủ tàu chọn khi nhảy cóc qua chặng Gửi vẫn complete', () => {
     const skipped = { export_pack: { created_at: 'a' }, owner_selected_at: 'c' }
     expect(candidateStages(skipped).states).toEqual(['complete', 'complete', 'complete'])
+  })
+})
+
+describe('deadlineAlert', () => {
+  it('quá hạn đỏ, sắp tới cam, không cờ thì null', () => {
+    expect(deadlineAlert({ kind: 'LATE', days: 3 })).toEqual({ tone: 'err', text: 'Hạn chốt quá 3 ngày' })
+    expect(deadlineAlert({ kind: 'SOON', days: 2 })).toEqual({ tone: 'warn', text: 'Hạn chốt còn 2 ngày' })
+    expect(deadlineAlert({ kind: 'SOON', days: 0 })).toEqual({ tone: 'warn', text: 'Hạn chốt hôm nay' })
+    expect(deadlineAlert(null)).toBeNull()
+  })
+})
+
+describe('candidateField', () => {
+  it('có người chốt hoặc được chọn thì ghi tên', () => {
+    expect(candidateField({ placed_name: 'A' })).toEqual({ label: 'Người được chốt', value: 'A' })
+    expect(candidateField({ selected_name: 'B' })).toEqual({ label: 'Người được chọn', value: 'B' })
+  })
+  it('chưa có người thì ghi số ứng viên', () => {
+    expect(candidateField({ candidates_count: 3 })).toEqual({ label: 'Ứng viên', value: '3 người' })
+    expect(candidateField({ candidates_count: 0 })).toEqual({ label: 'Ứng viên', value: 'Chưa có' })
+    expect(candidateField({})).toBeNull()
   })
 })

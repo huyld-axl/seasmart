@@ -1142,9 +1142,16 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-lcard__open:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 .ds-lcard__head, .ds-lcard__fields, .ds-lcard__money { pointer-events: none; }
 .ds-lcard__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; }
-.ds-lcard__media { display: none; }
-.ds-lcard__head:has(.ds-lcard__media) { grid-template-columns: 40px minmax(0, 1fr) auto; }
-.ds-lcard__head:has(.ds-lcard__media) .ds-lcard__media { display: block; grid-row: 1 / span 2; }
+.ds-lcard__head--media { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.ds-lcard__media { grid-row: 1 / span 2; grid-column: 1; align-self: center; }
+.ds-lcard__title { grid-row: 1; grid-column: 1; }
+.ds-lcard__fig { grid-row: 1; grid-column: 2; }
+.ds-lcard__sub { grid-row: 2; grid-column: 1; }
+.ds-lcard__badge { grid-row: 2; grid-column: 2; }
+.ds-lcard__head--media .ds-lcard__title, .ds-lcard__head--media .ds-lcard__sub { grid-column: 2; }
+.ds-lcard__head--media .ds-lcard__fig, .ds-lcard__head--media .ds-lcard__badge { grid-column: 3; }
+.ds-lcard__head--nofig .ds-lcard__title { grid-column: 1 / -1; }
+.ds-lcard__head--media.ds-lcard__head--nofig .ds-lcard__title { grid-column: 2 / -1; }
 .ds-lcard__title { overflow: hidden; font-size: 16px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .ds-lcard__fig { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .ds-lcard__fig small { margin-left: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
@@ -1153,7 +1160,6 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-lcard__fig--muted { color: var(--muted); }
 .ds-lcard__sub { display: -webkit-box; overflow: hidden; color: var(--muted); font-size: 13px; overflow-wrap: break-word; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .ds-lcard__sub .ds-mono { white-space: nowrap; }
-.ds-lcard__badge { justify-self: end; }
 .ds-lcard__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; margin: 0; padding-top: 10px; border-top: 1px dashed var(--border); }
 .ds-lcard__fields > div { min-width: 0; }
 .ds-lcard__wide { grid-column: 1 / -1; }

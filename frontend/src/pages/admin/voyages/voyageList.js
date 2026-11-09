@@ -25,6 +25,20 @@ export function leaveCell(row, formatDate) {
   return { date: row.planned_leave_date, sub: moved ? `đã dời từ ${formatDate(row.original_leave_date)}` : 'dự kiến' }
 }
 
+// Ô Rời tàu của thẻ danh sách (điện thoại): đã rời thì "Rời tàu" + ngày + nơi; chưa thì "Rời tàu dự kiến" + ngày (+ "đã dời từ").
+export function leaveField(row, formatDate) {
+  if (row.leave_date) return { label: 'Rời tàu', value: [formatDate(row.leave_date), row.leave_port_name].filter(Boolean).join(' · ') }
+  const moved = row.original_leave_date && row.original_leave_date !== row.planned_leave_date
+  const date = formatDate(row.planned_leave_date)
+  return { label: 'Rời tàu dự kiến', value: moved ? `${date} · dời từ ${formatDate(row.original_leave_date)}` : date }
+}
+
+// Dải cảnh báo rời tàu trên thẻ: từ leave_flag, đỏ khi quá hạn, cam khi sắp tới.
+export function leaveAlert(flag) {
+  const label = leaveFlagLabel(flag)
+  return label ? { text: label.text, tone: label.tone === 'error' ? 'err' : 'warn' } : null
+}
+
 // Nguồn: mã cơ hội, hoặc "Tạo tay" (lý do xem ở trang chi tiết).
 export function sourceText(row) {
   if (row.source === 'OPPORTUNITY') return row.opportunity_code || 'Từ cơ hội'

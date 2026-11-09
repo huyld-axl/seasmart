@@ -7,7 +7,8 @@ import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import { seafarerApi } from '../../api'
 import api from '../../api/client'
 import { EmptyState, StatusTabs } from '../../components/ds/Controls'
-import { CREW_TABS, vesselNow } from './seafarers/crewView'
+import { CREW_TABS, seafarerAlert, vesselNow } from './seafarers/crewView'
+import ListCard, { ListCardList } from '../../components/ds/ListCard'
 import StatusBadge from '../../components/ds/StatusBadge'
 import CrewThumb from './seafarers/CrewThumb'
 import { CrewFilterFields, CrewFilterButton } from './seafarers/CrewFilters'
@@ -144,19 +145,27 @@ export default function SeafarerListPage() {
     body = <EmptyState title="Chưa có thuyền viên nào" description="Thêm thuyền viên đầu tiên, hoặc nhập cả danh sách từ Excel." action={can('seafarer.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>Thêm thuyền viên</Button> : undefined} />
   } else if (isMobile) {
     body = (
-      <ul className="crew-list">
-        {rows.map((row) => (
-          <li key={row.id}>
-            <button type="button" className="crew-list__row" onClick={() => open(row)}>
-              <Person row={row} />
-              <span className="crew-list__meta">
-                <StatusBadge group="crew" value={row.status} />
-                {vesselNow(row) ? <span className="ds-cell2__sub">{vesselNow(row).vessel}</span> : null}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      <ListCardList label="Thuyền viên">
+        {rows.map((row) => {
+          const onboard = vesselNow(row)
+          return (
+            <ListCard
+              key={row.id}
+              media={<CrewThumb id={row.id} hasPhoto={row.has_photo} version={row.photo_updated_at} />}
+              title={row.full_name}
+              sub={row.rank_name || 'Chưa có chức danh'}
+              badge={<StatusBadge group="crew" value={row.status} />}
+              fields={[
+                { label: 'Tàu hiện tại', value: onboard?.vessel },
+                { label: 'Hợp đồng', value: onboard?.until },
+              ]}
+              alert={seafarerAlert(row)}
+              onOpen={() => open(row)}
+              openLabel={`Mở hồ sơ ${row.full_name}`}
+            />
+          )
+        })}
+      </ListCardList>
     )
   } else {
     body = (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { joinDeltaLabel, leaveCell, leaveFlagLabel, leaveHint, sourceText } from '../voyageList'
+import { leaveAlert, leaveField, joinDeltaLabel, leaveCell, leaveFlagLabel, leaveHint, sourceText } from '../voyageList'
 
 const fmt = (d) => d.split('-').reverse().join('/')
 
@@ -135,5 +135,24 @@ describe('thẻ Đội ngũ', () => {
     expect(rows[0].bars.map((b) => b.kind)).toEqual(['planned', 'onboard', 'overdue'])
     expect(rows[1].warn).toBe(true)
     expect(rows[1].subtitle).toContain('quá ngày lên 3 ngày')
+  })
+})
+
+describe('leaveField', () => {
+  const fmt = (d) => d.slice(8, 10) + '/' + d.slice(5, 7)
+  it('chưa rời: Rời tàu dự kiến, ghi đã dời khi đổi ngày', () => {
+    expect(leaveField({ planned_leave_date: '2026-11-14' }, fmt)).toEqual({ label: 'Rời tàu dự kiến', value: '14/11' })
+    expect(leaveField({ planned_leave_date: '2026-11-14', original_leave_date: '2026-11-02' }, fmt)).toEqual({ label: 'Rời tàu dự kiến', value: '14/11 · dời từ 02/11' })
+  })
+  it('đã rời: ngày và nơi rời', () => {
+    expect(leaveField({ leave_date: '2026-11-02', leave_port_name: 'Hải Phòng' }, fmt)).toEqual({ label: 'Rời tàu', value: '02/11 · Hải Phòng' })
+  })
+})
+
+describe('leaveAlert', () => {
+  it('đổi sang màu của ListCard', () => {
+    expect(leaveAlert({ kind: 'LATE', days: 7 })).toEqual({ text: 'Quá 7 ngày chưa rời', tone: 'err' })
+    expect(leaveAlert({ kind: 'SOON', days: 5 })).toEqual({ text: 'Còn 5 ngày', tone: 'warn' })
+    expect(leaveAlert(null)).toBeNull()
   })
 })

@@ -25,6 +25,14 @@ export function docsAlert(row) {
   return { tone: 'muted', text: 'Còn hạn' }
 }
 
+// Dải cảnh báo của thẻ thuyền viên (điện thoại): giấy tờ hết hạn (đỏ), sắp hết hạn (cam), rồi giấy chờ duyệt (cam); không có thì null.
+export function seafarerAlert(row) {
+  if (row.expired_count > 0) return { tone: 'err', text: `${row.expired_count} giấy tờ hết hạn` }
+  if (row.expiring_count > 0) return { tone: 'warn', text: `${row.expiring_count} giấy tờ sắp hết hạn` }
+  if (row.pending_review_count > 0) return { tone: 'warn', text: `${row.pending_review_count} giấy tờ chờ duyệt` }
+  return null
+}
+
 // Chữ trong ô avatar: chữ đầu của tên đệm cuối và tên ("Trần Minh Khôi" → "MK").
 export function nameInitials(fullName = '') {
   const parts = fullName.trim().split(/\s+/).filter(Boolean)

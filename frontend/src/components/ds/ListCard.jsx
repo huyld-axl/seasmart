@@ -20,7 +20,7 @@ export default function ListCard({ title, sub, badge, media, figure, fields = []
     <li className="ds-lcard">
       <div className="ds-lcard__main">
         {onOpen ? <button type="button" className="ds-lcard__open" aria-label={openLabel || (typeof title === 'string' ? `Mở ${title}` : 'Mở')} onClick={onOpen} /> : null}
-        <div className="ds-lcard__head">
+        <div className={`ds-lcard__head${media ? ' ds-lcard__head--media' : ''}${figure ? '' : ' ds-lcard__head--nofig'}`}>
           {media ? <span className="ds-lcard__media">{media}</span> : null}
           <span className="ds-lcard__title">{title}</span>
           {figure ? (
@@ -28,8 +28,8 @@ export default function ListCard({ title, sub, badge, media, figure, fields = []
               {figure.value}
               {figure.unit ? <small>{figure.unit}</small> : null}
             </span>
-          ) : <span />}
-          {sub ? <span className="ds-lcard__sub">{sub}</span> : <span />}
+          ) : null}
+          {sub ? <span className="ds-lcard__sub">{sub}</span> : null}
           {badge ? <span className="ds-lcard__badge">{badge}</span> : null}
         </div>
         {shown.length ? (

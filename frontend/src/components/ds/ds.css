@@ -1152,7 +1152,7 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-lcard__head--media .ds-lcard__fig, .ds-lcard__head--media .ds-lcard__badge { grid-column: 3; }
 .ds-lcard__head--nofig .ds-lcard__title { grid-column: 1 / -1; }
 .ds-lcard__head--media.ds-lcard__head--nofig .ds-lcard__title { grid-column: 2 / -1; }
-.ds-lcard__title { overflow: hidden; font-size: 16px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ds-lcard__title { display: -webkit-box; overflow: hidden; font-size: 16px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .ds-lcard__fig { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
 .ds-lcard__fig small { margin-left: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
 .ds-lcard__fig--pos { color: var(--success); }

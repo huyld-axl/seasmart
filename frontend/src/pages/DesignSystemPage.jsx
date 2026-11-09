@@ -57,6 +57,7 @@ import BottomSheet from '../components/ds/BottomSheet'
 import DateField, { DateRangeField } from '../components/ds/DateField'
 import ScrollRow from '../components/ds/ScrollRow'
 import RowList from '../components/ds/RowList'
+import ListCard, { ListCardList, MoneyStrip } from '../components/ds/ListCard'
 import useViewport from '../hooks/useViewport'
 import dayjs from 'dayjs'
 import ToastContent from '../components/ds/ToastContent'
@@ -343,6 +344,70 @@ function PhoneDemos() {
                 <button key={name} type="button" className="dsp-chip" aria-current={name === section ? 'true' : undefined} onClick={() => setSection(name)}>{name}</button>
               ))}
             </ScrollRow>
+          </div>
+        </Demo>
+        <Demo label="ListCard: thẻ danh sách ở điện thoại. Tiền + cảnh báo + nút việc kế tiếp (yêu cầu thanh toán quá hạn)" wide>
+          <div className="dsp-box dsp-box--flush">
+            <ListCardList>
+              <ListCard
+                title="Đỗ Mạnh Cường"
+                figure={{ value: '1.595', unit: 'USD' }}
+                sub={<>Kỳ 3/10 · <span className="ds-mono">TT-2026-00060</span></>}
+                badge={<StatusBadge group="bill" value="OVERDUE" />}
+                fields={[
+                  { label: 'Tàu', value: 'MV Ocean Glory' },
+                  { label: 'Chủ tàu', value: 'Lotus Shipping Pte. Ltd.' },
+                  { label: 'Kỳ thu', value: '01/09 – 30/09/2026' },
+                  { label: 'Hạn thanh toán', value: '04/11/2026', tone: 'err' },
+                ]}
+                alert={{ text: 'Quá hạn 5 ngày, chưa thu', tone: 'err' }}
+                actions={[{ label: 'Ghi nhận đã thu', onClick: () => {} }]}
+                onOpen={() => {}}
+                openLabel="Mở yêu cầu thanh toán TT-2026-00060"
+              />
+            </ListCardList>
+          </div>
+        </Demo>
+        <Demo label="ListCard: dải Thu − Chi, ô cả hàng, hai nút (hợp đồng chờ duyệt)" wide>
+          <div className="dsp-box dsp-box--flush">
+            <ListCardList>
+              <ListCard
+                title="Trần Minh Khôi"
+                figure={{ value: '+300', unit: 'USD/th', tone: 'pos' }}
+                sub={<>Máy trưởng · <span className="ds-mono">HĐ-2026-0058</span></>}
+                badge={<StatusBadge group="contract" value="PENDING" />}
+                fields={[
+                  { label: 'Tàu', value: 'MV Mekong Star' },
+                  { label: 'Chủ tàu', value: 'Halong Maritime JSC' },
+                  { label: 'Thời hạn', value: '15/10/2026 → 14/04/2027 · 6 tháng', wide: true },
+                ]}
+                extra={<MoneyStrip income="2.600" expense="2.300" result="+300 USD/tháng" resultTone="pos" />}
+                actions={[{ label: 'Duyệt', onClick: () => {} }, { label: 'Từ chối', danger: true, onClick: () => {} }]}
+                onOpen={() => {}}
+              />
+            </ListCardList>
+          </div>
+        </Demo>
+        <Demo label="ListCard: có ảnh đại diện, dải cảnh báo cam, không nút" wide>
+          <div className="dsp-box dsp-box--flush">
+            <ListCardList>
+              <ListCard
+                media={<span className="ds-lcard__demo-ava">NV</span>}
+                title="Ngô Quang Vinh"
+                sub="Thủy thủ trực ca"
+                badge={<StatusBadge group="crew" value="ON_VESSEL" />}
+                fields={[{ label: 'Tàu hiện tại', value: 'MV Ocean Glory' }]}
+                alert={{ text: '2 giấy tờ chờ duyệt', tone: 'warn' }}
+                onOpen={() => {}}
+              />
+            </ListCardList>
+          </div>
+        </Demo>
+        <Demo label="ListCard: tối thiểu, chỉ tiêu đề và trạng thái (tên chủ tàu dài bị cắt bằng …)" wide>
+          <div className="dsp-box dsp-box--flush">
+            <ListCardList>
+              <ListCard title="Qingdao Ocean Star Shipping and Maritime Management Co., Ltd." badge={<StatusBadge group="partner" value="ACTIVE" />} onOpen={() => {}} />
+            </ListCardList>
           </div>
         </Demo>
         <Demo label="RowList: bảng ít cột, điện thoại thành dòng hai tầng" wide>
@@ -1069,7 +1134,7 @@ export default function DesignSystemPage() {
       </Section>
 
       <Section id="dien-thoai" title="Điện thoại">
-        <p className="dsp-note">Dưới 640px: ô nhập 44px chữ 16px, nút nhỏ có vùng bấm 40×40, dialog thành sheet từ đáy (quy tắc chung, không cần component). Năm component dưới đây chỉ đổi khuôn ở điện thoại; desktop giữ như cũ.</p>
+        <p className="dsp-note">Dưới 640px: ô nhập 44px chữ 16px, nút nhỏ có vùng bấm 40×40, dialog thành sheet từ đáy (quy tắc chung, không cần component). Các component dưới đây chỉ đổi khuôn ở điện thoại; desktop giữ như cũ.</p>
         <PhoneDemos />
       </Section>
 

@@ -1132,3 +1132,49 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-rowlist__check { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; margin-left: -10px; }
 /* Nút "Dùng số điện thoại này cho Zalo" dưới ô Zalo: cột hẹp (form 3 cột ở 1100–1160px, điện thoại) thì xuống dòng, không tràn. */
 .ds-zalo-use.ant-btn { max-width: 100%; height: auto; min-height: var(--ant-control-height-sm); padding-left: 0; white-space: normal; text-align: left; }
+
+/* Thẻ danh sách ở điện thoại (ListCard). Thân thẻ có nút phủ để cả thẻ bấm được; nút việc kế tiếp nằm ngoài nút phủ. */
+.ds-lcards { display: grid; gap: 10px; margin: 0; padding: 12px; list-style: none; }
+.ds-lcard { overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.ds-lcard__main { position: relative; display: grid; gap: 10px; padding: 12px 14px; }
+.ds-lcard__open { position: absolute; inset: 0; z-index: 1; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.ds-lcard__open:active { background: var(--item-hover); }
+.ds-lcard__open:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.ds-lcard__head, .ds-lcard__fields, .ds-lcard__money { pointer-events: none; }
+.ds-lcard__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; }
+.ds-lcard__media { display: none; }
+.ds-lcard__head:has(.ds-lcard__media) { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.ds-lcard__head:has(.ds-lcard__media) .ds-lcard__media { display: block; grid-row: 1 / span 2; }
+.ds-lcard__title { overflow: hidden; font-size: 16px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.ds-lcard__fig { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.ds-lcard__fig small { margin-left: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
+.ds-lcard__fig--pos { color: var(--success); }
+.ds-lcard__fig--neg { color: var(--error-strong); }
+.ds-lcard__fig--muted { color: var(--muted); }
+.ds-lcard__sub { overflow: hidden; color: var(--muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.ds-lcard__badge { justify-self: end; }
+.ds-lcard__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; margin: 0; padding-top: 10px; border-top: 1px dashed var(--border); }
+.ds-lcard__fields > div { min-width: 0; }
+.ds-lcard__wide { grid-column: 1 / -1; }
+.ds-lcard__fields dt { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
+.ds-lcard__fields dd { margin: 0; overflow: hidden; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.ds-lcard__tone--err { color: var(--error-strong); }
+.ds-lcard__tone--warn { color: var(--warning); }
+.ds-lcard__tone--pos { color: var(--success); }
+.ds-lcard__tone--muted { color: var(--muted); }
+.ds-lcard__money { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; padding: 8px 10px; border-radius: 10px; background: var(--neutral-bg); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ds-lcard__money > span, .ds-lcard__money > b { white-space: nowrap; }
+.ds-lcard__money > span { color: var(--muted); }
+.ds-lcard__money > b { font-weight: 600; }
+.ds-lcard__money > .ds-lcard__money-eq { margin-left: auto; font-weight: 700; }
+.ds-lcard__alert { padding: 8px 14px; font-size: 13px; font-weight: 500; }
+.ds-lcard__alert--err { background: var(--error-bg); color: var(--error-strong); }
+.ds-lcard__alert--warn { background: var(--warning-bg); color: var(--warning); }
+.ds-lcard__actions { display: flex; border-top: 1px solid var(--border); }
+.ds-lcard__actions button { flex: 1; min-height: 44px; padding: 0 8px; border: 0; background: none; color: var(--primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ds-lcard__actions button + button { border-left: 1px solid var(--border); }
+.ds-lcard__actions button:active { background: var(--item-hover); }
+.ds-lcard__actions button:disabled { color: var(--muted); cursor: not-allowed; }
+.ds-lcard__actions button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.ds-lcard__actions .ds-lcard__action--danger { color: var(--error-strong); }
+.ds-lcard__demo-ava { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--secondary); color: var(--neutral); font-weight: 600; }

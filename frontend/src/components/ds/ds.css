@@ -1157,7 +1157,7 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-lcard__fields > div { min-width: 0; }
 .ds-lcard__wide { grid-column: 1 / -1; }
 .ds-lcard__fields dt { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
-.ds-lcard__fields dd { margin: 0; overflow: hidden; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.ds-lcard__fields dd { display: -webkit-box; margin: 0; overflow: hidden; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.35; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .ds-lcard__tone--err { color: var(--error-strong); }
 .ds-lcard__tone--warn { color: var(--warning); }
 .ds-lcard__tone--pos { color: var(--success); }

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Button, Input, Select, Skeleton, Table, Tooltip } from 'antd'
+import { App, Button, Input, Select, Skeleton, Table, Tooltip } from 'antd'
 import { CheckOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -19,7 +19,8 @@ import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
-import { overdueLabel } from './billView'
+import { billNextAction, overdueLabel, periodLabel } from './billView'
+import ListCard, { ListCardList } from '../../../components/ds/ListCard'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
 import { CrewFilterButton } from '../seafarers/CrewFilters'
@@ -54,6 +55,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const tableScroll = useListSticky()
   const toast = useToast()
+  const { modal } = App.useApp()
   const { move } = useBillMutations()
   const keyword = search.trim()
 
@@ -77,33 +79,34 @@ export default function BillListPage({ shipOwnerId } = {}) {
       return false
     }
   }
-  // Nút thao tác nhanh: Cần duyệt → Duyệt; Cần gửi → Gửi; Đã gửi / Quá hạn → Ghi nhận đã thu. Các trạng thái khác chừa ô trống cho thẳng cột.
+  // Việc kế tiếp (billNextAction): Cần duyệt → Duyệt; Cần gửi → Gửi; Đã gửi / Quá hạn → Ghi nhận đã thu. Desktop là nút icon, thẻ điện thoại là nút chữ.
+  const doNext = (row, next) => {
+    if (next.action === 'approve') return run(row, 'approve', `Đã duyệt ${row.code}`)
+    if (next.action === 'send') return run(row, 'send', `Đã đánh dấu gửi ${row.code}`)
+    return setCollecting(row)
+  }
+  // Điện thoại dễ bấm nhầm khi cuộn, mà Duyệt ghi ngay: hỏi xác nhận một bước (desktop giữ nguyên).
+  const nextOnCard = (row, next) => {
+    if (next.action !== 'approve') return doNext(row, next)
+    return modal.confirm({
+      title: `Duyệt ${row.code}?`,
+      content: `${row.seafarer.full_name} · ${formatUsd(row.total_usd, { fixed: true })} USD`,
+      okText: 'Duyệt',
+      cancelText: 'Huỷ',
+      onOk: () => doNext(row, next),
+    })
+  }
   const quickAction = (row) => {
-    if (row.display_status === 'TO_APPROVE' && can('bill.approve')) {
-      return (
-        <Tooltip title="Duyệt">
-          <Button type="text" size="small" icon={<CheckOutlined />} aria-label={`Duyệt ${row.code}`} disabled={move.isPending}
-            onClick={(event) => { event.stopPropagation(); run(row, 'approve', `Đã duyệt ${row.code}`) }} />
-        </Tooltip>
-      )
-    }
-    if (row.display_status === 'TO_SEND' && can('bill.send')) {
-      return (
-        <Tooltip title="Đánh dấu đã gửi">
-          <Button type="text" size="small" icon={<SendOutlined />} aria-label={`Đánh dấu đã gửi ${row.code}`} disabled={move.isPending}
-            onClick={(event) => { event.stopPropagation(); run(row, 'send', `Đã đánh dấu gửi ${row.code}`) }} />
-        </Tooltip>
-      )
-    }
-    if ((row.display_status === 'SENT' || row.display_status === 'OVERDUE') && can('bill.collect')) {
-      return (
-        <Tooltip title="Ghi nhận đã thu">
-          <Button type="text" size="small" icon={<CheckOutlined />} aria-label={`Ghi nhận đã thu ${row.code}`}
-            onClick={(event) => { event.stopPropagation(); setCollecting(row) }} />
-        </Tooltip>
-      )
-    }
-    return <span className="ds-row-actions__slot" aria-hidden />
+    const next = billNextAction(row, can)
+    if (!next) return <span className="ds-row-actions__slot" aria-hidden />
+    const Icon = next.action === 'send' ? SendOutlined : CheckOutlined
+    const tooltip = next.action === 'send' ? 'Đánh dấu đã gửi' : next.label
+    return (
+      <Tooltip title={tooltip}>
+        <Button type="text" size="small" icon={<Icon />} aria-label={`${tooltip} ${row.code}`} disabled={next.action !== 'collect' && move.isPending}
+          onClick={(event) => { event.stopPropagation(); doNext(row, next) }} />
+      </Tooltip>
+    )
   }
   const badge = (row) => <StatusBadge group="bill" value={row.display_status} label={overdueLabel(row)} />
 
@@ -165,23 +168,32 @@ export default function BillListPage({ shipOwnerId } = {}) {
     body = <EmptyState title="Chưa có yêu cầu thanh toán nào" description="Yêu cầu thanh toán tự tạo khi duyệt hợp đồng, mỗi kỳ chốt sổ một bill." action={can('contract.view') ? <Button type="primary" onClick={() => navigate('/contracts')}>Xem hợp đồng</Button> : undefined} />
   } else if (isMobile) {
     body = (
-      <ul className="crew-list">
-        {rows.map((row) => (
-          <li key={row.id}>
-            <button type="button" className="crew-list__row" onClick={() => open(row)}>
-              <span className="ds-cell2">
-                <span className="ds-cell2__main">{row.seafarer.full_name} · <span className="ds-mono">{row.code}</span></span>
-                <span className="ds-cell2__sub">{row.contract.contract_number} · {row.vessel.vessel_name} · {row.ship_owner.company_name}</span>
-                <span className="ds-cell2__sub">Kỳ {row.seq}/{row.periods} · {formatDate(row.period_start)} → {formatDate(row.period_end)} · hạn {formatDate(row.due_date)}</span>
-              </span>
-              <span className="crew-list__meta">
-                {badge(row)}
-                <b className="ds-num">{formatUsd(row.total_usd)}</b>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      <ListCardList label="Yêu cầu thanh toán">
+        {rows.map((row) => {
+          const next = billNextAction(row, can)
+          const overdue = row.display_status === 'OVERDUE'
+          const paid = row.display_status === 'PAID' && row.paid_date
+          return (
+            <ListCard
+              key={row.id}
+              title={row.seafarer.full_name}
+              figure={{ value: formatUsd(row.total_usd), unit: 'USD' }}
+              sub={<>Kỳ {row.seq}/{row.periods} · <span className="ds-mono">{row.code}</span></>}
+              badge={<StatusBadge group="bill" value={row.display_status} />}
+              fields={[
+                { label: 'Tàu', value: row.vessel.vessel_name },
+                { label: 'Chủ tàu', value: shipOwnerId ? null : row.ship_owner.company_name },
+                { label: 'Kỳ thu', value: periodLabel(row.period_start, row.period_end) },
+                paid ? { label: 'Đã thu ngày', value: formatDate(row.paid_date) } : { label: 'Hạn thanh toán', value: formatDate(row.due_date), tone: overdue ? 'err' : undefined },
+              ]}
+              alert={overdue ? { text: `${overdueLabel(row) || 'Quá hạn'}, chưa thu`, tone: 'err' } : null}
+              actions={next ? [{ label: next.label, disabled: move.isPending && next.action !== 'collect', onClick: () => nextOnCard(row, next) }] : []}
+              onOpen={() => open(row)}
+              openLabel={`Mở yêu cầu thanh toán ${row.code}`}
+            />
+          )
+        })}
+      </ListCardList>
     )
   } else {
     body = (

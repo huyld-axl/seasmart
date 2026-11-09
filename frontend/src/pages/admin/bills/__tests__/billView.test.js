@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import dayjs from 'dayjs'
-import { countChanges, groupItems, overdueLabel, payLabel, toPayload } from '../billView'
+import { billNextAction, countChanges, groupItems, overdueLabel, payLabel, periodLabel, toPayload } from '../billView'
 
 const items = [
   { id: 1, kind: 'MONTHLY', name: 'Lương cơ bản', amount_usd: 1000 },
@@ -38,5 +38,35 @@ describe('billView', () => {
     expect(overdueLabel({ display_status: 'SENT', due_date: '2026-10-12' }, dayjs('2026-10-21'))).toBeUndefined()
     expect(payLabel({ pay_day: 10, pay_month_offset: 1 })).toBe('Ngày 10 tháng sau')
     expect(payLabel({ pay_day: 31, pay_month_offset: 2 })).toBe('Cuối tháng sau 2 tháng')
+  })
+})
+
+describe('billNextAction', () => {
+  const all = () => true
+  const none = () => false
+  it('mỗi trạng thái một việc kế tiếp', () => {
+    expect(billNextAction({ display_status: 'TO_APPROVE' }, all)).toMatchObject({ action: 'approve', label: 'Duyệt' })
+    expect(billNextAction({ display_status: 'TO_SEND' }, all)).toMatchObject({ action: 'send', label: 'Đánh dấu đã gửi' })
+    expect(billNextAction({ display_status: 'SENT' }, all)).toMatchObject({ action: 'collect', label: 'Ghi nhận đã thu' })
+    expect(billNextAction({ display_status: 'OVERDUE' }, all)).toMatchObject({ action: 'collect' })
+  })
+  it('đã thu, chưa đến kỳ: không có việc', () => {
+    expect(billNextAction({ display_status: 'PAID' }, all)).toBeNull()
+    expect(billNextAction({ display_status: 'UPCOMING' }, all)).toBeNull()
+  })
+  it('thiếu quyền thì không có nút', () => {
+    expect(billNextAction({ display_status: 'TO_APPROVE' }, none)).toBeNull()
+    expect(billNextAction({ display_status: 'TO_APPROVE' }, (code) => code === 'bill.send')).toBeNull()
+    expect(billNextAction({ display_status: 'TO_SEND' }, (code) => code === 'bill.send')).toMatchObject({ action: 'send' })
+  })
+})
+
+describe('periodLabel', () => {
+  it('cùng năm bỏ năm đầu, dấu gạch liền, khác năm ghi đủ', () => {
+    expect(periodLabel('2026-09-01', '2026-09-30')).toBe('01/09–30/09/2026')
+    expect(periodLabel('2026-12-16', '2027-01-15')).toBe('16/12/2026–15/01/2027')
+  })
+  it('thiếu ngày thì rỗng', () => {
+    expect(periodLabel(null, '2026-09-30')).toBe('')
   })
 })

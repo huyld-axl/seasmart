@@ -221,3 +221,36 @@ export function planSummary(plan) {
 
 // Nhãn lệch ngày ở danh sách hợp đồng: "Đã rời tàu 17/10".
 export const dateMismatchText = (mismatch) => `Đã rời tàu ${dm(mismatch.leave_date)}`
+
+// Số tháng của hợp đồng như backend (monthsBetween): m tháng trọn + ngày lẻ / 30, làm tròn 2 chữ số. Ghi "6 tháng", "2,5 tháng".
+export function contractMonthsLabel(start, end) {
+  const a = dayjs(start)
+  const b = dayjs(end)
+  if (!a.isValid() || !b.isValid() || b.isBefore(a, 'day')) return ''
+  let months = (b.year() - a.year()) * 12 + (b.month() - a.month())
+  while (months > 0 && a.add(months, 'month').isAfter(b, 'day')) months -= 1
+  const days = b.startOf('day').diff(a.add(months, 'month').startOf('day'), 'day')
+  const value = round2(months + days / 30)
+  return `${String(value).replace('.', ',')} tháng`
+}
+
+// Hợp đồng Hiệu lực sắp hết hạn: số ngày còn lại tới ngày kết thúc (âm là đã quá). Trạng thái khác, hoặc chưa có ngày: null.
+export function daysLeft(row, today = dayjs()) {
+  if (row.status !== 'ACTIVE' || !row.end_date) return null
+  return dayjs(row.end_date).startOf('day').diff(today.startOf('day'), 'day')
+}
+
+// Ngưỡng sắp hết hạn: ô Thời hạn đổi màu khi còn ≤ 30 ngày, dải cảnh báo khi còn ≤ 7 ngày (kế hoạch danh sách mobile, mục 8 câu 3).
+export const EXPIRY_WARN_DAYS = 30
+export const EXPIRY_ALERT_DAYS = 7
+
+// Việc kế tiếp của hợp đồng trên danh sách, theo trạng thái và quyền (cùng quyền với nút ở trang chi tiết).
+// Trả về mảng tối đa 2 nút: Chờ duyệt → Duyệt, Từ chối; Nháp / Bị từ chối → Sửa. Hiệu lực, Đã kết thúc: không có.
+export function contractNextActions(row, can) {
+  if (row.status === 'PENDING' && can('contract.approve')) {
+    return [{ action: 'approve', label: 'Duyệt' }, { action: 'reject', label: 'Từ chối', danger: true }]
+  }
+  if (row.status === 'DRAFT' && can('contract.update')) return [{ action: 'edit', label: 'Sửa nháp' }]
+  if (row.status === 'REJECTED' && can('contract.update')) return [{ action: 'edit', label: 'Sửa lại' }]
+  return []
+}

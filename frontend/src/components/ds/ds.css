@@ -1151,7 +1151,8 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-lcard__fig--pos { color: var(--success); }
 .ds-lcard__fig--neg { color: var(--error-strong); }
 .ds-lcard__fig--muted { color: var(--muted); }
-.ds-lcard__sub { overflow: hidden; color: var(--muted); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.ds-lcard__sub { display: -webkit-box; overflow: hidden; color: var(--muted); font-size: 13px; overflow-wrap: break-word; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ds-lcard__sub .ds-mono { white-space: nowrap; }
 .ds-lcard__badge { justify-self: end; }
 .ds-lcard__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; margin: 0; padding-top: 10px; border-top: 1px dashed var(--border); }
 .ds-lcard__fields > div { min-width: 0; }

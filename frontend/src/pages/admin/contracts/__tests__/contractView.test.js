@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { balance, balanceNotes, itemRows, payOptions, termLabel, toFormValues, newFormValues, toPayload, periodText, planChangesBills, planRows, planHeadline, planSummary } from '../contractView'
+import dayjs from 'dayjs'
+import { contractMonthsLabel, contractNextActions, daysLeft, balance, balanceNotes, itemRows, payOptions, termLabel, toFormValues, newFormValues, toPayload, periodText, planChangesBills, planRows, planHeadline, planSummary } from '../contractView'
 
 const item = (kind, receivable_usd, payable_usd) => ({ kind, receivable_usd, payable_usd })
 
@@ -145,5 +146,46 @@ describe('bản xem trước bill khi duyệt lại', () => {
   it('chưa có bill hoặc ngày không đổi thì không có tóm tắt đổi bill', () => {
     expect(planSummary({ mode: 'FIRST', bills_range: null })).toBeNull()
     expect(planSummary({ mode: 'NONE', ...range })).toBe('Ngày không đổi so với bill đang có: duyệt không đổi bill.')
+  })
+})
+
+describe('contractMonthsLabel', () => {
+  it('tháng tròn, tháng lẻ ngày, dấu phẩy thập phân', () => {
+    expect(contractMonthsLabel('2026-10-15', '2027-04-14')).toBe('6 tháng')
+    expect(contractMonthsLabel('2026-09-01', '2027-03-16')).toBe('6,5 tháng')
+    expect(contractMonthsLabel('2026-01-01', '2026-07-01')).toBe('6 tháng')
+  })
+  it('ngày kết thúc trước ngày bắt đầu hoặc thiếu ngày thì rỗng', () => {
+    expect(contractMonthsLabel('2026-05-01', '2026-04-01')).toBe('')
+    expect(contractMonthsLabel(null, '2026-04-01')).toBe('')
+  })
+})
+
+describe('daysLeft', () => {
+  const today = dayjs('2026-11-09')
+  it('chỉ tính cho Hiệu lực', () => {
+    expect(daysLeft({ status: 'ACTIVE', end_date: '2026-11-14' }, today)).toBe(5)
+    expect(daysLeft({ status: 'ENDED', end_date: '2026-11-14' }, today)).toBeNull()
+    expect(daysLeft({ status: 'ACTIVE', end_date: null }, today)).toBeNull()
+  })
+  it('đã quá ngày kết thúc thì âm', () => {
+    expect(daysLeft({ status: 'ACTIVE', end_date: '2026-11-07' }, today)).toBe(-2)
+  })
+})
+
+describe('contractNextActions', () => {
+  const all = () => true
+  it('Chờ duyệt: Duyệt và Từ chối (cần quyền duyệt)', () => {
+    expect(contractNextActions({ status: 'PENDING' }, all).map((a) => a.action)).toEqual(['approve', 'reject'])
+    expect(contractNextActions({ status: 'PENDING' }, (code) => code === 'contract.update')).toEqual([])
+  })
+  it('Nháp và Bị từ chối: Sửa (cần quyền sửa)', () => {
+    expect(contractNextActions({ status: 'DRAFT' }, all)).toEqual([{ action: 'edit', label: 'Sửa nháp' }])
+    expect(contractNextActions({ status: 'REJECTED' }, all)).toEqual([{ action: 'edit', label: 'Sửa lại' }])
+    expect(contractNextActions({ status: 'DRAFT' }, () => false)).toEqual([])
+  })
+  it('Hiệu lực, Đã kết thúc: không có nút', () => {
+    expect(contractNextActions({ status: 'ACTIVE' }, all)).toEqual([])
+    expect(contractNextActions({ status: 'ENDED' }, all)).toEqual([])
   })
 })

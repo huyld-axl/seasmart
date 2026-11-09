@@ -111,4 +111,3 @@
 .ex-row .ds-cell2__sub { white-space: normal; }
 .ex-row__end { display: inline-flex; align-items: center; gap: 12px; }
 .rv-muted { color: var(--muted); }
-.crew-list__row[role='link'] { display: grid; }

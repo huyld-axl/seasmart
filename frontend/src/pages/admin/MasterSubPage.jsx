@@ -23,21 +23,18 @@ import './seafarers/SeafarerForm.css'
 import { masterRules, upperCode } from '../../utils/fieldRules'
 import useViewport from '../../hooks/useViewport'
 import Fab from '../../components/ds/Fab'
+import ListCard, { ListCardList } from '../../components/ds/ListCard'
 
 const isBlank = (value) => value == null || value === ''
 const sameValue = (a, b) => (isBlank(a) && isBlank(b)) || String(a) === String(b)
 
 // Dòng trên mobile: tên làm dòng chính, mã và tên phụ làm dòng dưới.
-function MobileRow({ row, resource }) {
+// Chữ của thẻ danh mục ở điện thoại: tên (kèm cờ với quốc gia) và dòng phụ mã · tên tiếng Anh / quốc gia.
+function masterCardText(row, resource) {
   const rawName = row.name_vi || row.name || row.code
   const main = resource === 'countries' ? withFlag(row.code, rawName, row.flag_emoji) : rawName
   const sub = [row.code || row.un_locode, row.name_en || (row.country_name ? withFlag(row.country_code, row.country_name, row.country_flag_emoji) : null)].filter((v) => v && v !== main).join(' · ')
-  return (
-    <span className="ds-cell2">
-      <span className="ds-cell2__main">{main}</span>
-      {sub ? <span className="ds-cell2__sub">{sub}</span> : null}
-    </span>
-  )
+  return { main, sub: sub || null }
 }
 
 // ── Generic CRUD hook ──────────────────────────────────────────────────────────
@@ -206,19 +203,12 @@ function MasterTable({ resource, columns, formFields, title }) {
     body = (
       <>
         {isMobile ? (
-          <ul className="crew-list">
-            {pageRows.map((row) => (
-              <li key={row.id}>
-                {canEdit ? (
-                  <button type="button" className="crew-list__row" onClick={() => openPanel(row)}>
-                    <MobileRow row={row} resource={resource} />
-                  </button>
-                ) : (
-                  <span className="crew-list__row"><MobileRow row={row} resource={resource} /></span>
-                )}
-              </li>
-            ))}
-          </ul>
+          <ListCardList label={title}>
+            {pageRows.map((row) => {
+              const { main, sub } = masterCardText(row, resource)
+              return <ListCard key={row.id} title={main} sub={sub} onOpen={canEdit ? () => openPanel(row) : undefined} openLabel={`Sửa ${main}`} />
+            })}
+          </ListCardList>
         ) : (
           <Table
             rowKey="id"

@@ -1,5 +1,7 @@
 import { Select } from 'antd'
 import { CheckOutlined } from '@ant-design/icons'
+import useViewport from '../../hooks/useViewport'
+import ScrollRow from './ScrollRow'
 import './ds.css'
 
 // Các control nhỏ dùng chung (components/small-controls.md, charts.md, loading.md, empty-state.md, list-row.md).
@@ -8,7 +10,31 @@ import './ds.css'
 // `compact`: luôn là nút dropdown, cho thanh công cụ ít chỗ (danh sách thuyền viên). Dưới sm hàng tab thành nút dropdown có nhãn "Trạng thái:" (luật chốt #7, layouts/app.md "Bảng dữ liệu").
 // tab.dot: chấm đỏ nhỏ sau số đếm (tab có việc quá hạn, màn Tổng quan).
 // `sticky`: ô chọn ở điện thoại dính dưới topbar khi cuộn (ô "Mục:" của trang chi tiết).
-export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:', compact = false, sticky = false }) {
+// `phone="chips"` (trang danh sách): dưới 768px thay ô chọn bằng hàng chip cuộn ngang có số đếm, bấm một lần là đổi; từ 768px như cũ.
+export function StatusTabs({ tabs, value, onChange, mobileLabel = 'Trạng thái:', compact = false, sticky = false, phone = 'select' }) {
+  const { isCompact } = useViewport()
+  if (phone === 'chips' && isCompact) {
+    return (
+      <div className="ds-tabs-chips">
+        <ScrollRow label={mobileLabel.replace(/:$/, '')} activeKey={value} indicator={false}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              aria-current={tab.value === value ? 'true' : undefined}
+              aria-pressed={tab.value === value}
+              className="ds-tabs-chips__chip"
+              onClick={() => onChange?.(tab.value)}
+            >
+              {tab.label}
+              {tab.count != null ? <span className="ds-tabs-chips__count">{tab.count}</span> : null}
+              {tab.dot ? <span className="ds-tabs-boxed__dot" title={typeof tab.dot === 'string' ? tab.dot : 'Có việc quá hạn'} /> : null}
+            </button>
+          ))}
+        </ScrollRow>
+      </div>
+    )
+  }
   return (
     <>
       <div className="ds-tabs-boxed" role="tablist" hidden={compact}>

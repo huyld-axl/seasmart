@@ -184,7 +184,7 @@ export default function OpportunityListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear

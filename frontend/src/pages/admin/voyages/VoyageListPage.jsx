@@ -132,7 +132,7 @@ export default function VoyageListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact tabs={tabs} value={tab} onChange={reset(setTab)} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={reset(setTab)} />
           <Input
             className="ds-toolbar__search"
             allowClear

@@ -21,6 +21,8 @@ import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
 import { overdueLabel } from './billView'
 import useViewport from '../../../hooks/useViewport'
+import ListFilters from '../../../components/ds/ListFilters'
+import { CrewFilterButton } from '../seafarers/CrewFilters'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
@@ -39,7 +41,7 @@ const stop = (event) => event.stopPropagation()
 export default function BillListPage({ shipOwnerId } = {}) {
   const can = useCan()
   const navigate = useNavigate()
-  const isMobile = useViewport().isCompact
+  const { isCompact: isMobile, isPhone } = useViewport()
   // ?tab= mở sẵn một tab (link từ Tổng quan).
   const [searchParams] = useSearchParams()
   const urlTab = TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : null
@@ -49,6 +51,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [collecting, setCollecting] = useState(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const tableScroll = useListSticky()
   const toast = useToast()
   const { move } = useBillMutations()
@@ -62,6 +65,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const tabs = TABS.map((item) => ({ ...item, count: counts ? counts[item.value] : null }))
   const open = (row) => navigate(`/bills/${row.id}`)
   const filtered = Boolean(keyword || ownerId)
+  const showOwnerFilter = !shipOwnerId && can('partner.view')
   const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPage(1) }
   async function run(row, action, message, body = {}) {
     try {
@@ -197,7 +201,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -207,7 +211,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
             value={search}
             onChange={(event) => { setSearch(event.target.value); setPage(1) }}
           />
-          {!shipOwnerId && can('partner.view') ? (
+          {showOwnerFilter && !isPhone ? (
             <Select
               className="vy-owner-filter"
               allowClear
@@ -221,7 +225,31 @@ export default function BillListPage({ shipOwnerId } = {}) {
               onChange={(value) => { setOwnerId(value); setPage(1) }}
             />
           ) : null}
+          {showOwnerFilter && isPhone ? (
+            <span className="ds-toolbar__end">
+              <CrewFilterButton count={ownerId ? 1 : 0} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+            </span>
+          ) : null}
         </div>
+        {showOwnerFilter ? (
+          <ListFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} count={ownerId ? 1 : 0} onClear={() => { setOwnerId(undefined); setPage(1) }} total={total} unit="yêu cầu" loading={list.isLoading}>
+            <label className="crew-filterbar__field crew-filterbar__field--wide">
+              <span>Chủ tàu</span>
+              <Select
+                style={{ width: '100%' }}
+                allowClear
+                showSearch
+                optionFilterProp="label"
+                placeholder="Tất cả chủ tàu"
+                aria-label="Lọc theo chủ tàu"
+                value={ownerId}
+                loading={owners.isLoading}
+                options={(owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
+                onChange={(value) => { setOwnerId(value); setPage(1) }}
+              />
+            </label>
+          </ListFilters>
+        ) : null}
         {body}
         {collecting ? (
           <CollectModal

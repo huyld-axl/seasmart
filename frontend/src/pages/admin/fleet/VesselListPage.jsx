@@ -136,7 +136,7 @@ export default function VesselListPage() {
       <VesselCatalogPanel key={catalog.key} open={catalog.open} initialQuery={catalog.query} onClose={() => setCatalog((previous) => ({ ...previous, open: false }))} />
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <span className="fl-searchgroup">
             <Input
               className="ds-toolbar__search"

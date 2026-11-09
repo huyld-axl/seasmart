@@ -1178,3 +1178,13 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-lcard__actions button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 .ds-lcard__actions .ds-lcard__action--danger { color: var(--error-strong); }
 .ds-lcard__demo-ava { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--secondary); color: var(--neutral); font-weight: 600; }
+
+/* Hàng chip trạng thái của trang danh sách ở điện thoại (StatusTabs phone="chips"). */
+.ds-tabs-chips { min-width: 0; }
+.ds-tabs-chips__chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; position: relative; }
+.ds-tabs-chips__chip::after { content: ''; position: absolute; inset: -2px 0; }
+.ds-tabs-chips__chip[aria-pressed='true'] { border-color: var(--primary); background: var(--primary); color: #fff; }
+.ds-tabs-chips__chip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.ds-tabs-chips__count { color: var(--muted); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.ds-tabs-chips__chip[aria-pressed='true'] .ds-tabs-chips__count { color: rgb(255 255 255 / 0.8); }
+@media (max-width: 767px) { .ds-toolbar > .ds-tabs-chips { flex: 0 0 100%; min-width: 0; } }

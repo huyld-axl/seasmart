@@ -22,6 +22,10 @@ import { CrewFilterButton } from '../seafarers/CrewFilters'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
 import Fab from '../../../components/ds/Fab'
+import ListCard, { ListCardList, MoneyStrip } from '../../../components/ds/ListCard'
+import ApproveModal from './ApproveModal'
+import RejectModal from './RejectModal'
+import { contractMonthsLabel, contractNextActions, daysLeft, EXPIRY_ALERT_DAYS, EXPIRY_WARN_DAYS } from './contractView'
 
 const stop = (event) => event.stopPropagation()
 
@@ -58,6 +62,7 @@ export default function ContractListPage() {
   const [search, setSearch] = useState('')
   const [filters, setFilters] = useState({})
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [acting, setActing] = useState(null)
   const [vesselSearch, setVesselSearch] = useState('')
   const [personSearch, setPersonSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -147,23 +152,51 @@ export default function ContractListPage() {
     body = <EmptyState title="Chưa có hợp đồng nào" description="Hợp đồng sinh khi chốt người trên cơ hội, hoặc thêm tay cho chuyến chưa có hợp đồng." action={createButton} />
   } else if (isMobile) {
     body = (
-      <ul className="crew-list">
-        {rows.map((row) => (
-          <li key={row.id}>
-            <button type="button" className="crew-list__row" onClick={() => open(row)}>
-              <span className="ds-cell2">
-                <span className="ds-cell2__main">{row.seafarer_name} · <span className="ds-mono">{row.contract_number}</span></span>
-                <span className="ds-cell2__sub">{row.rank_name} · {row.vessel_name}</span>
-                <span className="ds-cell2__sub">{formatDate(row.start_date)} → {formatDate(row.end_date)}</span>
-              </span>
-              <span className="crew-list__meta">
-                <StatusBadge group="contract" value={row.status} />
-                <b className="ds-num">{formatDiff(row.diff_monthly)}</b>
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      <ListCardList label="Hợp đồng">
+        {rows.map((row) => {
+          const diff = Number(row.diff_monthly) || 0
+          const hasMoney = Boolean(Number(row.receivable_monthly) || Number(row.payable_monthly))
+          const left = daysLeft(row)
+          const months = contractMonthsLabel(row.start_date, row.end_date)
+          const range = `${formatDate(row.start_date)} → ${formatDate(row.end_date)}`
+          const leftText = left != null && left >= 0 && left <= EXPIRY_WARN_DAYS ? ` · còn ${left} ngày` : ''
+          const goEdit = () => navigate(`/contracts/${row.id}/edit`)
+          const actions = contractNextActions(row, can).map((next) => ({
+            label: next.label,
+            danger: next.danger,
+            onClick: () => (next.action === 'edit' ? goEdit() : setActing({ kind: next.action, row })),
+          }))
+          let alert = null
+          if (left != null && left < 0) alert = { text: `Đã quá ngày kết thúc ${-left} ngày`, tone: 'err' }
+          else if (left != null && left <= EXPIRY_ALERT_DAYS) alert = { text: left === 0 ? 'Hết hạn hôm nay' : `Hết hạn sau ${left} ngày`, tone: 'warn' }
+          return (
+            <ListCard
+              key={row.id}
+              title={row.seafarer_name}
+              figure={{ value: formatDiff(diff), unit: 'USD/th', tone: !hasMoney || diff === 0 ? 'muted' : diff > 0 ? 'pos' : 'neg' }}
+              sub={<>{row.rank_name} · <span className="ds-mono">{row.contract_number}</span></>}
+              badge={<StatusBadge group="contract" value={row.status} />}
+              fields={[
+                { label: 'Tàu', value: row.vessel_name },
+                { label: 'Chủ tàu', value: row.ship_owner_name },
+                { label: 'Thời hạn', value: `${range}${months ? ` · ${months}` : ''}${leftText}`, wide: true, tone: left != null && left < 0 ? 'err' : left != null && left <= EXPIRY_WARN_DAYS ? 'warn' : undefined },
+              ]}
+              extra={(
+                <MoneyStrip
+                  income={hasMoney ? formatUsd(row.receivable_monthly) : null}
+                  expense={hasMoney ? formatUsd(row.payable_monthly) : null}
+                  result={`${formatDiff(diff)} USD/tháng`}
+                  resultTone={diff > 0 ? 'pos' : diff < 0 ? 'err' : 'muted'}
+                />
+              )}
+              alert={alert}
+              actions={actions}
+              onOpen={() => open(row)}
+              openLabel={`Mở hợp đồng ${row.contract_number}`}
+            />
+          )
+        })}
+      </ListCardList>
     )
   } else {
     body = (
@@ -183,7 +216,7 @@ export default function ContractListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -229,6 +262,8 @@ export default function ContractListPage() {
             })}
         </ListFilters>
         {body}
+        {acting?.kind === 'approve' ? <ApproveModal contract={{ contract: { id: acting.row.id, contract_number: acting.row.contract_number } }} open onClose={() => setActing(null)} /> : null}
+        {acting?.kind === 'reject' ? <RejectModal contract={{ contract: { id: acting.row.id, contract_number: acting.row.contract_number } }} open onClose={() => setActing(null)} /> : null}
         {rows.length > 0 && (
           <ListFooter total={total} page={page} pageSize={pageSize} unit="hợp đồng" note="Số tiền tính bằng USD" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
         )}

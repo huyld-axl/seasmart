@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Danh sách trên điện thoại</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe thiết kế lại mọi màn danh sách ở điện thoại (09/11/2026). Token chép từ frontend/src/theme/tokens.js.
+     "Hiện tại" dựng lại từ app ở 375px với dữ liệu demo; "Đề xuất" dùng chung một kiểu thẻ (ListCard). */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6; --surface: #ffffff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --secondary: #e7e8ec;
+    --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5;
+    --warning: #bb4d00; --warning-bg: #fffbeb; --warning-border: #fee685;
+    --error-strong: #c10007; --error-bg: #fef2f2; --error-border: #ffc9c9;
+    --info: #1447e6; --info-bg: #eff6ff;
+    --page: #ebecef;
+    --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--foreground); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  .wf { max-width: 1320px; margin: 0 auto; padding: 28px 16px 64px; }
+  .wf-head { display: grid; gap: 6px; margin-bottom: 20px; }
+  .wf-head h1 { font-size: 26px; font-weight: 700; }
+  .wf-head p { margin: 0; max-width: 82ch; color: var(--neutral); }
+  .wf-nav { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; overflow-x: auto; margin: 0 0 24px; padding: 10px 0; background: var(--page); scrollbar-width: none; }
+  .wf-nav a { flex-shrink: 0; padding: 6px 12px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--foreground); font-size: 13px; font-weight: 500; text-decoration: none; }
+  .wf-sec { display: grid; gap: 14px; margin-bottom: 56px; scroll-margin-top: 64px; }
+  .wf-sec > header { display: grid; gap: 4px; }
+  .wf-sec h2 { font-size: 20px; font-weight: 700; }
+  .wf-sec > header p { margin: 0; max-width: 82ch; color: var(--neutral); }
+  .wf-row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .wf-col { display: grid; gap: 8px; width: 375px; max-width: 100%; }
+  .wf-cap { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; }
+  .tag { padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .tag--now { background: var(--error-bg); color: var(--error-strong); }
+  .tag--new { background: var(--success-bg); color: var(--success); }
+  .notes { margin: 0; padding: 14px 16px 14px 34px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; max-width: 82ch; }
+  .notes li + li { margin-top: 6px; }
+  .notes--bad li::marker { color: var(--error-strong); font-weight: 700; }
+  .notes--good li::marker { color: var(--success); font-weight: 700; }
+
+  /* Khung điện thoại */
+  .phone { width: 375px; max-width: 100%; height: 720px; overflow: hidden; border: 1px solid var(--border-strong); border-radius: 28px; background: var(--background); display: flex; flex-direction: column; }
+  .ph-top { display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 16px; background: var(--surface); border-bottom: 1px solid var(--border); font-weight: 600; font-size: 16px; flex: none; }
+  .ph-top .ham { width: 18px; height: 12px; border-top: 2px solid var(--neutral); border-bottom: 2px solid var(--neutral); position: relative; }
+  .ph-top .ham::after { content: ''; position: absolute; left: 0; right: 0; top: 3px; height: 2px; background: var(--neutral); }
+  .ph-tools { display: grid; gap: 8px; padding: 12px 16px; background: var(--surface); border-bottom: 1px solid var(--border); flex: none; }
+  .fld { height: 44px; border: 1px solid var(--border-strong); border-radius: 10px; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--muted); font-size: 15px; background: var(--surface); }
+  .fld b { color: var(--foreground); font-weight: 500; }
+  .tools-row { display: flex; gap: 8px; } .tools-row .fld { flex: 1; min-width: 0; }
+  .chips { display: flex; gap: 6px; overflow: hidden; }
+  .chip { flex: none; height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--surface); }
+  .chip i { font-style: normal; color: var(--muted); font-weight: 400; }
+  .chip--on { background: var(--primary); border-color: var(--primary); color: #fff; } .chip--on i { color: rgba(255,255,255,.75); }
+  .ph-body { flex: 1; overflow: hidden; padding: 10px 12px; display: grid; gap: 10px; align-content: start; }
+  .ph-body--flat { padding: 0; gap: 0; background: var(--surface); margin: 10px 12px; border-radius: 14px; border: 1px solid var(--border); }
+  .mono { font-family: var(--mono); font-size: 12px; letter-spacing: -.01em; }
+
+  /* Hiện tại (crew-list) */
+  .old { display: grid; gap: 2px; padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  .old b { font-weight: 500; font-size: 15px; }
+  .old small { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .old .meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding-left: 40px; }
+
+  /* Badge */
+  .bdg { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; background: var(--neutral-bg); color: var(--neutral); border: 1px solid var(--border); }
+  .bdg::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .bdg--ok { background: var(--success-bg); color: var(--success); border-color: #a4f4cf; }
+  .bdg--warn { background: var(--warning-bg); color: var(--warning); border-color: var(--warning-border); }
+  .bdg--err { background: var(--error-bg); color: var(--error-strong); border-color: var(--error-border); }
+  .bdg--info { background: var(--info-bg); color: var(--info); border-color: #bedbff; }
+
+  /* ===== Đề xuất: thẻ danh sách ===== */
+  .lc { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .lc__main { display: grid; gap: 10px; padding: 12px 14px; }
+  .lc__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: baseline; }
+  .lc__title { font-size: 16px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lc__fig { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  .lc__fig small { margin-left: 3px; font-size: 11px; font-weight: 500; color: var(--muted); }
+  .lc__fig--pos { color: var(--success); } .lc__fig--neg { color: var(--error-strong); }
+  .lc__sub { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lc__head .bdg { justify-self: end; }
+  .lc__f { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 0; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .lc__f div { min-width: 0; }
+  .lc__f .w { grid-column: 1 / -1; }
+  .lc__f dt { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
+  .lc__f dd { margin: 0; font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lc__f dd.err { color: var(--error-strong); } .lc__f dd.warn { color: var(--warning); }
+  .lc__money { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border-radius: 10px; background: var(--neutral-bg); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .lc__money span { color: var(--muted); } .lc__money b { font-weight: 600; }
+  .lc__money .eq { margin-left: auto; color: var(--success); font-weight: 700; }
+  .lc__alert { display: flex; align-items: center; gap: 8px; padding: 8px 14px; font-size: 13px; font-weight: 500; }
+  .lc__alert--err { background: var(--error-bg); color: var(--error-strong); }
+  .lc__alert--warn { background: var(--warning-bg); color: var(--warning); }
+  .lc__act { display: flex; border-top: 1px solid var(--border); }
+  .lc__act span { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; height: 44px; color: var(--primary); font-weight: 600; font-size: 14px; }
+  .lc__act span + span { border-left: 1px solid var(--border); }
+  .lc__ava { width: 40px; height: 40px; border-radius: 10px; background: var(--secondary); display: grid; place-items: center; font-weight: 600; color: var(--neutral); flex: none; }
+  .lc__who { display: flex; gap: 12px; align-items: center; min-width: 0; }
+  .lc__who > div { min-width: 0; flex: 1; }
+  .ph-foot { flex: none; display: flex; justify-content: space-between; padding: 10px 16px; background: var(--surface); border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .ph-foot b { color: var(--foreground); }
+
+  /* Giải phẫu thẻ */
+  .anat { display: flex; flex-wrap: wrap; gap: 24px; align-items: center; }
+  .anat ol { margin: 0; padding-left: 22px; max-width: 46ch; font-size: 13px; display: grid; gap: 8px; }
+  .pin { position: relative; }
+  .pin::after { content: attr(data-n); position: absolute; left: -26px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; }
+  .anat .lc { width: 343px; margin-left: 28px; overflow: visible; }
+</style>
+</head>
+<body>
+<main class="wf">
+  <div class="wf-head">
+    <h1>Danh sách trên điện thoại</h1>
+    <p>Thiết kế lại mọi màn danh sách ở khổ 375px. Lỗi chung hiện nay: mỗi dòng là 2–3 hàng chữ nối nhau bằng dấu "·", không có nhãn, nên không biết đâu là tàu, đâu là chủ tàu, đâu là kỳ, đâu là hạn. Đề xuất: <b>một kiểu thẻ dùng chung</b>, mỗi thông tin có nhãn riêng, tối đa 4 ô, số tiền và cảnh báo ở chỗ cố định. Máy tính giữ nguyên bảng.</p>
+  </div>
+  <nav class="wf-nav">
+    <a href="#the">Kiểu thẻ chung</a><a href="#bill">Yêu cầu thanh toán</a><a href="#hd">Hợp đồng</a><a href="#ch">Cơ hội</a><a href="#cd">Chuyến</a><a href="#tv">Thuyền viên</a><a href="#khac">Tàu, đối tác, danh mục</a>
+  </nav>
+
+  <!-- ===== Kiểu thẻ ===== -->
+  <section class="wf-sec" id="the">
+    <header><h2>Kiểu thẻ chung (ListCard)</h2><p>Mọi danh sách ở điện thoại dùng một khung thẻ, mỗi màn chỉ khai báo ô nào hiện. Thẻ tách rời nhau (có khoảng hở), không còn là các dòng dính liền.</p></header>
+    <div class="anat">
+      <article class="lc">
+        <div class="lc__main">
+          <div class="lc__head">
+            <span class="lc__title pin" data-n="1">Đỗ Mạnh Cường</span><span class="lc__fig pin" data-n="2">1.595<small>USD</small></span>
+            <span class="lc__sub pin" data-n="3">Kỳ 10/10 · <span class="mono">TT-2026-00067</span></span><span class="bdg bdg--err pin" data-n="4">Quá hạn</span>
+          </div>
+          <dl class="lc__f pin" data-n="5">
+            <div><dt>Tàu</dt><dd>MV Ocean Glory</dd></div>
+            <div><dt>Chủ tàu</dt><dd>Lotus Shipping Pte. Ltd.</dd></div>
+            <div><dt>Kỳ thu</dt><dd>01/06 – 15/06/2027</dd></div>
+            <div><dt>Hạn thanh toán</dt><dd class="err">12/07/2027</dd></div>
+          </dl>
+        </div>
+        <div class="lc__alert lc__alert--err pin" data-n="6">Quá hạn 5 ngày</div>
+        <div class="lc__act pin" data-n="7"><span>Ghi nhận đã thu</span></div>
+      </article>
+      <ol>
+        <li><b>Tên chính</b>: người hoặc thứ mà bản ghi nói về (thuyền viên, chức danh, tàu). Một dòng, chữ 16px đậm.</li>
+        <li><b>Con số chính</b> bên phải, nếu màn có: số tiền bill, chênh lệch hợp đồng. Luôn ghi đơn vị.</li>
+        <li><b>Dòng phụ</b>: mã và một thông tin ngắn (kỳ, chức danh). Mã dùng chữ đơn cách, nhỏ, xám.</li>
+        <li><b>Trạng thái</b>: badge ở góc phải, ngay dưới con số.</li>
+        <li><b>Tối đa 4 ô có nhãn</b>, xếp 2 cột. Nhãn nhỏ xám ở trên, giá trị ở dưới. Ô dài (khoảng ngày) có thể chiếm cả hàng. Thông tin khác để ở trang chi tiết.</li>
+        <li><b>Dải cảnh báo</b> (chỉ khi cần): quá hạn, sắp rời tàu, sắp hết hạn. Màu đỏ hoặc cam, một dòng.</li>
+        <li><b>Một nút việc kế tiếp</b> (chỉ khi có quyền): Duyệt, Đánh dấu đã gửi, Ghi nhận đã thu… Bấm chỗ khác trên thẻ để mở chi tiết.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===== Bill ===== -->
+  <section class="wf-sec" id="bill">
+    <header><h2>Yêu cầu thanh toán</h2></header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap">Hiện tại <span class="tag tag--now">Đang dùng</span></div>
+        <div class="phone">
+          <div class="ph-top"><span class="ham"></span>Yêu cầu thanh toán</div>
+          <div class="ph-tools"><div class="fld">Tìm mã bill, số hợp đồng, thuyền…</div><div class="tools-row"><div class="fld">Trạng thái: <b>Tất…</b></div><div class="fld">Tất cả chủ tàu</div></div></div>
+          <div class="ph-body ph-body--flat">
+            <div class="old"><b>[KT-HĐ2] TV-B · <span class="mono">TT-2026-00215</span></b><small>HĐ-2026-0034 · MV Mekong Star · Halong Maritime …</small><small>Kỳ 9/9 · 01/07/2027 → 02/07/2027 · hạn 10/08/2027</small><span class="meta"><span class="bdg">Chưa đến kỳ</span><b>1.900</b></span></div>
+            <div class="old"><b>[KT-HĐ2] TV-B · <span class="mono">TT-2026-00104</span></b><small>HĐ-2026-0019 · MV Mekong Star · Halong Maritime …</small><small>Kỳ 9/9 · 01/07/2027 → 02/07/2027 · hạn 10/08/2027</small><span class="meta"><span class="bdg">Chưa đến kỳ</span><b>1.900</b></span></div>
+            <div class="old"><b>Đỗ Mạnh Cường · <span class="mono">TT-2026-00067</span></b><small>HĐ-2026-0010 · MV Ocean Glory · Lotus Shipping P…</small><small>Kỳ 10/10 · 01/06/2027 → 15/06/2027 · hạn 12/07/2027</small><span class="meta"><span class="bdg">Chưa đến kỳ</span><b>1.595</b></span></div>
+            <div class="old"><b>Ngô Quang Vinh · <span class="mono">TT-2026-00057</span></b><small>HĐ-2026-0009 · MV Ocean Glory · Lotus Shipping P…</small><small>Kỳ 10/10 · 01/06/2027 → 15/06/2027 · hạn 12/07/2027</small><span class="meta"><span class="bdg">Chưa đến kỳ</span><b>1.595</b></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-cap">Đề xuất <span class="tag tag--new">Mới</span></div>
+        <div class="phone">
+          <div class="ph-top"><span class="ham"></span>Yêu cầu thanh toán</div>
+          <div class="ph-tools">
+            <div class="tools-row"><div class="fld">Tìm mã bill, hợp đồng, thuyền viên</div><div class="fld" style="flex:none;width:44px;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16l-6 7.5V19l-4-2v-4.5z"/></svg></div></div>
+            <div class="chips"><span class="chip chip--on">Cần duyệt <i>3</i></span><span class="chip">Cần gửi <i>5</i></span><span class="chip">Quá hạn <i>2</i></span><span class="chip">Đã gửi <i>8</i></span></div>
+          </div>
+          <div class="ph-body">
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Trần Minh Khôi</span><span class="lc__fig">2.100<small>USD</small></span><span class="lc__sub">Kỳ 2/6 · <span class="mono">TT-2026-00221</span></span><span class="bdg bdg--warn">Cần duyệt</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div><dt>Kỳ thu</dt><dd>01/11 – 30/11/2026</dd></div><div><dt>Hạn thanh toán</dt><dd>10/12/2026</dd></div></dl>
+            </div><div class="lc__act"><span>✓ Duyệt</span></div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Lê Văn Đức</span><span class="lc__fig">1.900<small>USD</small></span><span class="lc__sub">Kỳ 6/7 · <span class="mono">TT-2026-00188</span></span><span class="bdg bdg--warn">Cần duyệt</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div><dt>Kỳ thu</dt><dd>01/10 – 31/10/2026</dd></div><div><dt>Hạn thanh toán</dt><dd>10/11/2026</dd></div></dl>
+            </div><div class="lc__act"><span>✓ Duyệt</span></div></article>
+          </div>
+          <div class="ph-foot"><span>3 yêu cầu</span><span>Tổng <b>5.900 USD</b></span></div>
+        </div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-cap">Đề xuất · các trạng thái khác</div>
+        <div class="phone">
+          <div class="ph-top"><span class="ham"></span>Yêu cầu thanh toán</div>
+          <div class="ph-tools">
+            <div class="tools-row"><div class="fld">Tìm mã bill, hợp đồng, thuyền viên</div><div class="fld" style="flex:none;width:44px;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16l-6 7.5V19l-4-2v-4.5z"/></svg></div></div>
+            <div class="chips"><span class="chip">Cần gửi <i>5</i></span><span class="chip">Quá hạn <i>2</i></span><span class="chip chip--on">Tất cả <i>301</i></span></div>
+          </div>
+          <div class="ph-body">
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Đỗ Mạnh Cường</span><span class="lc__fig">1.595<small>USD</small></span><span class="lc__sub">Kỳ 3/10 · <span class="mono">TT-2026-00060</span></span><span class="bdg bdg--err">Quá hạn</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Ocean Glory</dd></div><div><dt>Chủ tàu</dt><dd>Lotus Shipping Pte. Ltd.</dd></div><div><dt>Kỳ thu</dt><dd>01/09 – 30/09/2026</dd></div><div><dt>Hạn thanh toán</dt><dd class="err">04/11/2026</dd></div></dl>
+            </div><div class="lc__alert lc__alert--err">Quá hạn 5 ngày, chưa thu</div><div class="lc__act"><span>Ghi nhận đã thu</span></div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Ngô Quang Vinh</span><span class="lc__fig">1.595<small>USD</small></span><span class="lc__sub">Kỳ 4/10 · <span class="mono">TT-2026-00050</span></span><span class="bdg bdg--info">Cần gửi</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Ocean Glory</dd></div><div><dt>Chủ tàu</dt><dd>Lotus Shipping Pte. Ltd.</dd></div><div><dt>Kỳ thu</dt><dd>01/10 – 31/10/2026</dd></div><div><dt>Hạn thanh toán</dt><dd>10/11/2026</dd></div></dl>
+            </div><div class="lc__act"><span>Đánh dấu đã gửi</span></div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Vũ Đình Nam</span><span class="lc__fig">1.800<small>USD</small></span><span class="lc__sub">Kỳ 1/4 · <span class="mono">TT-2026-00031</span></span><span class="bdg bdg--ok">Đã thu</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div><dt>Kỳ thu</dt><dd>28/07 – 31/08/2026</dd></div><div><dt>Đã thu ngày</dt><dd>08/09/2026</dd></div></dl>
+            </div></article>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes notes--good">
+      <li>Tên thuyền viên và <b>số tiền kèm "USD"</b> nằm cùng dòng đầu, vì bill được tìm theo người và theo tiền.</li>
+      <li>4 ô có nhãn: <b>Tàu · Chủ tàu · Kỳ thu · Hạn thanh toán</b>. Bill đã thu thì ô cuối đổi thành "Đã thu ngày". Số hợp đồng chuyển vào trang chi tiết bill (vẫn tìm được bằng ô tìm kiếm).</li>
+      <li>Hạn đã qua thì giá trị đỏ và có dải "Quá hạn N ngày". Không cần đọc ngày để biết bill trễ.</li>
+      <li>Nút việc kế tiếp giống thao tác nhanh trên máy tính: Duyệt / Đánh dấu đã gửi / Ghi nhận đã thu, chỉ hiện khi có quyền.</li>
+      <li>Trạng thái chuyển từ ô chọn sang <b>hàng chip cuộn ngang</b> (ScrollRow) có số đếm, bấm một lần là đổi. Lọc chủ tàu đưa vào nút lọc (phễu), mở BottomSheet như màn Hợp đồng.</li>
+      <li>Dải chân cố định: số yêu cầu và tổng tiền của danh sách đang lọc.</li>
+    </ol>
+  </section>
+
+  <!-- ===== Hợp đồng ===== -->
+  <section class="wf-sec" id="hd">
+    <header><h2>Hợp đồng</h2></header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap">Hiện tại <span class="tag tag--now">Đang dùng</span></div>
+        <div class="phone">
+          <div class="ph-top"><span class="ham"></span>Hợp đồng</div>
+          <div class="ph-tools"><div class="tools-row"><div class="fld">Tìm số hợp đồng, thuyền vi…</div><div class="fld" style="flex:none;width:44px;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16l-6 7.5V19l-4-2v-4.5z"/></svg></div></div><div class="fld">Trạng thái: <b>Tất cả · 44</b></div></div>
+          <div class="ph-body ph-body--flat">
+            <div class="old"><b>huy · <span class="mono">HĐ-2026-0057</span></b><small>Thuyền trưởng · MV Mekong Star</small><small>01/09/2026 → 31/03/2027</small><span class="meta"><span class="bdg bdg--ok">Hiệu lực</span><b>+250</b></span></div>
+            <div class="old"><b>[KT-HĐ2] TV-A · <span class="mono">HĐ-KT-CU</span></b><small>Thuyền trưởng · MV Mekong Star</small><small>01/05/2026 → 01/06/2026</small><span class="meta"><span class="bdg bdg--ok">Hiệu lực</span><b>0</b></span></div>
+            <div class="old"><b>[KT-HĐ2] G-awaiting · <span class="mono">HĐ-2026-0054</span></b><small>Thuyền trưởng · MV Mekong Star</small><small>10/03/2026 → 31/12/2026</small><span class="meta"><span class="bdg">Nháp</span><b>+250</b></span></div>
+            <div class="old"><b>[KT-HĐ2] G-end · <span class="mono">HĐ-2026-0053</span></b><small>Thuyền trưởng · MV Mekong Star</small><small>10/03/2026 → 31/12/2026</small><span class="meta"><span class="bdg">Đã kết thúc</span><b>+250</b></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-cap">Đề xuất <span class="tag tag--new">Mới</span></div>
+        <div class="phone">
+          <div class="ph-top"><span class="ham"></span>Hợp đồng</div>
+          <div class="ph-tools">
+            <div class="tools-row"><div class="fld">Tìm số hợp đồng, thuyền viên</div><div class="fld" style="flex:none;width:44px;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16l-6 7.5V19l-4-2v-4.5z"/></svg></div></div>
+            <div class="chips"><span class="chip chip--on">Tất cả <i>44</i></span><span class="chip">Chờ duyệt <i>4</i></span><span class="chip">Nháp <i>6</i></span><span class="chip">Hiệu lực <i>21</i></span></div>
+          </div>
+          <div class="ph-body">
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Nguyễn Văn Huy</span><span class="lc__fig lc__fig--pos">+250<small>USD/th</small></span><span class="lc__sub">Thuyền trưởng · <span class="mono">HĐ-2026-0057</span></span><span class="bdg bdg--ok">Hiệu lực</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div class="w"><dt>Thời hạn</dt><dd>01/09/2026 → 31/03/2027 · 7 tháng</dd></div></dl>
+              <div class="lc__money"><span>Thu</span><b>2.250</b><span>− Chi</span><b>2.000</b><span class="eq">= +250 USD/tháng</span></div>
+            </div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Trần Minh Khôi</span><span class="lc__fig lc__fig--pos">+300<small>USD/th</small></span><span class="lc__sub">Máy trưởng · <span class="mono">HĐ-2026-0058</span></span><span class="bdg bdg--warn">Chờ duyệt</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div class="w"><dt>Thời hạn</dt><dd>15/10/2026 → 14/04/2027 · 6 tháng</dd></div></dl>
+              <div class="lc__money"><span>Thu</span><b>2.600</b><span>− Chi</span><b>2.300</b><span class="eq">= +300 USD/tháng</span></div>
+            </div><div class="lc__act"><span>Duyệt</span><span style="color:var(--error-strong)">Từ chối</span></div></article>
+          </div>
+        </div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-cap">Đề xuất · sắp hết hạn, nháp</div>
+        <div class="phone">
+          <div class="ph-top"><span class="ham"></span>Hợp đồng</div>
+          <div class="ph-tools">
+            <div class="tools-row"><div class="fld">Tìm số hợp đồng, thuyền viên</div><div class="fld" style="flex:none;width:44px;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16l-6 7.5V19l-4-2v-4.5z"/></svg></div></div>
+            <div class="chips"><span class="chip">Tất cả <i>44</i></span><span class="chip">Chờ duyệt <i>4</i></span><span class="chip chip--on">Hiệu lực <i>21</i></span></div>
+          </div>
+          <div class="ph-body">
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Vũ Đình Nam</span><span class="lc__fig lc__fig--pos">+200<small>USD/th</small></span><span class="lc__sub">Thủy thủ trưởng · <span class="mono">HĐ-2026-0041</span></span><span class="bdg bdg--ok">Hiệu lực</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div class="w"><dt>Thời hạn</dt><dd class="warn">28/07/2026 → 14/11/2026 · còn 5 ngày</dd></div></dl>
+              <div class="lc__money"><span>Thu</span><b>1.800</b><span>− Chi</span><b>1.600</b><span class="eq">= +200 USD/tháng</span></div>
+            </div><div class="lc__alert lc__alert--warn">Hết hạn sau 5 ngày</div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Lê Văn Đức</span><span class="lc__fig" style="color:var(--muted)">0<small>USD/th</small></span><span class="lc__sub">Đại phó · <span class="mono">HĐ-2026-0054</span></span><span class="bdg">Nháp</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Halong Spirit</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div class="w"><dt>Thời hạn</dt><dd>10/03/2026 → 31/12/2026 · 10 tháng</dd></div></dl>
+              <div class="lc__money"><span>Thu</span><b>—</b><span>− Chi</span><b>—</b><span class="eq" style="color:var(--muted)">Chưa nhập tiền</span></div>
+            </div><div class="lc__act"><span>Sửa nháp</span></div></article>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes notes--good">
+      <li>"+250" hiện nay không rõ là gì. Đề xuất ghi đủ <b>"+250 USD/th"</b> và thêm dải <b>Thu − Chi = Chênh lệch</b> để thấy ngay con số từ đâu ra. Dương xanh, âm đỏ.</li>
+      <li>Thêm ô <b>Chủ tàu</b> (hiện ở điện thoại đang bị ẩn). Thời hạn chiếm cả hàng, kèm số tháng hoặc "còn N ngày" khi sắp hết.</li>
+      <li>Nút việc kế tiếp theo trạng thái và quyền: Chờ duyệt → Duyệt / Từ chối; Nháp, Bị từ chối → Sửa nháp. Hiệu lực, Đã kết thúc: không có nút.</li>
+      <li>Trạng thái thành hàng chip như màn Yêu cầu thanh toán; các lọc khác giữ trong nút lọc.</li>
+    </ol>
+  </section>
+
+  <!-- ===== Các màn khác ===== -->
+  <section class="wf-sec" id="ch">
+    <header><h2>Cơ hội, Chuyến, Thuyền viên</h2><p>Cùng kiểu thẻ, ít ô hơn vì các màn này không có tiền.</p></header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap">Cơ hội</div>
+        <div class="phone" style="height:560px">
+          <div class="ph-top"><span class="ham"></span>Cơ hội</div>
+          <div class="ph-tools"><div class="chips"><span class="chip chip--on">Đang mở <i>19</i></span><span class="chip">Đã chốt <i>8</i></span><span class="chip">Không thành <i>3</i></span></div></div>
+          <div class="ph-body">
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Máy trưởng</span><span></span><span class="lc__sub"><span class="mono">CH26002</span></span><span class="bdg bdg--info">Chủ tàu đã chọn</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div><dt>Xuống tàu dự kiến</dt><dd>15/10/2026</dd></div><div><dt>Người được chọn</dt><dd>Trần Minh Khôi</dd></div></dl>
+            </div><div class="lc__alert lc__alert--err">Hạn chốt quá 2 ngày</div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Thuyền trưởng</span><span></span><span class="lc__sub"><span class="mono">CH26001</span></span><span class="bdg">Đang chọn ứng viên</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Chủ tàu</dt><dd>Halong Maritime JSC</dd></div><div><dt>Xuống tàu dự kiến</dt><dd>15/10/2026</dd></div><div><dt>Ứng viên</dt><dd>3 người</dd></div></dl>
+            </div></article>
+          </div>
+        </div>
+      </div>
+      <div class="wf-col" id="cd">
+        <div class="wf-cap">Chuyến</div>
+        <div class="phone" style="height:560px">
+          <div class="ph-top"><span class="ham"></span>Chuyến</div>
+          <div class="ph-tools"><div class="chips"><span class="chip chip--on">Đang trên tàu <i>17</i></span><span class="chip">Sắp lên <i>4</i></span><span class="chip">Đã rời <i>30</i></span></div></div>
+          <div class="ph-body">
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Lê Văn Đức</span><span></span><span class="lc__sub">Đại phó · <span class="mono">DEMO-TL-2</span></span><span class="bdg bdg--ok">Trên tàu</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Lên tàu</dt><dd>19/04/2026</dd></div><div class="w"><dt>Rời tàu dự kiến</dt><dd class="err">02/11/2026</dd></div></dl>
+            </div><div class="lc__alert lc__alert--err">Quá 7 ngày chưa ghi rời tàu</div><div class="lc__act"><span>Ghi rời tàu</span></div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__title">Vũ Đình Nam</span><span></span><span class="lc__sub">Thủy thủ trưởng · <span class="mono">DEMO-TL-5</span></span><span class="bdg bdg--ok">Trên tàu</span></div>
+              <dl class="lc__f"><div><dt>Tàu</dt><dd>MV Mekong Star</dd></div><div><dt>Lên tàu</dt><dd>28/07/2026</dd></div><div class="w"><dt>Rời tàu dự kiến</dt><dd class="warn">14/11/2026 · còn 5 ngày</dd></div></dl>
+            </div></article>
+          </div>
+        </div>
+      </div>
+      <div class="wf-col" id="tv">
+        <div class="wf-cap">Thuyền viên</div>
+        <div class="phone" style="height:560px">
+          <div class="ph-top"><span class="ham"></span>Thuyền viên</div>
+          <div class="ph-tools"><div class="chips"><span class="chip chip--on">Tất cả <i>57</i></span><span class="chip">Ở bờ <i>40</i></span><span class="chip">Trên tàu <i>17</i></span></div></div>
+          <div class="ph-body">
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__who" style="grid-column:1/-1"><span class="lc__ava">LĐ</span><div><div class="lc__title">Lê Văn Đức</div><div class="lc__sub">Đại phó · 38 tuổi</div></div><span class="bdg bdg--ok">Trên tàu</span></span></div>
+              <dl class="lc__f"><div><dt>Tàu hiện tại</dt><dd>MV Mekong Star</dd></div><div><dt>Điện thoại</dt><dd>0912 345 678</dd></div></dl>
+            </div></article>
+            <article class="lc"><div class="lc__main">
+              <div class="lc__head"><span class="lc__who" style="grid-column:1/-1"><span class="lc__ava">NV</span><div><div class="lc__title">Ngô Quang Vinh</div><div class="lc__sub">Thủy thủ trực ca · 29 tuổi</div></div><span class="bdg">Ở bờ</span></span></div>
+              <dl class="lc__f"><div><dt>Rời tàu gần nhất</dt><dd>15/06/2026</dd></div><div><dt>Điện thoại</dt><dd>0987 654 321</dd></div></dl>
+            </div><div class="lc__alert lc__alert--warn">2 chứng chỉ sắp hết hạn</div></article>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes notes--good">
+      <li><b>Cơ hội</b>: tên là chức danh cần tuyển; ô thứ 4 đổi theo giai đoạn (số ứng viên, hoặc người chủ tàu đã chọn). Hạn chốt quá hạn thành dải đỏ.</li>
+      <li><b>Chuyến</b>: dòng "Quá 7 ngày chưa rời" hiện đang lẫn trong dòng ngày, nay thành dải đỏ kèm nút "Ghi rời tàu".</li>
+      <li><b>Thuyền viên</b>: giữ ảnh đại diện; ô hiện theo trạng thái (đang trên tàu: tàu hiện tại; ở bờ: ngày rời gần nhất). Cảnh báo chứng chỉ sắp hết hạn nếu có. Thông tin "Điện thoại" chỉ là ví dụ, sẽ dùng đúng dữ liệu mà danh sách đang có.</li>
+    </ol>
+  </section>
+
+  <section class="wf-sec" id="khac">
+    <header><h2>Tàu, đối tác, danh mục, tài khoản</h2><p>Các màn này ít thông tin, đang đọc được. Chỉ đổi sang khung thẻ chung cho đồng bộ: tên + badge, tối đa 2 ô có nhãn (Tàu: Chủ tàu, IMO; Đối tác: Quốc gia, Số tàu). Không vẽ riêng.</p></header>
+  </section>
+</main>
+</body>
+</html>

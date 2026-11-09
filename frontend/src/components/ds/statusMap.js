@@ -76,6 +76,11 @@ export const STATUS = {
     LOST: { label: 'Không thành', tone: 'error', mark: 'cross' },
     CANCELLED: { label: 'Huỷ', tone: 'neutral', mark: 'minus' },
   },
+  // Chuyến (mỗi chuyến một thuyền viên): đang trên tàu khi chưa có ngày rời thực tế.
+  voyage: {
+    ONBOARD: { label: 'Đang trên tàu', tone: 'success', mark: 'ring-dot' },
+    LEFT: { label: 'Đã rời tàu', tone: 'neutral', mark: 'check' },
+  },
   // Ứng viên của cơ hội (opportunity_candidate.status).
   candidate: {
     PICKED: { label: 'Trong danh sách', tone: 'neutral', mark: 'ring' },
@@ -147,6 +152,7 @@ export const STATUS_GROUP_LABELS = {
   signature: 'Chữ ký',
   crew: 'Tình trạng thuyền viên',
   opportunity: 'Cơ hội',
+  voyage: 'Chuyến',
   candidate: 'Ứng viên',
   contract: 'Hợp đồng',
   bill: 'Yêu cầu thanh toán',

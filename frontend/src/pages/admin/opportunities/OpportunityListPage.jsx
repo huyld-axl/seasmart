@@ -17,7 +17,8 @@ import { useOpportunityList } from '../../../hooks/useOpportunities'
 import { useCan } from '../../../hooks/usePermission'
 import { OPPORTUNITY_TABS, OPPORTUNITY_TAB_LABELS } from '../../../constants/opportunityVoyage'
 import { formatDate, formatUsd } from '../../../utils/format'
-import { chosenCandidate, deadlineLabel } from './opportunityView'
+import { candidateField, chosenCandidate, deadlineAlert, deadlineLabel } from './opportunityView'
+import ListCard, { ListCardList } from '../../../components/ds/ListCard'
 import '../seafarers/SeafarerListPage.css'
 import '../voyages/voyages.css'
 import './opportunities.css'
@@ -134,22 +135,25 @@ export default function OpportunityListPage() {
     body = <EmptyState title="Chưa có cơ hội nào" description="Mỗi cơ hội là một vị trí chủ tàu cần người. Cần nhiều vị trí thì tạo nhiều cơ hội." action={createButton} />
   } else if (isMobile) {
     body = (
-      <ul className="crew-list">
+      <ListCardList label="Cơ hội">
         {rows.map((row) => (
-          <li key={row.id}>
-            <button type="button" className="crew-list__row" onClick={() => open(row)}>
-              <span className="ds-cell2">
-                <span className="ds-cell2__main">{row.rank_name} · <span className="ds-mono">{row.code}</span></span>
-                <span className="ds-cell2__sub">{row.vessel_name || 'Chưa rõ tàu'} · {row.ship_owner_name}</span>
-                <span className="ds-cell2__sub">Xuống {formatDate(row.planned_join_date)}{chosenCandidate(row) ? ` · ${chosenCandidate(row).name}` : ''}</span>
-              </span>
-              <span className="crew-list__meta">
-                <StatusBadge group="opportunity" value={row.display_status} />
-              </span>
-            </button>
-          </li>
+          <ListCard
+            key={row.id}
+            title={row.rank_name}
+            sub={<span className="ds-mono">{row.code}</span>}
+            badge={<StatusBadge group="opportunity" value={row.display_status} />}
+            fields={[
+              { label: 'Tàu', value: row.vessel_name || 'Chưa rõ tàu' },
+              { label: 'Chủ tàu', value: row.ship_owner_name },
+              { label: 'Xuống tàu dự kiến', value: formatDate(row.planned_join_date) },
+              candidateField(row),
+            ].filter(Boolean)}
+            alert={deadlineAlert(row.deadline_flag)}
+            onOpen={() => open(row)}
+            openLabel={`Mở cơ hội ${row.code}`}
+          />
         ))}
-      </ul>
+      </ListCardList>
     )
   } else {
     body = (
@@ -184,7 +188,7 @@ export default function OpportunityListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear

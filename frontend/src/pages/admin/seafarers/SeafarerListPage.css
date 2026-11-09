@@ -49,25 +49,6 @@
 
 .crew-loading { padding: 16px; }
 
-/* Điện thoại: danh sách thẻ dòng thay cho bảng. */
-.crew-list { margin: 0; padding: 0; list-style: none; }
-.crew-list li + li { border-top: 1px solid var(--border); }
-.crew-list__row {
-  display: grid;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 16px;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.crew-list__row:hover { background: var(--item-hover); }
-.crew-list__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-left: 42px; }
-.crew-list .crew-person { min-width: 0; }
-
 /* Bộ lọc nâng cao: hàng mở rộng ngay dưới thanh công cụ, cùng khung card */
 .crew-filterbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface-hover); }
 .crew-filterbar__field { display: grid; flex: 0 1 160px; gap: 4px; min-width: 140px; }

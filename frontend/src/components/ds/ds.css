@@ -796,6 +796,7 @@ span.ds-thumb--empty { cursor: default; }
 .ds-track__step--action:hover { filter: brightness(.95); }
 .ds-track__step--action.ds-track__step--todo { background: var(--primary-light); color: var(--primary); }
 .ds-track__step:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -3px; }
+.ds-track__text { display: contents; }
 .ds-track__label { overflow: hidden; text-overflow: ellipsis; }
 .ds-track__note { flex: none; font-weight: 400; opacity: .8; }
 .ds-track--stopped .ds-track__step, .ds-track--stopped .ds-track__step--action.ds-track__step--todo { background: var(--neutral-bg); color: var(--muted); }
@@ -814,15 +815,38 @@ span.ds-thumb--empty { cursor: default; }
 .ds-track__todo-done { color: var(--muted); }
 .ds-track__todo-done .ds-track__todo-box { border-color: var(--success); background: var(--success); }
 .ds-track__end { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+/* Điện thoại: mốc thành vòng tròn đánh số trên một hàng, tên mốc bên dưới; "Chi tiết giai đoạn" dưới nút chính mở hai khung. */
+.ds-track__dot, .ds-track__more { display: none; }
 @media (max-width: 767px) {
-  .ds-track__bar { flex-direction: column; align-items: stretch; }
-  .ds-track__list { flex-direction: column; gap: 4px; }
-  /* Xếp dọc: bỏ flex-basis 0 (ở cột dọc nó ép chặng về cao bằng chữ ~20px), mỗi chặng cao 40px để bấm được. */
-  .ds-track__item { flex: none; height: 40px; margin-left: 0; }
-  .ds-track__toggle { position: relative; }
-  .ds-track__toggle::after { content: ''; position: absolute; inset: -7px; }
-  .ds-track__step, .ds-track__item:first-child .ds-track__step, .ds-track__item:last-child .ds-track__step { justify-content: flex-start; padding: 0 12px; border-radius: 8px; clip-path: none; }
+  .ds-track__bar { flex-direction: column; align-items: stretch; gap: 12px; padding: 14px 12px 4px; }
+  .ds-track__bar > .ds-track__toggle { display: none; }
+  .ds-track__bar > .ant-btn { width: 100%; height: 44px; }
+  .ds-track__list { gap: 0; }
+  .ds-track__item, .ds-track__item:first-child { position: relative; flex: 1 1 0; height: auto; margin-left: 0; }
+  .ds-track__item + .ds-track__item::before { content: ''; position: absolute; top: 15px; right: 50%; width: 100%; height: 2px; background: var(--border-strong); }
+  .ds-track__item--done + .ds-track__item::before { background: var(--success); }
+  .ds-track__step, .ds-track__item:first-child .ds-track__step, .ds-track__item:last-child .ds-track__step { position: relative; z-index: 1; flex-direction: column; justify-content: flex-start; gap: 6px; min-height: 56px; padding: 0 2px 4px; border-radius: 8px; background: none; clip-path: none; color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.25; text-align: center; white-space: normal; }
+  .ds-track__step > .anticon { display: none; }
+  .ds-track__dot { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; flex: none; border: 2px solid var(--border-strong); border-radius: 50%; background: var(--surface); color: var(--muted); font-size: 13px; font-weight: 600; }
+  .ds-track__step--done .ds-track__dot { border-color: var(--success); background: var(--success); color: #fff; }
+  .ds-track__step--current .ds-track__dot { border-color: var(--primary); background: var(--primary); color: #fff; box-shadow: 0 0 0 4px var(--primary-light); }
+  .ds-track__step--action.ds-track__step--todo .ds-track__dot { border-color: var(--primary); color: var(--primary); }
+  .ds-track--stopped .ds-track__dot { border-color: var(--border-strong); background: var(--neutral-bg); color: var(--muted); box-shadow: none; }
+  .ds-track--stopped .ds-track__item::before { background: var(--border-strong); }
+  .ds-track__step--done, .ds-track__step--current, .ds-track__step--action.ds-track__step--todo { background: none; }
+  .ds-track__step--current, .ds-track__step--action.ds-track__step--todo { color: var(--primary); }
+  .ds-track__step--current { font-weight: 600; }
+  .ds-track__step--action:hover { filter: none; }
+  .ds-track__text { display: block; }
+  .ds-track__label { overflow: visible; }
+  .ds-track__note { margin-left: 3px; opacity: 1; }
+  .ds-track--stopped .ds-track__step, .ds-track--stopped .ds-track__step--current { background: none; color: var(--muted); }
+  .ds-track__more { display: inline-flex; align-self: flex-start; align-items: center; gap: 6px; min-height: 40px; padding: 0 4px; border: 0; background: none; color: var(--primary); font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+  .ds-track__more .anticon { font-size: 11px; transition: transform .15s; }
+  .ds-track--open .ds-track__more .anticon { transform: rotate(180deg); }
+  .ds-track__more:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; border-radius: 6px; }
   .ds-track__guide { grid-template-columns: 1fr; }
+  .ds-track__col { padding: 12px; }
   .ds-track__col + .ds-track__col { border-top: 1px solid var(--border); border-left: 0; border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
 }
 .ds-track__info > div { display: contents; }
@@ -831,7 +855,6 @@ span.ds-thumb--empty { cursor: default; }
 .ds-track__toggle:focus-visible { box-shadow: 0 0 0 2px var(--ring-focus); outline: none; }
 .ds-track__toggle .anticon { transition: transform .15s; transform: rotate(-90deg); }
 .ds-track__toggle--open .anticon { transform: none; }
-@media (max-width: 767px) { .ds-track__toggle { align-self: flex-start; } }
 .ds-panel--flush .ant-drawer-body { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
 .ds-toggle-row--compact { min-height: 40px; padding: 0 12px; font-size: 13px; }
 
@@ -1109,3 +1132,66 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-rowlist__check { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; margin-left: -10px; }
 /* Nút "Dùng số điện thoại này cho Zalo" dưới ô Zalo: cột hẹp (form 3 cột ở 1100–1160px, điện thoại) thì xuống dòng, không tràn. */
 .ds-zalo-use.ant-btn { max-width: 100%; height: auto; min-height: var(--ant-control-height-sm); padding-left: 0; white-space: normal; text-align: left; }
+
+/* Thẻ danh sách ở điện thoại (ListCard). Thân thẻ có nút phủ để cả thẻ bấm được; nút việc kế tiếp nằm ngoài nút phủ. */
+.ds-lcards { display: grid; gap: 10px; margin: 0; padding: 12px; list-style: none; }
+.ds-lcard { overflow: hidden; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.ds-lcard__main { position: relative; display: grid; gap: 10px; padding: 12px 14px; }
+.ds-lcard__open { position: absolute; inset: 0; z-index: 1; width: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.ds-lcard__open:active { background: var(--item-hover); }
+.ds-lcard__open:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.ds-lcard__head, .ds-lcard__fields, .ds-lcard__money { pointer-events: none; }
+.ds-lcard__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; }
+.ds-lcard__head--media { grid-template-columns: 40px minmax(0, 1fr) auto; }
+.ds-lcard__media { grid-row: 1 / span 2; grid-column: 1; align-self: center; }
+.ds-lcard__title { grid-row: 1; grid-column: 1; }
+.ds-lcard__fig { grid-row: 1; grid-column: 2; }
+.ds-lcard__sub { grid-row: 2; grid-column: 1; }
+.ds-lcard__badge { grid-row: 2; grid-column: 2; }
+.ds-lcard__head--media .ds-lcard__title, .ds-lcard__head--media .ds-lcard__sub { grid-column: 2; }
+.ds-lcard__head--media .ds-lcard__fig, .ds-lcard__head--media .ds-lcard__badge { grid-column: 3; }
+.ds-lcard__head--nofig .ds-lcard__title { grid-column: 1 / -1; }
+.ds-lcard__head--media.ds-lcard__head--nofig .ds-lcard__title { grid-column: 2 / -1; }
+.ds-lcard__title { display: -webkit-box; overflow: hidden; font-size: 16px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ds-lcard__fig { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.ds-lcard__fig small { margin-left: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
+.ds-lcard__fig--pos { color: var(--success); }
+.ds-lcard__fig--neg { color: var(--error-strong); }
+.ds-lcard__fig--muted { color: var(--muted); }
+.ds-lcard__sub { display: -webkit-box; overflow: hidden; color: var(--muted); font-size: 13px; overflow-wrap: break-word; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ds-lcard__sub .ds-mono { white-space: nowrap; }
+.ds-lcard__fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 12px; margin: 0; padding-top: 10px; border-top: 1px dashed var(--border); }
+.ds-lcard__fields > div { min-width: 0; }
+.ds-lcard__wide { grid-column: 1 / -1; }
+.ds-lcard__fields dt { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
+.ds-lcard__fields dd { display: -webkit-box; margin: 0; overflow: hidden; font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.35; overflow-wrap: anywhere; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.ds-lcard__tone--err { color: var(--error-strong); }
+.ds-lcard__tone--warn { color: var(--warning); }
+.ds-lcard__tone--pos { color: var(--success); }
+.ds-lcard__tone--muted { color: var(--muted); }
+.ds-lcard__money { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; padding: 8px 10px; border-radius: 10px; background: var(--neutral-bg); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ds-lcard__money > span, .ds-lcard__money > b { white-space: nowrap; }
+.ds-lcard__money > span { color: var(--muted); }
+.ds-lcard__money > b { font-weight: 600; }
+.ds-lcard__money > .ds-lcard__money-eq { margin-left: auto; font-weight: 700; }
+.ds-lcard__alert { padding: 8px 14px; font-size: 13px; font-weight: 500; }
+.ds-lcard__alert--err { background: var(--error-bg); color: var(--error-strong); }
+.ds-lcard__alert--warn { background: var(--warning-bg); color: var(--warning); }
+.ds-lcard__actions { display: flex; border-top: 1px solid var(--border); }
+.ds-lcard__actions button { flex: 1; min-height: 44px; padding: 0 8px; border: 0; background: none; color: var(--primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.ds-lcard__actions button + button { border-left: 1px solid var(--border); }
+.ds-lcard__actions button:active { background: var(--item-hover); }
+.ds-lcard__actions button:disabled { color: var(--muted); cursor: not-allowed; }
+.ds-lcard__actions button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.ds-lcard__actions .ds-lcard__action--danger { color: var(--error-strong); }
+.ds-lcard__demo-ava { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--secondary); color: var(--neutral); font-weight: 600; }
+
+/* Hàng chip trạng thái của trang danh sách ở điện thoại (StatusTabs phone="chips"). */
+.ds-tabs-chips { min-width: 0; }
+.ds-tabs-chips__chip { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: var(--surface); color: var(--foreground); font: inherit; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; position: relative; }
+.ds-tabs-chips__chip::after { content: ''; position: absolute; inset: -2px 0; }
+.ds-tabs-chips__chip[aria-pressed='true'] { border-color: var(--primary); background: var(--primary); color: #fff; }
+.ds-tabs-chips__chip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+.ds-tabs-chips__count { color: var(--muted); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.ds-tabs-chips__chip[aria-pressed='true'] .ds-tabs-chips__count { color: rgb(255 255 255 / 0.8); }
+@media (max-width: 767px) { .ds-toolbar > .ds-tabs-chips { flex: 0 0 100%; min-width: 0; } }

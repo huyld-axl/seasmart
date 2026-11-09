@@ -19,6 +19,7 @@ import useListSticky from '../../../components/ds/useListSticky'
 import ListFooter from '../../../components/ds/ListFooter'
 import useViewport from '../../../hooks/useViewport'
 import Fab from '../../../components/ds/Fab'
+import ListCard, { ListCardList } from '../../../components/ds/ListCard'
 
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
 
@@ -104,18 +105,24 @@ export default function VesselListPage() {
     body = <EmptyState title="Chưa có tàu nào" description="Thêm tàu để dùng khi đối chiếu sea service và tạo bộ giấy." action={can('vessel.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button> : undefined} />
   } else if (isMobile) {
     body = (
-      <ul className="crew-list">
+      <ListCardList label="Tàu">
         {rows.map((row) => (
-          <li key={row.id}>
-            <button type="button" className="crew-list__row" onClick={() => open(row)}>
-              <VesselCell row={row} />
-              <span className="crew-list__meta">
-                <span className="ds-cell2__sub">{[row.imo_number ? `IMO ${row.imo_number}` : 'Không có IMO', row.flag_name && withFlag(row.flag_code, row.flag_name, row.flag_emoji), row.ship_owner_name].filter(Boolean).join(' · ')}</span>
-              </span>
-            </button>
-          </li>
+          <ListCard
+            key={row.id}
+            media={<FleetTile />}
+            title={row.vessel_name}
+            sub={row.vessel_type_name || 'Chưa có loại tàu'}
+            badge={<StatusBadge group="vesselStatus" value={row.status} />}
+            fields={[
+              { label: 'Chủ tàu', value: row.ship_owner_name },
+              { label: 'IMO', value: row.imo_number || 'Không có' },
+              { label: 'Cờ', value: row.flag_name && withFlag(row.flag_code, row.flag_name, row.flag_emoji) },
+            ]}
+            onOpen={() => open(row)}
+            openLabel={`Mở tàu ${row.vessel_name}`}
+          />
         ))}
-      </ul>
+      </ListCardList>
     )
   } else {
     body = (
@@ -136,7 +143,7 @@ export default function VesselListPage() {
       <VesselCatalogPanel key={catalog.key} open={catalog.open} initialQuery={catalog.query} onClose={() => setCatalog((previous) => ({ ...previous, open: false }))} />
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <span className="fl-searchgroup">
             <Input
               className="ds-toolbar__search"

@@ -164,6 +164,17 @@ describe('contract_bill.service', () => {
     })
   })
 
+  it('danh sách trả ngày thu: có với bill đã thu, null với bill chưa thu', async () => {
+    const row = (id, paid_date) => ({ id, code: `TT-${id}`, seq: 1, periods: 1, period_start: '2026-10-01', period_end: '2026-10-31', due_date: '2026-11-10', paid_date, status: paid_date ? 'PAID' : 'OPEN', display_status: paid_date ? 'PAID' : 'TO_APPROVE', total_usd: '1900', contract_id: 1, contract_number: 'HĐ-1', seafarer_id: 2, seafarer_name: 'A', rank_name: 'Thuyền trưởng', vessel_id: 3, vessel_name: 'MV X', ship_owner_id: 4, ship_owner_name: 'Công ty Y' })
+    const pool = fakePool([
+      ['GROUP BY 1', () => [[{ display_status: 'PAID', n: 1 }, { display_status: 'TO_APPROVE', n: 1 }]]],
+      ['ORDER BY b.due_date', () => [[row(1, '2026-11-08'), row(2, null)]]],
+      ['COALESCE(SUM(', () => [[{ total: '3800' }]]],
+    ])
+    const result = await service.list(pool, {})
+    expect(result.data.map((bill) => bill.paid_date)).toEqual(['2026-11-08', null])
+  })
+
   it('chuyển trạng thái sai: chưa tới ngày chốt, ngày thu tương lai, sai trạng thái', async () => {
     await expect(service.transition(fakePool(moveRoutes({ status: 'APPROVED' })), 7, 'send')).rejects.toMatchObject({ statusCode: 409, message: 'Chưa đến ngày chốt sổ của kỳ này' })
     await expect(service.transition(fakePool(moveRoutes({ status: 'OPEN', period_end: '2026-10-21' })), 7, 'send')).rejects.toMatchObject({ statusCode: 409, message: 'Không thực hiện được: yêu cầu thanh toán đang ở trạng thái Chưa duyệt. Cần duyệt trước khi gửi' })

@@ -12,12 +12,13 @@ import './ds.css'
 // info: [[nhãn, giá trị]] khung "Thông tin giai đoạn" · todo: [{ key, label, done }] khung "Việc cần làm"
 // Nút mũi tên đầu đường mở / thu gọn hai khung bên dưới (mặc định thu gọn).
 // end: nút kết thúc (Không thành, Huỷ…) đặt dưới danh sách việc cần làm.
+// Điện thoại: các mốc thành vòng tròn đánh số nối nhau trên một hàng, tên mốc bên dưới; link "Chi tiết giai đoạn" dưới nút chính mở hai khung.
 export default function StageTrack({ steps, current, stopped = false, next = null, info = [], todo = [], end = null, label = 'Giai đoạn' }) {
   const [open, setOpen] = useState(false)
   const hasGuide = Boolean(info.length || todo.length || end)
   const shownInfo = info.filter(([, value]) => value != null && value !== '')
   return (
-    <div className={`ds-track${stopped ? ' ds-track--stopped' : ''}`}>
+    <div className={`ds-track${stopped ? ' ds-track--stopped' : ''}${open ? ' ds-track--open' : ''}`}>
       <div className="ds-track__bar">
         {hasGuide ? (
           <button
@@ -37,8 +38,11 @@ export default function StageTrack({ steps, current, stopped = false, next = nul
             const body = (
               <>
                 {state === 'done' ? <CheckOutlined aria-hidden /> : null}
-                <span className="ds-track__label">{step.label}</span>
-                {step.note ? <span className="ds-track__note">· {step.note}</span> : null}
+                <span className="ds-track__dot" aria-hidden>{state === 'done' ? <CheckOutlined /> : index + 1}</span>
+                <span className="ds-track__text">
+                  <span className="ds-track__label">{step.label}</span>
+                  {step.note ? <span className="ds-track__note">· {step.note}</span> : null}
+                </span>
               </>
             )
             const className = `ds-track__step ds-track__step--${state}`
@@ -53,7 +57,7 @@ export default function StageTrack({ steps, current, stopped = false, next = nul
                 </Dropdown>
               )
             }
-            return <li key={step.key} className="ds-track__item">{node}</li>
+            return <li key={step.key} className={`ds-track__item ds-track__item--${state}`}>{node}</li>
           })}
         </ol>
         {next?.menu ? (
@@ -62,6 +66,11 @@ export default function StageTrack({ steps, current, stopped = false, next = nul
           </Dropdown>
         ) : null}
         {next?.onClick ? <Button type="primary" title={next.hint} onClick={next.onClick}>{next.label}</Button> : null}
+        {hasGuide ? (
+          <button type="button" className="ds-track__more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+            {open ? 'Thu gọn' : 'Chi tiết giai đoạn'} <DownOutlined />
+          </button>
+        ) : null}
       </div>
       {hasGuide && open ? (
         <div className="ds-track__guide">

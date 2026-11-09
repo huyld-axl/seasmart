@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giai đoạn cơ hội trên điện thoại</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe thiết kế lại StageTrack trên điện thoại (09/11/2026). Token chép từ frontend/src/theme/tokens.js, giống responsive-mobile.html. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-light: rgba(0, 51, 102, 0.06); --primary-soft: rgba(0, 51, 102, 0.12);
+    --background: #f4f4f6; --surface: #ffffff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --secondary: #e7e8ec;
+    --neutral: #52525c; --neutral-bg: #f4f4f5;
+    --success: #007a55; --success-bg: #ecfdf5;
+    --error-strong: #c10007; --error-bg: #fef2f2;
+    --overlay: rgba(20, 24, 32, 0.45);
+    --page: #ebecef;
+    --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--foreground); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+  h1, h2 { margin: 0; text-wrap: balance; }
+  .wf { max-width: 1320px; margin: 0 auto; padding: 28px 16px 64px; }
+  .wf-head { display: grid; gap: 6px; margin-bottom: 28px; }
+  .wf-head h1 { font-size: 26px; font-weight: 700; }
+  .wf-head p { margin: 0; max-width: 80ch; color: var(--neutral); }
+  .wf-sec { display: grid; gap: 14px; margin-bottom: 56px; }
+  .wf-sec > header { display: grid; gap: 4px; }
+  .wf-sec h2 { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .wf-sec > header p { margin: 0; max-width: 80ch; color: var(--neutral); }
+  .wf-row { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+  .wf-col { display: grid; gap: 8px; width: 375px; max-width: 100%; }
+  .wf-cap { font-weight: 600; font-size: 13px; color: var(--neutral); }
+  .tag { padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .tag--now { background: var(--error-bg); color: var(--error-strong); }
+  .tag--rec { background: var(--success-bg); color: var(--success); }
+  .tag--alt { background: var(--neutral-bg); color: var(--neutral); }
+  .notes { margin: 0; padding: 14px 16px 14px 34px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); font-size: 13px; max-width: 80ch; }
+  .notes li + li { margin-top: 6px; }
+
+  /* Khung điện thoại: chỉ vẽ phần quanh thanh giai đoạn */
+  .phone { position: relative; overflow: hidden; width: 375px; max-width: 100%; border: 1px solid var(--border-strong); border-radius: 28px; background: var(--background); padding: 12px 16px 16px; min-height: 360px; }
+  .ctx { display: flex; gap: 8px; margin-bottom: 12px; }
+  .ctx span { height: 40px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); display: grid; place-items: center; font-size: 13px; color: var(--neutral); }
+  .ctx span:first-child { width: 40px; } .ctx span:last-child { flex: 1; }
+  .after { margin-top: 12px; height: 44px; border: 1px solid var(--border-strong); border-radius: 10px; background: var(--surface); display: flex; align-items: center; padding: 0 12px; color: var(--neutral); font-size: 14px; }
+  .card { border: 1px solid var(--border); border-radius: 16px; background: var(--surface); padding: 14px; }
+  .btn { display: flex; align-items: center; justify-content: center; height: 44px; border-radius: 10px; font: 600 15px var(--font); border: 1px solid var(--border-strong); background: var(--surface); color: var(--foreground); }
+  .btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn--danger { color: var(--error-strong); border-color: #ffc9c9; }
+  .muted { color: var(--muted); }
+  .ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* Hiện tại (từ ảnh chụp) */
+  .old { display: grid; gap: 6px; }
+  .old__t { width: 28px; height: 28px; border: 1px solid var(--border-strong); border-radius: 50%; display: grid; place-items: center; color: var(--neutral); margin-bottom: 4px; }
+  .old div.s { height: 40px; border-radius: 8px; display: flex; align-items: center; gap: 6px; padding: 0 12px; font-size: 13px; font-weight: 500; }
+  .s--d { background: var(--success-bg); color: var(--success); } .s--c { background: var(--primary); color: #fff; } .s--t { background: var(--neutral-bg); color: var(--primary); }
+
+  /* A: stepper ngang đánh số */
+  .st { display: flex; align-items: flex-start; margin: 2px 0 14px; }
+  .st__i { flex: 1; display: grid; justify-items: center; gap: 6px; position: relative; min-width: 0; }
+  .st__i + .st__i::before { content: ''; position: absolute; top: 15px; right: 50%; width: 100%; height: 2px; background: var(--border-strong); z-index: 0; }
+  .st__i--d + .st__i::before, .st__i--d + .st__i--d::before { background: var(--success); }
+  .st__dot { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 600; background: var(--surface); border: 2px solid var(--border-strong); color: var(--muted); }
+  .st__i--d .st__dot { background: var(--success); border-color: var(--success); color: #fff; }
+  .st__i--c .st__dot { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 0 0 4px var(--primary-soft); }
+  .st__l { font-size: 11px; line-height: 1.25; text-align: center; color: var(--muted); padding: 0 2px; }
+  .st__i--c .st__l { color: var(--primary); font-weight: 600; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .link { color: var(--primary); font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 4px; min-height: 40px; }
+  .detail { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--border); display: grid; gap: 12px; }
+  .h3 { font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: 13px; }
+  dt { color: var(--muted); } dd { margin: 0; font-weight: 500; }
+  .todo { display: grid; gap: 6px; font-size: 13px; }
+  .todo div { display: flex; align-items: center; gap: 8px; }
+  .box { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; color: #fff; }
+  .box--d { background: var(--success); border-color: var(--success); }
+  .todo .dn { color: var(--muted); }
+  .ends { display: flex; gap: 8px; } .ends .btn { flex: 1; font-size: 14px; }
+
+  /* B: dòng trạng thái + bottom sheet */
+  .sum { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--primary-light); color: var(--primary); font-weight: 600; font-size: 14px; }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+  .bars { display: flex; gap: 3px; margin-left: auto; }
+  .bars b { width: 14px; height: 6px; border-radius: 3px; background: var(--border); }
+  .bars b.d { background: var(--success); } .bars b.c { background: var(--primary); }
+  .sheetwrap { position: absolute; inset: 0; background: var(--overlay); display: flex; align-items: flex-end; }
+  .sheet { width: 100%; background: var(--surface); border-radius: 18px 18px 0 0; padding: 8px 16px 16px; display: grid; gap: 4px; }
+  .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 0 auto 8px; }
+  .sheet h3 { margin: 0 0 4px; font-size: 16px; }
+  .opt { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 4px; border-bottom: 1px solid var(--border); font-size: 15px; }
+  .opt:last-of-type { border-bottom: 0; }
+  .opt .sub { margin-left: auto; font-size: 12px; color: var(--muted); text-align: right; }
+  .opt--d { color: var(--success); } .opt--c { font-weight: 600; color: var(--primary); }
+  .opt .dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-strong); flex: none; display: grid; place-items: center; }
+  .opt--d .dot { border-color: var(--success); background: var(--success); color: #fff; }
+  .opt--c .dot { border-color: var(--primary); } .opt--c .dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+  .opt--a { color: var(--primary); }
+
+  /* C: thanh hành động dính đáy */
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; background: var(--success-bg); color: var(--success); font-size: 13px; font-weight: 500; }
+  .head { display: grid; gap: 6px; margin-bottom: 12px; }
+  .head b { font-size: 17px; }
+  .stageline { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--neutral); min-height: 40px; }
+  .dock { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 10px 16px 14px; background: var(--surface); border-top: 1px solid var(--border); box-shadow: 0 -4px 12px rgb(0 0 0 / .05); }
+  .dock .btn--primary { flex: 1; } .dock .btn:not(.btn--primary) { width: 44px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="chk" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="dn" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="rt" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="more" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+</svg>
+<main class="wf">
+  <div class="wf-head">
+    <h1>Giai đoạn cơ hội trên điện thoại</h1>
+    <p>Thiết kế lại khung giai đoạn (StageTrack) ở màn chi tiết cơ hội, khổ 375px. Máy tính giữ nguyên thanh chevron. Có 3 phương án để chọn; dữ liệu mẫu: cơ hội đang ở mốc 4/5 "Chủ tàu chọn", việc kế tiếp là "Chốt người".</p>
+  </div>
+
+  <section class="wf-sec">
+    <header><h2>Hiện tại <span class="tag tag--now">Đang dùng</span></h2><p>5 thanh chồng nhau chiếm gần cả màn hình; mốc đã qua và mốc chưa tới trông như nút; nút "›" nhỏ, khó đoán là để mở thông tin.</p></header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="phone">
+          <div class="ctx"><span>⋮</span><span>Sửa cơ hội</span></div>
+          <div class="card old">
+            <div class="old__t"><svg class="ico" style="width:12px"><use href="#rt"/></svg></div>
+            <div class="s s--d"><svg class="ico"><use href="#chk"/></svg>Mới</div>
+            <div class="s s--d"><svg class="ico"><use href="#chk"/></svg>Đang chọn · 3</div>
+            <div class="s s--d"><svg class="ico"><use href="#chk"/></svg>Chờ kết quả</div>
+            <div class="s s--c">Chủ tàu chọn</div>
+            <div class="s s--t">Đã chốt</div>
+            <div class="btn btn--primary" style="margin-top:6px">Chốt người</div>
+          </div>
+          <div class="after">Mục: Tổng quan</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wf-sec">
+    <header><h2>A · Bước đánh số nằm ngang <span class="tag tag--rec">Đề xuất</span></h2><p>Năm mốc thành 5 vòng tròn nối nhau trên một hàng, tên mốc nhỏ bên dưới. Nhìn một lần thấy cả chặng đường; khung chỉ cao bằng khoảng 2 dòng nút.</p></header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap">Thu gọn (mặc định)</div>
+        <div class="phone">
+          <div class="ctx"><span>⋮</span><span>Sửa cơ hội</span></div>
+          <div class="card">
+            <div class="st">
+              <div class="st__i st__i--d"><span class="st__dot"><svg class="ico"><use href="#chk"/></svg></span><span class="st__l">Mới</span></div>
+              <div class="st__i st__i--d"><span class="st__dot"><svg class="ico"><use href="#chk"/></svg></span><span class="st__l">Đang chọn · 3</span></div>
+              <div class="st__i st__i--d"><span class="st__dot"><svg class="ico"><use href="#chk"/></svg></span><span class="st__l">Chờ kết quả</span></div>
+              <div class="st__i st__i--c"><span class="st__dot">4</span><span class="st__l">Chủ tàu chọn</span></div>
+              <div class="st__i"><span class="st__dot">5</span><span class="st__l">Đã chốt</span></div>
+            </div>
+            <div class="btn btn--primary">Chốt người</div>
+            <div class="row" style="margin-top:4px"><span class="link">Chi tiết giai đoạn <svg class="ico"><use href="#dn"/></svg></span><span class="muted" style="font-size:12px">Hạn chốt quá 2 ngày</span></div>
+          </div>
+          <div class="after">Mục: Tổng quan</div>
+        </div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-cap">Bấm "Chi tiết giai đoạn"</div>
+        <div class="phone">
+          <div class="card">
+            <div class="st">
+              <div class="st__i st__i--d"><span class="st__dot"><svg class="ico"><use href="#chk"/></svg></span><span class="st__l">Mới</span></div>
+              <div class="st__i st__i--d"><span class="st__dot"><svg class="ico"><use href="#chk"/></svg></span><span class="st__l">Đang chọn · 3</span></div>
+              <div class="st__i st__i--d"><span class="st__dot"><svg class="ico"><use href="#chk"/></svg></span><span class="st__l">Chờ kết quả</span></div>
+              <div class="st__i st__i--c"><span class="st__dot">4</span><span class="st__l">Chủ tàu chọn</span></div>
+              <div class="st__i"><span class="st__dot">5</span><span class="st__l">Đã chốt</span></div>
+            </div>
+            <div class="btn btn--primary">Chốt người</div>
+            <div class="row" style="margin-top:4px"><span class="link">Thu gọn <svg class="ico" style="transform:rotate(180deg)"><use href="#dn"/></svg></span></div>
+            <div class="detail">
+              <div><p class="h3">Thông tin giai đoạn</p><dl><dt>Chủ tàu chọn</dt><dd>Nguyễn Văn Hải</dd><dt>Số ứng viên</dt><dd>3</dd><dt>Hạn chốt</dt><dd>07/11/2026 · quá 2 ngày</dd></dl></div>
+              <div><p class="h3">Việc cần làm</p><div class="todo">
+                <div class="dn"><span class="box box--d"><svg class="ico" style="width:10px"><use href="#chk"/></svg></span>Thêm ứng viên</div>
+                <div class="dn"><span class="box box--d"><svg class="ico" style="width:10px"><use href="#chk"/></svg></span>Gửi hồ sơ cho chủ tàu</div>
+                <div class="dn"><span class="box box--d"><svg class="ico" style="width:10px"><use href="#chk"/></svg></span>Chủ tàu chọn người</div>
+                <div><span class="box"></span>Chốt người: ngày xuống, nơi xuống</div>
+              </div></div>
+              <div class="ends"><span class="btn btn--danger">Không thành</span><span class="btn">Huỷ cơ hội</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li>Vòng tròn cao 32px, cả cột (vòng + chữ) là vùng bấm ~68×52px. Mốc bấm được thì làm việc luôn như trên máy tính, ví dụ bấm "Chờ kết quả" để bỏ nhãn chủ tàu đã chọn.</li>
+      <li>Tên mốc dài thì xuống 2 dòng (chữ 11px). Dùng tên ngắn sẵn có: "Đang chọn", "Chủ tàu chọn".</li>
+      <li>Thông tin và việc cần làm nằm dưới link "Chi tiết giai đoạn", mở ngay trong khung, không bật hộp thoại.</li>
+      <li>Cơ hội đã đóng: các vòng chuyển xám, nút chính đổi thành "Mở lại" (nếu có quyền).</li>
+    </ol>
+  </section>
+
+  <section class="wf-sec">
+    <header><h2>B · Một dòng trạng thái + bảng chọn từ đáy <span class="tag tag--alt">Phương án</span></h2><p>Khung chỉ còn 1 dòng (mốc hiện tại + vạch tiến độ) và nút chính. Bấm dòng đó thì bảng từ đáy màn hình trượt lên, liệt kê các mốc và việc có thể làm.</p></header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="wf-cap">Thu gọn</div>
+        <div class="phone">
+          <div class="ctx"><span>⋮</span><span>Sửa cơ hội</span></div>
+          <div class="card" style="display:grid;gap:10px">
+            <div class="sum"><span class="muted" style="font-size:13px">4/5</span><span class="pill"><i></i>Chủ tàu chọn</span><span class="bars"><b class="d"></b><b class="d"></b><b class="d"></b><b class="c"></b><b></b></span><svg class="ico muted"><use href="#dn"/></svg></div>
+            <div class="btn btn--primary">Chốt người</div>
+          </div>
+          <div class="after">Mục: Tổng quan</div>
+        </div>
+      </div>
+      <div class="wf-col">
+        <div class="wf-cap">Bấm dòng trạng thái</div>
+        <div class="phone" style="min-height:560px">
+          <div class="ctx"><span>⋮</span><span>Sửa cơ hội</span></div>
+          <div class="sheetwrap">
+            <div class="sheet">
+              <div class="grab"></div>
+              <h3>Giai đoạn</h3>
+              <div class="opt opt--d"><span class="dot"><svg class="ico" style="width:12px"><use href="#chk"/></svg></span>Mới</div>
+              <div class="opt opt--d"><span class="dot"><svg class="ico" style="width:12px"><use href="#chk"/></svg></span>Đang chọn · 3<span class="sub">Thêm ứng viên</span></div>
+              <div class="opt opt--d"><span class="dot"><svg class="ico" style="width:12px"><use href="#chk"/></svg></span>Chờ kết quả<span class="sub">Bỏ nhãn chủ tàu chọn</span></div>
+              <div class="opt opt--c"><span class="dot"></span>Chủ tàu chọn<span class="sub">Nguyễn Văn Hải</span></div>
+              <div class="opt opt--a"><span class="dot"></span>Đã chốt<span class="sub">Chốt người</span></div>
+              <div class="ends" style="margin-top:10px"><span class="btn btn--danger">Không thành</span><span class="btn">Huỷ cơ hội</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li>Gọn, dùng lại <code>BottomSheet</code> sẵn có. Nhược điểm: phải bấm mới thấy các mốc còn lại.</li>
+      <li>"Việc cần làm" gộp vào chữ nhỏ bên phải từng mốc.</li>
+    </ol>
+  </section>
+
+  <section class="wf-sec">
+    <header><h2>C · Bỏ khung, đưa nút xuống đáy màn hình <span class="tag tag--alt">Phương án</span></h2><p>Đầu trang đã có nhãn trạng thái ("Chủ tàu đã chọn"), nên thêm dòng "Giai đoạn 4/5" ngay dưới đó; nút "Chốt người" nằm dính ở đáy màn hình, luôn bấm được khi cuộn.</p></header>
+    <div class="wf-row">
+      <div class="wf-col">
+        <div class="phone" style="min-height:420px">
+          <div class="head">
+            <b>Thuyền trưởng · ABC</b>
+            <span><span class="badge">● Chủ tàu đã chọn</span></span>
+            <span class="stageline">Giai đoạn 4/5 <span class="bars" style="margin:0"><b class="d"></b><b class="d"></b><b class="d"></b><b class="c"></b><b></b></span><span class="link" style="margin-left:auto">Xem <svg class="ico"><use href="#rt"/></svg></span></span>
+          </div>
+          <div class="ctx"><span>⋮</span><span>Sửa cơ hội</span></div>
+          <div class="after">Mục: Tổng quan</div>
+          <div class="dock"><span class="btn"><svg class="ico"><use href="#more"/></svg></span><span class="btn btn--primary">Chốt người</span></div>
+        </div>
+      </div>
+    </div>
+    <ol class="notes">
+      <li>Tiết kiệm chỗ nhất và nút chính luôn trong tầm ngón cái. "Xem" mở bảng từ đáy như phương án B; nút ⋮ chứa Không thành, Huỷ cơ hội.</li>
+      <li>Rủi ro: thanh đáy có thể đụng nút nổi (Fab) và phân trang ở các tab bên dưới; thay đổi nhiều hơn A và B.</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>

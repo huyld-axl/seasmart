@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { vesselNow, docsAlert, nameInitials, CREW_TABS } from '../crewView'
+import { seafarerAlert, vesselNow, docsAlert, nameInitials, CREW_TABS } from '../crewView'
 
 describe('crewView', () => {
   it('tàu đang sign on: tên tàu và hạn hợp đồng, chỉ khi đang trên tàu', () => {
@@ -24,5 +24,16 @@ describe('crewView', () => {
 
   it('đủ 4 tab: tất cả và ba trạng thái với tàu', () => {
     expect(CREW_TABS.map((t) => t.label)).toEqual(['Tất cả', 'Đang trên tàu', 'Ở bờ', 'Tạm ngưng'])
+  })
+})
+
+describe('seafarerAlert', () => {
+  it('hết hạn trước, rồi sắp hết hạn, rồi chờ duyệt', () => {
+    expect(seafarerAlert({ expired_count: 2, expiring_count: 1, pending_review_count: 3 })).toEqual({ tone: 'err', text: '2 giấy tờ hết hạn' })
+    expect(seafarerAlert({ expiring_count: 1, pending_review_count: 3 })).toEqual({ tone: 'warn', text: '1 giấy tờ sắp hết hạn' })
+    expect(seafarerAlert({ pending_review_count: 3 })).toEqual({ tone: 'warn', text: '3 giấy tờ chờ duyệt' })
+  })
+  it('không có gì thì null', () => {
+    expect(seafarerAlert({})).toBeNull()
   })
 })

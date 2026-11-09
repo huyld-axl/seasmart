@@ -22,10 +22,17 @@ import ListFooter from '../../../components/ds/ListFooter'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
 import Fab from '../../../components/ds/Fab'
+import ListCard, { ListCardList } from '../../../components/ds/ListCard'
 import { CrewFilterButton } from '../seafarers/CrewFilters'
 
 const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
+
+// Logo (hoặc chữ viết tắt) của đối tác trong thẻ danh sách ở điện thoại.
+function PartnerTile({ row }) {
+  const logo = usePartnerLogo(row, 'thumb')
+  return <FleetTile text={initialsOfName(row.company_name)} src={logo} />
+}
 
 function PartnerCell({ row }) {
   const logo = usePartnerLogo(row, 'thumb')
@@ -107,19 +114,19 @@ export default function PartnerListPage() {
     body = <EmptyState title="Chưa có đối tác nào" description="Thêm chủ tàu đối tác để chọn ở mục “Nộp cho” của bộ giấy và gắn với tàu." action={can('partner.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button> : undefined} />
   } else if (isMobile) {
     body = (
-      <ul className="crew-list">
+      <ListCardList label="Đối tác">
         {rows.map((row) => (
-          <li key={row.id}>
-            <button type="button" className="crew-list__row" onClick={() => open(row)}>
-              <PartnerCell row={row} />
-              <span className="crew-list__meta">
-                <StatusBadge group="partner" value={Number(row.is_active) === 1 ? 'ACTIVE' : 'INACTIVE'} />
-                <span className="ds-cell2__sub">{[row.country_name && withFlag(row.country_code, row.country_name, row.country_flag_emoji)].filter(Boolean).join(' · ')}</span>
-              </span>
-            </button>
-          </li>
+          <ListCard
+            key={row.id}
+            media={<PartnerTile row={row} />}
+            title={row.company_name}
+            badge={<StatusBadge group="partner" value={Number(row.is_active) === 1 ? 'ACTIVE' : 'INACTIVE'} />}
+            fields={[{ label: 'Quốc gia', value: row.country_name && withFlag(row.country_code, row.country_name, row.country_flag_emoji) }]}
+            onOpen={() => open(row)}
+            openLabel={`Mở đối tác ${row.company_name}`}
+          />
         ))}
-      </ul>
+      </ListCardList>
     )
   } else {
     body = (
@@ -139,7 +146,7 @@ export default function PartnerListPage() {
     <div className="ds-page">
       <div className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
           <Input
             className="ds-toolbar__search"
             allowClear

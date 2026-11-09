@@ -51,6 +51,7 @@ function summary(row) {
     period_start: row.period_start,
     period_end: row.period_end,
     due_date: row.due_date,
+    paid_date: row.paid_date ?? null,
     status: row.status,
     display_status: row.display_status,
     total_usd: Number(row.total_usd),

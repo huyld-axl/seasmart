@@ -93,6 +93,10 @@
   font-size: 16px;
 }
 
+.app-shell__nav-item--guide {
+  margin-top: auto;
+}
+
 .app-shell__nav-item:hover {
   background: var(--item-hover);
   color: var(--foreground);

@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCAH - Hướng dẫn sử dụng</title>
+<style>
+  /* Trang hướng dẫn tĩnh, tự chứa, không gọi API. Màu theo frontend/src/theme/tokens.js. Ảnh trong anh/ chụp từ dữ liệu demo tự đặt. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --primary-mid: rgba(0, 51, 102, 0.16);
+    --bg: #f4f4f6;
+    --surface: #ffffff;
+    --fg: #2c2c2c;
+    --muted: #707070;
+    --neutral: #52525c;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error: #c10007;
+    --error-bg: #fef2f2;
+    --error-border: #ffc9c9;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --ai: #6d28d9;
+    --ai-bg: #f5f3ff;
+    --side: 272px;
+    --font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.65 var(--font); -webkit-font-smoothing: antialiased; }
+  a { color: var(--primary); }
+  :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  button { font: inherit; color: inherit; }
+
+  /* Cột mục lục */
+  .side { position: fixed; inset: 0 auto 0 0; width: var(--side); display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--border); z-index: 20; }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 18px 20px 14px; text-decoration: none; color: var(--fg); }
+  .brand i { width: 36px; height: 36px; border-radius: 9px; background: var(--primary); color: #fff; display: grid; place-items: center; font: 700 14px/1 var(--font); font-style: normal; letter-spacing: .02em; }
+  .brand b { display: block; font-size: 15px; }
+  .brand small { display: block; font-size: 12.5px; color: var(--muted); }
+  .find { margin: 0 16px 8px; position: relative; }
+  .find input { width: 100%; height: 38px; padding: 0 12px 0 34px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--bg); font: inherit; font-size: 14px; color: var(--fg); }
+  .find svg { position: absolute; left: 11px; top: 11px; width: 16px; height: 16px; color: var(--muted); }
+  .toc { flex: 1; overflow-y: auto; padding: 4px 12px 24px; }
+  .toc p { margin: 18px 10px 6px; font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--fg); text-decoration: none; font-size: 14px; }
+  .toc a:hover { background: var(--bg); }
+  .toc a.on { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+  .toc .empty { display: none; margin: 12px 10px; font-size: 13px; color: var(--muted); }
+
+  /* Thanh trên */
+  .page { margin-left: var(--side); min-width: 0; }
+  .bar { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 10px 40px; background: rgba(244, 244, 246, .92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+  .bar > span { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .jobs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+  .jobs::-webkit-scrollbar { display: none; }
+  .jobs button { flex-shrink: 0; height: 32px; padding: 0 13px; border: 1px solid var(--border-strong); border-radius: 99px; background: var(--surface); font-size: 13.5px; cursor: pointer; }
+  .jobs button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .menu-btn { display: none; flex-shrink: 0; width: 40px; height: 40px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); cursor: pointer; place-items: center; }
+  .menu-btn svg { width: 18px; height: 18px; }
+
+  main { max-width: 880px; padding: 40px 40px 96px; display: grid; gap: 64px; }
+  header .kicker { display: flex; align-items: center; gap: 10px; }
+  .ver { padding: 1px 8px; border-radius: 6px; background: var(--primary-mid); color: var(--primary); font-size: 12px; font-weight: 600; letter-spacing: 0; }
+  header h1 { margin: 14px 0 12px; font-size: 36px; line-height: 1.15; letter-spacing: -.02em; text-wrap: balance; }
+  header > p { margin: 0; max-width: 68ch; color: var(--neutral); font-size: 16px; }
+  .meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .meta b { display: block; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .meta span { font-size: 14px; }
+
+  section { display: grid; gap: 16px; min-width: 0; transition: opacity .2s; }
+  section.dim { opacity: .32; }
+  .kicker { font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--primary); }
+  h2 { margin: -8px 0 0; font-size: 25px; line-height: 1.25; letter-spacing: -.01em; text-wrap: balance; }
+  h3 { margin: 8px 0 -4px; font-size: 17px; }
+  section p, section ul, section ol { margin: 0; max-width: 72ch; }
+  ul, ol { padding-left: 20px; display: grid; gap: 6px; }
+  .ui { display: inline-block; padding: 0 7px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); font-size: 13px; font-weight: 600; white-space: nowrap; }
+  code { font-family: var(--mono); font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 0 5px; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; padding: 1px 9px; border-radius: 99px; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+  .tag::before { content: ''; width: 7px; height: 7px; border-radius: 99px; background: currentColor; }
+  .t-neutral { background: #f4f4f5; color: var(--neutral); }
+  .t-success { background: var(--success-bg); color: var(--success); }
+  .t-warning { background: var(--warning-bg); color: var(--warning); }
+  .t-error { background: var(--error-bg); color: var(--error); }
+  .t-info { background: var(--info-bg); color: var(--info); }
+
+  /* Luồng dạng chip */
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .flow span { padding: 7px 13px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--surface); font-size: 13.5px; font-weight: 600; }
+  .flow span.key { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .flow i { color: var(--muted); font-style: normal; }
+
+  /* Ai làm được */
+  .who { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+  .who > div { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) 200px; gap: 12px; align-items: center; padding: 9px 14px; border-top: 1px solid var(--border); font-size: 14px; }
+  .who > div:first-child { border-top: 0; background: #f8f8fa; font-size: 12px; font-weight: 600; color: var(--muted); padding: 7px 14px; }
+  .who em { font-style: normal; font-size: 13px; color: var(--neutral); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
+  .job { padding: 1px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .j-mg { background: #e0ecff; color: #1d4ed8; }
+  .j-dy { background: #fef3c7; color: #92400e; }
+  .j-kt { background: #dcfce7; color: #166534; }
+  .j-qt { background: #ede9fe; color: #5b21b6; }
+
+  /* Hộp lưu ý */
+  .note { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 4px 12px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(29, 78, 216, .2); background: var(--info-bg); font-size: 14px; max-width: 76ch; }
+  .note > i { grid-row: span 2; width: 26px; height: 26px; border-radius: 99px; display: grid; place-items: center; font: 700 13px/1 var(--font); font-style: normal; background: var(--info); color: #fff; }
+  .note b { font-weight: 600; }
+  .note p { margin: 0; }
+  .note--ai { border-color: rgba(109, 40, 217, .22); background: var(--ai-bg); }
+  .note--ai > i { background: var(--ai); }
+  .note--warn { border-color: var(--warning-border); background: var(--warning-bg); }
+  .note--warn > i { background: var(--warning); }
+  .note--ok { border-color: rgba(0, 122, 85, .22); background: var(--success-bg); }
+  .note--ok > i { background: var(--success); }
+
+  .steps { list-style: none; padding: 0; counter-reset: s; display: grid; gap: 10px; max-width: 76ch; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+  .steps li::before { content: counter(s); width: 28px; height: 28px; border-radius: 99px; background: var(--primary); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; min-width: 0; }
+  .card h4 { margin: 0 0 4px; font-size: 14.5px; }
+  .card p { margin: 0; font-size: 14px; color: var(--neutral); }
+
+  .tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+  table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 9px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+  th { font-size: 12px; font-weight: 600; color: var(--muted); background: #f8f8fa; }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { font-weight: 600; }
+
+  figure { margin: 0; display: grid; gap: 8px; }
+  figure a { display: block; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, .04); }
+  figure img { display: block; width: 100%; height: auto; }
+  figcaption { font-size: 13px; color: var(--muted); }
+  .phones { display: grid; grid-template-columns: repeat(2, minmax(0, 240px)); gap: 16px; }
+
+  .faq { display: grid; gap: 10px; max-width: 76ch; }
+  .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; }
+  .faq summary { cursor: pointer; font-weight: 600; }
+  .faq details p { margin: 8px 0 0; color: var(--neutral); }
+  footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 20px; }
+
+  .scrim { display: none; }
+
+  /* Màn vừa: sidebar thành ngăn kéo */
+  @media (max-width: 1023px) {
+    .page { margin-left: 0; }
+    .side { transform: translateX(-100%); transition: transform .2s; box-shadow: 0 0 40px rgba(0, 0, 0, .15); }
+    body.nav-open .side { transform: none; }
+    body.nav-open .scrim { display: block; position: fixed; inset: 0; z-index: 15; background: rgba(0, 0, 0, .3); }
+    .menu-btn { display: grid; }
+    .bar { padding: 10px 24px; }
+    main { padding: 32px 24px 80px; }
+  }
+  @media (max-width: 639px) {
+    .bar { padding: 10px 16px; gap: 8px; }
+    .bar > span { display: none; }
+    .jobs { flex: 1; }
+    .find input { font-size: 16px; }
+    main { padding: 24px 16px 72px; gap: 52px; }
+    header h1 { font-size: 28px; }
+    .meta, .two { grid-template-columns: minmax(0, 1fr); }
+    .who > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .who > div:first-child { display: none; }
+    .chips { justify-content: flex-start; }
+    .phones { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
+<!-- Trang hướng dẫn duy nhất của app (đã gộp tong-quan.html, hop-dong-va-chuyen.html, dien-thoai.html ngày 10/11/2026). App mở thẳng tới mục bằng #id (HelpLink.jsx). Quyền lấy từ backend/src/constants/permissions.js. -->
+</head>
+<body>
+<aside class="side" id="side" aria-label="Mục lục">
+  <a class="brand" href="#gioi-thieu"><i>MC</i><span><b>MCAH</b><small>Hướng dẫn sử dụng</small></span></a>
+  <label class="find">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="find" type="search" placeholder="Lọc mục lục…" aria-label="Lọc mục lục">
+  </label>
+  <nav class="toc" id="toc">
+    <p>Bắt đầu</p>
+    <a href="#gioi-thieu">Giới thiệu hệ thống</a>
+    <a href="#vai-tro">Vai trò &amp; phân quyền</a>
+    <a href="#dang-nhap">Đăng nhập &amp; tài khoản</a>
+    <a href="#dieu-huong">Điều hướng &amp; cách dùng chung</a>
+    <p>Hồ sơ</p>
+    <a href="#tong-quan">Tổng quan (Dashboard)</a>
+    <a href="#thuyen-vien">Thuyền viên</a>
+    <a href="#giay-to">Giấy tờ &amp; AI đọc giấy</a>
+    <a href="#doi-tac">Đối tác</a>
+    <a href="#tau">Tàu</a>
+    <p>Vận hành</p>
+    <a href="#co-hoi">Cơ hội</a>
+    <a href="#gui-chu-tau">Hồ sơ nộp &amp; gửi chủ tàu</a>
+    <a href="#chuyen-tau">Chuyến tàu</a>
+    <a href="#hop-dong">Hợp đồng</a>
+    <a href="#thanh-toan">Yêu cầu thanh toán</a>
+    <a href="#roi-tau">Rời tàu, sửa &amp; kết thúc hợp đồng</a>
+    <p>Hệ thống</p>
+    <a href="#danh-muc">Danh mục</a>
+    <a href="#tai-khoan">Tài khoản</a>
+    <a href="#phan-quyen">Vai trò và quyền</a>
+    <a href="#muc-tieu">Mục tiêu tháng</a>
+    <p>Khác</p>
+    <a href="#dien-thoai">Dùng trên điện thoại</a>
+    <a href="#hoi-dap">Hỏi đáp</a>
+    <span class="empty" id="toc-empty">Không có mục nào khớp.</span>
+  </nav>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<div class="page">
+  <div class="bar">
+    <button class="menu-btn" id="menu-btn" type="button" aria-label="Mở mục lục" aria-controls="side" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <span>Xem theo công việc của bạn:</span>
+    <div class="jobs" id="jobs" role="group" aria-label="Lọc theo công việc">
+      <button type="button" data-job="all" aria-pressed="true">Tất cả</button>
+      <button type="button" data-job="mg" aria-pressed="false">Môi giới</button>
+      <button type="button" data-job="dy" aria-pressed="false">Duyệt &amp; quản lý</button>
+      <button type="button" data-job="kt" aria-pressed="false">Kế toán</button>
+      <button type="button" data-job="qt" aria-pressed="false">Quản trị</button>
+    </div>
+  </div>
+
+  <main>
+    <header>
+      <div class="kicker">Tài liệu hướng dẫn MCAH <span class="ver">v1.0</span></div>
+      <h1>Hướng dẫn sử dụng MCAH</h1>
+      <p>Tài liệu này giải thích cách dùng từng phần của MCAH theo đúng luồng công việc của công ty môi giới thuyền viên: lập hồ sơ thuyền viên, tìm người cho vị trí chủ tàu cần, gửi hồ sơ, chốt người lên tàu, rồi làm hợp đồng và thu tiền chủ tàu. Bấm nút công việc ở thanh trên để làm nổi những phần liên quan đến bạn.</p>
+      <div class="meta">
+        <div><b>Cập nhật lần cuối</b><span>10/11/2026</span></div>
+        <div><b>Dành cho</b><span>Môi giới · Duyệt &amp; quản lý · Kế toán · Quản trị</span></div>
+        <div><b>Ngôn ngữ hệ thống</b><span>Tiếng Việt</span></div>
+      </div>
+    </header>
+
+    <!-- ================= BẮT ĐẦU ================= -->
+    <section id="gioi-thieu" data-jobs="mg dy kt qt">
+      <div class="kicker">Bắt đầu · 01</div>
+      <h2>MCAH là gì?</h2>
+      <p>MCAH là phần mềm quản lý cho công ty cung ứng (môi giới) thuyền viên. Mọi việc của một vị trí chủ tàu cần người đi qua một luồng, dữ liệu nhập ở bước đầu được dùng lại tới bước cuối:</p>
+      <div class="flow">
+        <span>Hồ sơ thuyền viên</span><i>→</i><span>Cơ hội</span><i>→</i><span>Gửi chủ tàu</span><i>→</i><span>Chốt người</span><i>→</i><span>Hợp đồng</span><i>→</i><span class="key">Thu tiền theo kỳ</span>
+      </div>
+      <p>Ứng dụng chạy trên trình duyệt, dùng được trên máy tính và điện thoại. Chỉ nhân viên công ty đăng nhập; thuyền viên và chủ tàu không có tài khoản. Chủ tàu nhận hồ sơ qua email như bình thường.</p>
+      <div class="note">
+        <i>i</i>
+        <b>Cách đọc tài liệu này</b>
+        <p>Mỗi mục có bảng <b>Ai làm được</b>: việc gì, cần quyền nào (đúng tên quyền trong <span class="ui">Quản trị → Vai trò và quyền</span>), và nhóm công việc thường làm việc đó. Bấm một nhóm ở thanh trên để làm mờ các mục không liên quan.</p>
+      </div>
+    </section>
+
+    <section id="vai-tro" data-jobs="qt dy">
+      <div class="kicker">Bắt đầu · 02</div>
+      <h2>Vai trò &amp; phân quyền</h2>
+      <p>MCAH không gắn sẵn vai trò cố định, trừ <b>Quản trị viên</b> có mọi quyền. Công ty tự tạo vai trò (ví dụ Môi giới viên, Kế toán, Trưởng phòng) và tích từng quyền trong bảng. Mỗi tài khoản có một vai trò; vai trò quyết định menu nào hiện ra và thao tác nào bấm được, cả trên giao diện lẫn ở máy chủ.</p>
+      <p>Bảng quyền có 12 mục, 48 quyền, chia ba nhóm Hồ sơ, Vận hành, Hệ thống. Bốn nhóm công việc dùng trong tài liệu này chỉ để đọc cho dễ; quyền thật là quyền công ty đã tích cho vai trò của bạn.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Nhóm công việc</th><th>Thường được cấp</th></tr></thead>
+          <tbody>
+            <tr><td><span class="job j-mg">Môi giới</span></td><td>Thuyền viên, Đối tác và Tàu (xem, thêm, sửa), Cơ hội (đủ quyền), Chuyến tàu, Hợp đồng (tạo, sửa nháp, gửi duyệt)</td></tr>
+            <tr><td><span class="job j-dy">Duyệt &amp; quản lý</span></td><td>Duyệt và từ chối hợp đồng, kết thúc hợp đồng, xem số cả công ty trên Tổng quan, đặt mục tiêu tháng</td></tr>
+            <tr><td><span class="job j-kt">Kế toán</span></td><td>Yêu cầu thanh toán: sửa số tiền, duyệt, đánh dấu đã gửi, ghi nhận đã thu</td></tr>
+            <tr><td><span class="job j-qt">Quản trị</span></td><td>Tài khoản, Vai trò và quyền, Danh mục</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Phạm vi dữ liệu</h3>
+      <p>Sáu mục Thuyền viên, Bản xuất, Cơ hội, Chuyến tàu, Hợp đồng, Yêu cầu thanh toán có thêm phạm vi: <b>Tất cả</b> hoặc <b>Do mình tạo</b>. Chọn Do mình tạo thì người đó chỉ thấy và làm trên bản ghi do chính mình tạo.</p>
+      <figure>
+        <a href="anh/vai-tro.webp" target="_blank" rel="noopener"><img src="anh/vai-tro.webp" width="1440" height="900" loading="lazy" alt="Bảng vai trò và quyền với bốn cột vai trò"></a>
+        <figcaption>Quản trị → Vai trò và quyền: mỗi cột là một vai trò, mỗi dòng là một quyền. Ô gạch ngang nghĩa là có một phần quyền của mục.</figcaption>
+      </figure>
+      <div class="note note--ok">
+        <i>✓</i>
+        <b>Nguyên tắc dễ nhớ</b>
+        <p>Tích bất kỳ quyền nào của một mục thì tự có quyền Xem của mục đó. Người duyệt yêu cầu thanh toán phải khác người vừa sửa nó. Quyền đổi có hiệu lực từ lần tải trang tới của người được đổi.</p>
+      </div>
+    </section>
+
+    <section id="dang-nhap" data-jobs="mg dy kt qt">
+      <div class="kicker">Bắt đầu · 03</div>
+      <h2>Đăng nhập &amp; tài khoản</h2>
+      <ol class="steps">
+        <li><span>Quản trị viên thêm tài khoản cho bạn ở <span class="ui">Quản trị → Tài khoản</span>. Hệ thống gửi thư mời tới email của bạn.</span></li>
+        <li><span>Mở thư, bấm đường dẫn, đặt mật khẩu theo các yêu cầu hiện trên trang <b>Đặt mật khẩu</b>.</span></li>
+        <li><span>Đăng nhập bằng email và mật khẩu. Nhập sai nhiều lần liên tiếp thì hệ thống tạm chặn, chờ vài phút rồi thử lại.</span></li>
+      </ol>
+      <p>Đăng xuất: bấm email của bạn ở góc trên bên phải, chọn <span class="ui">Đăng xuất</span>. Tài khoản chưa được gán vai trò sẽ thấy trang "Chưa có vai trò" và cần báo quản trị viên.</p>
+    </section>
+
+    <section id="dieu-huong" data-jobs="mg dy kt qt">
+      <div class="kicker">Bắt đầu · 04</div>
+      <h2>Điều hướng &amp; cách dùng chung</h2>
+      <p>Thanh bên trái chia ba nhóm: <b>Hồ sơ</b> (Tổng quan, Thuyền viên, Đối tác, Tàu), <b>Vận hành</b> (Cơ hội, Chuyến tàu, Hợp đồng, Yêu cầu thanh toán) và <b>Hệ thống</b> (Danh mục, Quản trị). Menu chỉ hiện mục bạn có quyền xem. Nút <span class="ui">☰</span> ở thanh trên thu gọn thanh bên.</p>
+      <div class="two">
+        <div class="card"><h4>Trang danh sách</h4><p>Ô tìm kiếm, tab hoặc ô chọn trạng thái, nút <span class="ui">Bộ lọc</span>, nút thêm mới ở góc phải. Bấm một dòng để mở chi tiết.</p></div>
+        <div class="card"><h4>Trang chi tiết</h4><p>Thẻ đầu trang tóm tắt bản ghi và các nút việc chính; bên dưới là các tab. Tab Tổng quan có mục lục nhóm thông tin bên trái, kèm số ô đã điền.</p></div>
+        <div class="card"><h4>Form thêm mới</h4><p>Nút lưu luôn bấm được; thiếu ô bắt buộc thì lỗi hiện ngay dưới ô. Nút <span class="ui">Lưu &amp; thêm … khác</span> lưu xong để form trống cho bản ghi tiếp theo.</p></div>
+        <div class="card"><h4>Form sửa</h4><p>Nút <span class="ui">Lưu thay đổi</span> sáng lên khi có thay đổi; ô đã đổi có chip "Đã sửa". Rời trang khi chưa lưu, app hỏi lại trước.</p></div>
+      </div>
+      <p>Ở Tổng quan, Chuyến tàu, Hợp đồng, Yêu cầu thanh toán và Mục tiêu tháng, thanh trên có link <span class="ui">Hướng dẫn</span> mở hướng dẫn chi tiết của phần đó. Chuông bên cạnh là thông báo.</p>
+    </section>
+
+    <!-- ================= HỒ SƠ ================= -->
+    <section id="tong-quan" data-jobs="mg dy kt">
+      <div class="kicker">Hồ sơ · 01</div>
+      <h2>Tổng quan (Dashboard)</h2>
+      <p>Trang đầu tiên sau khi đăng nhập, vừa một màn hình máy tính. Nhìn 5 giây là biết tháng này đang đạt hay chậm, và hôm nay có việc gì đã quá hạn. Màu đỏ chỉ dành cho việc quá hạn hoặc đang chậm.</p>
+      <figure>
+        <a href="anh/tong-quan.webp" target="_blank" rel="noopener"><img src="anh/tong-quan.webp" width="1440" height="900" loading="lazy" alt="Màn Tổng quan với thẻ Doanh thu, Hợp đồng mới ký và khối Cần chú ý"></a>
+        <figcaption>Tổng quan · bản Quản lý: số cả công ty và tiến độ từng môi giới viên.</figcaption>
+      </figure>
+      <div class="two">
+        <div class="card"><h4>Doanh thu · tháng này</h4><p>Phần chênh lệch giữa tiền thu chủ tàu và tiền trả thuyền viên, của hợp đồng hiệu lực hoặc đã kết thúc. Cột tháng này là số dự kiến, so với mục tiêu.</p></div>
+        <div class="card"><h4>Hợp đồng mới ký · tháng này</h4><p>Đếm khi hợp đồng được duyệt lần đầu. Nhãn Đạt mục tiêu, Đúng tiến độ hoặc Chậm tiến độ; quản lý thấy thêm một dòng cho từng người.</p></div>
+      </div>
+      <h3>Cách tính</h3>
+      <ul>
+        <li><b>Hợp đồng mới ký</b> được đếm một lần, vào tháng của ngày duyệt lần đầu. Đưa về Nháp rồi duyệt lại không đếm thêm.</li>
+        <li><b>Vạch đứng</b> trên thanh là tiến độ cần có tới hôm nay (ví dụ ngày 4 của tháng 30 ngày, mục tiêu 3 → cần 0,4). Thanh đỏ khi số đã ký còn nằm trước vạch. Phần gạch chéo (chỉ ở màn môi giới viên) là hợp đồng sắp vào: chờ duyệt, nháp, chủ tàu đã chọn.</li>
+        <li><b>Doanh thu</b>: khoản hằng tháng chia theo số ngày hợp đồng nằm trong tháng (chênh 1.000 USD/tháng, bắt đầu 16/11 → tháng 11 được 500 USD); khoản một lần tính trọn vào tháng bắt đầu. Hợp đồng nháp, chờ duyệt, bị từ chối chưa tính. Sửa ngày rồi duyệt lại thì các tháng cũ được tính lại.</li>
+        <li><b>Tính cho ai</b>: hợp đồng chốt từ cơ hội tính cho người phụ trách cơ hội; hợp đồng của chuyến tạo tay tính cho người tạo hợp đồng.</li>
+      </ul>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Tab Cần chú ý</th><th>Gồm</th><th>Đỏ khi</th></tr></thead>
+          <tbody>
+            <tr><td>Hạn chốt cơ hội</td><td>Cơ hội đang mở có hạn chốt trong 7 ngày tới hoặc đã qua</td><td>Đã qua hạn chốt</td></tr>
+            <tr><td>Chứng chỉ</td><td>Hết hạn trong 60 ngày tới hoặc đã hết, trừ khi đã có bản mới</td><td>Đã hết hạn</td></tr>
+            <tr><td>Xuống / rời tàu</td><td>Sắp xuống tàu trong 30 ngày; ngày rời dự kiến trong 30 ngày hoặc đã qua mà chưa ghi rời</td><td>Quá ngày rời dự kiến</td></tr>
+            <tr><td>Chờ xử lý / Việc của bạn</td><td>Hợp đồng chờ duyệt, bị từ chối, nháp; yêu cầu thanh toán cần duyệt, cần gửi, quá hạn</td><td>Bị từ chối, quá hạn thanh toán</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Trang tự mở tab đầu tiên có việc quá hạn. Bấm dòng có nhãn <span class="tag t-error">Quá n ngày</span> để mở thẳng bản ghi đó. Quản lý thấy số cả công ty, mỗi môi giới viên một dòng (người chậm tô đỏ); môi giới viên chỉ thấy số của mình và tab cuối là Việc của bạn.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem Tổng quan của chính mình</span><em>Xem của bất kỳ mục Thuyền viên, Cơ hội, Chuyến tàu, Hợp đồng, Yêu cầu thanh toán</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-kt">Kế toán</span></span></div>
+        <div><span>Xem số cả công ty</span><em>KPI · Xem số của cả công ty trên Tổng quan</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+
+    <section id="thuyen-vien" data-jobs="mg">
+      <div class="kicker">Hồ sơ · 02</div>
+      <h2>Thuyền viên</h2>
+      <p>Mỗi thuyền viên có một hồ sơ dùng lại cho mọi cơ hội, chuyến tàu, hợp đồng. Trạng thái <span class="tag t-success">Đang trên tàu</span> / <span class="tag t-neutral">Ở bờ</span> tự đổi theo chuyến tàu, không cần sửa tay.</p>
+      <figure>
+        <a href="anh/thuyen-vien-ds.webp" target="_blank" rel="noopener"><img src="anh/thuyen-vien-ds.webp" width="1440" height="900" loading="lazy" alt="Danh sách thuyền viên"></a>
+        <figcaption>Danh sách thuyền viên: tìm theo tên, CCCD, số sổ; lọc theo trạng thái và Bộ lọc.</figcaption>
+      </figure>
+      <h3>Thêm thuyền viên</h3>
+      <ul>
+        <li><span class="ui">+ Thêm thuyền viên</span> mở form theo nhóm: thông tin chung, giấy tờ tuỳ thân, thể chất, liên hệ, ngân hàng &amp; BHXH, gia quyến, học vấn.</li>
+        <li>Ở form, có thể quét CCCD, hộ chiếu hoặc sổ thuyền viên để AI điền sẵn các ô; app hỏi có lưu ảnh vừa quét vào Giấy tờ không.</li>
+        <li>Nhiều người một lúc: menu <span class="ui">⋮</span> trên danh sách → nhập từ Excel. Tải file mẫu, điền, chọn file rồi nhập.</li>
+      </ul>
+      <h3>Hồ sơ thuyền viên</h3>
+      <p>Thẻ đầu trang có chức danh, tàu và chuyến hiện tại, nút gọi, nhắn, gửi mail nhanh. Bên dưới là năm tab:</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Tab</th><th>Có gì</th></tr></thead>
+          <tbody>
+            <tr><td>Tổng quan</td><td>Bảy nhóm thông tin, mỗi nhóm có số ô đã điền để biết hồ sơ còn thiếu gì</td></tr>
+            <tr><td>Giấy tờ</td><td>Mọi giấy tờ, chứng chỉ, hạn và trạng thái (xem mục <a href="#giay-to">Giấy tờ &amp; AI đọc giấy</a>)</td></tr>
+            <tr><td>Đi tàu</td><td>Dòng thời gian các chuyến, tổng thời gian trên tàu, các khoảng ở bờ; nút Tạo chuyến</td></tr>
+            <tr><td>Hợp đồng</td><td>Các hợp đồng của thuyền viên này</td></tr>
+            <tr><td>Lịch sử</td><td>Ai đã sửa gì, khi nào</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure>
+        <a href="anh/thuyen-vien-ditau.webp" target="_blank" rel="noopener"><img src="anh/thuyen-vien-ditau.webp" width="1440" height="900" loading="lazy" alt="Tab Đi tàu của hồ sơ thuyền viên"></a>
+        <figcaption>Tab Đi tàu: chuyến đang đi, khoảng ở bờ và các chuyến trước.</figcaption>
+      </figure>
+      <p>Menu <span class="ui">⋮</span> ở đầu hồ sơ có <b>Tạm ngưng thuyền viên</b> (người tạm ngưng không chốt, không tạo chuyến được), <b>Kích hoạt lại</b> và <b>Xoá thuyền viên</b>.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem danh sách và hồ sơ</span><em>Thuyền viên · Xem danh sách và hồ sơ</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Thêm, sửa hồ sơ</span><em>Thuyền viên · Thêm thuyền viên, Sửa hồ sơ</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Nhập từ Excel</span><em>Thuyền viên · Nhập từ Excel</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Xoá thuyền viên</span><em>Thuyền viên · Xoá thuyền viên</em><span class="chips"><span class="job j-qt">Quản trị</span></span></div>
+      </div>
+    </section>
+
+    <section id="giay-to" data-jobs="mg">
+      <div class="kicker">Hồ sơ · 03</div>
+      <h2>Giấy tờ &amp; AI đọc giấy</h2>
+      <p>Tab Giấy tờ của hồ sơ gom mọi giấy của thuyền viên vào một bảng: tên, loại, số, ngày cấp, ngày hết hạn, trạng thái. Chip lọc theo nhóm: Tuỳ thân, Bằng (COC), Chứng chỉ (COP), Y tế, Khác. Nút tải cả bộ cho ra một file .zip.</p>
+      <figure>
+        <a href="anh/thuyen-vien-giayto.webp" target="_blank" rel="noopener"><img src="anh/thuyen-vien-giayto.webp" width="1440" height="900" loading="lazy" alt="Tab Giấy tờ với bảng chứng chỉ"></a>
+        <figcaption>Tab Giấy tờ: mỗi dòng một giấy; trạng thái Hiệu lực, Sắp hết hạn hoặc Hết hạn tính theo ngày hết hạn.</figcaption>
+      </figure>
+      <h3>Nạp giấy tờ bằng AI</h3>
+      <ol class="steps">
+        <li><span>Bấm <span class="ui">Nạp giấy tờ</span>, chọn ảnh chụp hoặc file PDF của giấy.</span></li>
+        <li><span>AI đọc ngay khi chọn tệp và điền sẵn các ô: loại giấy, số, ngày cấp, ngày hết hạn, nơi cấp.</span></li>
+        <li><span>Kiểm tra từng ô so với bản gốc, sửa nếu cần. Với giấy tuỳ thân (CCCD, hộ chiếu, sổ thuyền viên), app hiện các ô hồ sơ sẽ đổi (cũ → mới) để bạn chọn ô nào cập nhật.</span></li>
+        <li><span>Bấm lưu. Giấy vào bảng, ảnh gốc lưu kèm.</span></li>
+      </ol>
+      <div class="note note--ai">
+        <i>✦</i>
+        <b>AI chỉ điền sẵn, bạn là người duyệt</b>
+        <p>Ô không đọc được thì để trống, AI không đoán. Ảnh quá mờ thì nhập tay. Nếu máy chủ chưa cấu hình AI, tệp vẫn được lưu kèm hồ sơ và app báo "AI chưa được cấu hình"; các phần khác dùng bình thường.</p>
+      </div>
+      <div class="note note--warn">
+        <i>!</i>
+        <b>Không bao giờ ghi đè</b>
+        <p>Nạp bản mới của một giấy tạo dòng mới, dòng cũ chuyển thành "Bản cũ". Xoá giấy là xoá mềm: tệp còn giữ 180 ngày rồi mới bị dọn khỏi ổ đĩa.</p>
+      </div>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Nạp giấy, đọc bằng AI</span><em>Thuyền viên · Tải giấy tờ và đọc bằng AI</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+      </div>
+    </section>
+
+    <section id="doi-tac" data-jobs="mg">
+      <div class="kicker">Hồ sơ · 04</div>
+      <h2>Đối tác</h2>
+      <p>Danh bạ chủ tàu và các công ty đối tác: tên công ty (tiếng Việt và tiếng Anh), mã số thuế, logo, liên hệ công ty, danh sách người liên hệ và các tàu sở hữu. Tên đối tác hiện ở mục "Nộp cho" của bộ hồ sơ và trên danh sách tàu.</p>
+      <figure>
+        <a href="anh/doi-tac-them.webp" target="_blank" rel="noopener"><img src="anh/doi-tac-them.webp" width="1440" height="900" loading="lazy" alt="Form thêm đối tác"></a>
+        <figcaption>Thêm đối tác: chỉ tên công ty là bắt buộc, các mục khác điền sau cũng được.</figcaption>
+      </figure>
+      <h3>Quét danh thiếp và mã QR</h3>
+      <ul>
+        <li><b>Quét danh thiếp:</b> chụp hoặc chọn ảnh danh thiếp, AI điền họ tên, chức vụ, email, điện thoại của người liên hệ. Kiểm tra rồi lưu.</li>
+        <li><b>Quét mã QR kết bạn</b> Zalo, WhatsApp, WeChat hoặc LINE của người liên hệ để lưu đường liên lạc. Mã QR chỉ chứa đường dẫn kết bạn nên app lưu đường dẫn đó.</li>
+      </ul>
+      <p>Email của người liên hệ chính là địa chỉ mặc định khi gửi hồ sơ cho chủ tàu (mục <a href="#gui-chu-tau">Gửi chủ tàu</a>).</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem danh sách và chi tiết</span><em>Đối tác · Xem danh sách và chi tiết</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-kt">Kế toán</span></span></div>
+        <div><span>Thêm, sửa đối tác</span><em>Đối tác · Thêm đối tác, Sửa đối tác</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Xoá đối tác</span><em>Đối tác · Xoá đối tác</em><span class="chips"><span class="job j-qt">Quản trị</span></span></div>
+      </div>
+    </section>
+
+    <section id="tau" data-jobs="mg">
+      <div class="kicker">Hồ sơ · 05</div>
+      <h2>Tàu</h2>
+      <p>Hồ sơ từng con tàu: tên, tên cũ, số IMO, Call Sign, MMSI, loại tàu, cờ quốc gia, năm đóng, thông số, máy và thiết bị, chủ tàu và đơn vị quản lý. Tên tàu nên ghi đúng như trên sổ thuyền viên để AI khớp được chuyến đi tàu.</p>
+      <figure>
+        <a href="anh/tau-ct.webp" target="_blank" rel="noopener"><img src="anh/tau-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết tàu với cảnh báo thiếu thông tin chính"></a>
+        <figcaption>Chi tiết tàu: khung vàng nhắc thông tin chính còn thiếu, bấm Bổ sung để điền.</figcaption>
+      </figure>
+      <h3>Tra tàu theo số IMO</h3>
+      <ol class="steps">
+        <li><span>Ở form thêm tàu, nhập số IMO (7 chữ số) rồi tra cứu.</span></li>
+        <li><span>App lấy thông tin tàu từ nguồn bên ngoài và hiện khung <b>Thông tin thông minh</b>: từng trường lấy về đặt cạnh giá trị đang có.</span></li>
+        <li><span>Ô đang trống được chọn sẵn; ô khác giá trị hiện tại để bạn quyết định. Bấm áp dụng, kiểm tra rồi <span class="ui">Thêm tàu</span>.</span></li>
+      </ol>
+      <p>IMO đã có trong hệ thống thì app báo trùng và mời mở tàu đã có. Tra cứu cần máy chủ đã nối nguồn dữ liệu tàu; nếu nguồn không phản hồi, nhập tay như thường.</p>
+      <p>Trang tàu có tab <b>Đội ngũ</b> (ai đang ở trên tàu trong khoảng thời gian đang xem) và tab <b>Đi tàu</b>; nút <span class="ui">Tạo chuyến</span> ở đầu trang.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Thêm tàu, tra theo IMO</span><em>Tàu · Thêm tàu</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Sửa, xoá tàu</span><em>Tàu · Sửa tàu, Xoá tàu</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-qt">Quản trị</span></span></div>
+      </div>
+    </section>
+
+    <!-- ================= VẬN HÀNH ================= -->
+    <section id="co-hoi" data-jobs="mg dy">
+      <div class="kicker">Vận hành · 01</div>
+      <h2>Cơ hội</h2>
+      <p>Mỗi <b>cơ hội</b> là một vị trí chủ tàu cần người. Chủ tàu cần 6 người cho một tàu thì có 6 cơ hội. Cơ hội có chủ tàu, tàu (chưa rõ cũng được), chức danh, budget theo tháng hoặc cả chuyến, ngày và nơi xuống / rời tàu dự kiến, hạn chốt, người phụ trách.</p>
+      <div class="flow">
+        <span>Mới</span><i>→</i><span>Đang chọn ứng viên</span><i>→</i><span>Chờ kết quả</span><i>→</i><span>Chủ tàu đã chọn</span><i>→</i><span class="key">Đã chốt</span>
+      </div>
+      <figure>
+        <a href="anh/co-hoi-ct.webp" target="_blank" rel="noopener"><img src="anh/co-hoi-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết cơ hội với trục giai đoạn"></a>
+        <figcaption>Trục giai đoạn trên chi tiết cơ hội: bấm một mốc là làm việc của mốc đó; nút việc kế tiếp ở bên phải.</figcaption>
+      </figure>
+      <h3>Hồ sơ yêu cầu</h3>
+      <p>Mỗi cơ hội có danh sách thứ ứng viên phải có, chia ba khối: <b>Giấy tờ</b>, <b>Biểu mẫu</b>, <b>Kinh nghiệm</b> (số tháng ở chức danh, số chuyến trên loại tàu). Mỗi mục là <b>Bắt buộc</b> hoặc <b>Nên có</b>, kèm mốc phải còn hạn tới: ngày xuống tàu, ngày rời tàu, ngày rời cộng thêm n tháng, hoặc chỉ cần có. Khi tạo cơ hội, hồ sơ yêu cầu được điền sẵn theo tàu và chức danh.</p>
+      <h3>Thêm ứng viên</h3>
+      <p><span class="ui">Thêm ứng viên</span> mở bảng chọn với bộ lọc đề xuất bật sẵn: đủ giấy bắt buộc, từng làm cho chủ tàu này, rảnh trước ngày, chức danh, loại tàu, quốc tịch, tuổi. Mỗi người có thẻ <b>Hồ sơ</b> (đủ / thiếu giấy, giấy thiếu ở tooltip), <b>Bận</b> và lý do ngắn như "2 chuyến với chủ tàu X".</p>
+      <figure>
+        <a href="anh/co-hoi-ungvien.webp" target="_blank" rel="noopener"><img src="anh/co-hoi-ungvien.webp" width="1440" height="900" loading="lazy" alt="Bảng ứng viên của cơ hội"></a>
+        <figcaption>Tab Ứng viên: số mục bắt buộc đã đủ, giấy thiếu hoặc sắp hết hạn, và tiến trình Ráp → Gửi → Chủ tàu chọn của từng người.</figcaption>
+      </figure>
+      <h3>Chủ tàu chọn và chốt người</h3>
+      <ul>
+        <li>Kết quả chủ tàu báo ngoài hệ thống. Bạn gắn nhãn <b>Chủ tàu đã chọn</b> cho một ứng viên để giữ chỗ; các dòng khác mờ đi cho tới khi bỏ nhãn.</li>
+        <li><span class="ui">Chốt người</span>: chọn ứng viên, nhập ngày và nơi xuống tàu (không được sau hôm nay). App tạo chuyến <b>Đang trên tàu</b>, tạo hợp đồng nháp, đánh dấu cơ hội <b>Đã chốt</b> và các ứng viên còn lại "Không được chọn".</li>
+        <li>Cơ hội không thành thì đóng với lý do (<b>Không thành</b> hoặc <b>Huỷ</b>); mở lại được. Menu <span class="ui">⋮</span> có Nhân bản và Xoá.</li>
+      </ul>
+      <p>Hạn chốt còn 7 ngày trở xuống hiện nhãn <span class="tag t-warning">Còn n ngày</span>; đã qua hạn hiện <span class="tag t-error">Quá n ngày</span>.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Tạo, nhân bản cơ hội</span><em>Cơ hội · Tạo và nhân bản cơ hội</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Sửa, thêm ứng viên, gắn nhãn chủ tàu chọn</span><em>Cơ hội · Sửa cơ hội</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Chốt người, đóng, huỷ</span><em>Cơ hội · Chốt người, đóng và huỷ cơ hội</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+
+    <section id="gui-chu-tau" data-jobs="mg">
+      <div class="kicker">Vận hành · 02</div>
+      <h2>Hồ sơ nộp &amp; gửi chủ tàu</h2>
+      <p>Với từng ứng viên, nút <b>Hồ sơ nộp</b> mở bảng trượt gồm giấy tờ theo hồ sơ yêu cầu (đối chiếu hạn từng giấy, nạp ảnh còn thiếu ngay tại chỗ) và các biểu mẫu phải điền.</p>
+      <h3>Biểu mẫu tự điền</h3>
+      <p>Hộp <b>Điền biểu mẫu</b> lấy dữ liệu từ hồ sơ thuyền viên, cho xem trước đúng file sẽ xuất, sửa ô nếu cần, rồi tải về PDF, Excel hoặc cả hai. Các mẫu đang có:</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Nhóm</th><th>Biểu mẫu</th></tr></thead>
+          <tbody>
+            <tr><td>Tuyển dụng</td><td>CV chủ tàu Trung Quốc, KQ Thi tuyển, TB Trúng tuyển</td></tr>
+            <tr><td>Hợp đồng, điều động</td><td>Hợp đồng lao động, Quyết định điều động, Quyết định rời tàu, Thanh lý hợp đồng</td></tr>
+            <tr><td>Bảo hiểm, uỷ quyền</td><td>Đơn tham gia BHXH, Đơn không tham gia BHXH, Ủy quyền nhận lương, Ủy quyền cá nhân, Thư bảo lãnh</td></tr>
+            <tr><td>Tài chính</td><td>Phiếu thu</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Gửi thư cho chủ tàu</h3>
+      <ol class="steps">
+        <li><span>Chọn một hoặc nhiều ứng viên, bấm Gửi. Cửa sổ soạn thư mở ở góc dưới bên phải.</span></li>
+        <li><span>Đến, Cc, Bcc gợi ý từ người liên hệ của chủ tàu. Tiêu đề và nội dung đã soạn sẵn bằng tiếng Anh, chữ ký là tên người gửi.</span></li>
+        <li><span>Hồ sơ .zip của từng người tự đính kèm. Thêm tệp khác nếu cần: tối đa 5 tệp, 10 MB mỗi tệp, tổng 20 MB. Bỏ một file .zip nghĩa là bỏ người đó khỏi lần gửi.</span></li>
+        <li><span>Bấm gửi. Thư đi từ địa chỉ công ty, chủ tàu trả lời thẳng về người gửi. Lần gửi chỉ được ghi nhận khi máy chủ mail đã nhận thư.</span></li>
+      </ol>
+      <div class="note note--warn">
+        <i>!</i>
+        <b>Không gửi được?</b>
+        <p>Chủ tàu chưa có email liên hệ thì app nhắc thêm email ở trang Đối tác. Máy chủ chưa cấu hình mail (SMTP) thì app báo rõ; báo quản trị viên. Lỗi khi gửi thì cửa sổ thư được giữ để sửa và gửi lại.</p>
+      </div>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Ráp hồ sơ nộp, điền biểu mẫu</span><em>Cơ hội · Sửa cơ hội; Bản xuất · Tạo và sửa bộ giấy, Tải bản xuất</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Gửi thư cho chủ tàu</span><em>Cơ hội · Ghi nhận gửi chủ tàu</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+      </div>
+    </section>
+
+    <section id="chuyen-tau" data-jobs="mg dy">
+      <div class="kicker">Vận hành · 03</div>
+      <h2>Chuyến tàu</h2>
+      <p>Mỗi <b>chuyến</b> là một thuyền viên đi một tàu, từ ngày xuống tới ngày rời. Chuyến ghi sự việc thật; tiền nằm ở hợp đồng. Sửa ngày của chuyến không bao giờ làm đổi tiền.</p>
+      <figure>
+        <a href="anh/chuyen-ds.webp" target="_blank" rel="noopener"><img src="anh/chuyen-ds.webp" width="1440" height="900" loading="lazy" alt="Danh sách chuyến tàu"></a>
+        <figcaption>Danh sách chuyến: lọc trạng thái, tìm thuyền viên hoặc mã chuyến, chọn khoảng ngày; cột Lên tàu cho biết sớm hay muộn so với dự kiến.</figcaption>
+      </figure>
+      <div class="two">
+        <div class="card"><h4>Chuyến từ cơ hội</h4><p>Sinh ra khi chốt người, kèm hợp đồng nháp. Mã nối từ mã cơ hội: CH2601 → CH2601-01.</p></div>
+        <div class="card"><h4>Tạo chuyến bằng tay</h4><p>Bắt buộc chọn lý do: Chủ tàu tự tuyển, Nhập chuyến cũ, Khác. Nhập chuyến cũ thì bật "Chuyến đã kết thúc" để nhập luôn ngày rời. Mã dạng CT2601. Chuyến tạo tay không tự có hợp đồng.</p></div>
+      </div>
+      <h3>Các thao tác trên chuyến</h3>
+      <ul>
+        <li><b>Ghi rời tàu:</b> nhập ngày, nơi rời và ghi chú. Chuyến sang Đã rời tàu, thuyền viên về Ở bờ. Hợp đồng không tự đổi (xem <a href="#roi-tau">Rời tàu, sửa và kết thúc hợp đồng</a>). Thông báo sau đó có lối tắt <span class="ui">Mở hợp đồng</span> và <span class="ui">Tạo cơ hội tìm người thay</span>. Chọn nhiều chuyến trên danh sách để ghi rời một lần.</li>
+        <li><b>Không có thao tác chuyển tàu:</b> thuyền viên sang tàu khác thì ghi rời chuyến cũ trước, rồi chốt hoặc tạo chuyến mới.</li>
+        <li><b>Đổi ngày rời dự kiến:</b> app giữ ngày gốc để hiện "sớm / muộn n ngày".</li>
+        <li><b>Sửa ngày đã ghi</b> khi nhập nhầm; <b>Huỷ chốt</b> (chuyến từ cơ hội, cơ hội mở lại) hoặc <b>Xoá chuyến</b> (chuyến tạo tay).</li>
+      </ul>
+      <p>Ngày rời dự kiến còn 30 ngày trở xuống hiện nhãn vàng; đã qua mà chưa ghi rời hiện nhãn đỏ. Mỗi thuyền viên chỉ có một chuyến đang trên tàu tại một thời điểm.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Tạo chuyến</span><em>Chuyến tàu · Tạo chuyến tàu</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Ghi rời tàu</span><em>Chuyến tàu · Bắt đầu và kết thúc chuyến</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Sửa ngày, đổi ngày rời dự kiến</span><em>Chuyến tàu · Sửa chuyến tàu</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+      </div>
+    </section>
+
+    <section id="hop-dong" data-jobs="mg dy">
+      <div class="kicker">Vận hành · 04</div>
+      <h2>Hợp đồng</h2>
+      <p>Hợp đồng là thoả thuận tiền của một chuyến: ngày bắt đầu, ngày kết thúc, tiền <b>phải thu</b> từ chủ tàu và tiền <b>phải trả</b> thuyền viên. Mỗi chuyến có tối đa một hợp đồng. Chuyến tạo bằng tay không tự có hợp đồng; mở chuyến và bấm Tạo hợp đồng.</p>
+      <figure>
+        <a href="anh/hop-dong-ct.webp" target="_blank" rel="noopener"><img src="anh/hop-dong-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết hợp đồng với bảng khoản tiền và khung Cân đối"></a>
+        <figcaption>Chi tiết hợp đồng: bảng khoản hằng tháng hai phía; khung Cân đối so phải thu, phải chi với budget và tính chênh lệch.</figcaption>
+      </figure>
+      <h3>Soạn hợp đồng</h3>
+      <ul>
+        <li><b>Khoản hằng tháng:</b> lương cơ bản, làm thêm cố định, lương phép, phụ cấp, thưởng, phí dịch vụ.</li>
+        <li><b>Khoản một lần:</b> vé máy bay đi / về, phí visa, khám sức khoẻ, huấn luyện, thưởng hoàn thành hợp đồng.</li>
+        <li><b>Kỳ thanh toán</b> của mỗi phía: ngày chốt sổ (5, 10, 15, 20, 25 hoặc cuối tháng), ngày trả, trả vào tháng sau 1, 2 hay 3 tháng, và gặp thứ Bảy, Chủ nhật thì làm trước hay sau.</li>
+      </ul>
+      <h3>Duyệt</h3>
+      <div class="flow">
+        <span>Nháp</span><i>→</i><span>Chờ duyệt</span><i>→</i><span class="key">Hiệu lực</span><i>→</i><span>Kết thúc</span>
+      </div>
+      <ol class="steps">
+        <li><span>Người soạn bấm <span class="ui">Xin duyệt</span>. Hợp đồng sang Chờ duyệt và khoá; rút lại được.</span></li>
+        <li><span>Người duyệt bấm <span class="ui">Duyệt</span> (hợp đồng sang Hiệu lực) hoặc <span class="ui">Từ chối</span> kèm lý do.</span></li>
+        <li><span>Lần duyệt đầu, app sinh đủ các yêu cầu thanh toán từ ngày bắt đầu tới ngày kết thúc.</span></li>
+      </ol>
+      <p>Hợp đồng Hiệu lực không sửa được gì, kể cả ngày. Muốn đổi ngày hay tiền xem mục <a href="#roi-tau">Rời tàu, sửa và kết thúc hợp đồng</a>.</p>
+      <div class="note">
+        <i>i</i>
+        <b>Chốt mà không có hợp đồng nháp?</b>
+        <p>Khi thuyền viên còn một hợp đồng khác chưa kết thúc, trùng thời gian. Hộp Chốt báo trước bằng khung vàng "Sẽ không tạo hợp đồng"; người đó vẫn được ghi lên tàu. Kết thúc hoặc rút ngắn hợp đồng cũ, rồi bấm Tạo hợp đồng trên trang chuyến. Ngay lúc chọn ứng viên, người còn hợp đồng đã có nhãn "Đang có hợp đồng …".</p>
+      </div>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Tạo, sửa nháp, đưa về nháp</span><em>Hợp đồng · Tạo hợp đồng, Sửa hợp đồng nháp và đưa về nháp</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Xin duyệt, rút lại</span><em>Hợp đồng · Gửi duyệt và rút lại</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Duyệt, từ chối</span><em>Hợp đồng · Duyệt và từ chối</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Kết thúc hợp đồng</span><em>Hợp đồng · Kết thúc hợp đồng</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+
+    <section id="thanh-toan" data-jobs="kt dy">
+      <div class="kicker">Vận hành · 05</div>
+      <h2>Yêu cầu thanh toán</h2>
+      <p>Mỗi <b>yêu cầu thanh toán</b> (bill) là một kỳ thu tiền chủ tàu của một hợp đồng, cắt theo ngày chốt sổ. Kỳ đầu bắt đầu đúng ngày bắt đầu hợp đồng và cộng thêm các khoản một lần; kỳ cuối kết thúc đúng ngày kết thúc. Mã nối từ mã hợp đồng: CH2601-01/HĐ/T1 là kỳ 1 bên thu.</p>
+      <div class="flow">
+        <span>Chưa duyệt</span><i>→</i><span>Đã duyệt</span><i>→</i><span>Đã gửi</span><i>→</i><span class="key">Đã thu</span>
+      </div>
+      <figure>
+        <a href="anh/bill-ds.webp" target="_blank" rel="noopener"><img src="anh/bill-ds.webp" width="1440" height="900" loading="lazy" alt="Danh sách yêu cầu thanh toán theo tab trạng thái"></a>
+        <figcaption>Danh sách theo tab: Cần duyệt, Cần gửi, Quá hạn, Đã gửi, Chưa đến kỳ, Đã thu; lọc theo chủ tàu.</figcaption>
+      </figure>
+      <ol class="steps">
+        <li><span>Kỳ sinh ra ở trạng thái chưa duyệt; tới ngày chốt sổ thì vào tab Cần duyệt.</span></li>
+        <li><span>Sửa số tiền, dòng điều chỉnh, ghi chú hoặc hạn thanh toán nếu cần (chỉ khi chưa duyệt).</span></li>
+        <li><span><span class="ui">Duyệt</span>: người duyệt phải khác người sửa gần nhất. Kỳ đã duyệt bị khoá; muốn sửa thì Bỏ duyệt.</span></li>
+        <li><span>Gửi cho chủ tàu ngoài hệ thống rồi đánh dấu <span class="ui">Đã gửi</span>. Thu hồi một kỳ đã gửi đưa nó về chưa duyệt.</span></li>
+        <li><span>Nhận tiền thì <span class="ui">Ghi nhận đã thu</span> với ngày thu; ghi nhầm thì huỷ ghi nhận.</span></li>
+      </ol>
+      <figure>
+        <a href="anh/bill-ct.webp" target="_blank" rel="noopener"><img src="anh/bill-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết một yêu cầu thanh toán với lịch các kỳ"></a>
+        <figcaption>Chi tiết một kỳ: số tiền hằng tháng và một lần, ngày gửi, ngày thu; cột phải là lịch mọi kỳ của hợp đồng.</figcaption>
+      </figure>
+      <div class="note">
+        <i>i</i>
+        <b>Phạm vi hiện tại</b>
+        <p>App đang làm phía thu tiền chủ tàu. Phía chi trả lương thuyền viên chưa có.</p>
+      </div>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Sửa số tiền, ghi chú</span><em>Yêu cầu thanh toán · Sửa số tiền và ghi chú</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+        <div><span>Duyệt, bỏ duyệt</span><em>Yêu cầu thanh toán · Duyệt và bỏ duyệt</em><span class="chips"><span class="job j-kt">Kế toán</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Đánh dấu đã gửi, thu hồi</span><em>Yêu cầu thanh toán · Đánh dấu đã gửi và thu hồi</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+        <div><span>Ghi nhận đã thu</span><em>Yêu cầu thanh toán · Ghi nhận đã thu và huỷ ghi nhận</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+      </div>
+    </section>
+
+    <section id="roi-tau" data-jobs="mg dy kt">
+      <div class="kicker">Vận hành · 06</div>
+      <h2>Rời tàu, sửa và kết thúc hợp đồng</h2>
+      <p>Điều quan trọng nhất: <b>sửa ngày của chuyến không bao giờ đụng tới tiền</b>. Muốn đổi tiền thì sửa hợp đồng, và tiền chỉ đổi khi hợp đồng được duyệt lại.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Phần</th><th>Ghi gì</th><th>Đổi khi nào</th></tr></thead>
+          <tbody>
+            <tr><td>Chuyến tàu</td><td>Sự việc thật: ai lên tàu nào, ngày xuống, ngày rời</td><td>Ghi rời tàu, sửa ngày đã ghi. Đổi trạng thái thuyền viên</td></tr>
+            <tr><td>Hợp đồng</td><td>Thoả thuận tiền: ngày bắt đầu, kết thúc, phải thu, phải trả</td><td>Chỉ khi đưa về Nháp, sửa và duyệt lại. Ngày chỉ chép từ chuyến một lần, lúc chốt</td></tr>
+            <tr><td>Yêu cầu thanh toán</td><td>Các kỳ thu tiền, cắt theo ngày chốt sổ</td><td>Chỉ khi hợp đồng được duyệt</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3>Thuyền viên rời tàu sớm hoặc ở lại lâu hơn</h3>
+      <p>Ghi rời tàu chỉ đổi chuyến. Nếu hợp đồng còn kéo dài sau ngày rời, trang chuyến và trang hợp đồng hiện nhãn vàng "Đã rời tàu …, hợp đồng còn tới …", và các kỳ thu vẫn chạy tới ngày kết thúc hợp đồng. Muốn tiền khớp ngày rời thì sửa ngày kết thúc hợp đồng như sau:</p>
+      <ol class="steps">
+        <li><span>Mở hợp đồng Hiệu lực, bấm <span class="ui">Đưa về Nháp</span>. Hợp đồng có nhãn <span class="tag t-warning">Chờ duyệt lại</span>; các kỳ cũ vẫn gửi, thu bình thường.</span></li>
+        <li><span>Bấm <span class="ui">Sửa hợp đồng</span>, đổi ngày hoặc tiền, lưu. Trang hợp đồng cho xem trước các kỳ sẽ đổi ra sao.</span></li>
+        <li><span><span class="ui">Xin duyệt</span>. Người duyệt mở hộp duyệt: nếu kỳ thu sẽ thay đổi, hộp liệt kê từng kỳ, ô "Tôi đã xem các thay đổi trên" chỉ tick được sau 5 giây, rồi mới bấm được Xác nhận và duyệt.</span></li>
+      </ol>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Bạn đã đổi</th><th>Khi duyệt lại</th><th>Các kỳ bị ảnh hưởng phải</th></tr></thead>
+          <tbody>
+            <tr><td>Ngày kết thúc sớm hơn</td><td>Kỳ chứa ngày mới bị cắt về ngày đó, số tiền vẫn đủ tháng; các kỳ sau bị xoá</td><td>Chưa duyệt</td></tr>
+            <tr><td>Ngày kết thúc muộn hơn</td><td>Giữ kỳ cũ, sinh thêm kỳ cho phần kéo dài (đủ tháng, không có khoản một lần)</td><td>Không cần</td></tr>
+            <tr><td>Ngày bắt đầu</td><td>Xoá mọi kỳ cũ, sinh lại từ ngày mới; số đã sửa tay trên kỳ cũ mất</td><td>Mọi kỳ chưa duyệt</td></tr>
+            <tr><td>Chỉ tiền</td><td>Không đổi kỳ nào. Kỳ đang có giữ số cũ: mở từng kỳ chưa duyệt để sửa tay</td><td>Không cần</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note note--warn">
+        <i>!</i>
+        <b>Khi bị chặn</b>
+        <p>App không cho đổi ngày nếu một kỳ cần cắt hoặc xoá đã gửi hay đã thu, và hiện khung đỏ liệt kê đúng các kỳ đó. Gỡ từng kỳ: Đã thu → <b>Huỷ ghi nhận thu</b>; Đã gửi → <b>Thu hồi</b>; Đã duyệt → <b>Bỏ duyệt</b> (hoặc Bỏ duyệt hàng loạt ngay trong hộp duyệt). Hoặc chọn ngày kết thúc không đụng tới kỳ đã gửi, đã thu. Nhớ báo lại chủ tàu nếu đã gửi kỳ đó.</p>
+      </div>
+      <h3>Kết thúc hợp đồng</h3>
+      <p>Hợp đồng không tự hết hạn. Xong việc thì mở hợp đồng Hiệu lực, bấm <span class="ui">Kết thúc hợp đồng</span>; hợp đồng sang Đã kết thúc và <b>không mở lại được</b>. Kết thúc không đổi ngày và không đổi kỳ thu; muốn rút ngắn kỳ thu thì sửa ngày kết thúc trước.</p>
+      <h3>Huỷ chốt hoặc xoá chuyến khi đã có hợp đồng</h3>
+      <p>Được, nếu hợp đồng còn Nháp, Chờ duyệt hoặc Bị từ chối: hợp đồng bị xoá cùng chuyến, hộp xác nhận ghi rõ số hợp đồng. Không được nếu hợp đồng đã Hiệu lực, Đã kết thúc hoặc đang Chờ duyệt lại.</p>
+      <h3>Nhãn cảnh báo</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Nhãn</th><th>Nghĩa</th><th>Ở đâu</th></tr></thead>
+          <tbody>
+            <tr><td>Đang có hợp đồng …</td><td>Ứng viên còn một hợp đồng chưa kết thúc</td><td>Ứng viên trên cơ hội, hộp Chốt</td></tr>
+            <tr><td>Đã rời tàu …</td><td>Đã rời tàu nhưng hợp đồng còn kéo dài sau ngày rời</td><td>Trang chuyến, trang và danh sách hợp đồng</td></tr>
+            <tr><td>Chờ duyệt lại</td><td>Hợp đồng từng hiệu lực, đang sửa, chưa duyệt lại; kỳ thu vẫn là bản cũ</td><td>Trang và danh sách hợp đồng</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Các nhãn chỉ để nhắc, app không tự sửa gì.</p>
+    </section>
+
+    <!-- ================= HỆ THỐNG ================= -->
+    <section id="danh-muc" data-jobs="qt">
+      <div class="kicker">Hệ thống · 01</div>
+      <h2>Danh mục</h2>
+      <p>Các danh sách dùng chung cho mọi form: <b>Chứng chỉ</b>, <b>Loại tàu</b>, <b>Loại hợp đồng</b>, <b>Cảng biển</b>, <b>Quốc gia</b>. Mỗi danh mục là một tab trong <span class="ui">Danh mục</span>. Sửa ở đây thì mọi ô chọn trong app đổi theo.</p>
+      <figure>
+        <a href="anh/danh-muc.webp" target="_blank" rel="noopener"><img src="anh/danh-muc.webp" width="1440" height="900" loading="lazy" alt="Danh mục chứng chỉ"></a>
+        <figcaption>Danh mục Chứng chỉ.</figcaption>
+      </figure>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem danh mục</span><em>Danh mục · Xem danh mục</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-qt">Quản trị</span></span></div>
+        <div><span>Thêm, sửa, xoá</span><em>Danh mục · Thêm và sửa, Xoá</em><span class="chips"><span class="job j-qt">Quản trị</span></span></div>
+      </div>
+    </section>
+
+    <section id="tai-khoan" data-jobs="qt">
+      <div class="kicker">Hệ thống · 02</div>
+      <h2>Tài khoản</h2>
+      <p>Danh sách nhân viên có quyền đăng nhập, với vai trò và trạng thái <span class="tag t-warning">Chờ kích hoạt</span> hoặc <span class="tag t-success">Hoạt động</span>.</p>
+      <ul>
+        <li><span class="ui">Thêm tài khoản</span>: nhập email, họ tên, chọn vai trò. App gửi thư mời; người nhận tự đặt mật khẩu. Tài khoản chờ kích hoạt gửi lại thư mời được.</li>
+        <li>Sửa tài khoản để đổi họ tên hoặc vai trò.</li>
+        <li>Muốn tạm chặn một người: tắt <b>Đăng nhập</b> thay vì xoá. Xoá thì người đó không đăng nhập được nữa.</li>
+      </ul>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Thêm, sửa, khoá tài khoản</span><em>Tài khoản · Thêm, sửa, khoá tài khoản</em><span class="chips"><span class="job j-qt">Quản trị</span></span></div>
+        <div><span>Xoá tài khoản</span><em>Tài khoản · Xoá tài khoản</em><span class="chips"><span class="job j-qt">Quản trị</span></span></div>
+      </div>
+    </section>
+
+    <section id="phan-quyen" data-jobs="qt">
+      <div class="kicker">Hệ thống · 03</div>
+      <h2>Vai trò và quyền</h2>
+      <ol class="steps">
+        <li><span><span class="ui">+ Thêm vai trò</span>: đặt tên, mô tả, có thể sao chép quyền từ một vai trò đã có.</span></li>
+        <li><span>Tích quyền trong cột của vai trò. Ô tìm kiếm lọc quyền theo chữ, ví dụ "duyệt"; <span class="ui">Thu gọn tất cả</span> chỉ để lại tên mục.</span></li>
+        <li><span>Với mục có phạm vi dữ liệu, chọn <b>Tất cả</b> hoặc <b>Do mình tạo</b> ở dòng tên mục.</span></li>
+        <li><span>Bấm <span class="ui">Lưu thay đổi</span>. Ô đã sửa nhưng chưa lưu có viền riêng để dễ soát.</span></li>
+      </ol>
+      <p>Vai trò Quản trị viên luôn có mọi quyền và không sửa được. Chỉ Quản trị viên được sửa vai trò và quyền.</p>
+    </section>
+
+    <section id="muc-tieu" data-jobs="dy">
+      <div class="kicker">Hệ thống · 04</div>
+      <h2>Mục tiêu tháng</h2>
+      <p>Ở <span class="ui">Quản trị → Mục tiêu tháng</span>, chọn tháng, nhập số hợp đồng và doanh thu USD cho từng môi giới viên rồi lưu. <span class="ui">Chép từ tháng trước</span> điền nhanh các ô đang trống. Mục tiêu công ty là tổng mục tiêu của mọi người, và là mốc để Tổng quan báo Đúng tiến độ hay Chậm tiến độ.</p>
+      <figure>
+        <a href="anh/muc-tieu.webp" target="_blank" rel="noopener"><img src="anh/muc-tieu.webp" width="1440" height="900" loading="lazy" alt="Màn Mục tiêu tháng"></a>
+        <figcaption>Mục tiêu tháng của từng môi giới viên.</figcaption>
+      </figure>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Đặt mục tiêu tháng</span><em>KPI · Đặt mục tiêu tháng</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+
+    <!-- ================= KHÁC ================= -->
+    <section id="dien-thoai" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 01</div>
+      <h2>Dùng trên điện thoại</h2>
+      <p>Trên điện thoại, MCAH dùng cùng tài khoản và cùng dữ liệu như máy tính. Mở Safari (iPhone) hoặc Chrome (Android), vào địa chỉ MCAH của công ty và đăng nhập. Màn hình được sắp lại cho vừa một tay; việc làm được thì giống hệt máy tính.</p>
+      <div class="two">
+        <div class="card"><h4>Menu</h4><p>Nút ☰ góc trên bên trái mở ngăn kéo menu. Đáy ngăn kéo có email, Hướng dẫn sử dụng và Đăng xuất. Dòng ‹ trên đầu trang chi tiết đưa về trang trước.</p></div>
+        <div class="card"><h4>Tìm và lọc</h4><p>Ô tìm và nút Bộ lọc dính trên đầu khi cuộn. Bộ lọc trượt lên từ đáy; bấm "Xem n …" để đóng và xem kết quả. Tab trạng thái là hàng nút tròn có số đếm, vuốt ngang để xem hết.</p></div>
+        <div class="card"><h4>Thẻ trong danh sách</h4><p>Mỗi dòng là một thẻ, mọi thông tin có nhãn nhỏ phía trên. Dải đỏ là đã quá hạn, dải cam là sắp tới hạn. Nút ở chân thẻ là việc nên làm tiếp (Duyệt, Ghi rời tàu, Ghi nhận đã thu…), chỉ hiện khi bạn có quyền.</p></div>
+        <div class="card"><h4>Thêm mới và nút ⋯</h4><p>Nút tròn + ở góc dưới bên phải mở form thêm mới. Đầu trang chi tiết chỉ hiện việc hay làm nhất; việc còn lại trong nút ⋯. Hộp hỏi lại trượt lên từ đáy.</p></div>
+        <div class="card"><h4>Gọi, nhắn, Zalo</h4><p>Cạnh số điện thoại trong hồ sơ thuyền viên và đối tác có nút gọi, nhắn SMS, mở Zalo (cần đã cài Zalo) và sao chép.</p></div>
+        <div class="card"><h4>Điền form</h4><p>Ô ngày mở bảng chọn ngày của máy, ô số tiền mở bàn phím số. Thanh lưu ở đáy. Đang nhập dở mà rời trang, app hỏi "Rời trang này?".</p></div>
+      </div>
+      <p><b>Duyệt trên điện thoại:</b> ở trang chi tiết yêu cầu thanh toán, bấm Duyệt là duyệt luôn, không hỏi lại; nhầm thì ⋯ → Bỏ duyệt (khi chưa đánh dấu đã gửi). Trên thẻ danh sách, Duyệt có hỏi xác nhận một bước. Việc dài như tải nhiều giấy tờ hay ghi rời tàu nhiều người thì làm trên máy tính nhanh hơn.</p>
+      <h3>Thêm MCAH ra màn hình chính</h3>
+      <div class="two">
+        <div class="card"><h4>iPhone (Safari)</h4><p>Mở MCAH và đăng nhập → nút Chia sẻ (ô vuông có mũi tên lên) → Thêm vào MH chính → Thêm.</p></div>
+        <div class="card"><h4>Android (Chrome)</h4><p>Mở MCAH và đăng nhập → ⋮ góc trên bên phải → Thêm vào màn hình chính (có máy ghi Cài đặt ứng dụng) → xác nhận.</p></div>
+      </div>
+      <p>Biểu tượng trên màn hình chính chỉ là lối tắt mở nhanh, không cần tải từ App Store hay CH Play. Vẫn cần có mạng.</p>
+      <div class="phones">
+        <figure>
+          <a href="anh/dt-tong-quan.webp" target="_blank" rel="noopener"><img src="anh/dt-tong-quan.webp" width="780" height="1688" loading="lazy" alt="Tổng quan trên điện thoại"></a>
+          <figcaption>Tổng quan</figcaption>
+        </figure>
+        <figure>
+          <a href="anh/dt-thuyen-vien.webp" target="_blank" rel="noopener"><img src="anh/dt-thuyen-vien.webp" width="780" height="1688" loading="lazy" alt="Danh sách thuyền viên trên điện thoại"></a>
+          <figcaption>Thuyền viên</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="hoi-dap" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 02</div>
+      <h2>Hỏi đáp</h2>
+      <div class="faq">
+        <details><summary>Tôi không thấy một mục trên menu?</summary><p>Vai trò của bạn chưa có quyền xem mục đó. Báo quản trị viên cấp quyền ở Vai trò và quyền; quyền mới có hiệu lực khi tải lại trang.</p></details>
+        <details><summary>AI đọc sai một ô thì sao?</summary><p>AI chỉ điền sẵn. Bạn sửa ô đó trước khi lưu. Ô AI không đọc được thì để trống để bạn nhập.</p></details>
+        <details><summary>Thuyền viên rời tàu sớm, tiền có tự đổi không?</summary><p>Không. Ghi rời tàu chỉ đổi chuyến. Muốn tiền khớp ngày rời, đưa hợp đồng về Nháp, sửa ngày kết thúc rồi duyệt lại (mục <a href="#roi-tau">Rời tàu, sửa và kết thúc hợp đồng</a>).</p></details>
+        <details><summary>Thuyền viên chuyển thẳng sang tàu khác?</summary><p>Ghi rời tàu chuyến cũ với ngày chuyển, rồi chốt người đó vào cơ hội của tàu mới hoặc tạo chuyến tay. Rút ngắn hoặc kết thúc hợp đồng cũ trước, nếu không chuyến mới sẽ không tự có hợp đồng vì trùng thời gian.</p></details>
+        <details><summary>Giữa chừng tăng lương thì sao?</summary><p>Đưa hợp đồng về Nháp, sửa số tiền, duyệt lại. Các kỳ đã có không đổi: mở từng kỳ còn chưa duyệt để sửa tay theo số mới.</p></details>
+        <details><summary>Lỡ ghi sai ngày xuống tàu?</summary><p>Sửa trên chuyến bằng "Sửa ngày đã ghi"; việc này không đụng hợp đồng. Nếu ngày bắt đầu hợp đồng cũng sai thì sửa hợp đồng; đổi ngày bắt đầu cần mọi kỳ còn chưa duyệt.</p></details>
+        <details><summary>Bấm nhầm Kết thúc hợp đồng?</summary><p>Hợp đồng đã kết thúc không mở lại được trên giao diện. Báo quản trị viên.</p></details>
+        <details><summary>Vì sao tôi không duyệt được yêu cầu thanh toán vừa sửa?</summary><p>Người duyệt phải khác người sửa gần nhất. Nhờ một người khác có quyền duyệt.</p></details>
+        <details><summary>Vì sao doanh thu tháng này cao hơn số đã thu?</summary><p>Số to trên Tổng quan là dự kiến cả tháng theo các hợp đồng đang có. Số đã thu thực tế xem ở Yêu cầu thanh toán.</p></details>
+        <details><summary>Đầu tháng thấy nhiều người đỏ, có sao không?</summary><p>Vạch tiến độ đi dần theo ngày, nên đầu tháng chưa ký hợp đồng nào vẫn chưa đỏ. Đỏ là thực sự đang chậm so với số ngày đã qua.</p></details>
+        <details><summary>Xoá nhầm giấy tờ có lấy lại được không?</summary><p>Giấy bị xoá là xoá mềm và tệp còn giữ 180 ngày. Báo quản trị viên để khôi phục.</p></details>
+        <details><summary>Đăng nhập trên điện thoại có làm máy tính bị đăng xuất không?</summary><p>Không, dùng cùng lúc được. Dùng xong trên máy lạ thì nhớ Đăng xuất.</p></details>
+        <details><summary>Trang hiển thị lạ trên máy của tôi?</summary><p>Chụp màn hình, ghi tên máy và trình duyệt (ví dụ iPhone 13, Safari) rồi gửi người quản lý MCAH của công ty.</p></details>
+      </div>
+    </section>
+
+    <footer>
+      Ảnh minh hoạ chụp từ dữ liệu demo tự đặt; tên người, công ty, tàu và số giấy tờ đều không có thật. Cập nhật 10/11/2026.
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Lọc theo công việc: làm mờ mục không gắn nhóm đang chọn. Nhớ lựa chọn trong máy (bỏ qua nếu trình duyệt chặn).
+  ;(function () {
+    var buttons = document.querySelectorAll('#jobs button')
+    var sections = document.querySelectorAll('main section[data-jobs]')
+    function apply(job) {
+      buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.job === job)) })
+      sections.forEach(function (s) { s.classList.toggle('dim', job !== 'all' && s.dataset.jobs.split(' ').indexOf(job) < 0) })
+      try { localStorage.setItem('mcah-guide-job', job) } catch (e) { /* bỏ qua */ }
+    }
+    buttons.forEach(function (b) { b.addEventListener('click', function () { apply(b.dataset.job) }) })
+    var saved = 'all'
+    try { saved = localStorage.getItem('mcah-guide-job') || 'all' } catch (e) { /* bỏ qua */ }
+    if (document.querySelector('#jobs button[data-job="' + saved + '"]')) apply(saved)
+
+    // Lọc mục lục theo chữ (không phân biệt dấu).
+    var plain = function (s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase() }
+    var links = document.querySelectorAll('#toc a')
+    var heads = document.querySelectorAll('#toc p')
+    document.getElementById('find').addEventListener('input', function (e) {
+      var q = plain(e.target.value.trim())
+      var shown = 0
+      links.forEach(function (a) { var ok = !q || plain(a.textContent).indexOf(q) >= 0; a.style.display = ok ? '' : 'none'; if (ok) shown++ })
+      heads.forEach(function (p) {
+        var el = p.nextElementSibling, any = false
+        while (el && el.tagName === 'A') { if (el.style.display !== 'none') any = true; el = el.nextElementSibling }
+        p.style.display = any ? '' : 'none'
+      })
+      document.getElementById('toc-empty').style.display = shown ? 'none' : 'block'
+    })
+
+    // Ngăn kéo mục lục ở màn hẹp.
+    var btn = document.getElementById('menu-btn')
+    function setNav(open) { document.body.classList.toggle('nav-open', open); btn.setAttribute('aria-expanded', String(open)) }
+    btn.addEventListener('click', function () { setNav(!document.body.classList.contains('nav-open')) })
+    document.getElementById('scrim').addEventListener('click', function () { setNav(false) })
+    links.forEach(function (a) { a.addEventListener('click', function () { setNav(false) }) })
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setNav(false) })
+
+    // App mở thẳng tới một mục (#hop-dong…): cuộn tới mục đó sau khi trang dựng xong.
+    if (location.hash.length > 1) {
+      var target = document.getElementById(decodeURIComponent(location.hash.slice(1)))
+      if (target) {
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+        window.addEventListener('load', function () { target.scrollIntoView({ behavior: 'instant' }) })
+      }
+    }
+
+    // Tô mục đang đọc trong mục lục.
+    if ('IntersectionObserver' in window) {
+      var byId = {}
+      links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a })
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (en) {
+          if (!en.isIntersecting) return
+          links.forEach(function (a) { a.classList.remove('on') })
+          var a = byId[en.target.id]
+          if (a) a.classList.add('on')
+        })
+      }, { rootMargin: '-20% 0px -70% 0px' })
+      sections.forEach(function (s) { io.observe(s) })
+    }
+  })()
+</script>
+</body>
+</html>

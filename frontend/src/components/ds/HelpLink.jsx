@@ -1,12 +1,11 @@
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import './ds.css'
 
-export const GUIDE_CONTRACT_URL = '/huong-dan/hop-dong-va-chuyen.html'
-export const GUIDE_DASHBOARD_URL = '/huong-dan/tong-quan.html'
-export const GUIDE_PHONE_URL = '/huong-dan/dien-thoai.html'
+// Trang hướng dẫn duy nhất (frontend/public/huong-dan/index.html); mở thẳng tới một mục bằng id của mục.
+export const GUIDE_HOME_URL = '/huong-dan/index.html'
 
-// Link "Hướng dẫn" mở trang hướng dẫn tĩnh trong app (frontend/public/huong-dan/) ở tab mới.
-export default function HelpLink({ href = GUIDE_CONTRACT_URL, children = 'Hướng dẫn' }) {
+// Link "Hướng dẫn" mở trang hướng dẫn tĩnh trong app ở tab mới.
+export default function HelpLink({ href = GUIDE_HOME_URL, children = 'Hướng dẫn' }) {
   return (
     <a className="ds-help-link" href={href} target="_blank" rel="noopener noreferrer">
       <QuestionCircleOutlined aria-hidden />

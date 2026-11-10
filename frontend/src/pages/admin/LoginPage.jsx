@@ -4,6 +4,7 @@ import { Form, Input, Button } from 'antd'
 import { CheckCircleOutlined } from '@ant-design/icons'
 import useAuthStore from '../../stores/authStore'
 import Banner from '../../components/ds/Banner'
+import HelpLink, { GUIDE_HOME_URL } from '../../components/ds/HelpLink'
 import ProductBrand from '../../components/common/ProductBrand'
 import './LoginPage.css'
 
@@ -69,6 +70,7 @@ export default function LoginPage() {
           )}
         </Form>
       </div>
+      <HelpLink href={GUIDE_HOME_URL}>Hướng dẫn sử dụng</HelpLink>
     </main>
   )
 }

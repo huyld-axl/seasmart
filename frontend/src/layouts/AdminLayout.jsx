@@ -1,4 +1,4 @@
-import HelpLink, { GUIDE_CONTRACT_URL, GUIDE_DASHBOARD_URL, GUIDE_PHONE_URL } from '../components/ds/HelpLink'
+import HelpLink, { GUIDE_HOME_URL } from '../components/ds/HelpLink'
 import { Fragment, forwardRef, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Button, Dropdown, Drawer } from 'antd'
@@ -13,7 +13,6 @@ import {
   BookOutlined,
   LogoutOutlined,
   MenuOutlined,
-  MobileOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DownOutlined,
@@ -29,10 +28,11 @@ import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 import useViewport from '../hooks/useViewport'
 
-// Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng trang theo đường dẫn.
+// Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng mục của trang hướng dẫn theo đường dẫn.
+const guideUrl = (section) => `${GUIDE_HOME_URL}#${section}`
 const GUIDE_PATHS = [
-  ['/voyages', GUIDE_CONTRACT_URL], ['/contracts', GUIDE_CONTRACT_URL], ['/bills', GUIDE_CONTRACT_URL],
-  ['/dashboard', GUIDE_DASHBOARD_URL], ['/admin/kpi-targets', GUIDE_DASHBOARD_URL],
+  ['/voyages', guideUrl('chuyen-tau')], ['/contracts', guideUrl('hop-dong')], ['/bills', guideUrl('thanh-toan')],
+  ['/dashboard', guideUrl('tong-quan')], ['/admin/kpi-targets', guideUrl('muc-tieu')],
 ]
 
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -98,7 +98,7 @@ const NavItem = forwardRef(function NavItem({ section, active, expanded, collaps
 
 // Mục có trang con (Danh mục, Quản trị): bấm vào mục cha chỉ mở / đóng menu con thụt vào, không tự chuyển trang. Mặc định mở ở phân hệ đang xem.
 // Sidebar thu gọn thì rê vào icon để hiện danh sách trang con.
-function SideNav({ sections, current, currentTab, collapsed, onNavigate }) {
+function SideNav({ sections, current, currentTab, collapsed, onNavigate, guideHref }) {
   const navigate = useNavigate()
   const [toggled, setToggled] = useState({})
   return (
@@ -158,6 +158,17 @@ function SideNav({ sections, current, currentTab, collapsed, onNavigate }) {
           </Fragment>
         )
       })}
+      <a
+        className="app-shell__nav-item app-shell__nav-item--guide"
+        href={guideHref}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={collapsed ? 'Hướng dẫn sử dụng' : undefined}
+        onClick={onNavigate}
+      >
+        <BookOutlined />
+        <span className="app-shell__nav-label">Hướng dẫn sử dụng</span>
+      </a>
     </nav>
   )
 }
@@ -167,7 +178,7 @@ export default function AdminLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
-  const guide = GUIDE_PATHS.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1]
+  const guide = GUIDE_PATHS.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1] || GUIDE_HOME_URL
   const { user, logout } = useAuthStore()
   const isMobile = useViewport().isCompact
 
@@ -198,7 +209,7 @@ export default function AdminLayout() {
           <div className="app-shell__brand">
             <ProductBrand collapsed={collapsed} />
           </div>
-          <SideNav sections={sections} current={current} currentTab={currentTab} collapsed={collapsed} />
+          <SideNav sections={sections} current={current} currentTab={currentTab} collapsed={collapsed} guideHref={guide} />
         </aside>
       )}
 
@@ -223,7 +234,7 @@ export default function AdminLayout() {
           </h1>
 
           <div className="app-shell__right">
-            {guide ? <HelpLink href={guide} /> : null}
+            <HelpLink href={guide} />
             <NotificationBell />
             <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
               <button type="button" className="app-shell__user" aria-haspopup="menu">
@@ -260,16 +271,13 @@ export default function AdminLayout() {
                 <span className="app-shell__me-role">{user?.role?.name || 'Chưa có vai trò'}</span>
               </span>
             </div>
-            <Button type="text" block icon={<MobileOutlined />} href={GUIDE_PHONE_URL} target="_blank" rel="noopener noreferrer">
-              Dùng MCAH trên điện thoại
-            </Button>
             <Button type="text" block icon={<LogoutOutlined />} onClick={signOut}>
               Đăng xuất
             </Button>
           </div>
         }
       >
-        <SideNav sections={sections} current={current} currentTab={currentTab} onNavigate={() => setDrawerOpen(false)} />
+        <SideNav sections={sections} current={current} currentTab={currentTab} onNavigate={() => setDrawerOpen(false)} guideHref={guide} />
       </Drawer>
     </div>
   )

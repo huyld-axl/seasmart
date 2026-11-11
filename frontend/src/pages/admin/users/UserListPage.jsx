@@ -9,6 +9,8 @@ import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import ListFooter from '../../../components/ds/ListFooter'
 import Fab from '../../../components/ds/Fab'
 import useListSticky from '../../../components/ds/useListSticky'
+import useListScrollReset from '../../../components/ds/useListScrollReset'
+import useViewport from '../../../hooks/useViewport'
 import useAccountRights from '../../../hooks/useAccountRights'
 import { useRoleOptions } from '../../../hooks/useRoles'
 import {
@@ -39,18 +41,20 @@ export default function UserListPage() {
   const tableScroll = useListSticky()
   const { modal } = App.useApp()
 
-  const { data, isLoading, isError, refetch } = useUsers(filters)
+  const { data, isLoading, isError, isFetching, refetch } = useUsers(filters)
   const createUser = useCreateUser()
   const updateUser = useUpdateUser()
   const deleteUser = useDeleteUser()
   const resendInvite = useResendInvite()
   const [formKey, setFormKey] = useState(0)
 
+  const { listRef, scrollToListStart } = useListScrollReset(useViewport().isPhone, isFetching)
   const rows = data?.data || []
   const total = data?.total || 0
   const filtered = !!(filters.email || filters.role_id || filters.status)
   const setFilter = (key, value) => {
     setFilters((current) => ({ ...current, [key]: value || undefined, page: 1 }))
+    scrollToListStart()
     if (key === 'role_id')
       setSearchParams(value ? { role_id: String(value) } : {}, { replace: true })
   }
@@ -114,7 +118,7 @@ export default function UserListPage() {
         action={
           <Button
             onClick={() => {
-              setFilters({ page: 1, limit: PAGE_SIZE })
+              setFilters({ page: 1, limit: PAGE_SIZE }); scrollToListStart()
               setSearchParams({}, { replace: true })
             }}
           >
@@ -151,7 +155,7 @@ export default function UserListPage() {
           page={filters.page}
           pageSize={filters.limit}
           unit="tài khoản"
-          onChange={(page, limit) => setFilters((current) => ({ ...current, page, limit }))}
+          onChange={(page, limit) => { setFilters((current) => ({ ...current, page, limit })); scrollToListStart() }}
         />
       </>
     )
@@ -159,7 +163,7 @@ export default function UserListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
           <StatusTabs
             tabs={[

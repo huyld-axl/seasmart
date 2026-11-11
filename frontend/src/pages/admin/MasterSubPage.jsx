@@ -11,6 +11,7 @@ import { EmptyState } from '../../components/ds/Controls'
 import RowActions from '../../components/ds/RowActions'
 import ListFooter from '../../components/ds/ListFooter'
 import useListSticky from '../../components/ds/useListSticky'
+import useListScrollReset from '../../components/ds/useListScrollReset'
 import { actionColumn } from '../../components/ds/actionColumn'
 import { useCan } from '../../hooks/usePermission'
 import ToggleRow from '../../components/ds/ToggleRow'
@@ -114,6 +115,7 @@ function MasterTable({ resource, columns, formFields, title }) {
   const [form] = Form.useForm()
   const [changed, setChanged] = useState(new Set())
   const isMobile = useViewport().isCompact
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, false)
   const toast = useToast()
   const { modal } = App.useApp()
   const { data, isLoading, isError, refetch, create, update, remove } = useMasterData(resource)
@@ -220,16 +222,16 @@ function MasterTable({ resource, columns, formFields, title }) {
             onRow={(row) => (canEdit ? { onClick: () => openPanel(row), onKeyDown: (event) => event.key === 'Enter' && openPanel(row), tabIndex: 0 } : {})}
           />
         )}
-        <ListFooter total={rows.length} page={page} pageSize={pageSize} unit={title} note={keyword ? `lọc từ ${data.length}` : null} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+        <ListFooter total={rows.length} page={page} pageSize={pageSize} unit={title} note={keyword ? `lọc từ ${data.length}` : null} onChange={(next, size) => { setPage(next); setPageSize(size); scrollToListStart() }} />
       </>
     )
   }
 
   return (
     <>
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
-          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => { setPage(1); setSearch(event.target.value) }} />
+          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => { setPage(1); setSearch(event.target.value); scrollToListStart() }} />
           {canEdit ? (
             <span className="ds-toolbar__end">
               <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>

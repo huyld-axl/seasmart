@@ -1,5 +1,5 @@
-import HelpLink, { GUIDE_HOME_URL } from '../components/ds/HelpLink'
-import { Fragment, forwardRef, useState } from 'react'
+import { GUIDE_HOME_URL } from '../components/ds/HelpLink'
+import { Fragment, forwardRef, useLayoutEffect, useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { Button, Dropdown, Drawer } from 'antd'
 import Icon from '@ant-design/icons'
@@ -28,7 +28,7 @@ import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 import useViewport from '../hooks/useViewport'
 
-// Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng mục của trang hướng dẫn theo đường dẫn.
+// Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn trong menu, mở đúng mục của trang hướng dẫn theo đường dẫn.
 const guideUrl = (section) => `${GUIDE_HOME_URL}#${section}`
 const GUIDE_PATHS = [
   ['/voyages', guideUrl('chuyen-tau')], ['/contracts', guideUrl('hop-dong')], ['/bills', guideUrl('thanh-toan')],
@@ -178,6 +178,9 @@ export default function AdminLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
   const guide = GUIDE_PATHS.find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`))?.[1] || GUIDE_HOME_URL
   const { user, logout } = useAuthStore()
   const isMobile = useViewport().isCompact
@@ -234,7 +237,6 @@ export default function AdminLayout() {
           </h1>
 
           <div className="app-shell__right">
-            <HelpLink href={guide} />
             <NotificationBell />
             <Dropdown menu={userMenu} placement="bottomRight" trigger={['click']}>
               <button type="button" className="app-shell__user" aria-haspopup="menu">

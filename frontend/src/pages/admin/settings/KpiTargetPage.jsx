@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Button, InputNumber, Skeleton, Table, Tooltip } from 'antd'
+import { Button, Skeleton, Table, Tooltip } from 'antd'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CopyOutlined } from '@ant-design/icons'
@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { kpiTargetApi } from '../../../api'
 import MoneyInput from '../../../components/ds/MoneyInput'
+import NumberInput from '../../../components/ds/NumberInput'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import useViewport from '../../../hooks/useViewport'
@@ -67,7 +68,7 @@ export default function KpiTargetPage() {
     { title: 'Môi giới viên', dataIndex: 'name', render: (name) => <span className="kt-name">{name}</span> },
     {
       title: 'Hợp đồng', key: 'contracts', width: 150,
-      render: (_, row) => cell(row, 'contracts', <InputNumber min={0} max={1000} precision={0} controls={false} inputMode="numeric" value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
+      render: (_, row) => cell(row, 'contracts', <NumberInput min={0} max={1000} precision={0} controls={false} inputMode="numeric" value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
     },
     {
       title: 'Doanh thu', key: 'revenue_usd', width: 200,

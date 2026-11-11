@@ -12,6 +12,7 @@ import CooldownButton from '../../../components/ds/CooldownButton'
 import SourceChip from '../../../components/ds/SourceChip'
 import SparkIcon from '../../../components/ds/SparkIcon'
 import useToast from '../../../components/ds/useToast'
+import NumberInput from '../../../components/ds/NumberInput'
 import { lookupApi } from '../../../api'
 import { vesselApi, shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetItem, useFleetMutations } from '../../../hooks/useFleet'
@@ -329,22 +330,22 @@ function VesselForm({ vessel }) {
         <FormSection index={2} section={SECTIONS[2]} meta={sectionMeta(2)}>
           <div className="sf-grid">
             <Form.Item name="gross_tonnage" label={label('gross_tonnage', <>GRT<span className="sf-opt">Tổng dung tích đăng ký</span></>)} className={cn('gross_tonnage', 'sf-c4')} rules={vesselRules.positive('GRT', 1000000)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="GT" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="GT" />
             </Form.Item>
             <Form.Item name="net_tonnage" label={label('net_tonnage', <>NT<span className="sf-opt">Dung tích thực</span></>)} className={cn('net_tonnage', 'sf-c4')} dependencies={['gross_tonnage']} rules={[...vesselRules.positive('NT', 1000000), vesselRules.netNotOverGross]}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="NT" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="NT" />
             </Form.Item>
             <Form.Item name="deadweight" label={label('deadweight', <>DWT<span className="sf-opt">Trọng tải toàn phần</span></>)} className={cn('deadweight', 'sf-c4')} rules={vesselRules.positive('DWT', 1000000)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="tấn" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="tấn" />
             </Form.Item>
             <Form.Item name="length_overall" label={label('length_overall', <>LOA<span className="sf-opt">Chiều dài toàn bộ</span></>)} className={cn('length_overall', 'sf-c4')} rules={vesselRules.positive('LOA', 600)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="m" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="m" />
             </Form.Item>
             <Form.Item name="passenger_capacity" label={label('passenger_capacity', 'Sức chứa hành khách')} className={cn('passenger_capacity', 'sf-c4')}>
-              <InputNumber min={0} max={20000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
+              <NumberInput min={0} max={20000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
             </Form.Item>
             <Form.Item name="crew_capacity" label={label('crew_capacity', 'Định biên thuyền viên')} className={cn('crew_capacity', 'sf-c4')}>
-              <InputNumber min={0} max={10000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
+              <NumberInput min={0} max={10000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
             </Form.Item>
           </div>
         </FormSection>
@@ -352,7 +353,7 @@ function VesselForm({ vessel }) {
         <FormSection index={3} section={SECTIONS[3]} meta={sectionMeta(3)}>
           <div className="sf-grid">
             <Form.Item name="engine_power_kw" label={label('engine_power_kw', 'Công suất máy')} className={cn('engine_power_kw', 'sf-c4')} rules={vesselRules.positive('Công suất máy', 500000)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="kW" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="kW" />
             </Form.Item>
             <Form.Item name="engine_type" label={label('engine_type', 'Loại động cơ')} className={cn('engine_type', 'sf-c4')}>
               <Input maxLength={100} placeholder="Ví dụ MAN B&W 6S50MC-C" />

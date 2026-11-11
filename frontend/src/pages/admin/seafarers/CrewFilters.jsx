@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Badge, Button, InputNumber, Select } from 'antd'
 import { DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { lookupApi } from '../../../api'
-import { filterCount } from './crewFilters'
+import { filterCount } from './crewFilters.js'
 
 // Nút mở / đóng hàng bộ lọc nâng cao; số trên nút là số nhóm lọc đang bật (`count` ghi đè khi màn khác dùng bộ lọc riêng).
 export function CrewFilterButton({ value, count = filterCount(value), open, onToggle }) {

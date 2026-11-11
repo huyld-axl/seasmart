@@ -5,8 +5,9 @@ import { Button, Input, Select, Skeleton } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import useListSticky from '../../../components/ds/useListSticky'
+import useListScrollReset from '../../../components/ds/useListScrollReset'
 import ListFooter from '../../../components/ds/ListFooter'
-import { CrewFilterButton } from '../seafarers/CrewFilters'
+import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
 import { lookupApi } from '../../../api'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
@@ -61,6 +62,7 @@ export default function VoyageListPage() {
     page,
     limit: pageSize,
   })
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, list.isFetching)
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -89,7 +91,7 @@ export default function VoyageListPage() {
   } else if (!rows.length && (filtered || range)) {
     body = <EmptyState title="Không có chuyến nào khớp bộ lọc" description={range ? 'Thử nới khoảng "Trên tàu trong", hoặc tìm bằng tên, mã chuyến.' : 'Thử tìm bằng tên thuyền viên hoặc mã chuyến.'} action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có chuyến nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có chuyến nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có chuyến nào" description="Chuyến sinh ra khi chốt người trên cơ hội, hoặc tạo tay khi không qua tuyển." action={createButton} />
   } else if (isMobile) {
@@ -139,9 +141,9 @@ export default function VoyageListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={reset(setTab)} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { reset(setTab)(value); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -206,7 +208,7 @@ export default function VoyageListPage() {
         ) : null}
         {body}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="chuyến" onChange={(next, size) => { setPage(next); setPageSize(size); setSelected([]) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="chuyến" onChange={(next, size) => { scrollToListStart(); setPage(next); setPageSize(size); setSelected([]) }} />
         )}
       </div>
       {can('voyage.create') ? <Fab label="Tạo chuyến" onClick={() => navigate('/voyages/new')} /> : null}

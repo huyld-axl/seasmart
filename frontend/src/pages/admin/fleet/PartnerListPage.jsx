@@ -18,12 +18,13 @@ import './fleet.css'
 import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
+import useListScrollReset from '../../../components/ds/useListScrollReset'
 import ListFooter from '../../../components/ds/ListFooter'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
 import Fab from '../../../components/ds/Fab'
 import ListCard, { ListCardList } from '../../../components/ds/ListCard'
-import { CrewFilterButton } from '../seafarers/CrewFilters'
+import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
 
 const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)
@@ -65,6 +66,7 @@ export default function PartnerListPage() {
   const keyword = search.trim()
 
   const list = useFleetList('ship-owners', shipOwnerApi, { country_id: countryId, channels: channels.length ? channels.join(',') : undefined, active: TAB_ACTIVE[tab], search: keyword || undefined, page, limit: pageSize })
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, list.isFetching)
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -109,7 +111,7 @@ export default function PartnerListPage() {
   } else if (!rows.length && keyword) {
     body = <EmptyState title={`Không có đối tác nào khớp "${keyword}"`} description="Thử tìm bằng tên đối tác hoặc người liên hệ." action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có đối tác nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có đối tác nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có đối tác nào" description="Thêm chủ tàu đối tác để chọn ở mục “Nộp cho” của bộ giấy và gắn với tàu." action={can('partner.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/partners/new')}>Thêm đối tác</Button> : undefined} />
   } else if (isMobile) {
@@ -144,9 +146,9 @@ export default function PartnerListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -174,7 +176,7 @@ export default function PartnerListPage() {
         </ListFilters>
         {body}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="đối tác" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="đối tác" onChange={(next, size) => { scrollToListStart(); setPage(next); setPageSize(size) }} />
         )}
       </div>
       {can('partner.create') ? <Fab label="Thêm đối tác" onClick={() => navigate('/partners/new')} /> : null}

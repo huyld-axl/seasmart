@@ -714,10 +714,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               </Field>
               <DateField name="passport_issued_date" label="Ngày cấp hộ chiếu" span={4} rules={[notFuture('Ngày cấp')]} />
               <DateField name="passport_expiry" label="Ngày hết hạn hộ chiếu" span={4} dependencies={['passport_issued_date']} rules={[notBefore('passport_issued_date', 'Ngày hết hạn phải sau ngày cấp')]} />
-              <Field name="place_of_birth" label="Nơi sinh" span={6}>
+              <Field name="place_of_birth" label="Nơi sinh" span={4}>
                 <Input placeholder="VD: Thanh Hóa" maxLength={200} />
               </Field>
-              <Field name="nationality_id" label="Quốc tịch" span={6}>
+              <Field name="nationality_id" label="Quốc tịch" span={4}>
                 <Select
                   allowClear
                   showSearch

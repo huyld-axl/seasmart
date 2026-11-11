@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
-import VoyageTimeline from '../VoyageTimeline'
-import { timelineRows, durationText } from '../voyageTimeline'
+import VoyageTimeline from '../VoyageTimeline.jsx'
+import { timelineRows, durationText } from '../voyageTimeline.js'
 
 const items = [
   { id: 1, start: '2026-05-05', end: null, vessel: 'MV A', owner: 'Chủ A', rank: 'Oiler', code: 'CT-1' },

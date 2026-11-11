@@ -1,4 +1,4 @@
-import { timelineRows, durationText, totalDays, ashoreNow } from './voyageTimeline'
+import { timelineRows, durationText, totalDays, ashoreNow } from './voyageTimeline.js'
 import { EmptyState } from './Controls'
 import './ds.css'
 

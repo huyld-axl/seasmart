@@ -16,6 +16,7 @@ vi.mock('antd', async (original) => {
   }
 })
 beforeEach(() => {
+  sessionStorage.clear()
   // Màn desktop: truy vấn min-width khớp, max-width không (useViewport → bảng, không phải danh sách dòng).
   window.matchMedia = vi.fn((query) => ({ matches: !query.includes('max-width'), addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn() }))
   useFleetList.mockReturnValue({ data: { data: [{ id: 9, company_name: 'Lotus', is_active: 1, contacts: [{ name: 'Other contact' }, { name: 'Primary contact', is_primary: true, phone: '0901', position: 'Crewing Manager' }] }], total: 1, counts: { all: 1, active: 1, inactive: 0 } } })

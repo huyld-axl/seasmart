@@ -37,7 +37,7 @@ function buildSections(s, contacts) {
         ['Giới tính', GENDER[s.gender], 4],
         ['Tình trạng', <StatusBadge key="st" group="crew" value={s.status} />, 4],
         ['Chức danh', s.rank_name, 4],
-        ['Nguyên quán', s.place_of_origin, 8],
+        ['Nguyên quán', s.place_of_origin, 4],
         ['Địa chỉ thường trú', s.permanent_address, 12],
         ['Tình trạng hôn nhân', s.marital_status, 4],
         ['Số con', s.children_count, 4],

@@ -98,7 +98,7 @@ export function vesselSections(v, { linkOwner } = {}) {
       key: 'mgmt',
       title: 'Quản lý',
       fields: [
-        ['Chủ tàu', v.ship_owner_name ? (linkOwner ? linkOwner(v) : v.ship_owner_name) : null, 8],
+        ['Chủ tàu', v.ship_owner_name ? (linkOwner ? linkOwner(v) : v.ship_owner_name) : null, 12],
         ['Quản lý kỹ thuật', v.technical_manager, 6],
         ['Quản lý thương mại', v.commercial_manager, 6],
       ],
@@ -170,7 +170,7 @@ export function countFilled(section) {
 }
 
 // Cờ từ form (Switch) sang cột 0/1 của DB, và ngược lại.
-export const flagToNumber = (value) => (value ? 1 : 0)
+export const flagToNumber = (value) => (Number(value) === 1 ? 1 : 0)
 export const flagToBool = (value) => Number(value) === 1
 
 const cleanText = (value) => {
@@ -213,7 +213,7 @@ export function partnerToFormValues(owner) {
   if (!owner) return values
   for (const key of PARTNER_TEXT_FIELDS) values[key] = owner[key] ?? null
   values.country_id = owner.country_id ?? null
-  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', zalo: c.zalo ?? '', email: c.email ?? '', whatsapp: c.whatsapp ?? '', line_id: c.line_id ?? '', wechat_id: c.wechat_id ?? '', is_primary: !!c.is_primary }))
+  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', zalo: c.zalo ?? '', email: c.email ?? '', whatsapp: c.whatsapp ?? '', line_id: c.line_id ?? '', wechat_id: c.wechat_id ?? '', is_primary: flagToBool(c.is_primary) }))
   values.is_active = Number(owner.is_active) === 0 ? 0 : 1
   return values
 }
@@ -221,7 +221,7 @@ export function partnerToFormValues(owner) {
 // Bỏ dòng trống, cắt khoảng trắng, đúng một liên hệ chính (mặc định người đầu tiên).
 export function cleanContactList(list) {
   const rows = (list || [])
-    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), zalo: cleanText(c?.zalo), email: cleanText(c?.email), whatsapp: cleanText(c?.whatsapp), line_id: cleanText(c?.line_id), wechat_id: cleanText(c?.wechat_id), is_primary: !!c?.is_primary }))
+    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), zalo: cleanText(c?.zalo), email: cleanText(c?.email), whatsapp: cleanText(c?.whatsapp), line_id: cleanText(c?.line_id), wechat_id: cleanText(c?.wechat_id), is_primary: flagToBool(c?.is_primary) }))
     .filter((c) => c.name || c.position || c.phone || c.zalo || c.email || c.whatsapp || c.line_id || c.wechat_id)
   const primary = rows.findIndex((c) => c.is_primary)
   return rows.map((c, index) => ({ ...c, is_primary: index === (primary === -1 ? 0 : primary) }))

@@ -59,6 +59,12 @@ describe('list session state', () => {
     expect(renderHook(() => useListSessionState('partners', 'search', '')).result.current[0]).toBe('')
     expect(renderHook(() => useListSessionState('partners', 'page', 1)).result.current[0]).toBe(1)
   })
+  it('ignores null saved filters instead of crashing list pages', () => {
+    sessionStorage.setItem('list:1:partners:filters', JSON.stringify({ version: 1, value: null }))
+    expect(renderHook(() => useListSessionState('partners', 'filters', {})).result.current[0]).toEqual({})
+    sessionStorage.setItem('list:1:partners:channels', JSON.stringify({ version: 1, value: null }))
+    expect(renderHook(() => useListSessionState('partners', 'channels', [])).result.current[0]).toEqual([])
+  })
   it('still updates state when storage is blocked', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked') })
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('blocked') })

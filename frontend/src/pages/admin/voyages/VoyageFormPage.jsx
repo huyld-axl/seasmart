@@ -97,7 +97,7 @@ export default function VoyageFormPage() {
   function onValuesChange(change) {
     if ('seafarer_id' in change) {
       const rankId = personOptions.find((o) => o.value === change.seafarer_id)?.rankId
-      if (rankId) form.setFieldsValue({ rank_id: rankId })
+      form.setFieldsValue({ rank_id: rankId ?? undefined })
     }
   }
 

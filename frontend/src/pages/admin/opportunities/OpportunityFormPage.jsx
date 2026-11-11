@@ -24,6 +24,7 @@ import { FleetTile, TargetSvg, FormFrame, FormSection, AddAnotherLabel } from '.
 import changedLabel from '../fleet/changedLabel'
 import { monthsBetween, splitBudget } from '../voyages/voyageView'
 import RequirementTable from './RequirementTable'
+import { createPresetRequest } from './presetRequest'
 import { EMPTY_FORM, nextPositionValues, toFormValues, toPayload, toRequirementRows } from './opportunityView'
 import '../fleet/fleet.css'
 import './opportunities.css'
@@ -55,6 +56,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const { modal } = App.useApp()
   const me = useAuthStore((state) => state.user)
   const [form] = Form.useForm()
+  const requestPreset = useMemo(() => createPresetRequest((params) => opportunityApi.presets(params), () => form.getFieldsValue(true)), [form])
   const initial = useMemo(() => (opportunity ? toFormValues(opportunity) : { ...EMPTY_FORM, owner_user_id: me?.id, ...prefill }), [opportunity, prefill, me])
   const values = Form.useWatch([], form) || initial
   const { save } = useOpportunityMutations()
@@ -120,18 +122,20 @@ function OpportunityForm({ opportunity, prefill }) {
 
   // Hồ sơ yêu cầu điền sẵn khi chọn chức danh (và tàu). Bảng đã có dòng thì hỏi trước khi thay.
   async function loadPreset(all) {
-    if (!all.rank_id) return
-    const preset = await opportunityApi.presets({ rank_id: all.rank_id, vessel_id: all.vessel_id || undefined }).catch(() => null)
-    if (!preset) return
+    const result = await requestPreset(all)
+    if (!result) return
+    const { preset, isCurrent } = result
     const apply = () => {
+      if (!isCurrent()) return
       form.setFieldsValue({ requirements: toRequirementRows(preset.requirements) })
       setPresetSource(preset.source)
     }
-    if (!(all.requirements || []).length) return apply()
+    const requirements = form.getFieldValue('requirements') || []
+    if (!requirements.length) return apply()
     if (!preset.requirements.length) return setPresetSource(preset.source)
     modal.confirm({
       title: `Thay hồ sơ yêu cầu theo ${(ranks.data || []).find((r) => r.id === all.rank_id)?.name_vi || 'chức danh mới'}?`,
-      content: `${PRESET_SOURCE[preset.source]} Bảng hiện có ${all.requirements.length} dòng sẽ được thay.`,
+      content: `${PRESET_SOURCE[preset.source]} Bảng hiện có ${requirements.length} dòng sẽ được thay.`,
       okText: 'Thay',
       cancelText: 'Giữ bảng hiện tại',
       onOk: apply,

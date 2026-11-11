@@ -14,6 +14,7 @@ export default function useListSessionState(scope, field, initial, revive = (val
       if (parsed.version !== 1) return fallback()
       const value = revive(parsed.value)
       const expected = fallback()
+      if (expected !== null && typeof expected === 'object' && value === null && field !== 'range') return fallback()
       if (!(field === 'range' && value === null) && expected !== undefined && expected !== null && (typeof value !== typeof expected || Array.isArray(value) !== Array.isArray(expected))) return fallback()
       if ((field === 'page' || field === 'pageSize') && (!Number.isInteger(value) || value < 1)) return fallback()
       return value

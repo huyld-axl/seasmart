@@ -51,8 +51,8 @@ export function vesselSections(v, { linkOwner } = {}) {
       key: 'id',
       title: 'Nhận dạng',
       fields: [
-        ['Tên tàu', v.vessel_name, 6],
-        ['Tên cũ', v.vessel_name_prev, 6],
+        ['Tên tàu', v.vessel_name, 4],
+        ['Tên cũ', v.vessel_name_prev, 8],
         ['Số IMO', v.imo_number, 4, 'mono'],
         ['Call Sign', v.call_sign, 4],
         ['MMSI', v.mmsi, 4],
@@ -119,8 +119,8 @@ export function partnerSections(o, render = {}) {
       key: 'company',
       title: 'Công ty',
       fields: [
-        ['Tên công ty', o.company_name, 6],
-        ['Tên tiếng Anh', o.company_name_en, 6],
+        ['Tên công ty', o.company_name, 4],
+        ['Tên tiếng Anh', o.company_name_en, 8],
         ['Mã số thuế', render.tax ? render.tax(o.tax_id) : o.tax_id, 4],
         ['Quốc gia', o.country_name ? withFlag(o.country_code, o.country_name, o.country_flag_emoji) : null, 4],
         ['Tình trạng', render.status ? render.status(o.is_active) : Number(o.is_active) === 1 ? 'Đang hợp tác' : 'Ngừng hợp tác', 4],

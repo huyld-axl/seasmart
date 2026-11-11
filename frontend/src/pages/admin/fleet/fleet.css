@@ -56,12 +56,12 @@
 .partner-primary h2 { margin: 0; font-size: 13px; color: var(--muted); font-weight: 500; }
 .partner-primary p { margin: 0; overflow-wrap: anywhere; }
 .partner-primary__identity { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; }
-.partner-primary > .ds-quick { grid-column: 2; }
+.partner-primary__content { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; min-width: 0; }
+.partner-primary__content > .ds-quick { flex-shrink: 0; }
 .partner-profile .crew-head__meta dt, .partner-primary h2 { font-size: 12px; }
 .partner-profile .crew-head__text { font-size: 14px; }
 @media (max-width: 639px) {
   .partner-primary { grid-template-columns: minmax(0, 1fr); }
-  .partner-primary > .ds-quick { grid-column: 1; }
 }
 
 .pv-section { display: grid; gap: 12px; }

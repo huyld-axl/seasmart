@@ -175,8 +175,10 @@ export default function PartnerDetailPage() {
             {primary && (
               <section className="partner-primary" aria-label="Người liên hệ chính">
                 <h2>Người liên hệ chính</h2>
-                <p className="partner-primary__identity"><span>{primary.name}</span>{primary.position && <span className="crew-muted">{primary.position}</span>}</p>
-                <QuickContact zalo={primary.zalo} phone={primary.phone} email={primary.email} whatsapp={primary.whatsapp} line={primary.line_id} wechat={primary.wechat_id} />
+                <div className="partner-primary__content">
+                  <p className="partner-primary__identity"><span>{primary.name}</span>{primary.position && <span className="crew-muted">{primary.position}</span>}</p>
+                  <QuickContact zalo={primary.zalo} phone={primary.phone} email={primary.email} whatsapp={primary.whatsapp} line={primary.line_id} wechat={primary.wechat_id} />
+                </div>
               </section>
             )}
           </div>

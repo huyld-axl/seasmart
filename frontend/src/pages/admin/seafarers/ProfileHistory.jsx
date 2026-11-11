@@ -8,13 +8,14 @@ import useToast from '../../../components/ds/useToast'
 import api from '../../../api/client'
 import { EmptyState } from '../../../components/ds/Controls'
 import { FIELD_LABELS } from './fieldLabels'
+import { historyValue } from './historyValue'
 
 const PARTNER_LABELS = { company_name: 'Tên công ty', company_name_en: 'Tên tiếng Anh', country_id: 'Quốc gia', tax_id: 'Mã số thuế', address: 'Địa chỉ', phone: 'Điện thoại', zalo: 'Zalo', fax: 'Fax', email: 'Email', website: 'Website', is_active: 'Trạng thái', notes: 'Ghi chú', contacts: 'Người liên hệ' }
 
-const show = (value) => (value === null || value === undefined || value === '' ? 'trống' : (typeof value === 'object' ? JSON.stringify(value) : String(value)))
 
 // Tab Lịch sử của hồ sơ: mỗi lần sửa có lý do, ai sửa, trường nào đổi từ gì sang gì.
 export default function ProfileHistory({ seafarerId, partnerId }) {
+  const show = (field, value) => historyValue(field, value, Boolean(partnerId))
   const [downloading, setDownloading] = useState(false)
   const toast = useToast()
   const endpoint = partnerId ? `/admin/master/ship-owners/${partnerId}/revisions` : `/seafarers/${seafarerId}/revisions`
@@ -35,7 +36,7 @@ export default function ProfileHistory({ seafarerId, partnerId }) {
         const { data: page } = await api.get(endpoint, { params: { limit: 100, offset } })
         for (const rev of page.data) {
           lines.push(`${dayjs(rev.created_at).format('HH:mm DD/MM/YYYY')} · ${rev.changed_by_email || 'Không rõ người sửa'} · ${rev.reason}`)
-          for (const [field, [from, to]] of Object.entries(rev.changes)) lines.push(`  ${(partnerId ? PARTNER_LABELS[field] : FIELD_LABELS[field]) || field}: ${show(from)} → ${show(to)}`)
+          for (const [field, [from, to]] of Object.entries(rev.changes)) lines.push(`  ${(partnerId ? PARTNER_LABELS[field] : FIELD_LABELS[field]) || field}: ${show(field, from)} → ${show(field, to)}`)
           lines.push('')
         }
         offset = page.nextOffset
@@ -65,7 +66,7 @@ export default function ProfileHistory({ seafarerId, partnerId }) {
               <p className="ds-timeline__meta">{rev.changed_by_email || 'Không rõ người sửa'} · {dayjs(rev.created_at).format('HH:mm DD/MM/YYYY')}</p>
               <ul className="rev-changes">
                 {Object.entries(rev.changes).map(([field, [from, to]]) => (
-                  <li key={field}><b>{(partnerId ? PARTNER_LABELS[field] : FIELD_LABELS[field]) || field}</b>: {show(from)} → {show(to)}</li>
+                  <li key={field}><b>{(partnerId ? PARTNER_LABELS[field] : FIELD_LABELS[field]) || field}</b>: {show(field, from)} → {show(field, to)}</li>
                 ))}
               </ul>
             </div>

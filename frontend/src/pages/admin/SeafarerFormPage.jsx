@@ -1,7 +1,9 @@
+import { filterSearchOption } from '../../utils/search'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Spin, Tooltip } from 'antd'
+import Select from '../../components/ds/SearchSelect'
 import useLeaveGuard from '../../hooks/useLeaveGuard'
 import { FormCrumb, FormToc, AddAnotherLabel } from './fleet/FleetParts'
 import DateInput from '../../components/ds/DateField'
@@ -712,7 +714,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="passport_number" label="Số hộ chiếu" span={4} normalize={upperAlnum} rules={fieldRules.passport}>
                 <Input placeholder="B1234567" maxLength={20} />
               </Field>
-              <DateField name="passport_issued_date" label="Ngày cấp hộ chiếu" span={4} rules={[notFuture('Ngày cấp')]} />
+              <DateField name="passport_issued_date" label="Ngày cấp hộ chiếu" span={4} dependencies={['date_of_birth']} rules={[notFuture('Ngày cấp'), notBefore('date_of_birth', 'Ngày cấp hộ chiếu không được trước ngày sinh')]} />
               <DateField name="passport_expiry" label="Ngày hết hạn hộ chiếu" span={4} dependencies={['passport_issued_date']} rules={[notBefore('passport_issued_date', 'Ngày hết hạn phải sau ngày cấp')]} />
               <Field name="place_of_birth" label="Nơi sinh" span={4}>
                 <Input placeholder="VD: Thanh Hóa" maxLength={200} />
@@ -848,7 +850,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                         <Input maxLength={150} />
                       </Form.Item>
                       <Form.Item name={[name, 'relationship']} label="Quan hệ" className="sf-c4">
-                        <AutoComplete options={RELATIONSHIPS} placeholder="Chọn hoặc nhập" />
+                        <AutoComplete filterOption={filterSearchOption} options={RELATIONSHIPS} placeholder="Chọn hoặc nhập" />
                       </Form.Item>
                       <Form.Item name={[name, 'zalo']} label="Zalo" className="sf-c4"><ZaloInput phoneName={['contacts', name, 'phone_primary']} /></Form.Item>
                       <Form.Item name={[name, 'phone_primary']} label="Số điện thoại" className="sf-c4" rules={fieldRules.phone}>

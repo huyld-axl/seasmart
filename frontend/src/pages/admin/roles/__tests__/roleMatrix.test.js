@@ -238,6 +238,9 @@ describe('matchesQuery', () => {
     const perm = { name: 'Duyệt và từ chối', description: 'Hợp đồng chờ' }
     expect(matchesQuery(MODULES[0], perm, '')).toBe(true)
     expect(matchesQuery(MODULES[0], perm, 'DUYỆT')).toBe(true)
+    expect(matchesQuery(MODULES[0], perm, 'duyet')).toBe(true)
+    expect(matchesQuery(MODULES[0], perm, 'thuyen vien')).toBe(true)
+    expect(matchesQuery(MODULES[0], perm, 'hop dong cho')).toBe(true)
     expect(matchesQuery(MODULES[0], perm, 'thuyền')).toBe(true)
     expect(matchesQuery(MODULES[0], perm, 'chờ')).toBe(true)
     expect(matchesQuery(MODULES[0], perm, 'tàu')).toBe(false)

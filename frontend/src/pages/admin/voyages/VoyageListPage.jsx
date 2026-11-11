@@ -1,7 +1,10 @@
+import dayjs from 'dayjs'
+import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Input, Select, Skeleton } from 'antd'
+import { Button, Input, Skeleton } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import useListSticky from '../../../components/ds/useListSticky'
@@ -28,6 +31,17 @@ import ListFilters from '../../../components/ds/ListFilters'
 import Fab from '../../../components/ds/Fab'
 import { DateRangeField } from '../../../components/ds/DateField'
 
+const reviveRange = (value) => {
+  if (value == null) return null
+  if (!Array.isArray(value) || value.length !== 2) throw new Error('Invalid range')
+  return value.map((date) => {
+    if (date == null) return null
+    const parsed = dayjs(date)
+    if (!parsed.isValid()) throw new Error('Invalid date')
+    return parsed
+  })
+}
+
 const TABS = VOYAGE_TABS.map((value) => ({ value, label: VOYAGE_TAB_LABELS[value] }))
 const SOURCE_OPTIONS = VOYAGE_SOURCES.map((value) => ({ value, label: SOURCE_LABELS[value] }))
 const LEAVING_OPTIONS = [{ value: 30, label: 'Sắp rời trong 30 ngày' }]
@@ -37,14 +51,14 @@ export default function VoyageListPage() {
   const can = useCan()
   const navigate = useNavigate()
   const { isCompact: isMobile, isPhone } = useViewport()
-  const [tab, setTab] = useState('onboard')
-  const [search, setSearch] = useState('')
-  const [range, setRange] = useState(thisMonth)
-  const [filters, setFilters] = useState({})
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [tab, setTab] = useListSessionState(`voyages`, 'tab', 'onboard')
+  const [search, setSearch] = useListSessionState(`voyages`, 'search', '')
+  const [range, setRange] = useListSessionState(`voyages`, 'range', thisMonth, reviveRange)
+  const [filters, setFilters] = useListSessionState(`voyages`, 'filters', {})
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`voyages`, 'filtersOpen', false)
   const [vesselSearch, setVesselSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useListSessionState(`voyages`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`voyages`, 'pageSize', 20)
   const [selected, setSelected] = useState([])
   const [leaving, setLeaving] = useState(null)
   const tableScroll = useListSticky()

@@ -1,7 +1,9 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Input, Select, Skeleton, Table } from 'antd'
+import { Button, Input, Skeleton, Table } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -58,13 +60,13 @@ export default function OpportunityListPage() {
   const can = useCan()
   const navigate = useNavigate()
   const isMobile = useViewport().isCompact
-  const [tab, setTab] = useState('open')
-  const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState({})
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [tab, setTab] = useListSessionState(`opportunities`, 'tab', 'open')
+  const [search, setSearch] = useListSessionState(`opportunities`, 'search', '')
+  const [filters, setFilters] = useListSessionState(`opportunities`, 'filters', {})
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`opportunities`, 'filtersOpen', false)
   const [vesselSearch, setVesselSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useListSessionState(`opportunities`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`opportunities`, 'pageSize', 20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 

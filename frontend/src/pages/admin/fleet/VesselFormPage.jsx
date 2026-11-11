@@ -3,7 +3,8 @@ import { useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { Button, Form, Input, InputNumber, Select, Skeleton, Space } from 'antd'
+import { Button, Form, Input, InputNumber, Skeleton, Space } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -279,7 +280,7 @@ function VesselForm({ vessel }) {
             <Form.Item name="call_sign" label={label('call_sign', 'Call Sign')} className={cn('call_sign', 'sf-c3')} normalize={upperAlnum} rules={vesselRules.callSign}>
               <Input maxLength={10} placeholder="Hô hiệu" />
             </Form.Item>
-            <Form.Item name="mmsi" label={label('mmsi', 'MMSI')} className={cn('mmsi', 'sf-c3')} normalize={digitsOnly} rules={[{ pattern: /^\d{9}$/, message: 'MMSI có 9 chữ số' }]}>
+            <Form.Item name="mmsi" label={label('mmsi', 'MMSI')} className={cn('mmsi', 'sf-c3')} normalize={digitsOnly} rules={vesselRules.mmsi}>
               <Input inputMode="numeric" maxLength={9} placeholder="9 chữ số" />
             </Form.Item>
           </div>
@@ -338,8 +339,8 @@ function VesselForm({ vessel }) {
             <Form.Item name="deadweight" label={label('deadweight', <>DWT<span className="sf-opt">Trọng tải toàn phần</span></>)} className={cn('deadweight', 'sf-c4')} rules={vesselRules.positive('DWT', 1000000)}>
               <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="tấn" />
             </Form.Item>
-            <Form.Item name="length_overall" label={label('length_overall', <>LOA<span className="sf-opt">Chiều dài toàn bộ</span></>)} className={cn('length_overall', 'sf-c4')} rules={vesselRules.positive('LOA', 600)}>
-              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="m" />
+            <Form.Item name="length_overall" label={label('length_overall', <>LOA<span className="sf-opt">Chiều dài toàn bộ</span></>)} className={cn('length_overall', 'sf-c4')} rules={vesselRules.positive('LOA', 600, false)}>
+              <NumberInput changeOnBlur={false} controls={false} style={{ width: '100%' }} suffix="m" />
             </Form.Item>
             <Form.Item name="passenger_capacity" label={label('passenger_capacity', 'Sức chứa hành khách')} className={cn('passenger_capacity', 'sf-c4')}>
               <NumberInput min={0} max={20000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />

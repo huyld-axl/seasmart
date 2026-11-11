@@ -1,11 +1,12 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import dayjs from 'dayjs'
 import { withFlag } from '../../../utils/flag'
 import { useQuery } from '@tanstack/react-query'
 import { lookupApi } from '../../../api'
 import StatusBadge from '../../../components/ds/StatusBadge'
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Input, Select, Skeleton, Table } from 'antd'
+import { Button, Input, Skeleton, Table } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import { shipOwnerApi } from '../../../api/fleetApi'
@@ -52,16 +53,16 @@ export default function PartnerListPage() {
   const navigate = useNavigate()
   const can = useCan()
   const isMobile = useViewport().isCompact
-  const [tab, setTab] = useState('all')
-  const [search, setSearch] = useState('')
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [countryId, setCountryId] = useState(undefined)
-  const [channels, setChannels] = useState([])
+  const [tab, setTab] = useListSessionState(`partners`, 'tab', 'all')
+  const [search, setSearch] = useListSessionState(`partners`, 'search', '')
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`partners`, 'filtersOpen', false)
+  const [countryId, setCountryId] = useListSessionState(`partners`, 'countryId', undefined)
+  const [channels, setChannels] = useListSessionState(`partners`, 'channels', [])
   const filterCount = Number(Boolean(countryId)) + Number(channels.length > 0)
   const clearFilters = () => { setCountryId(undefined); setChannels([]); setPage(1) }
   const countries = useQuery({ queryKey: ['lookup', 'countries'], queryFn: () => lookupApi.countries().then((r) => r.data), enabled: filtersOpen })
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useListSessionState(`partners`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`partners`, 'pageSize', 20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 

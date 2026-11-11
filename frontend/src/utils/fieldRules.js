@@ -8,17 +8,19 @@ export const upperAlnum = (v) => (typeof v === 'string' ? v.replace(/[^A-Za-z0-9
 
 const pattern = (regex, message) => [{ pattern: regex, message }]
 
-const phoneRule = (message) => ({
+const phoneRule = (message, rejectAllZeros = false) => ({
   validator: (_, v) => {
     const s = String(v ?? '').trim()
     if (!s) return Promise.resolve()
-    const digits = s.replace(/\D/g, '').length
-    return /^\+?[\d\s.\-()]{8,20}$/.test(s) && digits >= 8 && digits <= 15 ? Promise.resolve() : Promise.reject(new Error(message))
+    const digits = s.replace(/\D/g, '')
+    const validFormat = /^\+?[\d\s.\-()]{8,20}$/.test(s) && digits.length >= 8 && digits.length <= 15
+    const allZeros = rejectAllZeros && /^0+$/.test(digits)
+    return validFormat && !allZeros ? Promise.resolve() : Promise.reject(new Error(message))
   },
 })
 
 export const fieldRules = {
-  idNumber: pattern(/^(\d{9}|\d{12})$/, 'Số CCCD gồm 12 chữ số (CMND cũ 9 chữ số)'),
+  idNumber: pattern(/^(?!0+$)(\d{9}|\d{12})$/, 'Số CCCD không hợp lệ: gồm 12 chữ số (CMND cũ 9 chữ số) và không được toàn số 0'),
   passport: pattern(/^[A-Z0-9]{6,20}$/i, 'Số hộ chiếu gồm 6–20 chữ và số'),
   seamanBook: pattern(/^[A-Z0-9][A-Z0-9\-/ ]{2,29}$/i, 'Số sổ thuyền viên gồm 3–30 chữ, số hoặc dấu - /'),
   shoe: [
@@ -48,15 +50,38 @@ export const notBefore = (otherName, message) => ({ getFieldValue }) => ({
 
 // Đối tác, tàu, danh mục (bản sao của backend/src/utils/field_rules.js).
 export const ownerRules = {
-  taxId: pattern(/^[0-9A-Za-z\-. ]{5,50}$/, 'Mã số thuế gồm 5–50 chữ, số hoặc dấu - .'),
+  companyPhone: [phoneRule('Số điện thoại công ty không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true)],
+  taxId: [
+    ...pattern(/^[0-9A-Za-z\-. ]{5,50}$/, 'Mã số thuế gồm 5–50 chữ, số hoặc dấu - .'),
+    {
+      validator: (_, value) => /^0+$/.test(String(value ?? '').replace(/[\s.-]/g, ''))
+        ? Promise.reject(new Error('Mã số thuế không hợp lệ: không được toàn số 0'))
+        : Promise.resolve(),
+    },
+  ],
   phone: [phoneRule('Số điện thoại gồm 8–15 chữ số')],
-  website: pattern(/^https?:\/\/[^\s/]+\.[^\s/]+\S*$/i, 'Website phải bắt đầu bằng http:// hoặc https://'),
+  website: [{
+    validator: (_, value) => {
+      const website = String(value ?? '').trim()
+      if (!website) return Promise.resolve()
+      const message = 'URL không hợp lệ. Website phải dùng http:// hoặc https:// và có cổng hợp lệ.'
+      if (!/^https?:\/\/[^\s/]+\.[^\s/]+\S*$/i.test(website)) return Promise.reject(new Error(message))
+      try {
+        // Bộ phân tích URL kiểm tra cả hostname và cổng, kể cả cổng vượt giới hạn.
+        new URL(website)
+        return Promise.resolve()
+      } catch {
+        return Promise.reject(new Error(message))
+      }
+    },
+  }],
 }
 
 export const vesselRules = {
+  mmsi: pattern(/^(?!0{9}$)\d{9}$/, 'MMSI không hợp lệ: phải gồm 9 chữ số và không được toàn số 0'),
   callSign: pattern(/^[A-Z0-9]{3,10}$/i, 'Call Sign gồm 3–10 chữ và số'),
-  // Số dương không quá `max`; 0 coi là chưa nhập.
-  positive: (label, max) => [{ validator: (_, v) => (v == null || v === '' || Number(v) === 0 || (Number(v) > 0 && Number(v) <= max) ? Promise.resolve() : Promise.reject(new Error(`${label} phải là số dương, không quá ${max.toLocaleString('en-US')}`))) }],
+  // Số dương không quá `max`; zeroIsEmpty=false để kiểm cả giá trị 0.
+  positive: (label, max, zeroIsEmpty = true) => [{ validator: (_, v) => (v == null || v === '' || (zeroIsEmpty && Number(v) === 0) || (Number(v) > 0 && Number(v) <= max) ? Promise.resolve() : Promise.reject(new Error(`${label} phải là số dương, không quá ${max.toLocaleString('en-US')}`))) }],
   netNotOverGross: ({ getFieldValue }) => ({
     validator: (_, v) => (!(Number(v) > 0) || !(Number(getFieldValue('gross_tonnage')) > 0) || Number(v) <= Number(getFieldValue('gross_tonnage')) ? Promise.resolve() : Promise.reject(new Error('NT không được lớn hơn GRT'))),
   }),

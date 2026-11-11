@@ -1,6 +1,8 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { App, Button, Input, Select, Skeleton, Table, Tooltip } from 'antd'
+import { App, Button, Input, Skeleton, Table, Tooltip } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { CheckOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -46,13 +48,13 @@ export default function BillListPage({ shipOwnerId } = {}) {
   // ?tab= mở sẵn một tab (link từ Tổng quan).
   const [searchParams] = useSearchParams()
   const urlTab = TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : null
-  const [tab, setTab] = useState(shipOwnerId ? 'all' : urlTab || (can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND'))
-  const [search, setSearch] = useState('')
-  const [ownerId, setOwnerId] = useState()
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [tab, setTab] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'tab', shipOwnerId ? 'all' : urlTab || (can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND'))
+  const [search, setSearch] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'search', '')
+  const [ownerId, setOwnerId] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'ownerId', undefined)
+  const [page, setPage] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'pageSize', 20)
   const [collecting, setCollecting] = useState(null)
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'filtersOpen', false)
   const listRef = useRef(null)
   const tableRef = useRef(null)
   const pendingScrollReset = useRef(false)

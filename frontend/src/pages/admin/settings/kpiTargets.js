@@ -18,12 +18,13 @@ export function changedRows(original, draft) {
   return draft.filter((r) => cells.has(r.user_id)).map(({ user_id, contracts, revenue_usd }) => ({ user_id, contracts: contracts ?? null, revenue_usd: revenue_usd ?? null }))
 }
 
-// Lỗi từng ô: số hợp đồng nguyên ≥ 0; doanh thu ≥ 0, tối đa 2 chữ số thập phân.
+// Hợp đồng là số nguyên từ 1; doanh thu từ 1 USD. Ô trống là chưa đặt.
 export function cellErrors(draft) {
   const errors = {}
   for (const r of draft) {
-    if (r.contracts != null && (!Number.isInteger(r.contracts) || r.contracts < 0)) errors[`${r.user_id}:contracts`] = 'Số nguyên từ 0'
-    if (r.revenue_usd != null && (r.revenue_usd < 0 || Math.abs(Math.round(r.revenue_usd * 100) - r.revenue_usd * 100) > 1e-6)) errors[`${r.user_id}:revenue_usd`] = 'Tối đa 2 số lẻ'
+    if (r.contracts != null && (!Number.isInteger(r.contracts) || r.contracts < 1 || r.contracts > 1000)) errors[`${r.user_id}:contracts`] = 'Số hợp đồng phải là số nguyên từ 1 đến 1.000'
+    if (r.revenue_usd != null && (!Number.isFinite(r.revenue_usd) || r.revenue_usd < 1 || r.revenue_usd > 9999999999)) errors[`${r.user_id}:revenue_usd`] = 'Doanh thu phải từ 1 và không vượt quá 9.999.999.999 USD'
+    else if (r.revenue_usd != null && Math.abs(Math.round(r.revenue_usd * 100) - r.revenue_usd * 100) > 1e-6) errors[`${r.user_id}:revenue_usd`] = 'Tối đa 2 số lẻ'
   }
   return errors
 }

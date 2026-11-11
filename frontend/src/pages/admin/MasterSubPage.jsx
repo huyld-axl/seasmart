@@ -1,7 +1,9 @@
 import { flagEmoji, withFlag } from '../../utils/flag'
+import { matchesSearch, normalizeSearch } from '../../utils/search'
 import { useParams, Navigate } from 'react-router-dom'
 import { Children, cloneElement, isValidElement, useState } from 'react'
-import { App, Table, Button, Form, Input, InputNumber, Select, Skeleton } from 'antd'
+import { App, Table, Button, Form, Input, InputNumber, Skeleton } from 'antd'
+import Select from '../../components/ds/SearchSelect'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/client'
@@ -119,9 +121,9 @@ function MasterTable({ resource, columns, formFields, title }) {
   const toast = useToast()
   const { modal } = App.useApp()
   const { data, isLoading, isError, refetch, create, update, remove } = useMasterData(resource)
-  const keyword = search.trim().toLowerCase()
+  const keyword = normalizeSearch(search)
   const rows = keyword
-    ? data.filter((row) => Object.values(row).some((value) => typeof value === 'string' && value.toLowerCase().includes(keyword)))
+    ? data.filter((row) => Object.values(row).some((value) => typeof value === 'string' && matchesSearch(value, keyword)))
     : data
   // Danh mục tải hết một lần; chia trang ngay trên trình duyệt.
   const pageRows = rows.slice((page - 1) * pageSize, page * pageSize)

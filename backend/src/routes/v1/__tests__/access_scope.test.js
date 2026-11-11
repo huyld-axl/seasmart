@@ -61,6 +61,163 @@ const as = (permissions, scopes = {}, extra = {}) => ({ 'x-access': JSON.stringi
 const get = (url, headers) => app.inject({ method: 'GET', url, headers })
 const executed = (re) => calls.some((c) => re.test(c.sql))
 
+describe('tìm kiếm thuyền viên', () => {
+  it.each(['Linh', 'linh', 'Tien Linh', 'Le Tien Linh', 'Lê Tiến Linh'])('danh sách và số đếm tìm bất kỳ phần tên, bỏ dấu: %s', async (search) => {
+    rules = [
+      ['COUNT(*) AS all_count', () => [[{ all_count: 1 }]]],
+      ['COUNT(*) as total', () => [[{ total: 1 }]]],
+      ['FROM seafarer s', () => [[{ id: 1, full_name: 'Lê Tiến Linh' }]]],
+    ]
+    const res = await get(`/seafarers?search=${encodeURIComponent(search)}`, as(['seafarer.view']))
+    expect(res.statusCode).toBe(200)
+    const searches = calls.filter((c) => c.sql.includes('unaccent(s.full_name::text) ILIKE unaccent(?)'))
+    expect(searches).toHaveLength(3)
+    for (const call of searches) expect(call.params.slice(0, 4)).toEqual(Array(4).fill(`%${search}%`))
+  })
+})
+
+describe('website đối tác', () => {
+  it.each([
+    ['POST', '/admin/master/ship-owners', 'partner.create'],
+    ['PUT', '/admin/master/ship-owners/1', 'partner.update'],
+  ])('%s %s chặn URL có cổng vượt giới hạn trước khi ghi dữ liệu', async (method, url, permission) => {
+    const res = await app.inject({
+      method, url, headers: as([permission]),
+      payload: { company_name: 'Đối tác kiểm thử', website: 'https://example.com:99999' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toContain('URL không hợp lệ')
+    expect(executed(/INSERT INTO ship_owner|UPDATE ship_owner/)).toBe(false)
+  })
+})
+
+describe('điện thoại công ty đối tác', () => {
+  it.each([
+    ['POST', '/admin/master/ship-owners', 'partner.create'],
+    ['PUT', '/admin/master/ship-owners/1', 'partner.update'],
+  ])('%s %s chặn điện thoại toàn số 0 trước khi ghi dữ liệu', async (method, url, permission) => {
+    const res = await app.inject({
+      method, url, headers: as([permission]),
+      payload: { company_name: 'Đối tác kiểm thử', phone: '0000000000' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toContain('Số điện thoại công ty không hợp lệ')
+    expect(executed(/INSERT INTO ship_owner|UPDATE ship_owner/)).toBe(false)
+  })
+})
+
+describe('chiều dài toàn bộ của tàu', () => {
+  it.each([
+    ['POST', '/admin/master/vessels', 'vessel.create'],
+    ['PUT', '/admin/master/vessels/1', 'vessel.update'],
+  ])('%s %s chặn LOA bằng 0 trước khi ghi dữ liệu', async (method, url, permission) => {
+    const res = await app.inject({
+      method, url, headers: as([permission]),
+      payload: { vessel_name: 'Tàu kiểm thử', status: 'ACTIVE', length_overall: 0 },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toContain('LOA phải là số dương')
+    expect(executed(/INSERT INTO vessel|UPDATE vessel/)).toBe(false)
+  })
+
+  it.each([0.01, 120.5, 600, null])('cho sửa LOA hợp lệ hoặc để trống: %s', async (lengthOverall) => {
+    rules = [['FROM vessel v', () => [[{ id: 1, vessel_name: 'Tàu kiểm thử', status: 'ACTIVE' }]]]]
+    const res = await app.inject({
+      method: 'PUT', url: '/admin/master/vessels/1', headers: as(['vessel.update']),
+      payload: { length_overall: lengthOverall },
+    })
+    expect(res.statusCode).toBe(200)
+    const update = calls.find((c) => c.sql.startsWith('UPDATE vessel'))
+    expect(update.params).toEqual([lengthOverall, 1])
+  })
+})
+
+describe('ngày cấp hộ chiếu thuyền viên', () => {
+  it.each([
+    ['POST', '/seafarers', 'seafarer.create'],
+    ['PUT', '/seafarers/1', 'seafarer.update'],
+  ])('%s %s chặn ngày cấp hộ chiếu trước ngày sinh', async (method, url, permission) => {
+    const res = await app.inject({
+      method, url, headers: as([permission]),
+      payload: { full_name: 'Nguyễn An', date_of_birth: '2000-01-01', passport_issued_date: '1999-01-01', passport_expiry: '2029-01-01' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toBe('Ngày cấp hộ chiếu không được trước ngày sinh')
+    expect(executed(/INSERT INTO seafarer|UPDATE seafarer/)).toBe(false)
+  })
+
+  it.each([
+    { passport_issued_date: '1999-01-01' },
+    { date_of_birth: '2002-01-01' },
+  ])('sửa riêng một ngày vẫn kiểm tra với ngày đã lưu: %j', async (payload) => {
+    rules = [['FROM seafarer WHERE', () => [[{ id: 1, date_of_birth: '2000-01-01', passport_issued_date: '2001-01-01' }]]]]
+    const res = await app.inject({ method: 'PUT', url: '/seafarers/1', headers: as(['seafarer.update']), payload })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toBe('Ngày cấp hộ chiếu không được trước ngày sinh')
+    expect(executed(/UPDATE seafarer|INSERT INTO seafarer_revision/)).toBe(false)
+  })
+
+  it.each([
+    { passport_issued_date: '2000-01-01' },
+    { passport_issued_date: '2003-01-01' },
+    { date_of_birth: '1990-01-01' },
+    { passport_issued_date: null },
+  ])('cho phép sửa ngày hợp lệ hoặc xoá ngày: %j', async (payload) => {
+    const row = { id: 1, full_name: 'Nguyễn An', date_of_birth: '2000-01-01', passport_issued_date: '2001-01-01' }
+    rules = [['FROM seafarer WHERE', () => [[row]]], ['FROM seafarer s', () => [[row]]]]
+    const res = await app.inject({ method: 'PUT', url: '/seafarers/1', headers: as(['seafarer.update']), payload })
+    expect(res.statusCode).toBe(200)
+    expect(executed(/UPDATE seafarer/)).toBe(true)
+  })
+})
+
+describe('CCCD thuyền viên', () => {
+  it.each([
+    ['POST', '/seafarers', 'seafarer.create', '000000000000'],
+    ['PUT', '/seafarers/1', 'seafarer.update', '000000000000'],
+    ['POST', '/seafarers', 'seafarer.create', '000000000'],
+    ['PUT', '/seafarers/1', 'seafarer.update', '000000000'],
+  ])('%s chặn số CCCD/CMND toàn số 0 (%s)', async (method, url, permission, nationalId) => {
+    const res = await app.inject({
+      method, url, headers: as([permission]),
+      payload: { full_name: 'Nguyễn An', national_id: nationalId },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toContain('Số CCCD không hợp lệ')
+    expect(executed(/INSERT INTO seafarer|UPDATE seafarer/)).toBe(false)
+  })
+})
+
+describe('mã số thuế đối tác', () => {
+  it.each([
+    ['POST', '/admin/master/ship-owners', 'partner.create'],
+    ['PUT', '/admin/master/ship-owners/1', 'partner.update'],
+  ])('%s chặn mã số thuế toàn số 0 trước khi ghi dữ liệu', async (method, url, permission) => {
+    const res = await app.inject({
+      method, url, headers: as([permission]),
+      payload: { company_name: 'Đối tác kiểm thử', tax_id: '0000000000' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toContain('Mã số thuế không hợp lệ')
+    expect(executed(/INSERT INTO ship_owner|UPDATE ship_owner/)).toBe(false)
+  })
+})
+
+describe('MMSI tàu', () => {
+  it.each([
+    ['POST', '/admin/master/vessels', 'vessel.create'],
+    ['PUT', '/admin/master/vessels/1', 'vessel.update'],
+  ])('%s chặn MMSI toàn số 0 trước khi ghi dữ liệu', async (method, url, permission) => {
+    const res = await app.inject({
+      method, url, headers: as([permission]),
+      payload: { vessel_name: 'Tàu kiểm thử', mmsi: '000000000' },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(res.json().error).toContain('MMSI không hợp lệ')
+    expect(executed(/INSERT INTO vessel|UPDATE vessel/)).toBe(false)
+  })
+})
+
 describe('thiếu quyền thì 403', () => {
   const cases = [
     ['GET', '/seafarers', 'seafarer.view'],

@@ -176,6 +176,8 @@ const kpiService = {
   async saveTargets({ month, rows }, actorId, db = pool) {
     const ids = [...new Set(rows.map((r) => r.user_id))]
     if (ids.length !== rows.length) throw { statusCode: 400, message: 'Một tài khoản xuất hiện hai lần' }
+    if (rows.some((r) => r.contracts != null && (!Number.isInteger(r.contracts) || r.contracts < 1))) throw { statusCode: 400, message: 'Số hợp đồng mục tiêu phải là số nguyên từ 1' }
+    if (rows.some((r) => r.revenue_usd != null && (!Number.isFinite(r.revenue_usd) || r.revenue_usd < 1))) throw { statusCode: 400, message: 'Doanh thu mục tiêu phải từ 1 USD' }
     // multipleOf 0.01 của JSON Schema sai với số thực, kiểm tay.
     if (rows.some((r) => r.revenue_usd != null && Math.abs(Math.round(r.revenue_usd * 100) - r.revenue_usd * 100) > 1e-6)) throw { statusCode: 400, message: 'Doanh thu tối đa 2 chữ số thập phân' }
     await withTransaction(db, async (conn) => {
@@ -199,7 +201,7 @@ const kpiService = {
     if (from === to) throw { statusCode: 400, message: 'Tháng nguồn và tháng đích trùng nhau' }
     await db.query(
       `INSERT INTO kpi_target (user_id, month, contracts, revenue_usd, created_by, updated_by)
-       SELECT user_id, ?, contracts, revenue_usd, ?, ? FROM kpi_target WHERE month = ?
+       SELECT user_id, ?, CASE WHEN contracts >= 1 THEN contracts END, CASE WHEN revenue_usd >= 1 THEN revenue_usd END, ?, ? FROM kpi_target WHERE month = ?
        ON CONFLICT (user_id, month) DO UPDATE SET
          contracts = COALESCE(kpi_target.contracts, EXCLUDED.contracts),
          revenue_usd = COALESCE(kpi_target.revenue_usd, EXCLUDED.revenue_usd),

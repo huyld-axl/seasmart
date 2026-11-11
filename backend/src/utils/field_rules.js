@@ -4,7 +4,7 @@
 const text = (v) => (v === undefined || v === null ? '' : String(v).trim())
 
 const REGEX = {
-  idNumber: /^(\d{9}|\d{12})$/,
+  idNumber: /^(?!0+$)(\d{9}|\d{12})$/,
   passport: /^[A-Z0-9]{6,20}$/i,
   seamanBook: /^[A-Z0-9][A-Z0-9\-/ ]{2,29}$/i,
   shoe: /^\d{2}(\.5)?$/,
@@ -21,11 +21,13 @@ function check(value, regex, message) {
   return v && !regex.test(v) ? message : null
 }
 
-function phoneCheck(value, message) {
+function phoneCheck(value, message, rejectAllZeros = false) {
   const v = text(value)
   if (!v) return null
-  const digits = v.replace(/\D/g, '').length
-  return !REGEX.phone.test(v) || digits < 8 || digits > 15 ? message : null
+  const digits = v.replace(/\D/g, '')
+  const validFormat = REGEX.phone.test(v) && digits.length >= 8 && digits.length <= 15
+  const allZeros = rejectAllZeros && /^0+$/.test(digits)
+  return validFormat && !allZeros ? null : message
 }
 
 // Số trong khoảng; 0 và rỗng coi là chưa nhập.
@@ -40,7 +42,7 @@ const day = (v) => (v ? String(v instanceof Date ? v.toISOString() : v).slice(0,
 // Trả danh sách lỗi (chuỗi) của một bản ghi thuyền viên gửi lên.
 function seafarerErrors(data, today = new Date().toISOString().slice(0, 10)) {
   const errors = [
-    check(data.national_id, REGEX.idNumber, 'Số CCCD gồm 12 chữ số (CMND cũ 9 chữ số)'),
+    check(data.national_id, REGEX.idNumber, 'Số CCCD không hợp lệ: gồm 12 chữ số (CMND cũ 9 chữ số) và không được toàn số 0'),
     check(data.passport_number, REGEX.passport, 'Số hộ chiếu gồm 6–20 chữ và số, không có ký tự lạ'),
     check(data.seaman_book_number, REGEX.seamanBook, 'Số sổ thuyền viên gồm 3–30 chữ, số hoặc dấu - /'),
     check(data.shoe_size, REGEX.shoe, 'Size giày là số từ 30 đến 55 (VD: 42 hoặc 42.5)'),
@@ -63,6 +65,9 @@ function seafarerErrors(data, today = new Date().toISOString().slice(0, 10)) {
   if (day(data.passport_issued_date) && day(data.passport_expiry) && day(data.passport_expiry) < day(data.passport_issued_date)) {
     errors.push('Ngày hết hạn hộ chiếu phải sau ngày cấp')
   }
+  if (day(data.date_of_birth) && day(data.passport_issued_date) && day(data.passport_issued_date) < day(data.date_of_birth)) {
+    errors.push('Ngày cấp hộ chiếu không được trước ngày sinh')
+  }
   if (day(data.date_of_birth) && day(data.national_id_issued_date) && day(data.national_id_issued_date) < day(data.date_of_birth)) {
     errors.push('Ngày cấp CCCD không được trước ngày sinh')
   }
@@ -73,7 +78,7 @@ function seafarerErrors(data, today = new Date().toISOString().slice(0, 10)) {
   for (const [i, row] of (Array.isArray(data.contacts) ? data.contacts : []).entries()) {
     const e =
       phoneCheck(row?.phone_primary, `Người thân ${i + 1}: số điện thoại gồm 8–15 chữ số`) ||
-      check(row?.guarantor_id_number, REGEX.idNumber, `Người thân ${i + 1}: số CCCD gồm 12 chữ số (CMND cũ 9 chữ số)`) ||
+      check(row?.guarantor_id_number, REGEX.idNumber, `Người thân ${i + 1}: số CCCD không hợp lệ, gồm 12 chữ số (CMND cũ 9 chữ số) và không được toàn số 0`) ||
       check(row?.full_name, REGEX.noDigit, `Người thân ${i + 1}: họ tên không chứa chữ số`)
     if (e) errors.push(e)
   }
@@ -90,8 +95,22 @@ function assertSeafarerData(data) {
 REGEX.taxId = /^[0-9A-Za-z\-. ]{5,50}$/
 REGEX.website = /^https?:\/\/[^\s/]+\.[^\s/]+\S*$/i
 REGEX.callSign = /^[A-Z0-9]{3,10}$/i
+REGEX.mmsi = /^(?!0{9}$)\d{9}$/
 REGEX.code = /^[A-Za-z0-9_.-]{1,30}$/
 REGEX.unLocode = /^[A-Za-z]{2}[A-Za-z0-9]{3}$/
+
+function websiteCheck(value) {
+  const website = text(value)
+  if (!website) return null
+  const message = 'URL không hợp lệ. Website phải dùng http:// hoặc https:// và có cổng hợp lệ.'
+  if (!REGEX.website.test(website)) return message
+  try {
+    new URL(website)
+    return null
+  } catch {
+    return message
+  }
+}
 
 // Có chữ thật (không chỉ khoảng trắng) khi có giá trị.
 function blankCheck(value, message) {
@@ -111,10 +130,11 @@ function ownerErrors(data) {
   const errors = [
     blankCheck(data.company_name, 'Tên công ty không được để trống'),
     check(data.tax_id, REGEX.taxId, 'Mã số thuế gồm 5–50 chữ, số hoặc dấu - .'),
-    phoneCheck(data.phone, 'Điện thoại gồm 8–15 chữ số'),
+    /^0+$/.test(text(data.tax_id).replace(/[\s.-]/g, '')) ? 'Mã số thuế không hợp lệ: không được toàn số 0' : null,
+    phoneCheck(data.phone, 'Số điện thoại công ty không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true),
     phoneCheck(data.fax, 'Fax gồm 8–15 chữ số'),
     check(data.email, REGEX.email, 'Email phải có dạng ten@congty.com'),
-    check(data.website, REGEX.website, 'Website phải bắt đầu bằng http:// hoặc https://'),
+    websiteCheck(data.website),
   ]
   for (const [i, row] of (Array.isArray(data.contacts) ? data.contacts : []).entries()) {
     errors.push(
@@ -127,19 +147,20 @@ function ownerErrors(data) {
 }
 
 function vesselErrors(data, year = new Date().getFullYear()) {
-  const positive = (key, label, max) => {
+  const positive = (key, label, max, zeroIsEmpty = true) => {
     const v = data[key]
-    if (v === undefined || v === null || v === '' || Number(v) === 0) return null
+    if (v === undefined || v === null || v === '' || (zeroIsEmpty && Number(v) === 0)) return null
     return !(Number(v) > 0) || Number(v) > max ? `${label} phải là số dương, không quá ${max.toLocaleString('en-US')}` : null
   }
   const errors = [
     blankCheck(data.vessel_name, 'Tên tàu không được để trống'),
     check(data.call_sign, REGEX.callSign, 'Call Sign gồm 3–10 chữ và số'),
+    check(data.mmsi, REGEX.mmsi, 'MMSI không hợp lệ: phải gồm 9 chữ số và không được toàn số 0'),
     maxCheck(data.year_built, year + 10, `Năm đóng không quá ${year + 10}`),
     positive('gross_tonnage', 'GRT', 1000000),
     positive('net_tonnage', 'NT', 1000000),
     positive('deadweight', 'DWT', 1000000),
-    positive('length_overall', 'LOA', 600),
+    positive('length_overall', 'LOA', 600, false),
     positive('engine_power_kw', 'Công suất máy', 500000),
     maxCheck(data.passenger_capacity, 20000, 'Sức chứa hành khách không quá 20,000'),
     maxCheck(data.crew_capacity, 10000, 'Định biên thuyền viên không quá 10,000'),

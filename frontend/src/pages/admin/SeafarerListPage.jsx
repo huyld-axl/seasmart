@@ -24,6 +24,7 @@ import ListFooter from '../../components/ds/ListFooter'
 import { useCan } from '../../hooks/usePermission'
 import useToast from '../../components/ds/useToast'
 import useViewport from '../../hooks/useViewport'
+import useCrewListState from './seafarers/useCrewListState'
 
 const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 
@@ -50,13 +51,14 @@ export default function SeafarerListPage() {
   const can = useCan()
   const toast = useToast()
   const isMobile = useViewport().isCompact
-  const [tab, setTab] = useState('all')
-  const [search, setSearch] = useState('')
-  const [sort, setSort] = useState('newest') // newest | name_asc | name_desc
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const { state: { tab, search, sort, filters, filtersOpen, page, pageSize }, setField } = useCrewListState()
+  const setTab = setField('tab')
+  const setSearch = setField('search')
+  const setSort = setField('sort')
+  const setFilters = setField('filters')
+  const setFiltersOpen = setField('filtersOpen')
+  const setPage = setField('page')
+  const setPageSize = setField('pageSize')
   const tableScroll = useListSticky()
   const [exporting, setExporting] = useState(false)
 

@@ -68,11 +68,11 @@ export default function KpiTargetPage() {
     { title: 'Môi giới viên', dataIndex: 'name', render: (name) => <span className="kt-name">{name}</span> },
     {
       title: 'Hợp đồng', key: 'contracts', width: 150,
-      render: (_, row) => cell(row, 'contracts', <NumberInput min={0} max={1000} precision={0} controls={false} inputMode="numeric" value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
+      render: (_, row) => cell(row, 'contracts', <NumberInput changeOnBlur={false} controls={false} inputMode="numeric" value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
     },
     {
       title: 'Doanh thu', key: 'revenue_usd', width: 200,
-      render: (_, row) => cell(row, 'revenue_usd', <MoneyInput value={row.revenue_usd} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'revenue_usd', v)} aria-label={`Mục tiêu doanh thu của ${row.name}`} />),
+      render: (_, row) => cell(row, 'revenue_usd', <MoneyInput min={undefined} max={undefined} changeOnBlur={false} value={row.revenue_usd} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'revenue_usd', v)} aria-label={`Mục tiêu doanh thu của ${row.name}`} />),
     },
     { title: 'Tháng này: đã ký / dự kiến', key: 'actual', align: 'right', render: (_, row) => <span className="kt-actual">{row.done} HĐ · {usd(row.revenue)} USD</span> },
   ]
@@ -140,7 +140,7 @@ export default function KpiTargetPage() {
       <div className="ds-page__head">
         <div>
           <h1 className="ds-page__title">Mục tiêu tháng</h1>
-          <p className="ds-page__desc">Mỗi môi giới viên một mục tiêu số hợp đồng ký mới và doanh thu. Mục tiêu công ty là tổng. Ô để trống là chưa đặt.</p>
+          <p className="ds-page__desc">Mỗi môi giới viên một mục tiêu số hợp đồng ký mới và doanh thu. Mục tiêu công ty là tổng. Số hợp đồng từ 1; doanh thu từ 1 USD. Ô để trống là chưa đặt.</p>
         </div>
       </div>
       <div className="kt-toolbar">

@@ -1,7 +1,9 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Input, Select, Skeleton, Table } from 'antd'
+import { Button, Input, Skeleton, Table } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { ArrowDownOutlined, ArrowUpOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -59,15 +61,15 @@ export default function ContractListPage() {
   const isMobile = useViewport().isCompact
   // ?tab= mở sẵn một tab (link từ Tổng quan).
   const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState(() => (TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : 'all'))
-  const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState({})
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [tab, setTab] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'tab', () => (TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : 'all'))
+  const [search, setSearch] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'search', '')
+  const [filters, setFilters] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'filters', {})
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'filtersOpen', false)
   const [acting, setActing] = useState(null)
   const [vesselSearch, setVesselSearch] = useState('')
   const [personSearch, setPersonSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'pageSize', 20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 

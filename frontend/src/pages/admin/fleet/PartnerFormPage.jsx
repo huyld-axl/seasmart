@@ -2,7 +2,8 @@ import OwnershipFields, { ownershipProblem } from './OwnershipFields'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Select, Skeleton } from 'antd'
+import { Button, Form, Input, Skeleton } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -256,7 +257,7 @@ function PartnerForm({ owner }) {
             <Form.Item name="address" className={cn('address')} label={label('address', 'Địa chỉ')}>
               <Input maxLength={500} />
             </Form.Item>
-            <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')} rules={ownerRules.phone}>
+            <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')} rules={ownerRules.companyPhone}>
               <Input maxLength={30} inputMode="tel" />
             </Form.Item>
             <Form.Item name="zalo" className={cn('zalo', 'sf-c4')} label="Zalo công ty">

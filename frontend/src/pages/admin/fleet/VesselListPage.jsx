@@ -1,3 +1,4 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -42,10 +43,10 @@ export default function VesselListPage() {
   const navigate = useNavigate()
   const can = useCan()
   const isMobile = useViewport().isCompact
-  const [tab, setTab] = useState('all')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [tab, setTab] = useListSessionState(`vessels`, 'tab', 'all')
+  const [search, setSearch] = useListSessionState(`vessels`, 'search', '')
+  const [page, setPage] = useListSessionState(`vessels`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`vessels`, 'pageSize', 20)
   // Danh mục tàu thế giới: `key` đổi mỗi lần mở để panel bắt đầu lại từ ô tìm sạch (hoặc từ khoá đang tìm).
   const [catalog, setCatalog] = useState({ open: false, key: 0, query: '' })
   const tableScroll = useListSticky()

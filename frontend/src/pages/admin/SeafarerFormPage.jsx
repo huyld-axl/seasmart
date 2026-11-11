@@ -481,6 +481,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     setPickedPhoto(null)
     setPhotoRemoved(false)
     setPendingDocs([])
+    setPhotoError('')
+    setKeepPhotoDoc(false)
+    setMarks({})
+    setScanDone(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -495,6 +499,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         saved = (await seafarerApi.update(id, payload)).data
       }
       let photoError = null
+      let docCount = 0
       // Ảnh giấy tuỳ thân (và ảnh thẻ) đã đồng ý lưu: mỗi ảnh một dòng giấy mới, số và ngày lấy từ hồ sơ vừa lưu.
       const docsToSave = [...pendingDocs, ...(photoFile && keepPhotoDoc ? [{ type: 'photo', label: 'ảnh thẻ', file: photoFile }] : [])]
       if (docsToSave.length) {
@@ -504,7 +509,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           for (const doc of docsToSave) {
             const identity = doc.type === 'photo' ? { code: 'PHOTO' } : IDENTITY[doc.type]
             const type = list.find((c) => c.code === identity.code || (identity.code === 'SEAMAN_BOOK' && c.code === 'SEAMAN-BOOK'))
-            if (!type) continue
+            if (!type) {
+              photoError = [photoError, `Chưa lưu được ${doc.label}: không tìm thấy loại giấy tờ ${identity.code}.`].filter(Boolean).join(' ')
+              continue
+            }
             const day = (v) => (v ? String(v).slice(0, 10) : undefined)
             const expiry = identity.expiry ? day(saved[identity.expiry]) : undefined
             const cert = (await certificateApi.create(saved.id, {
@@ -515,18 +523,19 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               no_expiry: !expiry,
             })).data
             await certificateApi.upload(saved.id, cert.id, doc.file)
+            docCount += 1
           }
         } catch (err) {
-          photoError = `Chưa lưu được ảnh giấy tờ: ${err.response?.data?.error || err.response?.data?.message || 'thử lại ở tab Giấy tờ'}`
+          photoError = [photoError, `Chưa lưu được ảnh giấy tờ: ${err.response?.data?.error || err.response?.data?.message || 'thử lại ở tab Giấy tờ'}`].filter(Boolean).join(' ')
         }
       }
       try {
         if (photoFile) await seafarerApi.uploadPhoto(saved.id, photoFile)
         else if (photoRemoved && seafarer?.has_photo) await seafarerApi.removePhoto(saved.id)
       } catch (err) {
-        photoError = err.response?.data?.error || err.response?.data?.message || 'Không lưu được ảnh chân dung'
+        photoError = [photoError, err.response?.data?.error || err.response?.data?.message || 'Không lưu được ảnh chân dung'].filter(Boolean).join(' ')
       }
-      return { saved, photoError, again, docCount: docsToSave.length }
+      return { saved, photoError, again, docCount }
     },
     onSuccess: ({ saved, photoError, again, docCount }) => {
       queryClient.invalidateQueries({ queryKey: ['seafarers'] })
@@ -571,10 +580,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
 
   const cancelTo = isEdit ? `/seafarers/${id}` : '/seafarers'
   const name = values.full_name?.trim() || seafarer?.full_name || ''
-  const canSave = !isEdit || changedKeys.length > 0 || photoChanged
+  const canSave = !isEdit || changedKeys.length > 0 || photoChanged || pendingDocs.length > 0
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
   // Thêm mới: tính cả giấy tờ đã quét đang chờ lưu (tự điền từ giấy tờ không đánh dấu ô là đã chạm).
-  const leave = useLeaveGuard(isEdit ? changedKeys.length > 0 || photoChanged : form.isFieldsTouched() || photoChanged || pendingDocs.length > 0)
+  const leave = useLeaveGuard(isEdit ? changedKeys.length > 0 || photoChanged || pendingDocs.length > 0 : form.isFieldsTouched() || photoChanged || pendingDocs.length > 0)
 
   return (
     <ChangedContext.Provider value={changedSet}>

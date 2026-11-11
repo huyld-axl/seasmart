@@ -191,6 +191,8 @@ function MasterTable({ resource, columns, formFields, title }) {
   }
 
   const actionCol = actionColumn((row) => <RowActions name={row.name_vi || row.name || row.code} onEdit={canEdit ? () => openPanel(row) : undefined} onDelete={can('catalog.delete') ? () => confirmDelete(row) : undefined} />)
+  // Độ rộng dựa trên cấu hình cột, không dựa vào nội dung của trang hiện tại.
+  const tableMinWidth = Math.max(640, [...columns, actionCol].reduce((sum, column) => sum + (typeof column.width === 'number' ? column.width : 240), 0))
 
   let body
   if (isError) {
@@ -220,7 +222,8 @@ function MasterTable({ resource, columns, formFields, title }) {
             dataSource={pageRows}
             columns={[...columns, actionCol]}
             pagination={false}
-            scroll={tableScroll}
+            tableLayout="fixed"
+            scroll={{ ...tableScroll, x: tableMinWidth }}
             onRow={(row) => (canEdit ? { onClick: () => openPanel(row), onKeyDown: (event) => event.key === 'Enter' && openPanel(row), tabIndex: 0 } : {})}
           />
         )}

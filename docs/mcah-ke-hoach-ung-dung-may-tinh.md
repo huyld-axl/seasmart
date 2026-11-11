@@ -139,7 +139,7 @@ App hiện là web: một máy chủ chạy Fastify + PostgreSQL (Docker), ngư�
 2. Máy nhân viên tìm máy chính trong mạng (tự tìm theo tên; không thấy thì gõ tên hoặc địa chỉ). Khi nối, **so dấu vân tay chứng chỉ với dấu vân tay máy chủ dịch vụ trả về**. Không khớp thì từ chối và báo "Máy này không phải máy chính của văn phòng". → Chống máy giả làm máy chính, kể cả khi kẻ gian giả được tên máy trong mạng.
 3. Máy nhân viên đưa vé đăng nhập (do máy chủ dịch vụ ký) cho máy chính. Máy chính kiểm chữ ký, kiểm người đó thuộc văn phòng và còn hoạt động trên máy chính, rồi **cấp cho thiết bị đó một mã thiết bị riêng** (khoá bí mật của thiết bị). Máy nhân viên cất mã thiết bị trong két hệ điều hành.
 4. **Mọi API** trên máy chính kiểm **hai lớp**: mã thiết bị còn hiệu lực + phiên đăng nhập của người dùng (JWT + quyền như hiện nay).
-5. Quản trị thấy danh sách thiết bị (tên máy, ai dùng, lần cuối nối) ở Cài đặt → Máy trong văn phòng; có thông báo khi có thiết bị mới. Bấm **"Gỡ"** → mã thiết bị bị thu hồi, **phiên đang mở trên máy đó bị cắt ngay**.
+5. Quản trị thấy danh sách thiết bị (tên máy, ai dùng, lần cuối nối) ở Cài đặt → Máy trong văn phòng; có thông báo khi có thiết bị mới. Bấm **"Gỡ"** → mã thiết bị bị thu hồi, **phiên đang mở trên máy đó bị cắt ngay**. Máy đã bị gỡ xin ghép lại → **chờ quản trị duyệt**, không tự cấp mã mới.
 
 **Những gì chạy ở đâu:**
 
@@ -181,6 +181,8 @@ App đưa vé cho máy chính ──► máy chính kiểm chữ ký vé (bằng
   ──► tìm user cục bộ gắn với tài khoản đó ──► cấp phiên như hiện nay, quyền đọc từ DB máy chính
 ```
 
+- **Vé ghi rõ:** tài khoản, văn phòng, máy chính nhận vé, thiết bị, và **mốc hết hạn offline** (= lần làm mới cuối với máy chủ dịch vụ + 7 ngày). JWT nội bộ **không bao giờ sống quá mốc này**; máy chính kiểm mốc trên **mọi request**. Đóng mở app hay xin JWT mới **không đặt lại** mốc; chỉ làm mới vé với máy chủ dịch vụ mới đẩy mốc đi.
+
 - Trình duyệt không chuyển về app được (hiếm: phần mềm chặn cổng nội bộ) → trang web hiện một mã ngắn để dán vào app.
 - **App không bao giờ thấy mật khẩu.** Máy chính không lưu mật khẩu (cột `password_hash` để nguyên, không dùng).
 
@@ -189,7 +191,7 @@ App đưa vé cho máy chính ──► máy chính kiểm chữ ký vé (bằng
 - Có internet: app tự làm mới vé ngầm, người dùng không thấy gì.
 - Mất internet: người đã đăng nhập **làm việc bình thường tới 7 ngày** kể từ lần làm mới cuối. Dải vàng khi còn ≤ 2 ngày: "Kết nối internet để giữ đăng nhập". Quá 7 ngày → phải đăng nhập lại (cần internet).
 - Cần internet: đăng nhập lần đầu / đăng nhập lại, đăng ký, mời người mới, ghép máy mới, tạo văn phòng.
-- **Tự khoá màn hình** sau 15 phút (chỉnh được 5–60): mở bằng **mã PIN 6 số** đặt sau lần đăng nhập đầu trên máy đó, không cần internet. Sai 5 lần → phải đăng nhập lại qua trình duyệt.
+- **Tự khoá màn hình** sau 15 phút (chỉnh được 5–60): mở bằng **mã PIN 6 số** đặt sau lần đăng nhập đầu trên máy đó, không cần internet. Sai 5 lần → phải đăng nhập lại qua trình duyệt, **bắt nhập lại mật khẩu / xác thực Google thật** (OIDC `max_age=0`, app kiểm `auth_time`), không chấp nhận phiên trình duyệt có sẵn.
 - **Đăng xuất**: xoá phiên, mã PIN và bản tạm trên máy đó.
 
 **Mời nhân viên (Q13: quản trị mời qua email trong app):**
@@ -209,7 +211,7 @@ App đưa vé cho máy chính ──► máy chính kiểm chữ ký vé (bằng
 Hiện nay A và B cùng mở hồ sơ, A đổi số điện thoại rồi lưu, B đổi địa chỉ rồi lưu thì **thay đổi của A bị ghi đè** (form B gửi kèm số điện thoại cũ). Bản web cũng đang có lỗi này; nhiều máy trong văn phòng làm nó hay xảy ra hơn. Phải sửa:
 
 - Mỗi bản ghi sửa được qua form (thuyền viên, tàu, đối tác, cơ hội, chuyến, hợp đồng, bill, chứng chỉ, giấy tờ) có **số phiên bản**. Form gửi kèm số phiên bản lúc mở. Lưu mà số phiên bản đã đổi → trả lỗi 409, giao diện báo **"Hồ sơ vừa được {người} sửa lúc {giờ}. Xem thay đổi của họ"**, **giữ nguyên nội dung đang nhập**, cho chọn: tải bản mới rồi nhập lại phần của mình, hoặc huỷ.
-- **Bấm lại không tạo trùng:** mỗi lần bấm "Thêm…" gửi kèm một mã yêu cầu duy nhất. Máy chính đã lưu xong nhưng máy nhân viên mất kết nối trước khi nhận phản hồi → bấm lại thì máy chính nhận ra mã cũ và trả lại kết quả lần trước, không tạo bản ghi thứ hai.
+- **Bấm lại không tạo trùng:** mỗi lần **mở form** "Thêm…" sinh một mã yêu cầu; bấm lại / thử lại dùng **đúng mã đó**. Máy chính lưu mã + kết quả **trong cùng transaction** với bản ghi. Máy chính đã lưu xong nhưng máy nhân viên mất kết nối trước khi nhận phản hồi → bấm lại thì máy chính nhận ra mã cũ và trả lại kết quả lần trước, không tạo bản ghi thứ hai.
 
 ### 3.5 Cấu trúc thư mục trong repo
 
@@ -302,7 +304,7 @@ Mỗi lớp trả lời câu "chống được chuyện gì".
 |---|---|
 | Máy nhân viên so dấu vân tay chứng chỉ máy chính với dấu vân tay trên máy chủ dịch vụ (mục 3.2) | Máy giả làm máy chính, kể cả giả tên máy trong mạng |
 | Máy chính chỉ nhận **HTTPS** từ thiết bị có **mã thiết bị còn hiệu lực**; mọi API kiểm cả mã thiết bị lẫn phiên người dùng; gỡ thiết bị cắt phiên ngay | Laptop lạ cắm vào Wi-Fi văn phòng; máy bị mất / nhân viên nghỉ việc |
-| Phiên, mã thiết bị, mã PIN băm cất trong **két hệ điều hành qua app**, không ở `localStorage` của trang | Phần mềm khác trên máy đọc trộm phiên |
+| Phiên, mã thiết bị, mã PIN băm cất trong **két hệ điều hành qua app**, không ở `localStorage` của trang. Ubuntu không có kho bí mật an toàn (`safeStorage` rơi về `basic_text`) → **chặn thiết lập**, hướng dẫn cài; không âm thầm dùng cách yếu | Ai copy tệp của app sang máy khác / đọc ổ đĩa. **Không** chống được phần mềm độc đang chạy dưới cùng tài khoản hệ điều hành |
 | Máy nhân viên **không có cơ sở dữ liệu văn phòng**. Chỉ giữ: phiên (≤ 7 ngày), dữ liệu đang xem trong bộ nhớ (mất khi đóng app), bản tạm của tài liệu đã mở / đính kèm (xoá khi đóng app, khi đăng xuất, khi mở app lần sau, hoặc sau 24 giờ). Bản xuất ra thư mục và bản trong app mail là trách nhiệm người dùng | Lộ dữ liệu từ máy nhân viên |
 | Cấu hình Electron an toàn: `contextIsolation`, `sandbox`, tắt `nodeIntegration`, CSP chặn script lạ, link ngoài mở bằng trình duyệt hệ thống, tắt DevTools ở bản phát hành | Một đoạn chữ độc trong dữ liệu (vd. tên thuyền viên chứa mã) chiếm quyền máy |
 | Chặn trang web lạ trong trình duyệt gọi vào phần xử lý (kiểm nguồn gọi + `Host`), cổng nhận vé đăng nhập chỉ mở trong lúc chờ đăng nhập | Trang web độc gọi lén vào máy chính / chiếm vé đăng nhập |
@@ -340,9 +342,10 @@ Toàn bộ dữ liệu văn phòng nằm trên **một máy chính**: hỏng ổ
 
 - Quy tắc kho tệp: **ghi tệp xong mới ghi dòng DB**; tệp **không bao giờ bị sửa tại chỗ** (bản mới = tệp mới); tệp bị xoá chỉ rời ổ đĩa sau 180 ngày (quy tắc hiện có). Lớp kho tệp (mục 5.5) buộc mọi service theo quy tắc này.
 - Nhờ vậy sao lưu không cần dừng văn phòng: chụp DB bằng `pg_dump` (luôn cho một ảnh nhất quán, không copy thư mục DB đang chạy), rồi copy **đúng các tệp mà ảnh DB đó trỏ tới**. Mọi tệp đó chắc chắn đã có trên đĩa và không đổi.
-- Việc theo giờ (cron) tạm dừng trong lúc chụp DB.
+- **Khoá chống xoá tệp** (job xoá tệp 180 ngày, `purgeExpired`) giữ **từ lúc bắt đầu tới lúc sao lưu xong**, không chỉ lúc chụp DB. Danh sách tệp cần chép lấy **từ chính ảnh DB vừa dump**, không hỏi DB đang chạy.
+- Bản sao lưu chỉ được tính là có khi **chép xong và kiểm toàn vẹn** (đọc lại, so mã băm). Ghi ra tệp tạm, xong mới đổi tên; đầy ổ / rút USB / mất điện giữa chừng thì bỏ tệp dở, báo lỗi.
 
-**Gói `.ssbak`**: ảnh DB + các tệp (vẫn ở dạng mã hoá) + khoá dữ liệu đã bọc bằng mật khẩu sao lưu và bằng mã khôi phục + phiên bản app và phiên bản DB. Cả gói được mã hoá thêm bằng mật khẩu sao lưu.
+**Gói `.ssbak`**: ảnh DB + các tệp (vẫn ở dạng mã hoá) + khoá dữ liệu đã bọc bằng mật khẩu sao lưu và bằng mã khôi phục + phiên bản app và phiên bản DB. Cả gói (kể cả DB) được mã hoá bằng **một khoá gói ngẫu nhiên**; đầu gói lưu khoá gói bọc hai cách: bằng mật khẩu sao lưu **hoặc** mã khôi phục. Mỗi cách tự mở được toàn bộ gói.
 
 **Lịch và nơi để**
 
@@ -352,9 +355,12 @@ Toàn bộ dữ liệu văn phòng nằm trên **một máy chính**: hỏng ổ
 
 **Khôi phục** (máy mới, cùng hoặc khác hệ điều hành): cài app → đăng nhập tài khoản quản trị → "Khôi phục từ bản sao lưu" → chọn tệp → nhập mật khẩu sao lưu (hoặc mã khôi phục dữ liệu) → app nạp DB, chép tệp, **bọc lại khoá dữ liệu bằng két của máy mới** → gửi dấu vân tay chứng chỉ mới lên máy chủ dịch vụ → máy nhân viên ghép lại.
 
+- **Không khôi phục quyền đã thu hồi:** sau khi nạp, mọi mã thiết bị và phiên cũ bị huỷ, sinh khoá ký phiên mới; đối chiếu thành viên với máy chủ dịch vụ (ai đã bị gỡ khỏi văn phòng thì khoá) **trước khi** mở cho máy nhân viên.
+- Chỉ **quản trị** được thay dấu vân tay máy chính (máy chủ dịch vụ báo thư cho mọi quản trị). Máy chính cũ còn chạy → máy nhân viên từ chối nó vì dấu vân tay không khớp; máy cũ hiện "Văn phòng đã chuyển sang máy chính khác" và ngừng phục vụ.
+
 **Cập nhật có đổi DB**
 
-- Ngay trước khi chạy migration: sao lưu đầy đủ như trên, và **chặn máy nhân viên** ("Máy chính đang cập nhật").
+- Thứ tự: **chặn mọi thao tác ghi** ("Máy chính đang cập nhật") → chờ request và job đang chạy xong → **rồi mới** sao lưu đầy đủ → chạy migration. (Sao lưu thường ngày thì không chặn, theo cách ở trên.)
 - Migration hiện chạy mỗi tệp một transaction, nên lỗi giữa chừng là DB đã đổi một phần. Lỗi thì: dừng, **khôi phục DB và khoá dữ liệu từ bản vừa chụp** (tệp không bị migration sửa), quay về bản app cũ, rồi mới cho máy nhân viên nối lại. Báo quản trị kèm mã lỗi.
 
 ### 5.5 Kho tệp và thư mục tài liệu
@@ -503,7 +509,7 @@ Chỉ báo trên thanh trên cùng khi mất internet. Mất **mạng nội bộ
 - **Tệp đã mã hoá:** app giải mã ra bản tạm trong thư mục tạm riêng của app (dọn theo mục 5.2). Bản app mail đã chép vào thư thì ngoài tầm của app.
 - **App không biết thư đã gửi thật chưa.** Sau khi mở thư, app hỏi "Đã gửi thư này chưa?" (Đã gửi / Chưa) để ghi trạng thái ở Cơ hội như hiện nay.
 
-**Cách phụ: gửi thẳng từ app qua SMTP.** Mỗi nhân viên khai trong Cài đặt → Email gửi đi (chọn Gmail / Outlook / Khác để app tự điền máy chủ, cổng; email; mật khẩu ứng dụng; nút "Gửi thử"). Mật khẩu cất trong két hệ điều hành của máy nhân viên, chỉ gửi sang máy chính lúc gửi thư. Dùng lại `email.service.js`.
+**Cách phụ: gửi thẳng từ app qua SMTP.** Mỗi nhân viên khai trong Cài đặt → Email gửi đi (chọn Gmail / Outlook / Khác để app tự điền máy chủ, cổng; email; mật khẩu ứng dụng; nút "Gửi thử"). Mật khẩu cất trong két hệ điều hành của máy nhân viên, chỉ gửi sang máy chính lúc gửi thư. Phải sửa `email.service.js`: hiện giữ **một** kết nối SMTP chung từ cấu hình toàn cục → đổi thành tạo kết nối theo người gửi.
 
 **Cài đặt → Email gửi đi** (theo từng máy): "Mở bằng app mail trên máy" (mặc định khi dò thấy Outlook / Thunderbird) hoặc "Gửi thẳng từ app (SMTP)". Có nút "Thử mở thư".
 
@@ -552,7 +558,7 @@ Thư viện dự kiến, **chưa chắc chạy được**. Giai đoạn 0 kiểm
 
 ### Giai đoạn 0 — Thử nhanh (1,5–2 tuần)
 
-Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho giai đoạn 1); máy chủ đăng nhập thử đặt trong `cloud/`. **Không sửa logic trong `backend/` và `frontend/`**; chỉ được thêm chỗ đọc cấu hình nếu bắt buộc, và ghi lại vào mục 13.
+Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho giai đoạn 1); máy chủ đăng nhập thử đặt trong `cloud/`. **Không sửa logic trong `backend/` và `frontend/`**; chỉ được thêm chỗ đọc cấu hình nếu bắt buộc, và **một bộ nhận vé thử** (route riêng, bật bằng cấu hình) cho bước 0.5; ghi lại vào mục 13.
 
 ⛔ **DỪNG trước khi bắt đầu:** hỏi người dùng có **máy Windows thật** (hoặc máy ảo Windows) và **máy thứ hai cùng mạng** không. Thiếu thì làm phần Ubuntu trước, nhưng giai đoạn 0 **chưa xong** cho tới khi thử thật đủ.
 
@@ -589,12 +595,12 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 - Thư mục `cloud/`: Fastify + Postgres riêng, HTTPS, giới hạn tần suất, sao lưu riêng.
 - **Tài khoản:** trang web đăng ký (xác minh email), đăng nhập, quên mật khẩu, "Tiếp tục với Google"; cấp vé ký số; làm mới vé; khoá công khai cho app.
 - **Văn phòng:** tạo văn phòng, thành viên, lời mời qua email (thư hệ thống của bên mình), dấu vân tay máy chính.
-- **App:** đăng nhập qua trình duyệt, phiên 7 ngày, mã PIN, đăng xuất; màn tạo văn phòng; màn Người dùng → "Mời" thay luồng `createUser` + `sendInvite` hiện tại; phiên cất trong két hệ điều hành thay `localStorage`.
+- **App:** đăng nhập qua trình duyệt, phiên 7 ngày, mã PIN, đăng xuất; màn tạo văn phòng **kèm sinh khoá dữ liệu, mật khẩu sao lưu, mã khôi phục** (phần khoá của mục 5.4; sao lưu làm ở giai đoạn 4); màn Người dùng → "Mời" thay luồng `createUser` + `sendInvite` hiện tại; phiên cất trong két hệ điều hành thay `localStorage`.
 - Chuyển sang đây: AI đọc giấy tờ + quét danh thiếp, danh mục tàu + tra IMO.
 - Trang quản trị nội bộ: văn phòng, khoá văn phòng, lượng quét AI và chi phí.
 - Script quét bộ cài tìm bí mật (mục 6.3).
 
-**Xong khi:** các testcase nhóm E qua; quét giấy tờ và tìm tàu chạy qua máy chủ; bộ cài không chứa khoá nào trong mục 6.3.
+**Xong khi:** các testcase nhóm E qua (E7 tới bước đăng nhập app; phần ghép máy kiểm ở giai đoạn 3); quét giấy tờ và tìm tàu chạy qua máy chủ; bộ cài không chứa khoá nào trong mục 6.3.
 
 ### Giai đoạn 3 — Máy chính và máy nhân viên (3–4 tuần)
 
@@ -605,7 +611,7 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 - **Chống ghi đè** (mục 3.4): số phiên bản trên các bảng sửa qua form, lỗi 409 + giao diện xung đột giữ nội dung đang nhập; mã yêu cầu chống tạo trùng.
 - Phiên bản giao tiếp, máy chính phát bộ cài cho máy nhân viên qua mạng nội bộ (mục 9, ý 8).
 
-**Xong khi:** các testcase nhóm D qua với 1 máy chính + 2 máy nhân viên (trộn Windows và Ubuntu).
+**Xong khi:** các testcase nhóm D và phần ghép máy của E7 qua với 1 máy chính + 2 máy nhân viên (trộn Windows và Ubuntu).
 
 ### Giai đoạn 4 — Kho tệp, sao lưu, bảo mật (2–3 tuần)
 
@@ -683,6 +689,9 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | B14 | Xuất toàn bộ hồ sơ ra USB | Có cảnh báo không mã hoá; cấu trúc đúng; bản cũ trong `Bản cũ/`; tệp đã xoá không có |
 | B15 | Thuyền viên trùng tên, tên có ký tự `/:?` | Hai thư mục khác nhau nhờ mã; ký tự cấm bị bỏ |
 | B16 | Nhân viên không có quyền xuất hàng loạt | Không thấy nút xuất nhiều / xuất toàn bộ |
+| B18 | Đang sao lưu thì: đầy ổ / rút USB / tắt điện | Không có bản sao lưu dở được tính là xong; lần sau sao lưu lại bình thường |
+| B19 | Sao lưu thứ Hai → gỡ nhân viên X thứ Ba → khôi phục bản thứ Hai | X không vào được; mọi máy nhân viên phải ghép lại |
+| B20 | Job xoá tệp tới hạn chạy giữa lúc sao lưu đang chép tệp | Bản sao lưu đủ tệp |
 | B17 | Tìm trong mã nguồn backend lệnh `fs` ghi thẳng vào kho tệp ngoài lớp kho tệp | Test tự động báo lỗi |
 
 **Nhóm C — Bảo vệ code**
@@ -727,7 +736,10 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | E7 | Quản trị mời email mới với vai trò X | Thư mời tới từ máy chủ dịch vụ; người đó đăng ký, đăng nhập app, vào văn phòng với vai trò X |
 | E8 | Quản trị tắt một nhân viên | Phiên của người đó bị chặn ngay ở thao tác kế tiếp |
 | E9 | Đăng xuất | Lần mở sau phải đăng nhập qua trình duyệt; mã PIN cũ không dùng được |
-| E10 | Tìm mật khẩu / vé trong `localStorage` và các tệp của app | Không có |
+| E11 | Vé còn 1 ngày offline, đóng mở app / xin phiên mới nhiều lần khi mất mạng | Hết đúng mốc cũ, không được kéo dài |
+| E12 | Sai PIN 5 lần khi trình duyệt vẫn đang đăng nhập Google | Vẫn bắt nhập lại mật khẩu / xác thực Google |
+| E13 | Gỡ máy nhân viên rồi máy đó xin ghép lại ngay | Chờ quản trị duyệt |
+| E10 | Tìm mật khẩu / vé trong `localStorage` và các tệp của app | Không có vé / mật khẩu **dạng rõ** (bản đã mã hoá trong két được phép) |
 
 **Nhóm F — Phát hành và cập nhật**
 
@@ -807,3 +819,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-11 | — | Chốt Q4, Q6 | PostgreSQL; không đóng gói LibreOffice / Thunderbird |
 | 2026-11-11 | — | Bổ sung cách làm việc + bước chi tiết giai đoạn 0 | Các giai đoạn sau viết kế hoạch chi tiết riêng trước khi làm |
 | 2026-11-11 | — | Sửa theo review + đăng nhập qua trình duyệt (Q11–Q13) | Khoá dữ liệu trong bản sao lưu; sao lưu nhất quán; ghép máy hai chiều + mã thiết bị; chống ghi đè; lớp kho tệp; cập nhật đủ hai hệ điều hành + ký riêng; tiêu chí chống crack theo nền tảng; giai đoạn 0 thêm cập nhật, sao lưu khác máy, đăng nhập; ước lượng 16–20 tuần |
+| 2026-11-11 | — | Sửa theo review lần 2 | Khoá gói sao lưu mở được bằng mã khôi phục; khoá chống xoá tệp suốt lúc sao lưu; chặn ghi trước khi sao lưu cập nhật; mốc offline 7 ngày gắn vào JWT; PIN sai bắt xác thực lại thật; ghép lại sau khi gỡ cần duyệt; khôi phục không trả quyền đã thu hồi; giới hạn két hệ điều hành; sắp lại thứ tự giai đoạn 0/2/3 |

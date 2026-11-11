@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App máy tính GĐ1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe giai đoạn 1 app máy tính (docs/mcah-ke-hoach-desktop-gd1.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1360px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 72ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 80ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; color: var(--foreground); max-width: 80ch; }
+  .notes li { margin-bottom: 4px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .titlebar { display: flex; align-items: center; gap: 16px; padding: 6px 12px; background: #2f3237; color: #e8e8ea; font-size: 12px; }
+  .titlebar .menu span { margin-right: 14px; }
+  .titlebar .dots { margin-left: auto; letter-spacing: 6px; }
+  .shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 460px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { padding: 0; display: grid; grid-template-rows: auto 1fr; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .topbar .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+  .page { padding: 20px; display: grid; gap: 16px; align-content: start; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .card h4 { margin: 0 0 12px; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: grid; gap: 4px; font-size: 13px; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); min-height: 36px; }
+  .input.area { min-height: 90px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 6px 4px; }
+  .btn.dis { opacity: .45; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--secondary); font-size: 12px; }
+  .radio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .radio.on { border-color: var(--primary); background: var(--primary-light); }
+  .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-strong); margin-top: 2px; flex-shrink: 0; }
+  .radio.on .dot { border: 5px solid var(--primary); }
+  .banner { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .banner.ok { background: var(--success-bg); color: var(--success); }
+  .banner.err { background: var(--error-bg); color: var(--error-strong); }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(560px, 100%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 14px; }
+  .modal.wide { width: min(720px, 100%); }
+  .modal h4 { margin: 0; font-size: 16px; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .files { display: grid; gap: 6px; }
+  .file { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+  .file .muted { margin-left: auto; }
+  .progress { height: 6px; border-radius: 3px; background: var(--secondary); overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 45%; background: var(--primary); }
+  .dropdown { position: absolute; right: 16px; top: 52px; width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-modal); padding: 6px; font-size: 13px; }
+  .dropdown div { padding: 8px 10px; border-radius: var(--radius-sm); }
+  .dropdown .on { background: var(--secondary); font-weight: 600; }
+  .dropdown hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+  .splash { min-height: 420px; display: grid; place-items: center; background: var(--background); }
+  .splash .box { width: min(480px, 100%); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 14px; text-align: left; }
+  .code { font-family: ui-monospace, monospace; font-size: 12px; background: var(--secondary); padding: 8px 10px; border-radius: var(--radius-sm); }
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .shell { grid-template-columns: 1fr; } .side { display: none; } .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">GĐ1 app máy tính</p>
+    <a href="#w1"><b>1</b>Gửi chủ tàu qua app mail</a>
+    <a href="#w2"><b>2</b>Đã gửi thư chưa?</a>
+    <a href="#w3"><b>3</b>Máy chưa có app mail</a>
+    <a href="#w4"><b>4</b>Cài đặt trên máy này</a>
+    <a href="#w5"><b>5</b>Cài thành phần xuất PDF</a>
+    <a href="#w6"><b>6</b>Tạo tài khoản (tạm)</a>
+    <a href="#w7"><b>7</b>App không khởi động được</a>
+  </nav>
+
+  <main class="main">
+    <header>
+      <h1>App máy tính — giai đoạn 1 (một máy)</h1>
+      <p class="lead">Chỉ những chỗ khác bản web. Mọi màn khác giữ nguyên. Dựng trên màn và control đang có: hộp soạn thư của Cơ hội (<code>ComposeMailModal</code>), hộp xác nhận kiểu <code>Modal</code> của antd, trang theo khung Quản trị. Chỉ cần chạy tốt trên màn máy tính.</p>
+    </header>
+
+    <!-- W1 -->
+    <section id="w1">
+      <h2><b>1</b> Gửi chủ tàu: mở thư trong app mail của máy</h2>
+      <p class="why">Giữ hộp soạn thư hiện có (người nhận, CC, tiêu đề, nội dung). Khác bản web: nút chính là <b>Mở trong app mail</b>, hồ sơ từng người (.zip) tự đính kèm. Bỏ nút đính kèm thêm: người dùng tự thêm trong app mail.</p>
+      <div class="app">
+        <div class="titlebar"><span class="menu"><span>Tài khoản</span><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div>
+        <div class="shell">
+          <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Cơ hội</div><div class="it">Chuyến tàu</div><div class="it">Hợp đồng</div></div>
+          <div class="content">
+            <div class="topbar"><h3>CH-0012 · Bulk carrier, 3/O</h3><div class="user"><div class="avatar">HL</div>Hà Linh</div></div>
+            <div class="page"><div class="card" style="min-height:300px"><h4>Ứng viên đã chọn</h4><p class="muted">… (màn chi tiết cơ hội như hiện nay)</p></div></div>
+          </div>
+          <div class="scrim">
+            <div class="modal wide" role="dialog" aria-label="Gửi hồ sơ cho chủ tàu">
+              <h4>Gửi hồ sơ cho chủ tàu</h4>
+              <div class="field">Đến <div class="input">ops@pacificbulk.com</div></div>
+              <div class="grid2"><div class="field">CC <div class="input"></div></div><div class="field">BCC <div class="input"></div></div></div>
+              <div class="field">Tiêu đề <div class="input">Đề xuất 2 ứng viên 3/O — MV Pacific Star</div></div>
+              <div class="field">Nội dung <div class="input area">Kính gửi anh/chị, …</div></div>
+              <div class="field">Tự đính kèm
+                <div class="files">
+                  <div class="file">📦 Nguyễn Văn An.zip <span class="muted">4,2 MB</span></div>
+                  <div class="file">📦 Trần Minh Đức.zip <span class="muted">3,8 MB</span></div>
+                </div>
+              </div>
+              <div class="foot"><span class="btn">Huỷ</span><span class="btn pri">✉ Mở trong app mail</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Bấm nút: app tạo hồ sơ .zip (như bây giờ), mở thư mới trong Outlook / Thunderbird với đủ người nhận, tiêu đề, nội dung và tệp. Hộp này đóng, chuyển sang hộp 2.</li>
+        <li>Cài đặt chọn "Gửi thẳng từ app" (hộp 4) thì nút chính là <b>Gửi</b> và còn nút đính kèm thêm, như bản web hiện nay.</li>
+        <li>Thư quá 20 MB: giữ thông báo hiện có ("Gửi bớt người mỗi thư").</li>
+      </ul>
+    </section>
+
+    <!-- W2 -->
+    <section id="w2">
+      <h2><b>2</b> Hỏi lại sau khi mở thư</h2>
+      <p class="why">App không biết người dùng đã bấm Gửi trong app mail chưa, nên hỏi một lần. Chỉ ghi "đã gửi" vào cơ hội khi người dùng chọn Đã gửi.</p>
+      <div class="app"><div class="shell" style="grid-template-columns:1fr; min-height:300px">
+        <div class="content"><div class="page"><div class="card" style="min-height:240px"><p class="muted">… màn chi tiết cơ hội …</p></div></div></div>
+        <div class="scrim">
+          <div class="modal" role="dialog" aria-label="Đã gửi thư chưa">
+            <h4>Đã gửi thư cho chủ tàu chưa?</h4>
+            <p style="margin:0">Thư đã mở trong app mail của máy. Bấm <b>Đã gửi</b> sau khi bạn gửi thư để ghi vào cơ hội.</p>
+            <div class="foot"><span class="btn">Chưa gửi</span><span class="btn pri">Đã gửi</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Đã gửi: ghi lần gửi như bây giờ (người nhận, tiêu đề, ứng viên). Chưa gửi: không ghi gì, thư vẫn còn trong app mail.</li>
+      </ul>
+    </section>
+
+    <!-- W3 -->
+    <section id="w3">
+      <h2><b>3</b> Máy chưa có app mail</h2>
+      <p class="why">Không mở được thư kèm tệp. App mở thư mục chứa hồ sơ để người dùng tự kéo vào thư, và chỉ đường cài Thunderbird.</p>
+      <div class="app"><div class="shell" style="grid-template-columns:1fr; min-height:300px">
+        <div class="content"><div class="page"><div class="card" style="min-height:240px"><p class="muted">…</p></div></div></div>
+        <div class="scrim">
+          <div class="modal" role="dialog" aria-label="Máy chưa có app mail">
+            <h4>Máy này chưa có app mail</h4>
+            <p style="margin:0">Đã mở thư mục chứa hồ sơ. Bạn kéo các tệp vào thư trong Gmail (trình duyệt) hoặc cài Thunderbird để lần sau app tự đính kèm.</p>
+            <div class="banner info">Dùng Gmail: cài Thunderbird rồi chọn "Đăng nhập bằng Google" khi thêm tài khoản.</div>
+            <div class="foot"><span class="btn">Đóng</span><span class="btn">Mở lại thư mục</span><span class="btn pri">Cài Thunderbird</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Cài Thunderbird</b> mở trang tải chính thức trong trình duyệt (không gói kèm, Q6).</li>
+        <li>Đóng hộp này thì vẫn hỏi "Đã gửi thư chưa?" như hộp 2.</li>
+      </ul>
+    </section>
+
+    <!-- W4 -->
+    <section id="w4">
+      <h2><b>4</b> Cài đặt trên máy này</h2>
+      <p class="why">Thiết lập theo từng máy, không theo văn phòng, nên đặt trong menu tài khoản (góc phải), không trong Quản trị. Giai đoạn 1 có hai mục: cách gửi email và thành phần xuất PDF.</p>
+      <div class="app">
+        <div class="shell">
+          <div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it">Tổng quan</div><div class="it">Thuyền viên</div></div>
+          <div class="content">
+            <div class="topbar"><h3>Cài đặt trên máy này</h3><div class="user"><div class="avatar">HL</div>Hà Linh ▾</div></div>
+            <div class="page">
+              <div class="card">
+                <h4>Gửi email</h4>
+                <div style="display:grid; gap:8px">
+                  <div class="radio on"><span class="dot"></span><div><b>Mở bằng app mail trên máy</b><div class="muted">Đang dùng: Thunderbird. Thư đi từ email của bạn trong app mail.</div></div></div>
+                  <div class="radio"><span class="dot"></span><div><b>Gửi thẳng từ app</b><div class="muted">Cần mật khẩu ứng dụng của email (Gmail, Outlook…).</div></div></div>
+                </div>
+                <div class="row" style="margin-top:12px"><span class="btn">Thử mở thư</span></div>
+              </div>
+              <div class="card">
+                <h4>Gửi thẳng từ app <span class="muted" style="font-weight:400">(hiện khi chọn cách này)</span></h4>
+                <div class="grid2">
+                  <div class="field">Loại email <div class="input">Gmail ▾</div></div>
+                  <div class="field">Email gửi <div class="input">halinh@congty.vn</div></div>
+                  <div class="field">Mật khẩu ứng dụng <div class="input">••••••••••••••••</div></div>
+                  <div class="field">Máy chủ, cổng <div class="input muted">smtp.gmail.com : 465 (tự điền)</div></div>
+                </div>
+                <div class="row" style="margin-top:12px"><span class="btn">Gửi thử cho tôi</span><span class="btn pri">Lưu</span></div>
+                <p class="muted" style="margin:10px 0 0">Mật khẩu cất trong két của hệ điều hành trên máy này, không lưu trong dữ liệu văn phòng.</p>
+              </div>
+              <div class="card">
+                <h4>Xuất PDF</h4>
+                <div class="banner ok">Đã có thành phần xuất PDF (LibreOffice 24.8).</div>
+              </div>
+            </div>
+          </div>
+          <div class="dropdown"><div class="muted">halinh@congty.vn · Môi giới</div><hr><div class="on">Cài đặt trên máy này</div><div>Kiểm tra bản mới</div><hr><div>Đăng xuất</div></div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Mặc định "Mở bằng app mail" nếu dò thấy Outlook / Thunderbird; không có thì mặc định "Gửi thẳng từ app" và hiện gợi ý cài Thunderbird.</li>
+        <li>Menu tài khoản thêm hai dòng "Cài đặt trên máy này", "Kiểm tra bản mới" (chỉ trong app máy tính). Menu Tài khoản trên thanh tiêu đề của giai đoạn 0 bỏ đi.</li>
+      </ul>
+    </section>
+
+    <!-- W5 -->
+    <section id="w5">
+      <h2><b>5</b> Xuất PDF khi máy chưa có LibreOffice</h2>
+      <p class="why">Xuất Excel luôn được. Xuất PDF cần LibreOffice (không gói kèm, Q6). Bấm bất kỳ nút xuất PDF nào khi chưa có thì hiện hộp này.</p>
+      <div class="app"><div class="shell" style="grid-template-columns:1fr; min-height:320px">
+        <div class="content"><div class="page"><div class="card" style="min-height:260px"><p class="muted">… màn Bộ hồ sơ / Gửi chủ tàu …</p></div></div></div>
+        <div class="scrim">
+          <div class="modal" role="dialog" aria-label="Cần cài thành phần xuất PDF">
+            <h4>Cần cài thành phần xuất PDF</h4>
+            <p style="margin:0">Xuất PDF dùng LibreOffice (miễn phí). Cài một lần trên máy này, khoảng 5–10 phút. Trong lúc chờ bạn vẫn xuất Excel được.</p>
+            <div class="banner warn">Máy sẽ hỏi mật khẩu quản trị để cài.</div>
+            <div style="display:grid; gap:6px"><span class="muted">Đang tải… 45%</span><div class="progress"><i></i></div></div>
+            <div class="foot"><span class="btn">Để sau</span><span class="btn pri dis">Đang cài…</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Trạng thái nút: <b>Cài ngay</b> → <b>Đang cài…</b> (thanh tiến độ) → hộp đóng, làm tiếp việc xuất PDF vừa bấm. Lỗi: hiện lý do + nút "Thử lại" + liên kết cài tay.</li>
+        <li>Ubuntu: cài gói LibreOffice của Ubuntu (hỏi mật khẩu). Windows: tải bộ cài chính thức của LibreOffice, Windows hỏi quyền quản trị.</li>
+      </ul>
+    </section>
+
+    <!-- W6 -->
+    <section id="w6">
+      <h2><b>6</b> Tạo tài khoản nhân viên (tạm, tới giai đoạn 2)</h2>
+      <p class="why">App máy tính chưa gửi được thư mời (thư mời chuyển sang máy chủ dịch vụ ở giai đoạn 2). Giữ màn Tài khoản hiện có; sau khi tạo, thay thông báo "đã gửi thư mời" bằng hộp này.</p>
+      <div class="app"><div class="shell" style="grid-template-columns:1fr; min-height:300px">
+        <div class="content"><div class="page"><div class="card" style="min-height:240px"><p class="muted">… Quản trị → Tài khoản …</p></div></div></div>
+        <div class="scrim">
+          <div class="modal" role="dialog" aria-label="Đã tạo tài khoản">
+            <h4>Đã tạo tài khoản cho nguyenan@congty.vn</h4>
+            <p style="margin:0">Người dùng đặt mật khẩu trên chính máy này. Bấm nút dưới, đưa máy cho người đó đặt mật khẩu rồi đăng nhập.</p>
+            <div class="foot"><span class="btn">Để sau</span><span class="btn pri">Mở trang đặt mật khẩu</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Nút mở trang Đặt mật khẩu hiện có (<code>/dat-mat-khau</code>) ngay trong app, đăng xuất quản trị trước. "Gửi lại thư mời" ở danh sách tài khoản đổi thành "Đặt mật khẩu" làm cùng việc.</li>
+      </ul>
+    </section>
+
+    <!-- W7 -->
+    <section id="w7">
+      <h2><b>7</b> App không khởi động được</h2>
+      <p class="why">Thay cho cửa sổ trắng hoặc app tự tắt. Hiện khi cơ sở dữ liệu hay phần xử lý không chạy được (đầy ổ, thư mục dữ liệu hỏng, phần mềm diệt virus chặn…).</p>
+      <div class="app"><div class="splash"><div class="box">
+        <h4 style="margin:0; font-size:16px">MCAH chưa mở được</h4>
+        <div class="banner err">Không khởi động được cơ sở dữ liệu.</div>
+        <p style="margin:0" class="muted">Thử: đóng app và mở lại; kiểm còn chỗ trống trên ổ đĩa; nếu vẫn lỗi, gửi mã lỗi và tệp nhật ký cho bộ phận hỗ trợ.</p>
+        <div class="code">Mã lỗi: DB_START · 2026-11-20 08:14</div>
+        <div class="row"><span class="btn">Mở thư mục nhật ký</span><span class="btn">Thoát</span><span class="btn pri">Thử lại</span></div>
+      </div></div></div>
+      <ul class="notes">
+        <li>Trong lúc khởi động (1–5 giây) hiện màn chờ có logo MCAH thay cho cửa sổ trắng.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+</body>
+</html>

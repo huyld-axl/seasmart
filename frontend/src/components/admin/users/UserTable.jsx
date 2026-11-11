@@ -8,11 +8,12 @@ import RowList from '../../ds/RowList'
 import { actionColumn } from '../../ds/actionColumn'
 import useAccountRights from '../../../hooks/useAccountRights'
 import useViewport from '../../../hooks/useViewport'
+import { isDesktop } from '../../../lib/desktop'
 
 const formatDate = (value) => (value ? new Date(value).toLocaleDateString('vi-VN') : '—')
 
 // Bảng tài khoản: họ tên là chữ chính (email dưới), vai trò là badge trung tính, tình trạng, cột Thao tác Xem / Sửa / Xoá.
-// Tài khoản Chờ kích hoạt có nút Gửi lại lời mời; khoá / mở khoá nằm trong form sửa.
+// Tài khoản Chờ kích hoạt có nút Gửi lại lời mời (app máy tính: Đặt mật khẩu ngay trên máy); khoá / mở khoá nằm trong form sửa.
 // Điện thoại (RowList): mỗi tài khoản một dòng, bấm dòng mở chi tiết, Xem / Sửa / Xoá gom vào menu ⋯.
 export default function UserTable({
   data,
@@ -66,7 +67,7 @@ export default function UserTable({
           <StatusBadge group="account" value={value} />
           {value === 'PENDING' && rights.canEdit(user) ? (
             <Button type="link" size="small" loading={resendingId === user.id} disabled={!!resendingId} onClick={(event) => { event.stopPropagation(); onResendInvite(user) }}>
-              Gửi lại lời mời
+              {isDesktop() ? 'Đặt mật khẩu' : 'Gửi lại lời mời'}
             </Button>
           ) : null}
         </span>

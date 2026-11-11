@@ -4,6 +4,7 @@ const { opportunityService } = require('../../services/opportunity.service')
 const seafarerSendService = require('../../services/seafarer_send.service')
 const submissionService = require('../../services/submission.service')
 const opportunityMailService = require('../../services/opportunity_mail.service')
+const { desktopSmtp } = require('../../utils/desktop_smtp')
 const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
 
 const NOT_FOUND = 'Không tìm thấy cơ hội'
@@ -217,11 +218,31 @@ async function opportunityRoutes(fastify) {
       }
     }
     if (!payload) throw { statusCode: 400, message: 'Thiếu nội dung thư' }
-    const result = await opportunityMailService.send(pool, request.params.id, opportunityMailService.parsePayload(payload), request.user, files)
-    const sendId = result.sends?.[0]?.id
-    if (sendId) seafarerSendService.keepCopies(pool, sendId, request.log).catch((error) => request.log.warn({ err: error, sendId }, 'Không giữ được bản đã gửi'))
+    const result = await opportunityMailService.send(pool, request.params.id, opportunityMailService.parsePayload(payload), request.user, files, desktopSmtp(request))
+    keepSendCopies(request, result)
     return result
   })
+
+  // App máy tính, cách "app mail" (docs/mcah-ke-hoach-desktop-gd1.md 3.5): ghi .zip từng người vào thư mục gửi thư,
+  // rồi ghi lần gửi khi người dùng xác nhận đã gửi trong app mail.
+  const candidateIdsBody = { type: 'object', required: ['candidate_ids'], properties: { candidate_ids: { type: 'array', minItems: 1, maxItems: 50, items: id } } }
+  fastify.post('/:id/mail/prepare', { ...can('send'), schema: { params: idParams, body: candidateIdsBody } }, async (request) => {
+    await inScope(request)
+    return opportunityMailService.prepare(pool, request.params.id, request.body.candidate_ids, request.user)
+  })
+  fastify.post('/:id/mail/record', { ...can('send'), schema: { params: idParams, body: { type: 'object' } } }, async (request) => {
+    await inScope(request)
+    const body = opportunityMailService.parsePayload(JSON.stringify(request.body))
+    const result = await opportunityMailService.record(pool, request.params.id, body, request.user)
+    keepSendCopies(request, result)
+    return result
+  })
+}
+
+// Giữ bản đã gửi của lần gửi vừa ghi (chạy nền, lỗi chỉ ghi log).
+function keepSendCopies(request, result) {
+  const sendId = result.sends?.[0]?.id
+  if (sendId) seafarerSendService.keepCopies(pool, sendId, request.log).catch((error) => request.log.warn({ err: error, sendId }, 'Không giữ được bản đã gửi'))
 }
 
 module.exports = opportunityRoutes

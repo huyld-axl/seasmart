@@ -27,6 +27,9 @@ export const opportunityApi = {
     for (const file of files) form.append('attachments', file)
     return api.post(`/opportunities/${id}/send-mail`, form, { timeout: 120000 }).then(data)
   },
+  // App máy tính, cách "app mail": ghi .zip từng người vào thư mục gửi thư (trả tên tệp), rồi ghi lần gửi khi người dùng xác nhận.
+  prepareMail: (id, candidateIds) => api.post(`/opportunities/${id}/mail/prepare`, { candidate_ids: candidateIds }, { timeout: 120000 }).then(data),
+  recordMail: (id, body) => api.post(`/opportunities/${id}/mail/record`, body).then(data),
   // Hồ sơ nộp của một ứng viên; ensurePack tạo / bổ sung bộ biểu mẫu theo yêu cầu.
   submission: (id, seafarerId) => api.get(`/opportunities/${id}/candidates/${seafarerId}/submission`).then(data),
   ensurePack: (id, seafarerId) => api.post(`/opportunities/${id}/candidates/${seafarerId}/submission/pack`).then(data),

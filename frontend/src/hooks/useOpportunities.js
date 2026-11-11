@@ -61,6 +61,8 @@ export function useOpportunityMutations() {
       ...options,
     }),
     sendMail: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.sendMail(id, body), ...options }),
+    prepareMail: useMutation({ mutationFn: ({ id, candidateIds }) => opportunityApi.prepareMail(id, candidateIds) }),
+    recordMail: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.recordMail(id, body), ...options }),
     place: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.place(id, body), ...options }),
   }
 }

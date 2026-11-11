@@ -1,8 +1,8 @@
 {
-  "name": "seasmart-desktop",
+  "name": "mcah-desktop",
   "version": "0.0.1",
   "private": true,
-  "description": "Vỏ Electron cho MCAH (giai đoạn 0: thử nhanh)",
+  "description": "App máy tính MCAH (Electron)",
   "main": "src/main.js",
   "scripts": {
     "build:frontend": "npm exec --prefix ../frontend -- vite build -c ../desktop/vite.frontend.config.mjs",
@@ -11,7 +11,8 @@
     "stage:win": "node scripts/stage.js win",
     "dist:linux": "npm run build:frontend && npm run stage:linux && electron-builder --linux deb",
     "dist:win": "npm run build:frontend && npm run stage:win && electron-builder --win nsis",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "test": "node --test test/*.test.js"
   },
   "devDependencies": {
     "electron": "^39.8.10",
@@ -37,6 +38,7 @@
     "files": [
       "src/**",
       "dist/frontend/**",
+      "build/icon.png",
       "package.json"
     ],
     "extraResources": [
@@ -63,7 +65,8 @@
     "linux": {
       "target": "deb",
       "category": "Office",
-      "executableName": "mcah"
+      "executableName": "mcah",
+      "icon": "build/icon.png"
     },
     "deb": {
       "depends": [
@@ -71,10 +74,15 @@
         "libgtk-3-0",
         "libxss1",
         "libasound2t64 | libasound2"
+      ],
+      "fpm": [
+        "--replaces=seasmart-desktop",
+        "--conflicts=seasmart-desktop"
       ]
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -89,5 +97,6 @@
   "dependencies": {
     "koffi": "^3.3.7",
     "pg": "8.23.1"
-  }
+  },
+  "desktopName": "mcah.desktop"
 }

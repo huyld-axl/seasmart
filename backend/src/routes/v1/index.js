@@ -20,6 +20,7 @@ const kpiTargetRoutes = require('./kpi_target.routes')
 
 async function v1Routes(fastify) {
   fastify.register(authRoutes, { prefix: '/auth' })
+  fastify.register(require('./system.routes'), { prefix: '/system' })
   // App máy tính, giai đoạn 0: nhận vé đăng nhập từ máy chủ dịch vụ. Không có khoá công khai thì không đăng ký.
   if (process.env.DESKTOP_TICKET_PUBLIC_KEY) {
     fastify.register(require('./desktop_ticket.routes'), { prefix: '/auth', publicKeyPem: process.env.DESKTOP_TICKET_PUBLIC_KEY })

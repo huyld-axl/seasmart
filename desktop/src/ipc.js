@@ -1,0 +1,98 @@
+// Các việc giao diện nhờ app làm (GĐ1 mục 3.1). Mỗi kênh kiểm dữ liệu vào: kiểu, độ dài; tệp chỉ nhận tên trong
+// thư mục gửi thư; địa chỉ ngoài chỉ nhận vài trang cố định.
+const path = require('path')
+const { app, ipcMain, shell } = require('electron')
+const { openMail, attachmentDir, defaultMailApp } = require('./mail')
+const { getSettings, saveSettings } = require('./settings')
+const { findSoffice, installSoffice } = require('./pdf-component')
+
+const EXTERNAL = {
+  thunderbird: 'https://www.thunderbird.net/vi/download/',
+  libreoffice: 'https://vi.libreoffice.org/download/download/',
+}
+const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+$/
+
+function str(v, max, name) {
+  if (typeof v !== 'string' || v.length > max) throw new Error(`${name} không hợp lệ`)
+  return v
+}
+
+function emails(list, name) {
+  if (list === undefined) return []
+  if (!Array.isArray(list) || list.length > 50 || !list.every((a) => typeof a === 'string' && EMAIL.test(a))) throw new Error(`${name} không hợp lệ`)
+  return list
+}
+
+function checkMail(m) {
+  if (!m || typeof m !== 'object') throw new Error('Thư không hợp lệ')
+  const files = m.files || []
+  if (!Array.isArray(files) || files.length > 50 || !files.every((f) => typeof f === 'string' && f.length < 255 && !/[\\/]/.test(f) && f !== '..' && path.basename(f) === f)) {
+    throw new Error('Tệp đính kèm không hợp lệ')
+  }
+  return {
+    to: emails(m.to, 'Người nhận'),
+    cc: emails(m.cc, 'CC'),
+    bcc: emails(m.bcc, 'BCC'),
+    subject: str(m.subject ?? '', 500, 'Tiêu đề'),
+    body: str(m.body ?? '', 20000, 'Nội dung'),
+    files,
+  }
+}
+
+function checkSettings(s) {
+  if (!s || typeof s !== 'object') throw new Error('Cài đặt không hợp lệ')
+  const out = {}
+  if (s.mailMode !== undefined) {
+    if (!['app', 'smtp'].includes(s.mailMode)) throw new Error('Cách gửi email không hợp lệ')
+    out.mailMode = s.mailMode
+  }
+  if (s.smtp !== undefined) {
+    const { provider, user, host, port, secure } = s.smtp || {}
+    if (!['gmail', 'outlook', 'other'].includes(provider)) throw new Error('Loại email không hợp lệ')
+    if (typeof user !== 'string' || !EMAIL.test(user)) throw new Error('Email gửi không hợp lệ')
+    out.smtp = { provider, user }
+    if (provider === 'other') {
+      out.smtp.host = str(host, 255, 'Máy chủ')
+      if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Cổng không hợp lệ')
+      out.smtp.port = port
+      out.smtp.secure = Boolean(secure)
+    }
+  }
+  if (s.smtpPassword !== undefined) out.smtpPassword = str(s.smtpPassword, 256, 'Mật khẩu')
+  return out
+}
+
+// hooks: { relaunch, openLogs, restartBackend(sofficePath), checkUpdate }
+function registerIpc(hooks) {
+  const handle = (channel, fn) => ipcMain.handle(`mcah:${channel}`, (event, arg) => fn(arg, event))
+  handle('open-mail', (m) => openMail(checkMail(m)))
+  handle('mail-status', () => ({ app: defaultMailApp() }))
+  handle('open-mail-folder', () => shell.openPath(attachmentDir()))
+  handle('open-external', (kind) => {
+    if (!EXTERNAL[kind]) throw new Error('Địa chỉ không hợp lệ')
+    return shell.openExternal(EXTERNAL[kind])
+  })
+  handle('pdf-component', () => ({ installed: Boolean(findSoffice()) }))
+  let installing = null
+  handle('install-pdf-component', (_arg, event) => {
+    if (!installing) {
+      installing = installSoffice((p) => event.sender.send('mcah:pdf-install-progress', p))
+        .then(async (soffice) => {
+          await hooks.restartBackend(soffice)
+          return { installed: true }
+        })
+        .finally(() => {
+          installing = null
+        })
+    }
+    return installing
+  })
+  handle('get-settings', () => getSettings())
+  handle('save-settings', (s) => saveSettings(checkSettings(s)))
+  handle('check-update', () => hooks.checkUpdate())
+  handle('startup-retry', () => hooks.relaunch())
+  handle('open-logs', () => hooks.openLogs())
+  handle('quit', () => app.quit())
+}
+
+module.exports = { registerIpc, checkMail, checkSettings }

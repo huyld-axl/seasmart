@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt')
 const pool = require('../config/db')
 const { ADMIN_ROLE_CODE } = require('../constants/permissions')
 const emailService = require('./email.service')
+const config = require('../config')
 
 const SALT_ROUNDS = 10
 
@@ -32,7 +33,10 @@ async function issueInviteToken(db, userId) {
   return token
 }
 
+// App máy tính chưa gửi thư mời (giai đoạn 2 chuyển sang máy chủ dịch vụ): trả mã cho quản trị mở trang đặt
+// mật khẩu ngay trên máy (docs/mcah-ke-hoach-desktop-gd1.md 3.7). Bản web gửi thư như cũ.
 async function sendInvite(user, token) {
+  if (config.desktop) return { invite_token: token }
   await emailService.sendInvite({
     to: user.email,
     fullName: user.full_name || user.email,
@@ -154,15 +158,13 @@ async function createUser(data, actor, db = pool) {
   )
   const token = await issueInviteToken(db, result.insertId)
   const user = await getUserById(result.insertId, db)
-  await sendInvite(user, token)
-  return user
+  return { ...user, ...(await sendInvite(user, token)) }
 }
 
 async function resendInvite(id, db = pool) {
   const user = await loadTarget(db, id)
   if (user.status !== 'PENDING') throw fail(400, 'Tài khoản này đã kích hoạt')
-  await sendInvite(user, await issueInviteToken(db, id))
-  return user
+  return { ...user, ...(await sendInvite(user, await issueInviteToken(db, id))) }
 }
 
 async function findPendingByToken(db, token) {

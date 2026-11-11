@@ -180,6 +180,11 @@
   }
 </style>
 <!-- Trang hướng dẫn duy nhất của app (đã gộp tong-quan.html, hop-dong-va-chuyen.html, dien-thoai.html ngày 10/11/2026). App mở thẳng tới mục bằng #id (HelpLink.jsx). Quyền lấy từ backend/src/constants/permissions.js. -->
+<style>
+  /* Mục "Ứng dụng trên máy tính": chỉ hiện khi trang mở trong app máy tính (giao thức app:), bản web giữ nguyên. */
+  html:not(.trong-app) .chi-app { display: none !important; }
+</style>
+<script>if (location.protocol === 'app:') document.documentElement.classList.add('trong-app')</script>
 </head>
 <body>
 <aside class="side" id="side" aria-label="Mục lục">
@@ -213,6 +218,7 @@
     <a href="#phan-quyen">Vai trò và quyền</a>
     <a href="#muc-tieu">Mục tiêu tháng</a>
     <p>Khác</p>
+    <a href="#app-may-tinh" class="chi-app">Ứng dụng trên máy tính</a>
     <a href="#dien-thoai">Dùng trên điện thoại</a>
     <a href="#hoi-dap">Hỏi đáp</a>
     <span class="empty" id="toc-empty">Không có mục nào khớp.</span>
@@ -760,6 +766,40 @@
     </section>
 
     <!-- ================= KHÁC ================= -->
+    <section id="app-may-tinh" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00</div>
+  <h2>Ứng dụng trên máy tính</h2>
+  <p>MCAH cài trên máy tính Windows hoặc Ubuntu như một phần mềm bình thường. Dữ liệu của văn phòng nằm ngay trên máy, không cần mạng để làm việc hằng ngày. Các màn và cách dùng giống hệt bản trên trình duyệt; mục này chỉ nói những chỗ khác.</p>
+
+  <h3>Mở app</h3>
+  <ul>
+    <li>Mở <b>MCAH</b> từ danh sách ứng dụng của máy. Lần đầu mất vài giây để chuẩn bị dữ liệu.</li>
+    <li>App đã mở rồi thì bấm lại biểu tượng chỉ đưa cửa sổ lên trước, không mở thêm cửa sổ.</li>
+    <li>App báo <b>MCAH chưa mở được</b> thì bấm <span class="ui">Thử lại</span>. Vẫn lỗi thì xem ổ đĩa còn chỗ trống, rồi gửi mã lỗi trên màn cho bộ phận hỗ trợ.</li>
+  </ul>
+
+  <h3>Gửi hồ sơ cho chủ tàu bằng app mail của bạn</h3>
+  <p>Ở cơ hội, <span class="ui">Gửi chủ tàu</span> mở hộp soạn thư như thường. Bấm <span class="ui">Mở trong app mail</span>: app mail trên máy (Outlook hoặc Thunderbird) mở một thư mới đã điền người nhận, tiêu đề, nội dung và tự đính kèm hồ sơ từng ứng viên. Bạn xem lại, thêm tệp nếu cần, rồi bấm Gửi trong app mail. Thư đi từ chính email của bạn.</p>
+  <p>Quay lại MCAH, chọn <span class="ui">Đã gửi</span> để ghi lần gửi vào cơ hội. Chưa gửi thì chọn <span class="ui">Chưa gửi</span>.</p>
+  <p class="note" style="padding:10px 14px;border-radius:10px;background:#eff6ff">Máy chưa có app mail: MCAH mở thư mục chứa hồ sơ để bạn kéo vào thư (ví dụ Gmail trên trình duyệt). Muốn lần sau tự đính kèm thì bấm <span class="ui">Cài Thunderbird</span>; người dùng Gmail chọn "Đăng nhập bằng Google" khi thêm tài khoản vào Thunderbird.</p>
+
+  <h3>Cài đặt trên máy này</h3>
+  <p>Bấm tên của bạn ở góc phải → <span class="ui">Cài đặt trên máy này</span>. Cài đặt chỉ áp dụng cho máy đang dùng.</p>
+  <ul>
+    <li><b>Mở bằng app mail trên máy</b> (mặc định khi máy có Outlook hoặc Thunderbird).</li>
+    <li><b>Gửi thẳng từ app</b>: khai email và <b>mật khẩu ứng dụng</b> của email (Gmail, Outlook tạo trong phần bảo mật tài khoản), bấm <span class="ui">Gửi thử cho tôi</span> để kiểm. Mật khẩu được cất trong két mật khẩu của máy.</li>
+  </ul>
+
+  <h3>Xuất PDF</h3>
+  <p>Xuất PDF cần thành phần miễn phí LibreOffice. Máy chưa có thì lần đầu bấm tải PDF, MCAH hỏi <b>Cần cài thành phần xuất PDF</b>: bấm <span class="ui">Cài ngay</span>, nhập mật khẩu quản trị của máy khi được hỏi, chờ vài phút. Cài xong MCAH tự tải tiếp tệp PDF bạn vừa bấm. Trong lúc chờ bạn vẫn tải Excel được.</p>
+
+  <h3>Thông báo</h3>
+  <p>Giấy tờ, chứng chỉ, hợp đồng sắp hết hạn được báo bằng thông báo của máy (góc màn hình), kể cả khi cửa sổ MCAH đang thu nhỏ. Bấm vào thông báo để mở đúng hồ sơ. Máy tắt qua đêm thì sáng mở app, MCAH tự kiểm và báo bù.</p>
+
+  <h3>Tạo tài khoản cho đồng nghiệp</h3>
+  <p>Quản trị → Tài khoản → tạo tài khoản như thường. Bản máy tính chưa gửi thư mời: sau khi tạo, bấm <span class="ui">Mở trang đặt mật khẩu</span> và để người đó đặt mật khẩu ngay trên máy, rồi đăng nhập.</p>
+</section>
+
     <section id="dien-thoai" data-jobs="mg dy kt qt">
       <div class="kicker">Khác · 01</div>
       <h2>Dùng trên điện thoại</h2>

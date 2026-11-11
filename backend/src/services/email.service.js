@@ -55,8 +55,27 @@ async function send({ to, cc, bcc, replyTo, fromName: displayName, subject, html
   return true
 }
 
+// Gửi bằng SMTP của chính người gửi (app máy tính, Cài đặt trên máy này). smtp: { host, port, secure, user, password }.
+// Kết nối tạo mới mỗi lần, không giữ lại, để mật khẩu không nằm trong bộ nhớ lâu hơn một lần gửi.
+async function sendWith(smtp, { to, cc, bcc, replyTo, fromName, subject, html, text, attachments }) {
+  const transport = nodemailer.createTransport({
+    host: smtp.host,
+    port: smtp.port,
+    secure: Boolean(smtp.secure),
+    requireTLS: !smtp.secure,
+    auth: { user: smtp.user, pass: smtp.password },
+  })
+  try {
+    await transport.sendMail({ from: { name: fromName || smtp.user, address: smtp.user }, to, cc, bcc, replyTo, subject, html, text, attachments })
+  } finally {
+    transport.close()
+  }
+  return true
+}
+
 const emailService = {
   send,
+  sendWith,
   isConfigured: shouldSend,
 
   // Thư mời đặt mật khẩu cho tài khoản mới. `token` là mã gốc, chỉ có trong thư.

@@ -1,8 +1,9 @@
-// Mở thư mới trong app mail của máy, tự đính kèm tệp (mục 8.1; giai đoạn 0, bước 0.10).
+// Mở thư mới trong app mail của máy, tự đính kèm tệp (mục 8.1 kế hoạch tổng; GĐ1 mục 3.5).
 //   Ubuntu: Thunderbird qua `thunderbird -compose`; Evolution và app khác qua xdg-email --attach.
 //   Windows: Simple MAPI (MAPISendMail trong MAPI32.DLL) qua koffi — Outlook bản Office, Thunderbird.
 // Tệp đính kèm phải nằm ở chỗ app mail đọc được: Thunderbird bản snap trên Ubuntu không đọc /tmp và thư mục ẩn
-// (~/.config/...), nên bản tạm để gửi thư nằm trong thư mục thường của người dùng (attachmentDir).
+// (~/.config/...), nên tệp gửi thư nằm trong thư mục thường của người dùng (attachmentDir). Backend ghi .zip vào đó
+// (MAIL_DIR); giao diện chỉ gửi tên tệp, không gửi đường dẫn.
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
@@ -10,18 +11,39 @@ const { execFile, execFileSync, spawn } = require('child_process')
 const { pathToFileURL } = require('url')
 const { shell } = require('electron')
 
-// Chỗ để bản tạm gửi thư: ~/MCAH/Tệp gửi thư (Windows: thư mục tạm của người dùng là được).
+const KEEP_MS = 24 * 3600 * 1000
+
+// ~/MCAH/Tệp gửi thư (Ubuntu) hoặc %LOCALAPPDATA%\MCAH\Tệp gửi thư (Windows).
 function attachmentDir() {
-  const dir = process.platform === 'win32' ? path.join(os.tmpdir(), 'MCAH-gui-thu') : path.join(os.homedir(), 'MCAH', 'Tệp gửi thư')
+  const base = process.platform === 'win32' ? process.env.LOCALAPPDATA || os.tmpdir() : os.homedir()
+  const dir = path.join(base, 'MCAH', 'Tệp gửi thư')
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   return dir
 }
 
-// App mail mặc định (Ubuntu), null nếu chưa có.
+// Xoá tệp gửi thư cũ hơn 24 giờ (gọi lúc mở app).
+function cleanAttachmentDir(now = Date.now()) {
+  const dir = attachmentDir()
+  for (const name of fs.readdirSync(dir)) {
+    const file = path.join(dir, name)
+    try {
+      if (now - fs.statSync(file).mtimeMs > KEEP_MS) fs.rmSync(file, { recursive: true, force: true })
+    } catch {}
+  }
+}
+
+// App mail mặc định, null nếu chưa có. Ubuntu: tên tệp .desktop của mailto; Windows: tên trong Clients\Mail.
 function defaultMailApp() {
-  if (process.platform === 'win32') return null
   try {
-    return execFileSync('xdg-mime', ['query', 'default', 'x-scheme-handler/mailto']).toString().trim() || null
+    if (process.platform !== 'win32') return execFileSync('xdg-mime', ['query', 'default', 'x-scheme-handler/mailto']).toString().trim() || null
+    for (const hive of ['HKCU', 'HKLM']) {
+      try {
+        const out = execFileSync('reg', ['query', `${hive}\\Software\\Clients\\Mail`, '/ve']).toString()
+        const name = /REG_SZ\s+(.+)/.exec(out)?.[1]?.trim()
+        if (name) return name
+      } catch {}
+    }
+    return null
   } catch {
     return null
   }
@@ -34,9 +56,11 @@ function thunderbirdBinary() {
   return null
 }
 
-function composeArg({ to, subject, body, attachments }) {
+function composeArg({ to, cc, bcc, subject, body, attachments }) {
   const q = (v) => `'${String(v).replace(/'/g, '’')}'`
   const parts = [`to=${q(to.join(','))}`, `subject=${q(subject)}`, `body=${q(body)}`]
+  if (cc.length) parts.push(`cc=${q(cc.join(','))}`)
+  if (bcc.length) parts.push(`bcc=${q(bcc.join(','))}`)
   if (attachments.length) parts.push(`attachment=${q(attachments.map((f) => pathToFileURL(f).href).join(','))}`)
   return parts.join(',')
 }
@@ -52,21 +76,23 @@ function run(cmd, args) {
   })
 }
 
-function openLinux({ to = [], subject = '', body = '', attachments = [] }) {
+function openLinux(mail) {
   const app = defaultMailApp() || ''
   const thunderbird = /thunderbird/i.test(app) && thunderbirdBinary()
-  if (thunderbird) return run(thunderbird, ['-compose', composeArg({ to, subject, body, attachments })])
+  if (thunderbird) return run(thunderbird, ['-compose', composeArg(mail)])
   // Evolution và app khác: xdg-email (Evolution nhận attach trong mailto).
-  const args = ['--utf8', '--subject', subject, '--body', body]
-  for (const file of attachments) args.push('--attach', file)
-  args.push(...(to.length ? to : ['']))
+  const args = ['--utf8', '--subject', mail.subject, '--body', mail.body]
+  for (const addr of mail.cc) args.push('--cc', addr)
+  for (const addr of mail.bcc) args.push('--bcc', addr)
+  for (const file of mail.attachments) args.push('--attach', file)
+  args.push(...(mail.to.length ? mail.to : ['']))
   return new Promise((resolve, reject) => {
     execFile('xdg-email', args, (error, _out, stderr) => (error ? reject(new Error(stderr || error.message)) : resolve()))
   })
 }
 
-// MAPISendMail: chỉ có trên Windows; chưa thử được ở giai đoạn 0 trên Ubuntu.
-function openWindows({ to = [], subject = '', body = '', attachments = [] }) {
+// MAPISendMail: chỉ có trên Windows; chưa thử được trên Ubuntu.
+function openWindows({ to, cc, bcc, subject, body, attachments }) {
   const koffi = require('koffi')
   const lib = koffi.load('MAPI32.DLL')
   const MapiRecipDesc = koffi.struct('MapiRecipDesc', {
@@ -81,14 +107,14 @@ function openWindows({ to = [], subject = '', body = '', attachments = [] }) {
     lpRecips: koffi.pointer(MapiRecipDesc), nFileCount: 'uint32', lpFiles: koffi.pointer(MapiFileDesc),
   })
   const MAPISendMail = lib.func('uint32 __stdcall MAPISendMail(uintptr, uintptr, MapiMessage *, uint32, uint32)')
-  const MAPI_TO = 1
   const MAPI_LOGON_UI = 0x1
   const MAPI_DIALOG = 0x8
+  const recips = [[to, 1], [cc, 2], [bcc, 3]].flatMap(([list, cls]) => list.map((addr) => ({ ulRecipClass: cls, lpszName: addr, lpszAddress: `SMTP:${addr}` })))
   const message = {
     lpszSubject: subject,
     lpszNoteText: body,
-    nRecipCount: to.length,
-    lpRecips: to.map((addr) => ({ ulRecipClass: MAPI_TO, lpszName: addr, lpszAddress: `SMTP:${addr}` })),
+    nRecipCount: recips.length,
+    lpRecips: recips,
     nFileCount: attachments.length,
     lpFiles: attachments.map((file) => ({ nPosition: 0xffffffff, lpszPathName: file, lpszFileName: path.basename(file) })),
   }
@@ -102,20 +128,22 @@ function openWindows({ to = [], subject = '', body = '', attachments = [] }) {
   })
 }
 
-// Mở thư kèm tệp. Không có app mail: mở thư mục chứa tệp để kéo thả, báo cho người gọi hiện nút "Cài Thunderbird".
-async function openMail(mail) {
+// Mở thư kèm tệp. files: tên tệp trong attachmentDir (không nhận đường dẫn). Không có app mail: mở thư mục chứa tệp
+// để kéo thả và trả opened: false để giao diện hiện nút "Cài Thunderbird".
+async function openMail({ to = [], cc = [], bcc = [], subject = '', body = '', files = [] }) {
   const dir = attachmentDir()
-  const attachments = (mail.attachments || []).map((file) => {
-    const copy = path.join(dir, path.basename(file))
-    fs.copyFileSync(file, copy)
-    return copy
+  const attachments = files.map((name) => {
+    if (/[\\/]/.test(name) || name === '..' || path.basename(name) !== name) throw new Error('Tên tệp đính kèm không hợp lệ')
+    const file = path.join(dir, name)
+    if (!fs.existsSync(file)) throw new Error(`Không thấy tệp ${name}`)
+    return file
   })
-  if (process.platform !== 'win32' && !defaultMailApp()) {
-    shell.openPath(dir)
-    return { opened: false, folder: dir }
+  if (!defaultMailApp()) {
+    await shell.openPath(dir)
+    return { opened: false }
   }
-  await (process.platform === 'win32' ? openWindows : openLinux)({ ...mail, attachments })
-  return { opened: true, folder: dir }
+  await (process.platform === 'win32' ? openWindows : openLinux)({ to, cc, bcc, subject, body, attachments })
+  return { opened: true }
 }
 
-module.exports = { openMail, attachmentDir, defaultMailApp }
+module.exports = { openMail, attachmentDir, cleanAttachmentDir, defaultMailApp }

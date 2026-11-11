@@ -6,7 +6,8 @@ const v1Routes = require('./src/routes/v1')
 const { startJobs } = require('./src/jobs')
 const { documentService } = require('./src/services/document.service')
 
-const fastify = Fastify({ logger: true })
+// App máy tính: không ghi log từng request (đường dẫn có thể chứa tên, số giấy tờ trong ô tìm kiếm).
+const fastify = Fastify({ logger: config.desktop ? { level: 'warn' } : true })
 
 // Error handler — phân biệt lỗi user-facing vs internal
 fastify.setErrorHandler((error, request, reply) => {
@@ -24,6 +25,7 @@ fastify.setErrorHandler((error, request, reply) => {
   // 4xx: lỗi do client, trả về message an toàn
   return reply.code(statusCode).send({
     error: error.message || 'Yêu cầu không hợp lệ',
+    ...(error.code && /^[A-Z_]+$/.test(error.code) ? { code: error.code } : {}),
     ...(error.blocked_bills ? { blocked_bills: error.blocked_bills } : {}),
   })
 })

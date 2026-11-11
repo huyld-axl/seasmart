@@ -7,13 +7,13 @@ const crypto = require('crypto')
 const { canonical } = require('../src/manifest')
 
 const DESKTOP = path.join(__dirname, '..')
-const { version, build } = require(path.join(DESKTOP, 'package.json'))
+const { name: pkgName, version, build } = require(path.join(DESKTOP, 'package.json'))
 const INSTALLERS = path.join(DESKTOP, build.directories.output)
 const OUT = path.join(DESKTOP, 'dist/updates')
 
 const key = require('./release-key').privateKey()
 const files = {}
-for (const [platform, name] of [['linux', `seasmart-desktop_${version}_amd64.deb`], ['win', `${build.productName} Setup ${version}.exe`]]) {
+for (const [platform, name] of [['linux', `${pkgName}_${version}_amd64.deb`], ['win', `${build.productName} Setup ${version}.exe`]]) {
   const src = path.join(INSTALLERS, name)
   if (!fs.existsSync(src)) continue
   const data = fs.readFileSync(src)

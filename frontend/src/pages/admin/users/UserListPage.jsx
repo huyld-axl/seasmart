@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { App, Button, Input, Select } from 'antd'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import UserTable from '../../../components/admin/users/UserTable'
 import UserForm from '../../../components/admin/users/UserForm'
 import useToast from '../../../components/ds/useToast'
+import useAuthStore from '../../../stores/authStore'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import ListFooter from '../../../components/ds/ListFooter'
 import Fab from '../../../components/ds/Fab'
@@ -38,6 +39,8 @@ export default function UserListPage() {
   const toast = useToast()
   const tableScroll = useListSticky()
   const { modal } = App.useApp()
+  const navigate = useNavigate()
+  const logout = useAuthStore((state) => state.logout)
 
   const { data, isLoading, isError, refetch } = useUsers(filters)
   const createUser = useCreateUser()
@@ -60,11 +63,27 @@ export default function UserListPage() {
     setPanelOpen(true)
   }
 
+  // App máy tính chưa gửi thư mời (wireframe 6, docs/mcah-ke-hoach-desktop-gd1.md 3.7): người dùng đặt mật khẩu ngay
+  // trên máy. Mở trang đặt mật khẩu sau khi đăng xuất quản trị.
+  const offerSetPassword = (email, token) =>
+    modal.confirm({
+      title: `Đã tạo tài khoản cho ${email}`,
+      content: 'Người dùng đặt mật khẩu trên chính máy này. Bấm nút dưới, đưa máy cho người đó đặt mật khẩu rồi đăng nhập.',
+      okText: 'Mở trang đặt mật khẩu',
+      cancelText: 'Để sau',
+      onOk: () => {
+        logout()
+        navigate(`/dat-mat-khau?token=${encodeURIComponent(token)}`)
+      },
+    })
+
   const handleSubmit = (values, form, addAnother) => {
     const name = values.full_name?.trim() || values.email
     const done = (text) => ({
-      onSuccess: () => {
-        toast.success(text)
+      onSuccess: (res) => {
+        const token = res?.invite_token
+        if (token) offerSetPassword(values.email, token)
+        else toast.success(text)
         if (addAnother) {
           form.resetFields()
           setFormKey((key) => key + 1)
@@ -93,7 +112,11 @@ export default function UserListPage() {
 
   const handleResend = (user) =>
     resendInvite.mutate(user.id, {
-      onSuccess: () => toast.success(`Đã gửi lại lời mời tới ${user.email}`),
+      onSuccess: (res) => {
+        const token = res?.data?.invite_token
+        if (token) offerSetPassword(user.email, token)
+        else toast.success(`Đã gửi lại lời mời tới ${user.email}`)
+      },
       onError: (error) => toast.error('Không gửi được lời mời', { description: errorText(error) }),
     })
 

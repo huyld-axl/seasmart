@@ -41,7 +41,9 @@ async function usersRoutes(fastify) {
     },
   }
   fastify.post('/:id/resend-invite', { ...guard(fastify, 'account.update'), config: resendLimit }, async (request, reply) => {
-    await userService.resendInvite(request.params.id)
+    const user = await userService.resendInvite(request.params.id)
+    // App máy tính: trả mã đặt mật khẩu để mở trang đặt mật khẩu ngay trên máy.
+    if (user.invite_token) return { invite_token: user.invite_token }
     return reply.code(204).send()
   })
 

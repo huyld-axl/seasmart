@@ -46,6 +46,7 @@ import StandaloneError from './pages/errors/StandaloneError'
 import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
 import KpiTargetPage from './pages/admin/settings/KpiTargetPage'
+import DeviceSettingsPage from './pages/admin/settings/DeviceSettingsPage'
 import ToastHost from './components/ds/ToastHost'
 
 const queryClient = new QueryClient({
@@ -104,6 +105,7 @@ function AppRoutes() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/cai-dat-may" element={<DeviceSettingsPage />} />
         <Route path="/seafarers" element={guard('seafarer.view', <SeafarerListPage />)} />
         <Route path="/seafarers/new" element={guard('seafarer.create', <SeafarerFormPage />)} />
         <Route

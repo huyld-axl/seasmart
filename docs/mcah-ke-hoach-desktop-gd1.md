@@ -1,7 +1,7 @@
 # MCAH — Kế hoạch app máy tính, giai đoạn 1: vỏ ứng dụng, một máy
 
 - **Ngày lập:** 2026-11-11
-- **Trạng thái:** chờ duyệt, chưa viết code.
+- **Trạng thái:** đã duyệt 2026-11-11; đã code bước 0–10 trên Ubuntu, chờ thử Windows và vài testcase tay (xem Nhật ký).
 - **Kế hoạch tổng:** `docs/mcah-ke-hoach-ung-dung-may-tinh.md`. Giai đoạn 1 ở mục 10; kết quả giai đoạn 0 ở mục 13.
 - **Wireframe:** `docs/design/wireframes/desktop-gd1.html` (7 màn).
 - **Testcase chạy tay:** `docs/mcah-testcase-desktop-gd1.md`.
@@ -239,3 +239,9 @@
 | Ngày | Bước | Việc | Ghi chú |
 |---|---|---|---|
 | 2026-11-11 | — | Lập kế hoạch, wireframe, testcase, hướng dẫn nháp | Chờ duyệt |
+| 2026-11-11 | 0 | Test gốc | backend 500, frontend 352 |
+| 2026-11-11 | 1–10 | Code trên Ubuntu | backend 507, frontend 356, desktop 5 test qua. Bản dev + bản đóng gói chạy: màn chờ, một cửa sổ, màn lỗi DB_START + Thử lại, cửa sổ hướng dẫn, `capabilities`, nhật ký xoay vòng, gửi chủ tàu qua Thunderbird + hỏi đã gửi + ghi lần gửi, đổi cách gửi, SMTP qua đường chuyển tiếp, hộp PDF + 424, tạo tài khoản trả mã đặt mật khẩu |
+| 2026-11-11 | — | Khác kế hoạch | (1) Cài `libreoffice-calc`, không `-nogui` (gói -nogui xung đột, có thể gỡ LibreOffice đầy đủ của người dùng). (2) Mật khẩu SMTP không đi qua giao diện: tiến trình chính gắn cấu hình vào header `x-mcah-smtp` khi chuyển tiếp `send-mail` / `smtp-test`. (3) Không có `capabilities/refresh`: cài LibreOffice xong thì app mở lại backend với `SOFFICE_PATH` mới. (4) Thêm `will-navigate`: `mailto:`, `tel:`, link ngoài mở bằng hệ điều hành, không điều hướng cửa sổ app. (5) `xlsx_pdf` sửa hồ sơ LibreOffice dùng `pathToFileURL` (đường dẫn `file://C:\…` sai trên Windows). (6) Lỗi job ngày ném lại để `runDaily` không ghi là đã chạy |
+| 2026-11-11 | 4 | ⛔ Hoãn thông báo hệ điều hành | Chuông thông báo không tự hỏi số chưa đọc (`enabled: false` từ bản đầu) và job nhắc hạn gửi cho `seafarer.user_id` (thuyền viên không có tài khoản). Làm thông báo hệ điều hành lúc này không có gì để báo; chờ người dùng quyết ai nhận nhắc hạn |
+| 2026-11-11 | — | Ghi chú | Tiến trình con do app mở (Thunderbird) thừa hưởng socket DevTools khi chạy dev với `--remote-debugging-port`; bản phát hành không mở cổng này |
+| 2026-11-11 | 4 | Người dùng chốt: nhắc hạn vào chuông của người phụ trách thuyền viên | Job nhắc hạn gửi cho `seafarer.created_by` (không còn `seafarer.user_id`), nội dung có tên thuyền viên và ngày dd/mm/yyyy. Chuông tự hỏi số chưa đọc mỗi phút (trước đây tắt, áp dụng cả bản web). App máy tính: thông báo mới hiện ở góc màn hình, lần đầu trên máy chỉ ghi mốc. Đã thử: job chạy bù tạo thông báo đúng người, đúng nội dung; thông báo mới gọi Notification của hệ điều hành |

@@ -1,7 +1,10 @@
 const { opportunityService } = require('./opportunity.service')
 const submissionService = require('./submission.service')
 const { exportPackService } = require('./export_pack.service')
+const fs = require('fs')
+const path = require('path')
 const emailService = require('./email.service')
+const config = require('../config')
 
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024
 const MAX_EXTRA_FILES = 5
@@ -49,54 +52,99 @@ function checkExtraFiles(files = []) {
   }
 }
 
-// Gửi hồ sơ ứng viên cho chủ tàu bằng mail server công ty: đính kèm mỗi người một .zip, ghi nhận lần gửi sau khi mail đi.
+// Hồ sơ .zip của từng ứng viên đã chọn (tạo bộ giấy nếu chưa có), kèm tệp người dùng thêm; chặn quá 20 MB.
+async function buildAttachments(pool, id, candidateIds, user, extraFiles = []) {
+  const ids = [...new Set(candidateIds || [])]
+  let opportunity = await opportunityService.get(pool, id)
+  if (opportunity.status !== 'OPEN') throw { statusCode: 409, message: 'Cơ hội đã đóng, không gửi được' }
+  const people = opportunity.candidates.filter((c) => c.status === 'PICKED' && ids.includes(c.id))
+  if (!ids.length || people.length !== ids.length) throw { statusCode: 400, message: 'Có ứng viên không thuộc danh sách của cơ hội này' }
+
+  // Người chưa có bộ giấy thì tạo trước khi đính kèm.
+  for (const person of people.filter((c) => !c.export_pack)) await submissionService.ensurePack(pool, id, person.seafarer_id, user)
+  opportunity = await opportunityService.get(pool, id)
+  const packById = new Map(opportunity.candidates.map((c) => [c.id, c.export_pack]))
+
+  const attachments = []
+  for (const person of people) {
+    const pack = packById.get(person.id)
+    const { buffer, filename } = await exportPackService.buildZip(pool, pack.id, 'pdf')
+    attachments.push({ filename, content: buffer, contentType: 'application/zip' })
+  }
+  attachments.push(...extraFiles)
+  const total = attachments.reduce((sum, file) => sum + file.content.length, 0)
+  if (total > MAX_ATTACHMENT_BYTES) {
+    throw { statusCode: 413, message: `Tệp đính kèm ${(total / 1048576).toFixed(1)} MB, quá giới hạn 20 MB. Gửi bớt người mỗi thư.` }
+  }
+  return { ids, attachments }
+}
+
+const recordFields = (body) => ({
+  to_email: body.to.join(', '),
+  subject: body.subject,
+  cc_emails: body.cc || [],
+  bcc_emails: body.bcc || [],
+  body: body.body,
+})
+
+// Tên tệp an toàn trong thư mục gửi thư: bỏ ký tự cấm của Windows / Linux, không đè tệp đang có.
+function mailFileName(dir, filename) {
+  const clean = filename.replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+/, '').slice(0, 150) || 'ho-so.zip'
+  const { name, ext } = path.parse(clean)
+  let candidate = clean
+  for (let i = 2; fs.existsSync(path.join(dir, candidate)); i++) candidate = `${name} (${i})${ext}`
+  return candidate
+}
+
+// Gửi hồ sơ ứng viên cho chủ tàu: đính kèm mỗi người một .zip, ghi nhận lần gửi sau khi mail đi.
 // body: { candidate_ids, ship_owner_contact_id, to[], cc[], bcc[], subject, body }. user: người gửi (đặt làm Reply-To).
 const opportunityMailService = {
   parsePayload,
   checkExtraFiles,
+  buildAttachments,
 
   // extraFiles: [{ filename, content, contentType }] do người dùng chọn thêm.
-  async send(pool, id, body, user, extraFiles = []) {
+  // smtp: cấu hình SMTP của chính người gửi (app máy tính, Cài đặt trên máy này); không có thì dùng mail server công ty.
+  async send(pool, id, body, user, extraFiles = [], smtp = null) {
     checkExtraFiles(extraFiles)
-    const ids = [...new Set(body.candidate_ids || [])]
-    let opportunity = await opportunityService.get(pool, id)
-    if (opportunity.status !== 'OPEN') throw { statusCode: 409, message: 'Cơ hội đã đóng, không gửi được' }
-    const people = opportunity.candidates.filter((c) => c.status === 'PICKED' && ids.includes(c.id))
-    if (!ids.length || people.length !== ids.length) throw { statusCode: 400, message: 'Có ứng viên không thuộc danh sách của cơ hội này' }
-    if (!emailService.isConfigured()) throw { statusCode: 503, message: 'Chưa cấu hình mail server, liên hệ quản trị' }
-
-    // Người chưa có bộ giấy thì tạo trước khi đính kèm.
-    for (const person of people.filter((c) => !c.export_pack)) await submissionService.ensurePack(pool, id, person.seafarer_id, user)
-    opportunity = await opportunityService.get(pool, id)
-    const packById = new Map(opportunity.candidates.map((c) => [c.id, c.export_pack]))
-
-    const attachments = []
-    for (const person of people) {
-      const pack = packById.get(person.id)
-      const { buffer, filename } = await exportPackService.buildZip(pool, pack.id, 'pdf')
-      attachments.push({ filename, content: buffer, contentType: 'application/zip' })
+    if (!smtp && !emailService.isConfigured()) {
+      throw { statusCode: 503, message: config.desktop ? 'Chưa khai email gửi thẳng trong Cài đặt trên máy này' : 'Chưa cấu hình mail server, liên hệ quản trị' }
     }
-    attachments.push(...extraFiles)
-    const total = attachments.reduce((sum, file) => sum + file.content.length, 0)
-    if (total > MAX_ATTACHMENT_BYTES) {
-      throw { statusCode: 413, message: `Tệp đính kèm ${(total / 1048576).toFixed(1)} MB, quá giới hạn 20 MB. Gửi bớt người mỗi thư.` }
-    }
+    const { ids, attachments } = await buildAttachments(pool, id, body.candidate_ids, user, extraFiles)
 
     try {
       const [[sender]] = await pool.query('SELECT full_name FROM "user" WHERE id = ?', [user.id])
-      await emailService.send({ to: body.to, cc: body.cc?.length ? body.cc : undefined, bcc: body.bcc?.length ? body.bcc : undefined, replyTo: user.email, fromName: sender?.full_name, subject: body.subject, text: body.body, attachments })
+      const message = { to: body.to, cc: body.cc?.length ? body.cc : undefined, bcc: body.bcc?.length ? body.bcc : undefined, replyTo: user.email, fromName: sender?.full_name, subject: body.subject, text: body.body, attachments }
+      if (smtp) await emailService.sendWith(smtp, message)
+      else await emailService.send(message)
     } catch (error) {
       throw { statusCode: 502, message: `Mail server không gửi được thư: ${error.message || 'lỗi không rõ'}` }
     }
-    return opportunityService.recordSend(pool, id, {
-      candidate_ids: ids,
-      ship_owner_contact_id: body.ship_owner_contact_id || null,
-      to_email: body.to.join(', '),
-      subject: body.subject,
-      cc_emails: body.cc || [],
-      bcc_emails: body.bcc || [],
-      body: body.body,
-    }, user.id)
+    return opportunityService.recordSend(pool, id, { candidate_ids: ids, ship_owner_contact_id: body.ship_owner_contact_id || null, ...recordFields(body) }, user.id)
+  },
+
+  // App máy tính, cách "app mail": ghi các .zip vào thư mục gửi thư để app mail của máy đính kèm. Chưa ghi lần gửi.
+  async prepare(pool, id, candidateIds, user) {
+    if (!config.desktop || !config.mailDir) throw { statusCode: 404, message: 'Không có' }
+    const { attachments } = await buildAttachments(pool, id, candidateIds, user)
+    fs.mkdirSync(config.mailDir, { recursive: true })
+    const files = attachments.map((file) => {
+      const name = mailFileName(config.mailDir, file.filename)
+      fs.writeFileSync(path.join(config.mailDir, name), file.content)
+      return { name, size: file.content.length }
+    })
+    return { files }
+  },
+
+  // App máy tính: người dùng xác nhận "Đã gửi" sau khi gửi trong app mail → ghi lần gửi như gửi bằng mail server.
+  async record(pool, id, body, user) {
+    if (!config.desktop) throw { statusCode: 404, message: 'Không có' }
+    const opportunity = await opportunityService.get(pool, id)
+    const ids = [...new Set(body.candidate_ids)]
+    if (opportunity.candidates.filter((c) => c.status === 'PICKED' && ids.includes(c.id)).length !== ids.length) {
+      throw { statusCode: 400, message: 'Có ứng viên không thuộc danh sách của cơ hội này' }
+    }
+    return opportunityService.recordSend(pool, id, { candidate_ids: ids, ship_owner_contact_id: body.ship_owner_contact_id || null, ...recordFields(body) }, user.id)
   },
 }
 

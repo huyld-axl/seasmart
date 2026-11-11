@@ -18,12 +18,17 @@ function readOrCreateSecret(file, bytes) {
   return secret
 }
 
-function backendEnv(userData, dbEnv, port) {
+// soffice: đường dẫn LibreOffice đã dò; null thì đặt một đường dẫn không có để backend trả lỗi
+// "Cần cài thành phần xuất PDF" (không chạy nhầm `soffice` lạ trên PATH). mailDir: thư mục gửi thư (mail.js).
+function backendEnv(userData, dbEnv, port, { soffice = null, mailDir } = {}) {
   const uploadDir = path.join(userData, 'uploads')
   fs.mkdirSync(uploadDir, { recursive: true })
   return {
     ...dbEnv,
     NODE_ENV: 'production',
+    MCAH_DESKTOP: '1',
+    SOFFICE_PATH: soffice || path.join(userData, 'chua-cai-libreoffice', 'soffice'),
+    MAIL_DIR: mailDir,
     HOST: '127.0.0.1',
     PORT: String(port),
     JWT_SECRET: readOrCreateSecret(path.join(userData, 'jwt-secret'), 48),
@@ -32,22 +37,31 @@ function backendEnv(userData, dbEnv, port) {
   }
 }
 
+// Đầu ra của tiến trình con đi vào log (rotatingLog) nếu có, không thì ra terminal.
+const pipeTo = (child, log) => {
+  if (!log) return
+  child.stdout.on('data', (d) => log.write(d))
+  child.stderr.on('data', (d) => log.write(d))
+}
+
 // Chạy một script của backend tới khi xong (vd. migrate.js).
-function runScript(script, env, cwd) {
+function runScript(script, env, cwd, log) {
   return new Promise((resolve, reject) => {
-    const child = spawn(NODE_BIN, [path.join(BACKEND_DIR, script)], { cwd, env: { PATH: process.env.PATH, ...env }, stdio: 'inherit' })
+    const child = spawn(NODE_BIN, [path.join(BACKEND_DIR, script)], { cwd, env: { PATH: process.env.PATH, ...env }, stdio: log ? ['ignore', 'pipe', 'pipe'] : 'inherit' })
+    pipeTo(child, log)
     child.on('error', reject)
     child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`${script} thoát với mã ${code}`))))
   })
 }
 
 // Mở tiến trình Fastify, chờ /health trả lời rồi mới trả về.
-async function startBackend(env, cwd) {
+async function startBackend(env, cwd, log) {
   const child = spawn(NODE_BIN, ['-r', GUARD, path.join(BACKEND_DIR, 'server.js')], {
     cwd,
     env: { PATH: process.env.PATH, ...env },
-    stdio: ['pipe', 'inherit', 'inherit'],
+    stdio: ['pipe', log ? 'pipe' : 'inherit', log ? 'pipe' : 'inherit'],
   })
+  pipeTo(child, log)
   let exited = false
   child.on('exit', (code, signal) => {
     exited = true

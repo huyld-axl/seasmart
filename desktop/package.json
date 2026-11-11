@@ -1,0 +1,93 @@
+{
+  "name": "seasmart-desktop",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Vỏ Electron cho MCAH (giai đoạn 0: thử nhanh)",
+  "main": "src/main.js",
+  "scripts": {
+    "build:frontend": "npm exec --prefix ../frontend -- vite build -c ../desktop/vite.frontend.config.mjs",
+    "start": "electron .",
+    "stage:linux": "node scripts/stage.js linux",
+    "stage:win": "node scripts/stage.js win",
+    "dist:linux": "npm run build:frontend && npm run stage:linux && electron-builder --linux deb",
+    "dist:win": "npm run build:frontend && npm run stage:win && electron-builder --win nsis",
+    "release": "node scripts/release.js"
+  },
+  "devDependencies": {
+    "electron": "^39.8.10",
+    "electron-builder": "^26.18.0",
+    "embedded-postgres": "17.11.0-beta.19"
+  },
+  "allowScripts": {
+    "electron@39.8.10": true,
+    "@embedded-postgres/linux-x64@17.11.0-beta.19": true,
+    "electron-winstaller": false,
+    "koffi@3.3.7": true
+  },
+  "author": {
+    "name": "MCAH",
+    "email": "support@mcah.vn"
+  },
+  "build": {
+    "appId": "vn.mcah.desktop",
+    "productName": "MCAH",
+    "directories": {
+      "output": "dist/installer"
+    },
+    "files": [
+      "src/**",
+      "dist/frontend/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/stage/${os}",
+        "to": ".",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "dist/stage/cloud-public-key.pem",
+        "to": "cloud-public-key.pem"
+      },
+      {
+        "from": "dist/stage/release-public-key.pem",
+        "to": "release-public-key.pem"
+      },
+      {
+        "from": "dist/stage/update-url.txt",
+        "to": "update-url.txt"
+      }
+    ],
+    "linux": {
+      "target": "deb",
+      "category": "Office",
+      "executableName": "mcah"
+    },
+    "deb": {
+      "depends": [
+        "libnss3",
+        "libgtk-3-0",
+        "libxss1",
+        "libasound2t64 | libasound2"
+      ]
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "asarUnpack": [
+      "src/backend-guard.js"
+    ]
+  },
+  "homepage": "https://mcah.vn",
+  "dependencies": {
+    "koffi": "^3.3.7",
+    "pg": "8.23.1"
+  }
+}

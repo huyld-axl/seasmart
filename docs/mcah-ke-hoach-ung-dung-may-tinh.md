@@ -30,7 +30,7 @@
 5. **Chống crack — nói thật:** không phần mềm cài trên máy nào chống crack được 100%. Bền nhất là để **phần giá trị nhất chạy trên máy chủ của mình** (đăng nhập, AI, danh mục tàu, cập nhật), cộng làm rối code và ký số. **Bản quyền (cách tính tiền) để sau**; tài khoản văn phòng trên máy chủ là nền sẵn cho nó. Bản đầu chưa có bản quyền: người có kỹ thuật cao vẫn có thể sửa app để dùng phần offline mà không qua đăng nhập; đây là đánh đổi chấp nhận ở bản đầu.
 6. **Bảo mật cho người dùng:** đăng nhập qua web, tự khoá màn hình (mở bằng mã PIN); đường truyền giữa các máy được mã hoá và mỗi máy phải được xác thực; tài liệu giấy tờ được mã hoá trên ổ đĩa; sao lưu tự động có mã hoá, khôi phục được sang máy mới (kể cả Windows ↔ Ubuntu); app không gửi dữ liệu nghiệp vụ ra internet ngoài lúc người dùng chủ động quét giấy tờ / tìm tàu.
 7. **Hệ điều hành:** Windows và Ubuntu. Không macOS, không điện thoại (code giao diện điện thoại hiện có vẫn giữ).
-8. **Thời gian ước tính sơ bộ:** 16–20 tuần tới bản chạy thử với vài văn phòng (làm bằng AI, một người). Cập nhật lại sau giai đoạn 0.
+8. **Thời gian ước tính:** sau giai đoạn 0 (Ubuntu) còn 15–18 tuần tới bản chạy thử với vài văn phòng (làm bằng AI, một người); xem cuối mục 10.
 9. **Chi phí cố định thêm (tham khảo):** chứng thư ký số cho Windows ~200–600 USD/năm (không có vẫn cài được nhưng Windows hiện cảnh báo; nên mua trước khi bán rộng), máy chủ dịch vụ ~10–40 USD/tháng. Ubuntu không tốn khoản nào.
 10. **Điều sếp cần biết đánh đổi:** **máy chính phải bật** thì máy nhân viên mới làm việc được; **không làm việc từ ngoài văn phòng** ở bản đầu; **không dùng trên điện thoại**; **đăng nhập lần đầu và mời người mới cần internet**; máy chủ của bên mình sập lâu hơn 7 ngày thì người dùng phải chờ mới đăng nhập lại được.
 
@@ -544,7 +544,7 @@ Thư viện dự kiến, **chưa chắc chạy được**. Giai đoạn 0 kiểm
 |---|---|---|
 | Vỏ app, đóng gói | Electron + `electron-builder` (NSIS cho Windows, `deb` cho Ubuntu) | Build `.exe` từ máy Ubuntu được không |
 | PostgreSQL nhúng | Gói npm `embedded-postgres` | Có extension `unaccent` không; chạy trong thư mục có dấu tiếng Việt / dấu cách; có `pg_dump` / `pg_restore` đi kèm |
-| Chạy Fastify | `utilityProcess.fork()` của Electron (không dùng `ELECTRON_RUN_AS_NODE` vì giai đoạn 5 tắt nó) | `backend/server.js` chạy được với cấu hình truyền vào |
+| Chạy Fastify | **Đã đổi ở 0.4:** chạy bằng **file Node chính thức kèm trong bộ cài** (tiến trình con thường), không dùng Node của Electron: trên Linux `sharp` đọc JPEG trong Electron bị segfault. Nhờ vậy giai đoạn 5 tắt được hẳn `RunAsNode`. Node kèm theo phải cùng bản lớn với Node dùng để cài `node_modules` của backend | `backend/server.js` chạy được với cấu hình truyền vào |
 | Phục vụ giao diện | Giao thức riêng của app (vd. `app://`) phục vụ bản build `frontend/`, mọi đường dẫn không phải tệp trả `index.html`; địa chỉ máy chính đưa vào trang qua preload lúc chạy | `createBrowserRouter` chạy đúng khi tải lại trang ở một đường dẫn sâu; nếu không thì đổi sang `createHashRouter` |
 | Module biên dịch sẵn (`sharp`, `@napi-rs/canvas`, `bcrypt`) | `electron-builder install-app-deps` | Có bản dựng sẵn cho Windows x64 và Linux x64 |
 | Đăng nhập qua trình duyệt | OAuth 2.0 cho app cài trên máy (PKCE + chuyển về `127.0.0.1`, RFC 8252); thư viện OIDC phía máy chủ (vd. `oidc-provider`) hoặc tự viết tối thiểu; Google qua OpenID Connect | Trình duyệt mặc định trên Windows / Ubuntu trả được về cổng nội bộ |
@@ -566,7 +566,7 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 |---|---|---|
 | 0.1 | Dựng `desktop/` tối thiểu: Electron mở bản build của `frontend/` | Cửa sổ app hiện màn đăng nhập |
 | 0.2 | Khởi động PostgreSQL nhúng trong thư mục dữ liệu của app (`app.getPath('userData')`), mật khẩu ngẫu nhiên, chỉ nghe `127.0.0.1`; chạy `backend/scripts/migrate.js` vào đó | Đủ 42 migration chạy qua; `SELECT unaccent('Nguyễn')` trả `Nguyen`; tắt app thì Postgres tắt theo, không còn tiến trình mồ côi |
-| 0.3 | Chạy Fastify bằng `utilityProcess.fork()`, cấu hình truyền qua biến môi trường của tiến trình con; phục vụ giao diện qua giao thức riêng, địa chỉ API lấy lúc chạy; tạo tài khoản thử bằng `backend/scripts/seed_admin.js` | Đăng nhập (kiểu cũ, tạm) được; mở danh sách thuyền viên; tải lại trang ở `/admin/...` vẫn đúng màn |
+| 0.3 | Chạy Fastify trong tiến trình con (xem bảng thư viện: Node riêng), cấu hình truyền qua biến môi trường của tiến trình con; phục vụ giao diện qua giao thức riêng, địa chỉ API lấy lúc chạy; tạo tài khoản thử bằng `backend/scripts/seed_admin.js` | Đăng nhập (kiểu cũ, tạm) được; mở danh sách thuyền viên; tải lại trang ở `/admin/...` vẫn đúng màn |
 | 0.4 | Dựng lại module biên dịch sẵn cho Electron; thử tải ảnh chân dung, tải PDF giấy tờ (cắt trang qua `pdfjs` + `canvas`), xuất Excel | Ba việc chạy không lỗi |
 | 0.5 | Đăng nhập qua trình duyệt, bản tối thiểu: `cloud/` có một trang đăng nhập thử + cấp vé ký số; app mở trình duyệt, nhận vé qua `127.0.0.1`, đưa vé cho Fastify, Fastify kiểm chữ ký bằng khoá công khai | Đăng nhập trọn vòng trên cả Windows và Ubuntu; rút mạng sau khi đăng nhập vẫn dùng được |
 | 0.6 | Đóng gói: `.deb` trên Ubuntu, `.exe` (thử build từ Ubuntu, không được thì build trên máy Windows); cài lên máy sạch | Cài xong mở app, làm lại 0.3–0.5 được; tắt mở lại máy vẫn còn dữ liệu |
@@ -646,6 +646,8 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 ⛔ **DỪNG:** báo sếp trước khi mở bán.
 
 **Tổng sơ bộ:** 16–20 tuần. Bản quyền (mục 7) cộng 1–2 tuần khi sales chốt.
+
+**Ước lượng lại sau giai đoạn 0 (2026-11-11): 15–18 tuần còn lại**, gồm: phần giai đoạn 0 còn thiếu (Windows + hai máy, ~1 tuần khi có máy); giai đoạn 1 còn 1,5–2 tuần (vỏ app, Postgres, backend, đóng gói đã chạy); giai đoạn 2 giữ 3 tuần (mới có bản đăng nhập thử, chưa Google, mời, trang web); giai đoạn 3 giữ 3–4 tuần (0.9 chưa thử, rủi ro lớn nhất còn lại); giai đoạn 4 tăng lên 3 tuần (định dạng sao lưu đã có, nhưng thêm đọc theo luồng, đường dẫn tương đối, lớp kho tệp, màn sao lưu); giai đoạn 5 giữ 1 tuần; giai đoạn 6 giảm còn 1 tuần (cập nhật có chữ ký đã chạy); giai đoạn 7 giữ 2 tuần.
 
 ### Màn giao diện mới cần vẽ wireframe trước khi code
 
@@ -782,17 +784,26 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | Không làm việc từ ngoài văn phòng được | Trung bình về kinh doanh | Báo rõ cho sales; làm sau qua VPN |
 | Chi phí AI tăng vì bên mình chịu | Trung bình | Giới hạn tần suất theo văn phòng; khoá văn phòng lạm dụng |
 
-### Số đo giai đoạn 0 (điền sau)
+### Số đo giai đoạn 0 (đo trên Ubuntu 2026-11-11; cột Windows chờ máy Windows)
 
 | Mục | Windows | Ubuntu |
 |---|---|---|
-| Dung lượng bộ cài | | |
-| Dung lượng sau khi cài | | |
-| Thời gian mở app (lần đầu / lần sau) | | |
-| RAM máy chính lúc rảnh / lúc quét giấy tờ | | |
-| RAM máy nhân viên | | |
-| Thời gian sao lưu / khôi phục (với dữ liệu mẫu) | | |
-| Thư viện không chạy được và thay bằng gì | | |
+| Dung lượng bộ cài | `.exe` 202 MB (build được từ Ubuntu, **chưa chạy thử**) | `.deb` 181 MB |
+| Dung lượng sau khi cài | | 693 MB (`/opt/MCAH`): Electron ~280, backend ~225, Node 121, Postgres 60 |
+| Thời gian mở app (lần đầu / lần sau) | | 4,7 giây (tạo DB + 42 migration) / 1,5 giây, tính tới màn đăng nhập |
+| RAM máy chính lúc rảnh / lúc quét giấy tờ | | ~490 MB (Electron 278, backend 177, Postgres 11; đo PSS) / đỉnh ~650 MB khi cắt PDF + xuất Excel (chưa gọi AI) |
+| RAM máy nhân viên | | Chưa đo (cần 0.9). Ước ~280 MB (chỉ phần Electron) |
+| Thời gian sao lưu / khôi phục (với dữ liệu mẫu) | | 0,6 giây / 1,7 giây (4 thuyền viên, 18 tệp, gói 3 MB). Chưa đo dữ liệu lớn: hiện cả gói nằm trong bộ nhớ, giai đoạn 4 phải đọc theo luồng |
+| Thư viện không chạy được và thay bằng gì | | `utilityProcess` (sharp segfault khi đọc JPEG + pdfjs tưởng là trình duyệt) → Node riêng. Thư viện `embedded-postgres` lúc chạy (đường dẫn trong `app.asar`) → gọi thẳng `initdb` / `postgres`. `pg_dump` (không có) → chụp JSON trong `REPEATABLE READ`. `electron-updater` → tự viết, ký Ed25519. `xdg-email --attach` với Thunderbird snap → `thunderbird -compose`. Chưa thử: `bonjour-service` (0.9), `koffi` + MAPI (Windows) |
+| Postgres nhúng (0.2) | | `embedded-postgres@17.11.0-beta.19` (= PostgreSQL 17.11, cùng đời bản server); có `unaccent`; 42 migration qua; chỉ nghe 127.0.0.1. **Gói không có `pg_dump` / `pg_restore`** → 0.8 dùng cách khác (xem dòng sao lưu) |
+| Fastify + giao diện trong app (0.3) | | Chạy được, **không sửa dòng nào** trong `backend/` và `frontend/`. Giao diện build riêng (`desktop/vite.frontend.config.mjs`, không lấy `frontend/.env`), gọi `/api/v1` tương đối qua `app://` (axios từ chối URL `app:`), tiến trình chính chuyển tiếp sang Fastify cổng ngẫu nhiên. Backend chạy với thư mục làm việc là userData để không đọc `backend/.env`. `migrate.js` cũng cần `JWT_SECRET`. `sharp` cảnh báo khác bản trên Electron Linux → xem ở 0.4 |
+| Module biên dịch sẵn (0.4) | | `bcrypt`, `sharp`, `@napi-rs/canvas` đều N-API, **không cần dựng lại**. Nhưng trong Node của Electron trên Linux, **`sharp` đọc JPEG là segfault** (PNG, WebP không sao) → backend chạy bằng Node riêng (bộ cài nặng thêm ~30 MB). Trong `utilityProcess`, pdfjs còn tưởng là trình duyệt (`process.type`) → cũng hết khi dùng Node riêng. Ảnh chân dung, cắt PDF thành ảnh trang, xuất Excel: chạy được |
+| Đăng nhập qua trình duyệt (0.5) | | Chạy trọn vòng với trình duyệt thật (Chromium): trang đăng nhập `cloud/` → chuyển về `127.0.0.1:<cổng tạm>` → vé Ed25519 → Fastify kiểm bằng khoá công khai → phiên. Phiên hết đúng mốc vé (7 ngày), không dài hơn. Bị chặn: vé ký khoá lạ, vé rác, mã sai, `redirect_uri` không phải 127.0.0.1, `state` sai. Tắt máy chủ dịch vụ rồi mở lại app: vẫn làm việc. `cloud/server.js` không thư viện ngoài; chưa có Google. Route nhận vé: `backend/src/routes/v1/desktop_ticket.routes.js`, chỉ bật khi có `DESKTOP_TICKET_PUBLIC_KEY`. Giao diện chưa có nút: đăng nhập ở menu Tài khoản của app. **Chưa thử rút dây mạng thật** (máy chủ dịch vụ đang chạy cùng máy) |
+| Đóng gói (0.6) | Build được, chưa thử | `npm run dist:linux` / `dist:win` trong `desktop/`. Bộ cài gồm: Electron, giao diện, `resources/backend` (chỉ phần chạy, không `.env`/test/uploads), `resources/node` (Node chính thức, kiểm SHA-256), `resources/postgres`, `resources/forms`, khoá công khai máy chủ dịch vụ. Bỏ thư viện `embedded-postgres` lúc chạy (đường dẫn trong `app.asar` không chạy được): app tự gọi `initdb` / `postgres`. Chạy bản đóng gói với HOME trống, không có `node` trên máy, máy chủ dịch vụ tắt: lần đầu mở được, 42 migration; đăng nhập qua trình duyệt, ảnh, PDF, Excel chạy; tắt mở lại còn dữ liệu và phiên. Thêm: backend tự thoát khi app chết (kể cả `kill -9`). **Chưa cài bằng `dpkg -i` lên máy sạch thật** (cần quyền quản trị / máy khác). Backend ~225 MB, phần lớn là thư viện AI + pdfjs + canvas → giảm khi AI chuyển lên máy chủ (giai đoạn 2). Thư mục dữ liệu đang tên `seasmart-desktop` → đổi ở giai đoạn 1 |
+| Cập nhật (0.7) | Chưa thử (cần máy Windows) | Tự viết (`desktop/src/updater.js`), không dùng electron-updater: `latest.json` ký Ed25519 (khoá riêng ở `desktop/.release/`, không commit), bộ cài kiểm SHA-256. Ubuntu cài bằng `pkexec dpkg -i` → **hỏi mật khẩu quản trị mỗi lần cập nhật** (người dùng chốt 2026-11-11). Windows chạy bộ cài im lặng, không hỏi. Đã thử: bản thật nhận và tải đúng; sửa `latest.json`, ký bằng khoá lạ, thay bộ cài → đều bị từ chối. **Đã thử cài thật trên Ubuntu:** cài 0.0.1 bằng apt → app hỏi bản mới → `pkexec` xin mật khẩu → lên 0.0.2, tự mở lại; migration thử chạy (43), dữ liệu có trước cập nhật còn nguyên. Việc sau: xoá bộ cài đã tải (`userData/updates`, ~180 MB) sau khi cập nhật xong; sao lưu trước cập nhật làm ở 0.8 / giai đoạn 4 |
+| Sao lưu / khôi phục (0.8) | Chưa thử (cần máy Windows: Ubuntu → Windows và ngược lại) | `desktop/src/backup.js`. **Không có `pg_dump`** → đọc mọi bảng trong một giao dịch `REPEATABLE READ` ra JSON; khôi phục = chạy migration của app rồi nạp dữ liệu (`json_populate_recordset`, bỏ cột sinh tự động, đặt lại sequence) → **chỉ khôi phục vào app có đúng bộ migration**, app kiểm và báo. Gói `.ssbak`: khoá gói ngẫu nhiên bọc bằng mật khẩu sao lưu **và** mã khôi phục (mỗi cách tự mở cả gói), AES-256-GCM, phần đầu là AAD; ghi tệp tạm, tự giải mã kiểm lại rồi mới đổi tên. Đã thử (sang thư mục dữ liệu khác trên cùng máy): mở bằng mật khẩu, bằng mã khôi phục (gõ thường, bỏ gạch vẫn nhận) → đủ thuyền viên, **mở được ảnh chân dung và ảnh trang PDF**, thêm bản ghi mới không trùng số; sai mật khẩu, sai mã, gói bị sửa 1 byte → từ chối, máy vẫn trống, thử lại được; không khôi phục đè lên máy có dữ liệu. Tạm: lệnh dòng lệnh (`--backup-setup`, `--backup=`, `--restore=`), chưa có màn; DB còn đường dẫn tuyệt đối nên lúc khôi phục đổi tiền tố kho tệp (giai đoạn 4 bỏ, dùng mã tệp tương đối); cả gói nằm trong bộ nhớ khi mở (giai đoạn 4 đọc theo luồng); khoá bọc trên máy chính nằm trong tệp 0600 (giai đoạn 4 vào két); phần đầu gói lộ đường dẫn kho tệp cũ (bỏ khi dùng đường dẫn tương đối) |
+| Mở thư kèm tệp (0.10) | Đã viết (`MAPISendMail` qua `koffi`), **chưa thử** Outlook bản Office / Outlook mới / Thunderbird | `desktop/src/mail.js`. Thunderbird (snap, Ubuntu 25): **đạt**, thư mới có người nhận, tiêu đề, nội dung, đủ PDF + ảnh. **`xdg-email --attach` không dùng được với Thunderbird bản snap**: xdg-email không nhận ra nó, rơi về `gio open mailto:...&attach=`, Thunderbird bỏ qua đính kèm trong mailto → app gọi thẳng `thunderbird -compose`. Bản tạm để đính kèm đặt ở `~/MCAH/Tệp gửi thư` (thư mục thường, bản snap đọc được), không để trong `~/.config` hay `/tmp`. Evolution: vẫn qua xdg-email, chưa thử. Máy không có app mail: mở thư mục chứa tệp (chưa có nút "Cài Thunderbird") |
+| Tắt app có còn Postgres mồ côi | | Đóng cửa sổ, Ctrl+C, SIGTERM: không còn. `kill -9` app: Postgres còn, **lần mở sau tự tắt nó** rồi chạy tiếp |
 
 ---
 
@@ -820,3 +831,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-11 | — | Bổ sung cách làm việc + bước chi tiết giai đoạn 0 | Các giai đoạn sau viết kế hoạch chi tiết riêng trước khi làm |
 | 2026-11-11 | — | Sửa theo review + đăng nhập qua trình duyệt (Q11–Q13) | Khoá dữ liệu trong bản sao lưu; sao lưu nhất quán; ghép máy hai chiều + mã thiết bị; chống ghi đè; lớp kho tệp; cập nhật đủ hai hệ điều hành + ký riêng; tiêu chí chống crack theo nền tảng; giai đoạn 0 thêm cập nhật, sao lưu khác máy, đăng nhập; ước lượng 16–20 tuần |
 | 2026-11-11 | — | Sửa theo review lần 2 | Khoá gói sao lưu mở được bằng mã khôi phục; khoá chống xoá tệp suốt lúc sao lưu; chặn ghi trước khi sao lưu cập nhật; mốc offline 7 ngày gắn vào JWT; PIN sai bắt xác thực lại thật; ghép lại sau khi gỡ cần duyệt; khôi phục không trả quyền đã thu hồi; giới hạn két hệ điều hành; sắp lại thứ tự giai đoạn 0/2/3 |
+| 2026-11-11 | — | Giai đoạn 0 trên Ubuntu | 0.1–0.8, 0.10, 0.11 đạt trên Ubuntu (số đo mục 13); 0.9 và phần Windows chờ máy; ước lượng còn 15–18 tuần; cập nhật trên Ubuntu hỏi mật khẩu quản trị (người dùng chốt) |

@@ -18,6 +18,12 @@ const textOf = (node) => {
 // Nút có thể được bọc Tooltip (nút khoá kèm lý do): lấy nút bên trong để đọc nhãn, icon, onClick.
 const buttonOf = (element) => (element.type === Tooltip ? element.props.children : element)
 
+const containsKey = (items, key) => items?.some((item) => item && (item.key === key || containsKey(item.children, key)))
+// Menu con mở ngang dễ tràn màn hình điện thoại; giữ các lựa chọn trong cùng menu cuộn dọc.
+const mobileItems = (items) => items.map((item) => item?.children
+  ? { ...item, type: 'group', children: mobileItems(item.children) }
+  : item)
+
 export default function HeadActions({ children }) {
   const { isPhone } = useViewport()
   const elements = Children.toArray(children).filter(isValidElement)
@@ -40,17 +46,17 @@ export default function HeadActions({ children }) {
     return { key: `head-${index}`, icon, danger, disabled, label: textOf(label), onClick }
   })
   const existing = menus.flatMap((element) => element.props.menu?.items || [])
-  const items = [...movedItems.map((item) => ({ key: item.key, icon: item.icon, danger: item.danger, disabled: item.disabled, label: item.label })), ...existing]
+  const items = [...movedItems.map((item) => ({ key: item.key, icon: item.icon, danger: item.danger, disabled: item.disabled, label: item.label })), ...mobileItems(existing)]
   const onMenu = (info) => {
     const hit = movedItems.find((item) => item.key === info.key)
     if (hit) return hit.onClick?.()
-    return menus.find((element) => element.props.menu?.items?.some((item) => item?.key === info.key))?.props.menu.onClick?.(info)
+    return menus.find((element) => containsKey(element.props.menu?.items, info.key))?.props.menu.onClick?.(info)
   }
 
   return (
     <div className="crew-head__actions">
       {items.length ? (
-        <Dropdown menu={{ items, onClick: onMenu }} trigger={['click']} placement="bottomRight">
+        <Dropdown menu={{ items, onClick: onMenu, style: { maxHeight: '60dvh', overflowY: 'auto' } }} trigger={['click']} placement="bottomLeft">
           <Button icon={<MoreOutlined />} aria-label="Thao tác khác" />
         </Dropdown>
       ) : null}

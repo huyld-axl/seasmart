@@ -356,6 +356,12 @@
 .ds-panel__desc { margin: 2px 0 0; color: var(--muted); font-size: 14px; font-weight: 400; text-wrap: pretty; }
 .ds-panel__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
+/* Nút form danh mục không tự đổi hàng khi xuất hiện spinner đang lưu. */
+.master-panel-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; width: 100%; }
+.master-panel-actions--create { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.master-panel-actions--create > .ant-btn { min-width: 0; height: auto; min-height: 40px; white-space: normal; }
+.master-panel-actions--create .master-panel-actions__create { grid-column: 1 / -1; }
+
 /* ---------- Toast ---------- */
 /* ---------- Toast (useToast): một kiểu, bốn loại. Nền luôn trắng, chỉ icon mang màu theo nghĩa. ---------- */
 /* Lớp bọc của antd mang sẵn nền, bo 16, bóng và rộng 384: để trong suốt, co theo chữ; khung toast do .ds-toast vẽ. */

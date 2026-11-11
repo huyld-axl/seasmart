@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Badge, Dropdown, Spin } from 'antd'
 import { BellOutlined } from '@ant-design/icons'
@@ -8,6 +9,7 @@ import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/vi'
 import { toast } from '../ds/useToast'
+import useViewport from '../../hooks/useViewport'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
@@ -36,9 +38,65 @@ function getNavigatePath(item) {
 }
 
 export default function NotificationBell() {
+  const { isCompact: isMobile } = useViewport()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
+  const bellRef = useRef(null)
+  const popupRef = useRef(null)
+  const [popupTop, setPopupTop] = useState(64)
+  const toggleMobile = () => {
+    setPopupTop((bellRef.current?.getBoundingClientRect().bottom || 56) + 8)
+    setOpen((value) => !value)
+  }
+  useEffect(() => {
+    if (!open || !isMobile) return
+    // Không đổi position/overflow của body: giữ nguyên thanh công cụ sticky và dock.
+    let touchX = 0
+    let touchY = 0
+    const scrollBox = () => popupRef.current?.firstElementChild
+    const canScroll = (target, deltaY, deltaX) => {
+      const box = scrollBox()
+      if (!box?.contains(target) || Math.abs(deltaX) > Math.abs(deltaY)) return false
+      return deltaY > 0
+        ? box.scrollTop + box.clientHeight < box.scrollHeight - 1
+        : deltaY < 0 && box.scrollTop > 0
+    }
+    const onWheel = (event) => {
+      if (!canScroll(event.target, event.deltaY, event.deltaX)) event.preventDefault()
+    }
+    const onTouchStart = (event) => {
+      touchX = event.touches[0]?.clientX ?? 0
+      touchY = event.touches[0]?.clientY ?? 0
+    }
+    const onTouchMove = (event) => {
+      const point = event.touches[0]
+      if (!point) return
+      if (!canScroll(event.target, touchY - point.clientY, touchX - point.clientX)) event.preventDefault()
+      touchX = point.clientX
+      touchY = point.clientY
+    }
+    const onOutside = (event) => {
+      if (!popupRef.current?.contains(event.target) && !bellRef.current?.contains(event.target)) setOpen(false)
+    }
+    const onKey = (event) => {
+      if (event.key === 'Escape') setOpen(false)
+      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)
+        && !popupRef.current?.contains(event.target)) event.preventDefault()
+    }
+    document.addEventListener('wheel', onWheel, { passive: false })
+    document.addEventListener('touchstart', onTouchStart, { passive: true })
+    document.addEventListener('touchmove', onTouchMove, { passive: false })
+    document.addEventListener('pointerdown', onOutside)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('wheel', onWheel)
+      document.removeEventListener('touchstart', onTouchStart)
+      document.removeEventListener('touchmove', onTouchMove)
+      document.removeEventListener('pointerdown', onOutside)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open, isMobile])
 
   const { data: count = 0 } = useQuery({
     queryKey: ['notifications-unread-count'],
@@ -81,9 +139,14 @@ export default function NotificationBell() {
   const dropdownContent = (
     <div
       style={{
-        width: 360,
-        maxHeight: 400,
-        overflow: 'auto',
+        width: isMobile ? 'min(360px, calc(100vw - 32px))' : 360,
+        maxWidth: '100%',
+        maxHeight: isMobile ? `min(400px, calc(100dvh - ${popupTop + 96}px))` : 400,
+        overflowY: 'auto',
+        touchAction: 'pan-y',
+        overflowX: 'hidden',
+        overscrollBehaviorY: 'contain',
+        overflowWrap: 'anywhere',
         background: 'var(--surface)',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)',
@@ -147,6 +210,23 @@ export default function NotificationBell() {
     </div>
   )
 
+  const bell = (
+    <button ref={bellRef} type="button" className="app-shell__icon-btn" aria-label="Thông báo" aria-expanded={open} onClick={isMobile ? toggleMobile : undefined}>
+      <Badge count={count} size="small" offset={[-2, 2]}>
+        <BellOutlined style={{ fontSize: 18 }} />
+      </Badge>
+    </button>
+  )
+
+  if (isMobile) return <>
+    {bell}
+    {open && createPortal(
+      <section ref={popupRef} aria-label="Danh sách thông báo" style={{ position: 'fixed', top: popupTop, right: 16, zIndex: 1050, maxWidth: 'calc(100vw - 32px)' }}>
+        {dropdownContent}
+      </section>, document.body,
+    )}
+  </>
+
   return (
     <Dropdown
       open={open}
@@ -155,11 +235,7 @@ export default function NotificationBell() {
       trigger={['click']}
       placement="bottomRight"
     >
-      <button type="button" className="app-shell__icon-btn" aria-label="Thông báo">
-        <Badge count={count} size="small" offset={[-2, 2]}>
-          <BellOutlined style={{ fontSize: 18 }} />
-        </Badge>
-      </button>
+      {bell}
     </Dropdown>
   )
 }

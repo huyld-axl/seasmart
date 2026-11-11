@@ -251,8 +251,8 @@ function MasterTable({ resource, columns, formFields, title }) {
         onClose={() => setEditing(null)}
         hasForm={false}
         footer={
-          <>
-            {editing?.id && changed.size > 0 ? <span style={{ marginRight: 'auto', color: 'var(--muted)' }}>{changed.size} thay đổi</span> : null}
+          <div className={`master-panel-actions${editing?.id ? '' : ' master-panel-actions--create'}`}>
+            {editing?.id && changed.size > 0 ? <span className="master-panel-actions__changes" style={{ marginRight: 'auto', color: 'var(--muted)' }}>{changed.size} thay đổi</span> : null}
             <Button onClick={() => setEditing(null)}>Huỷ</Button>
             {editing?.id ? (
               <Button type="primary" disabled={!changed.size} loading={update.isPending} onClick={() => submit()}>
@@ -263,12 +263,12 @@ function MasterTable({ resource, columns, formFields, title }) {
                 <Button loading={create.isPending} onClick={() => submit({ addAnother: true })}>
                   Lưu & thêm khác
                 </Button>
-                <Button type="primary" loading={create.isPending} onClick={() => submit()}>
+                <Button className="master-panel-actions__create" type="primary" loading={create.isPending} onClick={() => submit()}>
                   Thêm {title}
                 </Button>
               </>
             )}
-          </>
+          </div>
         }
       >
         <Form form={form} layout="vertical" onFinish={() => submit()} onValuesChange={trackChanges}>

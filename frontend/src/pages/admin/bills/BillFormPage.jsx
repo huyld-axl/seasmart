@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Form, Input, Skeleton } from 'antd'
@@ -48,6 +49,7 @@ function BillForm({ data }) {
   const back = `/bills/${bill.id}`
   const changes = countChanges(initial, { ...initial, ...values })
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại.
+  const shortcuts = useFormShortcuts({ onCancel: () => navigate(back) })
   const leave = useLeaveGuard(changes > 0)
   const { totals } = groupItems(values.items || [])
   const negative = totals.all < 0
@@ -105,7 +107,7 @@ function BillForm({ data }) {
         <p className="sf-head__desc">Kỳ {bill.seq}/{bill.periods} · {formatDate(bill.period_start)} → {formatDate(bill.period_end)} · {bill.contract.contract_number} · {bill.ship_owner.company_name}</p>
       </div>
 
-      <Form form={form} layout="vertical" className="ct-form" initialValues={initial} onFinish={submit}>
+      <Form ref={shortcuts} form={form} layout="vertical" className="ct-form" initialValues={initial} onFinish={submit}>
         <section className="sf-panel ct-panel" aria-labelledby="bl-general">
           <div className="sf-panel__head">
             <div>

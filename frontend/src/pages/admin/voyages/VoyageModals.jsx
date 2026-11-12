@@ -1,3 +1,5 @@
+import { cloneElement } from 'react'
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Button, Form, Input, Modal } from 'antd'
@@ -28,6 +30,7 @@ function usePortOptions() {
 
 // Khung chung của ba hộp thoại: rộng 480, nút Huỷ và nút chính, gửi form khi bấm nút chính.
 function FormModal({ title, okText, danger, pending, okDisabled, form, onClose, onSubmit, children, description }) {
+  const shortcuts = useFormShortcuts({ enabled: !danger, onCancel: onClose })
   async function submit() {
     const values = await form.validateFields().catch(() => null)
     if (values) onSubmit(values)
@@ -40,11 +43,11 @@ function FormModal({ title, okText, danger, pending, okDisabled, form, onClose, 
       title={title}
       footer={[
         <Button key="cancel" onClick={onClose}>Huỷ</Button>,
-        <Button key="ok" type="primary" danger={danger} loading={pending} disabled={okDisabled} onClick={submit}>{okText}</Button>,
+        <Button data-form-submit={!danger || undefined} key="ok" type="primary" danger={danger} loading={pending} disabled={okDisabled} onClick={submit}>{okText}</Button>,
       ]}
     >
       {description ? <p className="vd-muted">{description}</p> : null}
-      {children}
+      {danger ? children : cloneElement(children, { ref: shortcuts })}
     </Modal>
   )
 }

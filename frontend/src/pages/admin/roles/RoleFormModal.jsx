@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useEffect } from 'react'
 import { Button, Form, Input, Modal, Select } from 'antd'
 import { useCreateRole, useUpdateRole } from '../../../hooks/useRoles'
@@ -14,6 +15,7 @@ export default function RoleFormModal({ open, mode, role, initial, roles, onClos
   const create = useCreateRole()
   const update = useUpdateRole()
   const editing = mode === 'edit'
+  const shortcuts = useFormShortcuts({ enabled: open, autoFocus: !editing, onCancel: onClose })
   const pending = create.isPending || update.isPending
   const watched = Form.useWatch([], form)
 
@@ -96,6 +98,7 @@ export default function RoleFormModal({ open, mode, role, initial, roles, onClos
           Huỷ
         </Button>,
         <Button
+          data-form-submit
           key="ok"
           type="primary"
           loading={pending}
@@ -106,7 +109,7 @@ export default function RoleFormModal({ open, mode, role, initial, roles, onClos
         </Button>,
       ]}
     >
-      <Form form={form} layout="vertical" requiredMark onFinish={submit}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark onFinish={submit}>
         <Form.Item
           name="name"
           label="Tên vai trò"
@@ -117,7 +120,7 @@ export default function RoleFormModal({ open, mode, role, initial, roles, onClos
             { validator: duplicate },
           ]}
         >
-          <Input placeholder="Ví dụ: Kế toán" autoFocus maxLength={100} />
+          <Input placeholder="Ví dụ: Kế toán" maxLength={100} />
         </Form.Item>
         <Form.Item
           name="description"

@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../hooks/useFormShortcuts'
 import { filterSearchOption } from '../../utils/search'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
@@ -579,6 +580,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   }
 
   const cancelTo = isEdit ? `/seafarers/${id}` : '/seafarers'
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(cancelTo) })
   const name = values.full_name?.trim() || seafarer?.full_name || ''
   const canSave = !isEdit || changedKeys.length > 0 || photoChanged || pendingDocs.length > 0
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
@@ -660,6 +662,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         </aside>
 
         <Form
+          ref={shortcuts}
           form={form}
           layout="vertical"
           requiredMark={false}

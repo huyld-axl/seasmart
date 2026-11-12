@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { formatCalendarDuration } from '../../../utils/format'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -104,6 +105,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const label = (name, text) => changedLabel(text, changed.has(name))
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(isEdit ? `/opportunities/${opportunity.id}` : '/opportunities') })
   const leave = useLeaveGuard(isEdit ? changed.size > 0 : form.isFieldsTouched())
 
   const coreFields = ['ship_owner_id', 'vessel_id', 'rank_id', 'budget_monthly_usd', 'owner_user_id']
@@ -210,7 +212,7 @@ function OpportunityForm({ opportunity, prefill }) {
       done={filled(coreFields) + filled(timeFields)}
       total={coreFields.length + timeFields.length}
     >
-      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={onValuesChange} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={onValuesChange} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         <FormSection index={0} section={sections[0]} meta={metas[0]}>
           <div className="sf-grid">
             <Form.Item name="ship_owner_id" className={cn('ship_owner_id', 'sf-c4')} label={label('ship_owner_id', 'Chủ tàu')} rules={[{ required: true, message: vesselHasNoOwner ? 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng.' : 'Chọn chủ tàu' }]} extra={vesselHasNoOwner ? 'Tàu chưa có chủ tàu' : ownerFromVessel ? 'Lấy theo tàu' : undefined}>

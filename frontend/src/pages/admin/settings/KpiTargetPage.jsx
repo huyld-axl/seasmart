@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useState } from 'react'
 import { Button, Skeleton, Table, Tooltip } from 'antd'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
@@ -86,6 +87,8 @@ export default function KpiTargetPage() {
     save.mutate()
   }
 
+  const shortcuts = useFormShortcuts({ onCancel: () => setEdit({ base: null, rows: [], tried: false }) })
+
   let body
   if (query.isLoading) body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
   else if (query.isError) body = <EmptyState isError title="Không tải được mục tiêu" action={<Button onClick={() => query.refetch()}>Thử lại</Button>} />
@@ -136,7 +139,7 @@ export default function KpiTargetPage() {
   // Rời trang khi còn mục tiêu chưa lưu thì hỏi lại.
   useLeaveGuard(dirty)
   return (
-    <div className="ds-page">
+    <div ref={shortcuts} className="ds-page">
       <div className="ds-page__head">
         <div>
           <h1 className="ds-page__title">Mục tiêu tháng</h1>
@@ -164,7 +167,7 @@ export default function KpiTargetPage() {
         </div>
         <div className="sf-savebar__actions">
           <Button onClick={() => setEdit({ base: null, rows: [], tried: false })} disabled={!dirty || save.isPending}>Huỷ</Button>
-          <Button type="primary" onClick={submit} loading={save.isPending} disabled={!dirty}>Lưu thay đổi</Button>
+          <Button data-form-submit type="primary" onClick={submit} loading={save.isPending} disabled={!dirty}>Lưu thay đổi</Button>
         </div>
       </div>
     </div>

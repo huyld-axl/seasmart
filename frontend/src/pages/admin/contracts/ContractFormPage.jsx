@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { formatCalendarDuration } from '../../../utils/format'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -79,6 +80,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
     return JSON.stringify(toPayload(initial)) !== JSON.stringify(toPayload(values))
   }, [isEdit, initial, values])
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(back) })
   const leave = useLeaveGuard(isEdit ? changed : form.isFieldsTouched())
 
   function onVoyageChange(_, option) {
@@ -135,7 +137,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         </p>
       </div>
 
-      <Form form={form} layout="vertical" requiredMark className="ct-form" initialValues={initial} onFinish={submit} onValuesChange={() => blocked && setBlocked(null)} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="ct-form" initialValues={initial} onFinish={submit} onValuesChange={() => blocked && setBlocked(null)} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         {blocked ? (
           <Banner
             tone="error"

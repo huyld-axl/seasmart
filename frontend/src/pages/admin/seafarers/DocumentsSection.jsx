@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Modal, Form, Input, Checkbox, Space, Skeleton, Spin } from 'antd'
@@ -276,6 +277,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
 
   const rows = useMemo(() => data?.data || [], [data])
   const isNew = editing === 'new'
+  const shortcuts = useFormShortcuts({ enabled: editing !== null, autoFocus: isNew, onCancel: close })
   const noExpiry = Form.useWatch('no_expiry', form)
   const watched = Form.useWatch([], form) || {}
   // Giấy tuỳ thân: ô hồ sơ sẽ đổi khi lưu (số, ngày theo hộp thoại; họ tên, ngày sinh… theo AI đọc), người dùng bỏ tích được.
@@ -431,7 +433,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         </div>
         {aiRead ? <Banner tone="neutral" title="Thông tin AI đọc được" description="Các ô dưới đây AI điền từ ảnh. Kiểm tra và sửa nếu sai trước khi lưu." /> : null}
         {renewing ? <p className="crew-certs__renew">Bản mới thành một dòng riêng; bản hiện tại giữ lại, chuyển thành "Bản cũ" và hết cảnh báo.</p> : null}
-        <Form form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v, profile: chosenProfile, avatarFile: isPhotoType && setAvatar && certFile?.type?.startsWith('image/') ? certFile : null })}>
+        <Form ref={shortcuts} form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v, profile: chosenProfile, avatarFile: isPhotoType && setAvatar && certFile?.type?.startsWith('image/') ? certFile : null })}>
           <Form.Item name="certificate_type_id" label="Loại giấy tờ" rules={[{ required: true, message: 'Chọn loại giấy tờ' }]}>
             <Select
               allowClear

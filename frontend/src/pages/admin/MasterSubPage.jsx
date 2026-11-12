@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../hooks/useFormShortcuts'
 import { flagEmoji, withFlag } from '../../utils/flag'
 import { matchesSearch, normalizeSearch } from '../../utils/search'
 import { useParams, Navigate } from 'react-router-dom'
@@ -115,6 +116,7 @@ function MasterTable({ resource, columns, formFields, title }) {
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const [form] = Form.useForm()
+  const shortcuts = useFormShortcuts({ enabled: !!editing, autoFocus: !editing?.id, focusKey: editing, onCancel: () => setEditing(null) })
   const [changed, setChanged] = useState(new Set())
   const isMobile = useViewport().isCompact
   const { listRef, scrollToListStart } = useListScrollReset(isMobile, false)
@@ -258,7 +260,7 @@ function MasterTable({ resource, columns, formFields, title }) {
             {editing?.id && changed.size > 0 ? <span className="master-panel-actions__changes" style={{ marginRight: 'auto', color: 'var(--muted)' }}>{changed.size} thay đổi</span> : null}
             <Button onClick={() => setEditing(null)}>Huỷ</Button>
             {editing?.id ? (
-              <Button type="primary" disabled={!changed.size} loading={update.isPending} onClick={() => submit()}>
+              <Button data-form-submit type="primary" disabled={!changed.size} loading={update.isPending} onClick={() => submit()}>
                 Lưu thay đổi
               </Button>
             ) : (
@@ -266,7 +268,7 @@ function MasterTable({ resource, columns, formFields, title }) {
                 <Button loading={create.isPending} onClick={() => submit({ addAnother: true })}>
                   Lưu & thêm khác
                 </Button>
-                <Button className="master-panel-actions__create" type="primary" loading={create.isPending} onClick={() => submit()}>
+                <Button data-form-submit className="master-panel-actions__create" type="primary" loading={create.isPending} onClick={() => submit()}>
                   Thêm {title}
                 </Button>
               </>
@@ -274,7 +276,7 @@ function MasterTable({ resource, columns, formFields, title }) {
           </div>
         }
       >
-        <Form form={form} layout="vertical" onFinish={() => submit()} onValuesChange={trackChanges}>
+        <Form ref={shortcuts} form={form} layout="vertical" onFinish={() => submit()} onValuesChange={trackChanges}>
           {fields}
         </Form>
       </SlidePanel>

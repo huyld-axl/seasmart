@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { withFlag } from '../../../utils/flag'
 import { useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -220,6 +221,7 @@ function VesselForm({ vessel }) {
 
   const sectionMeta = (index) => `${stats[index]}/${SECTIONS[index].fields.length}`
   const cancelTo = isEdit ? `/vessels/${vessel.id}` : '/vessels'
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(cancelTo) })
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
 
   return (
@@ -235,7 +237,7 @@ function VesselForm({ vessel }) {
       done={done}
       total={total}
     >
-      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={dropSources} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={dropSources} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         {notices.length || compare ? (
           <div className="fl-notes">
             {notices.map((notice) => (

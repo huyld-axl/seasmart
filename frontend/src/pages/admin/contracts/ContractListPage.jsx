@@ -183,7 +183,7 @@ export default function ContractListPage() {
               fields={[
                 { label: 'Tàu', value: row.vessel_name },
                 { label: 'Chủ tàu', value: row.ship_owner_name },
-                { label: 'Thời hạn', value: `${range}${months ? ` · ${months}` : ''}${leftText}`, wide: true, tone: left != null && left < 0 ? 'err' : left != null && left <= EXPIRY_WARN_DAYS ? 'warn' : undefined },
+                { label: 'Thời hạn', value: <>{range}{months ? <span className="ds-duration-note">· {months}{leftText}</span> : leftText}</>, wide: true, tone: left != null && left < 0 ? 'err' : left != null && left <= EXPIRY_WARN_DAYS ? 'warn' : undefined },
               ]}
               extra={(
                 <MoneyStrip

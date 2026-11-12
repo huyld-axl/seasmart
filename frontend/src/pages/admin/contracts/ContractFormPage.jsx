@@ -1,3 +1,4 @@
+import { formatCalendarDuration } from '../../../utils/format'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -25,7 +26,6 @@ import '../fleet/fleet.css'
 import './contracts.css'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
-const formatMonths = (months) => `${String(months).replace('.', ',')} tháng`
 
 function safeMonths(start, end) {
   if (!start || !end) return null
@@ -203,7 +203,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                     },
                   },
                 ]}
-                extra={months != null ? formatMonths(months) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
+                extra={months != null ? formatCalendarDuration(values.start_date, values.end_date) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
               >
                 <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>

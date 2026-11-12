@@ -1,3 +1,4 @@
+import { formatCalendarDuration } from '../../../utils/format'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -32,7 +33,6 @@ import '../seafarers/SeafarerForm.css'
 import '../voyages/voyages.css'
 import './opportunities.css'
 
-const formatMonths = (months) => `${String(months).replace('.', ',')} tháng`
 const FIT_STATE = { ok: 'Có', missing: 'Thiếu', expires_early: 'Hết hạn trước mốc' }
 
 // Bảng đối chiếu từng mục hồ sơ yêu cầu của một ứng viên.
@@ -354,7 +354,7 @@ export default function OpportunityDetailPage() {
       fields: [
         ['Xuống tàu', place(o.planned_join_date, o.planned_join_port_name), 6],
         ['Rời tàu', place(o.planned_leave_date, o.planned_leave_port_name), 6],
-        ['Thời gian', formatMonths(o.months), 6],
+        ['Thời gian', formatCalendarDuration(o.planned_join_date, o.planned_leave_date), 6],
         ['Hạn chốt', formatDate(o.deadline), 6],
       ],
     },

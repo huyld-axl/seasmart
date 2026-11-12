@@ -64,7 +64,8 @@ describe('MoneyStrip', () => {
     render(<MoneyStrip income="2.250" expense="2.000" result="+250 USD/tháng" resultTone="pos" />)
     expect(screen.getByText('2.250')).toBeInTheDocument()
     expect(screen.getByText('2.000')).toBeInTheDocument()
-    expect(screen.getByText('= +250 USD/tháng')).toBeInTheDocument()
+    expect(screen.getByText('Chênh lệch')).toBeInTheDocument()
+    expect(screen.getByText('+250 USD/tháng')).toBeInTheDocument()
   })
 
   it('chưa có tiền thì ghi Chưa nhập tiền', () => {

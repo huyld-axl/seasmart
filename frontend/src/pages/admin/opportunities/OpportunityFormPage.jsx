@@ -1,3 +1,4 @@
+import { formatCalendarDuration } from '../../../utils/format'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -46,7 +47,6 @@ function safeMonths(start, end) {
     return null
   }
 }
-const formatMonths = (months) => `${String(months).replace('.', ',')} tháng`
 
 function OpportunityForm({ opportunity, prefill }) {
   const isEdit = !!opportunity
@@ -225,7 +225,7 @@ function OpportunityForm({ opportunity, prefill }) {
             <Form.Item name="budget_monthly_usd" className={cn('budget_monthly_usd', 'sf-c4')} label={label('budget_monthly_usd', 'Budget/tháng (USD)')} rules={[{ required: true, message: 'Nhập budget/tháng' }]}>
               <MoneyInput aria-label="Budget mỗi tháng" />
             </Form.Item>
-            <Form.Item name="budget_total_usd" className={cn('budget_total_usd', 'sf-c4')} label={label('budget_total_usd', 'Budget cả chuyến (USD)')} extra={months != null ? `Tính theo ngày xuống → rời: ${formatMonths(months)}. Sửa ô nào ô kia tự tính.` : 'Nhập ngày xuống và rời để tự tính.'}>
+            <Form.Item name="budget_total_usd" className={cn('budget_total_usd', 'sf-c4')} label={label('budget_total_usd', 'Budget cả chuyến (USD)')} extra={months != null ? `Tính theo ngày xuống → rời: ${formatCalendarDuration(values.planned_join_date, values.planned_leave_date)}. Sửa ô nào ô kia tự tính.` : 'Nhập ngày xuống và rời để tự tính.'}>
               <MoneyInput aria-label="Budget cả chuyến" />
             </Form.Item>
             <Form.Item name="owner_user_id" className={cn('owner_user_id', 'sf-c4')} label={label('owner_user_id', 'Người phụ trách')} extra={can('account.view') ? undefined : 'Mặc định là bạn'}>

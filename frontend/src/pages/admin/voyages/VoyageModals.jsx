@@ -56,7 +56,7 @@ export function LeavePlanModal({ voyage: v, onClose }) {
   const [form] = Form.useForm()
   const next = Form.useWatch('planned_leave_date', form)
   const base = v.original_leave_date || v.planned_leave_date
-  const delta = next ? deltaText(dayjs(next).startOf('day').diff(dayjs(base).startOf('day'), 'day')) : null
+  const delta = next ? deltaText(dayjs(next).startOf('day').diff(dayjs(base).startOf('day'), 'day'), base, next) : null
 
   async function onSubmit(values) {
     try {

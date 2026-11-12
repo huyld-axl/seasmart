@@ -57,6 +57,10 @@ module.exports = fp(async function (fastify) {
     } catch (err) {
       return reply.code(401).send({ error: 'Unauthorized' })
     }
+    // App máy tính: phiên không sống quá mốc offline của vé (7 ngày kể từ lần làm mới cuối với máy chủ dịch vụ).
+    if (config.desktop && !(request.user.offline_until > Date.now() / 1000)) {
+      return reply.code(401).send({ error: 'Đã quá 7 ngày không kết nối internet. Kết nối rồi đăng nhập lại.', code: 'OFFLINE_EXPIRED' })
+    }
     const access = await loadAccess(request.user.id)
     if (!access) return reply.code(401).send({ error: 'Unauthorized' })
     request.access = access

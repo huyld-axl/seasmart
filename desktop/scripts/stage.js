@@ -88,17 +88,32 @@ async function copyNode() {
   fs.rmSync(tmp, { recursive: true, force: true })
 }
 
-function writeCloudKey() {
-  const keyFile = path.join(ROOT, 'cloud/.data/signing-key.pem')
-  if (!fs.existsSync(keyFile)) throw new Error('Chưa có cloud/.data/signing-key.pem: chạy `node cloud/server.js` một lần')
-  const pub = crypto.createPublicKey(crypto.createPrivateKey(fs.readFileSync(keyFile))).export({ type: 'spki', format: 'pem' })
-  fs.writeFileSync(path.join(STAGE, 'cloud-public-key.pem'), pub)
+// Khoá công khai kiểm vé đăng nhập, gói vào bộ cài. Build cho máy chủ thật (MCAH_CLOUD_URL không phải localhost): lấy từ
+// <máy chủ>/.well-known/mcah-keys. Build cho máy dev: suy ra từ cloud/.data/signing-key.pem.
+async function writeCloudKey() {
+  const url = (process.env.MCAH_CLOUD_URL || '').replace(/\/+$/, '')
+  let pem
+  if (url && !/^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) {
+    if (!url.startsWith('https://')) throw new Error('MCAH_CLOUD_URL của máy chủ thật phải là https')
+    const r = await fetch(`${url}/.well-known/mcah-keys`)
+    if (!r.ok) throw new Error(`Không lấy được khoá công khai từ ${url} (${r.status})`)
+    const { keys } = await r.json()
+    if (!keys?.length) throw new Error(`${url} không trả khoá công khai nào`)
+    pem = keys.map((k) => crypto.createPublicKey(k.pem).export({ type: 'spki', format: 'pem' })).join('')
+    console.log(`Khoá công khai từ ${url}: ${keys.map((k) => k.kid).join(', ')}`)
+  } else {
+    const keyFile = path.join(ROOT, 'cloud/.data/signing-key.pem')
+    if (!fs.existsSync(keyFile)) throw new Error('Chưa có cloud/.data/signing-key.pem: chạy `node cloud/server.js` một lần')
+    pem = crypto.createPublicKey(crypto.createPrivateKey(fs.readFileSync(keyFile))).export({ type: 'spki', format: 'pem' })
+  }
+  fs.writeFileSync(path.join(STAGE, 'cloud-public-key.pem'), pem)
 }
 
 // Khoá công khai kiểm bản phát hành + địa chỉ phát hành (MCAH_UPDATE_URL lúc build; trống = tắt tự cập nhật).
 function writeUpdateConfig() {
   fs.writeFileSync(path.join(STAGE, 'release-public-key.pem'), require('./release-key').publicKeyPem())
   fs.writeFileSync(path.join(STAGE, 'update-url.txt'), process.env.MCAH_UPDATE_URL || '')
+  fs.writeFileSync(path.join(STAGE, 'cloud-url.txt'), process.env.MCAH_CLOUD_URL || 'http://localhost:4100')
 }
 
 // Bản thử của bước 0.7: thêm một migration cuối để kiểm cập nhật có chạy migration.
@@ -115,7 +130,7 @@ async function main() {
   fs.cpSync(path.join(ROOT, 'forms'), path.join(OUT, 'forms'), { recursive: true })
   copyPostgres()
   await copyNode()
-  writeCloudKey()
+  await writeCloudKey()
   writeUpdateConfig()
   console.log(`Đã gom xong: ${path.relative(DESKTOP, OUT)}`)
 }

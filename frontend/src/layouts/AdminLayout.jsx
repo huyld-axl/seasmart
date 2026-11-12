@@ -30,6 +30,8 @@ import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 import useViewport from '../hooks/useViewport'
 import PdfComponentModal from '../components/common/PdfComponentModal'
+import OfflineRibbon from '../components/common/OfflineRibbon'
+import DesktopLock from '../components/common/DesktopLock'
 import { desktop, isDesktop } from '../lib/desktop'
 
 // Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng mục của trang hướng dẫn theo đường dẫn.
@@ -259,11 +261,13 @@ export default function AdminLayout() {
             </Dropdown>
           </div>
         </header>
+        {isDesktop() ? <OfflineRibbon /> : null}
 
         <main className="app-shell__content">
           <ErrorBoundary resetKey={pathname}>
             <Outlet />
             {isDesktop() ? <PdfComponentModal /> : null}
+            {isDesktop() ? <DesktopLock /> : null}
           </ErrorBoundary>
         </main>
       </div>

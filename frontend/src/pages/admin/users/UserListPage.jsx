@@ -6,6 +6,7 @@ import UserTable from '../../../components/admin/users/UserTable'
 import UserForm from '../../../components/admin/users/UserForm'
 import useToast from '../../../components/ds/useToast'
 import useAuthStore from '../../../stores/authStore'
+import { isDesktop } from '../../../lib/desktop'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import ListFooter from '../../../components/ds/ListFooter'
 import Fab from '../../../components/ds/Fab'
@@ -83,6 +84,7 @@ export default function UserListPage() {
       onSuccess: (res) => {
         const token = res?.invite_token
         if (token) offerSetPassword(values.email, token)
+        else if (res?.cloud_warning) toast.warning(text, { description: res.cloud_warning })
         else toast.success(text)
         if (addAnother) {
           form.resetFields()
@@ -92,7 +94,7 @@ export default function UserListPage() {
       onError: (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) }),
     })
     if (editTarget) updateUser.mutate({ id: editTarget.id, data: values }, done(`Đã lưu ${name}`))
-    else createUser.mutate(values, done(`Đã tạo tài khoản và gửi email mời tới ${values.email}`))
+    else createUser.mutate(values, done(`Đã gửi thư mời tới ${values.email}`))
   }
 
   const confirmDelete = (user) =>
@@ -105,7 +107,7 @@ export default function UserListPage() {
       autoFocusButton: 'cancel',
       onOk: () =>
         deleteUser.mutateAsync(user.id).then(
-          () => toast.success(`Đã xoá ${user.email}`),
+          (res) => (res?.data?.cloud_warning ? toast.warning(`Đã xoá ${user.email}`, { description: res.data.cloud_warning }) : toast.success(`Đã xoá ${user.email}`)),
           (error) => toast.error(`Không xoá được ${user.email}`, { description: errorText(error) })
         ),
     })
@@ -151,7 +153,7 @@ export default function UserListPage() {
         action={
           rights.canCreate ? (
             <Button icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-              Thêm tài khoản
+              {isDesktop() ? 'Mời' : 'Thêm tài khoản'}
             </Button>
           ) : undefined
         }
@@ -219,7 +221,7 @@ export default function UserListPage() {
           {rights.canCreate ? (
             <span className="ds-toolbar__end">
               <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-                Thêm tài khoản
+                {isDesktop() ? 'Mời' : 'Thêm tài khoản'}
               </Button>
             </span>
           ) : null}
@@ -234,7 +236,7 @@ export default function UserListPage() {
         loading={createUser.isPending || updateUser.isPending}
         resetKey={formKey}
       />
-      {rights.canCreate ? <Fab label="Thêm tài khoản" onClick={() => openPanel(null)} /> : null}
+      {rights.canCreate ? <Fab label={isDesktop() ? 'Mời' : 'Thêm tài khoản'} onClick={() => openPanel(null)} /> : null}
     </div>
   )
 }

@@ -33,6 +33,7 @@ function getSettings() {
   const mailApp = defaultMailApp()
   return {
     mailMode: saved.mailMode || (mailApp ? 'app' : 'smtp'),
+    lockMinutes: saved.lockMinutes || 15,
     mailApp,
     smtp: saved.smtp || { provider: 'gmail', user: '' },
     smtpPasswordSaved: fs.existsSync(secretFile()),
@@ -40,9 +41,10 @@ function getSettings() {
   }
 }
 
-function saveSettings({ mailMode, smtp, smtpPassword }) {
+function saveSettings({ mailMode, smtp, smtpPassword, lockMinutes }) {
   const next = { ...read() }
   if (mailMode !== undefined) next.mailMode = mailMode
+  if (lockMinutes !== undefined) next.lockMinutes = lockMinutes
   if (smtp !== undefined) {
     const preset = PROVIDERS[smtp.provider] || {}
     next.smtp = {
@@ -68,4 +70,4 @@ function smtpConfig() {
   return { ...smtp, password: safeStorage.decryptString(fs.readFileSync(secretFile())) }
 }
 
-module.exports = { getSettings, saveSettings, smtpConfig, PROVIDERS }
+module.exports = { getSettings, saveSettings, smtpConfig, secretStoreAvailable, PROVIDERS }

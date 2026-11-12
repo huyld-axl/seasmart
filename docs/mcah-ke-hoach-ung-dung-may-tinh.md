@@ -835,3 +835,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-11 | 1 | Viết kế hoạch chi tiết giai đoạn 1 | `docs/mcah-ke-hoach-desktop-gd1.md`, wireframe `docs/design/wireframes/desktop-gd1.html`, testcase, hướng dẫn nháp; chờ duyệt |
 | 2026-11-11 | 1 | Code giai đoạn 1 trên Ubuntu | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd1.md`; chờ Windows, testcase tay còn lại, quyết định về thông báo nhắc hạn |
 | 2026-11-12 | 2 | Viết kế hoạch chi tiết giai đoạn 2 | `docs/mcah-ke-hoach-desktop-gd2.md`, wireframe `docs/design/wireframes/desktop-gd2.html`, testcase, hướng dẫn nháp; chờ duyệt |
+| 2026-11-12 | 2 | Code giai đoạn 2 trên Ubuntu (máy chủ dịch vụ chạy ở máy dev) | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd2.md`; chờ Google (M9), máy chủ thật + tên miền (M2), khoá AI / nguồn tàu ở máy chủ, Windows |

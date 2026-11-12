@@ -44,6 +44,13 @@ flock -n 9 || { echo 'Another deployment is running.' >&2; exit 1; }
 for env_path in backend/.env frontend/.env; do
   [[ -f "$env_path" ]] || { echo "Missing $env_path; create it from .env.example." >&2; exit 1; }
 done
+# Máy chủ dịch vụ của app máy tính là tuỳ chọn: chưa có cloud/.env thì deploy bản web như cũ, bỏ qua cloud.
+cloud_services=()
+if [[ -f cloud/.env ]]; then
+  cloud_services=(cloud-postgres cloud)
+else
+  echo 'No cloud/.env: skipping the desktop service (cloud). See docs/mcah-huong-dan-server-may-chu-dich-vu.md.' >&2
+fi
 
 if [[ ! -f docker/postgres.env ]]; then
   if [[ "$action" == --status || "$action" == --stop ]]; then
@@ -57,6 +64,14 @@ if [[ ! -f docker/postgres.env ]]; then
   echo 'Created private docker/postgres.env; credential values are not displayed.'
 fi
 
+# Postgres riêng của máy chủ dịch vụ (cloud/), tự tạo mật khẩu lần đầu như docker/postgres.env.
+if [[ ! -f docker/cloud-postgres.env ]]; then
+  command -v openssl >/dev/null || { echo 'openssl is required.' >&2; exit 1; }
+  cloud_pg_password="$(openssl rand -hex 32)"
+  printf 'POSTGRES_DB=mcah_cloud\nPOSTGRES_USER=mcah_cloud\nPOSTGRES_PASSWORD=%s\n' "$cloud_pg_password" > docker/cloud-postgres.env
+  unset cloud_pg_password
+  echo 'Created private docker/cloud-postgres.env; credential values are not displayed.'
+fi
 if [[ ! -f docker/jwt_secret ]]; then
   command -v openssl >/dev/null || { echo 'openssl is required.' >&2; exit 1; }
   openssl rand -hex 32 > docker/jwt_secret
@@ -84,8 +99,14 @@ build_images() {
       --build-arg FRONTEND_BUILD_ID \
       --build-arg "FRONTEND_API_URL=${FRONTEND_API_URL:-/api/v1}" \
       -t seasmart-frontend:local frontend
+    if [[ ${#cloud_services[@]} -gt 0 ]]; then
+      docker buildx build --load --network host --allow network.host \
+        -f cloud/Dockerfile -t seasmart-cloud:local .
+    fi
   else
-    "${compose[@]}" build backend frontend
+    build_targets=(backend frontend)
+    [[ ${#cloud_services[@]} -gt 0 ]] && build_targets+=(cloud)
+    "${compose[@]}" build "${build_targets[@]}"
   fi
 }
 
@@ -108,7 +129,8 @@ case "$action" in
     "${compose[@]}" up -d --wait --wait-timeout "$wait_timeout" postgres
     "${compose[@]}" run --rm --no-deps -T backend node scripts/migrate.js
     "${compose[@]}" run --rm --no-deps -T backend node scripts/check_deploy_env.js
-    "${compose[@]}" up -d --wait --wait-timeout "$wait_timeout" postgres backend frontend
+    # cloud chạy migration của nó mỗi lần khởi động (cloud/Dockerfile CMD).
+    "${compose[@]}" up -d --wait --wait-timeout "$wait_timeout" postgres backend "${cloud_services[@]}" frontend
     "${compose[@]}" ps
     printf 'Frontend: http://localhost:%s\n' "${WEB_PORT:-8080}"
     ;;

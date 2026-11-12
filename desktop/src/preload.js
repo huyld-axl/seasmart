@@ -17,6 +17,28 @@ contextBridge.exposeInMainWorld('mcah', {
     ipcRenderer.on('mcah:pdf-install-progress', listener)
     return () => ipcRenderer.removeListener('mcah:pdf-install-progress', listener)
   },
+  session: call('session'),
+  onSessionChanged: (fn) => {
+    const listener = (_event, info) => fn(info)
+    ipcRenderer.on('mcah:session-changed', listener)
+    return () => ipcRenderer.removeListener('mcah:session-changed', listener)
+  },
+  login: call('login'),
+  loginWithCode: call('login-code'),
+  cancelLogin: call('cancel-login'),
+  reopenBrowser: call('reopen-browser'),
+  logout: call('logout'),
+  refreshSession: call('refresh-session'),
+  lockState: call('lock-state'),
+  setPin: call('set-pin'),
+  unlock: call('unlock'),
+  onLockChanged: (fn) => {
+    const listener = (_event, locked) => fn(locked)
+    ipcRenderer.on('mcah:lock-changed', listener)
+    return () => ipcRenderer.removeListener('mcah:lock-changed', listener)
+  },
+  prepareOffice: call('prepare-office'),
+  createOffice: call('create-office'),
   getSettings: call('get-settings'),
   saveSettings: call('save-settings'),
   checkUpdate: call('check-update'),

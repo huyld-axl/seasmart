@@ -5,6 +5,7 @@ import Banner from '../../ds/Banner'
 import SlidePanel from '../../ds/SlidePanel'
 import { useRoleOptions } from '../../../hooks/useRoles'
 import useAuthStore from '../../../stores/authStore'
+import { isDesktop } from '../../../lib/desktop'
 
 // Tạo tài khoản: hộp thoại (họ tên, email, vai trò; mật khẩu do người dùng tự đặt qua thư mời).
 // Sửa tài khoản: panel trượt (khuôn D3).
@@ -113,20 +114,20 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
       <Modal
         open={open}
         onCancel={onClose}
-        title="Thêm tài khoản"
+        title={isDesktop() ? 'Mời vào văn phòng' : 'Thêm tài khoản'}
         footer={
           <>
             <Button onClick={onClose}>Huỷ</Button>
             <Button onClick={() => submit(true)} loading={loading}>
-              Lưu &amp; thêm tài khoản khác
+              {isDesktop() ? 'Gửi & mời người khác' : 'Lưu & thêm tài khoản khác'}
             </Button>
             <Button type="primary" onClick={() => submit(false)} loading={loading}>
-              Thêm tài khoản
+              {isDesktop() ? 'Gửi thư mời' : 'Thêm tài khoản'}
             </Button>
           </>
         }
       >
-        <Banner tone="neutral" icon={MailOutlined} title="Hệ thống sẽ gửi email mời" description="Người dùng bấm liên kết trong email để tự đặt mật khẩu." />
+        <Banner tone="neutral" icon={MailOutlined} title="Hệ thống sẽ gửi email mời" description={isDesktop() ? 'Người được mời đăng ký trên trang MCAH rồi đăng nhập app. Cần kết nối internet.' : 'Người dùng bấm liên kết trong email để tự đặt mật khẩu.'} />
         <div style={{ marginTop: 16 }}>{fields}</div>
       </Modal>
     )

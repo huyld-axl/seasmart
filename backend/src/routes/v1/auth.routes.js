@@ -22,6 +22,8 @@ async function authRoutes(fastify) {
       },
     },
     async (request) => {
+      // App máy tính đăng nhập qua trình duyệt (desktop_ticket.routes.js), không nhận mật khẩu.
+      if (config.desktop) throw { statusCode: 404, message: 'Không có' }
       const user = await authService.login(request.body)
       const access = await loadAccess(user.id)
       const token = fastify.jwt.sign(

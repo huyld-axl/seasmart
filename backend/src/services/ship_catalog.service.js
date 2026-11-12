@@ -1,5 +1,7 @@
 const { mapCatalogRow } = require('./vessel_lookup/map')
 const { loadRefs } = require('./vessel_lookup/refs')
+const config = require('../config')
+const desktopCloud = require('../utils/desktop_cloud')
 
 const MIN_QUERY = 2
 const MAX_LIMIT = 50
@@ -25,6 +27,7 @@ const shipCatalogService = {
     const size = Math.min(MAX_LIMIT, Math.max(1, Number(limit) || 20))
     const current = Math.max(1, Number(page) || 1)
     if (term.length < MIN_QUERY) return { data: [], total: 0, page: current, limit: size }
+    if (config.desktop) return searchCloud(db, term, current, size)
     const contains = `%${escapeLike(term)}%`
     const prefix = `${escapeLike(term)}%`
     const imo = /^\d{7}$/.test(term) ? term : null
@@ -48,6 +51,24 @@ const shipCatalogService = {
     const refs = await loadRefs(db)
     return { data: rows.map((row) => ({ ...row, ...mapCatalogRow(row, refs) })), total: Number(total), page: current, limit: size }
   },
+}
+
+// App máy tính: danh mục nằm ở máy chủ dịch vụ MCAH (không phát cả danh mục trong bộ cài). Máy chủ trả dòng thô;
+// ở đây loại tàu đã có trong văn phòng và đổi loại tàu / cờ sang mã của văn phòng như bản web.
+async function searchCloud(db, term, page, limit) {
+  let result
+  try {
+    result = await desktopCloud.call(`/api/vessels/catalog?q=${encodeURIComponent(term)}&page=${page}&limit=${limit}`, null, { method: 'GET' })
+  } catch (error) {
+    if (['CLOUD_OFFLINE', 'SIGNER_DOWN', 'NO_OFFICE'].includes(error.code)) throw { statusCode: 503, message: 'Cần kết nối internet để tìm danh mục tàu' }
+    throw error
+  }
+  const imos = result.data.map((row) => row.imo_number).filter(Boolean)
+  const [existing] = imos.length ? await db.query('SELECT imo_number FROM vessel WHERE imo_number IN (?)', [imos]) : [[]]
+  const taken = new Set(existing.map((row) => row.imo_number))
+  const refs = await loadRefs(db)
+  const data = result.data.filter((row) => !row.imo_number || !taken.has(row.imo_number)).map((row) => ({ ...row, ...mapCatalogRow(row, refs) }))
+  return { data, total: Math.max(0, Number(result.total) - (result.data.length - data.length)), page: result.page, limit: result.limit }
 }
 
 module.exports = { shipCatalogService, MIN_QUERY }

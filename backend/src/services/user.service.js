@@ -4,6 +4,7 @@ const pool = require('../config/db')
 const { ADMIN_ROLE_CODE } = require('../constants/permissions')
 const emailService = require('./email.service')
 const config = require('../config')
+const desktopCloud = require('../utils/desktop_cloud')
 
 const SALT_ROUNDS = 10
 
@@ -151,6 +152,18 @@ async function createUser(data, actor, db = pool) {
   const [existing] = await db.query('SELECT id FROM "user" WHERE email = ? AND deleted_at IS NULL', [email])
   if (existing.length > 0) throw fail(400, 'Email đã tồn tại')
 
+  // App máy tính đã có văn phòng: máy chủ dịch vụ gửi thư mời (docs/mcah-ke-hoach-desktop-gd2.md 4.2). Gọi trước khi tạo
+  // dòng ở máy này: không có mạng thì không tạo gì. Người được mời gắn vào dòng này ở lần đăng nhập đầu (theo email).
+  if (await desktopCloud.enabled(db)) {
+    await desktopCloud.call('/api/office/invites', { email, full_name: full_name.trim(), role: role.code === ADMIN_ROLE_CODE ? 'admin' : 'member', invited_by_email: actor.email })
+    const [created] = await db.query(
+      `INSERT INTO "user" (email, full_name, password_hash, role_id, is_active, created_at, updated_at)
+       VALUES (?, ?, NULL, ?, 1, NOW(), NOW())`,
+      [email, full_name.trim(), role.id]
+    )
+    return { ...(await getUserById(created.insertId, db)), invite_sent: true }
+  }
+
   const [result] = await db.query(
     `INSERT INTO "user" (email, full_name, password_hash, role_id, is_active, created_at, updated_at)
      VALUES (?, ?, NULL, ?, 1, NOW(), NOW())`,
@@ -164,6 +177,10 @@ async function createUser(data, actor, db = pool) {
 async function resendInvite(id, db = pool) {
   const user = await loadTarget(db, id)
   if (user.status !== 'PENDING') throw fail(400, 'Tài khoản này đã kích hoạt')
+  if (await desktopCloud.enabled(db)) {
+    await desktopCloud.call('/api/office/invites', { email: user.email, full_name: user.full_name, role: user.is_admin ? 'admin' : 'member' })
+    return { ...user, invite_sent: true }
+  }
   return { ...user, ...(await sendInvite(user, await issueInviteToken(db, id))) }
 }
 
@@ -231,20 +248,37 @@ async function updateUser(id, data, actor, db = pool) {
 
   fields.push('updated_at = NOW()')
   await db.query(`UPDATE "user" SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`, [...params, id])
-  return getUserById(id, db)
+  const user = await getUserById(id, db)
+  if (data.is_active === undefined || Boolean(data.is_active) === Boolean(target.is_active)) return user
+  return { ...user, ...(await syncMembership(user.email, Boolean(user.is_active), db)) }
+}
+
+// App máy tính: khoá / xoá người dùng có hiệu lực ngay ở máy này, rồi báo máy chủ dịch vụ bỏ (hoặc thêm lại) người đó
+// khỏi văn phòng. Không có mạng thì vẫn khoá ở máy, trả cảnh báo để giao diện nhắc báo lại sau.
+async function syncMembership(email, active, db = pool) {
+  if (!(await desktopCloud.enabled(db))) return {}
+  try {
+    await desktopCloud.call(active ? '/api/office/members/restore' : '/api/office/members/remove', { email })
+    return {}
+  } catch (error) {
+    return { cloud_warning: `Đã đổi trên máy này nhưng chưa báo được máy chủ MCAH (${error.message}). Bật lại rồi tắt lại khi có mạng.` }
+  }
 }
 
 async function softDeleteUser(id, actor, db = pool) {
   const target = await loadTarget(db, id)
   await assertCanChange(db, actor, target, { remove: true })
   await db.query('UPDATE "user" SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL', [id])
+  const sync = await syncMembership(target.email, false, db)
+  return sync.cloud_warning ? sync : undefined
 }
 
 async function toggleActive(id, actor, db = pool) {
   const target = await loadTarget(db, id)
   await assertCanChange(db, actor, target, { is_active: !target.is_active })
   await db.query('UPDATE "user" SET is_active = 1 - is_active, updated_at = NOW() WHERE id = ? AND deleted_at IS NULL', [id])
-  return getUserById(id, db)
+  const user = await getUserById(id, db)
+  return { ...user, ...(await syncMembership(user.email, Boolean(user.is_active), db)) }
 }
 
 module.exports = {

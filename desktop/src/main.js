@@ -15,6 +15,12 @@ const { attachmentDir, cleanAttachmentDir } = require('./mail')
 const { findSoffice } = require('./pdf-component')
 const { smtpConfig } = require('./settings')
 const { registerIpc } = require('./ipc')
+const session = require('./session')
+const pin = require('./pin')
+const { getSettings } = require('./settings')
+const signer = require('./signer')
+const { cloudUrl } = require('./browser-login')
+const { machineKey } = require('./office')
 const { frontendDist: FRONTEND_DIST } = require('./paths')
 
 // Tên app quyết định thư mục dữ liệu (~/.config/MCAH, %APPDATA%\MCAH); đặt trước khi dùng app.getPath.
@@ -35,23 +41,34 @@ let mainWindow = null
 let logs = null
 
 // /api/ và /public/ chuyển tiếp sang Fastify. Tệp có thật trong dist thì trả tệp đó, còn lại (đường dẫn của router) trả index.html.
-function serveFrontend(request) {
+// /api: tiến trình chính gắn JWT của phiên (giao diện không giữ token, mọi Authorization giao diện tự gửi bị bỏ).
+// Máy chính trả 401 cho request có phiên → phiên hết (quá mốc offline, bị khoá): bỏ phiên, giao diện về đăng nhập.
+async function serveFrontend(request) {
   const { pathname, search } = new URL(request.url)
   if (backend && (pathname.startsWith('/api/') || pathname.startsWith('/public/'))) {
     const headers = new Headers(request.headers)
     headers.delete('origin')
     headers.delete('x-mcah-smtp')
+    headers.delete('authorization')
+    // Đang khoá (mã PIN): không cho đọc / ghi dữ liệu.
+    if (pin.isLocked() && pathname.startsWith('/api/')) {
+      return new Response(JSON.stringify({ error: 'MCAH đang khoá, nhập mã PIN để tiếp tục', code: 'LOCKED' }), { status: 423, headers: { 'content-type': 'application/json' } })
+    }
+    const jwt = session.jwt()
+    if (jwt) headers.set('authorization', `Bearer ${jwt}`)
     if (request.method === 'POST' && SMTP_PATHS.some((re) => re.test(pathname))) {
       const smtp = smtpConfig()
       if (smtp) headers.set('x-mcah-smtp', Buffer.from(JSON.stringify(smtp)).toString('base64'))
     }
-    return net.fetch(backend.url + pathname + search, {
+    const response = await net.fetch(backend.url + pathname + search, {
       method: request.method,
       headers,
       body: request.body,
       duplex: 'half',
       bypassCustomProtocolHandlers: true,
     })
+    if (response.status === 401 && jwt && session.jwt() === jwt) session.expired()
+    return response
   }
   const file = path.normalize(path.join(FRONTEND_DIST, decodeURIComponent(pathname)))
   const inside = file.startsWith(FRONTEND_DIST + path.sep)
@@ -130,9 +147,17 @@ async function startup() {
   const env = backendEnv(userData, database.env, await freePort(), { soffice: findSoffice(), mailDir: attachmentDir() })
   const ticketKey = cloudPublicKey()
   if (ticketKey) env.DESKTOP_TICKET_PUBLIC_KEY = ticketKey
+  // Cổng ký: backend gọi máy chủ dịch vụ (mời, bỏ thành viên, AI, tra tàu) qua tiến trình chính giữ khoá máy chính.
+  const sign = await signer.start({ cloudUrl, machineKey })
+  env.MCAH_SIGNER_URL = sign.url
+  env.MCAH_SIGNER_TOKEN = sign.token
   await step('DB_MIGRATE', () => runScript('scripts/migrate.js', env, userData, logs.backend))
   backendEnvVars = env
   backend = await step('BACKEND_START', () => startBackend(env, userData, logs.backend))
+  session.init(() => backend.url)
+  session.events.on('changed', () => mainWindow?.webContents.send('mcah:session-changed', session.info()))
+  pin.events.on('changed', (locked) => mainWindow?.webContents.send('mcah:lock-changed', locked))
+  pin.watch({ lockMinutes: () => getSettings().lockMinutes, loggedIn: () => Boolean(session.jwt()) })
   try {
     cleanAttachmentDir()
   } catch (error) {

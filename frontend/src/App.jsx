@@ -47,6 +47,8 @@ import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
 import KpiTargetPage from './pages/admin/settings/KpiTargetPage'
 import DeviceSettingsPage from './pages/admin/settings/DeviceSettingsPage'
+import FirstRunPage from './pages/desktop/FirstRunPage'
+import { isDesktop } from './lib/desktop'
 import ToastHost from './components/ds/ToastHost'
 
 const queryClient = new QueryClient({
@@ -58,6 +60,21 @@ function HomeRedirect() {
   const { user, ready } = useAuthStore()
   if (!ready) return null
   return <Navigate to={sectionsFor(user)[0]?.to || '/no-role'} replace />
+}
+
+// App máy tính: phiên ở tiến trình chính hết (quá 7 ngày, bị khoá, đăng xuất ở chỗ khác) → giao diện về đăng nhập.
+function useDesktopSession() {
+  useEffect(() => {
+    if (!isDesktop()) return undefined
+    return window.mcah.onSessionChanged((info) => {
+      const { token } = useAuthStore.getState()
+      if (!info.loggedIn && token) {
+        localStorage.removeItem('user')
+        useAuthStore.setState({ user: null, token: null, ready: true })
+        window.location.href = info.needsOffice ? '/bat-dau' : '/login'
+      }
+    })
+  }, [])
 }
 
 // Lấy quyền mới từ máy chủ một lần khi mở app (đổi quyền có hiệu lực ở lần tải trang tới).
@@ -78,6 +95,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      {isDesktop() ? <Route path="/bat-dau" element={<FirstRunPage />} /> : null}
       <Route path="/dat-mat-khau" element={<SetPasswordPage />} />
       <Route path="/design-system" element={<DesignSystemPage />} />
       <Route
@@ -177,6 +195,7 @@ function ThemeProvider({ children }) {
 
 export default function App() {
   useRefreshAccess()
+  useDesktopSession()
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

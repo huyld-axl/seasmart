@@ -1,7 +1,7 @@
 # MCAH — Kế hoạch app máy tính, giai đoạn 2: máy chủ dịch vụ và tài khoản
 
 - **Ngày lập:** 2026-11-12
-- **Trạng thái:** chờ duyệt, chưa viết code.
+- **Trạng thái:** đã duyệt 2026-11-12; code bước 0–4, 6–10, 11 (trừ triển khai thật) và 12 trên Ubuntu với máy chủ dịch vụ chạy ở máy dev. Google: đạt (2026-11-12, máy dev). Chờ: máy chủ thật trên mcah.axalize.dev/tai-khoan (M2), Windows.
 - **Kế hoạch tổng:** `docs/mcah-ke-hoach-ung-dung-may-tinh.md` (mục 3.3 tài khoản, 5.4 khoá dữ liệu, 6.3 bí mật trong bộ cài, 8 tính năng cần mạng, 10 giai đoạn 2, 11 nhóm E).
 - **Wireframe:** `docs/design/wireframes/desktop-gd2.html` (8 màn).
 - **Testcase chạy tay:** `docs/mcah-testcase-desktop-gd2.md`.
@@ -131,7 +131,7 @@ Máy chính có cặp khoá Ed25519 sinh lúc tạo văn phòng (khoá riêng m�
 
 ### 3.5 Thư hệ thống
 
-`src/services/mailer.js`: gửi qua SMTP cấu hình ở biến môi trường (`MAIL_SMTP_URL`, `MAIL_FROM`); `MAIL_DEV=1` thì in thư ra log (máy dev). Mẫu thư: xác minh email, đặt lại mật khẩu, lời mời ("Hà Linh mời bạn vào văn phòng Công ty ABC trên MCAH"), báo đổi mật khẩu.
+`src/services/mailer.js`: gửi qua SMTP cấu hình bằng cùng tên biến với `backend/.env` (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_USE_SSL`, `SMTP_USE_TLS`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`); `SMTP_HOST` trống thì in thư ra log (máy dev). Mẫu thư: xác minh email, đặt lại mật khẩu, lời mời ("Hà Linh mời bạn vào văn phòng Công ty ABC trên MCAH"), báo đổi mật khẩu.
 
 ### 3.6 Danh mục tàu thế giới
 
@@ -271,3 +271,15 @@ Theo kế hoạch tổng 5.4 và W4: sinh khoá dữ liệu 32 byte, cất bằn
 | Ngày | Bước | Việc | Ghi chú |
 |---|---|---|---|
 | 2026-11-12 | — | Lập kế hoạch, wireframe, testcase, hướng dẫn nháp | Chờ duyệt |
+| 2026-11-12 | 0 | Test gốc | backend 507, frontend 356, desktop 5. Mục 2.3 chưa có gì: máy dev dùng Postgres riêng (cloud/scripts/dev-db.js), thư in ra log |
+| 2026-11-12 | 1–3 | Máy chủ dịch vụ `cloud/` | Fastify + Postgres, trang web (đăng ký, xác minh, đăng nhập, quên / đặt lại, lời mời), OAuth PKCE + mã ngắn + refresh xoay vòng + max_age, vé EdDSA có kid. 16 test qua. Sửa lỗi thật do test bắt: /authorize khi đã có phiên trình duyệt không trả mã (đọc cookie vừa đặt) |
+| 2026-11-12 | 4, 6 | Phiên ở tiến trình chính, tạo văn phòng | `desktop/src/session.js`, `office.js`; màn W1, W3, W4; route `desktop-ticket` chính thức + `desktop-office`; JWT mang offline_until, `authenticate` kiểm mọi request; `/auth/login` 404 khi desktop. Thử trọn vòng trên app: đăng nhập → Lần đầu → tạo văn phòng → Tổng quan; tắt máy chủ dịch vụ, mở lại app vẫn làm việc; khoá dữ liệu mở được bằng mật khẩu sao lưu và mã khôi phục. Khoá bọc sao lưu chuyển vào két (backup-keys.bin) |
+| 2026-11-12 | 5 | ⛔ Google | Chưa có Google OAuth client (M9). Bỏ qua, làm khi có |
+| 2026-11-12 | 5 | Google | Người dùng tạo OAuth client (Web application, redirect `https://mcah.axalize.dev/tai-khoan/google/callback` và `http://localhost:4100/google/callback`), điền `cloud/.env`. `cloud/src/services/google.js`: OIDC code + PKCE + state + nonce, kiểm iss / aud / exp / email đã xác minh, đăng nhập lại bắt buộc dùng prompt=login + max_age=0 và kiểm auth_time; gắn theo google_sub rồi email. 4 test Google giả. Người dùng đăng nhập Google thật trong app: vào màn Lần đầu đúng tên. Máy dev đổi sang `http://localhost:4100` (Google không nhận 127.0.0.1). Biến thư của `cloud/` đổi về `SMTP_*` như backend; test ép thư chỉ in log (một lần chạy trước đó đã thử gửi thư thật tới địa chỉ thử @thu.vn) |
+| 2026-11-12 | 7 | Mốc 7 ngày | Dải vàng W7; ngày 6 / ngày 8 đạt bằng `MCAH_FAKE_NOW` (chỉ dev). Thêm: chặn chỉnh lùi đồng hồ (lùi quá 1 giờ → bỏ phiên), lý do hiện ở màn đăng nhập |
+| 2026-11-12 | 8 | PIN, tự khoá | `desktop/src/pin.js`, `DesktopLock.jsx` (dùng `Input.Password` sẵn có, không thêm control mới). Khoá → 423; sai 5 lần → về đăng nhập với max_age=0. Thời gian tự khoá ở Cài đặt trên máy này |
+| 2026-11-12 | 9 | Mời, khoá thành viên | Cổng ký `desktop/src/signer.js` + `backend/src/utils/desktop_cloud.js`; Tài khoản → "Mời" khi desktop có văn phòng; khoá / xoá báo máy chủ, không có mạng thì vẫn khoá ở máy và cảnh báo |
+| 2026-11-12 | 10 | AI, tra IMO, danh mục | Nhà cung cấp AI `cloud`, nguồn tra tàu `cloud`, danh mục tàu tìm ở máy chủ (732.869 tàu, nạp 30 giây). Máy chủ dùng lại module AI / tra tàu của backend (`cloud/src/routes/services.js`; triển khai phải chép kèm). AI và tra IMO thật chưa thử: máy dev không có khoá |
+| 2026-11-12 | 11 | Quản trị nội bộ, quét bí mật | `/quan-tri` (CLOUD_ADMIN_EMAILS), khoá / mở khoá văn phòng; `desktop/scripts/scan-secrets.js` chạy trong `dist:*`, bắt được khoá giả. Triển khai thật chờ M2 |
+| 2026-11-12 | 12 | Test | cloud 16, backend 510, frontend 358, desktop 6 test qua. Hướng dẫn phần tài khoản đã vào trang hướng dẫn (chỉ hiện trong app) |
+| 2026-11-12 | 11 | Đưa máy chủ dịch vụ vào deploy | Máy chủ dịch vụ chạy dưới đường dẫn con (`config.basePath` lấy từ `CLOUD_PUBLIC_URL`): liên kết, form, chuyển hướng, cookie có tiền tố; đã thử qua proxy giả lập nginx ở `/tai-khoan`. `cloud/Dockerfile` (context gốc repo, `.dockerignore` gốc chỉ cho vào `backend/src` + `cloud`), `compose.yaml` thêm `cloud-postgres` + `cloud` (volume `cloud_data` giữ khoá ký vé), `frontend/nginx.conf` chuyển `/tai-khoan/`, `deploy.sh` tự tạo `docker/cloud-postgres.env`; chưa có `cloud/.env` thì bỏ qua cloud và deploy bản web như cũ (nginx tìm `cloud` lúc có request nên bản web không phụ thuộc cloud). Chạy thật mà thiếu `CLOUD_COOKIE_SECRET` thì máy chủ không khởi động. Build bộ cài cho server lấy khoá công khai từ `<máy chủ>/.well-known/mcah-keys`. Hướng dẫn cho người giữ server: `docs/mcah-huong-dan-server-may-chu-dich-vu.md`. **Chưa dựng thử bằng Docker** (máy dev không có Docker) |

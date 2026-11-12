@@ -52,6 +52,7 @@ backend/storage/
 
 # Deployment credentials and lock
 docker/postgres.env
+docker/cloud-postgres.env
 docker/jwt_secret
 backups/
 .deploy.lock

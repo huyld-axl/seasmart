@@ -5,6 +5,8 @@ const { app, ipcMain, shell } = require('electron')
 const { openMail, attachmentDir, defaultMailApp } = require('./mail')
 const { getSettings, saveSettings } = require('./settings')
 const { findSoffice, installSoffice } = require('./pdf-component')
+const session = require('./session')
+const pin = require('./pin')
 
 const EXTERNAL = {
   thunderbird: 'https://www.thunderbird.net/vi/download/',
@@ -59,6 +61,10 @@ function checkSettings(s) {
     }
   }
   if (s.smtpPassword !== undefined) out.smtpPassword = str(s.smtpPassword, 256, 'Mật khẩu')
+  if (s.lockMinutes !== undefined) {
+    if (!Number.isInteger(s.lockMinutes) || s.lockMinutes < 5 || s.lockMinutes > 60) throw new Error('Thời gian tự khoá từ 5 đến 60 phút')
+    out.lockMinutes = s.lockMinutes
+  }
   return out
 }
 
@@ -86,6 +92,34 @@ function registerIpc(hooks) {
         })
     }
     return installing
+  })
+  // Đăng nhập / văn phòng (docs/mcah-ke-hoach-desktop-gd2.md 4.1, 4.3).
+  handle('session', () => session.info())
+  handle('login', (opts) => session.login({ maxAge: opts?.reauth ? 0 : null }))
+  handle('login-code', (code) => {
+    if (typeof code !== 'string' || !/^[A-Za-z0-9-]{8,12}$/.test(code.trim())) throw new Error('Mã gồm 8 chữ và số, ví dụ K7P2-9QXM')
+    return session.loginWithCode(code.trim())
+  })
+  handle('cancel-login', () => session.cancelLogin())
+  handle('reopen-browser', () => session.reopenBrowser())
+  handle('logout', () => session.logout())
+  // Mã PIN và màn khoá (4.4).
+  handle('lock-state', () => ({ locked: pin.isLocked(), hasPin: pin.hasPin() }))
+  handle('set-pin', (value) => pin.setPin(str(String(value), 6, 'Mã PIN')))
+  handle('unlock', (value) => {
+    const result = pin.unlock(str(String(value ?? ''), 6, 'Mã PIN'))
+    if (result.exhausted) session.expired('pin')
+    return result
+  })
+  handle('refresh-session', async () => {
+    await session.refresh()
+    return session.info()
+  })
+  handle('prepare-office', (password) => session.prepareOffice(str(password, 200, 'Mật khẩu sao lưu')))
+  handle('create-office', (name) => {
+    const clean = str(name, 200, 'Tên văn phòng').trim()
+    if (!clean) throw new Error('Nhập tên văn phòng')
+    return session.createOffice(clean)
   })
   handle('get-settings', () => getSettings())
   handle('save-settings', (s) => saveSettings(checkSettings(s)))

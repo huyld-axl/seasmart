@@ -9,8 +9,8 @@
     "start": "electron .",
     "stage:linux": "node scripts/stage.js linux",
     "stage:win": "node scripts/stage.js win",
-    "dist:linux": "npm run build:frontend && npm run stage:linux && electron-builder --linux deb",
-    "dist:win": "npm run build:frontend && npm run stage:win && electron-builder --win nsis",
+    "dist:linux": "npm run build:frontend && npm run stage:linux && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked",
+    "dist:win": "npm run build:frontend && npm run stage:win && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked",
     "release": "node scripts/release.js",
     "test": "node --test test/*.test.js"
   },
@@ -60,6 +60,10 @@
       {
         "from": "dist/stage/update-url.txt",
         "to": "update-url.txt"
+      },
+      {
+        "from": "dist/stage/cloud-url.txt",
+        "to": "cloud-url.txt"
       }
     ],
     "linux": {

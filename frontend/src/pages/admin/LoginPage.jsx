@@ -6,10 +6,17 @@ import useAuthStore from '../../stores/authStore'
 import Banner from '../../components/ds/Banner'
 import HelpLink, { GUIDE_HOME_URL } from '../../components/ds/HelpLink'
 import ProductBrand from '../../components/common/ProductBrand'
+import DesktopLoginPage from '../desktop/DesktopLoginPage'
+import { isDesktop } from '../../lib/desktop'
 import './LoginPage.css'
 
 // Đăng nhập (D2, UI Kit): chỉ email, mật khẩu, nút. Lỗi hiện ngay dưới ô mật khẩu, không dùng toast.
+// App máy tính đăng nhập qua trình duyệt (pages/desktop/DesktopLoginPage.jsx); bản web giữ màn email + mật khẩu.
 export default function LoginPage() {
+  return isDesktop() ? <DesktopLoginPage /> : <WebLoginPage />
+}
+
+function WebLoginPage() {
   const [form] = Form.useForm()
   const demoEmail = import.meta.env.VITE_LOCAL_DEMO_EMAIL
   const demoPassword = import.meta.env.VITE_LOCAL_DEMO_PASSWORD

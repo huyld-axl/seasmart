@@ -22,6 +22,8 @@ module.exports = {
   // Node chạy backend: bản đóng gói kèm file Node riêng; dev dùng `node` trên PATH (hoặc MCAH_NODE).
   nodeBin: packaged ? res('node', `node${EXE}`) : process.env.MCAH_NODE || 'node',
   // Khoá công khai của máy chủ dịch vụ gói sẵn khi build (scripts/stage.js); dev lấy từ cloud/.data nếu có.
+  // Địa chỉ máy chủ dịch vụ gói kèm lúc build (MCAH_CLOUD_URL khi build); dev: http://127.0.0.1:4100.
+  cloudUrlFile: packaged ? res('cloud-url.txt') : path.join(__dirname, '../dist/stage/cloud-url.txt'),
   cloudPublicKeyFile: packaged ? res('cloud-public-key.pem') : path.join(__dirname, '../dist/stage/cloud-public-key.pem'),
   // Khoá công khai kiểm chữ ký bản phát hành và địa chỉ phát hành, gói kèm lúc build (scripts/stage.js).
   releasePublicKeyFile: packaged ? res('release-public-key.pem') : path.join(__dirname, '../dist/stage/release-public-key.pem'),

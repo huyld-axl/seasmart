@@ -32,8 +32,31 @@ function newRecoveryCode() {
   return chars.match(/.{4}/g).join('-')
 }
 
+// Khoá bọc đã dẫn xuất trên máy chính: bản mã hoá bằng két hệ điều hành (backup-keys.bin, giai đoạn 2 trở đi) hoặc
+// bản JSON 0600 của giai đoạn 0. protect / unprotect: hàm mã hoá của safeStorage (chỉ truyền khi chạy trong Electron).
+function writeKeys(userData, keys, protect) {
+  if (protect) {
+    fs.writeFileSync(path.join(userData, 'backup-keys.bin'), protect(JSON.stringify(keys)), { mode: 0o600 })
+    fs.rmSync(path.join(userData, KEYS_FILE), { force: true })
+  } else {
+    fs.writeFileSync(path.join(userData, KEYS_FILE), JSON.stringify(keys), { mode: 0o600 })
+  }
+}
+
+function readKeys(userData, unprotect) {
+  const bin = path.join(userData, 'backup-keys.bin')
+  if (fs.existsSync(bin)) {
+    if (!unprotect) throw new Error('Khoá sao lưu nằm trong két hệ điều hành, chỉ đọc được trong app')
+    return JSON.parse(unprotect(fs.readFileSync(bin)))
+  }
+  const json = path.join(userData, KEYS_FILE)
+  if (!fs.existsSync(json)) throw new Error('Chưa đặt mật khẩu sao lưu')
+  return JSON.parse(fs.readFileSync(json, 'utf8'))
+}
+
 // Đặt mật khẩu sao lưu, sinh mã khôi phục (chỉ hiện một lần). Lưu hai khoá bọc đã dẫn xuất trên máy chính.
-function setupKeys(userData, password) {
+// Trả thêm hai khoá bọc để người gọi bọc khoá dữ liệu (office.js).
+function setupKeys(userData, password, protect = null) {
   if (!password || password.length < 10) throw new Error('Mật khẩu sao lưu cần ít nhất 10 ký tự')
   const recoveryCode = newRecoveryCode()
   const saltPassword = crypto.randomBytes(16)
@@ -42,8 +65,8 @@ function setupKeys(userData, password) {
     password: { salt: b64(saltPassword), kek: b64(kdf(password, saltPassword)) },
     recovery: { salt: b64(saltRecovery), kek: b64(kdf(normalizeRecovery(recoveryCode), saltRecovery)) },
   }
-  fs.writeFileSync(path.join(userData, KEYS_FILE), JSON.stringify(keys), { mode: 0o600 })
-  return recoveryCode
+  writeKeys(userData, keys, protect)
+  return protect ? { recoveryCode, keys } : recoveryCode
 }
 
 function wrap(kek, key) {
@@ -101,10 +124,8 @@ function entryHeader(name, size) {
 }
 
 // Tạo gói. Ghi ra tệp tạm, kiểm lại (giải mã đủ) rồi mới đổi tên: không bao giờ để lại gói dở dang mang tên thật.
-async function createBackup({ userData, dbEnv, uploadDir, appVersion, outFile }) {
-  const keysFile = path.join(userData, KEYS_FILE)
-  if (!fs.existsSync(keysFile)) throw new Error('Chưa đặt mật khẩu sao lưu')
-  const keys = JSON.parse(fs.readFileSync(keysFile, 'utf8'))
+async function createBackup({ userData, dbEnv, uploadDir, appVersion, outFile, unprotect = null }) {
+  const keys = readKeys(userData, unprotect)
   const packageKey = crypto.randomBytes(32)
   const iv = crypto.randomBytes(12)
   const header = Buffer.from(JSON.stringify({
@@ -248,4 +269,4 @@ async function restoreBackup({ file, password, recoveryCode, dbEnv, uploadDir })
   return { appVersion: header.app_version, createdAt: header.created_at, files }
 }
 
-module.exports = { setupKeys, createBackup, restoreBackup, readBackup }
+module.exports = { setupKeys, createBackup, restoreBackup, readBackup, wrap, unwrap, readKeys }

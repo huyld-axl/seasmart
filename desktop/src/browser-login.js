@@ -1,16 +1,21 @@
-// Đăng nhập qua trình duyệt (giai đoạn 0, bước 0.5): OAuth cho app cài trên máy, RFC 8252 + PKCE S256.
-// Mở trình duyệt mặc định tới trang đăng nhập của máy chủ dịch vụ, chờ trình duyệt chuyển về
-// http://127.0.0.1:<cổng tạm>/callback, đổi mã lấy vé. Cổng tạm chỉ mở trong lúc chờ.
+// Đăng nhập qua trình duyệt: OAuth cho app cài trên máy, RFC 8252 + PKCE S256 (docs/mcah-ke-hoach-desktop-gd2.md 3.3).
+// Mở trình duyệt mặc định tới /authorize của máy chủ dịch vụ, chờ trình duyệt chuyển về http://127.0.0.1:<cổng tạm>/callback
+// rồi đổi mã lấy { ticket, refresh_token, offline_until }. Không chuyển về được thì người dùng dán mã ngắn (submitShortCode).
 const http = require('http')
 const fs = require('fs')
 const crypto = require('crypto')
 const { spawn } = require('child_process')
 const { shell } = require('electron')
-const { cloudPublicKeyFile } = require('./paths')
+const { cloudPublicKeyFile, cloudUrlFile } = require('./paths')
 
-const CLOUD_URL = (process.env.MCAH_CLOUD_URL || 'http://127.0.0.1:4100').replace(/\/+$/, '')
 const CLIENT_ID = 'mcah-desktop'
-const WAIT_MS = 5 * 60 * 1000
+const WAIT_MS = 10 * 60 * 1000
+
+// Địa chỉ máy chủ dịch vụ: MCAH_CLOUD_URL, hoặc tệp cloud-url.txt gói kèm lúc build.
+function cloudUrl() {
+  const fromFile = fs.existsSync(cloudUrlFile) ? fs.readFileSync(cloudUrlFile, 'utf8').trim() : ''
+  return (process.env.MCAH_CLOUD_URL || fromFile || 'http://localhost:4100').replace(/\/+$/, '')
+}
 
 // MCAH_OPEN_URL_WITH: lệnh mở trang thay cho trình duyệt mặc định (chỉ dùng khi chạy thử tự động).
 function openInBrowser(url) {
@@ -18,7 +23,7 @@ function openInBrowser(url) {
   else shell.openExternal(url)
 }
 
-// Khoá công khai của máy chủ dịch vụ, gói sẵn trong app (không cần mạng lúc mở app). Thiếu thì tắt đăng nhập qua trình duyệt.
+// Khoá công khai của máy chủ dịch vụ, gói sẵn trong app (không cần mạng lúc mở app). Thiếu thì tắt đăng nhập.
 function cloudPublicKey() {
   const file = process.env.MCAH_CLOUD_PUBLIC_KEY_FILE || cloudPublicKeyFile
   if (!fs.existsSync(file)) return null
@@ -29,8 +34,31 @@ function cloudPublicKey() {
 
 const b64url = (buf) => Buffer.from(buf).toString('base64url')
 
-// Trả về vé đã ký. Từ chối nếu state không khớp (chống trang lạ đẩy mã vào cổng tạm).
-function getTicket() {
+async function postToken(body) {
+  let r
+  try {
+    r = await fetch(`${cloudUrl()}/token`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) })
+  } catch {
+    throw Object.assign(new Error('Không kết nối được máy chủ MCAH. Kiểm tra internet rồi thử lại.'), { offline: true })
+  }
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw Object.assign(new Error(data.message || 'Máy chủ MCAH từ chối đăng nhập'), { status: r.status, grant: data.error })
+  return data
+}
+
+// Lần đăng nhập đang chờ (một lúc chỉ một).
+let pending = null
+
+function cancelLogin() {
+  if (!pending) return
+  pending.finish()
+  pending.reject(Object.assign(new Error('Đã huỷ đăng nhập'), { cancelled: true }))
+  pending = null
+}
+
+// maxAge = 0: bắt nhập lại mật khẩu thật (sau khi sai PIN 5 lần), không dùng phiên trình duyệt có sẵn.
+function startLogin({ maxAge = null } = {}) {
+  cancelLogin()
   const verifier = b64url(crypto.randomBytes(32))
   const challenge = b64url(crypto.createHash('sha256').update(verifier).digest())
   const state = b64url(crypto.randomBytes(16))
@@ -39,56 +67,56 @@ function getTicket() {
     let redirectUri
     const server = http.createServer(async (req, res) => {
       const url = new URL(req.url, 'http://127.0.0.1')
-      if (url.pathname !== '/callback') {
-        res.writeHead(404).end()
-        return
-      }
+      if (url.pathname !== '/callback') return res.writeHead(404).end()
       if (url.searchParams.get('state') !== state || !url.searchParams.get('code')) {
-        res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' }).end('Yêu cầu không hợp lệ')
-        return
+        return res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' }).end('Yêu cầu không hợp lệ')
       }
-      res.writeHead(302, { location: `${CLOUD_URL}/done` }).end()
-      finish()
+      res.writeHead(302, { location: `${cloudUrl()}/xong` }).end()
+      const current = pending
       try {
-        const r = await fetch(`${CLOUD_URL}/token`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ code: url.searchParams.get('code'), code_verifier: verifier, redirect_uri: redirectUri }),
-        })
-        const body = await r.json()
-        if (!r.ok || !body.ticket) throw new Error('Máy chủ dịch vụ không cấp vé')
-        resolve(body.ticket)
+        const tokens = await postToken({ grant_type: 'authorization_code', code: url.searchParams.get('code'), code_verifier: verifier, redirect_uri: redirectUri })
+        current?.finish()
+        if (pending === current) pending = null
+        resolve(tokens)
       } catch (error) {
         reject(error)
       }
     })
     const timer = setTimeout(() => {
-      finish()
-      reject(new Error('Hết thời gian chờ đăng nhập'))
+      if (pending?.server === server) cancelLogin()
     }, WAIT_MS)
-    function finish() {
+    const finish = () => {
       clearTimeout(timer)
       server.close()
     }
+    pending = { server, verifier, resolve, reject, finish }
     server.listen(0, '127.0.0.1', () => {
       redirectUri = `http://127.0.0.1:${server.address().port}/callback`
-      const auth = new URL(`${CLOUD_URL}/authorize`)
-      auth.search = new URLSearchParams({ client_id: CLIENT_ID, redirect_uri: redirectUri, code_challenge: challenge, code_challenge_method: 'S256', state }).toString()
-      openInBrowser(auth.toString())
+      const auth = new URL(`${cloudUrl()}/authorize`)
+      const params = { client_id: CLIENT_ID, redirect_uri: redirectUri, code_challenge: challenge, code_challenge_method: 'S256', state }
+      if (maxAge !== null) params.max_age = String(maxAge)
+      auth.search = new URLSearchParams(params).toString()
+      pending.authUrl = auth.toString()
+      openInBrowser(pending.authUrl)
     })
   })
 }
 
-// Đưa vé cho máy chính (Fastify) đổi lấy phiên của văn phòng.
-async function exchangeTicket(backendUrl, ticket) {
-  const r = await fetch(`${backendUrl}/api/v1/auth/desktop-ticket`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ticket }),
-  })
-  const body = await r.json()
-  if (!r.ok) throw new Error(body.error || 'Máy chính từ chối vé')
-  return body
+// Mã ngắn trên trang "Đã đăng nhập" (khi trình duyệt không chuyển về app được). Cần lần đăng nhập đang chờ (verifier).
+async function submitShortCode(code) {
+  if (!pending) throw new Error('Bấm Đăng nhập qua trình duyệt trước rồi nhập mã')
+  const current = pending
+  const tokens = await postToken({ grant_type: 'authorization_code', short_code: code, code_verifier: current.verifier })
+  current.finish()
+  if (pending === current) pending = null
+  current.resolve(tokens)
+  return tokens
 }
 
-module.exports = { cloudPublicKey, getTicket, exchangeTicket }
+const refreshTokens = (refreshToken) => postToken({ grant_type: 'refresh_token', refresh_token: refreshToken })
+const revokeRefresh = (refreshToken) => postToken({ grant_type: 'revoke', refresh_token: refreshToken }).catch(() => {})
+const reopenBrowser = () => {
+  if (pending?.authUrl) openInBrowser(pending.authUrl)
+}
+
+module.exports = { cloudUrl, cloudPublicKey, startLogin, submitShortCode, cancelLogin, refreshTokens, revokeRefresh, reopenBrowser }

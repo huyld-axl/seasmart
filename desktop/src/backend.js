@@ -27,6 +27,9 @@ function backendEnv(userData, dbEnv, port, { soffice = null, mailDir } = {}) {
     ...dbEnv,
     NODE_ENV: 'production',
     MCAH_DESKTOP: '1',
+    // AI đọc giấy tờ, tra IMO, danh mục tàu chạy ở máy chủ dịch vụ MCAH (bộ cài không có khoá).
+    AI_PROVIDER: 'cloud',
+    VESSEL_LOOKUP_PROVIDER: 'cloud',
     SOFFICE_PATH: soffice || path.join(userData, 'chua-cai-libreoffice', 'soffice'),
     MAIL_DIR: mailDir,
     HOST: '127.0.0.1',

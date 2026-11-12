@@ -71,8 +71,12 @@ export default function UserDetailPage() {
               loading={toggleActive.isPending}
               onClick={() =>
                 toggleActive.mutate(id, {
-                  onSuccess: () =>
-                    toast.success(user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`),
+                  onSuccess: (res) => {
+                    const text = user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`
+                    // App máy tính: chưa báo được máy chủ MCAH (không có mạng) thì nhắc làm lại sau.
+                    if (res?.cloud_warning) toast.warning(text, { description: res.cloud_warning })
+                    else toast.success(text)
+                  },
                   onError: (error) => toast.error(user.is_active ? `Không khoá được ${user.email}` : `Không mở lại được ${user.email}`, { description: errorText(error) }),
                 })
               }

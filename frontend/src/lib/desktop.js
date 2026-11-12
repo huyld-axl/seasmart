@@ -16,7 +16,28 @@ export const desktop = {
   getSettings: () => bridge().getSettings(),
   saveSettings: (settings) => bridge().saveSettings(settings),
   checkUpdate: () => bridge().checkUpdate(),
+  // Phiên (docs/mcah-ke-hoach-desktop-gd2.md 4.1): giao diện không giữ token; app gắn token khi chuyển tiếp /api.
+  session: () => bridge().session(),
+  onSessionChanged: (fn) => bridge().onSessionChanged(fn),
+  login: (opts) => bridge().login(opts),
+  loginWithCode: (code) => bridge().loginWithCode(code),
+  cancelLogin: () => bridge().cancelLogin(),
+  reopenBrowser: () => bridge().reopenBrowser(),
+  logout: () => bridge().logout(),
+  refreshSession: () => bridge().refreshSession(),
+  lockState: () => bridge().lockState(),
+  setPin: (value) => bridge().setPin(value),
+  unlock: (value) => bridge().unlock(value),
+  onLockChanged: (fn) => bridge().onLockChanged(fn),
+  prepareOffice: (password) => bridge().prepareOffice(password),
+  createOffice: (name) => bridge().createOffice(name),
 }
+
+// Lỗi từ app (ipcRenderer.invoke) kèm tiền tố kỹ thuật; bỏ đi cho người dùng đọc.
+export const bridgeError = (error) => String(error?.message || error).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
+
+// Giá trị đánh dấu "đã đăng nhập" trong authStore của app máy tính (token thật ở tiến trình chính).
+export const DESKTOP_TOKEN = 'desktop'
 
 // Cài đặt trên máy này: { mailMode, mailApp, smtp, smtpPasswordSaved, secretStore }. Bản web: null.
 export function useDeviceSettings() {

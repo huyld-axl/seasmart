@@ -55,7 +55,9 @@ async function usersRoutes(fastify) {
 
   // DELETE /api/v1/users/:id
   fastify.delete('/:id', guard(fastify, 'account.delete'), async (request, reply) => {
-    await userService.softDeleteUser(request.params.id, request.access)
+    const result = await userService.softDeleteUser(request.params.id, request.access)
+    // App máy tính: chưa báo được máy chủ dịch vụ thì trả cảnh báo để giao diện nhắc.
+    if (result?.cloud_warning) return result
     return reply.code(204).send()
   })
 

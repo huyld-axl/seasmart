@@ -371,3 +371,11 @@
     padding: 16px;
   }
 }
+
+/* Thanh lưu mobile đã có đệm safe-area bên trong. Không chừa thêm khoảng
+   dưới khung nội dung, tránh lộ nền khi cuộn đến cuối form. */
+@media (max-width: 639px) {
+  .app-shell__content:has(.sf-savebar) {
+    padding-bottom: 0;
+  }
+}

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App máy tính GĐ3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe giai đoạn 3 app máy tính (docs/mcah-ke-hoach-desktop-gd3.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1360px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 72ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 80ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; color: var(--foreground); max-width: 80ch; }
+  .notes li { margin-bottom: 4px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .titlebar { display: flex; align-items: center; gap: 16px; padding: 6px 12px; background: #2f3237; color: #e8e8ea; font-size: 12px; }
+  .titlebar .menu span { margin-right: 14px; }
+  .titlebar .dots { margin-left: auto; letter-spacing: 6px; }
+  .shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 460px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { padding: 0; display: grid; grid-template-rows: auto 1fr; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .topbar .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+  .page { padding: 20px; display: grid; gap: 16px; align-content: start; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .card h4 { margin: 0 0 12px; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: grid; gap: 4px; font-size: 13px; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); min-height: 36px; }
+  .input.area { min-height: 90px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 6px 4px; }
+  .btn.dis { opacity: .45; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--secondary); font-size: 12px; }
+  .radio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .radio.on { border-color: var(--primary); background: var(--primary-light); }
+  .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-strong); margin-top: 2px; flex-shrink: 0; }
+  .radio.on .dot { border: 5px solid var(--primary); }
+  .banner { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .banner.ok { background: var(--success-bg); color: var(--success); }
+  .banner.err { background: var(--error-bg); color: var(--error-strong); }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(560px, 100%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 14px; }
+  .modal.wide { width: min(720px, 100%); }
+  .modal h4 { margin: 0; font-size: 16px; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .files { display: grid; gap: 6px; }
+  .file { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+  .file .muted { margin-left: auto; }
+  .progress { height: 6px; border-radius: 3px; background: var(--secondary); overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 45%; background: var(--primary); }
+  .dropdown { position: absolute; right: 16px; top: 52px; width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-modal); padding: 6px; font-size: 13px; }
+  .dropdown div { padding: 8px 10px; border-radius: var(--radius-sm); }
+  .dropdown .on { background: var(--secondary); font-weight: 600; }
+  .dropdown hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+  .splash { min-height: 420px; display: grid; place-items: center; background: var(--background); }
+  .splash .box { width: min(480px, 100%); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 14px; text-align: left; }
+  .code { font-family: ui-monospace, monospace; font-size: 12px; background: var(--secondary); padding: 8px 10px; border-radius: var(--radius-sm); }
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .shell { grid-template-columns: 1fr; } .side { display: none; } .grid2 { grid-template-columns: 1fr; } }
+  .web { min-height: 440px; display: grid; place-items: center; background: #eef0f4; position: relative; }
+  .web .bar { position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: #dfe2e8; font-size: 12px; color: var(--muted); }
+  .web .box { width: min(400px, calc(100% - 32px)); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 12px; margin-top: 24px; }
+  .web h4 { margin: 0; font-size: 18px; }
+  .or { text-align: center; color: var(--muted); font-size: 12px; }
+  .pin { display: flex; gap: 8px; justify-content: center; }
+  .pin span { width: 40px; height: 48px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 22px; }
+  .code-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-family: ui-monospace, monospace; font-size: 15px; text-align: center; }
+  .code-grid span { padding: 8px; background: var(--secondary); border-radius: var(--radius-sm); }
+  .ribbon { padding: 8px 20px; background: var(--warning-bg); border-bottom: 1px solid var(--warning-border); color: var(--warning); font-size: 13px; display: flex; gap: 12px; align-items: center; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .tbl th { color: var(--muted); font-weight: 500; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--secondary); }
+  .tag.warn { background: var(--warning-bg); color: var(--warning); }
+  .tag.ok { background: var(--success-bg); color: var(--success); }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">GĐ3 nhiều máy</p>
+    <a href="#w1"><b>1</b>Tìm, nối máy chính</a><a href="#w2"><b>2</b>Máy trong văn phòng</a><a href="#w3"><b>3</b>Mất kết nối</a><a href="#w4"><b>4</b>Hộp xung đột</a><a href="#w5"><b>5</b>Cập nhật theo máy chính</a><a href="#w6"><b>6</b>Thẻ máy chính</a><a href="#w7"><b>7</b>Máy giả</a>
+  </nav>
+  <main class="main">
+    <header>
+      <h1>App máy tính — giai đoạn 3: máy chính và máy nhân viên</h1>
+      <p class="lead">Chỉ những màn mới hoặc đổi. Dựng bằng control antd / components/ds như màn hiện có. Hộp xung đột (4) dùng chung cho mọi form sửa.</p>
+    </header>
+    <section id="w1">
+      <h2><b>1</b> Máy nhân viên: tìm và nối máy chính</h2>
+      <p class="why">Thay câu "Mở MCAH trên máy chính…" của giai đoạn 2. Tài khoản đã thuộc văn phòng mà máy chưa có dữ liệu → máy này là máy nhân viên.</p>
+      <div class="grid2"><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Nối máy chính của Công ty ABC</h4><p class="muted" style="margin:0">Đang tìm trong mạng văn phòng…</p><div class="radio on"><span class="dot"></span><div><b>MAY-KE-TOAN</b><div class="muted">192.168.1.20 · máy chính của Công ty ABC</div></div></div><div class="row" style="justify-content:space-between"><span class="btn link">Nhập tên / địa chỉ máy</span><span class="btn pri">Nối</span></div></div></div></div><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Đang chờ quản trị duyệt</h4><p style="margin:0">Máy <b>LAPTOP-AN</b> vừa xin vào văn phòng. Quản trị duyệt trên máy chính là bạn vào được.</p><div class="progress"><i></i></div><div class="row" style="justify-content:space-between"><span class="btn link">Đăng xuất</span><span class="btn">Huỷ</span></div></div></div></div></div>
+      <ul class="notes"><li>Không tìm thấy (mạng chặn mDNS): ô nhập tên máy hoặc địa chỉ IP, ví dụ "MAY-KE-TOAN" hoặc "192.168.1.20".</li><li>Dấu vân tay của máy tìm được không khớp với dấu vân tay máy chủ dịch vụ giữ: báo "Máy này không phải máy chính của Công ty ABC", không nối (W7).</li><li>Lần đầu ghép: máy chính tự cấp mã thiết bị nếu người đó là thành viên đang hoạt động. Chỉ máy đã bị Gỡ xin vào lại mới phải chờ duyệt (khung bên phải).</li></ul>
+    </section>
+    <section id="w2">
+      <h2><b>2</b> Máy chính: Cài đặt → Máy trong văn phòng</h2>
+      <p class="why">Chỉ quản trị thấy. Mỗi dòng một máy nhân viên đã ghép. Thông báo ở chuông khi có máy mới vào hoặc máy xin vào lại.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Quản trị / Máy trong văn phòng</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><b>Máy chính: MAY-KE-TOAN · 192.168.1.20</b><span class="tag ok">Đang mở · không cho máy ngủ</span></div><table class="tbl"><tr><th>Máy</th><th>Người dùng gần nhất</th><th>Hệ điều hành · bản</th><th>Lần cuối nối</th><th></th></tr><tr><td>LAPTOP-AN</td><td>Nguyễn An</td><td>Windows 11 · 1.2.0</td><td>Đang nối</td><td><span class="btn link">Gỡ</span></td></tr><tr><td>PC-LE-TAN</td><td>Trần Hoa</td><td>Ubuntu 24.04 · 1.2.0</td><td>Hôm qua 17:40</td><td><span class="btn link">Gỡ</span></td></tr><tr><td>LAPTOP-CU</td><td>—</td><td>Windows 10 · 1.1.0</td><td><span class="tag warn">Xin vào lại</span></td><td><span class="btn pri">Duyệt</span> <span class="btn link">Từ chối</span></td></tr></table></div></div></div></div></div>
+      <ul class="notes"><li>Gỡ: hỏi xác nhận ("Máy LAPTOP-AN sẽ không vào được nữa. Dữ liệu đã xuất ra máy đó không xoá được."). Phiên đang mở trên máy đó bị cắt ngay.</li><li>Phiên bản cũ hơn máy chính và khác phiên bản giao tiếp: nhãn "Cần cập nhật".</li></ul>
+    </section>
+    <section id="w3">
+      <h2><b>3</b> Máy nhân viên: không nối được máy chính</h2>
+      <p class="why">Dải đỏ dưới thanh trên, giữ nguyên trang và nội dung form đang gõ. Lưu bị chặn tới khi nối lại; app tự thử lại.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Thuyền viên / Sửa</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="ribbon" style="background:var(--error-bg);color:var(--error-strong);border-color:#ffc9c9">⚠ Không nối được máy chính "MAY-KE-TOAN". Đang thử lại… Kiểm máy chính còn bật và cùng mạng. <span class="btn link" style="margin-left:auto">Thử ngay</span></div><div class="page"><div class="card"><div class="grid2"><div class="field">Họ tên<div class="input">Nguyễn Văn An</div></div><div class="field">Điện thoại<div class="input">0912 345 678</div></div></div><div class="row" style="justify-content:flex-end;margin-top:12px"><span class="btn pri dis">Lưu thay đổi</span></div></div></div></div></div></div>
+      <ul class="notes"><li>Nối lại được: dải xanh "Đã nối lại" 3 giây, nút Lưu bấm được; nội dung đang gõ còn nguyên.</li><li>Máy chính đổi địa chỉ IP: app tự tìm lại theo tên máy, không cần người dùng làm gì.</li></ul>
+    </section>
+    <section id="w4">
+      <h2><b>4</b> Hai người cùng sửa: hộp xung đột</h2>
+      <p class="why">Dùng chung cho mọi form sửa (thuyền viên, tàu, đối tác, cơ hội, hợp đồng, bill, chứng chỉ…). Hiện khi lưu mà bản ghi đã bị người khác sửa sau lúc mình mở.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Thuyền viên / Sửa</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card" style="min-height:200px"><p class="muted">… form đang sửa, nội dung đang nhập còn nguyên …</p></div></div></div><div class="scrim"><div class="modal" role="dialog"><h4>Hồ sơ vừa được Trần Hoa sửa lúc 10:42</h4><p style="margin:0">Phần bạn đang nhập chưa được lưu và vẫn còn trong form. Những ô người kia đã đổi:</p><table class="tbl"><tr><th>Ô</th><th>Của Trần Hoa</th><th>Của bạn</th></tr><tr><td>Điện thoại</td><td>0912 345 678</td><td>(không đổi)</td></tr><tr><td>Địa chỉ</td><td>(không đổi)</td><td>12 Lê Lợi, Hải Phòng</td></tr></table><div class="foot"><span class="btn">Huỷ phần của tôi</span><span class="btn pri">Lấy bản mới, giữ phần tôi đã đổi</span></div></div></div></div></div>
+      <ul class="notes"><li>"Lấy bản mới, giữ phần tôi đã đổi": tải bản mới nhất, đặt lại vào form những ô bạn đã đổi, đánh dấu "Đã sửa" như hiện nay; bạn xem lại rồi bấm Lưu.</li><li>Hai người cùng đổi một ô: ô đó hiện cả hai giá trị, bạn chọn.</li></ul>
+    </section>
+    <section id="w5">
+      <h2><b>5</b> Máy nhân viên cần cập nhật theo máy chính</h2>
+      <p class="why">Máy chính đã lên bản mới khác phiên bản giao tiếp. Máy nhân viên tải bộ cài từ máy chính qua mạng văn phòng (không cần internet), kiểm chữ ký rồi cài.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Cần cập nhật để nối máy chính</h4><p style="margin:0">Máy chính đang dùng MCAH 1.3.0. Máy này đang 1.2.0.</p><div style="display:grid;gap:6px"><span class="muted">Đang tải từ máy chính… 60%</span><div class="progress"><i style="width:60%"></i></div></div><div class="banner warn">Ubuntu sẽ hỏi mật khẩu quản trị để cài.</div><div class="row" style="justify-content:flex-end"><span class="btn pri dis">Đang tải…</span></div></div></div></div>
+      <ul class="notes"><li>Cùng phiên bản giao tiếp thì không hiện màn này: máy nhân viên bản cũ vẫn làm việc bình thường.</li></ul>
+    </section>
+    <section id="w6">
+      <h2><b>6</b> Máy chính: tên và trạng thái trong Cài đặt trên máy này</h2>
+      <p class="why">Thêm một thẻ ở trang Cài đặt trên máy này (giai đoạn 1), chỉ trên máy chính.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Cài đặt trên máy này</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card"><h4>Máy chính của văn phòng</h4><div class="grid2"><div class="field">Tên trong mạng<div class="input">MAY-KE-TOAN</div></div><div class="field">Địa chỉ<div class="input muted">192.168.1.20 · cổng 7443</div></div></div><div style="display:grid;gap:6px;margin-top:12px"><div class="banner ok">Tường lửa: đã mở cổng cho máy trong văn phòng.</div><div class="banner ok">Không cho máy ngủ khi MCAH đang mở.</div></div></div></div></div></div></div>
+      <ul class="notes"><li>Tường lửa chưa mở (Windows): nút "Mở cổng" (Windows hỏi quyền quản trị một lần).</li></ul>
+    </section>
+    <section id="w7">
+      <h2><b>7</b> Máy giả làm máy chính</h2>
+      <p class="why">Khi dấu vân tay chứng chỉ không khớp với dấu vân tay mà máy chủ dịch vụ đang giữ cho văn phòng.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Không nối máy này</h4><div class="banner err">Máy "MAY-KE-TOAN" (192.168.1.77) không phải máy chính của Công ty ABC.</div><p class="muted" style="margin:0">Có thể có máy lạ trong mạng đang giả tên máy chính. Báo quản trị văn phòng. Không nhập thông tin gì vào máy này.</p><div class="row" style="justify-content:flex-end"><span class="btn pri">Tìm lại</span></div></div></div></div>
+      <ul class="notes"><li>Máy chính vừa chuyển sang máy khác (khôi phục từ sao lưu): máy chủ dịch vụ đã có dấu vân tay mới, máy nhân viên nối máy mới bình thường; máy chính cũ bị từ chối.</li></ul>
+    </section>
+  </main>
+</div>
+</body>
+</html>

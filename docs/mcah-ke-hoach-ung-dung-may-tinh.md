@@ -834,3 +834,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-11 | — | Giai đoạn 0 trên Ubuntu | 0.1–0.8, 0.10, 0.11 đạt trên Ubuntu (số đo mục 13); 0.9 và phần Windows chờ máy; ước lượng còn 15–18 tuần; cập nhật trên Ubuntu hỏi mật khẩu quản trị (người dùng chốt) |
 | 2026-11-11 | 1 | Viết kế hoạch chi tiết giai đoạn 1 | `docs/mcah-ke-hoach-desktop-gd1.md`, wireframe `docs/design/wireframes/desktop-gd1.html`, testcase, hướng dẫn nháp; chờ duyệt |
 | 2026-11-11 | 1 | Code giai đoạn 1 trên Ubuntu | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd1.md`; chờ Windows, testcase tay còn lại, quyết định về thông báo nhắc hạn |
+| 2026-11-12 | 2 | Viết kế hoạch chi tiết giai đoạn 2 | `docs/mcah-ke-hoach-desktop-gd2.md`, wireframe `docs/design/wireframes/desktop-gd2.html`, testcase, hướng dẫn nháp; chờ duyệt |

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button, Input, Skeleton, Tag } from 'antd'
 import { countFilled, filled } from './readSectionUtils'
 import useScrollSpy from '../fleet/useScrollSpy'
+import { FormToc } from '../fleet/FleetParts'
 
 // Các khối chỉ đọc dùng chung cho màn chi tiết thuyền viên và đối tác: mục lục bên trái, các khối đánh số bên phải.
 // Mỗi khối: { key, title, fields | groups | items, unit?, footnote? }; mỗi trường: [nhãn, giá trị, độ rộng 12 cột].
@@ -74,7 +75,7 @@ export function ReadLayout({ sections, loading, label = 'hồ sơ' }) {
   return (
     <div className="sf-layout">
       <aside className="sf-aside" aria-label={`Tóm tắt ${label}`}>
-        <nav className="sf-toc" aria-label={`Các mục của ${label}`}>
+        <FormToc activeKey={active} label={`Các mục của ${label}`}>
           {sections.map((s, i) => (
             <a key={s.key} href={`#sf-${s.key}`} aria-current={active === s.key ? 'true' : undefined} onClick={goTo(s.key)}>
               <span className="sf-toc__n">{i + 1}</span>
@@ -82,7 +83,7 @@ export function ReadLayout({ sections, loading, label = 'hồ sơ' }) {
               <span className="sf-toc__cnt">{countFilled(s)}</span>
             </a>
           ))}
-        </nav>
+        </FormToc>
       </aside>
       <div className="sf-sections">
         {loading ? <Skeleton active paragraph={{ rows: 6 }} /> : sections.map((s, i) => <Panel key={s.key} index={i} section={s} />)}

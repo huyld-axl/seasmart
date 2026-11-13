@@ -11,6 +11,8 @@ const DESKTOP = path.join(__dirname, '..')
 const { version } = require(path.join(DESKTOP, 'package.json'))
 const git = (...args) => execFileSync('git', args, { cwd: DESKTOP }).toString().trim()
 const dirty = git('status', '--porcelain', '--untracked-files=no') !== ''
-const info = { platform, version, commit: git('rev-parse', 'HEAD'), dirty, scan: 'clean', built_at: new Date().toISOString() }
+const stage = (name) => fs.readFileSync(path.join(DESKTOP, 'dist/stage', name), 'utf8').trim()
+// Địa chỉ gói trong bộ cài: script phát hành chặn nếu khác desktop/endpoints.json (app không tìm thấy chỗ phát).
+const info = { platform, version, commit: git('rev-parse', 'HEAD'), dirty, scan: 'clean', cloud_url: stage('cloud-url.txt'), update_url: stage('update-url.txt'), built_at: new Date().toISOString() }
 fs.writeFileSync(path.join(DESKTOP, 'dist/installer', `build-info-${platform}.json`), JSON.stringify(info, null, 2))
 console.log(`build-info-${platform}: ${version} @ ${info.commit.slice(0, 8)}${dirty ? ' (có thay đổi chưa commit)' : ''}`)

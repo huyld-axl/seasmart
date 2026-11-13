@@ -6,7 +6,7 @@
 - **Wireframe:** `docs/design/wireframes/desktop-gd6.html` (5 màn).
 - **Testcase chạy tay:** `docs/mcah-testcase-desktop-gd6.md`.
 - **Hướng dẫn sử dụng (nháp):** `docs/mcah-huong-dan-desktop-gd6.html`, chép vào trang hướng dẫn ở bước 9.
-- **Mục tiêu:** từ một lệnh phát hành ra được bộ cài Windows `.exe` và Ubuntu `.deb` cùng phiên bản, đã ký bằng khoá của bên mình, đặt lên `https://mcah.axalize.dev/download`; app ở văn phòng tự nhận bản mới theo kênh (ổn định / thử nghiệm), có ghi chú thay đổi tiếng Việt; gỡ cài đặt không mất dữ liệu nếu không chọn xoá.
+- **Mục tiêu:** từ một lệnh phát hành ra được bộ cài Windows `.exe` và Ubuntu `.deb` cùng phiên bản, đã ký bằng khoá của bên mình, đặt lên `https://mcah.axalize.vn/download`; app ở văn phòng tự nhận bản mới theo kênh (ổn định / thử nghiệm), có ghi chú thay đổi tiếng Việt; gỡ cài đặt không mất dữ liệu nếu không chọn xoá.
 
 ## 0. Cách làm việc với file này
 
@@ -34,7 +34,7 @@
 
 1. **Một khoá ký cho mọi máy build** (3.1): khoá công khai nằm trong repo; khoá riêng chỉ ở máy phát hành. Bỏ việc máy build tự sinh khoá.
 2. **Quy trình phát hành** (3.2): đổi số phiên bản, ghi chú thay đổi, build Ubuntu (máy Linux) + build Windows (máy Windows, vì bytecode), gom về máy phát hành, script phát hành **chặn nếu thiếu một hệ điều hành** hoặc thiếu ghi chú, ký, đẩy lên chỗ phát.
-3. **Chỗ phát trên `mcah.axalize.dev`** (3.3): `/download/files/` (ổn định) và `/download/files/beta/` (thử nghiệm); nginx phục vụ từ thư mục ngoài repo (bộ cài không vào git).
+3. **Chỗ phát trên `mcah.axalize.vn`** (3.3): `/download/files/` (ổn định) và `/download/files/beta/` (thử nghiệm); nginx phục vụ từ thư mục ngoài repo (bộ cài không vào git).
 4. **Kênh ổn định / thử nghiệm** (3.4, W3): đặt ở máy chính, máy nhân viên theo máy chính.
 5. **Ghi chú thay đổi trong app** (3.5, W1, W2).
 6. **Gỡ cài đặt** (3.6, W4): Windows hỏi có xoá dữ liệu không (mặc định giữ, hỏi lại lần hai); Ubuntu không đụng dữ liệu.
@@ -50,7 +50,7 @@
 
 ### 2.3 Cần người dùng / sếp trước khi xong giai đoạn
 
-- **⛔ Q-F1 — đẩy bộ cài lên server thế nào.** Đề xuất: script phát hành chép (rsync qua SSH) vào thư mục `/srv/mcah/releases` trên server `mcah.axalize.dev`; nginx của frontend có `location /download/files/` trỏ thư mục đó (gắn volume chỉ đọc). Cần người lo server: tạo thư mục, tài khoản SSH chỉ ghi được thư mục đó, gắn volume. Cách khác: GitHub Releases (cần quyền repo, trang Tải về trỏ sang GitHub).
+- **⛔ Q-F1 — đẩy bộ cài lên server thế nào.** Đề xuất: script phát hành chép (rsync qua SSH) vào thư mục `/srv/mcah/releases` trên server `mcah.axalize.vn`; nginx của frontend có `location /download/files/` trỏ thư mục đó (gắn volume chỉ đọc). Cần người lo server: tạo thư mục, tài khoản SSH chỉ ghi được thư mục đó, gắn volume. Cách khác: GitHub Releases (cần quyền repo, trang Tải về trỏ sang GitHub).
 - **⛔ Q-F2 — máy giữ khoá riêng ký bản phát hành.** Đề xuất: máy của bạn (máy dev Ubuntu), có bản sao khoá cất ngoại tuyến (USB, két). Mất khoá này là mọi app đã cài không nhận bản cập nhật mới nữa (phải cài lại tay).
 - **Máy Windows** để build bản Windows (bytecode phải dịch trên Windows) và thử F1–F3.
 - Số phiên bản đầu tiên phát cho khách: đề xuất `1.0.0` khi vào giai đoạn 7, kênh thử nghiệm; trước đó `0.9.x`.
@@ -77,8 +77,8 @@
 
 ### 3.3 Chỗ phát
 
-- Ổn định: `https://mcah.axalize.dev/download/files/latest.json` + bộ cài. Thử nghiệm: `…/download/files/beta/`.
-- `update-url.txt` gói trong bộ cài = `https://mcah.axalize.dev/download/files` (biến `MCAH_UPDATE_URL` lúc build); app thêm `/beta` khi đang ở kênh thử nghiệm.
+- Ổn định: `https://mcah.axalize.vn/download/files/latest.json` + bộ cài. Thử nghiệm: `…/download/files/beta/`.
+- `update-url.txt` gói trong bộ cài = `https://mcah.axalize.vn/download/files` (biến `MCAH_UPDATE_URL` lúc build); app thêm `/beta` khi đang ở kênh thử nghiệm.
 - Giữ 3 phiên bản gần nhất mỗi kênh trên server (bộ cài cũ cho máy cần quay về, giai đoạn 4).
 - `frontend/nginx.conf`: `location /download/files/ { alias /srv/releases/; autoindex off; }` + `compose.yaml` gắn volume chỉ đọc (theo Q-F1).
 
@@ -107,6 +107,12 @@
 ### 3.8 Gói `.deb`
 
 - `depends` giữ như hiện có; thêm `recommends: libreoffice-calc` (xuất PDF; kế hoạch tổng Q6: không đóng gói LibreOffice). Kiểm cài trên Ubuntu 22.04 và 24.04 sạch (F1).
+
+### 3.9 Đổi tên miền về sau (thêm 2026-11-13)
+
+- Địa chỉ chính thức nằm ở `desktop/endpoints.json` (`https://mcah.axalize.vn/tai-khoan`, `https://mcah.axalize.vn/download/files`). Build gói địa chỉ này (biến `MCAH_CLOUD_URL` / `MCAH_UPDATE_URL` chỉ để build thử với máy chủ dev); `build-info` ghi lại, script phát hành chặn nếu bộ cài gói địa chỉ khác `endpoints.json`.
+- `latest.json` (đã ký) mang `endpoints`. App kiểm chữ ký xong thì học địa chỉ mới (`desktop/src/endpoints.js`, lưu trong cài đặt máy), kể cả khi không có bản mới hơn. Chỉ nhận `https`.
+- **Đổi tên miền:** (1) dựng tên mới trên server, (2) sửa `endpoints.json`, phát một bản, đẩy `latest.json` lên **cả tên cũ lẫn tên mới**, (3) giữ tên cũ chuyển hướng 308 vài tháng cho máy lâu không mở, (4) thêm Redirect URI Google cho tên mới, đổi `CLOUD_PUBLIC_URL`.
 
 ## 4. File sẽ sửa / thêm
 
@@ -142,7 +148,7 @@
 **Xong khi:** F4 qua; phát thử kênh beta lên thư mục cục bộ đủ hai tệp.
 
 ### Bước 3 — Chỗ phát trên server (3.3)
-**⛔** cần người lo server theo Q-F1. **Xong khi:** `https://mcah.axalize.dev/download/files/latest.json` trả bản thử; app cài từ bản đó tự thấy bản mới hơn.
+**⛔** cần người lo server theo Q-F1. **Xong khi:** `https://mcah.axalize.vn/download/files/latest.json` trả bản thử; app cài từ bản đó tự thấy bản mới hơn.
 
 ### Bước 4 — Kênh cập nhật (3.4, W3)
 **Xong khi:** máy chính đổi kênh, máy nhân viên theo; không hạ bản.
@@ -174,3 +180,4 @@ Chép hướng dẫn nháp vào trang Hướng dẫn, thêm mục "Phát hành" 
   - Gỡ trên Windows: `installer.nsh` hỏi hai lần (bỏ qua khi bộ cài bản mới gỡ bản cũ hoặc gỡ im lặng). Chưa thử (cần Windows). `.deb` thêm `recommends: libreoffice-calc`.
   - Trang Tải về: ngày, yêu cầu máy, ghi chú, SHA-256, dòng SmartScreen — thử với `latest.json` mẫu trên máy dev.
   - Thêm `docs/mcah-quy-trinh-phat-hanh.md`.
+  - Thêm 3.9 theo yêu cầu người dùng: tên miền chính thức `mcah.axalize.vn`, app tự học địa chỉ mới từ `latest.json` đã ký (test tự động), tài liệu đổi sang `.vn` (nhật ký giai đoạn 2 giữ nguyên như đã ghi).

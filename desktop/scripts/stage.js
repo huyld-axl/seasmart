@@ -123,8 +123,10 @@ async function writeCloudKey() {
 function writeUpdateConfig() {
   // Khoá công khai trong repo (build/release-public-key.pem): mọi máy build gói cùng một khoá, không cần khoá riêng.
   fs.writeFileSync(path.join(STAGE, 'release-public-key.pem'), require('./release-key').publicKeyPem())
-  fs.writeFileSync(path.join(STAGE, 'update-url.txt'), process.env.MCAH_UPDATE_URL || '')
-  fs.writeFileSync(path.join(STAGE, 'cloud-url.txt'), process.env.MCAH_CLOUD_URL || 'http://localhost:4100')
+  // Mặc định địa chỉ chính thức trong desktop/endpoints.json; build thử với máy chủ dev thì đặt MCAH_CLOUD_URL / MCAH_UPDATE_URL.
+  const official = JSON.parse(fs.readFileSync(path.join(DESKTOP, 'endpoints.json'), 'utf8'))
+  fs.writeFileSync(path.join(STAGE, 'update-url.txt'), process.env.MCAH_UPDATE_URL ?? official.update_url)
+  fs.writeFileSync(path.join(STAGE, 'cloud-url.txt'), process.env.MCAH_CLOUD_URL ?? official.cloud_url)
 }
 
 // Bản thử của bước 0.7: thêm một migration cuối để kiểm cập nhật có chạy migration.

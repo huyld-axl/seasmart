@@ -4,7 +4,8 @@
 //   npm run release -- --promote 1.2.0            đưa bản beta 1.2.0 đã phát sang kênh ổn định (không build lại)
 // Chặn (không phát gì) khi: thiếu .deb hoặc .exe, hai bản khác phiên bản / commit, có thay đổi chưa commit, chưa quét bí mật,
 // thiếu release-notes/<phiên bản>.md, khoá riêng không khớp khoá công khai trong repo.
-// MCAH_RELEASE_TARGET: đích rsync, vd. mcah-release@mcah.axalize.dev:/srv/mcah/releases
+// MCAH_RELEASE_TARGET: đích rsync, vd. mcah-release@mcah.axalize.vn:/srv/mcah/releases
+// latest.json mang `endpoints` (desktop/endpoints.json): đổi tên miền thì sửa tệp đó và phát bản mới, app tự học (3.9).
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
@@ -19,6 +20,7 @@ function plan({ desktop = DESKTOP, channel = 'beta' } = {}) {
   const { name: pkgName, version, build } = pkg
   const installers = path.join(desktop, build.directories.output)
   const problems = []
+  const endpoints = JSON.parse(fs.readFileSync(path.join(desktop, 'endpoints.json'), 'utf8'))
   if (!['beta', 'stable'].includes(channel)) problems.push(`Kênh không hợp lệ: ${channel}`)
   const files = {}
   const infos = {}
@@ -38,6 +40,7 @@ function plan({ desktop = DESKTOP, channel = 'beta' } = {}) {
     if (info.version !== version) problems.push(`Bản ${platform} là ${info.version}, không phải ${version}`)
     if (info.scan !== 'clean') problems.push(`Bản ${platform} chưa quét bí mật sạch`)
     if (info.dirty) problems.push(`Bản ${platform} build khi còn thay đổi chưa commit`)
+    if (info.cloud_url !== endpoints.cloud_url || info.update_url !== endpoints.update_url) problems.push(`Bản ${platform} gói địa chỉ ${info.update_url} / ${info.cloud_url}, khác endpoints.json`)
     const data = fs.readFileSync(src)
     files[platform] = { name, sha256: crypto.createHash('sha256').update(data).digest('hex'), size: data.length }
   }
@@ -47,7 +50,7 @@ function plan({ desktop = DESKTOP, channel = 'beta' } = {}) {
   if (!notes) problems.push(`Thiếu ghi chú thay đổi release-notes/${version}.md`)
   const migrations = path.join(desktop, '../backend/migrations/postgres')
   const lastMigration = fs.existsSync(migrations) ? fs.readdirSync(migrations).filter((n) => /^\d+.*\.sql$/.test(n)).sort().pop() : null
-  return { version, files, installers, notes, lastMigration, problems, commit: infos.linux?.commit }
+  return { version, files, installers, notes, lastMigration, endpoints, problems, commit: infos.linux?.commit }
 }
 
 const sign = (signed, key) => ({ ...signed, signature: crypto.sign(null, Buffer.from(canonical(signed)), key).toString('base64') })
@@ -80,7 +83,7 @@ function release({ channel, key }) {
   const dir = path.join(DESKTOP, 'dist/updates', channel)
   fs.mkdirSync(dir, { recursive: true })
   for (const { name } of Object.values(p.files)) fs.copyFileSync(path.join(p.installers, name), path.join(dir, name))
-  const manifest = sign({ version: p.version, files: p.files, last_migration: p.lastMigration, notes: p.notes, channel, released_at: new Date().toISOString(), windows_signed: false }, key)
+  const manifest = sign({ version: p.version, files: p.files, last_migration: p.lastMigration, endpoints: p.endpoints, notes: p.notes, channel, released_at: new Date().toISOString(), windows_signed: false }, key)
   fs.writeFileSync(path.join(dir, 'latest.json'), JSON.stringify(manifest, null, 2))
   prune(dir, new Set(Object.values(p.files).map((f) => f.name)))
   console.log(`Đã phát ${p.version} kênh ${channel === 'beta' ? 'thử nghiệm' : 'ổn định'}: ${Object.keys(p.files).join(', ')}`)

@@ -6,15 +6,15 @@ const fs = require('fs')
 const crypto = require('crypto')
 const { spawn } = require('child_process')
 const { shell } = require('electron')
-const { cloudPublicKeyFile, cloudUrlFile } = require('./paths')
+const { cloudPublicKeyFile } = require('./paths')
 
 const CLIENT_ID = 'mcah-desktop'
 const WAIT_MS = 10 * 60 * 1000
 
 // Địa chỉ máy chủ dịch vụ: MCAH_CLOUD_URL, hoặc tệp cloud-url.txt gói kèm lúc build.
+// Địa chỉ máy chủ dịch vụ (endpoints.js: biến môi trường → địa chỉ đã học từ bản tin cập nhật → địa chỉ gói lúc build).
 function cloudUrl() {
-  const fromFile = fs.existsSync(cloudUrlFile) ? fs.readFileSync(cloudUrlFile, 'utf8').trim() : ''
-  return (process.env.MCAH_CLOUD_URL || fromFile || 'http://localhost:4100').replace(/\/+$/, '')
+  return require('./endpoints').cloudUrl()
 }
 
 // MCAH_OPEN_URL_WITH: lệnh mở trang thay cho trình duyệt mặc định (chỉ dùng khi chạy thử tự động).

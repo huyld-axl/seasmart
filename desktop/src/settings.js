@@ -38,6 +38,7 @@ function getSettings() {
     updateChannel: saved.updateChannel === 'beta' ? 'beta' : 'stable',
     filesDir: saved.filesDir || null,
     seenVersion: saved.seenVersion || null,
+    endpoints: saved.endpoints || null,
     mailApp,
     smtp: saved.smtp || { provider: 'gmail', user: '' },
     smtpPasswordSaved: fs.existsSync(secretFile()),
@@ -45,8 +46,9 @@ function getSettings() {
   }
 }
 
-function saveSettings({ mailMode, smtp, smtpPassword, lockMinutes, updateChannel, seenVersion }) {
+function saveSettings({ mailMode, smtp, smtpPassword, lockMinutes, updateChannel, seenVersion, endpoints }) {
   const next = { ...read() }
+  if (endpoints !== undefined) next.endpoints = endpoints
   if (seenVersion !== undefined) next.seenVersion = seenVersion
   if (mailMode !== undefined) next.mailMode = mailMode
   if (lockMinutes !== undefined) next.lockMinutes = lockMinutes

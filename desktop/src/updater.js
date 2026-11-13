@@ -10,18 +10,19 @@ const path = require('path')
 const crypto = require('crypto')
 const { spawn } = require('child_process')
 const { app, dialog } = require('electron')
-const { releasePublicKeyFile, updateUrlFile } = require('./paths')
+const { releasePublicKeyFile } = require('./paths')
 const { canonical } = require('./manifest')
 
-// Địa chỉ phát hành: MCAH_UPDATE_URL, hoặc tệp update-url.txt gói kèm lúc build.
-const UPDATE_URL = (process.env.MCAH_UPDATE_URL || (fs.existsSync(updateUrlFile) ? fs.readFileSync(updateUrlFile, 'utf8').trim() : '')).replace(/\/+$/, '')
+// Đọc mỗi lần dùng: app có thể đã học địa chỉ mới từ bản tin cập nhật (endpoints.js).
+const endpoints = require('./endpoints')
+const updateBase = () => endpoints.updateUrl()
 const PLATFORM = process.platform === 'win32' ? 'win' : 'linux'
 
 // Kênh cập nhật (docs/mcah-ke-hoach-desktop-gd6.md 3.4): thử nghiệm ở <địa chỉ>/beta. main.js đặt nguồn kênh
 // (máy chính: cài đặt của máy; máy nhân viên: hỏi máy chính). Chỉ nhận bản MỚI HƠN nên đổi kênh không hạ bản.
 let channelOf = async () => 'stable'
 const setChannelSource = (fn) => { channelOf = fn }
-const channelUrl = async () => `${UPDATE_URL}${(await channelOf().catch(() => 'stable')) === 'beta' ? '/beta' : ''}`
+const channelUrl = async () => `${updateBase()}${(await channelOf().catch(() => 'stable')) === 'beta' ? '/beta' : ''}`
 
 // Migration cuối gói trong bản đang chạy (so với last_migration của bản mới).
 function lastMigration() {
@@ -49,12 +50,14 @@ function verifyManifest(manifest, publicKeyPem) {
 
 // Bản mới hợp lệ cho máy này, hoặc null. Sai chữ ký thì báo lỗi, không bao giờ tải tiếp.
 async function checkForUpdate() {
-  if (!UPDATE_URL || !fs.existsSync(releasePublicKeyFile)) return null
+  if (!updateBase() || !fs.existsSync(releasePublicKeyFile)) return null
   const base = await channelUrl()
   const r = await fetch(`${base}/latest.json`, { cache: 'no-store' })
   if (!r.ok) throw new Error(`Không lấy được thông tin bản mới (${r.status})`)
   const manifest = await r.json()
   if (!verifyManifest(manifest, fs.readFileSync(releasePublicKeyFile, 'utf8'))) throw new Error('Chữ ký bản cập nhật không hợp lệ, bỏ qua')
+  // Bản tin đã ký mang địa chỉ máy chủ / chỗ phát mới (đổi tên miền): học ngay, kể cả khi không có bản mới hơn.
+  endpoints.learn(manifest.endpoints)
   const file = manifest.files?.[PLATFORM]
   if (!file || !newer(manifest.version, app.getVersion())) return null
   if (!/^[\w.\- ]+$/.test(file.name) || !/^[0-9a-f]{64}$/.test(file.sha256)) throw new Error('Thông tin bản cập nhật sai định dạng')
@@ -65,7 +68,7 @@ async function download(update) {
   const dir = path.join(app.getPath('userData'), 'updates')
   fs.rmSync(dir, { recursive: true, force: true })
   fs.mkdirSync(dir, { recursive: true })
-  const r = await fetch(`${update.base || UPDATE_URL}/${encodeURIComponent(update.name)}`)
+  const r = await fetch(`${update.base || updateBase()}/${encodeURIComponent(update.name)}`)
   if (!r.ok) throw new Error(`Không tải được bản cập nhật (${r.status})`)
   const data = Buffer.from(await r.arrayBuffer())
   if (crypto.createHash('sha256').update(data).digest('hex') !== update.sha256) throw new Error('Tệp cập nhật tải về bị sai (SHA-256 không khớp)')
@@ -130,7 +133,7 @@ async function runUpdate(window, { quiet = false, beforeInstall = null } = {}) {
 const mirrorDir = () => path.join(app.getPath('userData'), 'lan-installers')
 
 async function mirrorInstallers() {
-  if (!UPDATE_URL || !fs.existsSync(releasePublicKeyFile)) return
+  if (!updateBase() || !fs.existsSync(releasePublicKeyFile)) return
   const base = await channelUrl()
   const r = await fetch(`${base}/latest.json`, { cache: 'no-store' })
   if (!r.ok) return

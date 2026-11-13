@@ -6,16 +6,18 @@ const path = require('path')
 const { plan } = require('../scripts/release')
 
 // Thư mục giả: desktop/ (package.json, dist/installer, release-notes) + backend/migrations.
-function setup({ win = true, linux = true, notes = true, winCommit = 'abc', dirty = false } = {}) {
+function setup(opts = {}) {
+  const { win = true, linux = true, notes = true, winCommit = 'abc', dirty = false } = opts
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rel-'))
   const d = path.join(root, 'desktop')
   fs.mkdirSync(path.join(d, 'dist/installer'), { recursive: true })
   fs.mkdirSync(path.join(root, 'backend/migrations/postgres'), { recursive: true })
   fs.writeFileSync(path.join(root, 'backend/migrations/postgres/048_x.sql'), '')
+  fs.writeFileSync(path.join(d, 'endpoints.json'), JSON.stringify({ cloud_url: 'https://a.vn/tai-khoan', update_url: 'https://a.vn/download/files' }))
   fs.writeFileSync(path.join(d, 'package.json'), JSON.stringify({ name: 'mcah-desktop', version: '1.2.0', build: { productName: 'MCAH', directories: { output: 'dist/installer' } } }))
   const put = (platform, name, commit) => {
     fs.writeFileSync(path.join(d, 'dist/installer', name), 'x')
-    fs.writeFileSync(path.join(d, 'dist/installer', `build-info-${platform}.json`), JSON.stringify({ version: '1.2.0', commit, scan: 'clean', dirty }))
+    fs.writeFileSync(path.join(d, 'dist/installer', `build-info-${platform}.json`), JSON.stringify({ version: '1.2.0', commit, scan: 'clean', dirty, cloud_url: platform === 'win' && opts.wrongUrl ? 'http://localhost:4100' : 'https://a.vn/tai-khoan', update_url: 'https://a.vn/download/files' }))
   }
   if (linux) put('linux', 'mcah-desktop_1.2.0_amd64.deb', 'abc')
   if (win) put('win', 'MCAH Setup 1.2.0.exe', winCommit)
@@ -36,7 +38,7 @@ test('phát hành: đủ hai bản cùng commit, có ghi chú thì không chặn
 })
 
 test('phát hành: chặn khi thiếu Ubuntu, khác commit, thiếu ghi chú, còn thay đổi chưa commit', () => {
-  for (const [opts, want] of [[{ linux: false }, /Thiếu bộ cài Ubuntu/], [{ winCommit: 'zzz' }, /khác commit/], [{ notes: false }, /ghi chú/], [{ dirty: true }, /chưa commit/]]) {
+  for (const [opts, want] of [[{ linux: false }, /Thiếu bộ cài Ubuntu/], [{ winCommit: 'zzz' }, /khác commit/], [{ notes: false }, /ghi chú/], [{ dirty: true }, /chưa commit/], [{ wrongUrl: true }, /khác endpoints\.json/]]) {
     const { root, d } = setup(opts)
     const p = plan({ desktop: d })
     assert.ok(p.problems.some((x) => want.test(x)), `${JSON.stringify(opts)}: ${p.problems}`)

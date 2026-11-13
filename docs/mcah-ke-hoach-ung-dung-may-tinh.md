@@ -255,7 +255,7 @@ seasmart/
 | **M2** | Máy chủ dịch vụ: dùng lại máy chủ đang chạy bản web hay thuê máy mới; tên miền cho trang đăng nhập | Sếp / bạn | Giai đoạn 2 |
 | **M3** | Trang "Tải về" | **Chốt 2026-11-13:** `https://mcah.axalize.vn/download` (trang tĩnh trong frontend, đọc `latest.json`) | Dựng trang; tệp bộ cài đặt lên ở giai đoạn 6 |
 | **M4** | Mua chứng thư ký số Windows | **Chưa vội** (2026-11-13) | Phát hành rộng |
-| **M5** | Điều khoản sử dụng, Chính sách quyền riêng tư | **2026-11-13:** dựng trang với nội dung "TBC" trước (`/tai-khoan/dieu-khoan`, `/tai-khoan/quyen-rieng-tu`), luật sư viết sau | Trước khi mở bán |
+| **M5** | Điều khoản sử dụng, Chính sách quyền riêng tư | **2026-11-13:** dựng trang với nội dung "TBC" trước (`/tai-khoan/dieu-khoan`, `/tai-khoan/quyen-rieng-tu`; tệp tĩnh `frontend/public/phap-ly/*.html`, nginx trả thẳng nên không phụ thuộc máy chủ tài khoản), luật sư viết sau | Trước khi mở bán |
 | **M6** | Quy định 375px | **Chốt 2026-11-13:** bản web vẫn giữ giao diện điện thoại; màn chỉ có trong app máy tính không cần | Đã sửa `CLAUDE.md` 3.5 |
 | **M7** | Sếp đã biết các đánh đổi | **Đã chốt** 2026-11-13 (gồm Q14 không mã hoá, Q15 không sao lưu) | — |
 | **M8** | Cách tính tiền, bản quyền, số máy | **Không làm trong kế hoạch này** (2026-11-13) | — |

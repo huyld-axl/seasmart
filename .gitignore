@@ -52,9 +52,13 @@ backend/storage/
 
 # Deployment credentials and lock
 docker/postgres.env
+docker/cloud-postgres.env
 docker/jwt_secret
 backups/
 .deploy.lock
 
 # Danh mục tàu nguồn (30MB), nạp bằng npm run seed:ship-catalog
 docs/ships_plain.db
+
+# Bộ cài app máy tính: nằm trên server (/srv/mcah/releases), không vào git
+frontend/public/download/files/

@@ -1,8 +1,10 @@
-const fs = require('fs')
+const { versionWhere, failIfStale } = require('../utils/row_version')
 const path = require('path')
 const pool = require('../config/db')
-const config = require('../config')
 const { trashFiles, certificateFilePath } = require('../utils/file_trash')
+const fileStore = require('../utils/file_store')
+const tree = require('../utils/readable_tree')
+const fileLayout = require('./file_layout.service')
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const ALLOWED_EXTS = ['.pdf', '.jpg', '.jpeg', '.png']
@@ -96,6 +98,8 @@ const certificateService = {
         'INSERT INTO seafarer_certificate SET ?',
         [{ ...data, seafarer_id: seafarerId, created_by, updated_by: created_by }]
       )
+      // Bản mới cùng loại: bản trước vào "Bản cũ" của thư mục hồ sơ.
+      await fileLayout.enqueue(pool, 'seafarer', seafarerId)
       return this.getById(result.insertId, seafarerId)
     } catch (err) {
       if (err?.code === '23505') throw { statusCode: 409, message: 'Hồ sơ đã có chứng chỉ này (cùng loại và cùng ngày cấp)' }
@@ -103,12 +107,17 @@ const certificateService = {
     }
   },
 
-  async update(id, seafarerId, data, updated_by) {
+  async update(id, seafarerId, body, updated_by) {
+    const { version, ...data } = body || {}
     await this.getById(id, seafarerId)
-    await pool.query(
-      'UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
-      [data, updated_by, id]
+    // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4).
+    const guard = versionWhere(version)
+    const [res] = await pool.query(
+      `UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?${guard.sql}`,
+      [data, updated_by, id, ...guard.params]
     )
+    await failIfStale(pool, 'seafarer_certificate', id, version, res.affectedRows)
+    await fileLayout.enqueue(pool, 'seafarer', seafarerId)
     return this.getById(id, seafarerId)
   },
 
@@ -119,7 +128,8 @@ const certificateService = {
       'UPDATE seafarer_certificate SET deleted_at = NOW(), updated_by = ? WHERE id = ?',
       [updated_by, id]
     )
-    await trashFiles(certificateFilePath(seafarerId, row.document_url), 'Xoá giấy tờ')
+    await trashFiles([certificateFilePath(seafarerId, row.document_url), row.tree_file], 'Xoá giấy tờ')
+    await fileLayout.enqueue(pool, 'seafarer', seafarerId)
     return { success: true }
   },
 
@@ -144,19 +154,16 @@ const certificateService = {
       throw { statusCode: 400, message: 'Nội dung file không hợp lệ' }
     }
 
-    const uploadDir = path.join(config.upload.dir, 'certificates', String(seafarerId))
-    fs.mkdirSync(uploadDir, { recursive: true })
-
-    const filename = `${id}_${Date.now()}${ext}`
-    const filepath = path.join(uploadDir, filename)
-    fs.writeFileSync(filepath, fileBuffer)
-
-    const document_url = `/uploads/certificates/${seafarerId}/${filename}`
+    // Tệp vào thư mục hồ sơ của thuyền viên (app máy tính) hoặc kho nội bộ (bản web); document_url giữ mã tệp.
+    const [[crew]] = await pool.query('SELECT id, full_name, seafarer_code FROM seafarer WHERE id = ?', [seafarerId])
+    const target = tree.certificatePath(crew, { ...current, type_name: current.display_name, category: current.certificate_category }, ext === '.jpeg' ? '.jpg' : ext)
+    const document_url = await fileStore.put(fileBuffer, { tree: target, kind: 'cert', ext })
     await pool.query(
       'UPDATE seafarer_certificate SET document_url = ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
       [document_url, updated_by, id]
     )
     await trashFiles(certificateFilePath(seafarerId, current.document_url), 'Thay tệp giấy tờ')
+    await fileLayout.enqueue(pool, 'seafarer', seafarerId)
 
     return this.getById(id, seafarerId)
   },
@@ -169,11 +176,10 @@ const certificateService = {
     )
     const url = rows[0]?.document_url
     if (!url) throw { statusCode: 404, message: 'Chứng chỉ này không có file đính kèm' }
-    const name = path.basename(url)
-    const filepath = path.join(config.upload.dir, 'certificates', String(seafarerId), name)
-    if (!fs.existsSync(filepath)) throw { statusCode: 404, message: 'Không tìm thấy file chứng chỉ' }
+    const ref = certificateFilePath(seafarerId, url)
+    const name = path.basename(fileStore.abs(ref))
     const mime = { '.pdf': 'application/pdf', '.png': 'image/png' }[path.extname(name).toLowerCase()] || 'image/jpeg'
-    return { path: filepath, name, mime }
+    return { stream: await fileStore.stream(ref), name, mime }
   },
 }
 
@@ -196,12 +202,12 @@ certificateService.bundle = async function bundle(seafarerId, { ids, photo = tru
   const lacking = []
   let n = 0
   const put = (name, ext, buffer) => { n += 1; zip.file(`${folder}/${String(n).padStart(2, '0')} ${safeName(name)}${ext}`, buffer) }
-  if (photo && crew.photo_path && fs.existsSync(crew.photo_path)) put('Ảnh thẻ 4x6', path.extname(crew.photo_path).toLowerCase() || '.jpg', fs.readFileSync(crew.photo_path))
+  if (photo && (await fileStore.exists(crew.photo_path))) put('Ảnh thẻ 4x6', path.extname(fileStore.abs(crew.photo_path)).toLowerCase() || '.jpg', await fileStore.read(crew.photo_path))
   for (const row of rows) {
     const name = `${row.display_name}${row.certificate_number ? ` - ${row.certificate_number}` : ''}`
     if (row.document_url) {
-      const file = path.join(config.upload.dir, 'certificates', String(seafarerId), path.basename(row.document_url))
-      if (fs.existsSync(file)) { put(name, path.extname(file).toLowerCase(), fs.readFileSync(file)); continue }
+      const ref = certificateFilePath(seafarerId, row.document_url)
+      if (await fileStore.exists(ref)) { put(name, path.extname(fileStore.abs(ref)).toLowerCase(), await fileStore.read(ref)); continue }
     }
     if (row.source_document_id) {
       const [[doc]] = await pool.query('SELECT * FROM seafarer_document WHERE id = ? AND deleted_at IS NULL', [row.source_document_id])

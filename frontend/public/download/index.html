@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tải MCAH</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  /* Trang Tải về (M3, docs/mcah-ke-hoach-ung-dung-may-tinh.md 4.2): https://mcah.axalize.dev/download.
+     Đọc files/latest.json (bản phát hành đã ký, giai đoạn 6 đặt vào /download/files/); chưa có thì báo sắp có. */
+  :root { color-scheme: light; --primary: #003366; --bg: #eef0f4; --surface: #fff; --fg: #2c2c2c; --muted: #707070; --border: #d3d5db; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg); font: 15px/1.6 Inter, system-ui, 'Segoe UI', sans-serif; padding: 16px; }
+  main { max-width: 760px; margin: 32px auto; display: grid; gap: 16px; }
+  .card { background: var(--surface); border-radius: 16px; padding: 24px 28px; display: grid; gap: 12px; }
+  .brand { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 18px; }
+  .brand i { width: 36px; height: 36px; border-radius: 9px; background: var(--primary); color: #fff; display: grid; place-items: center; font-style: normal; font-size: 13px; }
+  h1 { margin: 0; font-size: 24px; }
+  p { margin: 0; }
+  .muted { color: var(--muted); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .os { border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: grid; gap: 8px; }
+  .os.mine { border-color: var(--primary); box-shadow: 0 0 0 3px #00336622; }
+  .os b { font-size: 16px; }
+  a.btn { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 16px; border-radius: 999px; background: var(--primary); color: #fff; text-decoration: none; font-weight: 600; }
+  a.btn[aria-disabled="true"] { background: #e7e8ec; color: var(--muted); pointer-events: none; }
+  a { color: var(--primary); }
+  ol { margin: 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <section class="card">
+    <div class="brand"><i>MC</i>MCAH</div>
+    <h1>Tải MCAH cho máy tính</h1>
+    <p>Quản lý thuyền viên, tàu, hợp đồng trên máy tính của văn phòng. Một máy chính giữ dữ liệu, các máy khác trong văn phòng nối vào.</p>
+    <p class="muted" id="version">Đang kiểm bản mới nhất…</p>
+  </section>
+  <section class="card">
+    <div class="grid">
+      <div class="os" id="os-win"><b>Windows 10 / 11</b><span class="muted" id="win-info">—</span><a class="btn" id="win-link" aria-disabled="true" href="#">Tải cho Windows</a></div>
+      <div class="os" id="os-linux"><b>Ubuntu 22.04 / 24.04</b><span class="muted" id="linux-info">—</span><a class="btn" id="linux-link" aria-disabled="true" href="#">Tải cho Ubuntu (.deb)</a></div>
+    </div>
+    <p class="muted">Yêu cầu: Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB RAM.</p>
+    <p class="muted" id="smartscreen" hidden>Windows có thể hiện "Windows đã bảo vệ máy tính của bạn": bấm <b>Thêm thông tin</b> → <b>Vẫn chạy</b>.</p>
+  </section>
+  <section class="card" id="notes-card" hidden>
+    <b>Có gì mới</b>
+    <ul id="notes"></ul>
+    <details class="muted"><summary>Mã SHA-256 để tham khảo</summary><div id="sums"></div></details>
+  </section>
+  <section class="card">
+    <b>Cài đặt</b>
+    <ol>
+      <li>Tải bộ cài đúng hệ điều hành, mở tệp vừa tải và làm theo hướng dẫn.</li>
+      <li>Mở MCAH, bấm <b>Đăng nhập qua trình duyệt</b>, đăng nhập hoặc đăng ký tài khoản.</li>
+      <li>Người đầu tiên tạo văn phòng trên máy chính; nhân viên đăng nhập trên máy mình, MCAH tự nối máy chính.</li>
+    </ol>
+    <p class="muted">Xem thêm <a href="/huong-dan/">Hướng dẫn sử dụng</a> · <a href="/tai-khoan/dieu-khoan">Điều khoản</a> · <a href="/tai-khoan/quyen-rieng-tu">Quyền riêng tư</a></p>
+  </section>
+</main>
+<script>
+  // Hệ điều hành của người xem: làm nổi ô tương ứng.
+  const ua = navigator.userAgent
+  document.getElementById(/Windows/i.test(ua) ? 'os-win' : /Linux|X11/i.test(ua) ? 'os-linux' : 'none')?.classList.add('mine')
+  const mb = (n) => `${Math.round(n / 1024 / 1024)} MB`
+  fetch('files/latest.json', { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : Promise.reject()))
+    .then((m) => {
+      const date = m.released_at ? ` · ${new Date(m.released_at).toLocaleDateString('vi-VN')}` : ''
+      document.getElementById('version').textContent = `Bản mới nhất: ${m.version}${date}`
+      document.getElementById('smartscreen').hidden = m.windows_signed !== false
+      const lines = String(m.notes || '').split('\n').map((l) => l.replace(/^\s*[-*]\s*/, '').trim()).filter(Boolean)
+      if (lines.length) {
+        document.getElementById('notes-card').hidden = false
+        for (const line of lines) {
+          const li = document.createElement('li')
+          li.textContent = line
+          document.getElementById('notes').appendChild(li)
+        }
+        for (const f of Object.values(m.files || {})) {
+          const div = document.createElement('div')
+          div.textContent = `${f.name}: ${f.sha256}`
+          div.style.wordBreak = 'break-all'
+          document.getElementById('sums').appendChild(div)
+        }
+      }
+      for (const [key, id] of [['win', 'win'], ['linux', 'linux']]) {
+        const f = m.files?.[key]
+        if (!f) continue
+        const link = document.getElementById(`${id}-link`)
+        link.href = `files/${encodeURIComponent(f.name)}`
+        link.removeAttribute('aria-disabled')
+        document.getElementById(`${id}-info`).textContent = `${f.name} · ${mb(f.size)}`
+      }
+    })
+    .catch(() => { document.getElementById('version').textContent = 'Bản cài đặt sắp có. Quay lại sau.' })
+</script>
+</body>
+</html>

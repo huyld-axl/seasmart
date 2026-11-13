@@ -1,3 +1,4 @@
+const { assertVersion } = require('../utils/row_version')
 const { pickAllowed, paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
 const { uniqueCode } = require('../utils/code_counter')
@@ -42,7 +43,7 @@ const CONTRACT_FROM = `FROM seafarer_contract c
 
 const LIVE_BILL = 'EXISTS (SELECT 1 FROM contract_bill b WHERE b.contract_id = c.id AND b.deleted_at IS NULL)'
 
-const CONTRACT_SELECT = `SELECT c.id, c.contract_number, c.status, c.voyage_position_id, c.seafarer_voyage_id, c.seafarer_id, c.start_date, c.end_date,
+const CONTRACT_SELECT = `SELECT c.id, c.version, c.contract_number, c.status, c.voyage_position_id, c.seafarer_voyage_id, c.seafarer_id, c.start_date, c.end_date,
     c.notes, c.last_reject_reason, c.created_at, c.updated_at,
     s.full_name AS seafarer_name, s.seafarer_code, s.status AS seafarer_status,
     p.sort_order AS position_sort_order, p.budget_total_usd, COALESCE(sv.budget_monthly_usd, p.budget_monthly_usd) AS budget_monthly_usd, r.name_vi AS rank_name,
@@ -230,6 +231,7 @@ const seafarerContractService = {
     return {
       contract: {
         id: row.id,
+        version: row.version,
         contract_number: row.contract_number,
         status: row.status,
         voyage_position_id: row.voyage_position_id,
@@ -357,8 +359,9 @@ const seafarerContractService = {
     const terms = parseTerms(body.terms)
     await withTransaction(pool, async (conn) => {
       const [[current]] = await conn.query(
-        'SELECT id, status, seafarer_id, seafarer_voyage_id, start_date, end_date FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+        'SELECT id, status, seafarer_id, seafarer_voyage_id, start_date, end_date, version, updated_at, updated_by FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
       if (!current) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
+      await assertVersion(conn, current, body.version)
       if (!EDITABLE_CONTRACT_STATUSES.includes(current.status)) throw { statusCode: 409, message: 'Hợp đồng đang khoá, không sửa được' }
       if (!current.seafarer_voyage_id) throw { statusCode: 409, message: LEGACY_MESSAGE }
       // Thuyền viên và chuyến của hợp đồng không đổi: lấy theo chuyến, bỏ giá trị gửi lên.

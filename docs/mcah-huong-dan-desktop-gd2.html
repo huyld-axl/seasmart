@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hướng dẫn tài khoản MCAH</title>
+<style>
+  /* Bản nháp phần tài khoản cho mục "Ứng dụng trên máy tính" (frontend/public/huong-dan/index.html), bước 12 của
+     docs/mcah-ke-hoach-desktop-gd2.md. Khi chép vào, bỏ thẻ <style> này và dùng class sẵn có của trang. */
+  :root { color-scheme: light; --border: #e5e6ea; --bg: #f4f4f6; }
+  body { margin: 0; background: var(--bg); color: #2c2c2c; font: 15px/1.6 'Inter', system-ui, sans-serif; }
+  section { max-width: 760px; margin: 32px auto; padding: 24px 28px; background: #fff; border-radius: 16px; }
+  h2 { margin-top: 0; }
+  .ui { padding: 1px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-weight: 500; white-space: nowrap; }
+  .note { padding: 10px 14px; border-radius: 10px; background: #fffbeb; color: #bb4d00; }
+</style>
+</head>
+<body>
+<section id="app-tai-khoan">
+  <h2>Tài khoản và đăng nhập (ứng dụng trên máy tính)</h2>
+
+  <h3>Đăng nhập</h3>
+  <p>Bấm <span class="ui">Đăng nhập qua trình duyệt</span>. Trình duyệt mở trang đăng nhập MCAH: đăng nhập bằng email và mật khẩu, hoặc <span class="ui">Tiếp tục với Google</span>. Xong, trình duyệt báo "Đã đăng nhập" và MCAH tự vào. Ứng dụng không bao giờ hỏi mật khẩu của bạn.</p>
+  <p>Chưa có tài khoản thì chọn <span class="ui">Đăng ký</span> trên trang đó và bấm liên kết trong thư xác minh. Quên mật khẩu thì đặt lại ngay trên trang đó.</p>
+  <p>MCAH không tự vào sau khi đăng nhập? Trang "Đã đăng nhập" có một mã 8 ký tự: trong MCAH bấm <span class="ui">Nhập mã thủ công</span> và dán mã vào.</p>
+
+  <h3>Lần đầu: tạo văn phòng</h3>
+  <p>Người đầu tiên của văn phòng chọn <span class="ui">Tạo văn phòng mới</span> trên máy sẽ giữ dữ liệu (máy chính, nên là máy bàn luôn bật). Bạn đặt tên văn phòng, đặt <b>mật khẩu sao lưu</b> và nhận <b>mã khôi phục dữ liệu</b>.</p>
+  <p class="note">In hoặc chép mã khôi phục ra giấy và cất kỹ. Khi chuyển dữ liệu sang máy khác, bạn cần mật khẩu sao lưu hoặc mã này. Mất cả hai thì không mở được tài liệu, bên MCAH cũng không mở được.</p>
+
+  <h3>Mã PIN và tự khoá</h3>
+  <p>Sau lần đăng nhập đầu trên một máy, bạn đặt mã PIN 6 số. Để máy một lúc (mặc định 15 phút) MCAH tự khoá; nhập PIN để mở, không cần internet. Sai PIN 5 lần thì phải đăng nhập lại qua trình duyệt. Đổi thời gian tự khoá ở <span class="ui">Cài đặt trên máy này</span>.</p>
+
+  <h3>Không có internet</h3>
+  <p>Đã đăng nhập thì bạn làm việc bình thường tới 7 ngày không có internet. Còn 2 ngày, MCAH hiện dải vàng nhắc kết nối. Quá 7 ngày phải kết nối internet và đăng nhập lại. Quét giấy tờ bằng AI, tra tàu theo IMO và tìm danh mục tàu luôn cần internet.</p>
+
+  <h3>Mời đồng nghiệp</h3>
+  <p>Quản trị vào Quản trị → Tài khoản → <span class="ui">Mời</span>, nhập email, họ tên và vai trò. Đồng nghiệp nhận thư mời của MCAH, bấm liên kết để đăng ký, rồi đăng nhập MCAH. Tắt "Đăng nhập" của một người thì người đó không vào được nữa, kể cả đang mở ứng dụng.</p>
+</section>
+</body>
+</html>

@@ -12,6 +12,8 @@ import {
   SafetyCertificateOutlined,
   BookOutlined,
   LogoutOutlined,
+  SettingOutlined,
+  CloudDownloadOutlined,
   MenuOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -27,6 +29,13 @@ import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } f
 import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 import useViewport from '../hooks/useViewport'
+import PdfComponentModal from '../components/common/PdfComponentModal'
+import AiConsentModal from '../components/common/AiConsentModal'
+import OfflineRibbon from '../components/common/OfflineRibbon'
+import MainLinkRibbon from '../components/common/MainLinkRibbon'
+import WhatsNewRibbon from '../components/common/WhatsNew'
+import DesktopLock from '../components/common/DesktopLock'
+import { desktop, isDesktop } from '../lib/desktop'
 
 // Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn ở thanh trên, mở đúng mục của trang hướng dẫn theo đường dẫn.
 const guideUrl = (section) => `${GUIDE_HOME_URL}#${section}`
@@ -195,10 +204,20 @@ export default function AdminLayout() {
     items: [
       { key: 'meta', type: 'group', label: `${user?.email || ''} · ${user?.role?.name || 'Chưa có vai trò'}` },
       { type: 'divider' },
+      // App máy tính: cài đặt theo máy và kiểm bản mới (docs/mcah-ke-hoach-desktop-gd1.md 3.6).
+      ...(isDesktop()
+        ? [
+            { key: 'device', icon: <SettingOutlined />, label: 'Cài đặt trên máy này' },
+            { key: 'update', icon: <CloudDownloadOutlined />, label: 'Kiểm tra bản mới' },
+            { type: 'divider' },
+          ]
+        : []),
       { key: 'logout', icon: <LogoutOutlined />, label: 'Đăng xuất', danger: true },
     ],
     onClick: ({ key }) => {
       if (key === 'logout') signOut()
+      if (key === 'device') navigate('/cai-dat-may')
+      if (key === 'update') desktop.checkUpdate()
     },
   }
 
@@ -229,7 +248,7 @@ export default function AdminLayout() {
                 <span className="app-shell__title-parent">{current.label} /</span> {currentTab.label}
               </>
             ) : (
-              current?.label || 'MCAH'
+              current?.label || (pathname === '/cai-dat-may' ? 'Cài đặt trên máy này' : 'MCAH')
             )}
           </h1>
 
@@ -245,10 +264,16 @@ export default function AdminLayout() {
             </Dropdown>
           </div>
         </header>
+        {isDesktop() ? <OfflineRibbon /> : null}
+        {isDesktop() ? <MainLinkRibbon /> : null}
+        {isDesktop() ? <WhatsNewRibbon /> : null}
 
         <main className="app-shell__content">
           <ErrorBoundary resetKey={pathname}>
             <Outlet />
+            {isDesktop() ? <PdfComponentModal /> : null}
+            <AiConsentModal />
+            {isDesktop() ? <DesktopLock /> : null}
           </ErrorBoundary>
         </main>
       </div>

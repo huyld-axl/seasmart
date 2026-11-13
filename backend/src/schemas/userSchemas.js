@@ -18,6 +18,7 @@ const updateUserSchema = {
       full_name: { type: 'string', minLength: 1, maxLength: 150, pattern: '\\S' },
       role_id: { type: 'integer', minimum: 1 },
       is_active: { type: 'boolean' },
+      version: { type: 'integer', minimum: 1 },
     },
   },
 }

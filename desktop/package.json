@@ -1,0 +1,133 @@
+{
+  "name": "mcah-desktop",
+  "version": "0.0.1",
+  "private": true,
+  "description": "App máy tính MCAH (Electron)",
+  "main": "src/main.js",
+  "scripts": {
+    "build:frontend": "npm exec --prefix ../frontend -- vite build -c ../desktop/vite.frontend.config.mjs",
+    "start": "electron .",
+    "stage:linux": "node scripts/stage.js linux",
+    "stage:win": "node scripts/stage.js win",
+    "dist:linux": "npm run build:frontend && npm run stage:linux && node scripts/build-main.js && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked && node scripts/build-info.js linux",
+    "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked && node scripts/build-info.js win",
+    "release": "node scripts/release.js",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "electron": "^39.8.10",
+    "electron-builder": "^26.18.0",
+    "embedded-postgres": "17.11.0-beta.19",
+    "esbuild": "^0.25.12"
+  },
+  "allowScripts": {
+    "electron@39.8.10": true,
+    "@embedded-postgres/linux-x64@17.11.0-beta.19": true,
+    "electron-winstaller": false,
+    "koffi@3.3.7": true
+  },
+  "author": {
+    "name": "MCAH",
+    "email": "support@mcah.vn"
+  },
+  "build": {
+    "appId": "vn.mcah.desktop",
+    "productName": "MCAH",
+    "directories": {
+      "output": "dist/installer"
+    },
+    "files": [
+      "app-build/**",
+      "!**/*.map",
+      "dist/frontend/**",
+      "build/icon.png",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/stage/${os}",
+        "to": ".",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "dist/stage/cloud-public-key.pem",
+        "to": "cloud-public-key.pem"
+      },
+      {
+        "from": "dist/stage/release-public-key.pem",
+        "to": "release-public-key.pem"
+      },
+      {
+        "from": "dist/stage/update-url.txt",
+        "to": "update-url.txt"
+      },
+      {
+        "from": "dist/stage/cloud-url.txt",
+        "to": "cloud-url.txt"
+      },
+      {
+        "from": "release-notes",
+        "to": "release-notes"
+      }
+    ],
+    "linux": {
+      "target": "deb",
+      "category": "Office",
+      "executableName": "mcah",
+      "icon": "build/icon.png"
+    },
+    "deb": {
+      "recommends": [
+        "libreoffice-calc"
+      ],
+      "depends": [
+        "libnss3",
+        "libgtk-3-0",
+        "libxss1",
+        "libasound2t64 | libasound2"
+      ],
+      "fpm": [
+        "--replaces=seasmart-desktop",
+        "--conflicts=seasmart-desktop"
+      ]
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
+    },
+    "extraMetadata": {
+      "main": "app-build/main.js"
+    },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
+    },
+    "asarUnpack": [
+      "app-build/backend-guard.js"
+    ]
+  },
+  "homepage": "https://mcah.vn",
+  "dependencies": {
+    "@peculiar/x509": "^3.1.0",
+    "bonjour-service": "^1.4.4",
+    "bytenode": "^1.5.7",
+    "koffi": "^3.3.7",
+    "pg": "8.23.1",
+    "reflect-metadata": "^0.2.2",
+    "yauzl": "^3.2.0",
+    "yazl": "^3.3.1"
+  },
+  "desktopName": "mcah.desktop"
+}

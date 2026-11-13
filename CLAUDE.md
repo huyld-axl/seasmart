@@ -124,7 +124,7 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 
 ### 3.5 Màn hẹp (điện thoại)
 
-Kế hoạch đầy đủ: `docs/mcah-ke-hoach-responsive-mobile.md`. Mọi màn mới phải dùng được ở 375px trước khi báo xong.
+Kế hoạch đầy đủ: `docs/mcah-ke-hoach-responsive-mobile.md`. Mọi màn mới **của bản web** phải dùng được ở 375px trước khi báo xong. Màn chỉ có trong app máy tính (trang `pages/desktop/`, Cài đặt trên máy này, Máy trong văn phòng, hộp chỉ hiện khi `isDesktop()`…) chỉ cần chạy tốt trên màn máy tính (M6, 2026-11-13). Không xoá code điện thoại sẵn có.
 
 - **Ba mốc:** dưới 640px là điện thoại, dưới 768px sidebar thành ngăn kéo và bảng danh sách thành dòng, từ 1024px là màn rộng. CSS chỉ dùng `max-width: 639 / 767 / 1023px` hoặc `min-width: 640 / 768 / 1024px`; mốc khác phải có comment `mốc riêng: <lý do>` (test `src/__tests__/breakpoints.test.js` chặn). JS dùng `useViewport()` (`hooks/useViewport.js`), không gọi `Grid.useBreakpoint()` của antd.
 - **Ô gõ được** cao 44px, chữ 16px ở điện thoại (dưới 16px iOS tự phóng to trang): đã có qua `antThemePhone` và lưới an toàn trong `index.css`, không tự hạ cỡ chữ ô nhập.

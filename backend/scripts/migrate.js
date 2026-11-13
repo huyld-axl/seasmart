@@ -8,7 +8,7 @@ async function migrate() {
   try {
     await client.query('SELECT pg_advisory_lock(741930271)')
     await client.query('CREATE TABLE IF NOT EXISTS schema_migration (name TEXT PRIMARY KEY, checksum TEXT NOT NULL, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())')
-    const dir = path.join(__dirname, '../migrations/postgres')
+    const dir = require('../src/config/paths').MIGRATIONS_DIR
     for (const name of fs.readdirSync(dir).filter((name) => /^\d+.*\.sql$/.test(name)).sort()) {
       const sql = fs.readFileSync(path.join(dir, name), 'utf8')
       const checksum = crypto.createHash('sha256').update(sql).digest('hex')

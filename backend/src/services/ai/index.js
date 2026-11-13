@@ -4,12 +4,15 @@ const pool = require('../../config/db')
 const { createLimiter } = require('./limiter')
 const { createOpenAIProvider } = require('./openai_provider')
 const { createAnthropicProvider } = require('./anthropic_provider')
+const { createCloudProvider } = require('./cloud_provider')
 
 let provider = null
 let limiter = null
 
 function buildProvider() {
   const { ai } = config
+  // App máy tính: AI chạy ở máy chủ dịch vụ MCAH (AI_PROVIDER=cloud do desktop đặt).
+  if (ai.provider === 'cloud') return createCloudProvider()
   if (ai.provider === 'anthropic') {
     return createAnthropicProvider({ apiKey: ai.anthropicApiKey, model: ai.anthropicModel, timeoutMs: ai.timeoutMs })
   }

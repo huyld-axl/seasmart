@@ -1,7 +1,11 @@
 import { create } from 'zustand'
 import { authApi } from '../api'
+import { DESKTOP_TOKEN, desktop, isDesktop } from '../lib/desktop'
 
-const storedToken = localStorage.getItem('token') || null
+// App máy tính không giữ token ở giao diện (tiến trình chính gắn token khi chuyển tiếp /api): có thông tin người dùng
+// đã lưu thì coi như đang đăng nhập, /auth/me trả 401 thì client.js đưa về màn đăng nhập.
+const desktopMode = isDesktop()
+const storedToken = desktopMode ? (localStorage.getItem('user') ? DESKTOP_TOKEN : null) : localStorage.getItem('token') || null
 
 // Giá trị cũ hỏng (vd. chuỗi "undefined") không được làm sập cả app.
 function readStoredUser() {
@@ -18,6 +22,12 @@ const useAuthStore = create((set) => ({
   token: storedToken,
   // false cho tới khi lấy xong quyền mới từ /auth/me (chỉ khi có token); tránh nháy trang 403 vì quyền cũ.
   ready: !storedToken,
+
+  // App máy tính: tiến trình chính đã đăng nhập xong, chỉ ghi người dùng.
+  setDesktopUser: (user) => {
+    localStorage.setItem('user', JSON.stringify(user))
+    set({ user, token: DESKTOP_TOKEN, ready: true })
+  },
 
   login: async (email, password) => {
     const res = await authApi.login({ email, password })
@@ -43,6 +53,7 @@ const useAuthStore = create((set) => ({
   },
 
   logout: () => {
+    if (desktopMode) desktop.logout().catch(() => {})
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     set({ user: null, token: null, ready: true })

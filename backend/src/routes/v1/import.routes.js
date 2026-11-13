@@ -1,7 +1,7 @@
 const path = require('path')
+const { tmpRoot } = require('../../utils/tmp_dir')
 const fs = require('fs')
 const { importExcel } = require('../../services/import.service')
-const config = require('../../config')
 
 async function importRoutes(fastify) {
   // POST /api/v1/import/excel — upload file
@@ -21,11 +21,8 @@ async function importRoutes(fastify) {
 
       // Giới hạn kích thước file import (5MB)
       const MAX_IMPORT_SIZE = 5 * 1024 * 1024
-      const tmpPath = path.join(
-        config.upload.dir,
-        `import_${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`
-      )
-      fs.mkdirSync(config.upload.dir, { recursive: true })
+      // Tệp nhập chỉ cần trong lúc đọc: thư mục tạm của app, xoá ngay sau đó.
+      const tmpPath = path.join(tmpRoot(), `import_${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`)
 
       let bytesWritten = 0
       const writeStream = fs.createWriteStream(tmpPath)
@@ -76,7 +73,7 @@ async function importRoutes(fastify) {
       onRequest: [fastify.authenticate, fastify.can('seafarer.import')],
     },
     async (request) => {
-      const samplePath = path.resolve(__dirname, '../../../../sample data/HD - Hong.xlsx')
+      const samplePath = path.resolve(require('../../config/paths').BACKEND_ROOT, '../../sample data/HD - Hong.xlsx')
       const result = await importExcel(samplePath, request.user.id, 'data')
       return { message: 'Import file mẫu hoàn tất', ...result }
     }

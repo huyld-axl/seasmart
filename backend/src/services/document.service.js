@@ -1,9 +1,8 @@
-const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const pool = require('../config/db')
+const fileStore = require('../utils/file_store')
 const { withTransaction } = require('../utils/transaction')
-const config = require('../config')
 const documentReader = require('./document_reader.service')
 const documentPages = require('./document_pages.service')
 const documentSplitter = require('./document_splitter.service')
@@ -201,11 +200,10 @@ const documentService = {
     const existing = await findDuplicate()
     if (existing) return existing
 
-    const dir = path.join(config.upload.dir, 'documents', String(seafarerId))
-    fs.mkdirSync(dir, { recursive: true })
+    // Bản tải lên (thường nhiều giấy trong một tệp) ở kho nội bộ; từng giấy sau khi duyệt có tệp riêng trong thư mục
+    // hồ sơ (file_layout.service cutDocument).
     const ext = { 'application/pdf': '.pdf', 'image/jpeg': '.jpg', 'image/png': '.png' }[mime]
-    const storagePath = path.join(dir, `${Date.now()}_${crypto.randomBytes(6).toString('hex')}${ext}`)
-    fs.writeFileSync(storagePath, buffer)
+    const storagePath = await fileStore.put(buffer, { kind: 'upload', ext })
 
     const name = path.basename(String(file.filename || 'giay-to')).slice(0, 255)
     let id
@@ -216,7 +214,8 @@ const documentService = {
       )
       id = result.insertId
     } catch (err) {
-      fs.rmSync(storagePath, { force: true })
+      // Tệp vừa ghi trong chính request này (CLAUDE.md 6.1): dọn ngay.
+      await fileStore.discardNew(storagePath)
       // Hai lần thả cùng lúc: lần sau thua khoá UNIQUE, trả tệp của lần trước.
       if (err?.code === '23505') {
         const dup = await findDuplicate()
@@ -256,7 +255,8 @@ const documentService = {
       pageCount = await this.ensurePages(upload)
       if (!ai.isConfigured()) throw { statusCode: 503, message: ai.notConfiguredMessage() }
       const [rows] = await pool.query('SELECT page_no, thumb_path FROM document_upload_page WHERE upload_id = ? ORDER BY page_no', [upload.id])
-      const pages = rows.map((row) => ({ page_no: row.page_no, thumbBuffer: fs.readFileSync(row.thumb_path) }))
+      const pages = []
+      for (const row of rows) pages.push({ page_no: row.page_no, thumbBuffer: await fileStore.read(row.thumb_path) })
       const { entries, papers } = await documentSplitter.split({ uploadId: upload.id, pages })
       await withTransaction(pool, async (conn) => {
         for (const entry of entries) {
@@ -320,18 +320,14 @@ const documentService = {
     const [[have]] = await pool.query('SELECT COUNT(*) AS n FROM document_upload_page WHERE upload_id = ?', [upload.id])
     if (have.n > 0) return have.n
     await pool.query('UPDATE document_upload SET status = ?, error = NULL WHERE id = ?', [UPLOAD_STATUS.SPLITTING, upload.id])
-    if (!fs.existsSync(upload.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp gốc trên máy chủ' }
-    const pages = await documentPages.cut(fs.readFileSync(upload.storage_path), upload.mime_type)
-    const dir = path.join(config.upload.dir, 'documents', String(upload.seafarer_id), String(upload.id))
-    fs.mkdirSync(dir, { recursive: true })
-    const rows = pages.map((page) => {
-      const base = `p${String(page.pageNo).padStart(3, '0')}`
-      const imagePath = path.join(dir, `${base}.jpg`)
-      const thumbPath = path.join(dir, `${base}_t.jpg`)
-      fs.writeFileSync(imagePath, page.image)
-      fs.writeFileSync(thumbPath, page.thumb)
-      return [upload.id, page.pageNo, imagePath, thumbPath, page.width, page.height]
-    })
+    if (!(await fileStore.exists(upload.storage_path))) throw { statusCode: 404, message: 'Không tìm thấy tệp gốc trên máy chủ' }
+    const pages = await documentPages.cut(await fileStore.read(upload.storage_path), upload.mime_type)
+    const rows = []
+    for (const page of pages) {
+      const imagePath = await fileStore.put(page.image, { kind: 'page', ext: '.jpg' })
+      const thumbPath = await fileStore.put(page.thumb, { kind: 'page', ext: '.jpg' })
+      rows.push([upload.id, page.pageNo, imagePath, thumbPath, page.width, page.height])
+    }
     await withTransaction(pool, async (conn) => {
       await conn.query('INSERT INTO document_upload_page (upload_id, page_no, image_path, thumb_path, width, height) VALUES ?', [rows])
       await conn.query('UPDATE document_upload SET page_count = ? WHERE id = ?', [pages.length, upload.id])
@@ -357,7 +353,9 @@ const documentService = {
     const to = doc.page_to || count
     const [pages] = await pool.query('SELECT image_path FROM document_upload_page WHERE upload_id = ? AND page_no BETWEEN ? AND ? ORDER BY page_no', [upload.id, from, to])
     if (!pages.length) throw { statusCode: 404, message: 'Không có ảnh trang cho giấy này' }
-    return pages.map((page) => ({ buffer: fs.readFileSync(page.image_path), mimeType: 'image/jpeg' }))
+    const out = []
+    for (const page of pages) out.push({ buffer: await fileStore.read(page.image_path), mimeType: 'image/jpeg' })
+    return out
   },
 
   // Một giấy chỉ đọc một lần cùng lúc: quét giấy kẹt định kỳ không được chạy chồng lên lần đọc đang chạy.
@@ -638,6 +636,8 @@ const documentService = {
       if (err?.code === '23505') throw { statusCode: 409, message: 'Hồ sơ đã có dữ liệu trùng với giấy này (cùng loại và cùng ngày cấp, hoặc giấy đã đưa vào hồ sơ). Tải lại trang rồi thử lại.' }
       throw err
     }
+    // Giấy vừa vào hồ sơ: cắt tệp riêng của từng giấy vào thư mục hồ sơ (file_layout.service).
+    await require('./file_layout.service').enqueue(pool, 'seafarer', seafarerId)
     return { documents: docs.length, profile_fields: Object.keys(profile), certificates: certificates.length }
   },
 
@@ -803,8 +803,8 @@ const documentService = {
        FROM seafarer_document d LEFT JOIN document_upload u ON u.id = d.upload_id WHERE d.id = ? AND d.deleted_at IS NULL`,
       [id]
     )
-    if (!doc || !doc.storage_path || !fs.existsSync(doc.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
-    return doc
+    if (!doc || !doc.storage_path || !(await fileStore.exists(doc.storage_path))) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    return { ...doc, stream: await fileStore.stream(doc.storage_path) }
   },
 
   async getUpload(id) {
@@ -834,8 +834,8 @@ const documentService = {
 
   async uploadFile(id) {
     const [[upload]] = await pool.query('SELECT storage_path, mime_type, file_name FROM document_upload WHERE id = ? AND deleted_at IS NULL', [id])
-    if (!upload || !fs.existsSync(upload.storage_path)) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
-    return upload
+    if (!upload || !(await fileStore.exists(upload.storage_path))) throw { statusCode: 404, message: 'Không tìm thấy tệp' }
+    return { ...upload, stream: await fileStore.stream(upload.storage_path) }
   },
 
   // size: 'thumb' (ảnh thu nhỏ) hoặc 'full' (ảnh trang đầy đủ).
@@ -846,8 +846,8 @@ const documentService = {
       [uploadId, pageNo]
     )
     const file = page && (size === 'thumb' ? page.thumb_path : page.image_path)
-    if (!file || !fs.existsSync(file)) throw { statusCode: 404, message: 'Không tìm thấy ảnh trang' }
-    return file
+    if (!file || !(await fileStore.exists(file))) throw { statusCode: 404, message: 'Không tìm thấy ảnh trang' }
+    return fileStore.stream(file)
   },
 
   // Bỏ cả tệp (và các giấy của nó) khi chưa giấy nào vào hồ sơ.

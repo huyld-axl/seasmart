@@ -71,8 +71,12 @@ export default function UserDetailPage() {
               loading={toggleActive.isPending}
               onClick={() =>
                 toggleActive.mutate(id, {
-                  onSuccess: () =>
-                    toast.success(user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`),
+                  onSuccess: (res) => {
+                    const text = user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`
+                    // App máy tính: chưa báo được máy chủ MCAH (không có mạng) thì nhắc làm lại sau.
+                    if (res?.cloud_warning) toast.warning(text, { description: res.cloud_warning })
+                    else toast.success(text)
+                  },
                   onError: (error) => toast.error(user.is_active ? `Không khoá được ${user.email}` : `Không mở lại được ${user.email}`, { description: errorText(error) }),
                 })
               }
@@ -107,7 +111,7 @@ export default function UserDetailPage() {
       <UserForm
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
-        onSubmit={(values) =>
+        onSubmit={(values, _form, { onConflict }) =>
           updateUser.mutate(
             { id, data: values },
             {
@@ -115,7 +119,10 @@ export default function UserDetailPage() {
                 toast.success(`Đã lưu ${user.email}`)
                 setPanelOpen(false)
               },
-              onError: (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) }),
+              onError: async (error) => {
+                if (await onConflict(error)) return
+                toast.error('Không lưu được tài khoản', { description: errorText(error) })
+              },
             }
           )
         }

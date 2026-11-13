@@ -1,3 +1,4 @@
+import { keyHeader } from '../lib/idempotency'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { opportunityApi } from '../api/opportunityApi'
 
@@ -48,7 +49,8 @@ function useRefresh() {
 export function useOpportunityMutations() {
   const options = { onSuccess: useRefresh() }
   return {
-    save: useMutation({ mutationFn: ({ id, ...body }) => (id ? opportunityApi.update(id, body) : opportunityApi.create(body)), ...options }),
+    // requestKey: mã yêu cầu chống tạo trùng của lần mở form thêm mới (lib/idempotency.js).
+    save: useMutation({ mutationFn: ({ id, requestKey, ...body }) => (id ? opportunityApi.update(id, body) : opportunityApi.create(body, requestKey ? keyHeader(requestKey) : undefined)), ...options }),
     duplicate: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.duplicate(id, body), ...options }),
     close: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.close(id, body), ...options }),
     reopen: useMutation({ mutationFn: (id) => opportunityApi.reopen(id), ...options }),
@@ -61,6 +63,8 @@ export function useOpportunityMutations() {
       ...options,
     }),
     sendMail: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.sendMail(id, body), ...options }),
+    prepareMail: useMutation({ mutationFn: ({ id, candidateIds }) => opportunityApi.prepareMail(id, candidateIds) }),
+    recordMail: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.recordMail(id, body), ...options }),
     place: useMutation({ mutationFn: ({ id, ...body }) => opportunityApi.place(id, body), ...options }),
   }
 }

@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
+import useEditConflict from '../../../hooks/useEditConflict'
+import { newRequestKey } from '../../../lib/idempotency'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Form, Input, Select, Skeleton } from 'antd'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
@@ -57,6 +59,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const initial = useMemo(() => (opportunity ? toFormValues(opportunity) : { ...EMPTY_FORM, owner_user_id: me?.id, ...prefill }), [opportunity, prefill, me])
   const values = Form.useWatch([], form) || initial
   const { save } = useOpportunityMutations()
+  const queryClient = useQueryClient()
   const againRef = useRef(false)
   const [again, setAgain] = useState(false)
   const [vesselSearch, setVesselSearch] = useState('')
@@ -167,10 +170,24 @@ function OpportunityForm({ opportunity, prefill }) {
     }
   }
 
+  const requestKey = useRef(newRequestKey())
+  const conflict = useEditConflict({
+    form,
+    initial,
+    labels: FIELD_LABELS,
+    reload: async () => {
+      const latest = await opportunityApi.get(opportunity.id)
+      queryClient.setQueryData(['opportunities', 'item', String(opportunity.id)], latest)
+      return toFormValues(latest)
+    },
+  })
+
   async function submit(formValues) {
     try {
-      const row = await save.mutateAsync({ id: opportunity?.id, ...toPayload(formValues, categoryOf) })
+      const body = toPayload(formValues, categoryOf)
+      const row = await save.mutateAsync(isEdit ? { id: opportunity.id, ...body, version: opportunity.version } : { ...body, requestKey: requestKey.current })
       if (againRef.current) {
+        requestKey.current = newRequestKey()
         toast.success(`Đã tạo ${row.code} · ${row.rank_name}`)
         form.setFieldsValue(nextPositionValues(form.getFieldsValue(true)))
         setPresetSource(null)
@@ -181,6 +198,7 @@ function OpportunityForm({ opportunity, prefill }) {
         navigate(`/opportunities/${row.id}`)
       }
     } catch (error) {
+      if (await conflict.handleError(error)) return
       toast.error(isEdit ? 'Không lưu được cơ hội' : 'Không tạo được cơ hội', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
@@ -310,6 +328,7 @@ function OpportunityForm({ opportunity, prefill }) {
           </div>
         </div>
       </Form>
+      {conflict.dialog}
     </FormFrame>
   )
 }

@@ -1,0 +1,12 @@
+# Chỉ dùng cho bản dựng có context là thư mục gốc (cloud/Dockerfile). backend/ và frontend/ dựng bằng context riêng
+# và có .dockerignore riêng. Mặc định bỏ hết, chỉ cho vào đúng phần máy chủ dịch vụ cần.
+*
+!backend/package.json
+!backend/package-lock.json
+!backend/src
+backend/src/**/__tests__
+!cloud
+cloud/node_modules
+cloud/.data
+cloud/.env
+cloud/test

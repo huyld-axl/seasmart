@@ -1195,3 +1195,12 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-tabs-chips__count { color: var(--muted); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .ds-tabs-chips__chip[aria-pressed='true'] .ds-tabs-chips__count { color: rgb(255 255 255 / 0.8); }
 @media (max-width: 767px) { .ds-toolbar > .ds-tabs-chips { flex: 0 0 100%; min-width: 0; } }
+
+/* Hộp xung đột khi hai người cùng sửa (ConflictDialog.jsx) */
+.ds-conflict { display: grid; gap: 12px; }
+.ds-conflict p { margin: 0; }
+.ds-conflict__table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ds-conflict__table th { text-align: left; font-weight: 500; color: var(--muted); }
+.ds-conflict__table th, .ds-conflict__table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.ds-conflict__table td .sf-seg { margin-top: 6px; }
+.ds-conflict__same { color: var(--muted); }

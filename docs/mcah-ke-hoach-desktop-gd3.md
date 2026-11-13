@@ -1,7 +1,7 @@
 # MCAH — Kế hoạch app máy tính, giai đoạn 3: máy chính và máy nhân viên
 
 - **Ngày lập:** 2026-11-12
-- **Trạng thái:** chờ duyệt. Chưa code.
+- **Trạng thái:** đã duyệt 2026-11-12; code bước 0–8 xong, thử trên Ubuntu bằng hai bản app trên cùng máy dev (máy chính + máy nhân viên). Chờ: hai máy thật, Windows (D7, D13, tường lửa), bộ cài có chữ ký để thử D10–D11.
 - **Kế hoạch tổng:** `docs/mcah-ke-hoach-ung-dung-may-tinh.md` (mục 3.2 ghép máy, 3.4 chống ghi đè, 9 ý 8 phiên bản giao tiếp, 10 giai đoạn 3, 11 nhóm D và E7).
 - **Wireframe:** `docs/design/wireframes/desktop-gd3.html` (7 màn).
 - **Testcase chạy tay:** `docs/mcah-testcase-desktop-gd3.md`.
@@ -73,7 +73,7 @@
 5. Máy chính: thành viên đang hoạt động, máy chưa từng bị gỡ → cấp ngay mã thiết bị (32 byte ngẫu nhiên, DB chỉ giữ SHA-256). Máy đã bị gỡ xin lại → trạng thái `pending`, báo chuông cho quản trị, máy nhân viên chờ (W1 phải).
 6. Máy nhân viên cất mã thiết bị + dấu vân tay + tên máy chính trong `settings` (két hệ điều hành).
 
-Bảng mới ở máy chính: `office_device (id, name, os, app_version, token_hash, status active|pending|removed, last_user_id, last_seen_at, created_at, removed_at)` — migration `045_office_device.sql`.
+Bảng mới ở máy chính: `office_device (id, name, os, app_version, token_hash, status active|pending|removed, last_user_id, last_seen_at, created_at, removed_at)` — migration `046_office_device.sql`.
 
 ### 3.3 Mỗi lệnh từ máy nhân viên
 
@@ -85,10 +85,10 @@ Bảng mới ở máy chính: `office_device (id, name, os, app_version, token_h
 
 ### 3.4 Chống ghi đè
 
-- Thêm `version INT NOT NULL DEFAULT 1` (migration `046_row_version.sql`) cho: `seafarer`, `vessel` (fleet), `partner` và bảng danh mục sửa qua form ở `master_data`, `opportunity`, `seafarer_contract`, `contract_bill`, `export_pack`, `certificate`, `voyage`, `document`, `app_user`. Danh sách chính xác chốt ở bước 6 theo các route PUT/PATCH đã liệt kê.
+- Thêm `version INT NOT NULL DEFAULT 1` (migration `045_row_version.sql`) cho: `seafarer`, `vessel` (fleet), `partner` và bảng danh mục sửa qua form ở `master_data`, `opportunity`, `seafarer_contract`, `contract_bill`, `export_pack`, `certificate`, `voyage`, `document`, `app_user`. Danh sách chính xác chốt ở bước 6 theo các route PUT/PATCH đã liệt kê.
 - GET chi tiết trả `version`. PUT/PATCH nhận `version`; câu UPDATE thêm `AND version = $n` và `version = version + 1`. Không khớp → 409 `{ error: 'conflict', current, changed_by, changed_at }`. Thiếu `version` → vẫn cho lưu (giữ tương thích bản cũ trong lúc chuyển), ghi cảnh báo log; bỏ ở giai đoạn 7.
 - Giao diện: `ConflictDialog` mới ở `components/ds/`, minh hoạ ở `/design-system`. Hook dùng chung trong `FormFrame`: nhận 409 → so bản mới với bản lúc mở và phần mình đã đổi → hiện W4. "Lấy bản mới, giữ phần tôi đã đổi" nạp bản mới và đặt lại các ô mình đổi (chip "Đã sửa" như hiện nay). Cùng một ô hai bên đổi → ô đó hiện cả hai giá trị để chọn.
-- Mã yêu cầu: form thêm mới tạo `Idempotency-Key` (UUID) mỗi lần mở form; POST tạo mới gửi kèm. Máy chính giữ `idempotency_key (key, user_id, path, status, body, created_at)` 24 giờ; trùng → trả lại đúng kết quả lần trước. Bảng trong `046`.
+- Mã yêu cầu: form thêm mới tạo `Idempotency-Key` (UUID) mỗi lần mở form; POST tạo mới gửi kèm. Máy chính giữ `idempotency_key (key, user_id, path, status, body, created_at)` 24 giờ; trùng → trả lại đúng kết quả lần trước. Bảng trong `045`.
 
 ### 3.5 Phiên bản giao tiếp và bộ cài qua mạng
 
@@ -103,7 +103,7 @@ Bảng mới ở máy chính: `office_device (id, name, os, app_version, token_h
 | desktop mới | `src/lan-server.js` (HTTPS 7443, chuyển tiếp, kiểm thiết bị), `src/lan-cert.js`, `src/discovery.js` (mDNS), `src/lan-client.js` (ghép, ghim chứng chỉ, chuyển tiếp, nối lại), `pages/pair.html` hoặc màn React W1 |
 | desktop sửa | `main.js`, `ipc.js`, `preload.js`, `session.js`, `office.js`, `updater.js`, `manifest.js`, `electron-builder` cấu hình NSIS (tường lửa) |
 | cloud | `src/routes/api.js` (`PUT /api/office/machine/cert`, `/api/me` thêm dấu vân tay), test |
-| backend | migration `045_office_device.sql`, `046_row_version.sql`; `routes/v1/lan_device.routes.js`; `plugins/index.js` (kiểm thiết bị, mã yêu cầu); service + route của các bảng ở 3.4 |
+| backend | migration `046_office_device.sql`, `046_row_version.sql`; `routes/v1/lan_device.routes.js`; `plugins/index.js` (kiểm thiết bị, mã yêu cầu); service + route của các bảng ở 3.4 |
 | frontend | `components/ds/ConflictDialog.jsx`, `/design-system`, `FormFrame` (hook xung đột + mã yêu cầu), các form sửa, `pages/desktop/PairPage.jsx`, `pages/admin/DevicesPage.jsx`, `OfflineRibbon` (dải đỏ), `DeviceSettingsPage.jsx` (thẻ máy chính), trang hướng dẫn |
 
 ## 5. Rủi ro riêng
@@ -160,4 +160,12 @@ Chép nháp `docs/mcah-huong-dan-desktop-gd3.html` vào trang hướng dẫn (m�
 
 ## 8. Nhật ký
 
-- 2026-11-12: lập kế hoạch, wireframe, testcase, nháp hướng dẫn. Chờ duyệt.
+- 2026-11-12: lập kế hoạch, wireframe, testcase, nháp hướng dẫn. Người dùng duyệt cùng ngày.
+- 2026-11-12/13: code bước 0–8.
+  - Bước 1, 6 (chống ghi đè): `version` + trigger tự tăng trên 20 bảng (`045_row_version.sql`), `utils/row_version.js`, 409 `CONFLICT`. Thuyền viên, tàu, đối tác, cơ hội, hợp đồng, bill gửi `version`; `ConflictDialog` + `useEditConflict` dùng chung, minh hoạ ở `/design-system`. Mã yêu cầu (`plugins/idempotency.js`) cho form thêm thuyền viên, tàu, đối tác, cơ hội. 2026-11-13 phủ thêm: giấy tờ (hộp sửa chứng chỉ), danh mục (loại giấy, loại tàu, loại hợp đồng, cảng; quốc gia không có cột version nên không kiểm), tài khoản. Kiểm bằng điều kiện `AND version = ?` (`versionWhere` / `failIfStale`). Không làm: duyệt từng ô giấy AI đọc và bộ giấy xuất (lưu từng thao tác ngay, không phải form có nút Lưu).
+  - Bước 2: chứng chỉ ECDSA tự ký phải có CA:TRUE + keyCertSign và ít nhất một phần mở rộng, không thì BoringSSL của Electron từ chối (cả lúc đọc lẫn lúc ghim); tệp đổi tên `lan-cert-v2.pem`. Backend báo dấu vân tay qua cổng ký (`/api/office/machine/lan`), vé mang `machine_cert/name/port`.
+  - Bước 3–5: mDNS tìm được máy chính trên cùng máy; ghép, Gỡ (D5), xin vào lại chờ duyệt, tự nối lại sau khi tắt máy chính (D6) đều chạy. Máy nhân viên không chạy Postgres / Fastify (`staff.json`).
+  - Bước 7: soạn thư bằng app mail trên máy nhân viên: máy chính trả tệp base64, máy nhân viên ghi vào thư mục gửi thư của mình.
+  - Bước 8: máy chính giữ bộ cài hai hệ điều hành (`lan-installers`), máy nhân viên nhận 426 thì tải qua mạng văn phòng, kiểm chữ ký + SHA-256. Chưa thử thật (cần bộ cài đã ký).
+  - Lệch kế hoạch: nút Lưu không bị khoá khi mất nối; bấm Lưu thì báo lỗi và form giữ nguyên. Tường lửa Windows: bộ cài xin UAC một lần (cài theo người dùng), chưa thử.
+  - Lỗi có sẵn phát hiện khi thử: cột TIMESTAMP không múi giờ đọc ra lệch 7 giờ (phiên DB ở UTC, pg đọc theo giờ máy). Hộp xung đột đã bù; chỗ khác chưa sửa.

@@ -39,6 +39,16 @@ const desktopCloud = {
     }
     return data.body
   },
+
+  // Máy chính báo chứng chỉ HTTPS trong mạng văn phòng (docs/mcah-ke-hoach-desktop-gd3.md 3.1); tiến trình chính truyền
+  // dấu vân tay / tên / cổng qua biến môi trường. Gọi lúc mở app (lặp mỗi giờ tới khi được) và ngay sau khi tạo văn phòng.
+  // Trả true khi đã báo xong.
+  async registerLan(db = pool) {
+    const fingerprint = process.env.MCAH_LAN_FINGERPRINT
+    if (!fingerprint || !(await desktopCloud.enabled(db))) return false
+    await desktopCloud.call('/api/office/machine/lan', { fingerprint, name: process.env.MCAH_LAN_NAME, port: Number(process.env.MCAH_LAN_PORT) }, { db })
+    return true
+  },
 }
 
 module.exports = desktopCloud

@@ -31,6 +31,7 @@ import './AdminLayout.css'
 import useViewport from '../hooks/useViewport'
 import PdfComponentModal from '../components/common/PdfComponentModal'
 import OfflineRibbon from '../components/common/OfflineRibbon'
+import MainLinkRibbon from '../components/common/MainLinkRibbon'
 import DesktopLock from '../components/common/DesktopLock'
 import { desktop, isDesktop } from '../lib/desktop'
 
@@ -262,6 +263,7 @@ export default function AdminLayout() {
           </div>
         </header>
         {isDesktop() ? <OfflineRibbon /> : null}
+        {isDesktop() ? <MainLinkRibbon /> : null}
 
         <main className="app-shell__content">
           <ErrorBoundary resetKey={pathname}>

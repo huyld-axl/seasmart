@@ -1,3 +1,4 @@
+const { assertVersion } = require('../utils/row_version')
 const { OVERVIEW_FIELDS, TAB_CONDITIONS, TABS, shapeRow } = require('../utils/crew_overview')
 const pool = require('../config/db')
 const { withTransaction } = require('../utils/transaction')
@@ -429,18 +430,19 @@ const seafarerService = {
   },
 
   // Sửa hồ sơ: bắt buộc lý do, ghi lại trường nào đổi từ gì sang gì; bộ giấy chưa xong thành "Cần làm lại".
-  async update(id, data, updated_by, reason) {
+  async update(id, data, updated_by, reason, version) {
     assertSeafarerData(data)
-    await withTransaction(pool, (conn) => this.applyUpdate(conn, id, data, updated_by, reason))
+    await withTransaction(pool, (conn) => this.applyUpdate(conn, id, data, updated_by, reason, version))
     return this.getById(id)
   },
 
   // Sửa hồ sơ trên một kết nối cho trước (để gói chung transaction với việc khác):
   // ghi lịch sử sửa (lý do không bắt buộc), bộ giấy đang chờ thì chuyển STALE. Trả về các trường đã đổi.
-  async applyUpdate(db, id, data, updated_by, reason) {
+  async applyUpdate(db, id, data, updated_by, reason, version) {
     const text = String(reason || '').trim() || 'Cập nhật hồ sơ'
     const [[before]] = await db.query('SELECT * FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
     if (!before) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
+    await assertVersion(db, before, version)
     const { rank_name, nationality_name, nationality_code, nationality_flag_emoji, ...rest } = data
     const safeData = pickAllowed(rest)
     const hasLists = Array.isArray(data.bank_accounts) || Array.isArray(data.contacts)

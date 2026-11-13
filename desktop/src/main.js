@@ -3,15 +3,16 @@
 // Khởi động: màn chờ → Postgres → migration → Fastify → giao diện; hỏng bước nào thì hiện màn lỗi có mã (GĐ1 mục 3.2).
 const path = require('path')
 const fs = require('fs')
-const { app, BrowserWindow, Menu, protocol, net, shell } = require('electron')
+const { app, BrowserWindow, Menu, protocol, net, shell, dialog } = require('electron')
 const { pathToFileURL } = require('url')
+const { Readable } = require('stream')
 const { startDatabase, killNow, freePort, isRunning } = require('./db')
 const { backendEnv, runScript, startBackend } = require('./backend')
 const { cloudPublicKey } = require('./browser-login')
-const { runUpdate } = require('./updater')
+const { runUpdate, mirrorInstallers, serveInstaller, updateFromMain } = require('./updater')
 const { setupKeys, createBackup, restoreBackup, readBackup } = require('./backup')
 const { rotatingLog, captureConsole } = require('./logs')
-const { attachmentDir, cleanAttachmentDir } = require('./mail')
+const { attachmentDir, cleanAttachmentDir, saveAttachments } = require('./mail')
 const { findSoffice } = require('./pdf-component')
 const { smtpConfig } = require('./settings')
 const { registerIpc } = require('./ipc')
@@ -22,6 +23,13 @@ const signer = require('./signer')
 const { cloudUrl } = require('./browser-login')
 const { machineKey } = require('./office')
 const { frontendDist: FRONTEND_DIST } = require('./paths')
+const os = require('os')
+const { powerSaveBlocker } = require('electron')
+const lanServer = require('./lan-server')
+const { ensureCert } = require('./lan-cert')
+const { LAN_PORT } = require('./lan')
+const discovery = require('./discovery')
+const lanClient = require('./lan-client')
 
 // Tên app quyết định thư mục dữ liệu (~/.config/MCAH, %APPDATA%\MCAH); đặt trước khi dùng app.getPath.
 app.setName('MCAH')
@@ -32,6 +40,7 @@ protocol.registerSchemesAsPrivileged([
 
 const PAGES = path.join(__dirname, 'pages')
 // Hai API cần cấu hình SMTP của máy này: tiến trình chính gắn vào lúc chuyển tiếp, giao diện không thấy mật khẩu.
+const MAIL_PREPARE = /^\/api\/v1\/opportunities\/\d+\/mail\/prepare$/
 const SMTP_PATHS = [/^\/api\/v1\/opportunities\/\d+\/send-mail$/, /^\/api\/v1\/system\/smtp-test$/]
 
 let backend = null
@@ -39,13 +48,15 @@ let backendEnvVars = null
 let database = null
 let mainWindow = null
 let logs = null
+let lan = null // { cert, key, fingerprint, secret, server } khi máy này là máy chính
+let staffMode = false // máy nhân viên: /api đi qua máy chính (lan-client.js), máy này không chạy Postgres / Fastify
 
 // /api/ và /public/ chuyển tiếp sang Fastify. Tệp có thật trong dist thì trả tệp đó, còn lại (đường dẫn của router) trả index.html.
 // /api: tiến trình chính gắn JWT của phiên (giao diện không giữ token, mọi Authorization giao diện tự gửi bị bỏ).
 // Máy chính trả 401 cho request có phiên → phiên hết (quá mốc offline, bị khoá): bỏ phiên, giao diện về đăng nhập.
 async function serveFrontend(request) {
   const { pathname, search } = new URL(request.url)
-  if (backend && (pathname.startsWith('/api/') || pathname.startsWith('/public/'))) {
+  if ((backend || staffMode) && (pathname.startsWith('/api/') || pathname.startsWith('/public/'))) {
     const headers = new Headers(request.headers)
     headers.delete('origin')
     headers.delete('x-mcah-smtp')
@@ -59,6 +70,16 @@ async function serveFrontend(request) {
     if (request.method === 'POST' && SMTP_PATHS.some((re) => re.test(pathname))) {
       const smtp = smtpConfig()
       if (smtp) headers.set('x-mcah-smtp', Buffer.from(JSON.stringify(smtp)).toString('base64'))
+    }
+    if (staffMode) {
+      const response = await lanClient.forward({ method: request.method, pathname: pathname + search, headers: Object.fromEntries(headers), body: request.body ? Readable.fromWeb(request.body) : null })
+      if (response.status === 401 && jwt && session.jwt() === jwt) session.expired()
+      // Soạn thư bằng app mail: máy chính trả nội dung tệp, ghi vào thư mục gửi thư của máy này (mail.js).
+      if (response.ok && MAIL_PREPARE.test(pathname)) {
+        const { files } = await response.json()
+        return Response.json({ files: saveAttachments(files || []) })
+      }
+      return response
     }
     const response = await net.fetch(backend.url + pathname + search, {
       method: request.method,
@@ -141,10 +162,66 @@ async function restartBackend(soffice) {
   backend = await startBackend(backendEnvVars, app.getPath('userData'), logs.backend)
 }
 
+// Máy nhân viên: không mở Postgres / Fastify; phiên và mọi /api đi qua máy chính.
+async function startupStaff() {
+  staffMode = true
+  session.init(null, lanClient.call)
+  watchSession()
+  watchLan()
+  await mainWindow.loadURL('app://mcah/')
+  runUpdate(mainWindow, { quiet: true })
+  setInterval(() => runUpdate(mainWindow, { quiet: true }), 6 * 3600 * 1000)
+}
+
+function watchSession() {
+  session.events.on('changed', () => {
+    mainWindow?.webContents.send('mcah:session-changed', session.info())
+    // Vừa tạo văn phòng: máy này thành máy chính, mở cổng cho máy nhân viên.
+    if (!staffMode && session.info().loggedIn && fs.existsSync(path.join(app.getPath('userData'), 'machine-key.bin'))) startLan()
+  })
+  pin.events.on('changed', (locked) => mainWindow?.webContents.send('mcah:lock-changed', locked))
+  pin.watch({ lockMinutes: () => getSettings().lockMinutes, loggedIn: () => Boolean(session.jwt()) })
+}
+
+// Máy nhân viên: báo giao diện khi mất / có lại máy chính; bị Gỡ thì mở lại app ở chế độ ghép.
+function watchLan() {
+  lanClient.events.on('online', (value) => mainWindow?.webContents.send('mcah:lan-online', value))
+  let updating = false
+  lanClient.events.on('update-required', () => {
+    if (updating) return
+    updating = true
+    updateFromMain(mainWindow, (name) => lanClient.download(name)).catch((error) => {
+      updating = false
+      dialog.showErrorBox('Không cập nhật được theo máy chính', error.message)
+    })
+  })
+  lanClient.events.on('removed', () => {
+    session.expired('device_removed')
+    app.relaunch()
+    app.quit()
+  })
+}
+
+// Vừa ghép xong (ngay hoặc sau khi quản trị duyệt): chuyển sang máy nhân viên, đăng nhập lại bằng vé đang chờ qua máy chính.
+async function becomeStaff() {
+  staffMode = true
+  watchLan()
+  return session.becomeStaff(lanClient.call)
+}
+
 async function startup() {
   const userData = app.getPath('userData')
+  if (lanClient.isStaff()) return startupStaff()
   database = await step('DB_START', () => startDatabase(userData))
   const env = backendEnv(userData, database.env, await freePort(), { soffice: findSoffice(), mailDir: attachmentDir() })
+  // Máy chính: chứng chỉ HTTPS trong mạng văn phòng; backend báo dấu vân tay lên máy chủ dịch vụ (giai đoạn 3).
+  try {
+    const cert = await ensureCert(lanHostName())
+    lan = { ...cert, secret: lanServer.newSecret(), server: null }
+    Object.assign(env, { MCAH_LAN_FINGERPRINT: cert.fingerprint, MCAH_LAN_NAME: lanHostName(), MCAH_LAN_PORT: String(LAN_PORT), MCAH_LAN_SECRET: lan.secret })
+  } catch (error) {
+    console.error(`Không tạo được chứng chỉ trong mạng văn phòng: ${error.message}`)
+  }
   const ticketKey = cloudPublicKey()
   if (ticketKey) env.DESKTOP_TICKET_PUBLIC_KEY = ticketKey
   // Cổng ký: backend gọi máy chủ dịch vụ (mời, bỏ thành viên, AI, tra tàu) qua tiến trình chính giữ khoá máy chính.
@@ -155,9 +232,8 @@ async function startup() {
   backendEnvVars = env
   backend = await step('BACKEND_START', () => startBackend(env, userData, logs.backend))
   session.init(() => backend.url)
-  session.events.on('changed', () => mainWindow?.webContents.send('mcah:session-changed', session.info()))
-  pin.events.on('changed', (locked) => mainWindow?.webContents.send('mcah:lock-changed', locked))
-  pin.watch({ lockMinutes: () => getSettings().lockMinutes, loggedIn: () => Boolean(session.jwt()) })
+  watchSession()
+  if (fs.existsSync(path.join(userData, 'machine-key.bin'))) startLan()
   try {
     cleanAttachmentDir()
   } catch (error) {
@@ -167,6 +243,45 @@ async function startup() {
   // Kiểm bản mới lúc mở app và mỗi 6 giờ, im lặng nếu không có hoặc lỗi mạng.
   runUpdate(mainWindow, { quiet: true })
   setInterval(() => runUpdate(mainWindow, { quiet: true }), 6 * 3600 * 1000)
+}
+
+// Tên máy trong mạng văn phòng (hiện ở màn ghép và Cài đặt): tên máy của hệ điều hành, chỉ chữ số và gạch.
+const lanHostName = () => os.hostname().split('.')[0].replace(/[^A-Za-z0-9-]/g, '-').slice(0, 63) || 'MCAH'
+
+// Mở cổng HTTPS cho máy nhân viên, quảng bá trong mạng (mDNS), không cho máy ngủ khi MCAH đang mở.
+async function startLan() {
+  if (!lan || lan.server || lan.starting) return
+  lan.starting = true
+  try {
+    lan.server = await lanServer.start({
+      cert: lan.cert,
+      key: lan.key,
+      port: LAN_PORT,
+      secret: lan.secret,
+      backendUrl: () => backend.url,
+      appVersion: () => app.getVersion(),
+      installerFor: serveInstaller,
+    })
+    const hello = await fetch(`${backend.url}/api/v1/lan/hello`, { headers: { 'x-mcah-lan': lan.secret } }).then((r) => r.json()).catch(() => ({}))
+    if (hello.office_id) discovery.advertise({ name: lanHostName(), port: LAN_PORT, officeId: hello.office_id })
+    lan.blocker = powerSaveBlocker.start('prevent-app-suspension')
+    // Giữ bộ cài mới nhất cho máy nhân viên (tải qua mạng văn phòng); lỗi mạng thì để lần sau.
+    const mirror = () => mirrorInstallers().catch((error) => console.error(`Bộ cài cho máy nhân viên: ${error.message}`))
+    mirror()
+    setInterval(mirror, 6 * 3600 * 1000)
+    console.error(`Cổng máy chính mở ở ${LAN_PORT} (${lanHostName()})`)
+  } catch (error) {
+    console.error(`Không mở được cổng máy chính ${LAN_PORT}: ${error.message}`)
+  } finally {
+    lan.starting = false
+  }
+}
+
+// Trạng thái máy chính cho thẻ trong Cài đặt trên máy này (wireframe màn 6).
+function lanStatus() {
+  if (!lan?.server) return null
+  const addresses = Object.values(os.networkInterfaces()).flat().filter((a) => a && a.family === 'IPv4' && !a.internal).map((a) => a.address)
+  return { name: lanHostName(), port: LAN_PORT, addresses, fingerprint: lan.fingerprint, keepAwake: Boolean(lan.blocker !== undefined && powerSaveBlocker.isStarted(lan.blocker)) }
 }
 
 // Lệnh sao lưu chạy không mở cửa sổ (chưa có màn tới giai đoạn 4; mật khẩu qua biến môi trường):
@@ -256,6 +371,26 @@ async function main() {
     openLogs: () => shell.openPath(logDir()),
     restartBackend,
     checkUpdate: () => runUpdate(mainWindow),
+    lanStatus,
+    lanFind: () => lanClient.find(session.pendingTicket()),
+    // Lỗi có mã (WRONG_MACHINE, UNREACHABLE, …) trả về như kết quả để giao diện chọn màn (IPC làm mất mã của lỗi ném).
+    lanPair: async (host) => {
+      try {
+        const result = await lanClient.pair(session.pendingTicket(), host)
+        if (result.status === 'active') await becomeStaff()
+        return result
+      } catch (error) {
+        if (!error.code) throw error
+        return { status: 'error', code: error.code, message: error.message, host }
+      }
+    },
+    lanPairStatus: async () => {
+      const result = await lanClient.pairStatus()
+      if (result.status === 'active' && !staffMode) await becomeStaff()
+      return result
+    },
+    lanInfo: () => ({ staff: staffMode, main: lanClient.info(), pending: Boolean(lanClient.load()?.pairSecret) }),
+    lanRetry: () => lanClient.retryNow(),
   })
   mainWindow = createWindow()
   try {
@@ -277,6 +412,8 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   stopping = true
   if (backend) backend.child.kill()
+  lan?.server?.close()
+  discovery.stop()
   database.pg.stop().finally(() => app.exit(0))
 })
 // Bị tắt bằng tín hiệu (Ctrl+C, hệ điều hành tắt máy) thì không kịp chờ stop(): gửi tín hiệu tắt cho Postgres ngay.

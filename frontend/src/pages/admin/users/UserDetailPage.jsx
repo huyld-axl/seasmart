@@ -111,7 +111,7 @@ export default function UserDetailPage() {
       <UserForm
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
-        onSubmit={(values) =>
+        onSubmit={(values, _form, { onConflict }) =>
           updateUser.mutate(
             { id, data: values },
             {
@@ -119,7 +119,10 @@ export default function UserDetailPage() {
                 toast.success(`Đã lưu ${user.email}`)
                 setPanelOpen(false)
               },
-              onError: (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) }),
+              onError: async (error) => {
+                if (await onConflict(error)) return
+                toast.error('Không lưu được tài khoản', { description: errorText(error) })
+              },
             }
           )
         }

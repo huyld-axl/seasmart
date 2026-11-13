@@ -5,13 +5,14 @@ import Banner from '../../components/ds/Banner'
 import ProductBrand from '../../components/common/ProductBrand'
 import useAuthStore from '../../stores/authStore'
 import { bridgeError, desktop } from '../../lib/desktop'
+import PairPanel from './PairPanel'
 import '../admin/LoginPage.css'
 
 const CHECK_GROUPS = [1, 4] // nhóm thứ 2 và thứ 5 (đếm từ 0)
 
 // Wireframe 3 + 4 (docs/design/wireframes/desktop-gd2.html): máy chưa có dữ liệu văn phòng sau lần đăng nhập đầu.
 // Tạo văn phòng: tên → mật khẩu sao lưu → mã khôi phục (chỉ hiện một lần) → kiểm nhóm 2 và 5 → tạo.
-// Tài khoản đã thuộc văn phòng khác (được mời): giai đoạn 2 chỉ báo mở MCAH trên máy chính của văn phòng đó.
+// Tài khoản đã thuộc văn phòng (được mời): máy này là máy nhân viên, tìm và nối máy chính (PairPanel, giai đoạn 3).
 export default function FirstRunPage() {
   const navigate = useNavigate()
   const setDesktopUser = useAuthStore((state) => state.setDesktopUser)
@@ -80,13 +81,7 @@ export default function FirstRunPage() {
 
   let body
   if (info.office) {
-    body = (
-      <>
-        {head(`Chào ${info.name}`)}
-        <Banner tone="neutral">Bạn thuộc văn phòng {info.office_name}. Mở MCAH trên máy chính của văn phòng đó để làm việc.</Banner>
-        <div>{logout}</div>
-      </>
-    )
+    body = <PairPanel info={info} head={head} logout={logout} />
   } else if (step === 0) {
     body = (
       <>

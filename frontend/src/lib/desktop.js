@@ -31,6 +31,14 @@ export const desktop = {
   onLockChanged: (fn) => bridge().onLockChanged(fn),
   prepareOffice: (password) => bridge().prepareOffice(password),
   createOffice: (name) => bridge().createOffice(name),
+  // Giai đoạn 3: máy chính / máy nhân viên (docs/mcah-ke-hoach-desktop-gd3.md).
+  lanStatus: () => bridge().lanStatus(),
+  lanFind: () => bridge().lanFind(),
+  lanPair: (host) => bridge().lanPair(host),
+  lanPairStatus: () => bridge().lanPairStatus(),
+  lanInfo: () => bridge().lanInfo(),
+  lanRetry: () => bridge().lanRetry(),
+  onLanOnline: (fn) => bridge().onLanOnline(fn),
 }
 
 // Lỗi từ app (ipcRenderer.invoke) kèm tiền tố kỹ thuật; bỏ đi cho người dùng đọc.

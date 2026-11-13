@@ -47,6 +47,7 @@ import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
 import KpiTargetPage from './pages/admin/settings/KpiTargetPage'
 import DeviceSettingsPage from './pages/admin/settings/DeviceSettingsPage'
+import DevicesPage from './pages/admin/devices/DevicesPage'
 import FirstRunPage from './pages/desktop/FirstRunPage'
 import { isDesktop } from './lib/desktop'
 import ToastHost from './components/ds/ToastHost'
@@ -168,6 +169,7 @@ function AppRoutes() {
         <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
         <Route path="/master-data/:tab" element={guard('catalog.view', <MasterSubPage />)} />
         <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
+        <Route path="/admin/may-trong-van-phong" element={guard('account.view', <DevicesPage />)} />
         <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
         <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />
         <Route path="/admin/kpi-targets" element={guard('kpi.manage', <KpiTargetPage />)} />

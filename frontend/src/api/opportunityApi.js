@@ -6,7 +6,7 @@ const data = (r) => r.data
 export const opportunityApi = {
   list: (params) => api.get('/opportunities', { params }).then(data),
   get: (id) => api.get(`/opportunities/${id}`).then(data),
-  create: (body) => api.post('/opportunities', body).then(data),
+  create: (body, config) => api.post('/opportunities', body, config).then(data),
   update: (id, body) => api.put(`/opportunities/${id}`, body).then(data),
   duplicate: (id, body) => api.post(`/opportunities/${id}/duplicate`, body || {}).then(data),
   close: (id, body) => api.post(`/opportunities/${id}/close`, body).then(data),

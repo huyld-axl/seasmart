@@ -68,4 +68,7 @@ module.exports = fp(async function (fastify) {
 
   // Dùng sau authenticate: { onRequest: [fastify.authenticate, fastify.can('voyage.update')] }
   fastify.decorate('can', can)
+
+  await fastify.register(require('./lan_device'))
+  await fastify.register(require('./idempotency'))
 })

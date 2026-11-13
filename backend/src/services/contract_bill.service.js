@@ -1,3 +1,4 @@
+const { assertVersion } = require('../utils/row_version')
 const { paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
 const { uniqueCode } = require('../utils/code_counter')
@@ -32,7 +33,7 @@ const BILL_FROM = `FROM contract_bill b
   JOIN vessel ves ON ves.id = COALESCE(sv.vessel_id, v.vessel_id)
   JOIN ship_owner o ON o.id = COALESCE(sv.ship_owner_id, v.ship_owner_id)`
 
-const BILL_SELECT = `SELECT b.id, b.code, b.contract_id, b.side, b.seq, b.period_start, b.period_end, b.due_date, b.status,
+const BILL_SELECT = `SELECT b.id, b.version, b.code, b.contract_id, b.side, b.seq, b.period_start, b.period_end, b.due_date, b.status,
     b.sent_at, b.paid_date, b.note, b.created_at, ${DISPLAY_SQL} AS display_status, ${TOTAL_SQL} AS total_usd,
     (SELECT COUNT(*) FROM contract_bill b2 WHERE b2.contract_id = b.contract_id AND b2.side = b.side AND b2.deleted_at IS NULL) AS periods,
     c.contract_number, c.seafarer_id, s.full_name AS seafarer_name, r.name_vi AS rank_name,
@@ -229,7 +230,7 @@ const contractBillService = {
       [id]
     )
     return {
-      bill: { ...summary(row), note: row.note, sent_at: row.sent_at, paid_date: row.paid_date },
+      bill: { ...summary(row), note: row.note, sent_at: row.sent_at, paid_date: row.paid_date, version: row.version },
       items: itemRows.map((item) => ({ id: item.id, item_code: item.item_code, kind: item.kind, name: item.name, default_usd: num(item.default_usd), amount_usd: num(item.amount_usd) })),
       term: term || null,
       periods: siblingRows.map((b) => ({ id: b.id, code: b.code, seq: b.seq, period_start: b.period_start, period_end: b.period_end, due_date: b.due_date, status: b.status, display_status: b.display_status, total_usd: Number(b.total_usd) })),
@@ -242,8 +243,9 @@ const contractBillService = {
     const input = Array.isArray(body.items) ? body.items : []
     const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null
     await withTransaction(pool, async (conn) => {
-      const [[bill]] = await conn.query('SELECT id, status, period_start FROM contract_bill WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+      const [[bill]] = await conn.query('SELECT id, status, period_start, version, updated_at, updated_by FROM contract_bill WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
       if (!bill) throw { statusCode: 404, message: 'Không tìm thấy yêu cầu thanh toán' }
+      await assertVersion(conn, bill, body.version)
       if (bill.status !== 'OPEN') throw { statusCode: 409, message: `Yêu cầu thanh toán đang ở trạng thái ${STATUS_LABELS[bill.status]}, không sửa được` }
       const [current] = await conn.query('SELECT id, kind, amount_usd FROM contract_bill_item WHERE bill_id = ?', [id])
       const byId = new Map(current.map((item) => [item.id, item]))

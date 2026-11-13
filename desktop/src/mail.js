@@ -21,6 +21,20 @@ function attachmentDir() {
   return dir
 }
 
+// Máy nhân viên: ghi tệp gửi thư do máy chính trả về (base64) vào thư mục gửi thư của máy này. → [{ name, size }]
+function saveAttachments(files) {
+  const dir = attachmentDir()
+  return files.map((file) => {
+    const clean = String(file.name).replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').replace(/^\.+/, '').slice(0, 150) || 'ho-so.zip'
+    const { name, ext } = path.parse(clean)
+    let candidate = clean
+    for (let i = 2; fs.existsSync(path.join(dir, candidate)); i++) candidate = `${name} (${i})${ext}`
+    const content = Buffer.from(String(file.content_base64 || ''), 'base64')
+    fs.writeFileSync(path.join(dir, candidate), content, { mode: 0o600 })
+    return { name: candidate, size: content.length }
+  })
+}
+
 // Xoá tệp gửi thư cũ hơn 24 giờ (gọi lúc mở app).
 function cleanAttachmentDir(now = Date.now()) {
   const dir = attachmentDir()
@@ -146,4 +160,4 @@ async function openMail({ to = [], cc = [], bcc = [], subject = '', body = '', f
   return { opened: true }
 }
 
-module.exports = { openMail, attachmentDir, cleanAttachmentDir, defaultMailApp }
+module.exports = { saveAttachments, openMail, attachmentDir, cleanAttachmentDir, defaultMailApp }

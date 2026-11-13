@@ -91,7 +91,8 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
     },
     "asarUnpack": [
       "src/backend-guard.js"
@@ -99,8 +100,11 @@
   },
   "homepage": "https://mcah.vn",
   "dependencies": {
+    "@peculiar/x509": "^3.1.0",
+    "bonjour-service": "^1.4.4",
     "koffi": "^3.3.7",
-    "pg": "8.23.1"
+    "pg": "8.23.1",
+    "reflect-metadata": "^0.2.2"
   },
   "desktopName": "mcah.desktop"
 }

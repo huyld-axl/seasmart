@@ -27,6 +27,7 @@ fastify.setErrorHandler((error, request, reply) => {
     error: error.message || 'Yêu cầu không hợp lệ',
     ...(error.code && /^[A-Z_]+$/.test(error.code) ? { code: error.code } : {}),
     ...(error.blocked_bills ? { blocked_bills: error.blocked_bills } : {}),
+    ...(error.conflict ? { conflict: error.conflict } : {}),
   })
 })
 

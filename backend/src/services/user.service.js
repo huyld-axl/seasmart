@@ -1,3 +1,4 @@
+const { versionWhere, failIfStale } = require('../utils/row_version')
 const crypto = require('crypto')
 const bcrypt = require('bcrypt')
 const pool = require('../config/db')
@@ -8,7 +9,7 @@ const desktopCloud = require('../utils/desktop_cloud')
 
 const SALT_ROUNDS = 10
 
-const USER_SELECT = `SELECT u.id, u.email, u.full_name, u.is_active, u.activated_at, u.role_id, u.created_at, u.updated_at, u.last_login_at,
+const USER_SELECT = `SELECT u.id, u.version, u.email, u.full_name, u.is_active, u.activated_at, u.role_id, u.created_at, u.updated_at, u.last_login_at,
         r.code AS role_code, r.name AS role_name
  FROM "user" u LEFT JOIN "role" r ON r.id = u.role_id`
 
@@ -247,7 +248,10 @@ async function updateUser(id, data, actor, db = pool) {
   }
 
   fields.push('updated_at = NOW()')
-  await db.query(`UPDATE "user" SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL`, [...params, id])
+  // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4).
+  const guard = versionWhere(data.version)
+  const [res] = await db.query(`UPDATE "user" SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL${guard.sql}`, [...params, id, ...guard.params])
+  await failIfStale(db, 'user', id, data.version, res.affectedRows)
   const user = await getUserById(id, db)
   if (data.is_active === undefined || Boolean(data.is_active) === Boolean(target.is_active)) return user
   return { ...user, ...(await syncMembership(user.email, Boolean(user.is_active), db)) }

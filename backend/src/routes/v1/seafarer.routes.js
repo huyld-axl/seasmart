@@ -168,8 +168,8 @@ async function seafarerRoutes(fastify) {
     },
     async (request) => {
       await assertSeafarerInScope(request, parseInt(request.params.id))
-      const { reason, ...data } = request.body || {}
-      return seafarerService.update(parseInt(request.params.id), data, request.user.id, reason)
+      const { reason, version, ...data } = request.body || {}
+      return seafarerService.update(parseInt(request.params.id), data, request.user.id, reason, version)
     }
   )
 

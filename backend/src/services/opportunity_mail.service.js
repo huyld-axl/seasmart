@@ -124,9 +124,11 @@ const opportunityMailService = {
   },
 
   // App máy tính, cách "app mail": ghi các .zip vào thư mục gửi thư để app mail của máy đính kèm. Chưa ghi lần gửi.
-  async prepare(pool, id, candidateIds, user) {
-    if (!config.desktop || !config.mailDir) throw { statusCode: 404, message: 'Không có' }
+  // inline (máy nhân viên gọi qua mạng văn phòng): trả nội dung tệp (base64), máy nhân viên tự ghi vào thư mục của nó.
+  async prepare(pool, id, candidateIds, user, { inline = false } = {}) {
+    if (!config.desktop || (!config.mailDir && !inline)) throw { statusCode: 404, message: 'Không có' }
     const { attachments } = await buildAttachments(pool, id, candidateIds, user)
+    if (inline) return { files: attachments.map((file) => ({ name: file.filename, size: file.content.length, content_base64: file.content.toString('base64') })) }
     fs.mkdirSync(config.mailDir, { recursive: true })
     const files = attachments.map((file) => {
       const name = mailFileName(config.mailDir, file.filename)

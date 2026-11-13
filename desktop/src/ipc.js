@@ -68,7 +68,7 @@ function checkSettings(s) {
   return out
 }
 
-// hooks: { relaunch, openLogs, restartBackend(sofficePath), checkUpdate }
+// hooks: { relaunch, openLogs, restartBackend(sofficePath), checkUpdate, lanStatus, lanFind, lanPair, lanPairStatus, lanInfo, lanRetry }
 function registerIpc(hooks) {
   const handle = (channel, fn) => ipcMain.handle(`mcah:${channel}`, (event, arg) => fn(arg, event))
   handle('open-mail', (m) => openMail(checkMail(m)))
@@ -124,6 +124,18 @@ function registerIpc(hooks) {
   handle('get-settings', () => getSettings())
   handle('save-settings', (s) => saveSettings(checkSettings(s)))
   handle('check-update', () => hooks.checkUpdate())
+  // Giai đoạn 3: trạng thái máy chính (thẻ trong Cài đặt trên máy này).
+  handle('lan-status', () => hooks.lanStatus())
+  // Máy nhân viên: tìm, ghép máy chính (wireframe màn 1), trạng thái nối (màn 3).
+  handle('lan-find', () => hooks.lanFind())
+  handle('lan-pair', (host) => {
+    const clean = str(String(host ?? ''), 253, 'Tên / địa chỉ máy').trim()
+    if (!/^[A-Za-z0-9.-]{1,253}$/.test(clean)) throw new Error('Gõ tên máy (vd. MAY-KE-TOAN) hoặc địa chỉ IP (vd. 192.168.1.20)')
+    return hooks.lanPair(clean)
+  })
+  handle('lan-pair-status', () => hooks.lanPairStatus())
+  handle('lan-info', () => hooks.lanInfo())
+  handle('lan-retry', () => hooks.lanRetry())
   handle('startup-retry', () => hooks.relaunch())
   handle('open-logs', () => hooks.openLogs())
   handle('quit', () => app.quit())

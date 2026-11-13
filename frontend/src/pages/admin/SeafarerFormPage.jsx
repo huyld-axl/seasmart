@@ -22,6 +22,8 @@ import { SCAN_BUTTONS, SOURCE_NAMES, matchCountry, mergeScans, sectionSummaries,
 import './seafarers/SeafarerForm.css'
 import useToast from '../../components/ds/useToast'
 import { IDENTITY } from './seafarers/scanToDoc'
+import useEditConflict from '../../hooks/useEditConflict'
+import { keyHeader, newRequestKey } from '../../lib/idempotency'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
 const DATE_FIELDS = ['date_of_birth', 'passport_issued_date', 'passport_expiry', 'national_id_issued_date']
@@ -471,7 +473,22 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     document.getElementById(`sf-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  // Mã yêu cầu của lần mở form thêm mới này (đổi khi "Lưu & thêm khác").
+  const requestKey = useRef(newRequestKey())
+  const conflict = useEditConflict({
+    form,
+    initial: initialValues,
+    labels: FIELD_LABELS,
+    reload: async () => {
+      const [latest, latestContacts] = await Promise.all([seafarerApi.getById(id).then((r) => r.data), seafarerApi.getContacts(id).then((r) => r.data)])
+      queryClient.setQueryData(['seafarer', id], latest)
+      queryClient.setQueryData(['seafarer-contacts', id], latestContacts)
+      return toFormValues(latest, latestContacts)
+    },
+  })
+
   const resetForNext = () => {
+    requestKey.current = newRequestKey()
     form.resetFields()
     if (vnId) form.setFieldValue('nationality_id', vnId)
     prevNameRef.current = ''
@@ -488,9 +505,9 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
       if (!isEdit) {
         // POST kiểm tra kiểu từng trường: bỏ ô trống thay vì gửi null.
         const body = Object.fromEntries(Object.entries(payload).filter(([, v]) => v !== null))
-        saved = (await seafarerApi.create(body)).data
+        saved = (await seafarerApi.create(body, keyHeader(requestKey.current))).data
       } else if (changedKeys.length) {
-        saved = (await seafarerApi.update(id, payload)).data
+        saved = (await seafarerApi.update(id, { ...payload, version: seafarer.version })).data
       }
       let photoError = null
       // Ảnh giấy tuỳ thân (và ảnh thẻ) đã đồng ý lưu: mỗi ảnh một dòng giấy mới, số và ngày lấy từ hồ sơ vừa lưu.
@@ -542,7 +559,8 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         navigate(`/seafarers/${saved.id}`)
       }
     },
-    onError: (err) => {
+    onError: async (err) => {
+      if (await conflict.handleError(err)) return
       toast.error(isEdit ? 'Không lưu được hồ sơ' : 'Không tạo được hồ sơ', { description: err.response?.data?.error || err.response?.data?.message })
     },
   })
@@ -970,6 +988,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           </div>
         </Form>
       </div>
+      {conflict.dialog}
      </ScanContext.Provider>
      </AiMarksContext.Provider>
     </ChangedContext.Provider>

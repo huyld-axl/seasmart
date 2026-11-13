@@ -78,7 +78,7 @@ export default function UserListPage() {
       },
     })
 
-  const handleSubmit = (values, form, addAnother) => {
+  const handleSubmit = (values, form, { addAnother, onConflict } = {}) => {
     const name = values.full_name?.trim() || values.email
     const done = (text) => ({
       onSuccess: (res) => {
@@ -91,7 +91,10 @@ export default function UserListPage() {
           setFormKey((key) => key + 1)
         } else setPanelOpen(false)
       },
-      onError: (error) => toast.error('Không lưu được tài khoản', { description: errorText(error) }),
+      onError: async (error) => {
+        if (await onConflict?.(error)) return
+        toast.error('Không lưu được tài khoản', { description: errorText(error) })
+      },
     })
     if (editTarget) updateUser.mutate({ id: editTarget.id, data: values }, done(`Đã lưu ${name}`))
     else createUser.mutate(values, done(`Đã gửi thư mời tới ${values.email}`))

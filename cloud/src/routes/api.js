@@ -67,6 +67,17 @@ async function apiRoutes(fastify) {
   fastify.post('/api/office/members/restore', { preHandler: byMachine }, async (request) =>
     offices.restoreMember({ officeId: request.office.id, email: request.body?.email }))
 
+  // Máy chính báo dấu vân tay chứng chỉ HTTPS trong mạng văn phòng, tên máy, cổng (docs/mcah-ke-hoach-desktop-gd3.md 3.1).
+  // Vé của thành viên mang các giá trị này để máy nhân viên ghim đúng máy chính.
+  fastify.post('/api/office/machine/lan', { preHandler: byMachine }, async (request) => {
+    const { fingerprint, name, port } = request.body || {}
+    if (!/^[0-9a-f]{64}$/.test(String(fingerprint)) || !/^[A-Za-z0-9._-]{1,63}$/.test(String(name)) || !(Number.isInteger(port) && port > 0 && port < 65536)) {
+      throw fail(400, 'Thông tin máy chính không hợp lệ')
+    }
+    await offices.setMachineLan({ officeId: request.office.id, fingerprint, name, port })
+    return { ok: true }
+  })
+
   fastify.decorate('byMachine', byMachine)
   fastify.register(require('./services'))
 }

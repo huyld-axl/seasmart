@@ -48,6 +48,13 @@ const offices = {
     return rows[0]?.public_key || null
   },
 
+  async setMachineLan({ officeId, fingerprint, name, port }, db = pool) {
+    await db.query(
+      'UPDATE office_machine SET cert_fingerprint = $2, lan_name = $3, lan_port = $4, lan_updated_at = NOW() WHERE office_id = $1 AND revoked_at IS NULL',
+      [officeId, fingerprint, name, port]
+    )
+  },
+
   async membership(accountId, db = pool) {
     const { rows } = await db.query('SELECT * FROM office_member WHERE account_id = $1 AND removed_at IS NULL', [accountId])
     return rows[0] || null

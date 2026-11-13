@@ -81,6 +81,15 @@ describe('văn phòng', () => {
     expect(tickets.verify((await oauth.buildTicket(nv, Date.now())).ticket).office).toBeNull()
   })
 
+  it('máy chính báo chứng chỉ trong mạng văn phòng; vé thành viên mang dấu vân tay để ghim', async () => {
+    const fp = 'ab'.repeat(32)
+    expect((await signed('POST', '/api/office/machine/lan', { fingerprint: 'xyz', name: 'MAY-CHINH', port: 7443 })).statusCode).toBe(400)
+    expect((await signed('POST', '/api/office/machine/lan', { fingerprint: fp, name: 'MAY-CHINH', port: 7443 }, crypto.generateKeyPairSync('ed25519').privateKey)).statusCode).toBe(401)
+    expect((await signed('POST', '/api/office/machine/lan', { fingerprint: fp, name: 'MAY-CHINH', port: 7443 })).json()).toEqual({ ok: true })
+    const admin = await accounts.findByEmail('quantri@thu.vn')
+    expect(tickets.verify((await oauth.buildTicket(admin, Date.now())).ticket)).toMatchObject({ machine_cert: fp, machine_name: 'MAY-CHINH', machine_port: 7443 })
+  })
+
   it('văn phòng bị khoá thì máy chính bị từ chối', async () => {
     await require('../src/services/offices').setLocked(officeId, true)
     expect((await signed('POST', '/api/office/invites', { email: 'x@thu.vn' })).statusCode).toBe(403)

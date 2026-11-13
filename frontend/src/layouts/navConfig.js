@@ -1,5 +1,6 @@
 // Điều hướng của khung app (UI Kit, tab Màn hình): sidebar 3 nhóm (`group`, ngăn bằng đường kẻ), mục có trang con thì trang con hiện thành menu con thụt vào dưới mục cha.
-// `match`: các tiền tố đường dẫn làm mục sáng lên. `tabs`: trang con của mục.
+// `match`: các tiền tố đường dẫn làm mục sáng lên. `tabs`: trang con của mục. `desktop`: chỉ có trong app máy tính.
+import { isDesktop } from '../lib/desktop'
 
 export const NAV_GROUP_LABELS = { 1: 'Hồ sơ', 2: 'Vận hành', 3: 'Hệ thống' }
 
@@ -40,6 +41,7 @@ export const NAV_SECTIONS = [
       { to: '/admin/users', label: 'Tài khoản', perm: 'account.view' },
       { to: '/admin/roles', label: 'Vai trò và quyền', perm: 'role.manage' },
       { to: '/admin/kpi-targets', label: 'Mục tiêu tháng', perm: 'kpi.manage' },
+      { to: '/admin/may-trong-van-phong', label: 'Máy trong văn phòng', perm: 'account.view', desktop: true },
     ],
   },
 ]
@@ -49,7 +51,7 @@ export function sectionsFor(user) {
   const has = (perm) => !perm || (user?.permissions || []).includes(perm)
   return NAV_SECTIONS.flatMap((section) => {
     if (section.tabs) {
-      const tabs = section.tabs.filter((tab) => has(tab.perm))
+      const tabs = section.tabs.filter((tab) => has(tab.perm) && (!tab.desktop || isDesktop()))
       return tabs.length && has(section.perm) ? [{ ...section, tabs, to: tabs[0].to }] : []
     }
     if (section.anyPerm && !section.anyPerm.some(has)) return []

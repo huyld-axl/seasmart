@@ -1,3 +1,4 @@
+import { keyHeader } from '../lib/idempotency'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { shipOwnerLogoApi } from '../api/fleetApi'
 
@@ -25,9 +26,10 @@ export function useFleetMutations(resourceApi) {
     queryClient.invalidateQueries({ queryKey: ['fleet'] })
     queryClient.invalidateQueries({ queryKey: ['lookup'] })
   }
+  // requestKey: mã yêu cầu của lần mở form thêm mới (lib/idempotency.js), chống tạo trùng khi bấm lại.
   const save = useMutation({
-    mutationFn: ({ id, ...values }) =>
-      id ? resourceApi.update(id, values) : resourceApi.create(values),
+    mutationFn: ({ id, requestKey, ...values }) =>
+      id ? resourceApi.update(id, values) : resourceApi.create(values, requestKey ? keyHeader(requestKey) : undefined),
     onSuccess: refresh,
   })
   const remove = useMutation({ mutationFn: (id) => resourceApi.remove(id), onSuccess: refresh })

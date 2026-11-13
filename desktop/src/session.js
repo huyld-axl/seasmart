@@ -33,6 +33,8 @@ const events = new EventEmitter()
 let state = null // { jwt, refreshToken, offlineUntil, user }
 let pendingOffice = null // { tokens, account } khi máy chưa có văn phòng
 let backendUrl = null
+// Máy nhân viên: gửi qua máy chính (lan-client.call) thay cho backend trên máy này (giai đoạn 3).
+let transport = null
 let lastReason = null // lý do phiên vừa hết, hiện ở màn đăng nhập
 let timer = null
 
@@ -67,9 +69,16 @@ function clear(reason = null) {
 }
 
 async function backend(pathname, body) {
-  const r = await fetch(`${backendUrl()}${pathname}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
-  const data = await r.json().catch(() => ({}))
-  if (!r.ok) throw Object.assign(new Error(data.error || 'Máy chính từ chối đăng nhập'), { status: r.status, code: data.code })
+  let status
+  let data
+  if (transport) {
+    ;({ status, data } = await transport(pathname, body))
+  } else {
+    const r = await fetch(`${backendUrl()}${pathname}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    status = r.status
+    data = await r.json().catch(() => ({}))
+  }
+  if (status >= 400) throw Object.assign(new Error(data.error || 'Máy chính từ chối đăng nhập'), { status, code: data.code })
   return data
 }
 
@@ -91,8 +100,10 @@ async function adopt(tokens) {
 const session = {
   events,
 
-  init(getBackendUrl) {
+  // getBackendUrl: backend trên máy này (máy chính); via: hàm gửi qua máy chính (máy nhân viên).
+  init(getBackendUrl, via = null) {
     backendUrl = getBackendUrl
+    transport = via
     load()
     clearInterval(timer)
     timer = setInterval(() => session.refresh().catch(() => {}), REFRESH_MS)
@@ -111,7 +122,7 @@ const session = {
 
   info() {
     session.checkExpiry()
-    if (state) return { loggedIn: true, user: state.user, offlineUntil: state.offlineUntil, now: new Date(now()).toISOString(), persisted: secretStoreAvailable() }
+    if (state) return { loggedIn: true, staff: Boolean(transport), user: state.user, offlineUntil: state.offlineUntil, now: new Date(now()).toISOString(), persisted: secretStoreAvailable() }
     if (pendingOffice) return { loggedIn: false, needsOffice: true, account: pendingOffice.account }
     return { loggedIn: false, reason: lastReason }
   },
@@ -179,6 +190,16 @@ const session = {
     clear()
     if (refreshToken) await login.revokeRefresh(refreshToken)
   },
+
+  // Vừa ghép xong máy nhân viên: từ giờ đăng nhập qua máy chính, dùng lại vé đang chờ.
+  async becomeStaff(via) {
+    transport = via
+    if (!pendingOffice) return session.info()
+    await adopt(pendingOffice.tokens)
+    return session.info()
+  },
+
+  pendingTicket: () => pendingOffice?.tokens?.ticket || null,
 
   // Máy chính báo phiên hết (401): bỏ phiên, giao diện về màn đăng nhập.
   expired: clear,

@@ -1,4 +1,6 @@
 import { withFlag } from '../../../utils/flag'
+import useEditConflict from '../../../hooks/useEditConflict'
+import { newRequestKey } from '../../../lib/idempotency'
 import { useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -191,12 +193,25 @@ function VesselForm({ vessel }) {
     toast.success(`Đã thêm loại tàu "${row.name_vi}"`)
   }
 
+  const requestKey = useRef(newRequestKey())
+  const conflict = useEditConflict({
+    form,
+    initial,
+    labels: FIELD_LABELS,
+    reload: async () => {
+      const latest = await vesselApi.get(vessel.id)
+      queryClient.setQueryData(['fleet', 'vessels', 'item', String(vessel.id)], latest)
+      return vesselToFormValues(latest)
+    },
+  })
+
   async function submit(formValues) {
     const payload = vesselToPayload(formValues)
     try {
-      const row = await save.mutateAsync({ id: vessel?.id, ...payload })
+      const row = await save.mutateAsync(isEdit ? { id: vessel.id, ...payload, version: vessel.version } : { ...payload, requestKey: requestKey.current })
       toast.success(isEdit ? `Đã lưu ${row.vessel_name}` : `Đã thêm ${row.vessel_name}`)
       if (againRef.current) {
+        requestKey.current = newRequestKey()
         // Về form trống thật sự: bỏ cả giá trị điền sẵn từ danh mục và các nguồn, gợi ý, thông báo.
         form.resetFields()
         form.setFieldsValue({ ...Object.fromEntries(Object.keys(initial).map((key) => [key, null])), ...vesselToFormValues(null) })
@@ -212,6 +227,7 @@ function VesselForm({ vessel }) {
         navigate(`/vessels/${row.id}`)
       }
     } catch (error) {
+      if (await conflict.handleError(error)) return
       toast.error(isEdit ? 'Không lưu được tàu' : 'Không thêm được tàu', { description: errorText(error, 'Thử lại sau ít phút.') })
     }
   }
@@ -432,6 +448,7 @@ function VesselForm({ vessel }) {
           </div>
         </div>
       </Form>
+      {conflict.dialog}
     </FormFrame>
   )
 }

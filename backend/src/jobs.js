@@ -216,6 +216,23 @@ function startJobs(logger) {
     }
   })
 
+  // App máy tính, máy chính: báo chứng chỉ trong mạng văn phòng lên máy chủ dịch vụ; chưa được (mất mạng) thì thử lại mỗi giờ.
+  if (config.desktop) {
+    const desktopCloud = require('./utils/desktop_cloud')
+    const register = () => desktopCloud.registerLan()
+      .then((done) => (done ? logger.info('Đã báo chứng chỉ máy chính lên máy chủ dịch vụ') : setTimeout(register, 3600 * 1000).unref()))
+      .catch((err) => {
+        logger.warn({ err: err.message || err }, 'Chưa báo được chứng chỉ máy chính, thử lại sau 1 giờ')
+        setTimeout(register, 3600 * 1000).unref()
+      })
+    register()
+  }
+
+  // Dọn mã yêu cầu chống tạo trùng quá 24 giờ (plugins/idempotency.js).
+  daily('purge_idempotency_keys', '30 3 * * *', async () => {
+    await pool.query('DELETE FROM idempotency_key WHERE created_at < NOW() - INTERVAL \'24 hours\'')
+  })
+
   // Job 4 (mỗi 5 phút): đưa vào chạy lại tệp và giấy AI đọc kẹt quá 5 phút (trước đây chỉ làm lúc khởi động).
   const documentService = require('./services/document.service').documentService
   cron.schedule('*/5 * * * *', async () => {

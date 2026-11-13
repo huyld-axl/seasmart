@@ -25,6 +25,8 @@ export default function DeviceSettingsPage() {
   const settings = useDeviceSettings()
   const save = useSaveDeviceSettings()
   const pdf = useQuery({ queryKey: ['pdf-component'], queryFn: desktop.pdfComponent, enabled: isDesktop() })
+  // Máy chính (giai đoạn 3, wireframe docs/design/wireframes/desktop-gd3.html màn 6): tên, địa chỉ cho máy nhân viên.
+  const lan = useQuery({ queryKey: ['lan-status'], queryFn: desktop.lanStatus, enabled: isDesktop() })
   const [form] = Form.useForm()
   const [testing, setTesting] = useState(false)
   const provider = Form.useWatch('provider', form)
@@ -179,6 +181,16 @@ export default function DeviceSettingsPage() {
           />
         )}
       </Card>
+
+      {lan.data ? (
+        <Card title="Máy chính của văn phòng">
+          <p style={{ marginTop: 0 }}>
+            Tên trong mạng: <b>{lan.data.name}</b> · Địa chỉ: <b>{lan.data.addresses.join(', ') || '—'}</b> · cổng {lan.data.port}
+          </p>
+          <p className="muted" style={{ marginTop: 0 }}>Máy nhân viên tự tìm máy này. Không tìm thấy thì gõ tên hoặc địa chỉ trên ở màn nối máy chính.</p>
+          {lan.data.keepAwake ? <Alert type="success" showIcon message="Không cho máy ngủ khi MCAH đang mở." /> : null}
+        </Card>
+      ) : null}
     </div>
   )
 }

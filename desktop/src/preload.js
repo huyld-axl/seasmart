@@ -42,6 +42,17 @@ contextBridge.exposeInMainWorld('mcah', {
   getSettings: call('get-settings'),
   saveSettings: call('save-settings'),
   checkUpdate: call('check-update'),
+  lanStatus: call('lan-status'),
+  lanFind: call('lan-find'),
+  lanPair: call('lan-pair'),
+  lanPairStatus: call('lan-pair-status'),
+  lanInfo: call('lan-info'),
+  lanRetry: call('lan-retry'),
+  onLanOnline: (fn) => {
+    const listener = (_event, online) => fn(online)
+    ipcRenderer.on('mcah:lan-online', listener)
+    return () => ipcRenderer.removeListener('mcah:lan-online', listener)
+  },
   // Màn lỗi khởi động
   startup: { retry: call('startup-retry'), openLogs: call('open-logs'), quit: call('quit') },
 })

@@ -1,3 +1,4 @@
+const { versionWhere, failIfStale } = require('../utils/row_version')
 const fs = require('fs')
 const path = require('path')
 const pool = require('../config/db')
@@ -103,12 +104,16 @@ const certificateService = {
     }
   },
 
-  async update(id, seafarerId, data, updated_by) {
+  async update(id, seafarerId, body, updated_by) {
+    const { version, ...data } = body || {}
     await this.getById(id, seafarerId)
-    await pool.query(
-      'UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
-      [data, updated_by, id]
+    // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4).
+    const guard = versionWhere(version)
+    const [res] = await pool.query(
+      `UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?${guard.sql}`,
+      [data, updated_by, id, ...guard.params]
     )
+    await failIfStale(pool, 'seafarer_certificate', id, version, res.affectedRows)
     return this.getById(id, seafarerId)
   },
 

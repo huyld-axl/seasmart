@@ -119,6 +119,8 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
     } finally {
       client.release()
     }
+    // Văn phòng mới: báo luôn chứng chỉ trong mạng văn phòng để máy nhân viên ghép được ngay.
+    require('../../utils/desktop_cloud').registerLan().catch((err) => request.log.warn({ err: err.message || err }, 'Chưa báo được chứng chỉ máy chính'))
     return session({ id: userId, email: claims.email }, claims)
   })
 
@@ -130,4 +132,11 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
 }
 
 desktopTicketRoutes.machineId = machineId
+// Dùng lại ở lan_device.routes.js (ghép máy nhân viên bằng vé).
+desktopTicketRoutes.verifyTicket = verifyTicket
+desktopTicketRoutes.parseKeys = (publicKeyPem) => String(publicKeyPem).match(/-----BEGIN PUBLIC KEY-----[\s\S]+?-----END PUBLIC KEY-----/g).map((pem) => {
+  const clean = normalizePem(pem)
+  return { kid: keyId(clean), publicKey: crypto.createPublicKey(clean) }
+})
+desktopTicketRoutes.officeInfo = officeInfo
 module.exports = desktopTicketRoutes

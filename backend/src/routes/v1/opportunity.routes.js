@@ -228,7 +228,7 @@ async function opportunityRoutes(fastify) {
   const candidateIdsBody = { type: 'object', required: ['candidate_ids'], properties: { candidate_ids: { type: 'array', minItems: 1, maxItems: 50, items: id } } }
   fastify.post('/:id/mail/prepare', { ...can('send'), schema: { params: idParams, body: candidateIdsBody } }, async (request) => {
     await inScope(request)
-    return opportunityMailService.prepare(pool, request.params.id, request.body.candidate_ids, request.user)
+    return opportunityMailService.prepare(pool, request.params.id, request.body.candidate_ids, request.user, { inline: Boolean(request.lan) })
   })
   fastify.post('/:id/mail/record', { ...can('send'), schema: { params: idParams, body: { type: 'object' } } }, async (request) => {
     await inScope(request)

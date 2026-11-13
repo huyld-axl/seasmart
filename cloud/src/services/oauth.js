@@ -37,7 +37,7 @@ async function issueCode(accountId, pending, authTime, db = pool) {
 // Vé + thông tin văn phòng hiện tại của tài khoản (văn phòng có thể đổi giữa các lần làm mới: được mời, bị bỏ).
 async function buildTicket(account, authTime, db = pool) {
   const { rows } = await db.query(
-    `SELECT m.office_id, m.role, o.name AS office_name, o.locked_at, k.public_key
+    `SELECT m.office_id, m.role, o.name AS office_name, o.locked_at, k.public_key, k.cert_fingerprint, k.lan_name, k.lan_port
      FROM office_member m JOIN office o ON o.id = m.office_id
      LEFT JOIN office_machine k ON k.office_id = o.id AND k.revoked_at IS NULL
      WHERE m.account_id = $1 AND m.removed_at IS NULL`,
@@ -53,6 +53,10 @@ async function buildTicket(account, authTime, db = pool) {
     office_role: member?.role || null,
     office_locked: Boolean(member?.locked_at),
     machine: member?.public_key ? crypto.createHash('sha256').update(member.public_key).digest('hex').slice(0, 32) : null,
+    // Máy nhân viên ghim chứng chỉ máy chính theo dấu vân tay này (docs/mcah-ke-hoach-desktop-gd3.md 3.2).
+    machine_cert: member?.cert_fingerprint || null,
+    machine_name: member?.lan_name || null,
+    machine_port: member?.lan_port || null,
     auth_time: Math.floor(new Date(authTime).getTime() / 1000),
   })
 }

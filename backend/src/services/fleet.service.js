@@ -1,3 +1,4 @@
+const { assertVersion } = require('../utils/row_version')
 const { isValidImo } = require('../utils/imo')
 const { assertOwnerData, assertVesselData } = require('../utils/field_rules')
 const fs = require('fs')
@@ -96,7 +97,7 @@ async function duplicateGuard(promise, message) {
   }
 }
 
-const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_number, v.call_sign, v.mmsi,
+const VESSEL_SELECT = `SELECT v.id, v.version, v.vessel_name, v.vessel_name_prev, v.imo_number, v.call_sign, v.mmsi,
     v.vessel_type_id, vt.name_vi AS vessel_type_name, v.flag_country_id, COALESCE(c.name_vi, c.name_en) AS flag_name, c.code AS flag_code, c.flag_emoji AS flag_emoji,
     v.year_built, v.port_of_registry_id, p.name AS port_of_registry_name, v.classification_society, v.status, v.class_status,
     v.gross_tonnage, v.net_tonnage, v.deadweight, v.length_overall, v.passenger_capacity, v.crew_capacity,
@@ -110,7 +111,7 @@ const VESSEL_SELECT = `SELECT v.id, v.vessel_name, v.vessel_name_prev, v.imo_num
   LEFT JOIN port p ON p.id = v.port_of_registry_id
   LEFT JOIN ship_owner o ON o.id = v.ship_owner_id`
 
-const OWNER_SELECT = `SELECT o.id, o.company_name, o.company_name_en, o.country_id, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji,
+const OWNER_SELECT = `SELECT o.id, o.version, o.company_name, o.company_name_en, o.country_id, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji,
     o.tax_id, o.address, o.phone, o.zalo, o.fax, o.email, o.website,
     o.is_active, o.notes, o.updated_at, o.logo_updated_at,
     (SELECT COALESCE(json_agg(json_build_object('id', ct.id, 'name', ct.name, 'position', ct.position, 'phone', ct.phone, 'zalo', ct.zalo, 'email', ct.email, 'whatsapp', ct.whatsapp, 'line_id', ct.line_id, 'wechat_id', ct.wechat_id, 'is_primary', ct.is_primary = 1)
@@ -186,10 +187,15 @@ const fleetService = {
     validateVessel(data)
     await this.getVessel(pool, id)
     const cols = Object.keys(data)
-    await duplicateGuard(
-      pool.query(`UPDATE vessel SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
-      'IMO này đã có trong danh mục'
-    )
+    await withTransaction(pool, async (conn) => {
+      // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4): form gửi version đã đọc.
+      const [[current]] = await conn.query('SELECT id, version, updated_at FROM vessel WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+      await assertVersion(conn, current, body.version)
+      await duplicateGuard(
+        conn.query(`UPDATE vessel SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),
+        'IMO này đã có trong danh mục'
+      )
+    })
     return this.getVessel(pool, id)
   },
 
@@ -401,6 +407,8 @@ const fleetService = {
     const before = await this.getOwner(pool, id)
     const cols = Object.keys(data)
     await withTransaction(pool, async (conn) => {
+      const [[current]] = await conn.query('SELECT id, version, updated_at FROM ship_owner WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+      await assertVersion(conn, current, body.version)
       if (cols.length) {
         await duplicateGuard(
           conn.query(`UPDATE ship_owner SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ? AND deleted_at IS NULL`, [...Object.values(data), id]),

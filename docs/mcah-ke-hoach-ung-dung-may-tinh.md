@@ -244,6 +244,7 @@ seasmart/
 | **Q11** | Mất internet, người đã đăng nhập có làm tiếp được không? | **Có, tới 7 ngày** | Mục 3.3 |
 | **Q12** | Đăng ký / đăng nhập bằng gì? | **Email + mật khẩu và Google** | Mục 3.3 |
 | **Q13** | Nhân viên vào văn phòng thế nào? | **Quản trị mời qua email trong app** | Mục 3.3 |
+| **Q14** | Có mã hoá tài liệu trên máy và bản sao lưu không? (chốt 2026-11-13) | **Không.** Tài liệu lưu thẳng vào cây thư mục dễ đọc trên máy chính, như cách văn phòng đang làm; bản sao lưu là tệp nén thường; bỏ mật khẩu sao lưu, mã khôi phục dữ liệu, khoá dữ liệu | Mục 5.1, 5.4, 5.5 cũ về mã hoá **không còn hiệu lực**; thiết kế mới ở `docs/mcah-ke-hoach-desktop-gd4.md`. Bảo vệ tài liệu dựa vào mật khẩu hệ điều hành và mã hoá ổ đĩa máy chính |
 
 ### 4.2 Việc còn mở (không chặn giai đoạn 0)
 
@@ -323,6 +324,8 @@ Mỗi lớp trả lời câu "chống được chuyện gì".
 
 ### 5.4 Khoá dữ liệu, sao lưu và khôi phục
 
+> **Đổi 2026-11-13 (Q14):** bỏ khoá dữ liệu, mật khẩu sao lưu, mã khôi phục và mã hoá gói sao lưu. Phần sao lưu nhất quán, lịch, khôi phục khác máy, cập nhật có quay về vẫn giữ, chi tiết ở `docs/mcah-ke-hoach-desktop-gd4.md`.
+
 Toàn bộ dữ liệu văn phòng nằm trên **một máy chính**: hỏng ổ / mất máy là mất hết nếu không sao lưu. Và tài liệu đã mã hoá thì **mất khoá là mất tài liệu**. Thiết kế:
 
 **Khoá dữ liệu**
@@ -364,6 +367,8 @@ Toàn bộ dữ liệu văn phòng nằm trên **một máy chính**: hỏng ổ
 - Migration hiện chạy mỗi tệp một transaction, nên lỗi giữa chừng là DB đã đổi một phần. Lỗi thì: dừng, **khôi phục DB và khoá dữ liệu từ bản vừa chụp** (tệp không bị migration sửa), quay về bản app cũ, rồi mới cho máy nhân viên nối lại. Báo quản trị kèm mã lỗi.
 
 ### 5.5 Kho tệp và thư mục tài liệu
+
+> **Đổi 2026-11-13 (Q14):** không mã hoá; cây thư mục dễ đọc dưới đây **chính là kho tệp** trên máy chính (không còn là bản xem dựng ra). Cấu trúc và quy tắc đặt tên giữ nguyên. Chi tiết ở `docs/mcah-ke-hoach-desktop-gd4.md`.
 
 **Lớp kho tệp dùng chung (bắt buộc).** Hiện nhiều service tự ghi thẳng vào `UPLOAD_DIR`: tệp gốc + ảnh từng trang + ảnh thu nhỏ (`document.service.js`), chứng chỉ (`certificate.service.js`), chân dung (`seafarer.service.js`), logo (`fleet.service.js`), ZIP hồ sơ đã gửi (`seafarer_send.service.js`), tệp nhập (`import.routes.js`), thùng rác (`file_trash.js`), xuất hồ sơ (`export_pack.service.js`). Chỉ mã hoá lúc tải lên sẽ còn sót. Phải:
 
@@ -836,3 +841,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-11 | 1 | Code giai đoạn 1 trên Ubuntu | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd1.md`; chờ Windows, testcase tay còn lại, quyết định về thông báo nhắc hạn |
 | 2026-11-12 | 2 | Viết kế hoạch chi tiết giai đoạn 2 | `docs/mcah-ke-hoach-desktop-gd2.md`, wireframe `docs/design/wireframes/desktop-gd2.html`, testcase, hướng dẫn nháp; chờ duyệt |
 | 2026-11-12 | 2 | Code giai đoạn 2 trên Ubuntu (máy chủ dịch vụ chạy ở máy dev) | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd2.md`; chờ Google (M9), máy chủ thật + tên miền (M2), khoá AI / nguồn tàu ở máy chủ, Windows |
+| 2026-11-13 | 4 | Chốt Q14: không mã hoá tài liệu, không mã hoá sao lưu | Tài liệu lưu thẳng cây thư mục dễ đọc; viết lại kế hoạch giai đoạn 4 |

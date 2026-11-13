@@ -41,6 +41,8 @@ function backendEnv(userData, dbEnv, port, { soffice = null, mailDir, filesDir =
     PORT: String(port),
     JWT_SECRET: readOrCreateSecret(path.join(userData, 'jwt-secret'), 48),
     UPLOAD_DIR: uploadDir,
+    // Backend đã gom thành khối (giai đoạn 5): đường dẫn mẫu thư, migration… tính từ đây.
+    MCAH_BACKEND_ROOT: BACKEND_DIR,
     MCAH_TMP_DIR: tmpDir,
     ...(filesDir ? { MCAH_FILES_DIR: filesDir } : {}),
     FORMS_DIR: formsDir,

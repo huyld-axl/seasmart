@@ -1,5 +1,4 @@
 const fp = require('fastify-plugin')
-const path = require('path')
 const cors = require('@fastify/cors')
 const jwt = require('@fastify/jwt')
 const multipart = require('@fastify/multipart')
@@ -46,7 +45,7 @@ module.exports = fp(async function (fastify) {
 
   // Static files
   await fastify.register(staticFiles, {
-    root: path.join(__dirname, '../../public'),
+    root: require('../config/paths').PUBLIC_DIR,
     prefix: '/public/',
   })
 

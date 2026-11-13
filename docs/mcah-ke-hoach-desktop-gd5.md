@@ -1,7 +1,7 @@
 # MCAH — Kế hoạch app máy tính, giai đoạn 5: bảo vệ code
 
 - **Ngày lập:** 2026-11-13
-- **Trạng thái:** chờ duyệt. Chưa code.
+- **Trạng thái:** đã duyệt 2026-11-13; code bước 0–6 và 8 trên Ubuntu. Chờ máy Windows cho bước 7 (C1, C6 Windows, Defender, dịch bytecode bản Windows).
 - **Kế hoạch tổng:** `docs/mcah-ke-hoach-ung-dung-may-tinh.md` (mục 6 bảo vệ sản phẩm, 10 giai đoạn 5, 11 nhóm C).
 - **Wireframe:** không có — giai đoạn này không thêm hay đổi màn nào.
 - **Hướng dẫn sử dụng:** không có — người dùng không thấy gì khác.
@@ -155,3 +155,11 @@ So số đo với bước 0 (cỡ bộ cài, thời gian mở app), ghi Nhật k
 ## 8. Nhật ký
 
 - 2026-11-13: lập kế hoạch, testcase. Chờ duyệt.
+- 2026-11-13: duyệt, code.
+  - Số đo bản Ubuntu (`linux-unpacked`): **trước** 696 MB, 91 tệp mã nguồn backend + 20 tệp vỏ app đọc được nguyên văn, 3.272 tệp `.map`, mở tới màn đăng nhập 2,5–3,8 giây. **Sau** 658 MB, backend chỉ còn `server.jsc` / `scripts/migrate.jsc` + tệp nạp, vỏ app chỉ còn `app-build/main.jsc` + `preload.js` đã nén, 0 tệp `.map`, mở 2,9–3,0 giây.
+  - **Khác thiết kế 3.1:** esbuild chỉ gom code của MCAH (`packages: 'external'`); toàn bộ thư viện trong `node_modules` để ngoài khối như cũ (không phải code của mình, tránh hỏng module nạp động). `src/config/paths.js` + `MCAH_BACKEND_ROOT` thay 5 chỗ `__dirname` chạy lúc dùng (4 chỗ còn lại là script dev).
+  - Vỏ app dựng ra `desktop/app-build/` (cùng cấp `src/`, đường dẫn tương đối giữ nguyên), bộ cài dùng `extraMetadata.main`; `npm start` vẫn chạy `src/`.
+  - Đã thử trên bản đóng gói: mở app, migration chạy; backend bytecode trả danh sách, ảnh nhỏ, thư mục hồ sơ, tải cả bộ giấy tờ, xuất biểu mẫu Excel và PDF. Cầu chì đọc lại khớp cấu hình. `--remote-debugging-port`, `--inspect` → app thoát, không mở cổng. Quét bí mật sạch.
+  - Lỗi phát hiện khi đóng gói: chữ `<ngày>` trong hộp Xuất hồ sơ (commit M1) làm frontend không dựng được — đã sửa.
+  - Bản Windows: build chéo từ Linux chỉ gom + nén backend, **chưa dịch bytecode** (script in cảnh báo); phải build trên Windows trước khi phát hành.
+  - Chưa thử: bấm phím tắt DevTools trên bản đóng gói (menu app chỉ có Sửa, và có chặn khi DevTools mở); luồng đăng nhập thật + máy nhân viên trên bản bytecode.

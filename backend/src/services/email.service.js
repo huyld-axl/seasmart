@@ -3,7 +3,7 @@ const path = require('path')
 const nodemailer = require('nodemailer')
 const config = require('../config')
 
-const TEMPLATES_DIR = path.join(__dirname, '../templates')
+const { TEMPLATES_DIR } = require('../config/paths')
 
 let transporter = null
 

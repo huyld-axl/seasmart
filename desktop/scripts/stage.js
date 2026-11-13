@@ -24,7 +24,7 @@ const sh = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit' }
 
 function copyBackend() {
   const dest = path.join(OUT, 'backend')
-  const skip = new Set(['node_modules', '.env', 'uploads', 'storage', 'test_support', '__tests__', 'Dockerfile', 'docker-entrypoint.sh', '.dockerignore'])
+  const skip = new Set(['node_modules', '.env', 'uploads', 'storage', 'test_support', '__tests__', 'Dockerfile', 'docker-entrypoint.sh', '.dockerignore', 'eslint.config.js', 'vitest.config.js'])
   fs.cpSync(path.join(ROOT, 'backend'), dest, {
     recursive: true,
     filter: (src) => {
@@ -33,6 +33,16 @@ function copyBackend() {
     },
   })
   sh('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', `--os=${npmOs}`, '--cpu=x64'], dest)
+  removeSourceMaps(dest)
+}
+
+// Bộ cài không kèm tệp .map (bản đồ mã nguồn của thư viện; docs/mcah-ke-hoach-desktop-gd5.md 3.4).
+function removeSourceMaps(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) removeSourceMaps(full)
+    else if (entry.name.endsWith('.map')) fs.rmSync(full)
+  }
 }
 
 function copyPostgres() {
@@ -122,6 +132,15 @@ function addTestMigration() {
   fs.copyFileSync(path.join(DESKTOP, 'test/update_test_migration.sql'), path.join(OUT, 'backend/migrations/postgres/999_desktop_update_test.sql'))
 }
 
+// Gom backend thành một khối và dịch bytecode bằng chính Node đi kèm (docs/mcah-ke-hoach-desktop-gd5.md 3.1).
+// Bytecode chỉ dịch được trên đúng hệ điều hành đích: build bản Windows trên Linux thì chỉ gom + nén, chưa dịch.
+function protectBackend() {
+  const nodeBin = path.join(OUT, 'node', target === 'win' ? 'node.exe' : 'node')
+  const sameOs = (target === 'win') === (process.platform === 'win32')
+  if (!sameOs) console.warn('CẢNH BÁO: build chéo hệ điều hành, backend chỉ được gom + nén, chưa dịch bytecode. Build lại trên Windows trước khi phát hành.')
+  sh(process.execPath, [path.join(__dirname, 'build-backend.js'), path.join(OUT, 'backend'), nodeBin, ...(sameOs ? [] : ['--no-bytecode'])], DESKTOP)
+}
+
 async function main() {
   fs.rmSync(OUT, { recursive: true, force: true })
   fs.mkdirSync(OUT, { recursive: true })
@@ -130,6 +149,7 @@ async function main() {
   fs.cpSync(path.join(ROOT, 'forms'), path.join(OUT, 'forms'), { recursive: true })
   copyPostgres()
   await copyNode()
+  protectBackend()
   await writeCloudKey()
   writeUpdateConfig()
   console.log(`Đã gom xong: ${path.relative(DESKTOP, OUT)}`)

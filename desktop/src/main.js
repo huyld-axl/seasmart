@@ -34,6 +34,12 @@ const lanClient = require('./lan-client')
 const readableView = require('./readable-view')
 const diskEncryption = require('./disk-encryption')
 
+// Bản phát hành không cho gắn trình gỡ lỗi (docs/mcah-ke-hoach-desktop-gd5.md 3.5): --inspect đã bị cầu chì tắt;
+// cờ Chromium --remote-debugging-port / pipe thì thoát ngay.
+if (app.isPackaged && process.argv.some((a) => /^--(remote-debugging-(port|pipe)|inspect(-brk)?(-port)?|js-flags)(=|$)/.test(a))) {
+  app.exit(1)
+}
+
 // Tên app quyết định thư mục dữ liệu (~/.config/MCAH, %APPDATA%\MCAH); đặt trước khi dùng app.getPath.
 app.setName('MCAH')
 

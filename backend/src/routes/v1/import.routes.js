@@ -73,7 +73,7 @@ async function importRoutes(fastify) {
       onRequest: [fastify.authenticate, fastify.can('seafarer.import')],
     },
     async (request) => {
-      const samplePath = path.resolve(__dirname, '../../../../sample data/HD - Hong.xlsx')
+      const samplePath = path.resolve(require('../../config/paths').BACKEND_ROOT, '../../sample data/HD - Hong.xlsx')
       const result = await importExcel(samplePath, request.user.id, 'data')
       return { message: 'Import file mẫu hoàn tất', ...result }
     }

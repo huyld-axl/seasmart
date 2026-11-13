@@ -12,18 +12,23 @@ const PATTERNS = [
   ['khoá AWS', /\bAKIA[0-9A-Z]{16}\b/],
   ['khoá riêng PEM', /-----BEGIN (?:RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----/],
   ['Google client secret', /\bGOCSPX-[A-Za-z0-9_-]{20,}/],
-  ['biến khoá có giá trị', /\b(?:OPENAI_API_KEY|ANTHROPIC_API_KEY|VESSEL_API_ENC_KEY|SMTP_PASSWORD|JWT_SECRET|GOOGLE_CLIENT_SECRET|CLOUD_COOKIE_SECRET)\s*=\s*['"]?[^\s'"#]{8,}/],
+  ['biến khoá có giá trị', /\b(?:OPENAI_API_KEY|ANTHROPIC_API_KEY|VESSEL_API_ENC_KEY|SMTP_PASSWORD|JWT_SECRET|GOOGLE_CLIENT_SECRET|CLOUD_COOKIE_SECRET|SMS_WEBHOOK_TOKEN|VESSEL_API_BASE_URL)\s*=\s*['"]?[^\s'"#]{8,}/],
 ]
 // Tệp không được có mặt trong bộ cài.
-const FORBIDDEN_NAMES = [/^\.env(\..*)?$/, /^signing-key\.pem$/, /^release-key\.pem$/, /^db-secret$/]
+// Tệp .map (bản đồ mã nguồn) và danh mục tàu cũng không được có (kế hoạch tổng 6.3, giai đoạn 5 3.4).
+const FORBIDDEN_NAMES = [/^\.env(\..*)?$/, /^signing-key\.pem$/, /^release-key\.pem$/, /^db-secret$/, /^ships_plain\.db$/, /\.map$/]
 // Thư viện bên thứ ba có chuỗi mẫu trong tài liệu / test (vd. "sk-..." trong README của SDK): không tính.
-const SKIP = [/[\\/]node_modules[\\/][^\\/]+[\\/](test|tests|docs?|examples?)[\\/]/i, /\.(md|markdown|d\.ts|map)$/i, /[\\/]LICENSE/i]
-const TEXT_EXT = /\.(js|cjs|mjs|json|txt|html|css|env|pem|yml|yaml|ini|conf|cfg|sql|sh|xml)$|^[^.]+$/i
+const SKIP = [/[\\/]node_modules[\\/][^\\/]+[\\/](test|tests|docs?|examples?)[\\/]/i, /\.(md|markdown|d\.ts)$/i, /[\\/]LICENSE/i]
+// .jsc: bytecode của backend / vỏ app vẫn chứa chuỗi đọc được — đúng chỗ cần quét.
+const TEXT_EXT = /\.(js|cjs|mjs|jsc|json|txt|html|css|env|pem|yml|yaml|ini|conf|cfg|sql|sh|xml)$|^[^.]+$/i
 const MAX_BYTES = 5 * 1024 * 1024
 
 const findings = []
 const check = (where, name, read) => {
-  if (FORBIDDEN_NAMES.some((re) => re.test(name))) findings.push(`${where}: tệp không được có trong bộ cài`)
+  if (FORBIDDEN_NAMES.some((re) => re.test(name))) {
+    findings.push(`${where}: tệp không được có trong bộ cài`)
+    return
+  }
   if (SKIP.some((re) => re.test(where)) || !TEXT_EXT.test(name)) return
   const text = read()
   if (!text || text.length > MAX_BYTES) return

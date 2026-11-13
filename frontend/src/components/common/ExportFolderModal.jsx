@@ -54,7 +54,7 @@ export default function ExportFolderModal({ open, onClose, pageIds = [] }) {
             { value: 'all', title: 'Toàn bộ hồ sơ thuyền viên' },
           ]}
         />
-        <p className="muted" style={{ margin: 0 }}>Thư mục "MCAH - Hồ sơ xuất <ngày>" được tạo ở nơi bạn chọn: giấy tờ còn hiệu lực, bản cũ (trong "Bản cũ"), ảnh, hồ sơ đã gửi. Tệp đã xoá không xuất.</p>
+        <p className="muted" style={{ margin: 0 }}>Thư mục "MCAH - Hồ sơ xuất (ngày xuất)" được tạo ở nơi bạn chọn: giấy tờ còn hiệu lực, bản cũ (trong "Bản cũ"), ảnh, hồ sơ đã gửi. Tệp đã xoá không xuất.</p>
         {busy && progress.total ? <Progress percent={Math.round((progress.done / progress.total) * 100)} format={() => `${progress.done}/${progress.total} tệp`} /> : null}
       </div>
     </Modal>

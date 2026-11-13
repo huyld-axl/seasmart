@@ -9,15 +9,16 @@
     "start": "electron .",
     "stage:linux": "node scripts/stage.js linux",
     "stage:win": "node scripts/stage.js win",
-    "dist:linux": "npm run build:frontend && npm run stage:linux && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked",
-    "dist:win": "npm run build:frontend && npm run stage:win && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked",
+    "dist:linux": "npm run build:frontend && npm run stage:linux && node scripts/build-main.js && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked",
+    "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked",
     "release": "node scripts/release.js",
     "test": "node --test test/*.test.js"
   },
   "devDependencies": {
     "electron": "^39.8.10",
     "electron-builder": "^26.18.0",
-    "embedded-postgres": "17.11.0-beta.19"
+    "embedded-postgres": "17.11.0-beta.19",
+    "esbuild": "^0.25.12"
   },
   "allowScripts": {
     "electron@39.8.10": true,
@@ -36,7 +37,8 @@
       "output": "dist/installer"
     },
     "files": [
-      "src/**",
+      "app-build/**",
+      "!**/*.map",
       "dist/frontend/**",
       "build/icon.png",
       "package.json"
@@ -94,6 +96,9 @@
       "allowToChangeInstallationDirectory": true,
       "include": "build/installer.nsh"
     },
+    "extraMetadata": {
+      "main": "app-build/main.js"
+    },
     "electronFuses": {
       "runAsNode": false,
       "enableCookieEncryption": true,
@@ -103,13 +108,14 @@
       "onlyLoadAppFromAsar": true
     },
     "asarUnpack": [
-      "src/backend-guard.js"
+      "app-build/backend-guard.js"
     ]
   },
   "homepage": "https://mcah.vn",
   "dependencies": {
     "@peculiar/x509": "^3.1.0",
     "bonjour-service": "^1.4.4",
+    "bytenode": "^1.5.7",
     "koffi": "^3.3.7",
     "pg": "8.23.1",
     "reflect-metadata": "^0.2.2",

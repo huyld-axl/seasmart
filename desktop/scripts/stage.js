@@ -121,6 +121,7 @@ async function writeCloudKey() {
 
 // Khoá công khai kiểm bản phát hành + địa chỉ phát hành (MCAH_UPDATE_URL lúc build; trống = tắt tự cập nhật).
 function writeUpdateConfig() {
+  // Khoá công khai trong repo (build/release-public-key.pem): mọi máy build gói cùng một khoá, không cần khoá riêng.
   fs.writeFileSync(path.join(STAGE, 'release-public-key.pem'), require('./release-key').publicKeyPem())
   fs.writeFileSync(path.join(STAGE, 'update-url.txt'), process.env.MCAH_UPDATE_URL || '')
   fs.writeFileSync(path.join(STAGE, 'cloud-url.txt'), process.env.MCAH_CLOUD_URL || 'http://localhost:4100')

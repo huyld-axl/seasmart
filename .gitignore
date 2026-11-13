@@ -59,3 +59,6 @@ backups/
 
 # Danh mục tàu nguồn (30MB), nạp bằng npm run seed:ship-catalog
 docs/ships_plain.db
+
+# Bộ cài app máy tính: nằm trên server (/srv/mcah/releases), không vào git
+frontend/public/download/files/

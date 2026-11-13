@@ -222,6 +222,7 @@
     <a href="#app-tai-khoan" class="chi-app">Tài khoản (máy tính)</a>
     <a href="#app-nhieu-may" class="chi-app">Nhiều máy trong văn phòng</a>
     <a href="#app-ho-so" class="chi-app">Thư mục hồ sơ</a>
+    <a href="#app-cai-dat" class="chi-app">Cài đặt, cập nhật, gỡ</a>
     <a href="#dien-thoai">Dùng trên điện thoại</a>
     <a href="#hoi-dap">Hỏi đáp</a>
     <span class="empty" id="toc-empty">Không có mục nào khớp.</span>
@@ -868,6 +869,24 @@
 
   <h3>Cập nhật</h3>
   <p>Khi bản mới đổi cấu trúc dữ liệu, máy chính tạm dừng việc lưu trên mọi máy, tự chụp lại dữ liệu, rồi mới cập nhật. Cập nhật lỗi thì MCAH tự trả dữ liệu và bản app về như trước.</p>
+    </section>
+    <section id="app-cai-dat" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00e</div>
+  <h2>Cài đặt, cập nhật và gỡ MCAH (ứng dụng trên máy tính)</h2>
+
+  <h3>Tải và cài</h3>
+  <p>Vào <b>mcah.axalize.dev/download</b>, tải bộ cài đúng hệ điều hành. Yêu cầu: Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit; máy chính 8 GB RAM và 10 GB trống, máy nhân viên 4 GB RAM.</p>
+  <p><b>Windows:</b> mở tệp <span class="ui">MCAH Setup ….exe</span>. Nếu Windows hiện "Windows đã bảo vệ máy tính của bạn", bấm <span class="ui">Thêm thông tin</span> → <span class="ui">Vẫn chạy</span>. Trên máy chính, Windows hỏi quyền quản trị một lần để mở cổng cho máy nhân viên.</p>
+  <p><b>Ubuntu:</b> mở tệp <span class="ui">mcah-desktop_….deb</span> bằng App Center, hoặc chạy <span class="ui">sudo apt install ./mcah-desktop_….deb</span>. Nên cài thêm LibreOffice để xuất PDF.</p>
+
+  <h3>Cập nhật</h3>
+  <p>MCAH tự kiểm bản mới khi mở và mỗi 6 giờ. Có bản mới thì hiện hộp ghi rõ có gì mới; bấm <span class="ui">Cập nhật ngay</span>. Bản cập nhật được MCAH ký, app kiểm chữ ký trước khi cài. Máy nhân viên cập nhật theo máy chính, không cần internet.</p>
+  <p>Quản trị chọn kênh ở <span class="ui">Cài đặt trên máy này</span> → <span class="ui">Cập nhật</span> trên máy chính: <b>Ổn định</b> (mặc định) hoặc <b>Thử nghiệm</b> (nhận bản sớm, có thể còn lỗi).</p>
+
+  <h3>Gỡ cài đặt</h3>
+  <p><b>Windows:</b> gỡ trong Cài đặt → Ứng dụng. Mặc định dữ liệu được giữ lại, cài lại là dùng tiếp. Muốn xoá hẳn thì tích <span class="ui">Xoá cả dữ liệu trên máy này</span> và xác nhận lần hai.</p>
+  <p><b>Ubuntu:</b> <span class="ui">sudo apt remove mcah-desktop</span>. Dữ liệu vẫn giữ ở <span class="ui">~/.config/MCAH</span> và thư mục <span class="ui">Tài liệu/MCAH - Hồ sơ</span>; xoá tay hai thư mục này nếu muốn xoá hẳn.</p>
+  <p class="note">Gỡ MCAH trên máy chính là cả văn phòng không làm việc được. Muốn đổi máy chính, liên hệ hỗ trợ MCAH trước.</p>
     </section>
 
     <section id="dien-thoai" data-jobs="mg dy kt qt">

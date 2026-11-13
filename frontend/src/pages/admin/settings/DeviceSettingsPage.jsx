@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Card, Form, Input, InputNumber, Radio, Select, Skeleton, Switch } from 'antd'
+import { Alert, Button, Card, Form, Input, InputNumber, Modal, Radio, Select, Skeleton, Switch } from 'antd'
+import { SegmentedPick } from '../fleet/FleetParts'
+import { NotesList } from '../../../components/common/WhatsNew'
 import useToast from '../../../components/ds/useToast'
 import api from '../../../api/client'
 import apiErrorText from '../../../utils/apiError'
@@ -27,6 +29,9 @@ export default function DeviceSettingsPage() {
   const pdf = useQuery({ queryKey: ['pdf-component'], queryFn: desktop.pdfComponent, enabled: isDesktop() })
   // Máy chính (giai đoạn 3, wireframe docs/design/wireframes/desktop-gd3.html màn 6): tên, địa chỉ cho máy nhân viên.
   const lan = useQuery({ queryKey: ['lan-status'], queryFn: desktop.lanStatus, enabled: isDesktop() })
+  // Cập nhật (giai đoạn 6, wireframe docs/design/wireframes/desktop-gd6.html màn 3).
+  const release = useQuery({ queryKey: ['whats-new'], queryFn: desktop.whatsNew, enabled: isDesktop() })
+  const [notesOpen, setNotesOpen] = useState(false)
   const [form] = Form.useForm()
   const [testing, setTesting] = useState(false)
   const provider = Form.useWatch('provider', form)
@@ -181,6 +186,37 @@ export default function DeviceSettingsPage() {
           />
         )}
       </Card>
+
+      {release.data ? (
+        <Card title="Cập nhật">
+          <p style={{ marginTop: 0 }}>Đang dùng <b>MCAH {release.data.version}</b>. MCAH tự kiểm bản mới khi mở và mỗi 6 giờ.</p>
+          <p className="sf-label" style={{ marginBottom: 6 }}>Kênh cập nhật</p>
+          {release.data.staff ? (
+            <p className="muted" style={{ marginTop: 0 }}>Máy nhân viên theo kênh của máy chính.</p>
+          ) : (
+            <>
+              <SegmentedPick
+                label="Kênh cập nhật"
+                value={release.data.channel}
+                onChange={async (updateChannel) => {
+                  await save.mutateAsync({ updateChannel })
+                  release.refetch()
+                  toast.success(updateChannel === 'beta' ? 'Đã chuyển sang kênh Thử nghiệm' : 'Đã chuyển sang kênh Ổn định')
+                }}
+                options={[{ value: 'stable', label: 'Ổn định' }, { value: 'beta', label: 'Thử nghiệm (beta)' }]}
+              />
+              <p className="muted" style={{ marginBottom: 0 }}>Thử nghiệm: nhận bản sớm hơn, có thể còn lỗi. Máy nhân viên theo kênh của máy này. Đổi về Ổn định không hạ bản đang dùng.</p>
+            </>
+          )}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 12 }}>
+            {release.data.notes ? <Button onClick={() => setNotesOpen(true)}>Xem có gì mới</Button> : null}
+            <Button type="primary" onClick={() => desktop.checkUpdate()}>Kiểm bản mới</Button>
+          </div>
+          <Modal open={notesOpen} title={`Có gì mới trong MCAH ${release.data.version}`} onCancel={() => setNotesOpen(false)} footer={null}>
+            <NotesList notes={release.data.notes} />
+          </Modal>
+        </Card>
+      ) : null}
 
       {lan.data ? (
         <Card title="Máy chính của văn phòng">

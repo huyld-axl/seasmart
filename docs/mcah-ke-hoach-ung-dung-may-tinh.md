@@ -849,3 +849,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-13 | 5 | Viết kế hoạch chi tiết giai đoạn 5 | `docs/mcah-ke-hoach-desktop-gd5.md`, testcase; không có màn mới; chờ duyệt |
 | 2026-11-13 | 5 | Code giai đoạn 5 trên Ubuntu | Backend và vỏ app thành bytecode, không còn mã nguồn / .map trong bộ cài, chặn cờ gỡ lỗi, cảnh báo dùng bất thường; chờ Windows (C1, Defender, bytecode bản Windows) |
 | 2026-11-13 | 6 | Viết kế hoạch chi tiết giai đoạn 6 | `docs/mcah-ke-hoach-desktop-gd6.md`, wireframe, testcase, hướng dẫn nháp; chờ duyệt và Q-F1 (đẩy bộ cài lên server), Q-F2 (máy giữ khoá ký) |
+| 2026-11-13 | 6 | Code giai đoạn 6 | Khoá ký chung, script phát hành có chặn, kênh beta/ổn định, ghi chú thay đổi, gỡ giữ dữ liệu, trang Tải về; chờ server (chỗ phát), Windows, phát thử |

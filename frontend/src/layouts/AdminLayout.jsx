@@ -33,6 +33,7 @@ import PdfComponentModal from '../components/common/PdfComponentModal'
 import AiConsentModal from '../components/common/AiConsentModal'
 import OfflineRibbon from '../components/common/OfflineRibbon'
 import MainLinkRibbon from '../components/common/MainLinkRibbon'
+import WhatsNewRibbon from '../components/common/WhatsNew'
 import DesktopLock from '../components/common/DesktopLock'
 import { desktop, isDesktop } from '../lib/desktop'
 
@@ -265,6 +266,7 @@ export default function AdminLayout() {
         </header>
         {isDesktop() ? <OfflineRibbon /> : null}
         {isDesktop() ? <MainLinkRibbon /> : null}
+        {isDesktop() ? <WhatsNewRibbon /> : null}
 
         <main className="app-shell__content">
           <ErrorBoundary resetKey={pathname}>

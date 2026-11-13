@@ -1,7 +1,7 @@
 # MCAH — Kế hoạch app máy tính, giai đoạn 6: đóng gói và phát hành
 
 - **Ngày lập:** 2026-11-13
-- **Trạng thái:** chờ duyệt. Chưa code.
+- **Trạng thái:** đã duyệt 2026-11-13 (Q-F1, Q-F2 theo đề xuất); code bước 1–7 và 9. Chờ: người lo server tạo chỗ phát (bước 3), máy Windows (build `.exe`, gỡ cài đặt, F1–F3), máy Ubuntu sạch (F1), phát thử hai bản liên tiếp (bước 8).
 - **Kế hoạch tổng:** `docs/mcah-ke-hoach-ung-dung-may-tinh.md` (mục 4.2 M3 / M4, 9 phát hành và cập nhật, 10 giai đoạn 6, 11 nhóm F).
 - **Wireframe:** `docs/design/wireframes/desktop-gd6.html` (5 màn).
 - **Testcase chạy tay:** `docs/mcah-testcase-desktop-gd6.md`.
@@ -165,3 +165,12 @@ Chép hướng dẫn nháp vào trang Hướng dẫn, thêm mục "Phát hành" 
 ## 8. Nhật ký
 
 - 2026-11-13: lập kế hoạch, wireframe, testcase, nháp hướng dẫn. Chờ duyệt.
+- 2026-11-13: duyệt, code.
+  - Khoá ký chung: `build/release-public-key.pem` trong repo, lấy từ khoá riêng sẵn có trên máy dev (khớp, đã kiểm). `release-key.js` không tự sinh khoá nữa; `--init` chỉ dùng lần đầu.
+  - `release.js` viết lại: kênh `beta` / `stable`, `--promote`, chặn thiếu hệ điều hành / khác commit / còn thay đổi chưa commit / thiếu ghi chú / chưa quét / khoá lệch (test tự động), giữ 3 phiên bản, rsync bộ cài trước rồi `latest.json`. `build-info.js` ghi phiên bản + commit sau khi quét bí mật sạch.
+  - Chỗ phát: `nginx.conf` `/download/files/` → `/srv/releases` (gắn chỉ đọc trong `compose.yaml`, `RELEASES_DIR`), `latest.json` không cache; hướng dẫn server thêm mục. **Chưa thử nginx** (máy dev không có Docker).
+  - Kênh: cài đặt `updateChannel`, updater thêm `/beta`; máy nhân viên hỏi máy chính qua `/lan/channel`.
+  - **Khác thiết kế 3.5:** hộp có bản mới vẫn là hộp thoại của hệ điều hành (thêm ghi chú, cỡ tải, dòng "tạm không lưu được"), không dựng hộp trong giao diện. Dải "Đã cập nhật" + thẻ Cập nhật trong Cài đặt trên máy này đã làm; ghi chú gói kèm bộ cài (`release-notes/`).
+  - Gỡ trên Windows: `installer.nsh` hỏi hai lần (bỏ qua khi bộ cài bản mới gỡ bản cũ hoặc gỡ im lặng). Chưa thử (cần Windows). `.deb` thêm `recommends: libreoffice-calc`.
+  - Trang Tải về: ngày, yêu cầu máy, ghi chú, SHA-256, dòng SmartScreen — thử với `latest.json` mẫu trên máy dev.
+  - Thêm `docs/mcah-quy-trinh-phat-hanh.md`.

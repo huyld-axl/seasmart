@@ -7,17 +7,19 @@ const http = require('http')
 const crypto = require('crypto')
 const { PROTOCOL } = require('./lan')
 
-const ROUTES = /^\/(lan\/hello|lan\/pair|lan\/pair\/status|lan\/installer\/[A-Za-z0-9._%-]+|api\/.+|public\/.+)$/
+const ROUTES = /^\/(lan\/hello|lan\/channel|lan\/pair|lan\/pair\/status|lan\/installer\/[A-Za-z0-9._%-]+|api\/.+|public\/.+)$/
 const HOP = ['connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'proxy-connection', 'te', 'trailer', 'host']
 
 // secret: tạo trước khi chạy backend (newSecret) và truyền cho backend qua MCAH_LAN_SECRET.
 const newSecret = () => crypto.randomBytes(24).toString('base64url')
 
-function start({ cert, key, port, secret, backendUrl, appVersion, installerFor }) {
+function start({ cert, key, port, secret, backendUrl, appVersion, installerFor, channel = () => 'stable' }) {
   const server = https.createServer({ cert, key, minVersion: 'TLSv1.2' }, (req, res) => {
     const reply = (status, data) => res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(data))
     const url = new URL(req.url, 'https://lan')
     if (!ROUTES.test(url.pathname) || url.pathname.includes('..')) return reply(404, { error: 'Không có' })
+    // Kênh cập nhật của máy chính: máy nhân viên theo (docs/mcah-ke-hoach-desktop-gd6.md 3.4). Không bí mật.
+    if (url.pathname === '/lan/channel') return reply(200, { channel: channel(), version: appVersion() })
     const proto = req.headers['x-mcah-protocol']
     if (proto !== undefined && Number(proto) !== PROTOCOL && !url.pathname.startsWith('/lan/')) {
       return reply(426, { error: 'Máy này cần cập nhật để nối máy chính', code: 'UPDATE_REQUIRED', protocol: PROTOCOL, version: appVersion() })

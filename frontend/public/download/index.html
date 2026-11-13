@@ -41,6 +41,13 @@
       <div class="os" id="os-win"><b>Windows 10 / 11</b><span class="muted" id="win-info">—</span><a class="btn" id="win-link" aria-disabled="true" href="#">Tải cho Windows</a></div>
       <div class="os" id="os-linux"><b>Ubuntu 22.04 / 24.04</b><span class="muted" id="linux-info">—</span><a class="btn" id="linux-link" aria-disabled="true" href="#">Tải cho Ubuntu (.deb)</a></div>
     </div>
+    <p class="muted">Yêu cầu: Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB RAM.</p>
+    <p class="muted" id="smartscreen" hidden>Windows có thể hiện "Windows đã bảo vệ máy tính của bạn": bấm <b>Thêm thông tin</b> → <b>Vẫn chạy</b>.</p>
+  </section>
+  <section class="card" id="notes-card" hidden>
+    <b>Có gì mới</b>
+    <ul id="notes"></ul>
+    <details class="muted"><summary>Mã SHA-256 để tham khảo</summary><div id="sums"></div></details>
   </section>
   <section class="card">
     <b>Cài đặt</b>
@@ -60,7 +67,24 @@
   fetch('files/latest.json', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : Promise.reject()))
     .then((m) => {
-      document.getElementById('version').textContent = `Bản mới nhất: ${m.version}`
+      const date = m.released_at ? ` · ${new Date(m.released_at).toLocaleDateString('vi-VN')}` : ''
+      document.getElementById('version').textContent = `Bản mới nhất: ${m.version}${date}`
+      document.getElementById('smartscreen').hidden = m.windows_signed !== false
+      const lines = String(m.notes || '').split('\n').map((l) => l.replace(/^\s*[-*]\s*/, '').trim()).filter(Boolean)
+      if (lines.length) {
+        document.getElementById('notes-card').hidden = false
+        for (const line of lines) {
+          const li = document.createElement('li')
+          li.textContent = line
+          document.getElementById('notes').appendChild(li)
+        }
+        for (const f of Object.values(m.files || {})) {
+          const div = document.createElement('div')
+          div.textContent = `${f.name}: ${f.sha256}`
+          div.style.wordBreak = 'break-all'
+          document.getElementById('sums').appendChild(div)
+        }
+      }
       for (const [key, id] of [['win', 'win'], ['linux', 'linux']]) {
         const f = m.files?.[key]
         if (!f) continue

@@ -205,6 +205,13 @@ const lanClient = {
     }
   },
 
+  // Kênh cập nhật của máy chính (máy nhân viên theo).
+  async channel() {
+    const res = await send(await lanClient.target(), { pathname: '/lan/channel' })
+    const data = await readJson(res)
+    return data.channel === 'beta' ? 'beta' : 'stable'
+  },
+
   // Tải một tệp bộ cài từ máy chính (lan-installers của máy chính). → Buffer
   async download(name) {
     const target = await lanClient.target()

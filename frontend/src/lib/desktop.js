@@ -38,6 +38,9 @@ export const desktop = {
   lanInfo: () => bridge().lanInfo(),
   lanRetry: () => bridge().lanRetry(),
   onLanOnline: (fn) => bridge().onLanOnline(fn),
+  // Giai đoạn 6: có gì mới.
+  whatsNew: () => bridge().whatsNew(),
+  whatsNewSeen: () => bridge().whatsNewSeen(),
   // Giai đoạn 4: thư mục hồ sơ.
   openFolder: (seafarerId) => bridge().openFolder(seafarerId),
   exportFolder: (opts) => bridge().exportFolder(opts),

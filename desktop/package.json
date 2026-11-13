@@ -9,8 +9,8 @@
     "start": "electron .",
     "stage:linux": "node scripts/stage.js linux",
     "stage:win": "node scripts/stage.js win",
-    "dist:linux": "npm run build:frontend && npm run stage:linux && node scripts/build-main.js && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked",
-    "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked",
+    "dist:linux": "npm run build:frontend && npm run stage:linux && node scripts/build-main.js && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked && node scripts/build-info.js linux",
+    "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked && node scripts/build-info.js win",
     "release": "node scripts/release.js",
     "test": "node --test test/*.test.js"
   },
@@ -66,6 +66,10 @@
       {
         "from": "dist/stage/cloud-url.txt",
         "to": "cloud-url.txt"
+      },
+      {
+        "from": "release-notes",
+        "to": "release-notes"
       }
     ],
     "linux": {
@@ -75,6 +79,9 @@
       "icon": "build/icon.png"
     },
     "deb": {
+      "recommends": [
+        "libreoffice-calc"
+      ],
       "depends": [
         "libnss3",
         "libgtk-3-0",

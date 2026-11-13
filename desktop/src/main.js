@@ -9,7 +9,7 @@ const { Readable } = require('stream')
 const { startDatabase, killNow, freePort, isRunning } = require('./db')
 const { backendEnv, runScript, startBackend } = require('./backend')
 const { cloudPublicKey } = require('./browser-login')
-const { runUpdate, mirrorInstallers, serveInstaller, updateFromMain, install, PLATFORM } = require('./updater')
+const { runUpdate, mirrorInstallers, serveInstaller, updateFromMain, install, PLATFORM, setChannelSource } = require('./updater')
 const updateGuard = require('./update-guard')
 const { createBackup, restoreBackup, readManifest } = require('./backup')
 const { rotatingLog, captureConsole } = require('./logs')
@@ -19,7 +19,7 @@ const { smtpConfig } = require('./settings')
 const { registerIpc } = require('./ipc')
 const session = require('./session')
 const pin = require('./pin')
-const { getSettings } = require('./settings')
+const { getSettings, saveSettings } = require('./settings')
 const signer = require('./signer')
 const { cloudUrl } = require('./browser-login')
 const { machineKey, removeOldKeyFiles, markMove, pendingMove } = require('./office')
@@ -220,6 +220,7 @@ const beforeInstall = (update) => updateGuard.prepare({
 // Máy nhân viên: không mở Postgres / Fastify; phiên và mọi /api đi qua máy chính.
 async function startupStaff() {
   staffMode = true
+  setChannelSource(() => lanClient.channel())
   readableView.cleanViews()
   session.init(null, lanClient.call)
   watchSession()
@@ -263,6 +264,7 @@ function watchLan() {
 // Vừa ghép xong (ngay hoặc sau khi quản trị duyệt): chuyển sang máy nhân viên, đăng nhập lại bằng vé đang chờ qua máy chính.
 async function becomeStaff() {
   staffMode = true
+  setChannelSource(() => lanClient.channel())
   watchLan()
   return session.becomeStaff(lanClient.call)
 }
@@ -271,6 +273,7 @@ async function startup() {
   const userData = app.getPath('userData')
   removeOldKeyFiles()
   if (lanClient.isStaff()) return startupStaff()
+  setChannelSource(async () => getSettings().updateChannel)
   database = await step('DB_START', () => startDatabase(userData))
   const env = backendEnv(userData, database.env, await freePort(), { soffice: findSoffice(), mailDir: attachmentDir(), filesDir: filesDir() })
   // Máy chính: chứng chỉ HTTPS trong mạng văn phòng; backend báo dấu vân tay lên máy chủ dịch vụ (giai đoạn 3).
@@ -340,6 +343,7 @@ async function startLan() {
       backendUrl: () => backend.url,
       appVersion: () => app.getVersion(),
       installerFor: serveInstaller,
+      channel: () => getSettings().updateChannel,
     })
     const hello = await fetch(`${backend.url}/api/v1/lan/hello`, { headers: { 'x-mcah-lan': lan.secret } }).then((r) => r.json()).catch(() => ({}))
     if (hello.office_id) discovery.advertise({ name: lanHostName(), port: LAN_PORT, officeId: hello.office_id })
@@ -479,6 +483,14 @@ async function main() {
     restartBackend,
     checkUpdate: () => runUpdate(mainWindow, staffMode ? {} : { beforeInstall }),
     lanStatus,
+    // Có gì mới (docs/mcah-ke-hoach-desktop-gd6.md 3.5): ghi chú của bản đang chạy, gói kèm bộ cài.
+    whatsNew: () => {
+      const version = app.getVersion()
+      const file = path.join(app.isPackaged ? process.resourcesPath : path.join(__dirname, '..'), 'release-notes', `${version}.md`)
+      const notes = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim() : ''
+      return { version, notes, unseen: Boolean(notes) && getSettings().seenVersion !== version, channel: getSettings().updateChannel, staff: staffMode }
+    },
+    whatsNewSeen: () => saveSettings({ seenVersion: app.getVersion() }),
     lanFind: () => lanClient.find(session.pendingTicket()),
     // Lỗi có mã (WRONG_MACHINE, UNREACHABLE, …) trả về như kết quả để giao diện chọn màn (IPC làm mất mã của lỗi ném).
     lanPair: async (host) => {

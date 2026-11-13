@@ -72,3 +72,25 @@ Sau khi `https://mcah.axalize.dev/tai-khoan/health` chạy, báo người build 
 
 - Google yêu cầu chủ DNS của `axalize.dev` xác minh quyền sở hữu trên Google Search Console (thêm một bản ghi TXT). Chỉ cần khi chuyển đăng nhập Google sang chế độ chính thức; chế độ thử chưa cần.
 - Nếu đổi sang tên miền khác: đổi `CLOUD_PUBLIC_URL`, báo người phụ trách Google Cloud Console thêm địa chỉ chuyển về mới, và build lại bộ cài app.
+
+## Chỗ phát bộ cài app máy tính (giai đoạn 6)
+
+Trang `https://mcah.axalize.dev/download` và app máy tính đọc bộ cài ở `/download/files/` (kênh ổn định) và `/download/files/beta/` (kênh thử nghiệm). Bộ cài không nằm trong git: script phát hành chép thẳng lên server bằng rsync.
+
+Làm một lần trên server:
+
+1. Tạo thư mục và tài khoản chỉ dùng để đẩy bộ cài:
+
+   ```bash
+   sudo mkdir -p /srv/mcah/releases/beta
+   sudo useradd --system --create-home --shell /bin/bash mcah-release
+   sudo chown -R mcah-release:mcah-release /srv/mcah/releases
+   ```
+
+2. Thêm khoá SSH công khai của máy phát hành (người giữ khoá ký gửi) vào `/home/mcah-release/.ssh/authorized_keys`. Tài khoản này chỉ cần ghi vào `/srv/mcah/releases`.
+3. Nếu muốn để thư mục ở chỗ khác: đặt `RELEASES_DIR=/đường/dẫn` trong tệp `.env` của compose (cạnh `compose.yaml`). Mặc định `/srv/mcah/releases`.
+4. Chạy lại `./deploy.sh` (frontend gắn thư mục đó chỉ đọc vào `/srv/releases`, nginx phục vụ ở `/download/files/`).
+
+Kiểm: `curl -I https://mcah.axalize.dev/download/files/latest.json` trả 404 khi chưa phát bản nào, 200 sau lần phát đầu.
+
+Trên máy phát hành, đặt đích đẩy: `export MCAH_RELEASE_TARGET=mcah-release@mcah.axalize.dev:/srv/mcah/releases`.

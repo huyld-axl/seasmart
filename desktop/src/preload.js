@@ -42,6 +42,8 @@ contextBridge.exposeInMainWorld('mcah', {
   saveSettings: call('save-settings'),
   checkUpdate: call('check-update'),
   lanStatus: call('lan-status'),
+  whatsNew: call('whats-new'),
+  whatsNewSeen: call('whats-new-seen'),
   lanFind: call('lan-find'),
   lanPair: call('lan-pair'),
   lanPairStatus: call('lan-pair-status'),

@@ -61,6 +61,10 @@ function checkSettings(s) {
     }
   }
   if (s.smtpPassword !== undefined) out.smtpPassword = str(s.smtpPassword, 256, 'Mật khẩu')
+  if (s.updateChannel !== undefined) {
+    if (!['stable', 'beta'].includes(s.updateChannel)) throw new Error('Kênh cập nhật không hợp lệ')
+    out.updateChannel = s.updateChannel
+  }
   if (s.lockMinutes !== undefined) {
     if (!Number.isInteger(s.lockMinutes) || s.lockMinutes < 5 || s.lockMinutes > 60) throw new Error('Thời gian tự khoá từ 5 đến 60 phút')
     out.lockMinutes = s.lockMinutes
@@ -125,6 +129,8 @@ function registerIpc(hooks) {
   handle('check-update', () => hooks.checkUpdate())
   // Giai đoạn 3: trạng thái máy chính (thẻ trong Cài đặt trên máy này).
   handle('lan-status', () => hooks.lanStatus())
+  handle('whats-new', () => hooks.whatsNew())
+  handle('whats-new-seen', () => hooks.whatsNewSeen())
   // Máy nhân viên: tìm, ghép máy chính (wireframe màn 1), trạng thái nối (màn 3).
   handle('lan-find', () => hooks.lanFind())
   handle('lan-pair', (host) => {

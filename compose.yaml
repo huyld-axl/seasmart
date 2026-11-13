@@ -131,6 +131,9 @@ services:
     restart: unless-stopped
     ports:
       - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8080}:80"
+    volumes:
+      # Bộ cài app máy tính do script phát hành rsync lên (RELEASES_DIR trên server, mặc định /srv/mcah/releases).
+      - ${RELEASES_DIR:-/srv/mcah/releases}:/srv/releases:ro
     depends_on:
       backend:
         condition: service_healthy

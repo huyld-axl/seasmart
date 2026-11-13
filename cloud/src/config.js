@@ -23,7 +23,7 @@ module.exports = {
   host: process.env.HOST || '127.0.0.1',
   // Địa chỉ công khai của trang web (liên kết trong thư, chuyển hướng Google).
   publicUrl: (process.env.CLOUD_PUBLIC_URL || 'http://localhost:4100').replace(/\/+$/, ''),
-  // Đường dẫn con khi chạy sau proxy (vd. https://mcah.axalize.dev/tai-khoan → '/tai-khoan'); proxy bỏ tiền tố trước khi
+  // Đường dẫn con khi chạy sau proxy (vd. https://mcah.axalize.vn/tai-khoan → '/tai-khoan'); proxy bỏ tiền tố trước khi
   // chuyển vào, nên route vẫn là /dang-nhap, còn liên kết / chuyển hướng / cookie phải thêm tiền tố này.
   basePath: new URL(process.env.CLOUD_PUBLIC_URL || 'http://localhost:4100').pathname.replace(/\/+$/, ''),
   secureCookies: (process.env.CLOUD_PUBLIC_URL || '').startsWith('https://'),

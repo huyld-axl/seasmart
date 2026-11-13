@@ -253,7 +253,7 @@ seasmart/
 |---|---|---|---|
 | **M1** | Tên sản phẩm | **Chốt 2026-11-13: MCAH** ở mọi chỗ người dùng thấy (app, bộ cài, trang web, thư mục) | Đã làm |
 | **M2** | Máy chủ dịch vụ: dùng lại máy chủ đang chạy bản web hay thuê máy mới; tên miền cho trang đăng nhập | Sếp / bạn | Giai đoạn 2 |
-| **M3** | Trang "Tải về" | **Chốt 2026-11-13:** `https://mcah.axalize.dev/download` (trang tĩnh trong frontend, đọc `latest.json`) | Dựng trang; tệp bộ cài đặt lên ở giai đoạn 6 |
+| **M3** | Trang "Tải về" | **Chốt 2026-11-13:** `https://mcah.axalize.vn/download` (trang tĩnh trong frontend, đọc `latest.json`) | Dựng trang; tệp bộ cài đặt lên ở giai đoạn 6 |
 | **M4** | Mua chứng thư ký số Windows | **Chưa vội** (2026-11-13) | Phát hành rộng |
 | **M5** | Điều khoản sử dụng, Chính sách quyền riêng tư | **2026-11-13:** dựng trang với nội dung "TBC" trước (`/tai-khoan/dieu-khoan`, `/tai-khoan/quyen-rieng-tu`), luật sư viết sau | Trước khi mở bán |
 | **M6** | Quy định 375px | **Chốt 2026-11-13:** bản web vẫn giữ giao diện điện thoại; màn chỉ có trong app máy tính không cần | Đã sửa `CLAUDE.md` 3.5 |

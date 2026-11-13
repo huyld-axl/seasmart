@@ -1,7 +1,7 @@
 # MCAH — Testcase chạy tay: app máy tính, giai đoạn 6
 
 - Kế hoạch: `docs/mcah-ke-hoach-desktop-gd6.md`. Wireframe: `docs/design/wireframes/desktop-gd6.html`.
-- Chạy trên bộ cài phát thật qua `https://mcah.axalize.dev/download` (kênh thử nghiệm), máy Windows sạch và Ubuntu 22.04 / 24.04 sạch.
+- Chạy trên bộ cài phát thật qua `https://mcah.axalize.vn/download` (kênh thử nghiệm), máy Windows sạch và Ubuntu 22.04 / 24.04 sạch.
 - Cột Ubuntu / Windows ghi: Đạt / Không đạt (kèm mô tả) / Chờ máy. F1–F4 lấy từ kế hoạch tổng (mục 11).
 
 ## Chuẩn bị
@@ -26,5 +26,5 @@
 | G7 | Windows: gỡ không tích "Xoá cả dữ liệu", cài lại | Đăng nhập lại là thấy đủ dữ liệu và thư mục hồ sơ | — | Chờ máy |
 | G8 | Windows: gỡ có tích, xác nhận lần hai | Không còn `%APPDATA%\MCAH` và `Tài liệu\MCAH - Hồ sơ` | — | Chờ máy |
 | G9 | Ubuntu: `sudo apt remove mcah-desktop`, cài lại | Dữ liệu còn nguyên | Chưa thử | — |
-| G10 | Mở https://mcah.axalize.dev/download trên máy tính và điện thoại | Đúng bản mới nhất, ngày, ghi chú, SHA-256, dòng SmartScreen; nút tải đúng tệp | Đạt với latest.json mẫu trên máy dev; chờ server thật | — |
+| G10 | Mở https://mcah.axalize.vn/download trên máy tính và điện thoại | Đúng bản mới nhất, ngày, ghi chú, SHA-256, dòng SmartScreen; nút tải đúng tệp | Đạt với latest.json mẫu trên máy dev; chờ server thật | — |
 | G11 | Trong lúc đẩy bản mới lên server, app kiểm bản mới | Không bao giờ thấy latest.json trỏ tệp chưa có (không tải hỏng) | Chưa thử | Chờ máy |

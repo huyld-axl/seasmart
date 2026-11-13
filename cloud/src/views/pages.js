@@ -40,7 +40,8 @@ ${googleButton(google, 'Tiếp tục với Google')}
 <label>Email<input name="email" type="email" autocomplete="username" required value="${e(email)}" ${reauth && email ? 'readonly' : 'autofocus'}></label>
 <label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required ${reauth && email ? 'autofocus' : ''}></label>
 <button class="pri">Đăng nhập</button></form>
-<div class="row"><a href="${B}/quen-mat-khau">Quên mật khẩu?</a><a href="${B}/dang-ky">Đăng ký</a></div>`),
+<div class="row"><a href="${B}/quen-mat-khau">Quên mật khẩu?</a><a href="${B}/dang-ky">Đăng ký</a></div>
+<div class="row muted"><a href="${B}/dieu-khoan">Điều khoản</a><a href="${B}/quyen-rieng-tu">Quyền riêng tư</a></div>`),
 
   register: ({ email = '', fullName = '', error = '', google = false, invite = null }) => layout('Đăng ký', `
 <h1>Đăng ký</h1>
@@ -52,7 +53,15 @@ ${googleButton(google, 'Đăng ký bằng Google')}
 <label>Email<input name="email" type="email" autocomplete="email" required value="${e(email)}" ${invite ? 'readonly' : ''}></label>
 <label>Mật khẩu (ít nhất 10 ký tự)<input name="password" type="password" autocomplete="new-password" minlength="10" required></label>
 <button class="pri">Đăng ký</button></form>
+<p class="muted">Bằng việc đăng ký, bạn đồng ý với <a href="${B}/dieu-khoan">Điều khoản sử dụng</a> và <a href="${B}/quyen-rieng-tu">Chính sách quyền riêng tư</a> của MCAH.</p>
 <div class="row"><span class="muted">Đã có tài khoản?</span><a href="${B}/dang-nhap">Đăng nhập</a></div>`),
+
+  // Điều khoản / quyền riêng tư (M5): nội dung chờ luật sư, tạm "TBC".
+  legal: ({ title }) => layout(title, `
+<h1>${e(title)}</h1>
+<p>Nội dung đang được hoàn thiện (TBC).</p>
+<p class="muted">Cần hỏi thêm, liên hệ MCAH.</p>
+<div class="row"><a href="${B}/dang-nhap">Về đăng nhập</a></div>`),
 
   checkEmail: ({ email }) => layout('Xác minh email', `
 <h1>Xác minh email</h1>${notice('info', `Đã gửi thư tới ${email}. Bấm liên kết trong thư rồi quay lại đây đăng nhập.`)}

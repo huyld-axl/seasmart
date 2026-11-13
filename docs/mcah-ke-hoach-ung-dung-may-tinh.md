@@ -251,14 +251,14 @@ seasmart/
 
 | # | Việc | Ai quyết | Cần trước |
 |---|---|---|---|
-| **M1** | Tên sản phẩm và biểu tượng trên bộ cài, cửa sổ app, trang đăng nhập web (code đang dùng cả "Marineport", "MCAH", "SeaSmart") | Sếp | Giai đoạn 1 |
+| **M1** | Tên sản phẩm | **Chốt 2026-11-13: MCAH** ở mọi chỗ người dùng thấy (app, bộ cài, trang web, thư mục) | Đã làm |
 | **M2** | Máy chủ dịch vụ: dùng lại máy chủ đang chạy bản web hay thuê máy mới; tên miền cho trang đăng nhập | Sếp / bạn | Giai đoạn 2 |
-| **M3** | Trang "Tải về" đặt trên website nào, ai làm | Sếp / marketing | Giai đoạn 6 |
-| **M4** | Mua chứng thư ký số Windows | Sếp duyệt chi | Phát hành rộng (sau giai đoạn 7) |
-| **M5** | Điều khoản sử dụng, Chính sách quyền riêng tư (mục 5.6) | Luật sư | Giai đoạn 2 (trang đăng ký cần) |
-| **M6** | Bỏ quy định 375px trong `CLAUDE.md` mục 3.5 theo Q2 | Bạn | Màn mới đầu tiên |
-| **M7** | Sếp đã biết các đánh đổi ở mục 0, ý 10 | Sếp | Giai đoạn 2 |
-| **M8** | Cách tính tiền, bản quyền, số máy (Q5, Q8, Q10) | Sales | Sau bản đầu |
+| **M3** | Trang "Tải về" | **Chốt 2026-11-13:** `https://mcah.axalize.dev/download` (trang tĩnh trong frontend, đọc `latest.json`) | Dựng trang; tệp bộ cài đặt lên ở giai đoạn 6 |
+| **M4** | Mua chứng thư ký số Windows | **Chưa vội** (2026-11-13) | Phát hành rộng |
+| **M5** | Điều khoản sử dụng, Chính sách quyền riêng tư | **2026-11-13:** dựng trang với nội dung "TBC" trước (`/tai-khoan/dieu-khoan`, `/tai-khoan/quyen-rieng-tu`), luật sư viết sau | Trước khi mở bán |
+| **M6** | Quy định 375px | **Chốt 2026-11-13:** bản web vẫn giữ giao diện điện thoại; màn chỉ có trong app máy tính không cần | Đã sửa `CLAUDE.md` 3.5 |
+| **M7** | Sếp đã biết các đánh đổi | **Đã chốt** 2026-11-13 (gồm Q14 không mã hoá, Q15 không sao lưu) | — |
+| **M8** | Cách tính tiền, bản quyền, số máy | **Không làm trong kế hoạch này** (2026-11-13) | — |
 | **M9** | Đăng ký app với Google (Google Cloud Console) để có nút "Tiếp tục với Google"; cần tên miền và trang quyền riêng tư | Bạn / sếp | Giai đoạn 2 |
 
 ### 4.3 Q4: vì sao không chuyển sang SQLite
@@ -396,7 +396,7 @@ Toàn bộ dữ liệu văn phòng nằm trên **một máy chính**: hỏng ổ
 **Cấu trúc thư mục dễ đọc:**
 
 ```
-SeaSmart - Hồ sơ/
+MCAH - Hồ sơ/
 ├── Đọc tôi.txt                     ← "Đây là bản sao. Sửa ở đây không vào app."
 ├── Thuyền viên/
 │   └── NGUYỄN VĂN AN - <mã thuyền viên>/
@@ -648,7 +648,7 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 
 - 2–3 văn phòng thân, kênh beta, mỗi nơi ít nhất một máy nhân viên. Thu lỗi, sửa.
 
-**Xong khi:** các văn phòng dùng 2 tuần không mất dữ liệu, không lỗi chặn việc; có ít nhất một lần khôi phục thử từ bản sao lưu thật.
+**Xong khi:** các văn phòng dùng 2 tuần không mất dữ liệu, không lỗi chặn việc; hỗ trợ MCAH chuyển máy chính thử một lần bằng lệnh `--backup` / `--restore` (Q15: app không có sao lưu cho người dùng).
 ⛔ **DỪNG:** báo sếp trước khi mở bán.
 
 **Tổng sơ bộ:** 16–20 tuần. Bản quyền (mục 7) cộng 1–2 tuần khi sales chốt.
@@ -845,3 +845,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-13 | 4 | Chốt Q14: không mã hoá tài liệu, không mã hoá sao lưu | Tài liệu lưu thẳng cây thư mục dễ đọc; viết lại kế hoạch giai đoạn 4 |
 | 2026-11-13 | 4 | Chốt Q15: bỏ tính năng sao lưu cho người dùng | Chỉ còn bản chụp trước khi cập nhật và lệnh cho hỗ trợ MCAH |
 | 2026-11-13 | 4 | Code giai đoạn 4 trên Ubuntu | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd4.md`; chờ Windows, bộ cài thật (B9), đăng nhập thật để thử chuyển máy (B5, B19) |
+| 2026-11-13 | — | Chốt M1, M3–M8 | MCAH; /download; ký số chưa vội; trang điều khoản TBC; 375px chỉ cho bản web; không làm bản quyền |

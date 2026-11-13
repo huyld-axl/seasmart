@@ -98,6 +98,8 @@ async function webRoutes(fastify) {
 
   // Trang chuyển về sau khi app đã nhận mã (app chuyển trình duyệt tới đây).
   fastify.get('/xong', async (request, reply) => html(reply, pages.backToApp()))
+  fastify.get('/dieu-khoan', async (request, reply) => html(reply, pages.legal({ title: 'Điều khoản sử dụng' })))
+  fastify.get('/quyen-rieng-tu', async (request, reply) => html(reply, pages.legal({ title: 'Chính sách quyền riêng tư' })))
 
   // ---- Đăng nhập ----
   const loginLimit = { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }

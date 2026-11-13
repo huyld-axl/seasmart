@@ -63,7 +63,7 @@ module.exports = {
     useSsl: process.env.SMTP_USE_SSL === 'true',
     useTls: process.env.SMTP_USE_TLS === 'true',
     fromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@marineport.vn',
-    fromName: process.env.SMTP_FROM_NAME || 'MarinePort',
+    fromName: process.env.SMTP_FROM_NAME || 'MCAH',
   },
   appUrl: (process.env.APP_URL || 'http://localhost:5173').replace(/\/+$/, ''),
 }

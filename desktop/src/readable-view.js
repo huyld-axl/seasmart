@@ -1,6 +1,7 @@
 // Mở thư mục hồ sơ / xuất hồ sơ ra thư mục (docs/mcah-ke-hoach-desktop-gd4.md 3.2, wireframe màn 4, 5).
 // Máy chính: mở thẳng thư mục thật trong thư mục hồ sơ. Máy nhân viên: tải từng tệp qua máy chính vào bản xem tạm chỉ đọc
-// (<userData>/tmp/xem, xoá khi đóng app / đăng xuất / mở app lần sau). Xuất: chép vào "SeaSmart - Hồ sơ" ở nơi người dùng chọn.
+// (<userData>/tmp/xem, xoá khi đóng app / đăng xuất / mở app lần sau). Xuất: chép vào "MCAH - Hồ sơ xuất <ngày>" ở nơi người dùng chọn
+// (khác tên thư mục hồ sơ thật "MCAH - Hồ sơ" để xuất vào Tài liệu không đè lên nó).
 const fs = require('fs')
 const path = require('path')
 const { app, shell, dialog } = require('electron')
@@ -64,7 +65,7 @@ async function exportFolder(api, window, { seafarerIds = null, all = false }, on
   const tree = await json(await api(`/api/v1/files/tree?${query}`))
   const pick = await dialog.showOpenDialog(window, { title: 'Chọn nơi xuất hồ sơ', properties: ['openDirectory', 'createDirectory'] })
   if (pick.canceled || !pick.filePaths[0]) return { canceled: true }
-  const root = path.join(pick.filePaths[0], 'SeaSmart - Hồ sơ')
+  const root = path.join(pick.filePaths[0], `MCAH - Hồ sơ xuất ${new Date().toISOString().slice(0, 10)}`)
   fs.mkdirSync(root, { recursive: true })
   fs.writeFileSync(path.join(root, 'Đọc tôi.txt'), EXPORT_README)
   for (const f of tree.folders) fs.mkdirSync(path.join(root, ...f.folder.split('/')), { recursive: true })

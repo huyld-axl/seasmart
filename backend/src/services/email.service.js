@@ -46,7 +46,7 @@ function shouldSend() {
 }
 
 // Thư HTML (thư mời) hoặc thư chữ thường có đính kèm (gửi hồ sơ cho chủ tàu). cc, replyTo, attachments tuỳ chọn.
-// fromName: tên người gửi, hiện là "Tên (MarinePort)"; địa chỉ gửi luôn là của công ty.
+// fromName: tên người gửi, hiện là "Tên (MCAH)"; địa chỉ gửi luôn là của công ty.
 async function send({ to, cc, bcc, replyTo, fromName: displayName, subject, html, text, attachments }) {
   if (!shouldSend()) return false
   const { fromName, fromEmail } = config.smtp

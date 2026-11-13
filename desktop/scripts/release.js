@@ -15,7 +15,8 @@ const { canonical } = require('../src/manifest')
 const DESKTOP = path.join(__dirname, '..')
 const KEEP = 3
 
-function plan({ desktop = DESKTOP, channel = 'beta' } = {}) {
+// allowMissing: nền tảng được phép vắng mặt (vd. ['win'] khi chưa build được bản Windows); bản có mặt vẫn kiểm đủ.
+function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [] } = {}) {
   const pkg = JSON.parse(fs.readFileSync(path.join(desktop, 'package.json'), 'utf8'))
   const { name: pkgName, version, build } = pkg
   const installers = path.join(desktop, build.directories.output)
@@ -28,6 +29,7 @@ function plan({ desktop = DESKTOP, channel = 'beta' } = {}) {
     const src = path.join(installers, name)
     const infoFile = path.join(installers, `build-info-${platform}.json`)
     if (!fs.existsSync(src)) {
+      if (allowMissing.includes(platform)) continue
       problems.push(`Thiếu bộ cài ${platform === 'win' ? 'Windows' : 'Ubuntu'}: ${name}`)
       continue
     }
@@ -44,13 +46,14 @@ function plan({ desktop = DESKTOP, channel = 'beta' } = {}) {
     const data = fs.readFileSync(src)
     files[platform] = { name, sha256: crypto.createHash('sha256').update(data).digest('hex'), size: data.length }
   }
+  if (!Object.keys(files).length) problems.push('Không có bộ cài nào')
   if (infos.linux && infos.win && infos.linux.commit !== infos.win.commit) problems.push(`Hai bản khác commit: Ubuntu ${infos.linux.commit.slice(0, 8)}, Windows ${infos.win.commit.slice(0, 8)}`)
   const notesFile = path.join(desktop, 'release-notes', `${version}.md`)
   const notes = fs.existsSync(notesFile) ? fs.readFileSync(notesFile, 'utf8').trim() : ''
   if (!notes) problems.push(`Thiếu ghi chú thay đổi release-notes/${version}.md`)
   const migrations = path.join(desktop, '../backend/migrations/postgres')
   const lastMigration = fs.existsSync(migrations) ? fs.readdirSync(migrations).filter((n) => /^\d+.*\.sql$/.test(n)).sort().pop() : null
-  return { version, files, installers, notes, lastMigration, endpoints, problems, commit: infos.linux?.commit }
+  return { version, files, installers, notes, lastMigration, endpoints, problems, commit: (infos.linux || infos.win)?.commit }
 }
 
 const sign = (signed, key) => ({ ...signed, signature: crypto.sign(null, Buffer.from(canonical(signed)), key).toString('base64') })
@@ -77,8 +80,8 @@ function upload(dir, channel) {
   console.log(`Đã đẩy lên ${dest}`)
 }
 
-function release({ channel, key }) {
-  const p = plan({ channel })
+function release({ channel, key, allowMissing = [] }) {
+  const p = plan({ channel, allowMissing })
   if (p.problems.length) throw new Error(`Không phát hành ${p.version}:\n- ${p.problems.join('\n- ')}`)
   const dir = path.join(DESKTOP, 'dist/updates', channel)
   fs.mkdirSync(dir, { recursive: true })
@@ -109,7 +112,7 @@ if (require.main === module) {
   try {
     const key = require('./release-key').privateKey()
     if (arg('--promote')) promote(arg('--promote'), key)
-    else release({ channel: arg('--channel') || 'beta', key })
+    else release({ channel: arg('--channel') || 'beta', key, allowMissing: (arg('--allow-missing') || '').split(',').filter(Boolean) })
   } catch (error) {
     console.error(error.message)
     process.exitCode = 1

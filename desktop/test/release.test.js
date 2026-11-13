@@ -45,3 +45,16 @@ test('phát hành: chặn khi thiếu Ubuntu, khác commit, thiếu ghi chú, c�
     fs.rmSync(root, { recursive: true })
   }
 })
+
+test('phát hành: --allow-missing win cho phát một mình bản Ubuntu, vẫn chặn khi chẳng có bản nào', () => {
+  let { root, d } = setup({ win: false })
+  assert.ok(plan({ desktop: d }).problems.some((x) => /Thiếu bộ cài Windows/.test(x)))
+  const p = plan({ desktop: d, allowMissing: ['win'] })
+  assert.deepStrictEqual(p.problems, [])
+  assert.deepStrictEqual(Object.keys(p.files), ['linux'])
+  assert.strictEqual(p.commit, 'abc')
+  fs.rmSync(root, { recursive: true })
+  ;({ root, d } = setup({ win: false, linux: false }))
+  assert.ok(plan({ desktop: d, allowMissing: ['win', 'linux'] }).problems.includes('Không có bộ cài nào'))
+  fs.rmSync(root, { recursive: true })
+})

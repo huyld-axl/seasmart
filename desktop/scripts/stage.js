@@ -20,7 +20,8 @@ const STAGE = path.join(DESKTOP, 'dist/stage')
 const OUT = path.join(STAGE, target)
 const PG_VERSION = require(path.join(DESKTOP, 'package.json')).devDependencies['embedded-postgres']
 
-const sh = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit' })
+// Windows: npm là npm.cmd, phải chạy qua shell; tar.exe có sẵn từ Windows 10 (giải nén được cả .zip).
+const sh = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
 
 function copyBackend() {
   const dest = path.join(OUT, 'backend')
@@ -86,7 +87,7 @@ async function copyNode() {
   fs.rmSync(tmp, { recursive: true, force: true })
   fs.mkdirSync(tmp, { recursive: true })
   fs.writeFileSync(path.join(tmp, name), archive)
-  if (target === 'win') sh('unzip', ['-q', name], tmp)
+  if (target === 'win') sh(process.platform === 'win32' ? 'tar' : 'unzip', process.platform === 'win32' ? ['-xf', name] : ['-q', name], tmp)
   else sh('tar', ['-xJf', name], tmp)
   const dir = path.join(tmp, name.replace(/\.(zip|tar\.xz)$/, ''))
   const dest = path.join(OUT, 'node')
@@ -141,7 +142,8 @@ function protectBackend() {
   const nodeBin = path.join(OUT, 'node', target === 'win' ? 'node.exe' : 'node')
   const sameOs = (target === 'win') === (process.platform === 'win32')
   if (!sameOs) console.warn('CẢNH BÁO: build chéo hệ điều hành, backend chỉ được gom + nén, chưa dịch bytecode. Build lại trên Windows trước khi phát hành.')
-  sh(process.execPath, [path.join(__dirname, 'build-backend.js'), path.join(OUT, 'backend'), nodeBin, ...(sameOs ? [] : ['--no-bytecode'])], DESKTOP)
+  // Gọi thẳng (không qua shell): đường dẫn Node trên Windows thường có dấu cách (C:\Program Files\nodejs).
+  execFileSync(process.execPath, [path.join(__dirname, 'build-backend.js'), path.join(OUT, 'backend'), nodeBin, ...(sameOs ? [] : ['--no-bytecode'])], { cwd: DESKTOP, stdio: 'inherit' })
 }
 
 async function main() {

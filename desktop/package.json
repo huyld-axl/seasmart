@@ -1,6 +1,6 @@
 {
   "name": "mcah-desktop",
-  "version": "0.0.1",
+  "version": "0.9.0",
   "private": true,
   "description": "App máy tính MCAH (Electron)",
   "main": "src/main.js",

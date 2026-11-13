@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App máy tính GĐ6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe giai đoạn 6 app máy tính (docs/mcah-ke-hoach-desktop-gd6.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1360px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 72ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 80ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; color: var(--foreground); max-width: 80ch; }
+  .notes li { margin-bottom: 4px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .titlebar { display: flex; align-items: center; gap: 16px; padding: 6px 12px; background: #2f3237; color: #e8e8ea; font-size: 12px; }
+  .titlebar .menu span { margin-right: 14px; }
+  .titlebar .dots { margin-left: auto; letter-spacing: 6px; }
+  .shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 460px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { padding: 0; display: grid; grid-template-rows: auto 1fr; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .topbar .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+  .page { padding: 20px; display: grid; gap: 16px; align-content: start; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .card h4 { margin: 0 0 12px; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: grid; gap: 4px; font-size: 13px; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); min-height: 36px; }
+  .input.area { min-height: 90px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 6px 4px; }
+  .btn.dis { opacity: .45; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--secondary); font-size: 12px; }
+  .radio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .radio.on { border-color: var(--primary); background: var(--primary-light); }
+  .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-strong); margin-top: 2px; flex-shrink: 0; }
+  .radio.on .dot { border: 5px solid var(--primary); }
+  .banner { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .banner.ok { background: var(--success-bg); color: var(--success); }
+  .banner.err { background: var(--error-bg); color: var(--error-strong); }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(560px, 100%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 14px; }
+  .modal.wide { width: min(720px, 100%); }
+  .modal h4 { margin: 0; font-size: 16px; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .files { display: grid; gap: 6px; }
+  .file { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+  .file .muted { margin-left: auto; }
+  .progress { height: 6px; border-radius: 3px; background: var(--secondary); overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 45%; background: var(--primary); }
+  .dropdown { position: absolute; right: 16px; top: 52px; width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-modal); padding: 6px; font-size: 13px; }
+  .dropdown div { padding: 8px 10px; border-radius: var(--radius-sm); }
+  .dropdown .on { background: var(--secondary); font-weight: 600; }
+  .dropdown hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+  .splash { min-height: 420px; display: grid; place-items: center; background: var(--background); }
+  .splash .box { width: min(480px, 100%); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 14px; text-align: left; }
+  .code { font-family: ui-monospace, monospace; font-size: 12px; background: var(--secondary); padding: 8px 10px; border-radius: var(--radius-sm); }
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .shell { grid-template-columns: 1fr; } .side { display: none; } .grid2 { grid-template-columns: 1fr; } }
+  .web { min-height: 440px; display: grid; place-items: center; background: #eef0f4; position: relative; }
+  .web .bar { position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: #dfe2e8; font-size: 12px; color: var(--muted); }
+  .web .box { width: min(400px, calc(100% - 32px)); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 12px; margin-top: 24px; }
+  .web h4 { margin: 0; font-size: 18px; }
+  .or { text-align: center; color: var(--muted); font-size: 12px; }
+  .pin { display: flex; gap: 8px; justify-content: center; }
+  .pin span { width: 40px; height: 48px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 22px; }
+  .code-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-family: ui-monospace, monospace; font-size: 15px; text-align: center; }
+  .code-grid span { padding: 8px; background: var(--secondary); border-radius: var(--radius-sm); }
+  .ribbon { padding: 8px 20px; background: var(--warning-bg); border-bottom: 1px solid var(--warning-border); color: var(--warning); font-size: 13px; display: flex; gap: 12px; align-items: center; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .tbl th { color: var(--muted); font-weight: 500; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--secondary); }
+  .tag.warn { background: var(--warning-bg); color: var(--warning); }
+  .tag.ok { background: var(--success-bg); color: var(--success); }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">GĐ6 phát hành</p>
+    <a href="#w1"><b>1</b>Hộp có bản mới</a><a href="#w2"><b>2</b>Có gì mới</a><a href="#w3"><b>3</b>Cài đặt → Cập nhật</a><a href="#w4"><b>4</b>Gỡ trên Windows</a><a href="#w5"><b>5</b>Trang Tải về</a>
+  </nav>
+  <main class="main">
+    <header>
+      <h1>App máy tính — giai đoạn 6: đóng gói và phát hành</h1>
+      <p class="lead">Chỉ những màn mới hoặc đổi. Dựng bằng control antd / components/ds như màn hiện có.</p>
+    </header>
+    <section id="w1">
+      <h2><b>1</b> Hộp có bản mới (kèm ghi chú thay đổi)</h2>
+      <p class="why">Thay hộp hỏi cập nhật của giai đoạn 1: thêm ghi chú thay đổi bằng tiếng Việt và cỡ tải.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Tổng quan</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card" style="min-height:160px"><p class="muted">… trang đang dùng …</p></div></div></div><div class="scrim"><div class="modal" role="dialog"><h4>Có bản mới MCAH 1.2.0</h4><p class="muted" style="margin:0">Đang dùng 1.1.3 · tải 120 MB</p><b>Có gì mới</b><ul style="margin:0;padding-left:18px"><li>Thêm nút "Mở thư mục hồ sơ" ở trang tàu và đối tác.</li><li>Sửa lỗi xuất PDF khi tên thuyền viên có dấu nháy.</li></ul><div class="foot"><span class="btn">Để sau</span><span class="btn pri">Cập nhật ngay</span></div></div></div></div></div>
+      <ul class="notes"><li>Máy chính, bản có đổi dữ liệu: thêm dòng "Các máy trong văn phòng sẽ tạm không lưu được trong vài phút." (giai đoạn 4).</li><li>Ubuntu: thêm dòng "Ubuntu sẽ hỏi mật khẩu quản trị để cài."</li></ul>
+    </section>
+    <section id="w2">
+      <h2><b>2</b> Sau khi cập nhật: Có gì mới</h2>
+      <p class="why">Lần đầu mở bản mới: dải xanh trên cùng, bấm thì mở hộp ghi chú. Đóng là thôi, không hiện lại.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Tổng quan</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="ribbon" style="background:var(--success-bg, #ecfdf5);color:#007a55">✓ Đã cập nhật lên MCAH 1.2.0. <span class="btn link" style="margin-left:auto">Xem có gì mới</span> <span class="btn link">Đóng</span></div><div class="page"><div class="card" style="min-height:120px"><p class="muted">… trang Tổng quan …</p></div></div></div></div></div>
+      <ul class="notes"></ul>
+    </section>
+    <section id="w3">
+      <h2><b>3</b> Cài đặt trên máy này → Cập nhật</h2>
+      <p class="why">Thẻ mới trong trang Cài đặt trên máy này (mọi máy).</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Cài đặt trên máy này</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card"><h4>Cập nhật</h4><div class="grid2"><div class="field">Đang dùng<div class="input">MCAH 1.2.0 · kênh Ổn định</div></div><div class="field">Lần kiểm gần nhất<div class="input">hôm nay 09:12 · đã là bản mới nhất</div></div></div><div class="field" style="margin-top:8px">Kênh cập nhật<div class="row" style="gap:8px"><span class="btn pri">Ổn định</span><span class="btn">Thử nghiệm (beta)</span></div></div><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><span class="btn">Xem có gì mới</span><span class="btn pri">Kiểm bản mới</span></div></div></div></div></div></div>
+      <ul class="notes"><li>Kênh beta: nhận bản sớm hơn, có thể còn lỗi. Chỉ quản trị đổi được kênh ở máy chính; máy nhân viên theo máy chính.</li><li>App tự kiểm khi mở và mỗi 6 giờ như hiện nay.</li></ul>
+    </section>
+    <section id="w4">
+      <h2><b>4</b> Gỡ cài đặt trên Windows</h2>
+      <p class="why">Bộ gỡ cài đặt (NSIS) hỏi có xoá dữ liệu không. Mặc định giữ.</p>
+      <div class="app"><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Gỡ MCAH</h4><p style="margin:0">MCAH sẽ được gỡ khỏi máy này.</p><div class="radio"><span class="dot"></span><div><b>Xoá cả dữ liệu trên máy này</b><div class="muted">Cơ sở dữ liệu và thư mục hồ sơ. Không lấy lại được.</div></div></div><div class="row" style="justify-content:flex-end;gap:8px"><span class="btn">Huỷ</span><span class="btn pri">Gỡ</span></div></div></div></div>
+      <ul class="notes"><li>Có tích "Xoá cả dữ liệu": hỏi lại lần hai ("Xoá vĩnh viễn dữ liệu của văn phòng trên máy này?") rồi mới xoá.</li><li>Ubuntu (.deb): gỡ gói không đụng dữ liệu; hướng dẫn ghi cách xoá tay nếu muốn.</li></ul>
+    </section>
+    <section id="w5">
+      <h2><b>5</b> Trang Tải về (đã dựng ở M3)</h2>
+      <p class="why">https://mcah.axalize.dev/download — thêm số phiên bản, ngày phát hành, yêu cầu máy, ghi chú bản mới nhất, SHA-256 để tham khảo.</p>
+      <div class="app"><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Tải MCAH cho máy tính</h4><p class="muted" style="margin:0">Bản mới nhất 1.2.0 · 14/11/2026</p><div class="grid2"><div class="card"><b>Windows 10 / 11</b><p class="muted" style="margin:4px 0">MCAH Setup 1.2.0.exe · 118 MB</p><span class="btn pri">Tải cho Windows</span></div><div class="card"><b>Ubuntu 22.04 / 24.04</b><p class="muted" style="margin:4px 0">mcah-desktop_1.2.0_amd64.deb · 112 MB</p><span class="btn pri">Tải cho Ubuntu</span></div></div><p class="muted" style="margin:0">Yêu cầu: máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB RAM.</p><b>Có gì mới</b><ul style="margin:0;padding-left:18px"><li>Thêm nút "Mở thư mục hồ sơ" ở trang tàu và đối tác.</li><li>Sửa lỗi xuất PDF khi tên thuyền viên có dấu nháy.</li></ul></div></div></div>
+      <ul class="notes"><li>Windows chưa ký số (M4 chưa vội): ghi chú "Windows có thể hiện cảnh báo SmartScreen — bấm Thêm thông tin → Vẫn chạy".</li></ul>
+    </section>
+  </main>
+</div>
+</body>
+</html>

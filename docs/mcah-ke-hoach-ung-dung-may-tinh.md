@@ -848,3 +848,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-13 | — | Chốt M1, M3–M8 | MCAH; /download; ký số chưa vội; trang điều khoản TBC; 375px chỉ cho bản web; không làm bản quyền |
 | 2026-11-13 | 5 | Viết kế hoạch chi tiết giai đoạn 5 | `docs/mcah-ke-hoach-desktop-gd5.md`, testcase; không có màn mới; chờ duyệt |
 | 2026-11-13 | 5 | Code giai đoạn 5 trên Ubuntu | Backend và vỏ app thành bytecode, không còn mã nguồn / .map trong bộ cài, chặn cờ gỡ lỗi, cảnh báo dùng bất thường; chờ Windows (C1, Defender, bytecode bản Windows) |
+| 2026-11-13 | 6 | Viết kế hoạch chi tiết giai đoạn 6 | `docs/mcah-ke-hoach-desktop-gd6.md`, wireframe, testcase, hướng dẫn nháp; chờ duyệt và Q-F1 (đẩy bộ cài lên server), Q-F2 (máy giữ khoá ký) |

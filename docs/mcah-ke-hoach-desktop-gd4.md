@@ -1,12 +1,12 @@
-# MCAH — Kế hoạch app máy tính, giai đoạn 4: thư mục hồ sơ, sao lưu, bảo mật
+# MCAH — Kế hoạch app máy tính, giai đoạn 4: thư mục hồ sơ, cập nhật an toàn, bảo mật
 
 - **Ngày lập:** 2026-11-13 (viết lại cùng ngày theo Q14: không mã hoá)
 - **Trạng thái:** chờ duyệt. Chưa code.
 - **Kế hoạch tổng:** `docs/mcah-ke-hoach-ung-dung-may-tinh.md` (mục 4.1 Q14, 5.2, 5.4, 5.5, 10 giai đoạn 4, 11 nhóm B).
-- **Wireframe:** `docs/design/wireframes/desktop-gd4.html` (9 màn).
+- **Wireframe:** `docs/design/wireframes/desktop-gd4.html` (6 màn; màn Sao lưu, dải nhắc, Khôi phục đã bỏ theo Q15).
 - **Testcase chạy tay:** `docs/mcah-testcase-desktop-gd4.md`.
 - **Hướng dẫn sử dụng (nháp):** `docs/mcah-huong-dan-desktop-gd4.html`, chép vào trang hướng dẫn ở bước 10.
-- **Mục tiêu:** tài liệu trên máy chính nằm trong **một cây thư mục dễ đọc** (như văn phòng đang tự sắp xếp), app tự đặt tên, tự xếp, tự đổi tên khi hồ sơ đổi; sao lưu tự động mỗi ngày ra ngoài máy chính, khôi phục được sang máy khác (kể cả khác hệ điều hành); cập nhật có đổi dữ liệu mà lỗi thì tự quay về; đóng các lỗ bảo mật còn lại của app.
+- **Mục tiêu:** tài liệu trên máy chính nằm trong **một cây thư mục dễ đọc** (như văn phòng đang tự sắp xếp), app tự đặt tên, tự xếp, tự đổi tên khi hồ sơ đổi; **không có tính năng sao lưu cho người dùng** (Q15); cập nhật có đổi dữ liệu thì app tự chụp dữ liệu trước, lỗi thì tự quay về; chuyển máy chính do hỗ trợ MCAH làm bằng lệnh; đóng các lỗ bảo mật còn lại của app.
 
 ## 0. Cách làm việc với file này
 
@@ -22,7 +22,7 @@
 | | Ở đâu | Giai đoạn này |
 |---|---|---|
 | Khoá dữ liệu, mật khẩu sao lưu, mã khôi phục lúc tạo văn phòng (giai đoạn 2) | `desktop/src/office.js`, `backup.js`, `FirstRunPage.jsx` | **Bỏ** (Q14). Tạo văn phòng chỉ còn đặt tên |
-| Gói `.ssbak` mã hoá, lệnh `--backup` / `--restore` | `desktop/src/backup.js`, `main.js` | **Viết lại** thành tệp `.zip` thường, nhất quán (3.3) |
+| Gói `.ssbak` mã hoá, lệnh `--backup` / `--restore` | `desktop/src/backup.js`, `main.js` | **Viết lại** thành tệp `.zip` thường, nhất quán (3.3); chỉ dùng nội bộ (trước cập nhật) và cho hỗ trợ MCAH chuyển máy, không có nút cho người dùng |
 | Thùng rác tệp, job xoá sau 180 ngày | `backend/src/utils/file_trash.js`, `jobs.js` | Giữ, chuyển qua lớp kho tệp |
 | Máy nhân viên, mã thiết bị, bộ cài qua mạng văn phòng | giai đoạn 3 | Giữ |
 | Electron `contextIsolation`, `sandbox`, tắt `nodeIntegration` | `desktop/src/main.js` | Giữ, thêm 3.7 |
@@ -33,8 +33,8 @@
 
 1. **Lớp kho tệp + cây thư mục hồ sơ** (3.1, 3.2): mọi đọc / ghi / xoá tệp của backend qua một module; app máy tính lưu tệp vào cây thư mục dễ đọc; tự đổi tên / chuyển khi hồ sơ đổi; chịu được người dùng lỡ tay xoá / di chuyển tệp; thư mục tạm riêng.
 2. **Bỏ mã hoá đã làm ở giai đoạn 2** (3.6): màn tạo văn phòng, khoá dữ liệu, mật khẩu sao lưu.
-3. **Sao lưu nhất quán** (3.3): `.zip` thường, lịch hằng ngày, giữ 7 ngày + 4 tuần, màn Sao lưu (W1), dải nhắc (W2).
-4. **Khôi phục từ app** (3.4, W3): khác máy, khác hệ điều hành; huỷ thiết bị và phiên cũ; đổi máy chính trên máy chủ dịch vụ; máy chính cũ ngừng phục vụ (W9).
+3. **Bản chụp nhất quán** (3.3): `.zip` thường, chỉ tạo tự động ngay trước khi cập nhật có đổi DB, và bằng lệnh `--backup` cho hỗ trợ MCAH. Không màn, không nút (Q15).
+4. **Chuyển máy chính bằng lệnh** (3.4): hỗ trợ MCAH chạy `--backup` trên máy cũ, `--restore` trên máy mới; huỷ thiết bị và phiên cũ; đổi máy chính trên máy chủ dịch vụ; máy chính cũ ngừng phục vụ (W9).
 5. **Cập nhật có đổi DB** (3.5, W8): chặn ghi → sao lưu → migration; lỗi thì khôi phục DB và quay về bản cũ.
 6. **Mở thư mục hồ sơ, xuất ra thư mục** (3.2, W4, W5); quyền xuất hàng loạt.
 7. **Kiểm mã hoá ổ đĩa máy chính** (3.7, W6) — giờ là lớp bảo vệ chính của tài liệu.
@@ -46,12 +46,13 @@
 - Mã hoá tài liệu, mã hoá cơ sở dữ liệu, mã hoá bản sao lưu (Q14).
 - Đọc ngược thay đổi người dùng tự làm trong cây thư mục vào app (thêm tệp bằng tay không vào hồ sơ; sửa tên tay bị app đặt lại).
 - Sao lưu lên máy chủ của bên mình.
+- Mọi tính năng sao lưu cho người dùng: lịch tự động, nút "Sao lưu ngay", màn Sao lưu, dải nhắc, khôi phục từ app (Q15, 2026-11-13). Hệ quả, ghi rõ trong hướng dẫn: máy chính hỏng ổ / mất / dính mã độc là **mất dữ liệu**, trừ khi văn phòng tự chép thư mục hồ sơ và tự có cách sao lưu riêng (thư mục hồ sơ chép được, nhưng cơ sở dữ liệu thì không).
 
 ### 2.3 Cần người dùng / sếp trước khi xong giai đoạn
 
 - **⛔ Q-B1:** quay về bản app cũ khi cập nhật lỗi cần bộ cài bản cũ. Đề xuất: máy chính giữ bộ cài của bản đang chạy (thư mục `lan-installers/current`) và cài lại nó. Ubuntu hỏi mật khẩu quản trị thêm một lần lúc quay về.
 - **⛔ Q-B2:** thư mục hồ sơ đặt ở đâu trên máy chính. Đề xuất: `Tài liệu/MCAH - Hồ sơ` (Windows `Documents`, Ubuntu `~/Documents` hoặc thư mục Tài liệu theo XDG), đổi được trong Cài đặt (app chuyển cả cây).
-- **Lưu ý cho khách (ghi vào hướng dẫn):** ai đăng nhập được tài khoản hệ điều hành của máy chính là mở được toàn bộ giấy tờ. Máy chính phải có mật khẩu đăng nhập và nên mã hoá ổ đĩa (W6).
+- **Lưu ý cho khách (ghi vào hướng dẫn):** không có sao lưu trong app — văn phòng tự chịu việc giữ máy chính an toàn. Ai đăng nhập được tài khoản hệ điều hành của máy chính là mở được toàn bộ giấy tờ. Máy chính phải có mật khẩu đăng nhập và nên mã hoá ổ đĩa (W6).
 - Máy Windows (đường dẫn dài, ký tự tiếng Việt trong tên tệp, BitLocker) và hai máy khác hệ điều hành cho B5.
 
 ## 3. Thiết kế
@@ -61,7 +62,7 @@
 - Bảng `stored_file` (migration `047_stored_file.sql`): `id`, `rel_path` (tương đối với gốc kho, dấu `/`), `kind`, `owner_type` + `owner_id` (thuyền viên / tàu / đối tác / lần gửi), `size`, `sha256`, `created_at`, `trashed_at`. Các cột đường dẫn cũ (`document_upload.storage_path`, ảnh trang, `seafarer_certificate.document_url`, `seafarer.photo_path`, `ship_owner.logo_path`, `opportunity_send_copy.storage_path`) đổi thành `stored_file_id`. Script `scripts/move-to-file-store.js` chuyển tệp sẵn có (máy dev, máy thử).
 - API: `put(buffer | stream, { kind, owner, name }) → fileId`, `read(fileId)`, `stream(fileId)`, `trash(fileId, reason)`, `relocateOwner(owner)` (3.2). Gọi `put` xong mới ghi dòng nghiệp vụ; không sửa tệp tại chỗ (bản mới = tệp mới).
 - **Hai cách xếp:** bản web — `flat` (như hiện nay: tên ngẫu nhiên trong `UPLOAD_DIR`); app máy tính — `readable` (cây ở 3.2). Service không biết đang dùng cách nào.
-- **Tệp phát sinh** (ảnh từng trang, ảnh thu nhỏ, ảnh chân dung cỡ nhỏ) không phải giấy tờ của người dùng → để trong `<userData>/cache/` tên ngẫu nhiên, vẫn qua `stored_file`, vẫn được sao lưu.
+- **Tệp phát sinh** (ảnh từng trang, ảnh thu nhỏ, ảnh chân dung cỡ nhỏ) không phải giấy tờ của người dùng → để trong `<userData>/cache/` tên ngẫu nhiên, vẫn qua `stored_file`, vẫn vào bản chụp (3.3).
 - **Chuyển các service:** `document.service`, `certificate.service`, `seafarer.service` (chân dung), `fleet.service` (logo), `seafarer_send.service`, `opportunity_mail.service`, `export_pack.service`, `form_export.service`, `import.routes`, `file_trash`.
 - **Test chặn:** quét mã nguồn backend, báo lỗi khi thấy `fs.*` với `UPLOAD_DIR` / gốc kho ngoài `file_store.js` và `tmp_dir.js` (như test mốc CSS).
 - **Thư mục tạm (`utils/tmp_dir.js`):** `<userData>/tmp` (web: `os.tmpdir()/mcah`); `xlsx_pdf.js`, bản xem tạm, tệp gửi thư dùng nó; xoá ngay sau việc; dọn toàn bộ lúc app khởi động.
@@ -76,19 +77,17 @@
 - **Mở thư mục hồ sơ (W4):** máy chính mở thẳng thư mục thật của người đó bằng `shell.openPath`. Máy nhân viên không với tới ổ máy chính: tải danh sách `GET /api/v1/files/tree?scope=…` + từng tệp qua HTTPS, dựng bản xem tạm chỉ đọc trong `tmp/xem/`, xoá khi đóng app / đăng xuất / sau 24 giờ.
 - **Xuất ra thư mục (W5):** cả hai loại máy dùng cùng danh sách, chép vào nơi người dùng chọn. Quyền mới `seafarer.export_bulk`; mở thư mục một người theo `seafarer.view` / `seafarer.docs`.
 
-### 3.3 Sao lưu nhất quán và lịch
+### 3.3 Bản chụp nhất quán (nội bộ)
 
 - Tệp `MCAH sao lưu <văn phòng> <năm-tháng-ngày giờ>.zip` (zip64, ghi theo luồng): `manifest.json` (văn phòng, bản app, bản DB, danh sách tệp + `sha256`), `db.dump` (`pg_dump`), `Hồ sơ/…` (cây thư mục y nguyên — mở zip ra là đọc được), `cache/…`, `trash/…`.
 - Thứ tự: khoá tư vấn `backup` (job xoá tệp 180 ngày và job chuyển tệp `file_move` đều lấy khoá này nên chờ) → `pg_dump` → đọc danh sách `stored_file` **từ chính bản dump** → chép từng tệp (đường trong dump; không thấy thì đường hiện tại theo `id`) → nhả khoá.
-- Ghi ra `.zip.part`, đọc lại kiểm `sha256` từng tệp, rồi đổi tên. Lỗi (ENOSPC, rút USB, tắt điện): xoá `.part`, ghi lần thất bại, báo ở W1.
-- Lịch: tiến trình chính máy chính, 12:00 mỗi ngày, mở app sau giờ đó mà hôm đó chưa có thì chạy bù. Giữ 7 bản ngày + 4 bản tuần (Chủ nhật), chỉ xoá tệp đúng mẫu tên trong thư mục sao lưu của MCAH.
-- Nơi để: thư mục người dùng chọn (USB, ổ mạng, thư mục Drive / OneDrive). Cùng ổ với thư mục hồ sơ thì cảnh báo vàng.
-- Bảng `backup_run`: lúc, cỡ, nơi để, ra ngoài ổ máy chính hay không, kết quả. Giao diện hiện dải W2 cho quản trị khi bản ra ngoài gần nhất quá 7 ngày.
-- **Cảnh báo trên màn Sao lưu:** "Bản sao lưu không được mã hoá. Ai có tệp này là đọc được toàn bộ hồ sơ. Cất USB cẩn thận; thư mục Drive chỉ chia sẻ cho người cần."
+- Ghi ra `.zip.part`, đọc lại kiểm `sha256` từng tệp, rồi đổi tên. Lỗi (đầy ổ, tắt điện): xoá `.part`, không cập nhật (3.5).
+- Chỉ tạo ở hai chỗ (Q15): trước khi cập nhật có đổi DB (`<userData>/before-update.zip`, chỉ giữ một bản, xoá sau khi bản mới chạy ổn 7 ngày) và lệnh `--backup=<tệp>` (hỗ trợ MCAH). Không màn, không nút, không lịch, không bảng `backup_run`.
+- Cần chỗ trống ≈ cỡ thư mục hồ sơ + DB; thiếu thì không cập nhật và báo quản trị.
 
-### 3.4 Khôi phục từ app
+### 3.4 Chuyển máy chính bằng lệnh (hỗ trợ MCAH)
 
-1. Màn Lần đầu bật "Khôi phục từ bản sao lưu" → W3: chọn tệp `.zip` → đọc `manifest.json` (văn phòng, ngày, bản app).
+1. Trên máy mới, sau khi quản trị đăng nhập: `mcah --restore=<tệp>` → đọc `manifest.json` (văn phòng, ngày, bản app). Màn Lần đầu **không** có lựa chọn khôi phục (giữ ẩn như giai đoạn 2).
 2. Kiểm: tài khoản đăng nhập là quản trị của văn phòng trong gói (theo vé); bản app trong gói ≤ bản đang chạy; đủ chỗ trống trên ổ.
 3. Nạp DB (`pg_restore`), giải nén cây hồ sơ vào gốc kho của máy mới (Q-B2), `cache`, `trash`; kiểm `sha256`. Đường dẫn tương đối nên khác hệ điều hành vẫn đúng; tên quá dài trên Windows thì cắt theo quy tắc đặt tên và cập nhật `rel_path`.
 4. **Trước khi mở cổng 7443:** đánh `removed` mọi `office_device`, đổi `jwt-secret`, đối chiếu thành viên với máy chủ dịch vụ (ai đã bị gỡ thì khoá ở máy này).
@@ -118,33 +117,34 @@
 
 ### 3.8 Đồng ý lần đầu quét AI
 
-- Cột `user.ai_consent_at` (migration `049_ai_consent.sql`). `ScanButton` hỏi W7 khi chưa có; đồng ý thì `POST /api/v1/me/ai-consent`. Backend từ chối gọi AI khi chưa đồng ý (409 `AI_CONSENT_REQUIRED`). Bản web hỏi như nhau.
+- Cột `user.ai_consent_at` (migration `048_ai_consent.sql`). `ScanButton` hỏi W7 khi chưa có; đồng ý thì `POST /api/v1/me/ai-consent`. Backend từ chối gọi AI khi chưa đồng ý (409 `AI_CONSENT_REQUIRED`). Bản web hỏi như nhau.
 
 ## 4. File sẽ sửa / thêm
 
 | Phần | File |
 |---|---|
-| backend mới | `utils/file_store.js`, `utils/readable_tree.js`, `utils/tmp_dir.js`, `routes/v1/files.routes.js`, `routes/v1/backup.routes.js`, `plugins/maintenance.js`, migration `047_stored_file.sql`, `048_backup_run.sql`, `049_ai_consent.sql`, `scripts/move-to-file-store.js` |
+| backend mới | `utils/file_store.js`, `utils/readable_tree.js`, `utils/tmp_dir.js`, `routes/v1/files.routes.js`, `plugins/maintenance.js`, migration `047_stored_file.sql`, `048_ai_consent.sql`, `scripts/move-to-file-store.js` |
 | backend sửa | các service ở 3.1, `file_trash.js`, `xlsx_pdf.js`, `jobs.js` (chuyển tệp, đếm tệp thiếu), `constants/permissions.js`, logger |
-| desktop | `backup.js` (viết lại: zip, dump-trước-chép, `.part`, khoá), `backup-schedule.js`, `disk-encryption.js`, `readable-view.js` (bản xem tạm, xuất), `office.js` (bỏ khoá dữ liệu), `main.js`, `backend.js` (gốc kho), `updater.js` (bảo trì, quay về), `logs.js`, `ipc.js`, `preload.js`, `browser-login.js`, `signer.js`, cấu hình build (fuses) |
+| desktop | `backup.js` (viết lại: zip, dump-trước-chép, `.part`, khoá), `disk-encryption.js`, `readable-view.js` (bản xem tạm, xuất), `office.js` (bỏ khoá dữ liệu), `main.js`, `backend.js` (gốc kho), `updater.js` (bảo trì, quay về), `logs.js`, `ipc.js`, `preload.js`, `browser-login.js`, `signer.js`, cấu hình build (fuses) |
 | cloud | `POST /api/offices/:id/machine`, từ chối máy cũ `machine_replaced`, thư báo quản trị, test |
-| frontend | `FirstRunPage.jsx` (bỏ bước mật khẩu, thêm khôi phục), `pages/admin/settings/BackupSettingsPage.jsx`, dải nhắc (gộp với `MainLinkRibbon`), nút Mở thư mục ở chi tiết thuyền viên / tàu / đối tác, hộp Xuất ở danh sách, "Tệp không còn trong thư mục hồ sơ", `ScanButton` (đồng ý), trang hướng dẫn |
+| frontend | `FirstRunPage.jsx` (bỏ bước mật khẩu), nút Mở thư mục ở chi tiết thuyền viên / tàu / đối tác, hộp Xuất ở danh sách, "Tệp không còn trong thư mục hồ sơ", `ScanButton` (đồng ý), trang hướng dẫn |
 
 ## 5. Rủi ro riêng
 
 | Rủi ro | Cách xử lý |
 |---|---|
-| Người dùng sửa / xoá / di chuyển tệp trong cây hồ sơ | `Đọc tôi.txt`; tự tìm lại theo `sha256`; báo tệp thiếu; sao lưu hằng ngày giữ bản cũ |
+| Người dùng sửa / xoá / di chuyển tệp trong cây hồ sơ | `Đọc tôi.txt`; tự tìm lại theo `sha256`; báo tệp thiếu. Không có bản sao lưu để lấy lại tệp đã xoá tay |
+| Máy chính hỏng / mất là mất dữ liệu (Q15) | Ghi rõ trong hướng dẫn và lúc tạo văn phòng; hỗ trợ MCAH có lệnh `--backup` khi khách cần |
 | Đổi tên thư mục lỗi trên Windows khi tệp đang mở trong Word / trình xem PDF | Hàng đợi `file_move`, thử lại mỗi phút; đọc tệp theo cả đường cũ |
 | Đường dẫn dài / ký tự tiếng Việt trên Windows | Giới hạn 200 ký tự, chuẩn hoá Unicode NFC, test trên Windows trước khi xong bước 2 |
 | Chuyển 10 service sang kho tệp làm hỏng bản web | Bản web dùng cách `flat`; làm từng service, mỗi cái có test; thử lại tải lên, xem, xuất CV, gửi hồ sơ trên bản web |
-| Bản sao lưu / bản xuất không mã hoá bị lộ | Cảnh báo ở màn Sao lưu và hộp Xuất; hướng dẫn nói rõ |
+| Bản xuất không mã hoá bị lộ | Cảnh báo ở hộp Xuất; hướng dẫn nói rõ |
 | CSP chặn thứ antd / thư viện cần | Chế độ chỉ ghi log trước |
 
 ## 6. Test tự động
 
 - backend: `file_store` (cả `flat` lẫn `readable`: ghi / đọc / luồng / thùng rác), test chặn `fs`, `readable_tree` (cấu trúc, tên trùng, ký tự cấm, bản cũ, đường dẫn < 200, NFC), đổi tên thuyền viên → tệp chuyển đúng, tệp bị di chuyển tay → tìm lại theo `sha256`, bảo trì 503, đồng ý AI.
-- desktop: sao lưu dump-trước-chép (tệp tạo sau dump không vào gói; tệp xoá / chuyển giữa lúc chép vẫn có), `.part` khi lỗi, giữ 7 + 4, khôi phục gói hỏng không đụng máy, lọc log.
+- desktop: sao lưu dump-trước-chép (tệp tạo sau dump không vào gói; tệp xoá / chuyển giữa lúc chép vẫn có), `.part` khi lỗi, khôi phục gói hỏng không đụng máy, lọc log.
 - cloud: đổi máy chính cần vé quản trị mới đăng nhập, máy cũ bị từ chối.
 
 ## 7. Các bước
@@ -158,11 +158,11 @@
 ### Bước 2 — Lớp kho tệp, cây thư mục hồ sơ (3.1, 3.2)
 **Xong khi:** test qua; bản web tải lên, xem, xuất CV, gửi hồ sơ, logo, chân dung chạy như cũ; trên app, cây thư mục đúng mục 5.5; đổi tên thuyền viên / thêm bản mới thì tệp chuyển đúng; B13, B15, B17 qua.
 
-### Bước 3 — Sao lưu nhất quán, lịch, màn Sao lưu, dải nhắc (3.3, W1, W2)
-**Xong khi:** B8, B18, B20 qua; mở `.zip` bằng trình giải nén thấy đúng cây hồ sơ; sao lưu tự chạy 12:00 và chạy bù.
+### Bước 3 — Bản chụp nhất quán (3.3)
+**Xong khi:** B8, B18, B20 qua bằng lệnh `--backup`; mở `.zip` bằng trình giải nén thấy đúng cây hồ sơ.
 
-### Bước 4 — Khôi phục từ app, đổi máy chính (3.4, W3, W9)
-**Xong khi:** B5, B19 qua; gói hỏng / gói văn phòng khác bị từ chối, máy vẫn trống (B5 khác hệ điều hành: ⛔ cần máy Windows, không có thì "Chờ máy").
+### Bước 4 — Chuyển máy chính bằng lệnh, đổi máy chính trên máy chủ dịch vụ (3.4, W9)
+**Xong khi:** B5, B19 qua bằng lệnh; gói hỏng / gói văn phòng khác bị từ chối, máy vẫn trống (B5 khác hệ điều hành: ⛔ cần máy Windows, không có thì "Chờ máy").
 
 ### Bước 5 — Cập nhật có đổi DB, quay về (3.5, W8)
 **Xong khi:** B9 qua với bản thử có migration cố ý lỗi.
@@ -184,4 +184,4 @@ Chép nháp hướng dẫn vào trang Hướng dẫn (và bỏ đoạn mật kh�
 
 ## 8. Nhật ký
 
-- 2026-11-13: lập kế hoạch (bản có mã hoá), rồi viết lại cùng ngày theo Q14: không mã hoá tài liệu và bản sao lưu, tài liệu lưu thẳng cây thư mục dễ đọc. Chờ duyệt.
+- 2026-11-13: lập kế hoạch (bản có mã hoá), rồi viết lại cùng ngày theo Q14: không mã hoá tài liệu và bản sao lưu, tài liệu lưu thẳng cây thư mục dễ đọc. Q15 cùng ngày: bỏ mọi tính năng sao lưu cho người dùng (lịch, nút "Sao lưu ngay", màn Sao lưu, dải nhắc, khôi phục từ app); chỉ còn bản chụp tự động trước khi cập nhật và lệnh `--backup` / `--restore` cho hỗ trợ MCAH chuyển máy. Chờ duyệt.

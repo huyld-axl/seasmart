@@ -245,6 +245,7 @@ seasmart/
 | **Q12** | Đăng ký / đăng nhập bằng gì? | **Email + mật khẩu và Google** | Mục 3.3 |
 | **Q13** | Nhân viên vào văn phòng thế nào? | **Quản trị mời qua email trong app** | Mục 3.3 |
 | **Q14** | Có mã hoá tài liệu trên máy và bản sao lưu không? (chốt 2026-11-13) | **Không.** Tài liệu lưu thẳng vào cây thư mục dễ đọc trên máy chính, như cách văn phòng đang làm; bản sao lưu là tệp nén thường; bỏ mật khẩu sao lưu, mã khôi phục dữ liệu, khoá dữ liệu | Mục 5.1, 5.4, 5.5 cũ về mã hoá **không còn hiệu lực**; thiết kế mới ở `docs/mcah-ke-hoach-desktop-gd4.md`. Bảo vệ tài liệu dựa vào mật khẩu hệ điều hành và mã hoá ổ đĩa máy chính |
+| **Q15** | Có tính năng sao lưu cho người dùng không? (chốt 2026-11-13) | **Không.** Không lịch, không nút, không màn Sao lưu / Khôi phục. App chỉ tự chụp dữ liệu ngay trước khi cập nhật có đổi dữ liệu (để quay về khi lỗi); chuyển máy chính do hỗ trợ MCAH làm bằng lệnh | Mục 5.4 phần lịch, nơi để, dải nhắc, khôi phục từ app **bỏ**. Máy chính hỏng / mất là mất dữ liệu — ghi rõ trong hướng dẫn |
 
 ### 4.2 Việc còn mở (không chặn giai đoạn 0)
 
@@ -842,3 +843,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-12 | 2 | Viết kế hoạch chi tiết giai đoạn 2 | `docs/mcah-ke-hoach-desktop-gd2.md`, wireframe `docs/design/wireframes/desktop-gd2.html`, testcase, hướng dẫn nháp; chờ duyệt |
 | 2026-11-12 | 2 | Code giai đoạn 2 trên Ubuntu (máy chủ dịch vụ chạy ở máy dev) | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd2.md`; chờ Google (M9), máy chủ thật + tên miền (M2), khoá AI / nguồn tàu ở máy chủ, Windows |
 | 2026-11-13 | 4 | Chốt Q14: không mã hoá tài liệu, không mã hoá sao lưu | Tài liệu lưu thẳng cây thư mục dễ đọc; viết lại kế hoạch giai đoạn 4 |
+| 2026-11-13 | 4 | Chốt Q15: bỏ tính năng sao lưu cho người dùng | Chỉ còn bản chụp trước khi cập nhật và lệnh cho hỗ trợ MCAH |

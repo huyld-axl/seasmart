@@ -844,3 +844,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-12 | 2 | Code giai đoạn 2 trên Ubuntu (máy chủ dịch vụ chạy ở máy dev) | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd2.md`; chờ Google (M9), máy chủ thật + tên miền (M2), khoá AI / nguồn tàu ở máy chủ, Windows |
 | 2026-11-13 | 4 | Chốt Q14: không mã hoá tài liệu, không mã hoá sao lưu | Tài liệu lưu thẳng cây thư mục dễ đọc; viết lại kế hoạch giai đoạn 4 |
 | 2026-11-13 | 4 | Chốt Q15: bỏ tính năng sao lưu cho người dùng | Chỉ còn bản chụp trước khi cập nhật và lệnh cho hỗ trợ MCAH |
+| 2026-11-13 | 4 | Code giai đoạn 4 trên Ubuntu | Chi tiết ở Nhật ký `docs/mcah-ke-hoach-desktop-gd4.md`; chờ Windows, bộ cài thật (B9), đăng nhập thật để thử chuyển máy (B5, B19) |

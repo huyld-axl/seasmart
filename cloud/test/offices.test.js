@@ -90,6 +90,20 @@ describe('văn phòng', () => {
     expect(tickets.verify((await oauth.buildTicket(admin, Date.now())).ticket)).toMatchObject({ machine_cert: fp, machine_name: 'MAY-CHINH', machine_port: 7443 })
   })
 
+  it('chuyển máy chính: cần vé quản trị vừa đăng nhập; máy cũ bị báo machine_replaced', async () => {
+    const admin = await accounts.findByEmail('quantri@thu.vn')
+    const fresh = crypto.generateKeyPairSync('ed25519')
+    const pem = fresh.publicKey.export({ type: 'spki', format: 'pem' })
+    const call = (ticket) => app.inject({ method: 'POST', url: `/api/offices/${officeId}/machine`, headers: { authorization: `Bearer ${ticket}`, 'content-type': 'application/json' }, payload: { machine_public_key: pem } })
+    const old = (await oauth.buildTicket(admin, Date.now() - 3600 * 1000)).ticket
+    expect((await call(old)).json().error).toBe('reauth_required')
+    expect((await call((await oauth.buildTicket(admin, Date.now())).ticket)).json()).toEqual({ replaced: true })
+    const res = await signed('GET', '/api/office/machine/status', undefined)
+    expect([res.statusCode, res.json().error]).toEqual([409, 'machine_replaced'])
+    expect((await signed('GET', '/api/office/machine/status', undefined, fresh.privateKey)).json()).toEqual({ ok: true })
+    machine = fresh
+  })
+
   it('văn phòng bị khoá thì máy chính bị từ chối', async () => {
     await require('../src/services/offices').setLocked(officeId, true)
     expect((await signed('POST', '/api/office/invites', { email: 'x@thu.vn' })).statusCode).toBe(403)

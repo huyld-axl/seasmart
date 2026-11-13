@@ -124,6 +124,30 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
     return session({ id: userId, email: claims.email }, claims)
   })
 
+  // Máy chính mới sau khi hỗ trợ MCAH nạp bản chụp (docs/mcah-ke-hoach-desktop-gd4.md 3.4): tiến trình chính đã đổi khoá
+  // máy chính trên máy chủ dịch vụ; vé mới mang khoá mới. Ghi khoá mới vào office_info rồi đăng nhập như thường.
+  fastify.post('/desktop-machine', {
+    config: limit,
+    schema: { body: { type: 'object', required: ['ticket', 'machine_public_key'], properties: { ticket: { type: 'string', maxLength: 8192 }, machine_public_key: { type: 'string', maxLength: 2000 } } } },
+  }, async (request) => {
+    const claims = readTicket(request.body.ticket)
+    const office = await officeInfo()
+    let pem
+    try {
+      pem = normalizePem(request.body.machine_public_key)
+    } catch {
+      throw fail(400, 'Khoá máy chính không hợp lệ')
+    }
+    if (!office || claims.office !== office.office_id || claims.office_role !== 'admin' || claims.machine !== machineId(pem)) {
+      throw fail(403, 'Vé không khớp văn phòng của bản chụp', 'NOT_IN_OFFICE')
+    }
+    await pool.query('UPDATE office_info SET machine_public_key = ? WHERE id = 1', [pem])
+    const [[user]] = await pool.query('SELECT id, email, is_active FROM "user" WHERE (cloud_account_id = ? OR lower(email) = lower(?)) AND deleted_at IS NULL ORDER BY cloud_account_id IS NULL LIMIT 1', [claims.sub, claims.email])
+    if (!user?.is_active) throw fail(403, 'Tài khoản không còn trong văn phòng', 'NOT_IN_OFFICE')
+    require('../../utils/desktop_cloud').registerLan().catch((err) => request.log.warn({ err: err.message || err }, 'Chưa báo được chứng chỉ máy chính'))
+    return session(user, claims)
+  })
+
   // Thông tin văn phòng của máy (màn Tài khoản, dải trạng thái).
   fastify.get('/desktop-office', { onRequest: [fastify.authenticate] }, async () => {
     const office = await officeInfo()

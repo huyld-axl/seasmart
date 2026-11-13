@@ -1,7 +1,7 @@
 # MCAH — Kế hoạch app máy tính, giai đoạn 4: thư mục hồ sơ, cập nhật an toàn, bảo mật
 
 - **Ngày lập:** 2026-11-13 (viết lại cùng ngày theo Q14: không mã hoá)
-- **Trạng thái:** chờ duyệt. Chưa code.
+- **Trạng thái:** đã duyệt 2026-11-13 (Q-B1, Q-B2 theo đề xuất); code bước 1–10 trên Ubuntu máy dev. Chờ: Windows (đường dẫn, BitLocker, fuses), bộ cài thật để thử quay về bản cũ (B9), đăng nhập thật để thử chuyển máy chính qua app (B5, B19), hai máy (B12 trên máy nhân viên).
 - **Kế hoạch tổng:** `docs/mcah-ke-hoach-ung-dung-may-tinh.md` (mục 4.1 Q14, 5.2, 5.4, 5.5, 10 giai đoạn 4, 11 nhóm B).
 - **Wireframe:** `docs/design/wireframes/desktop-gd4.html` (6 màn; màn Sao lưu, dải nhắc, Khôi phục đã bỏ theo Q15).
 - **Testcase chạy tay:** `docs/mcah-testcase-desktop-gd4.md`.
@@ -185,3 +185,9 @@ Chép nháp hướng dẫn vào trang Hướng dẫn (và bỏ đoạn mật kh�
 ## 8. Nhật ký
 
 - 2026-11-13: lập kế hoạch (bản có mã hoá), rồi viết lại cùng ngày theo Q14: không mã hoá tài liệu và bản sao lưu, tài liệu lưu thẳng cây thư mục dễ đọc. Q15 cùng ngày: bỏ mọi tính năng sao lưu cho người dùng (lịch, nút "Sao lưu ngay", màn Sao lưu, dải nhắc, khôi phục từ app); chỉ còn bản chụp tự động trước khi cập nhật và lệnh `--backup` / `--restore` cho hỗ trợ MCAH chuyển máy. Chờ duyệt.
+- 2026-11-13: duyệt, code.
+  - Lúc code phát hiện giấy AI đọc không có tệp riêng (một PDF tải lên chứa nhiều giấy). Hỏi lại, người dùng chọn giữ kế hoạch: thư mục hồ sơ là nơi chứa tệp thật, giấy AI đọc được cắt thành tệp riêng (`file_layout.service` `cutDocument`, pdf-lib; ảnh nhiều trang ghép PDF) vào cột mới `seafarer_certificate.tree_file`. Bản tải lên nhiều giấy và ảnh trang vẫn ở kho nội bộ.
+  - **Khác thiết kế 3.1:** không đổi cột đường dẫn sang `stored_file_id`; các cột cũ giữ tên, lưu mã tệp `hs:` / `u:` (`file_store.abs` vẫn đọc đường dẫn cũ). `stored_file` chỉ giữ sha256 + cỡ để tìm lại tệp bị di chuyển tay. Sắp thư mục bằng hàng đợi `file_relayout` (worker 5 giây, chỉ app máy tính), chuyển tệp ghi `file_move` trước, khác ổ thì chép rồi xoá.
+  - **Khác thiết kế 3.5:** quay về khi cập nhật lỗi dùng bản chép nguyên thư mục DB (`pgdata-truoc-cap-nhat`, chép lúc Postgres đã tắt) thay vì `.zip`, vì bản mới không có migration cũ để nạp lại. Bản mới có đổi DB hay không: so `last_migration` trong `latest.json` (script phát hành tự ghi) với migration cuối của bản đang chạy.
+  - Đã thử trên máy dev: tạo thư mục hồ sơ đúng nhóm, bản cũ vào `Bản cũ/`, đổi tên thuyền viên thì thư mục đổi theo, tệp bị di chuyển tay vẫn đọc được, xoá giấy thì tệp ra thùng rác ngoài cây; cắt giấy AI đọc 2/3 trang đúng; bản web vẫn lưu tên ngẫu nhiên. Chụp `.zip` từ DB dev và `--restore` sang máy trống (đủ DB + thư mục hồ sơ), tệp hỏng bị từ chối, máy vẫn trống. Migration cố ý lỗi → DB được trả về. API danh sách / tải tệp thư mục hồ sơ, mã tệp lạ bị từ chối. CSP: giao diện chạy, mã chèn trong dữ liệu không chạy. Kiểm mã hoá ổ đĩa báo đúng `off` trên máy dev. Đồng ý AI: chưa đồng ý 409, đồng ý một lần thì qua.
+  - Chưa làm: dải nhắc mã hoá ổ đĩa ở mọi trang (chỉ hiện trong thẻ máy chính); job hằng ngày đếm tệp thiếu báo quản trị; đổi chỗ thư mục hồ sơ trong Cài đặt (mới đọc `filesDir` từ cài đặt / biến môi trường); thuyền viên bị xoá mềm thì thư mục vẫn còn trong cây; ảnh nhỏ (thumbnail) của tệp đã xoá không vào thùng rác (tệp phát sinh, tạo lại được).

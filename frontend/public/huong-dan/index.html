@@ -221,6 +221,7 @@
     <a href="#app-may-tinh" class="chi-app">Ứng dụng trên máy tính</a>
     <a href="#app-tai-khoan" class="chi-app">Tài khoản (máy tính)</a>
     <a href="#app-nhieu-may" class="chi-app">Nhiều máy trong văn phòng</a>
+    <a href="#app-ho-so" class="chi-app">Thư mục hồ sơ</a>
     <a href="#dien-thoai">Dùng trên điện thoại</a>
     <a href="#hoi-dap">Hỏi đáp</a>
     <span class="empty" id="toc-empty">Không có mục nào khớp.</span>
@@ -812,8 +813,7 @@
   <p>MCAH không tự vào sau khi đăng nhập? Trang "Đã đăng nhập" có một mã 8 ký tự: trong MCAH bấm <span class="ui">Nhập mã thủ công</span> và dán mã vào.</p>
 
   <h3>Lần đầu: tạo văn phòng</h3>
-  <p>Người đầu tiên của văn phòng chọn <span class="ui">Tạo văn phòng mới</span> trên máy sẽ giữ dữ liệu (máy chính, nên là máy bàn luôn bật). Bạn đặt tên văn phòng, đặt <b>mật khẩu sao lưu</b> và nhận <b>mã khôi phục dữ liệu</b>.</p>
-  <p class="note" style="padding:10px 14px;border-radius:10px;background:#fffbeb;color:#bb4d00">In hoặc chép mã khôi phục ra giấy và cất kỹ. Khi chuyển dữ liệu sang máy khác, bạn cần mật khẩu sao lưu hoặc mã này. Mất cả hai thì không mở được tài liệu, bên MCAH cũng không mở được.</p>
+  <p>Người đầu tiên của văn phòng chọn <span class="ui">Tạo văn phòng mới</span> trên máy sẽ giữ dữ liệu (máy chính, nên là máy bàn luôn bật) và đặt tên văn phòng. Bạn là quản trị; nhân viên cài MCAH trên máy mình sẽ nối vào máy này.</p>
 
   <h3>Mã PIN và tự khoá</h3>
   <p>Sau lần đăng nhập đầu trên một máy, bạn đặt mã PIN 6 số. Để máy một lúc (mặc định 15 phút) MCAH tự khoá; nhập PIN để mở, không cần internet. Sai PIN 5 lần thì phải đăng nhập lại qua trình duyệt. Đổi thời gian tự khoá ở <span class="ui">Cài đặt trên máy này</span>.</p>
@@ -846,6 +846,28 @@
 
   <h3>Cập nhật</h3>
   <p>Khi máy chính lên bản mới mà máy nhân viên cần cập nhật theo, máy nhân viên tự tải bộ cài từ máy chính (không cần internet) và cài. Trên Ubuntu, máy sẽ hỏi mật khẩu quản trị.</p>
+    </section>
+    <section id="app-ho-so" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00d</div>
+  <h2>Thư mục hồ sơ (ứng dụng trên máy tính)</h2>
+
+  <h3>Thư mục hồ sơ</h3>
+  <p>Mọi giấy tờ, ảnh, hồ sơ đã gửi nằm trên máy chính trong thư mục <b>MCAH - Hồ sơ</b> (mặc định trong Tài liệu / Documents), xếp sẵn theo thuyền viên, tàu, đối tác. Tên tệp ghi loại giấy, số giấy và ngày hết hạn. Đổi tên thuyền viên hay thêm bản mới, MCAH tự đổi tên và chuyển bản cũ vào thư mục <b>Bản cũ</b>.</p>
+  <p class="note">Xem và copy thoải mái. Muốn thêm, sửa, xoá giấy tờ thì làm trong MCAH. Đổi tên hoặc xoá tệp trực tiếp trong thư mục có thể làm MCAH không tìm thấy tệp.</p>
+  <p>Ở trang thuyền viên (hoặc tàu, đối tác) bấm <span class="ui">Mở thư mục hồ sơ</span> để mở đúng thư mục của người đó. Trên máy nhân viên, MCAH tải về một bản chỉ đọc, tự xoá khi đóng app.</p>
+  <p>Cần mang đi, ở danh sách thuyền viên chọn hồ sơ rồi bấm <span class="ui">Xuất hồ sơ ra thư mục</span> (cần quyền xuất hàng loạt).</p>
+
+  <h3>Bảo vệ máy chính</h3>
+  <p>Giấy tờ không được mã hoá: ai đăng nhập được vào máy chính là mở được. Máy chính cần mật khẩu đăng nhập và nên bật mã hoá ổ đĩa (BitLocker / Mã hoá thiết bị trên Windows, hoặc cài Ubuntu với tuỳ chọn mã hoá). MCAH kiểm và nhắc trong <span class="ui">Cài đặt trên máy này</span>.</p>
+
+  <h3>Không có sao lưu trong MCAH</h3>
+  <p class="note">MCAH không tự sao lưu và không có nút sao lưu. Toàn bộ dữ liệu chỉ nằm trên máy chính: ổ đĩa hỏng, mất máy hay dính mã độc là mất dữ liệu. Văn phòng nên tự giữ máy chính cẩn thận và tự có cách sao lưu máy riêng. Cần chuyển văn phòng sang máy khác thì liên hệ hỗ trợ MCAH.</p>
+
+  <h3>Quét giấy tờ bằng AI</h3>
+  <p>Lần đầu bấm quét, MCAH hỏi bạn đồng ý gửi ảnh lên máy chủ MCAH cho AI đọc. Máy chủ không lưu ảnh. Không đồng ý thì vẫn nhập tay như thường.</p>
+
+  <h3>Cập nhật</h3>
+  <p>Khi bản mới đổi cấu trúc dữ liệu, máy chính tạm dừng việc lưu trên mọi máy, tự chụp lại dữ liệu, rồi mới cập nhật. Cập nhật lỗi thì MCAH tự trả dữ liệu và bản app về như trước.</p>
     </section>
 
     <section id="dien-thoai" data-jobs="mg dy kt qt">

@@ -81,6 +81,38 @@ const offices = {
     })
   },
 
+  // Chuyển văn phòng sang máy chính mới (docs/mcah-ke-hoach-desktop-gd4.md 3.4): thu hồi khoá máy cũ, đăng ký khoá mới,
+  // xoá dấu vân tay cũ (máy mới báo lại). Chỉ quản trị; nơi gọi đã kiểm vé vừa đăng nhập lại.
+  async replaceMachine({ officeId, accountId, machinePublicKey, ip }) {
+    const publicKey = checkPublicKey(machinePublicKey)
+    const done = await withTx(async (db) => {
+      const member = await offices.membership(accountId, db)
+      if (!member || member.office_id !== officeId || member.role !== 'admin') throw fail(403, 'Chỉ quản trị của văn phòng được chuyển máy chính')
+      if ((await offices.machineKey(officeId, db)) === publicKey) return false
+      await db.query('UPDATE office_machine SET revoked_at = NOW() WHERE office_id = $1 AND revoked_at IS NULL', [officeId])
+      await db.query('INSERT INTO office_machine (office_id, public_key) VALUES ($1, $2)', [officeId, publicKey])
+      await audit(accountId, 'office_machine_replace', ip, officeId, db)
+      return true
+    })
+    if (done) {
+      const office = await offices.get(officeId)
+      const { rows } = await pool.query("SELECT a.email FROM office_member m JOIN account a ON a.id = m.account_id WHERE m.office_id = $1 AND m.role = 'admin' AND m.removed_at IS NULL", [officeId])
+      const mailer = require('./mailer')
+      for (const { email } of rows) {
+        await mailer.send({ to: email, subject: `MCAH: ${office.name} đã chuyển sang máy chính mới`, text: `Văn phòng ${office.name} vừa được chuyển sang một máy chính mới lúc ${new Date().toLocaleString('vi-VN')}. Máy chính cũ ngừng phục vụ.
+
+Không phải bạn hoặc người trong văn phòng làm việc này thì liên hệ MCAH ngay.` }).catch(() => {})
+      }
+    }
+    return { replaced: done }
+  },
+
+  // Khoá máy này đã bị thay (văn phòng chuyển sang máy khác)?
+  async machineReplaced(officeId, publicKey, db = pool) {
+    const { rows } = await db.query('SELECT revoked_at FROM office_machine WHERE office_id = $1 AND public_key = $2 ORDER BY registered_at DESC LIMIT 1', [officeId, publicKey])
+    return Boolean(rows[0]?.revoked_at)
+  },
+
   async invite({ officeId, email, fullName, role = 'member', invitedBy }) {
     email = String(email || '').trim().toLowerCase()
     if (!EMAIL.test(email)) throw fail(400, 'Email không hợp lệ')

@@ -9,8 +9,9 @@ const { Readable } = require('stream')
 const { startDatabase, killNow, freePort, isRunning } = require('./db')
 const { backendEnv, runScript, startBackend } = require('./backend')
 const { cloudPublicKey } = require('./browser-login')
-const { runUpdate, mirrorInstallers, serveInstaller, updateFromMain } = require('./updater')
-const { setupKeys, createBackup, restoreBackup, readBackup } = require('./backup')
+const { runUpdate, mirrorInstallers, serveInstaller, updateFromMain, install, PLATFORM } = require('./updater')
+const updateGuard = require('./update-guard')
+const { createBackup, restoreBackup, readManifest } = require('./backup')
 const { rotatingLog, captureConsole } = require('./logs')
 const { attachmentDir, cleanAttachmentDir, saveAttachments } = require('./mail')
 const { findSoffice } = require('./pdf-component')
@@ -21,7 +22,7 @@ const pin = require('./pin')
 const { getSettings } = require('./settings')
 const signer = require('./signer')
 const { cloudUrl } = require('./browser-login')
-const { machineKey } = require('./office')
+const { machineKey, removeOldKeyFiles, markMove, pendingMove } = require('./office')
 const { frontendDist: FRONTEND_DIST } = require('./paths')
 const os = require('os')
 const { powerSaveBlocker } = require('electron')
@@ -30,6 +31,8 @@ const { ensureCert } = require('./lan-cert')
 const { LAN_PORT } = require('./lan')
 const discovery = require('./discovery')
 const lanClient = require('./lan-client')
+const readableView = require('./readable-view')
+const diskEncryption = require('./disk-encryption')
 
 // Tên app quyết định thư mục dữ liệu (~/.config/MCAH, %APPDATA%\MCAH); đặt trước khi dùng app.getPath.
 app.setName('MCAH')
@@ -39,6 +42,7 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 const PAGES = path.join(__dirname, 'pages')
+const CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 // Hai API cần cấu hình SMTP của máy này: tiến trình chính gắn vào lúc chuyển tiếp, giao diện không thấy mật khẩu.
 const MAIL_PREPARE = /^\/api\/v1\/opportunities\/\d+\/mail\/prepare$/
 const SMTP_PATHS = [/^\/api\/v1\/opportunities\/\d+\/send-mail$/, /^\/api\/v1\/system\/smtp-test$/]
@@ -49,6 +53,7 @@ let database = null
 let mainWindow = null
 let logs = null
 let lan = null // { cert, key, fingerprint, secret, server } khi máy này là máy chính
+let signerInfo = null // { url, token } của cổng ký (signer.js)
 let staffMode = false // máy nhân viên: /api đi qua máy chính (lan-client.js), máy này không chạy Postgres / Fastify
 
 // /api/ và /public/ chuyển tiếp sang Fastify. Tệp có thật trong dist thì trả tệp đó, còn lại (đường dẫn của router) trả index.html.
@@ -94,7 +99,12 @@ async function serveFrontend(request) {
   const file = path.normalize(path.join(FRONTEND_DIST, decodeURIComponent(pathname)))
   const inside = file.startsWith(FRONTEND_DIST + path.sep)
   const target = inside && fs.existsSync(file) && fs.statSync(file).isFile() ? file : path.join(FRONTEND_DIST, 'index.html')
-  return net.fetch(pathToFileURL(target).toString())
+  const res = await net.fetch(pathToFileURL(target).toString())
+  // CSP (docs/mcah-ke-hoach-desktop-gd4.md 3.7): chỉ chạy script của app; dữ liệu lạ (tên chứa <script>…) không chạy được.
+  if (!target.endsWith('.html')) return res
+  const headers = new Headers(res.headers)
+  headers.set('Content-Security-Policy', CSP)
+  return new Response(res.body, { status: res.status, headers })
 }
 
 const GUIDE = /^app:\/\/mcah\/huong-dan\//
@@ -132,6 +142,8 @@ function createWindow() {
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') },
   })
   guardNavigation(win)
+  // Bản phát hành: không cho mở DevTools (Ctrl+Shift+I…). Cờ --inspect bị tắt bằng Electron fuses lúc đóng gói.
+  if (app.isPackaged) win.webContents.on('devtools-opened', () => win.webContents.closeDevTools())
   win.loadFile(path.join(PAGES, 'splash.html'))
   return win
 }
@@ -162,9 +174,47 @@ async function restartBackend(soffice) {
   backend = await startBackend(backendEnvVars, app.getPath('userData'), logs.backend)
 }
 
+async function rollbackUpdate(error) {
+  console.error(`Cập nhật lỗi khi chuyển dữ liệu, quay về bản cũ: ${error.message}`)
+  await database.pg.stop()
+  database = null
+  const from = updateGuard.pending()?.from
+  const installer = updateGuard.rollback(PLATFORM)
+  await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    message: 'Cập nhật không thành công',
+    detail: installer
+      ? `Đã trả dữ liệu về như trước khi cập nhật. MCAH sẽ cài lại bản ${from}. Không mất gì.\nMã lỗi: MIGRATE. Gửi mã này cho bộ phận hỗ trợ MCAH.`
+      : `Đã trả dữ liệu về như trước khi cập nhật nhưng máy không còn bộ cài bản ${from}. Liên hệ bộ phận hỗ trợ MCAH, đừng mở lại MCAH trước khi được hướng dẫn.`,
+    buttons: ['Đồng ý'],
+  })
+  if (installer) {
+    await install(installer).catch((e) => console.error(`Không cài lại được bản cũ: ${e.message}`))
+    if (PLATFORM === 'linux') app.relaunch()
+  }
+  app.exit(0)
+}
+
+// Trước khi cài bản mới có đổi dữ liệu: dừng ghi, chép DB, giữ bộ cài bản đang chạy.
+const beforeInstall = (update) => updateGuard.prepare({
+  update,
+  stopBackend: async () => {
+    lan?.server?.close()
+    if (backend) {
+      backend.child.kill()
+      await new Promise((r) => (backend.child.exitCode !== null ? r() : backend.child.once('exit', r)))
+    }
+  },
+  stopDatabase: async () => {
+    await database.pg.stop()
+    database = null
+  },
+})
+
 // Máy nhân viên: không mở Postgres / Fastify; phiên và mọi /api đi qua máy chính.
 async function startupStaff() {
   staffMode = true
+  readableView.cleanViews()
   session.init(null, lanClient.call)
   watchSession()
   watchLan()
@@ -176,6 +226,8 @@ async function startupStaff() {
 function watchSession() {
   session.events.on('changed', () => {
     mainWindow?.webContents.send('mcah:session-changed', session.info())
+    // Đăng xuất / hết phiên: xoá bản xem tạm của thư mục hồ sơ.
+    if (!session.info().loggedIn) readableView.cleanViews()
     // Vừa tạo văn phòng: máy này thành máy chính, mở cổng cho máy nhân viên.
     if (!staffMode && session.info().loggedIn && fs.existsSync(path.join(app.getPath('userData'), 'machine-key.bin'))) startLan()
   })
@@ -211,9 +263,10 @@ async function becomeStaff() {
 
 async function startup() {
   const userData = app.getPath('userData')
+  removeOldKeyFiles()
   if (lanClient.isStaff()) return startupStaff()
   database = await step('DB_START', () => startDatabase(userData))
-  const env = backendEnv(userData, database.env, await freePort(), { soffice: findSoffice(), mailDir: attachmentDir() })
+  const env = backendEnv(userData, database.env, await freePort(), { soffice: findSoffice(), mailDir: attachmentDir(), filesDir: filesDir() })
   // Máy chính: chứng chỉ HTTPS trong mạng văn phòng; backend báo dấu vân tay lên máy chủ dịch vụ (giai đoạn 3).
   try {
     const cert = await ensureCert(lanHostName())
@@ -226,9 +279,18 @@ async function startup() {
   if (ticketKey) env.DESKTOP_TICKET_PUBLIC_KEY = ticketKey
   // Cổng ký: backend gọi máy chủ dịch vụ (mời, bỏ thành viên, AI, tra tàu) qua tiến trình chính giữ khoá máy chính.
   const sign = await signer.start({ cloudUrl, machineKey })
+  signerInfo = sign
   env.MCAH_SIGNER_URL = sign.url
   env.MCAH_SIGNER_TOKEN = sign.token
-  await step('DB_MIGRATE', () => runScript('scripts/migrate.js', env, userData, logs.backend))
+  env.MCAH_MAINTENANCE_FILE = updateGuard.maintenanceFile()
+  try {
+    await step('DB_MIGRATE', () => runScript('scripts/migrate.js', env, userData, logs.backend))
+  } catch (error) {
+    // Bản mới đổi dữ liệu lỗi (docs/mcah-ke-hoach-desktop-gd4.md 3.5): trả DB về, cài lại bản cũ.
+    if (updateGuard.canRollback()) return rollbackUpdate(error)
+    throw error
+  }
+  if (updateGuard.pending()) updateGuard.finish()
   backendEnvVars = env
   backend = await step('BACKEND_START', () => startBackend(env, userData, logs.backend))
   session.init(() => backend.url)
@@ -241,18 +303,29 @@ async function startup() {
   }
   await mainWindow.loadURL('app://mcah/')
   // Kiểm bản mới lúc mở app và mỗi 6 giờ, im lặng nếu không có hoặc lỗi mạng.
-  runUpdate(mainWindow, { quiet: true })
-  setInterval(() => runUpdate(mainWindow, { quiet: true }), 6 * 3600 * 1000)
+  runUpdate(mainWindow, { quiet: true, beforeInstall })
+  setInterval(() => runUpdate(mainWindow, { quiet: true, beforeInstall }), 6 * 3600 * 1000)
 }
+
+// Thư mục hồ sơ dễ đọc trên máy chính: đặt trong Cài đặt (sau này), mặc định Tài liệu/MCAH - Hồ sơ.
+// MCAH_FILES_DIR (dev) để thử nhiều bản app trên một máy.
+const filesDir = () => process.env.MCAH_FILES_DIR || getSettings().filesDir || path.join(app.getPath('documents'), 'MCAH - Hồ sơ')
 
 // Tên máy trong mạng văn phòng (hiện ở màn ghép và Cài đặt): tên máy của hệ điều hành, chỉ chữ số và gạch.
 const lanHostName = () => os.hostname().split('.')[0].replace(/[^A-Za-z0-9-]/g, '-').slice(0, 63) || 'MCAH'
 
 // Mở cổng HTTPS cho máy nhân viên, quảng bá trong mạng (mDNS), không cho máy ngủ khi MCAH đang mở.
 async function startLan() {
-  if (!lan || lan.server || lan.starting) return
+  if (!lan || lan.server || lan.starting || pendingMove()) return
   lan.starting = true
   try {
+    // Văn phòng đã chuyển sang máy chính khác (docs/mcah-ke-hoach-desktop-gd4.md 3.4, W9): ngừng phục vụ.
+    const office = await fetch(`${backend.url}/api/v1/lan/hello`, { headers: { 'x-mcah-lan': lan.secret } }).then((r) => r.json()).catch(() => ({}))
+    if (office.office_id && (await machineReplaced(office.office_id))) {
+      lan.replaced = true
+      mainWindow?.loadFile(path.join(PAGES, 'moved.html'), { query: { office: office.office_name || '' } })
+      return
+    }
     lan.server = await lanServer.start({
       cert: lan.cert,
       key: lan.key,
@@ -265,6 +338,10 @@ async function startLan() {
     const hello = await fetch(`${backend.url}/api/v1/lan/hello`, { headers: { 'x-mcah-lan': lan.secret } }).then((r) => r.json()).catch(() => ({}))
     if (hello.office_id) discovery.advertise({ name: lanHostName(), port: LAN_PORT, officeId: hello.office_id })
     lan.blocker = powerSaveBlocker.start('prevent-app-suspension')
+    // Mã hoá ổ đĩa chứa thư mục hồ sơ (kiểm lúc mở và mỗi ngày; thẻ máy chính trong Cài đặt hiện kết quả).
+    const checkDisk = async () => { diskState = await diskEncryption.check(filesDir()) }
+    checkDisk()
+    setInterval(checkDisk, 24 * 3600 * 1000).unref?.()
     // Giữ bộ cài mới nhất cho máy nhân viên (tải qua mạng văn phòng); lỗi mạng thì để lần sau.
     const mirror = () => mirrorInstallers().catch((error) => console.error(`Bộ cài cho máy nhân viên: ${error.message}`))
     mirror()
@@ -277,21 +354,44 @@ async function startLan() {
   }
 }
 
+// Hỏi máy chủ dịch vụ (qua cổng ký) khoá máy này còn là máy chính không. Mất mạng thì coi như còn.
+async function machineReplaced(officeId) {
+  try {
+    const r = await fetch(`${signerInfo.url}/call`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-signer-token': signerInfo.token },
+      body: JSON.stringify({ office_id: officeId, path: '/api/office/machine/status', method: 'GET' }),
+      signal: AbortSignal.timeout(15000),
+    }).then((x) => x.json())
+    return r.status === 409 && r.body?.error === 'machine_replaced'
+  } catch {
+    return false
+  }
+}
+
+// Gọi /api của văn phòng từ tiến trình chính với phiên hiện tại (máy chính: backend máy này; máy nhân viên: qua máy chính).
+function apiGet(pathname) {
+  const jwt = session.jwt()
+  if (!jwt) return Promise.resolve(new Response('{"error":"Chưa đăng nhập"}', { status: 401 }))
+  if (staffMode) return lanClient.forward({ method: 'GET', pathname, headers: { authorization: `Bearer ${jwt}` }, body: null })
+  return fetch(`${backend.url}${pathname}`, { headers: { authorization: `Bearer ${jwt}` } })
+}
+
 // Trạng thái máy chính cho thẻ trong Cài đặt trên máy này (wireframe màn 6).
+let diskState = 'unknown'
 function lanStatus() {
   if (!lan?.server) return null
   const addresses = Object.values(os.networkInterfaces()).flat().filter((a) => a && a.family === 'IPv4' && !a.internal).map((a) => a.address)
-  return { name: lanHostName(), port: LAN_PORT, addresses, fingerprint: lan.fingerprint, keepAwake: Boolean(lan.blocker !== undefined && powerSaveBlocker.isStarted(lan.blocker)) }
+  return { name: lanHostName(), port: LAN_PORT, addresses, fingerprint: lan.fingerprint, keepAwake: Boolean(lan.blocker !== undefined && powerSaveBlocker.isStarted(lan.blocker)), diskEncryption: diskState, filesDir: filesDir() }
 }
 
-// Lệnh sao lưu chạy không mở cửa sổ (chưa có màn tới giai đoạn 4; mật khẩu qua biến môi trường):
-//   --backup-setup        đặt mật khẩu (MCAH_BACKUP_PASSWORD), in mã khôi phục một lần
-//   --backup=<tệp>        sao lưu ra tệp
-//   --restore=<tệp>       khôi phục vào máy mới (chưa có dữ liệu), mở bằng MCAH_BACKUP_PASSWORD hoặc MCAH_RECOVERY_CODE
+// Lệnh cho hỗ trợ MCAH (không có nút trong app, Q15; docs/mcah-ke-hoach-desktop-gd4.md 3.3, 3.4):
+//   --backup=<tệp.zip>    chụp dữ liệu máy chính (DB + thư mục hồ sơ + kho nội bộ) ra tệp .zip thường
+//   --restore=<tệp.zip>   nạp bản chụp vào máy mới (chưa có dữ liệu); chuyển máy chính trên máy chủ dịch vụ làm ở bước 4
 function cliCommand() {
   for (const arg of process.argv) {
-    const m = /^--(backup-setup|backup|restore)(?:=(.+))?$/.exec(arg)
-    if (m) return { name: m[1], file: m[2] && path.resolve(m[2]) }
+    const m = /^--(backup|restore)=(.+)$/.exec(arg)
+    if (m) return { name: m[1], file: path.resolve(m[2]) }
   }
   return null
 }
@@ -301,29 +401,30 @@ async function runCli(cmd, userData) {
     throw new Error('Máy này đã có dữ liệu. Khôi phục chỉ làm trên máy mới (thư mục dữ liệu trống).')
   }
   if (isRunning(userData)) throw new Error('App đang mở. Đóng app rồi chạy lại lệnh.')
-  if (cmd.name === 'backup-setup') {
-    console.log(`Mã khôi phục dữ liệu (chép lại, chỉ hiện một lần): ${setupKeys(userData, process.env.MCAH_BACKUP_PASSWORD)}`)
-    return
-  }
-  // Mở thử gói trước khi tạo gì trên máy: sai mật khẩu / gói hỏng thì máy vẫn trống, thử lại được.
+  // Đọc thử bản chụp trước khi tạo gì trên máy: hỏng thì máy vẫn trống.
   if (cmd.name === 'restore') {
-    readBackup(cmd.file, { password: process.env.MCAH_BACKUP_PASSWORD, recoveryCode: process.env.MCAH_RECOVERY_CODE })
+    const m = await readManifest(cmd.file)
+    console.log(`Bản chụp của ${m.office?.name || 'văn phòng'} lúc ${m.created_at} (MCAH ${m.app_version}), ${m.files.length} tệp`)
   }
   database = await startDatabase(userData)
   const env = backendEnv(userData, database.env, await freePort())
   await runScript('scripts/migrate.js', env, userData)
   if (cmd.name === 'backup') {
-    const r = await createBackup({ userData, dbEnv: database.env, uploadDir: env.UPLOAD_DIR, appVersion: app.getVersion(), outFile: cmd.file })
-    console.log(`Đã sao lưu: ${r.files} tệp, ${r.bytes} byte → ${cmd.file}`)
+    const r = await createBackup({ dbEnv: database.env, uploadDir: env.UPLOAD_DIR, filesDir: filesDir(), appVersion: app.getVersion(), outFile: cmd.file })
+    console.log(`Đã chụp: ${r.files} tệp, ${r.bytes} byte → ${cmd.file}${r.missing ? ` (thiếu ${r.missing} tệp trong thư mục hồ sơ)` : ''}`)
   } else {
-    const r = await restoreBackup({
-      file: cmd.file,
-      password: process.env.MCAH_BACKUP_PASSWORD,
-      recoveryCode: process.env.MCAH_RECOVERY_CODE,
-      dbEnv: database.env,
-      uploadDir: env.UPLOAD_DIR,
-    })
-    console.log(`Đã khôi phục bản sao lưu ${r.createdAt} (app ${r.appVersion}), ${r.files} tệp`)
+    const r = await restoreBackup({ file: cmd.file, dbEnv: database.env, uploadDir: env.UPLOAD_DIR, filesDir: filesDir() })
+    console.log(`Đã khôi phục bản chụp ${r.createdAt} (app ${r.appVersion}), ${r.files} tệp`)
+    // Không mang quyền cũ sang máy mới: huỷ mọi máy nhân viên đã ghép, đổi khoá ký phiên; lần đăng nhập đầu của quản trị
+    // chuyển máy chính trên máy chủ dịch vụ (session.completeMove).
+    const { Client } = require('pg')
+    const client = new Client({ host: database.env.DB_HOST, port: +database.env.DB_PORT, user: database.env.DB_USER, password: database.env.DB_PASSWORD, database: database.env.DB_NAME })
+    await client.connect()
+    await client.query("UPDATE office_device SET status = 'removed', token_hash = NULL, removed_at = NOW() WHERE status <> 'removed'")
+    await client.end()
+    fs.rmSync(path.join(userData, 'jwt-secret'), { force: true })
+    if (r.office?.id) markMove(r.office.id)
+    console.log('Máy nhân viên cũ đã bị huỷ. Quản trị mở MCAH, đăng nhập để chuyển văn phòng sang máy này.')
   }
 }
 
@@ -370,7 +471,7 @@ async function main() {
     },
     openLogs: () => shell.openPath(logDir()),
     restartBackend,
-    checkUpdate: () => runUpdate(mainWindow),
+    checkUpdate: () => runUpdate(mainWindow, staffMode ? {} : { beforeInstall }),
     lanStatus,
     lanFind: () => lanClient.find(session.pendingTicket()),
     // Lỗi có mã (WRONG_MACHINE, UNREACHABLE, …) trả về như kết quả để giao diện chọn màn (IPC làm mất mã của lỗi ném).
@@ -391,6 +492,8 @@ async function main() {
     },
     lanInfo: () => ({ staff: staffMode, main: lanClient.info(), pending: Boolean(lanClient.load()?.pairSecret) }),
     lanRetry: () => lanClient.retryNow(),
+    openFolder: (id) => readableView.openFolder(apiGet, id),
+    exportFolder: (opts) => readableView.exportFolder(apiGet, mainWindow, opts, (done, total) => mainWindow?.webContents.send('mcah:export-progress', { done, total })),
   })
   mainWindow = createWindow()
   try {
@@ -404,6 +507,7 @@ async function main() {
 app.whenReady().then(main)
 
 app.on('window-all-closed', () => app.quit())
+app.on('will-quit', () => readableView.cleanViews())
 
 // Tắt Postgres trước khi thoát để không còn tiến trình mồ côi.
 let stopping = false

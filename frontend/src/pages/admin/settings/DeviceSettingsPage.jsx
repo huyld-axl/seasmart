@@ -189,6 +189,14 @@ export default function DeviceSettingsPage() {
           </p>
           <p className="muted" style={{ marginTop: 0 }}>Máy nhân viên tự tìm máy này. Không tìm thấy thì gõ tên hoặc địa chỉ trên ở màn nối máy chính.</p>
           {lan.data.keepAwake ? <Alert type="success" showIcon message="Không cho máy ngủ khi MCAH đang mở." /> : null}
+          <p style={{ margin: '12px 0 0' }}>Thư mục hồ sơ: <b>{lan.data.filesDir}</b></p>
+          <div style={{ marginTop: 8 }}>
+            {lan.data.diskEncryption === 'on' ? <Alert type="success" showIcon message="Ổ đĩa chứa dữ liệu đã được mã hoá." /> : null}
+            {lan.data.diskEncryption === 'off' ? (
+              <Alert type="warning" showIcon message="Ổ đĩa chứa dữ liệu và thư mục hồ sơ chưa mã hoá. Mất máy là lộ toàn bộ giấy tờ." description="Windows: bật BitLocker hoặc Mã hoá thiết bị trong Cài đặt → Quyền riêng tư & bảo mật. Ubuntu: chỉ bật được khi cài lại Ubuntu với tuỳ chọn mã hoá ổ đĩa (LUKS)." />
+            ) : null}
+            {lan.data.diskEncryption === 'unknown' ? <Alert type="info" showIcon message="Chưa kiểm được ổ đĩa có mã hoá không. Hỏi người quản lý máy hoặc tự kiểm trong cài đặt hệ điều hành." /> : null}
+          </div>
         </Card>
       ) : null}
     </div>

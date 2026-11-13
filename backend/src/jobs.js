@@ -3,6 +3,7 @@ const pool = require('./config/db')
 const notificationService = require('./services/notification.service')
 const emailService = require('./services/email.service')
 const { purgeExpired } = require('./utils/file_trash')
+const { unlessBackingUp } = require('./utils/backup_lock')
 const config = require('./config')
 
 // Ngày dd/mm/yyyy cho nội dung thông báo (cột DATE trả về Date hoặc chuỗi yyyy-mm-dd).
@@ -69,7 +70,9 @@ function startJobs(logger) {
   // Job 2 (daily 3:00 AM): xoá khỏi ổ đĩa các tệp đã xoá mềm / bị thay quá 180 ngày (quy tắc xoá tệp).
   daily('purge_trash', '0 3 * * *', async () => {
     try {
-      await purgeExpired(logger)
+      // Đang có bản chụp dữ liệu chép tệp: bỏ lượt (runDaily chạy lại giờ sau vì ném lỗi).
+      const r = await unlessBackingUp(() => purgeExpired(logger))
+      if (r?.skipped) throw new Error('Đang chụp dữ liệu, xoá tệp để lần sau')
     } catch (err) {
       logger.error({ err }, 'Job: failed to purge trashed files')
       // Ném lại để runDaily không ghi là đã chạy: giờ sau thử lại.
@@ -226,6 +229,30 @@ function startJobs(logger) {
         setTimeout(register, 3600 * 1000).unref()
       })
     register()
+  }
+
+  // App máy tính: thư mục hồ sơ dễ đọc (docs/mcah-ke-hoach-desktop-gd4.md 3.2). Lúc mở app xếp lại mọi hồ sơ (nhận cả
+  // tệp từ trước giai đoạn 4); sau đó cứ 5 giây xử lý hàng đợi sắp xếp và các lần chuyển tệp chưa xong.
+  const fileStore = require('./utils/file_store')
+  if (fileStore.treeEnabled()) {
+    const fileLayout = require('./services/file_layout.service')
+    let busy = false
+    const tick = async () => {
+      if (busy) return
+      busy = true
+      try {
+        await unlessBackingUp(async () => {
+          await fileStore.retryMoves()
+          await fileLayout.processQueue(logger)
+        })
+      } catch (err) {
+        logger.warn({ err: err.message }, 'Job: sắp thư mục hồ sơ lỗi')
+      } finally {
+        busy = false
+      }
+    }
+    fileLayout.enqueueAll().then(tick).catch((err) => logger.warn({ err: err.message }, 'Job: chưa xếp được thư mục hồ sơ'))
+    setInterval(tick, 5000).unref()
   }
 
   // Dọn mã yêu cầu chống tạo trùng quá 24 giờ (plugins/idempotency.js).

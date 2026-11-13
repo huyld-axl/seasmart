@@ -30,6 +30,7 @@ import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 import useViewport from '../hooks/useViewport'
 import PdfComponentModal from '../components/common/PdfComponentModal'
+import AiConsentModal from '../components/common/AiConsentModal'
 import OfflineRibbon from '../components/common/OfflineRibbon'
 import MainLinkRibbon from '../components/common/MainLinkRibbon'
 import DesktopLock from '../components/common/DesktopLock'
@@ -269,6 +270,7 @@ export default function AdminLayout() {
           <ErrorBoundary resetKey={pathname}>
             <Outlet />
             {isDesktop() ? <PdfComponentModal /> : null}
+            <AiConsentModal />
             {isDesktop() ? <DesktopLock /> : null}
           </ErrorBoundary>
         </main>

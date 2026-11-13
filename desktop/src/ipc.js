@@ -115,7 +115,6 @@ function registerIpc(hooks) {
     await session.refresh()
     return session.info()
   })
-  handle('prepare-office', (password) => session.prepareOffice(str(password, 200, 'Mật khẩu sao lưu')))
   handle('create-office', (name) => {
     const clean = str(name, 200, 'Tên văn phòng').trim()
     if (!clean) throw new Error('Nhập tên văn phòng')
@@ -136,6 +135,16 @@ function registerIpc(hooks) {
   handle('lan-pair-status', () => hooks.lanPairStatus())
   handle('lan-info', () => hooks.lanInfo())
   handle('lan-retry', () => hooks.lanRetry())
+  // Thư mục hồ sơ (giai đoạn 4): mở của một thuyền viên, xuất nhiều / toàn bộ.
+  handle('open-folder', (id) => {
+    if (!Number.isInteger(id) || id < 1) throw new Error('Thuyền viên không hợp lệ')
+    return hooks.openFolder(id)
+  })
+  handle('export-folder', (opts) => {
+    const ids = Array.isArray(opts?.seafarerIds) ? opts.seafarerIds.filter((n) => Number.isInteger(n) && n > 0).slice(0, 2000) : null
+    if (!opts?.all && !ids?.length) throw new Error('Chưa chọn thuyền viên')
+    return hooks.exportFolder({ seafarerIds: ids, all: Boolean(opts?.all) })
+  })
   handle('startup-retry', () => hooks.relaunch())
   handle('open-logs', () => hooks.openLogs())
   handle('quit', () => app.quit())

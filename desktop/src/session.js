@@ -82,9 +82,40 @@ async function backend(pathname, body) {
   return data
 }
 
+// Máy vừa được nạp bản chụp (office.pendingMove): đổi khoá máy chính trên máy chủ dịch vụ bằng vé vừa đăng nhập,
+// lấy vé mới (mang khoá mới) rồi ghi khoá vào máy này (docs/mcah-ke-hoach-desktop-gd4.md 3.4).
+async function completeMove(tokens) {
+  const claims = JSON.parse(Buffer.from(String(tokens.ticket).split('.')[1], 'base64url'))
+  if (!(claims.auth_time > now() / 1000 - 540)) throw new Error('Đăng nhập lại để xác nhận chuyển văn phòng sang máy này')
+  const { publicPem } = office.machineKey()
+  const r = await fetch(`${login.cloudUrl()}/api/offices/${claims.office}/machine`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${tokens.ticket}` },
+    body: JSON.stringify({ machine_public_key: publicPem }),
+    signal: AbortSignal.timeout(20000),
+  }).catch(() => {
+    throw new Error('Không kết nối được máy chủ MCAH. Cần internet để chuyển văn phòng sang máy này.')
+  })
+  const data = await r.json().catch(() => ({}))
+  if (!r.ok) throw new Error(data.message || 'Máy chủ MCAH không cho chuyển máy chính')
+  const fresh = await login.refreshTokens(tokens.refresh_token)
+  const result = await backend('/api/v1/auth/desktop-machine', { ticket: fresh.ticket, machine_public_key: publicPem })
+  state = { jwt: result.token, refreshToken: fresh.refresh_token, offlineUntil: result.offline_until, user: result.user, maxSeen: now() }
+  office.clearMove()
+  save()
+  events.emit('changed')
+  return { user: result.user }
+}
+
 // Vé + refresh token từ máy chủ dịch vụ → phiên ở máy chính.
 async function adopt(tokens) {
-  const result = await backend('/api/v1/auth/desktop-ticket', { ticket: tokens.ticket })
+  let result
+  try {
+    result = await backend('/api/v1/auth/desktop-ticket', { ticket: tokens.ticket })
+  } catch (error) {
+    if (error.code === 'NOT_IN_OFFICE' && !transport && office.pendingMove()) return completeMove(tokens)
+    throw error
+  }
   if (result.needs_office) {
     pendingOffice = { tokens, account: result.account }
     events.emit('changed')
@@ -139,12 +170,9 @@ const session = {
   cancelLogin: login.cancelLogin,
   reopenBrowser: login.reopenBrowser,
 
-  prepareOffice: (backupPassword) => office.prepare(backupPassword),
-
   // Tạo văn phòng ở máy chủ dịch vụ (bằng vé), làm mới vé để có văn phòng + máy, rồi ghi vào máy chính.
   async createOffice(name) {
     if (!pendingOffice) throw new Error('Đăng nhập trước khi tạo văn phòng')
-    if (!office.hasPrepared()) throw new Error('Chưa đặt mật khẩu sao lưu')
     const { publicPem } = office.machineKey()
     const r = await fetch(`${login.cloudUrl()}/api/offices`, {
       method: 'POST',

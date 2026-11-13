@@ -2,6 +2,7 @@ import axios from 'axios'
 import { toast } from '../components/ds/useToast'
 import { isDesktop } from '../lib/desktop'
 import usePdfComponentStore from '../stores/pdfComponentStore'
+import useAiConsentStore from '../stores/aiConsentStore'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
@@ -35,6 +36,10 @@ api.interceptors.response.use(
     // App máy tính thiếu LibreOffice: mời cài, cài xong gửi lại đúng yêu cầu xuất vừa bấm (một lần).
     if (err.response?.status === 424 && isDesktop() && !err.config?._pdfRetried && (await errorCode(err)) === 'PDF_COMPONENT_MISSING') {
       if (await usePdfComponentStore.getState().ask()) return api.request({ ...err.config, _pdfRetried: true })
+    }
+    // Lần đầu quét AI: hỏi đồng ý, đồng ý thì gửi lại đúng yêu cầu vừa bấm (một lần).
+    if (err.response?.status === 409 && !err.config?._aiConsent && (await errorCode(err)) === 'AI_CONSENT_REQUIRED') {
+      if (await useAiConsentStore.getState().ask()) return api.request({ ...err.config, _aiConsent: true })
     }
     if (err.response?.status === 401 && !err.config.url.includes('/auth/login')) {
       localStorage.removeItem('token')

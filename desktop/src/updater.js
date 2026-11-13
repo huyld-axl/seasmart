@@ -17,6 +17,16 @@ const { canonical } = require('./manifest')
 const UPDATE_URL = (process.env.MCAH_UPDATE_URL || (fs.existsSync(updateUrlFile) ? fs.readFileSync(updateUrlFile, 'utf8').trim() : '')).replace(/\/+$/, '')
 const PLATFORM = process.platform === 'win32' ? 'win' : 'linux'
 
+// Migration cuối gói trong bản đang chạy (so với last_migration của bản mới).
+function lastMigration() {
+  const dir = path.join(require('./paths').backendDir, 'migrations/postgres')
+  try {
+    return fs.readdirSync(dir).filter((n) => /^\d+.*\.sql$/.test(n)).sort().pop() || null
+  } catch {
+    return null
+  }
+}
+
 // So phiên bản dạng a.b.c.
 function newer(a, b) {
   const pa = a.split('.').map(Number)
@@ -41,7 +51,7 @@ async function checkForUpdate() {
   const file = manifest.files?.[PLATFORM]
   if (!file || !newer(manifest.version, app.getVersion())) return null
   if (!/^[\w.\- ]+$/.test(file.name) || !/^[0-9a-f]{64}$/.test(file.sha256)) throw new Error('Thông tin bản cập nhật sai định dạng')
-  return { version: manifest.version, ...file }
+  return { version: manifest.version, has_migrations: manifest.last_migration !== lastMigration(), ...file }
 }
 
 async function download(update) {
@@ -72,7 +82,7 @@ function install(file) {
 }
 
 // Kiểm, hỏi, tải, cài. Trả về true khi app sắp thoát để bản mới chạy.
-async function runUpdate(window, { quiet = false } = {}) {
+async function runUpdate(window, { quiet = false, beforeInstall = null } = {}) {
   try {
     const update = await checkForUpdate()
     if (!update) {
@@ -89,6 +99,8 @@ async function runUpdate(window, { quiet = false } = {}) {
     })
     if (response !== 0) return false
     const file = await download(update)
+    // Máy chính, bản mới có đổi dữ liệu (docs/mcah-ke-hoach-desktop-gd4.md 3.5): dừng ghi, chụp DB, giữ bộ cài bản đang chạy.
+    if (update.has_migrations && beforeInstall) await beforeInstall(update)
     await install(file)
     if (PLATFORM === 'linux') app.relaunch()
     app.quit()
@@ -164,4 +176,4 @@ async function updateFromMain(window, fetchFromMain) {
   app.quit()
 }
 
-module.exports = { runUpdate, checkForUpdate, download, verifyManifest, mirrorInstallers, serveInstaller, updateFromMain }
+module.exports = { install, PLATFORM, runUpdate, checkForUpdate, download, verifyManifest, mirrorInstallers, serveInstaller, updateFromMain }

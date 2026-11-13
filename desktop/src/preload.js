@@ -37,7 +37,6 @@ contextBridge.exposeInMainWorld('mcah', {
     ipcRenderer.on('mcah:lock-changed', listener)
     return () => ipcRenderer.removeListener('mcah:lock-changed', listener)
   },
-  prepareOffice: call('prepare-office'),
   createOffice: call('create-office'),
   getSettings: call('get-settings'),
   saveSettings: call('save-settings'),
@@ -48,6 +47,13 @@ contextBridge.exposeInMainWorld('mcah', {
   lanPairStatus: call('lan-pair-status'),
   lanInfo: call('lan-info'),
   lanRetry: call('lan-retry'),
+  openFolder: call('open-folder'),
+  exportFolder: call('export-folder'),
+  onExportProgress: (fn) => {
+    const listener = (_event, p) => fn(p)
+    ipcRenderer.on('mcah:export-progress', listener)
+    return () => ipcRenderer.removeListener('mcah:export-progress', listener)
+  },
   onLanOnline: (fn) => {
     const listener = (_event, online) => fn(online)
     ipcRenderer.on('mcah:lan-online', listener)

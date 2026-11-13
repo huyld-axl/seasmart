@@ -61,6 +61,12 @@ async function authRoutes(fastify) {
       return { user: toClientUser(request.access) }
     }
   )
+
+  // Đồng ý gửi ảnh cho AI đọc (một lần cho tài khoản, dùng cho mọi máy).
+  fastify.post('/ai-consent', { onRequest: [fastify.authenticate] }, async (request) => {
+    await require('../../config/db').query('UPDATE "user" SET ai_consent_at = COALESCE(ai_consent_at, NOW()) WHERE id = ?', [request.user.id])
+    return { ai_consent: true }
+  })
 }
 
 module.exports = authRoutes

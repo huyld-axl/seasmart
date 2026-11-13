@@ -1,7 +1,7 @@
-const fs = require('fs')
 const path = require('path')
 const PizZip = require('pizzip')
-const config = require('../config')
+const fileStore = require('../utils/file_store')
+const tree = require('../utils/readable_tree')
 const { exportPackService } = require('./export_pack.service')
 
 // Tên tệp trong .zip → { name, kind }: giấy tờ (thư mục GIAY-TO) hay biểu mẫu. Bỏ tệp ghi chú THIEU / CHUA-CO.
@@ -22,14 +22,15 @@ const seafarerSendService = {
   async keepCopies(pool, sendId, log) {
     const [[send]] = await pool.query('SELECT export_pack_ids FROM opportunity_send WHERE id = ?', [sendId])
     if (!send) return
-    const dir = path.join(config.upload.dir, 'sends', String(sendId))
-    fs.mkdirSync(dir, { recursive: true })
+    // Bản đã gửi vào "07 Hồ sơ đã gửi" của từng thuyền viên trong thư mục hồ sơ (app máy tính).
+    const [[meta]] = await pool.query(
+      `SELECT s.sent_at, so.company_name AS partner_name FROM opportunity_send s
+       LEFT JOIN opportunity o ON o.id = s.opportunity_id LEFT JOIN ship_owner so ON so.id = o.ship_owner_id WHERE s.id = ?`, [sendId])
     for (const packId of send.export_pack_ids) {
       try {
-        const [[pack]] = await pool.query('SELECT seafarer_id FROM export_pack WHERE id = ?', [packId])
+        const [[pack]] = await pool.query('SELECT p.seafarer_id, s.full_name, s.seafarer_code FROM export_pack p JOIN seafarer s ON s.id = p.seafarer_id WHERE p.id = ?', [packId])
         const { buffer, filename } = await exportPackService.buildZip(pool, packId, 'pdf')
-        const file = path.join(dir, `${packId}.zip`)
-        fs.writeFileSync(file, buffer)
+        const file = await fileStore.put(buffer, { tree: tree.sentPath({ id: pack.seafarer_id, ...pack }, meta || {}), kind: 'send', ext: '.zip' }, pool)
         await pool.query(
           'INSERT INTO opportunity_send_copy (send_id, seafarer_id, export_pack_id, storage_path, file_name, files) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING',
           [sendId, pack.seafarer_id, packId, file, filename, JSON.stringify(filesOfZip(buffer))])
@@ -82,7 +83,7 @@ const seafarerSendService = {
        LEFT JOIN opportunity_send_copy c ON c.send_id = os.id AND c.seafarer_id = p.seafarer_id
        WHERE os.id = ?`, [seafarerId, sendId])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy lần gửi này' }
-    if (row.storage_path && fs.existsSync(row.storage_path)) return { buffer: fs.readFileSync(row.storage_path), filename: row.file_name }
+    if (row.storage_path && (await fileStore.exists(row.storage_path, pool))) return { buffer: await fileStore.read(row.storage_path, pool), filename: row.file_name }
     return exportPackService.buildZip(pool, row.pack_id, 'pdf')
   },
 }

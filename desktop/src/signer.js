@@ -5,7 +5,7 @@
 const http = require('http')
 const crypto = require('crypto')
 
-const ALLOWED = /^\/api\/office\/(invites|invites\/revoke|members\/remove|members\/restore|machine\/lan)$|^\/api\/(ai\/vision|vessels\/imo\/\d{7}|vessels\/catalog)$/
+const ALLOWED = /^\/api\/office\/(invites|invites\/revoke|members\/remove|members\/restore|machine\/lan|machine\/status)$|^\/api\/(ai\/vision|vessels\/imo\/\d{7}|vessels\/catalog)$/
 
 function start({ cloudUrl, machineKey }) {
   const token = crypto.randomBytes(24).toString('base64url')

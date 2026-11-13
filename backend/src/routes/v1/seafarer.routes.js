@@ -3,7 +3,6 @@ const seafarerSendService = require('../../services/seafarer_send.service')
 const pool = require('../../config/db')
 const formExportService = require('../../services/form_export.service')
 const config = require('../../config')
-const fs = require('fs')
 const { ownerIdFor, assertSeafarerInScope } = require('../../utils/scope')
 const { assertInScope } = require('../../plugins/access')
 
@@ -203,7 +202,7 @@ async function seafarerRoutes(fastify) {
     const photo = await seafarerService.getPhoto(request.params.id, request.query.size)
     reply.header('Content-Type', photo.mime)
     reply.header('Cache-Control', 'private, no-cache')
-    return reply.send(fs.createReadStream(photo.path))
+    return reply.send(photo.stream)
   })
 
   fastify.post('/:id/photo', { onRequest: [fastify.authenticate, fastify.can('seafarer.update')], schema: { params: idParams } }, async (request) => {

@@ -1,4 +1,3 @@
-const fs = require('fs')
 const config = require('../../config')
 const pool = require('../../config/db')
 const { fleetService, VESSEL_STATUSES } = require('../../services/fleet.service')
@@ -207,7 +206,7 @@ async function fleetRoutes(fastify) {
           const logo = await fleetService.getOwnerLogo(pool, request.params.id, request.query.size)
           reply.header('Content-Type', logo.mime)
           reply.header('Cache-Control', 'private, no-cache')
-          return reply.send(fs.createReadStream(logo.path))
+          return reply.send(logo.stream)
         })
         app.post('/:id/logo', { ...write, schema: { params } }, async (request) => {
           const file = await request.file({ limits: { fileSize: config.upload.maxFileSize, files: 1 } })
@@ -219,7 +218,7 @@ async function fleetRoutes(fastify) {
           const have = request.access?.permissions
           if (!have || !(have.has('partner.create') || have.has('partner.update'))) return reply.code(403).send({ error: 'Không có quyền' })
         }
-        app.post('/scan-card', { onRequest: [app.authenticate, canWrite] }, async (request) => {
+        app.post('/scan-card', { onRequest: [app.authenticate, canWrite], preHandler: [app.requireAiConsent] }, async (request) => {
           const part = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })
           if (!part) throw { statusCode: 400, message: 'Chưa chọn danh thiếp' }
           return businessCardScan.scan(part)

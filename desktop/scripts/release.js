@@ -23,7 +23,10 @@ if (!Object.keys(files).length) throw new Error(`Không có bộ cài ${version}
 
 fs.mkdirSync(OUT, { recursive: true })
 for (const { name } of Object.values(files)) fs.copyFileSync(path.join(INSTALLERS, name), path.join(OUT, name))
-const signed = { version, files }
+// Migration cuối của bản này: app đang chạy so với migration cuối của mình để biết bản mới có đổi dữ liệu không
+// (có thì chụp DB và giữ bộ cài cũ trước khi cài, docs/mcah-ke-hoach-desktop-gd4.md 3.5).
+const lastMigration = fs.readdirSync(path.join(DESKTOP, '../backend/migrations/postgres')).filter((n) => /^\d+.*\.sql$/.test(n)).sort().pop()
+const signed = { version, files, last_migration: lastMigration }
 const signature = crypto.sign(null, Buffer.from(canonical(signed)), key).toString('base64')
 fs.writeFileSync(path.join(OUT, 'latest.json'), JSON.stringify({ ...signed, signature }, null, 2))
 console.log(`Đã phát ${version}: ${Object.keys(files).join(', ')}`)

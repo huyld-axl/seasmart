@@ -5,6 +5,16 @@ const path = require('path')
 const MAX_BYTES = 10 * 1024 * 1024
 const KEEP = 2
 
+// Log không chứa dữ liệu cá nhân (docs/mcah-ke-hoach-desktop-gd4.md 3.7): email, số điện thoại, số giấy tờ (hộ chiếu,
+// CCCD, sổ thuyền viên), tên thư mục người trong thư mục hồ sơ → [đã ẩn]. Áp cho cả log của backend đi qua đây.
+const SCRUB = [
+  [/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, '[email]'],
+  [/(Thuyền viên|Đối tác|Tàu)\/[^/"\n]+/g, '$1/[đã ẩn]'],
+  [/(?<![\w-])(\+?84|0)\d{9,10}(?![\w-])/g, '[sđt]'],
+  [/(?<![\w-])[A-Z]{0,2}\d{7,12}(?![\w-])/g, '[số giấy]'],
+]
+const scrub = (text) => SCRUB.reduce((t, [re, to]) => t.replace(re, to), text)
+
 function rotatingLog(file, { maxBytes = MAX_BYTES, keep = KEEP } = {}) {
   fs.mkdirSync(path.dirname(file), { recursive: true })
   let size = fs.existsSync(file) ? fs.statSync(file).size : 0
@@ -22,7 +32,7 @@ function rotatingLog(file, { maxBytes = MAX_BYTES, keep = KEEP } = {}) {
 
   return {
     write(chunk) {
-      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(String(chunk))
+      const buf = Buffer.from(scrub(Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk)))
       if (size + buf.length > maxBytes && size > 0) rotate()
       fs.writeSync(fd, buf)
       size += buf.length
@@ -45,4 +55,4 @@ function captureConsole(log) {
   }
 }
 
-module.exports = { rotatingLog, captureConsole }
+module.exports = { rotatingLog, captureConsole, scrub }

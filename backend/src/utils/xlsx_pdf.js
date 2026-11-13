@@ -6,6 +6,7 @@ const fs = require('fs/promises')
 const os = require('os')
 const path = require('path')
 const { pathToFileURL } = require('url')
+const { tmpRoot } = require('./tmp_dir')
 
 const SOFFICE = process.env.SOFFICE_PATH || 'soffice'
 const TIMEOUT_MS = 120000
@@ -24,7 +25,7 @@ function run(args) {
 }
 
 async function convert(buffers) {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'mcah-pdf-'))
+  const dir = await fs.mkdtemp(path.join(tmpRoot(), 'pdf-'))
   try {
     const inputs = buffers.map((_, i) => path.join(dir, `${i}.xlsx`))
     await Promise.all(buffers.map((buffer, i) => fs.writeFile(inputs[i], buffer)))

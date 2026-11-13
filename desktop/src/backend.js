@@ -20,9 +20,14 @@ function readOrCreateSecret(file, bytes) {
 
 // soffice: đường dẫn LibreOffice đã dò; null thì đặt một đường dẫn không có để backend trả lỗi
 // "Cần cài thành phần xuất PDF" (không chạy nhầm `soffice` lạ trên PATH). mailDir: thư mục gửi thư (mail.js).
-function backendEnv(userData, dbEnv, port, { soffice = null, mailDir } = {}) {
+// filesDir: thư mục hồ sơ dễ đọc (docs/mcah-ke-hoach-desktop-gd4.md 3.2, Q-B2: Tài liệu/MCAH - Hồ sơ).
+// Thư mục tạm của app (<userData>/tmp) xoá sạch mỗi lần khởi động.
+function backendEnv(userData, dbEnv, port, { soffice = null, mailDir, filesDir = null } = {}) {
   const uploadDir = path.join(userData, 'uploads')
   fs.mkdirSync(uploadDir, { recursive: true })
+  const tmpDir = path.join(userData, 'tmp')
+  fs.rmSync(tmpDir, { recursive: true, force: true })
+  fs.mkdirSync(tmpDir, { recursive: true })
   return {
     ...dbEnv,
     NODE_ENV: 'production',
@@ -36,6 +41,8 @@ function backendEnv(userData, dbEnv, port, { soffice = null, mailDir } = {}) {
     PORT: String(port),
     JWT_SECRET: readOrCreateSecret(path.join(userData, 'jwt-secret'), 48),
     UPLOAD_DIR: uploadDir,
+    MCAH_TMP_DIR: tmpDir,
+    ...(filesDir ? { MCAH_FILES_DIR: filesDir } : {}),
     FORMS_DIR: formsDir,
   }
 }

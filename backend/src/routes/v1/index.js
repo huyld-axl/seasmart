@@ -27,6 +27,7 @@ async function v1Routes(fastify) {
     // Giai đoạn 3: ghép máy nhân viên, máy trong văn phòng.
     fastify.register(require('./lan_device.routes'), { prefix: '/lan', publicKeyPem: process.env.DESKTOP_TICKET_PUBLIC_KEY })
   }
+  fastify.register(require('./files.routes'), { prefix: '/files' })
   fastify.register(seafarerRoutes, { prefix: '/seafarers' })
   fastify.register(seafarerContactRoutes, { prefix: '/seafarers/:seafarerId/contacts' })
   fastify.register(importRoutes, { prefix: '/import' })

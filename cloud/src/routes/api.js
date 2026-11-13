@@ -38,8 +38,16 @@ async function apiRoutes(fastify) {
     const key = office && (await offices.machineKey(officeId))
     if (!key) throw fail(401, 'Máy chính chưa đăng ký', 'unauthorized')
     const path = request.raw.url.split('?')[0]
-    const ok = crypto.verify(null, Buffer.from(signingInput(request.method, path, time, request.rawBody)), crypto.createPublicKey(key), Buffer.from(signature, 'base64'))
-    if (!ok) throw fail(401, 'Chữ ký máy chính không hợp lệ', 'unauthorized')
+    const input = Buffer.from(signingInput(request.method, path, time, request.rawBody))
+    const ok = crypto.verify(null, input, crypto.createPublicKey(key), Buffer.from(signature, 'base64'))
+    if (!ok) {
+      // Máy chính cũ sau khi văn phòng chuyển máy: báo riêng để máy đó hiện "Văn phòng đã chuyển sang máy chính khác".
+      const { rows } = await require('../db').query('SELECT public_key FROM office_machine WHERE office_id = $1 AND revoked_at IS NOT NULL', [officeId])
+      if (rows.some((r) => { try { return crypto.verify(null, input, crypto.createPublicKey(r.public_key), Buffer.from(signature, 'base64')) } catch { return false } })) {
+        throw fail(409, 'Văn phòng đã chuyển sang máy chính khác', 'machine_replaced')
+      }
+      throw fail(401, 'Chữ ký máy chính không hợp lệ', 'unauthorized')
+    }
     if (office.locked_at) throw fail(403, 'Văn phòng đang bị khoá, liên hệ MCAH', 'office_locked')
     request.office = office
   }
@@ -49,6 +57,15 @@ async function apiRoutes(fastify) {
     const office = await offices.create({ accountId: request.claims.sub, name, machinePublicKey, ip: request.ip })
     return { id: office.id, name: office.name }
   })
+
+  // Chuyển máy chính (docs/mcah-ke-hoach-desktop-gd4.md 3.4): vé của quản trị vừa đăng nhập lại (auth_time ≤ 10 phút).
+  fastify.post('/api/offices/:id/machine', { onRequest: byTicket, config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (request) => {
+    if (!(request.claims.auth_time > Date.now() / 1000 - 600)) throw fail(401, 'Đăng nhập lại để xác nhận chuyển máy chính', 'reauth_required')
+    return offices.replaceMachine({ officeId: request.params.id, accountId: request.claims.sub, machinePublicKey: request.body?.machine_public_key, ip: request.ip })
+  })
+
+  // Máy chính hỏi trạng thái của mình lúc mở app (máy cũ sau khi chuyển máy nhận 409 machine_replaced từ byMachine).
+  fastify.get('/api/office/machine/status', { preHandler: byMachine }, async () => ({ ok: true }))
 
   fastify.post('/api/office/invites', { preHandler: byMachine }, async (request) => {
     const { email, full_name: fullName, role, invited_by_email: by } = request.body || {}

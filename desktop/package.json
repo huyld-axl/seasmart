@@ -94,6 +94,14 @@
       "allowToChangeInstallationDirectory": true,
       "include": "build/installer.nsh"
     },
+    "electronFuses": {
+      "runAsNode": false,
+      "enableCookieEncryption": true,
+      "enableNodeOptionsEnvironmentVariable": false,
+      "enableNodeCliInspectArguments": false,
+      "enableEmbeddedAsarIntegrityValidation": true,
+      "onlyLoadAppFromAsar": true
+    },
     "asarUnpack": [
       "src/backend-guard.js"
     ]
@@ -104,7 +112,9 @@
     "bonjour-service": "^1.4.4",
     "koffi": "^3.3.7",
     "pg": "8.23.1",
-    "reflect-metadata": "^0.2.2"
+    "reflect-metadata": "^0.2.2",
+    "yauzl": "^3.2.0",
+    "yazl": "^3.3.1"
   },
   "desktopName": "mcah.desktop"
 }

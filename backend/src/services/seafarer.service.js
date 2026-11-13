@@ -1,13 +1,13 @@
 const { assertVersion } = require('../utils/row_version')
 const { OVERVIEW_FIELDS, TAB_CONDITIONS, TABS, shapeRow } = require('../utils/crew_overview')
 const pool = require('../config/db')
+const fileStore = require('../utils/file_store')
+const tree = require('../utils/readable_tree')
+const fileLayout = require('./file_layout.service')
 const { withTransaction } = require('../utils/transaction')
 const XLSX = require('xlsx')
-const fs = require('fs')
 const { trashFiles } = require('../utils/file_trash')
-const path = require('path')
 const sharp = require('sharp')
-const crypto = require('crypto')
 const config = require('../config')
 const { assertSeafarerData } = require('../utils/field_rules')
 
@@ -169,14 +169,11 @@ async function syncRows(db, table, seafarerId, rows, fields, extra = () => ({}))
   return existing
 }
 
-// Ảnh nhỏ (thumbnail) cho danh sách: cạnh file ảnh gốc, tên thumb_<tên gốc>.jpg. Giữ nguyên tỉ lệ ảnh gốc (ảnh 4x6, tức 2:3), không cắt. Thiếu thì tạo lúc cần.
+// Ảnh nhỏ (thumbnail) cho danh sách: tệp phát sinh trong kho nội bộ (file_store.derived). Giữ nguyên tỉ lệ ảnh gốc
+// (ảnh 4x6, tức 2:3), không cắt. Thiếu thì tạo lúc cần.
 const THUMB = { width: 120, height: 180 }
-const thumbPathOf = (photoPath) => path.join(path.dirname(photoPath), `thumb_${path.basename(photoPath, path.extname(photoPath))}.jpg`)
-async function makeThumb(photoPath) {
-  const thumbPath = thumbPathOf(photoPath)
-  await sharp(photoPath).rotate().resize(THUMB.width, THUMB.height, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 80 }).toFile(thumbPath)
-  return thumbPath
-}
+const makeThumb = (photoRef) => fileStore.derived(photoRef, '-thumb.jpg', (buffer) =>
+  sharp(buffer).rotate().resize(THUMB.width, THUMB.height, { fit: 'inside', withoutEnlargement: true }).jpeg({ quality: 80 }).toBuffer())
 
 // Ảnh chân dung: chỉ JPG/PNG, nhận theo magic bytes, không tin MIME trình duyệt gửi.
 function sniffImage(buffer) {
@@ -355,38 +352,23 @@ const seafarerService = {
     }
     const mime = sniffImage(buffer)
     if (!mime) throw { statusCode: 400, message: 'Chỉ nhận ảnh JPG hoặc PNG' }
-    const [[row]] = await pool.query('SELECT photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
+    const [[row]] = await pool.query('SELECT id, full_name, seafarer_code, photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
 
-    const dir = path.join(config.upload.dir, 'photos')
-    fs.mkdirSync(dir, { recursive: true })
-    const storagePath = path.join(dir, `${id}_${Date.now()}_${crypto.randomBytes(6).toString('hex')}${mime === 'image/png' ? '.png' : '.jpg'}`)
-    fs.writeFileSync(storagePath, buffer)
-    await makeThumb(storagePath).catch(() => {})
-    try {
-      await pool.query('UPDATE seafarer SET photo_path = ?, photo_mime = ?, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [
-        storagePath,
-        mime,
-        updated_by,
-        id,
-      ])
-    } catch (err) {
-      fs.rmSync(storagePath, { force: true })
-      fs.rmSync(thumbPathOf(storagePath), { force: true })
-      throw err
-    }
-    if (row.photo_path) await trashFiles([row.photo_path, thumbPathOf(row.photo_path)], 'Thay ảnh chân dung')
+    // Ảnh cũ ra thùng rác trước để ảnh mới lấy đúng tên "Chân dung" trong thư mục hồ sơ.
+    if (row.photo_path) await trashFiles(row.photo_path, 'Thay ảnh chân dung')
+    const ext = mime === 'image/png' ? '.png' : '.jpg'
+    const ref = await fileStore.put(buffer, { tree: tree.photoPath(row, ext), kind: 'photo', ext })
+    await makeThumb(ref).catch(() => {})
+    await pool.query('UPDATE seafarer SET photo_path = ?, photo_mime = ?, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [ref, mime, updated_by, id])
     return { has_photo: true }
   },
 
   async getPhoto(id, size = 'full') {
     const [[row]] = await pool.query('SELECT photo_path, photo_mime FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
-    if (!row?.photo_path || !fs.existsSync(row.photo_path)) throw { statusCode: 404, message: 'Chưa có ảnh chân dung' }
-    if (size === 'thumb') {
-      const thumbPath = thumbPathOf(row.photo_path)
-      return { path: fs.existsSync(thumbPath) ? thumbPath : await makeThumb(row.photo_path), mime: 'image/jpeg' }
-    }
-    return { path: row.photo_path, mime: row.photo_mime }
+    if (!row?.photo_path || !(await fileStore.exists(row.photo_path))) throw { statusCode: 404, message: 'Chưa có ảnh chân dung' }
+    if (size === 'thumb') return { stream: await fileStore.stream(await makeThumb(row.photo_path)), mime: 'image/jpeg' }
+    return { stream: await fileStore.stream(row.photo_path), mime: row.photo_mime }
   },
 
   // Tạm ngưng (INACTIVE) hoặc kích hoạt lại (AVAILABLE). Chỉ tạm ngưng khi đang ở bờ và không còn hợp đồng chưa kết thúc,
@@ -425,7 +407,7 @@ const seafarerService = {
     const [[row]] = await pool.query('SELECT photo_path FROM seafarer WHERE id = ? AND deleted_at IS NULL', [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
     await pool.query('UPDATE seafarer SET photo_path = NULL, photo_mime = NULL, photo_updated_at = NOW(), updated_by = ? WHERE id = ?', [updated_by, id])
-    if (row.photo_path) await trashFiles([row.photo_path, thumbPathOf(row.photo_path)], 'Gỡ ảnh chân dung')
+    if (row.photo_path) await trashFiles(row.photo_path, 'Gỡ ảnh chân dung')
     return { has_photo: false }
   },
 
@@ -466,6 +448,8 @@ const seafarerService = {
     if (!Object.keys(changes).length) return changes
     // updated_at do trigger touch_updated_at đặt.
     await db.query('UPDATE seafarer SET ? WHERE id = ?', [{ ...safeData, updated_by }, id])
+    // Đổi tên / mã: thư mục hồ sơ của người này đổi tên theo.
+    if ('full_name' in changes || 'seafarer_code' in changes) await fileLayout.enqueue(db, 'seafarer', id)
     await db.query('INSERT INTO seafarer_revision (seafarer_id, changed_by, reason, changes) VALUES (?, ?, ?, ?)', [
       id,
       updated_by,

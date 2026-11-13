@@ -1,6 +1,4 @@
-// Tạo văn phòng trên máy chính (docs/mcah-ke-hoach-desktop-gd2.md 4.3, wireframe 4):
-//   prepare(password) — sinh khoá dữ liệu (32 byte, cất bằng két hệ điều hành) và bọc nó bằng mật khẩu sao lưu và
-//   mã khôi phục (data-key-wraps.json); trả mã khôi phục để hiện một lần. Gọi lại trước khi tạo xong thì làm lại từ đầu.
+// Tạo văn phòng trên máy chính (docs/mcah-ke-hoach-desktop-gd2.md 4.3):
 //   machineKey() — cặp khoá Ed25519 của máy chính (khoá riêng cất bằng két); tạo một lần, dùng lại khi thử lại.
 // Máy không có két an toàn (Ubuntu thiếu gnome-keyring → basic_text) thì không cho tạo văn phòng.
 const fs = require('fs')
@@ -8,7 +6,6 @@ const path = require('path')
 const crypto = require('crypto')
 const { app, safeStorage } = require('electron')
 const { secretStoreAvailable } = require('./settings')
-const { setupKeys, wrap, unwrap } = require('./backup')
 
 const file = (name) => path.join(app.getPath('userData'), name)
 const protect = (text) => safeStorage.encryptString(text)
@@ -18,28 +15,6 @@ function requireSecretStore() {
   if (!secretStoreAvailable()) {
     throw new Error('Máy chưa có kho mật khẩu an toàn của hệ điều hành. Trên Ubuntu cài gói gnome-keyring, đăng xuất rồi đăng nhập lại máy, sau đó mở lại MCAH.')
   }
-}
-
-function prepare(backupPassword) {
-  requireSecretStore()
-  if (typeof backupPassword !== 'string' || backupPassword.length < 10) throw new Error('Mật khẩu sao lưu cần ít nhất 10 ký tự')
-  const dataKey = crypto.randomBytes(32)
-  const { recoveryCode, keys } = setupKeys(app.getPath('userData'), backupPassword, protect)
-  const wraps = {
-    password: wrap(Buffer.from(keys.password.kek, 'base64'), dataKey),
-    recovery: wrap(Buffer.from(keys.recovery.kek, 'base64'), dataKey),
-  }
-  fs.writeFileSync(file('data-key.bin'), protect(dataKey.toString('base64')), { mode: 0o600 })
-  fs.writeFileSync(file('data-key-wraps.json'), JSON.stringify(wraps), { mode: 0o600 })
-  return recoveryCode
-}
-
-// Khoá dữ liệu (giai đoạn 4 dùng để mã hoá kho tệp và sao lưu).
-const dataKey = () => Buffer.from(unprotect(fs.readFileSync(file('data-key.bin'))), 'base64')
-
-// Mở bản bọc bằng khoá bọc (dẫn xuất từ mật khẩu sao lưu hoặc mã khôi phục) → khoá dữ liệu. Dùng để kiểm và khôi phục.
-function unwrapDataKey(kind, kek) {
-  return unwrap(kek, JSON.parse(fs.readFileSync(file('data-key-wraps.json'), 'utf8'))[kind])
 }
 
 function machineKey() {
@@ -55,6 +30,16 @@ function machineKey() {
   return { privateKey, publicPem: crypto.createPublicKey(privateKey).export({ type: 'spki', format: 'pem' }) }
 }
 
-const hasPrepared = () => fs.existsSync(file('data-key.bin')) && fs.existsSync(file('data-key-wraps.json'))
+// Q14 (docs/mcah-ke-hoach-desktop-gd4.md 3.6): không còn khoá dữ liệu / mật khẩu sao lưu. Máy thử đã tạo ở giai đoạn 2
+// còn tệp khoá cũ thì xoá lúc khởi động.
+function removeOldKeyFiles() {
+  for (const name of ['data-key.bin', 'data-key-wraps.json', 'backup-keys.json', 'backup-keys.bin']) fs.rmSync(file(name), { force: true })
+}
 
-module.exports = { prepare, dataKey, unwrapDataKey, machineKey, hasPrepared, requireSecretStore }
+// Máy vừa được hỗ trợ MCAH nạp bản chụp (--restore): lần đăng nhập đầu phải chuyển máy chính trên máy chủ dịch vụ.
+const MOVE = 'machine-move.json'
+const pendingMove = () => fs.existsSync(file(MOVE))
+const markMove = (officeId) => fs.writeFileSync(file(MOVE), JSON.stringify({ office_id: officeId, at: new Date().toISOString() }))
+const clearMove = () => fs.rmSync(file(MOVE), { force: true })
+
+module.exports = { machineKey, requireSecretStore, removeOldKeyFiles, pendingMove, markMove, clearMove }

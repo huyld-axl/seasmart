@@ -26,6 +26,8 @@
   a.btn[aria-disabled="true"] { background: #e7e8ec; color: var(--muted); pointer-events: none; }
   a { color: var(--primary); }
   ol { margin: 0; padding-left: 20px; }
+  /* .card đặt display: grid nên phải ép [hidden] ẩn thật (khung "Có gì mới" khi chưa có bản nào). */
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>

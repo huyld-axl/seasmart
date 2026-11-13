@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App máy tính GĐ4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe giai đoạn 4 app máy tính (docs/mcah-ke-hoach-desktop-gd4.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1360px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 72ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 80ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; color: var(--foreground); max-width: 80ch; }
+  .notes li { margin-bottom: 4px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .titlebar { display: flex; align-items: center; gap: 16px; padding: 6px 12px; background: #2f3237; color: #e8e8ea; font-size: 12px; }
+  .titlebar .menu span { margin-right: 14px; }
+  .titlebar .dots { margin-left: auto; letter-spacing: 6px; }
+  .shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 460px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { padding: 0; display: grid; grid-template-rows: auto 1fr; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .topbar .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+  .page { padding: 20px; display: grid; gap: 16px; align-content: start; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .card h4 { margin: 0 0 12px; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: grid; gap: 4px; font-size: 13px; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); min-height: 36px; }
+  .input.area { min-height: 90px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 6px 4px; }
+  .btn.dis { opacity: .45; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--secondary); font-size: 12px; }
+  .radio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .radio.on { border-color: var(--primary); background: var(--primary-light); }
+  .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-strong); margin-top: 2px; flex-shrink: 0; }
+  .radio.on .dot { border: 5px solid var(--primary); }
+  .banner { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .banner.ok { background: var(--success-bg); color: var(--success); }
+  .banner.err { background: var(--error-bg); color: var(--error-strong); }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(560px, 100%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 14px; }
+  .modal.wide { width: min(720px, 100%); }
+  .modal h4 { margin: 0; font-size: 16px; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .files { display: grid; gap: 6px; }
+  .file { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+  .file .muted { margin-left: auto; }
+  .progress { height: 6px; border-radius: 3px; background: var(--secondary); overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 45%; background: var(--primary); }
+  .dropdown { position: absolute; right: 16px; top: 52px; width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-modal); padding: 6px; font-size: 13px; }
+  .dropdown div { padding: 8px 10px; border-radius: var(--radius-sm); }
+  .dropdown .on { background: var(--secondary); font-weight: 600; }
+  .dropdown hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+  .splash { min-height: 420px; display: grid; place-items: center; background: var(--background); }
+  .splash .box { width: min(480px, 100%); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 14px; text-align: left; }
+  .code { font-family: ui-monospace, monospace; font-size: 12px; background: var(--secondary); padding: 8px 10px; border-radius: var(--radius-sm); }
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .shell { grid-template-columns: 1fr; } .side { display: none; } .grid2 { grid-template-columns: 1fr; } }
+  .web { min-height: 440px; display: grid; place-items: center; background: #eef0f4; position: relative; }
+  .web .bar { position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: #dfe2e8; font-size: 12px; color: var(--muted); }
+  .web .box { width: min(400px, calc(100% - 32px)); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 12px; margin-top: 24px; }
+  .web h4 { margin: 0; font-size: 18px; }
+  .or { text-align: center; color: var(--muted); font-size: 12px; }
+  .pin { display: flex; gap: 8px; justify-content: center; }
+  .pin span { width: 40px; height: 48px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 22px; }
+  .code-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-family: ui-monospace, monospace; font-size: 15px; text-align: center; }
+  .code-grid span { padding: 8px; background: var(--secondary); border-radius: var(--radius-sm); }
+  .ribbon { padding: 8px 20px; background: var(--warning-bg); border-bottom: 1px solid var(--warning-border); color: var(--warning); font-size: 13px; display: flex; gap: 12px; align-items: center; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .tbl th { color: var(--muted); font-weight: 500; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--secondary); }
+  .tag.warn { background: var(--warning-bg); color: var(--warning); }
+  .tag.ok { background: var(--success-bg); color: var(--success); }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">GĐ4 kho tệp, sao lưu</p>
+    <a href="#w1"><b>1</b>Sao lưu và khôi phục</a><a href="#w2"><b>2</b>Dải chưa sao lưu</a><a href="#w3"><b>3</b>Khôi phục lần đầu</a><a href="#w4"><b>4</b>Mở thư mục hồ sơ</a><a href="#w5"><b>5</b>Xuất hồ sơ</a><a href="#w6"><b>6</b>Mã hoá ổ đĩa</a><a href="#w7"><b>7</b>Đồng ý quét AI</a><a href="#w8"><b>8</b>Cập nhật có đổi dữ liệu</a><a href="#w9"><b>9</b>Máy chính cũ</a>
+  </nav>
+  <main class="main">
+    <header>
+      <h1>App máy tính — giai đoạn 4: kho tệp, sao lưu, bảo mật</h1>
+      <p class="lead">Chỉ những màn mới hoặc đổi. Dựng bằng control antd / components/ds như màn hiện có.</p>
+    </header>
+    <section id="w1">
+      <h2><b>1</b> Cài đặt → Sao lưu và khôi phục (máy chính, quản trị)</h2>
+      <p class="why">Trang mới trong Cài đặt trên máy này, chỉ hiện trên máy chính cho quản trị.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Cài đặt trên máy này / Sao lưu</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card"><h4>Sao lưu tự động</h4><div class="grid2"><div class="field">Nơi để bản sao lưu<div class="input">E:\ (USB SANDISK) · Sao lưu MCAH</div></div><div class="field">Giờ sao lưu mỗi ngày<div class="input">12:00</div></div></div><p class="muted">Giữ 7 bản theo ngày và 4 bản theo tuần. Bản sao lưu đã mã hoá, mở bằng mật khẩu sao lưu hoặc mã khôi phục.</p><div class="banner ok">Lần gần nhất: hôm nay 12:00 · 1,2 GB · đã kiểm toàn vẹn</div><div class="row" style="justify-content:flex-end;gap:8px;margin-top:12px"><span class="btn">Đổi nơi để</span><span class="btn pri">Sao lưu ngay</span></div></div><div class="card" style="margin-top:12px"><h4>Bản sao lưu</h4><table class="tbl"><tr><th>Lúc</th><th>Cỡ</th><th>Loại</th><th>Trạng thái</th></tr><tr><td>12/11 12:00</td><td>1,2 GB</td><td>Ngày</td><td><span class="tag ok">Đã kiểm</span></td></tr><tr><td>11/11 12:00</td><td>1,2 GB</td><td>Ngày</td><td><span class="tag ok">Đã kiểm</span></td></tr><tr><td>09/11 12:00</td><td>1,1 GB</td><td>Tuần</td><td><span class="tag ok">Đã kiểm</span></td></tr></table></div><div class="card" style="margin-top:12px"><h4>Mật khẩu sao lưu và mã khôi phục</h4><div class="row" style="gap:8px"><span class="btn">Đổi mật khẩu sao lưu</span><span class="btn">Tạo mã khôi phục mới</span><span class="btn">Xuất toàn bộ tài liệu…</span></div></div></div></div></div></div>
+      <ul class="notes"><li>Chưa chọn nơi để hoặc nơi để nằm trên chính ổ của máy chính: banner vàng "Bản sao lưu đang nằm cùng ổ với dữ liệu. Hỏng ổ là mất cả hai."</li><li>Đang sao lưu: thanh tiến độ thay banner, nút "Sao lưu ngay" thành "Đang sao lưu…". Lỗi (đầy ổ, rút USB): banner đỏ nêu lý do, bản dở bị bỏ.</li><li>Đổi mật khẩu sao lưu: hỏi mật khẩu cũ hoặc mã khôi phục. Tạo mã khôi phục mới: hiện mã một lần, kiểm nhóm 2 và 5 như lúc tạo văn phòng; mã cũ hết dùng.</li></ul>
+    </section>
+    <section id="w2">
+      <h2><b>2</b> Dải nhắc: chưa có bản sao lưu ra ngoài 7 ngày</h2>
+      <p class="why">Hiện cho quản trị ở mọi máy (cả máy nhân viên), cùng chỗ với dải mất nối của giai đoạn 3.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Thuyền viên</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="ribbon">⚠ 8 ngày chưa có bản sao lưu ra ngoài máy chính. Cắm USB hoặc chọn nơi để rồi bấm Sao lưu ngay. <span class="btn link" style="margin-left:auto">Mở Sao lưu</span></div><div class="page"><div class="card" style="min-height:120px"><p class="muted">… danh sách thuyền viên …</p></div></div></div></div></div>
+      <ul class="notes"><li>Nhân viên không phải quản trị không thấy dải này.</li><li>Cùng chỗ hiển thị thêm: "Ổ đĩa máy chính chưa mã hoá" (màn 6) — tối đa một dải mỗi lúc, dải đỏ mất nối ưu tiên trước.</li></ul>
+    </section>
+    <section id="w3">
+      <h2><b>3</b> Lần đầu → Khôi phục từ bản sao lưu</h2>
+      <p class="why">Bật lựa chọn đang mờ "Khôi phục từ bản sao lưu" ở màn Lần đầu của giai đoạn 2. Chỉ quản trị của văn phòng đó.</p>
+      <div class="grid2"><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Khôi phục từ bản sao lưu</h4><div class="field">Tệp sao lưu<div class="input">E:\Sao lưu MCAH\2026-11-12.ssbak</div></div><div class="banner ok">Bản của Công ty ABC · tạo 12/11 12:00 · MCAH 1.3.0</div><div class="field">Mật khẩu sao lưu<div class="input">••••••••••••</div></div><span class="btn link">Dùng mã khôi phục thay mật khẩu</span><div class="row" style="justify-content:space-between"><span class="btn">Quay lại</span><span class="btn pri">Khôi phục</span></div></div></div></div><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Đang khôi phục…</h4><div style="display:grid;gap:6px"><span class="muted">Chép tài liệu 3.120 / 5.400</span><div class="progress"><i style="width:58%"></i></div></div><ul class="muted" style="margin:0;padding-left:18px"><li>✓ Kiểm mật khẩu và gói</li><li>✓ Nạp dữ liệu</li><li>… Chép tài liệu</li><li>Đăng ký máy chính mới với máy chủ MCAH</li><li>Huỷ mọi máy nhân viên cũ (phải ghép lại)</li></ul></div></div></div></div>
+      <ul class="notes"><li>Sai mật khẩu: báo ngay sau bước kiểm, máy vẫn trống, nhập lại được (B7).</li><li>Gói của văn phòng khác hoặc tài khoản không phải quản trị của văn phòng trong gói: không cho khôi phục.</li><li>Bước đăng ký máy chính mới cần đăng nhập lại trên trình duyệt (máy chủ dịch vụ xin xác nhận quản trị) và gửi thư báo cho mọi quản trị.</li><li>Xong: "Văn phòng đã chuyển sang máy này. Nhân viên mở MCAH trên máy mình để nối lại."</li></ul>
+    </section>
+    <section id="w4">
+      <h2><b>4</b> Chi tiết thuyền viên: Mở thư mục hồ sơ</h2>
+      <p class="why">Nút mới trong cụm nút đầu trang chi tiết thuyền viên (và tàu, đối tác). Có trên máy chính và máy nhân viên.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Thuyền viên / Nguyễn Văn An</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card"><div class="row" style="justify-content:space-between"><b>NGUYỄN VĂN AN · TV0123</b><span class="row" style="gap:8px"><span class="btn">Mở thư mục hồ sơ</span><span class="btn pri">Sửa</span><span class="btn">⋯</span></span></div><p class="muted">… các tab hồ sơ …</p></div></div></div></div></div>
+      <ul class="notes"><li>Bấm: app dựng bản xem tạm (chỉ đọc) đúng cấu trúc mục 5.5 kế hoạch tổng rồi mở File Explorer / Files. Đang dựng: nút quay "Đang chuẩn bị…".</li><li>Bản xem tạm bị xoá khi đóng app, đăng xuất, mở app lần sau, hoặc sau 24 giờ.</li></ul>
+    </section>
+    <section id="w5">
+      <h2><b>5</b> Danh sách thuyền viên: Xuất hồ sơ ra thư mục</h2>
+      <p class="why">Trong menu ⋯ của danh sách (chọn nhiều hoặc tất cả) và ở Sao lưu → "Xuất toàn bộ tài liệu". Cần quyền xuất hàng loạt.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Thuyền viên</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card" style="min-height:160px"><p class="muted">… 12 thuyền viên đã chọn …</p></div></div></div><div class="scrim"><div class="modal" role="dialog"><h4>Xuất 12 hồ sơ ra thư mục</h4><div class="banner warn">Bản xuất <b>không được mã hoá</b>. Ai mở được thư mục này là đọc được giấy tờ.</div><div class="field">Xuất vào<div class="input">E:\ · thư mục "SeaSmart - Hồ sơ" sẽ được tạo</div></div><p class="muted" style="margin:0">Gồm giấy tờ còn hiệu lực, bản cũ (trong "Bản cũ"), ảnh, hồ sơ đã gửi. Tệp đã xoá không xuất.</p><div class="foot"><span class="btn">Huỷ</span><span class="btn pri">Chọn thư mục và xuất</span></div></div></div></div></div>
+      <ul class="notes"><li>Đang xuất: thanh tiến độ trong hộp, bấm Huỷ thì dừng và để lại phần đã xuất cùng tệp "Đọc tôi.txt" ghi là bản chưa xong.</li><li>Xong: toast "Đã xuất 12 hồ sơ" kèm nút "Mở thư mục".</li></ul>
+    </section>
+    <section id="w6">
+      <h2><b>6</b> Thẻ máy chính: mã hoá ổ đĩa</h2>
+      <p class="why">Thêm dòng vào thẻ "Máy chính của văn phòng" (giai đoạn 3) trong Cài đặt trên máy này.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Cài đặt trên máy này</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card"><h4>Máy chính của văn phòng</h4><div style="display:grid;gap:6px"><div class="banner ok">Không cho máy ngủ khi MCAH đang mở.</div><div class="banner warn">Ổ đĩa chứa dữ liệu chưa mã hoá. Mất máy là lộ dữ liệu. <span class="btn link">Cách bật BitLocker / Mã hoá thiết bị</span></div></div></div></div></div></div></div>
+      <ul class="notes"><li>Ubuntu: hướng dẫn nói rõ phải cài lại Ubuntu với tuỳ chọn mã hoá (LUKS) — không bật thêm được trên máy đang chạy.</li><li>Không kiểm được (thiếu quyền, hệ thống lạ): "Chưa kiểm được ổ đĩa có mã hoá không" kèm hướng dẫn tự kiểm.</li></ul>
+    </section>
+    <section id="w7">
+      <h2><b>7</b> Lần đầu quét AI: hộp đồng ý</h2>
+      <p class="why">Hiện một lần cho mỗi tài khoản, lần đầu bấm bất kỳ nút quét giấy tờ / danh thiếp.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="grp">Hệ thống</div><div class="it">Quản trị</div></div><div class="content"><div class="topbar"><h3>Thuyền viên / Thêm</h3><div class="user"><div class="avatar">NA</div>Nguyễn An ▾</div></div><div class="page"><div class="card" style="min-height:160px"><p class="muted">… form thuyền viên …</p></div></div></div><div class="scrim"><div class="modal" role="dialog"><h4>Gửi ảnh cho AI đọc?</h4><p style="margin:0">Để tự điền, ảnh giấy tờ được gửi lên máy chủ MCAH cho AI đọc. Máy chủ <b>không lưu</b> ảnh, chỉ ghi số trang và thời gian để tính phí.</p><p class="muted" style="margin:0">Không đồng ý thì vẫn nhập tay được như thường.</p><div class="foot"><span class="btn">Không, tôi nhập tay</span><span class="btn pri">Đồng ý và quét</span></div></div></div></div></div>
+      <ul class="notes"><li>Đồng ý lưu theo tài khoản (cả khi dùng máy khác). Bỏ đồng ý ở Cài đặt → Tài khoản của tôi.</li></ul>
+    </section>
+    <section id="w8">
+      <h2><b>8</b> Cập nhật máy chính có đổi dữ liệu</h2>
+      <p class="why">Thay hộp cập nhật của giai đoạn 1 khi bản mới có migration. Máy nhân viên thấy dải "Máy chính đang cập nhật".</p>
+      <div class="grid2"><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Đang cập nhật MCAH 1.3.0 → 1.4.0</h4><ul class="muted" style="margin:0;padding-left:18px"><li>✓ Tạm dừng ghi trên mọi máy</li><li>✓ Sao lưu đầy đủ</li><li>… Chuyển dữ liệu sang bản mới</li><li>Mở lại cho máy nhân viên</li></ul><div class="progress"><i style="width:70%"></i></div></div></div></div><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Cập nhật không thành công</h4><div class="banner err">Đã trả dữ liệu về như trước khi cập nhật và quay về MCAH 1.3.0. Không mất gì.</div><p class="muted" style="margin:0">Mã lỗi: MIGRATE_047. Gửi mã này cho bộ phận hỗ trợ MCAH.</p><div class="row" style="justify-content:flex-end"><span class="btn pri">Tiếp tục làm việc</span></div></div></div></div></div>
+      <ul class="notes"><li>Máy nhân viên lúc này: dải xanh dương "Máy chính đang cập nhật, đọc được nhưng chưa lưu được"; lưu thì báo và giữ nội dung form.</li></ul>
+    </section>
+    <section id="w9">
+      <h2><b>9</b> Máy chính cũ sau khi văn phòng chuyển máy</h2>
+      <p class="why">Máy chính cũ còn chạy khi văn phòng đã khôi phục sang máy khác.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Văn phòng đã chuyển sang máy chính khác</h4><p style="margin:0">Công ty ABC đã khôi phục dữ liệu lên máy <b>MAY-MOI</b> lúc 13/11 09:20. Máy này ngừng phục vụ để tránh hai bản dữ liệu.</p><p class="muted" style="margin:0">Dữ liệu cũ vẫn còn trên máy này. Muốn dùng máy này làm máy nhân viên: gỡ MCAH rồi cài lại.</p><div class="row" style="justify-content:flex-end"><span class="btn">Đăng xuất</span></div></div></div></div>
+      <ul class="notes"></ul>
+    </section>
+  </main>
+</div>
+</body>
+</html>

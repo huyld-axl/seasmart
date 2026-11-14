@@ -13,7 +13,7 @@ const REGEX = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   bankAccount: /^\d{6,30}$/,
   socialInsurance: /^\d{10}$/,
-  noDigit: /^[^\d]+$/,
+  personName: /^(?=.*\p{L})[^\d]+$/u,
 }
 
 function check(value, regex, message) {
@@ -51,11 +51,11 @@ function seafarerErrors(data, today = new Date().toISOString().slice(0, 10)) {
     rangeCheck(data.height_cm, 50, 300, 'Chiều cao từ 50 đến 300 cm'),
     rangeCheck(data.weight_kg, 20, 500, 'Cân nặng từ 20 đến 500 kg'),
     rangeCheck(data.children_count, 0, 30, 'Số con từ 0 đến 30'),
-    phoneCheck(data.phone_primary, 'Số điện thoại gồm 8–15 chữ số'),
-    phoneCheck(data.phone_secondary, 'Số điện thoại phụ gồm 8–15 chữ số'),
+    phoneCheck(data.phone_primary, 'Số điện thoại không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true),
+    phoneCheck(data.phone_secondary, 'Số điện thoại phụ không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true),
     check(data.email, REGEX.email, 'Email chưa đúng dạng'),
     check(data.social_insurance_number, REGEX.socialInsurance, 'Số BHXH gồm 10 chữ số'),
-    check(data.full_name, REGEX.noDigit, 'Họ và tên không chứa chữ số'),
+    check(data.full_name, REGEX.personName, 'Họ và tên phải có ít nhất một chữ cái và không chứa chữ số'),
     check(data.bank_account_number, REGEX.bankAccount, 'Số tài khoản gồm 6–30 chữ số'),
   ]
   if (Number(data.children_count) < 0 || Number(data.height_cm) < 0 || Number(data.weight_kg) < 0) errors.push('Số không được âm')
@@ -72,14 +72,14 @@ function seafarerErrors(data, today = new Date().toISOString().slice(0, 10)) {
     errors.push('Ngày cấp CCCD không được trước ngày sinh')
   }
   for (const [i, row] of (Array.isArray(data.bank_accounts) ? data.bank_accounts : []).entries()) {
-    const e = check(row?.account_number, REGEX.bankAccount, `Tài khoản ${i + 1}: số tài khoản gồm 6–30 chữ số`) || check(row?.account_holder, REGEX.noDigit, `Tài khoản ${i + 1}: tên chủ tài khoản không chứa chữ số`)
+    const e = check(row?.account_number, REGEX.bankAccount, `Tài khoản ${i + 1}: số tài khoản gồm 6–30 chữ số`) || check(row?.account_holder, REGEX.personName, `Tài khoản ${i + 1}: tên chủ tài khoản phải có ít nhất một chữ cái và không chứa chữ số`)
     if (e) errors.push(e)
   }
   for (const [i, row] of (Array.isArray(data.contacts) ? data.contacts : []).entries()) {
     const e =
-      phoneCheck(row?.phone_primary, `Người thân ${i + 1}: số điện thoại gồm 8–15 chữ số`) ||
+      phoneCheck(row?.phone_primary, `Người thân ${i + 1}: số điện thoại không hợp lệ, gồm 8–15 chữ số và không được toàn số 0`, true) ||
       check(row?.guarantor_id_number, REGEX.idNumber, `Người thân ${i + 1}: số CCCD không hợp lệ, gồm 12 chữ số (CMND cũ 9 chữ số) và không được toàn số 0`) ||
-      check(row?.full_name, REGEX.noDigit, `Người thân ${i + 1}: họ tên không chứa chữ số`)
+      check(row?.full_name, REGEX.personName, `Người thân ${i + 1}: họ tên phải có ít nhất một chữ cái và không chứa chữ số`)
     if (e) errors.push(e)
   }
   return [...new Set(errors.filter(Boolean))]
@@ -130,6 +130,7 @@ function ownerErrors(data) {
   const errors = [
     blankCheck(data.company_name, 'Tên công ty không được để trống'),
     check(data.tax_id, REGEX.taxId, 'Mã số thuế gồm 5–50 chữ, số hoặc dấu - .'),
+    text(data.tax_id) && !/[0-9A-Za-z]/.test(text(data.tax_id)) ? 'Mã số thuế phải có ít nhất một chữ hoặc số' : null,
     /^0+$/.test(text(data.tax_id).replace(/[\s.-]/g, '')) ? 'Mã số thuế không hợp lệ: không được toàn số 0' : null,
     phoneCheck(data.phone, 'Số điện thoại công ty không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true),
     phoneCheck(data.fax, 'Fax gồm 8–15 chữ số'),

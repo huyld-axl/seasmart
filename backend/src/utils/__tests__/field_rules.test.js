@@ -136,3 +136,22 @@ describe('field_rules: đối tác, tàu, danh mục', () => {
     expect(masterErrors('country', { code: 'zz' })).toEqual([])
   })
 })
+
+
+describe('hồi quy validate 13/11: tên, điện thoại và mã số thuế', () => {
+  it.each(['!!!', '---', '😀', '123'])('chặn họ tên %s', (full_name) => {
+    expect(seafarerErrors({ full_name })).toHaveLength(1)
+  })
+  it.each(['Lê Tiến Linh', 'Jean-Luc', 'O’Neill', '李明'])('giữ tên %s', (full_name) => {
+    expect(seafarerErrors({ full_name })).toEqual([])
+  })
+  it.each(['0000000000', '+00 0000 0000', '(000) 000-0000'])('chặn điện thoại %s', (phone_primary) => {
+    expect(seafarerErrors({ phone_primary })).toHaveLength(1)
+    expect(seafarerErrors({ phone_secondary: phone_primary })).toHaveLength(1)
+    expect(seafarerErrors({ contacts: [{ phone_primary }] })).toHaveLength(1)
+  })
+  it('chặn mã số thuế chỉ có dấu phân cách', async () => {
+    const { ownerErrors } = await import('../field_rules')
+    for (const tax_id of ['-----', '.....', ' -.-.- ']) expect(ownerErrors({ tax_id })).toContain('Mã số thuế phải có ít nhất một chữ hoặc số')
+  })
+})

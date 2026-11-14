@@ -1,3 +1,4 @@
+import { notBefore } from '../../../utils/fieldRules'
 import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -458,7 +459,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           <Form.Item name="issued_date" label="Ngày cấp" rules={[{ required: true, message: 'Nhập ngày cấp' }]}>
             <DateField format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="expiry_date" label="Có giá trị đến" rules={[{ required: !noExpiry, message: 'Nhập hạn hoặc đánh dấu không thời hạn' }]}>
+          <Form.Item name="expiry_date" label="Có giá trị đến" dependencies={['issued_date', 'no_expiry']} rules={[{ required: !noExpiry, message: 'Nhập hạn hoặc đánh dấu không thời hạn' }, ...(noExpiry ? [] : [notBefore('issued_date', 'Ngày hết hạn không được trước ngày cấp')])]}>
             <DateField format="DD/MM/YYYY" style={{ width: '100%' }} disabled={Boolean(noExpiry)} />
           </Form.Item>
           <Form.Item name="no_expiry" valuePropName="checked">

@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const pool = require('../config/db')
 const config = require('../config')
+const { assertCertificateDates } = require('../utils/certificate_dates')
 const { trashFiles, certificateFilePath } = require('../utils/file_trash')
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
@@ -91,6 +92,7 @@ const certificateService = {
   },
 
   async create(seafarerId, data, created_by) {
+    assertCertificateDates(data)
     try {
       const [result] = await pool.query(
         'INSERT INTO seafarer_certificate SET ?',
@@ -104,7 +106,8 @@ const certificateService = {
   },
 
   async update(id, seafarerId, data, updated_by) {
-    await this.getById(id, seafarerId)
+    const current = await this.getById(id, seafarerId)
+    assertCertificateDates({ ...current, ...data })
     await pool.query(
       'UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?',
       [data, updated_by, id]

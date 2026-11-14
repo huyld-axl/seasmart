@@ -28,11 +28,11 @@ export const fieldRules = {
     { validator: (_, v) => (!v || (Number(v) >= 30 && Number(v) <= 55) ? Promise.resolve() : Promise.reject(new Error('Size giày là số từ 30 đến 55'))) },
   ],
   pants: pattern(/^[0-9A-Za-z/. ]{1,10}$/, 'Size quần chỉ gồm số, chữ, dấu / và dấu chấm (VD: 30 / 32)'),
-  phone: [phoneRule('Số điện thoại gồm 8–15 chữ số')],
+  phone: [phoneRule('Số điện thoại không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true)],
   email: [{ type: 'email', message: 'Email chưa đúng dạng' }],
   bankAccount: pattern(/^\d{6,30}$/, 'Số tài khoản gồm 6–30 chữ số'),
   socialInsurance: pattern(/^\d{10}$/, 'Số BHXH gồm 10 chữ số'),
-  personName: pattern(/^[^\d]+$/, 'Không chứa chữ số'),
+  personName: pattern(/^(?=.*\p{L})[^\d]+$/u, 'Tên phải có ít nhất một chữ cái và không chứa chữ số'),
 }
 
 // Ngày: không ở tương lai.
@@ -53,6 +53,7 @@ export const ownerRules = {
   companyPhone: [phoneRule('Số điện thoại công ty không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true)],
   taxId: [
     ...pattern(/^[0-9A-Za-z\-. ]{5,50}$/, 'Mã số thuế gồm 5–50 chữ, số hoặc dấu - .'),
+    { validator: (_, value) => String(value ?? '').trim() && !/[0-9A-Za-z]/.test(value) ? Promise.reject(new Error('Mã số thuế phải có ít nhất một chữ hoặc số')) : Promise.resolve() },
     {
       validator: (_, value) => /^0+$/.test(String(value ?? '').replace(/[\s.-]/g, ''))
         ? Promise.reject(new Error('Mã số thuế không hợp lệ: không được toàn số 0'))

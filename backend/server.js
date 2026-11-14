@@ -6,7 +6,8 @@ const v1Routes = require('./src/routes/v1')
 const { startJobs } = require('./src/jobs')
 const { documentService } = require('./src/services/document.service')
 
-const fastify = Fastify({ logger: true })
+// App máy tính: không ghi log từng request (đường dẫn có thể chứa tên, số giấy tờ trong ô tìm kiếm).
+const fastify = Fastify({ logger: config.desktop ? { level: 'warn' } : true })
 
 const { errorHandler } = require('./src/utils/error_handler')
 fastify.setErrorHandler(errorHandler)

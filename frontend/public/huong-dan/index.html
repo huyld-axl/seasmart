@@ -180,6 +180,11 @@
   }
 </style>
 <!-- Trang hướng dẫn duy nhất của app (đã gộp tong-quan.html, hop-dong-va-chuyen.html, dien-thoai.html ngày 10/11/2026). App mở thẳng tới mục bằng #id (HelpLink.jsx). Quyền lấy từ backend/src/constants/permissions.js. -->
+<style>
+  /* Mục "Ứng dụng trên máy tính": chỉ hiện khi trang mở trong app máy tính (giao thức app:), bản web giữ nguyên. */
+  html:not(.trong-app) .chi-app { display: none !important; }
+</style>
+<script>if (location.protocol === 'app:') document.documentElement.classList.add('trong-app')</script>
 </head>
 <body>
 <aside class="side" id="side" aria-label="Mục lục">
@@ -213,6 +218,11 @@
     <a href="#phan-quyen">Vai trò và quyền</a>
     <a href="#muc-tieu">Mục tiêu tháng</a>
     <p>Khác</p>
+    <a href="#app-may-tinh" class="chi-app">Ứng dụng trên máy tính</a>
+    <a href="#app-tai-khoan" class="chi-app">Tài khoản (máy tính)</a>
+    <a href="#app-nhieu-may" class="chi-app">Nhiều máy trong văn phòng</a>
+    <a href="#app-ho-so" class="chi-app">Thư mục hồ sơ</a>
+    <a href="#app-cai-dat" class="chi-app">Cài đặt, cập nhật, gỡ</a>
     <a href="#dien-thoai">Dùng trên điện thoại</a>
     <a href="#hoi-dap">Hỏi đáp</a>
     <span class="empty" id="toc-empty">Không có mục nào khớp.</span>
@@ -760,6 +770,125 @@
     </section>
 
     <!-- ================= KHÁC ================= -->
+    <section id="app-may-tinh" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00</div>
+  <h2>Ứng dụng trên máy tính</h2>
+  <p>MCAH cài trên máy tính Windows hoặc Ubuntu như một phần mềm bình thường. Dữ liệu của văn phòng nằm ngay trên máy, không cần mạng để làm việc hằng ngày. Các màn và cách dùng giống hệt bản trên trình duyệt; mục này chỉ nói những chỗ khác.</p>
+
+  <h3>Mở app</h3>
+  <ul>
+    <li>Mở <b>MCAH</b> từ danh sách ứng dụng của máy. Lần đầu mất vài giây để chuẩn bị dữ liệu.</li>
+    <li>App đã mở rồi thì bấm lại biểu tượng chỉ đưa cửa sổ lên trước, không mở thêm cửa sổ.</li>
+    <li>App báo <b>MCAH chưa mở được</b> thì bấm <span class="ui">Thử lại</span>. Vẫn lỗi thì xem ổ đĩa còn chỗ trống, rồi gửi mã lỗi trên màn cho bộ phận hỗ trợ.</li>
+  </ul>
+
+  <h3>Gửi hồ sơ cho chủ tàu bằng app mail của bạn</h3>
+  <p>Ở cơ hội, <span class="ui">Gửi chủ tàu</span> mở hộp soạn thư như thường. Bấm <span class="ui">Mở trong app mail</span>: app mail trên máy (Outlook hoặc Thunderbird) mở một thư mới đã điền người nhận, tiêu đề, nội dung và tự đính kèm hồ sơ từng ứng viên. Bạn xem lại, thêm tệp nếu cần, rồi bấm Gửi trong app mail. Thư đi từ chính email của bạn.</p>
+  <p>Quay lại MCAH, chọn <span class="ui">Đã gửi</span> để ghi lần gửi vào cơ hội. Chưa gửi thì chọn <span class="ui">Chưa gửi</span>.</p>
+  <p class="note" style="padding:10px 14px;border-radius:10px;background:#eff6ff">Máy chưa có app mail: MCAH mở thư mục chứa hồ sơ để bạn kéo vào thư (ví dụ Gmail trên trình duyệt). Muốn lần sau tự đính kèm thì bấm <span class="ui">Cài Thunderbird</span>; người dùng Gmail chọn "Đăng nhập bằng Google" khi thêm tài khoản vào Thunderbird.</p>
+
+  <h3>Cài đặt trên máy này</h3>
+  <p>Bấm tên của bạn ở góc phải → <span class="ui">Cài đặt trên máy này</span>. Cài đặt chỉ áp dụng cho máy đang dùng.</p>
+  <ul>
+    <li><b>Mở bằng app mail trên máy</b> (mặc định khi máy có Outlook hoặc Thunderbird).</li>
+    <li><b>Gửi thẳng từ app</b>: khai email và <b>mật khẩu ứng dụng</b> của email (Gmail, Outlook tạo trong phần bảo mật tài khoản), bấm <span class="ui">Gửi thử cho tôi</span> để kiểm. Mật khẩu được cất trong két mật khẩu của máy.</li>
+  </ul>
+
+  <h3>Xuất PDF</h3>
+  <p>Xuất PDF cần thành phần miễn phí LibreOffice. Máy chưa có thì lần đầu bấm tải PDF, MCAH hỏi <b>Cần cài thành phần xuất PDF</b>: bấm <span class="ui">Cài ngay</span>, nhập mật khẩu quản trị của máy khi được hỏi, chờ vài phút. Cài xong MCAH tự tải tiếp tệp PDF bạn vừa bấm. Trong lúc chờ bạn vẫn tải Excel được.</p>
+
+  <h3>Thông báo</h3>
+  <p>Giấy tờ, chứng chỉ, hợp đồng sắp hết hạn được báo bằng thông báo của máy (góc màn hình), kể cả khi cửa sổ MCAH đang thu nhỏ. Bấm vào thông báo để mở đúng hồ sơ. Máy tắt qua đêm thì sáng mở app, MCAH tự kiểm và báo bù.</p>
+
+  <h3>Tạo tài khoản cho đồng nghiệp</h3>
+  <p>Quản trị → Tài khoản → tạo tài khoản như thường. Bản máy tính chưa gửi thư mời: sau khi tạo, bấm <span class="ui">Mở trang đặt mật khẩu</span> và để người đó đặt mật khẩu ngay trên máy, rồi đăng nhập.</p>
+</section>
+
+    <section id="app-tai-khoan" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00b</div>
+  <h2>Tài khoản và đăng nhập (ứng dụng trên máy tính)</h2>
+
+  <h3>Đăng nhập</h3>
+  <p>Bấm <span class="ui">Đăng nhập qua trình duyệt</span>. Trình duyệt mở trang đăng nhập MCAH: đăng nhập bằng email và mật khẩu, hoặc <span class="ui">Tiếp tục với Google</span>. Xong, trình duyệt báo "Đã đăng nhập" và MCAH tự vào. Ứng dụng không bao giờ hỏi mật khẩu của bạn.</p>
+  <p>Chưa có tài khoản thì chọn <span class="ui">Đăng ký</span> trên trang đó và bấm liên kết trong thư xác minh. Quên mật khẩu thì đặt lại ngay trên trang đó.</p>
+  <p>MCAH không tự vào sau khi đăng nhập? Trang "Đã đăng nhập" có một mã 8 ký tự: trong MCAH bấm <span class="ui">Nhập mã thủ công</span> và dán mã vào.</p>
+
+  <h3>Lần đầu: tạo văn phòng</h3>
+  <p>Người đầu tiên của văn phòng chọn <span class="ui">Tạo văn phòng mới</span> trên máy sẽ giữ dữ liệu (máy chính, nên là máy bàn luôn bật) và đặt tên văn phòng. Bạn là quản trị; nhân viên cài MCAH trên máy mình sẽ nối vào máy này.</p>
+
+  <h3>Mã PIN và tự khoá</h3>
+  <p>Sau lần đăng nhập đầu trên một máy, bạn đặt mã PIN 6 số. Để máy một lúc (mặc định 15 phút) MCAH tự khoá; nhập PIN để mở, không cần internet. Sai PIN 5 lần thì phải đăng nhập lại qua trình duyệt. Đổi thời gian tự khoá ở <span class="ui">Cài đặt trên máy này</span>.</p>
+
+  <h3>Không có internet</h3>
+  <p>Đã đăng nhập thì bạn làm việc bình thường tới 7 ngày không có internet. Còn 2 ngày, MCAH hiện dải vàng nhắc kết nối. Quá 7 ngày phải kết nối internet và đăng nhập lại. Quét giấy tờ bằng AI, tra tàu theo IMO và tìm danh mục tàu luôn cần internet.</p>
+
+  <h3>Mời đồng nghiệp</h3>
+  <p>Quản trị vào Quản trị → Tài khoản → <span class="ui">Mời</span>, nhập email, họ tên và vai trò. Đồng nghiệp nhận thư mời của MCAH, bấm liên kết để đăng ký, rồi đăng nhập MCAH. Tắt "Đăng nhập" của một người thì người đó không vào được nữa, kể cả đang mở ứng dụng.</p>
+</section>
+    <section id="app-nhieu-may" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00c</div>
+  <h2>Dùng MCAH trên nhiều máy trong văn phòng</h2>
+
+  <h3>Máy chính và máy nhân viên</h3>
+  <p>Dữ liệu của văn phòng nằm ở <b>máy chính</b> (máy đã tạo văn phòng). Các máy khác là <b>máy nhân viên</b>: chúng nối vào máy chính qua mạng văn phòng và làm việc như đang ngồi ở máy chính. Máy chính phải bật và mở MCAH thì máy nhân viên mới làm việc được. Nên dùng máy bàn làm máy chính; MCAH giữ máy không ngủ khi đang mở.</p>
+
+  <h3>Nối một máy nhân viên</h3>
+  <p>Cài MCAH trên máy nhân viên, đăng nhập bằng tài khoản đã được mời. MCAH tự tìm máy chính trong mạng văn phòng; bấm <span class="ui">Nối</span>. Không thấy máy chính thì bấm <span class="ui">Nhập tên / địa chỉ máy</span> và gõ tên máy chính (xem ở <span class="ui">Cài đặt trên máy này</span> trên máy chính).</p>
+  <p class="note">MCAH chỉ nối vào đúng máy chính của văn phòng bạn. Nếu thấy báo "Máy này không phải máy chính của …", đừng nhập gì và báo quản trị.</p>
+
+  <h3>Máy trong văn phòng</h3>
+  <p>Quản trị xem các máy đã nối ở <span class="ui">Quản trị</span> → <span class="ui">Máy trong văn phòng</span>. Máy mất hoặc nhân viên nghỉ: bấm <span class="ui">Gỡ</span>, máy đó không vào được nữa. Máy đã gỡ muốn vào lại thì quản trị phải bấm <span class="ui">Duyệt</span>.</p>
+
+  <h3>Mất nối máy chính</h3>
+  <p>Khi máy chính tắt hoặc mất mạng, máy nhân viên hiện dải đỏ "Không nối được máy chính". Những gì bạn đang gõ vẫn còn; chỉ chưa lưu được. Bật lại máy chính, MCAH tự nối và bạn bấm Lưu như thường.</p>
+
+  <h3>Hai người cùng sửa một hồ sơ</h3>
+  <p>Nếu người khác đã lưu hồ sơ sau lúc bạn mở, MCAH không ghi đè mà hiện những ô người kia đã đổi. Bấm <span class="ui">Lấy bản mới, giữ phần tôi đã đổi</span>, xem lại rồi bấm Lưu. Ô mà cả hai cùng đổi sẽ hiện cả hai giá trị để bạn chọn.</p>
+
+  <h3>Cập nhật</h3>
+  <p>Khi máy chính lên bản mới mà máy nhân viên cần cập nhật theo, máy nhân viên tự tải bộ cài từ máy chính (không cần internet) và cài. Trên Ubuntu, máy sẽ hỏi mật khẩu quản trị.</p>
+    </section>
+    <section id="app-ho-so" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00d</div>
+  <h2>Thư mục hồ sơ (ứng dụng trên máy tính)</h2>
+
+  <h3>Thư mục hồ sơ</h3>
+  <p>Mọi giấy tờ, ảnh, hồ sơ đã gửi nằm trên máy chính trong thư mục <b>MCAH - Hồ sơ</b> (mặc định trong Tài liệu / Documents), xếp sẵn theo thuyền viên, tàu, đối tác. Tên tệp ghi loại giấy, số giấy và ngày hết hạn. Đổi tên thuyền viên hay thêm bản mới, MCAH tự đổi tên và chuyển bản cũ vào thư mục <b>Bản cũ</b>.</p>
+  <p class="note">Xem và copy thoải mái. Muốn thêm, sửa, xoá giấy tờ thì làm trong MCAH. Đổi tên hoặc xoá tệp trực tiếp trong thư mục có thể làm MCAH không tìm thấy tệp.</p>
+  <p>Ở trang thuyền viên (hoặc tàu, đối tác) bấm <span class="ui">Mở thư mục hồ sơ</span> để mở đúng thư mục của người đó. Trên máy nhân viên, MCAH tải về một bản chỉ đọc, tự xoá khi đóng app.</p>
+  <p>Cần mang đi, ở danh sách thuyền viên chọn hồ sơ rồi bấm <span class="ui">Xuất hồ sơ ra thư mục</span> (cần quyền xuất hàng loạt).</p>
+
+  <h3>Bảo vệ máy chính</h3>
+  <p>Giấy tờ không được mã hoá: ai đăng nhập được vào máy chính là mở được. Máy chính cần mật khẩu đăng nhập và nên bật mã hoá ổ đĩa (BitLocker / Mã hoá thiết bị trên Windows, hoặc cài Ubuntu với tuỳ chọn mã hoá). MCAH kiểm và nhắc trong <span class="ui">Cài đặt trên máy này</span>.</p>
+
+  <h3>Không có sao lưu trong MCAH</h3>
+  <p class="note">MCAH không tự sao lưu và không có nút sao lưu. Toàn bộ dữ liệu chỉ nằm trên máy chính: ổ đĩa hỏng, mất máy hay dính mã độc là mất dữ liệu. Văn phòng nên tự giữ máy chính cẩn thận và tự có cách sao lưu máy riêng. Cần chuyển văn phòng sang máy khác thì liên hệ hỗ trợ MCAH.</p>
+
+  <h3>Quét giấy tờ bằng AI</h3>
+  <p>Lần đầu bấm quét, MCAH hỏi bạn đồng ý gửi ảnh lên máy chủ MCAH cho AI đọc. Máy chủ không lưu ảnh. Không đồng ý thì vẫn nhập tay như thường.</p>
+
+  <h3>Cập nhật</h3>
+  <p>Khi bản mới đổi cấu trúc dữ liệu, máy chính tạm dừng việc lưu trên mọi máy, tự chụp lại dữ liệu, rồi mới cập nhật. Cập nhật lỗi thì MCAH tự trả dữ liệu và bản app về như trước.</p>
+    </section>
+    <section id="app-cai-dat" class="chi-app" data-jobs="mg dy kt qt">
+      <div class="kicker">Khác · 00e</div>
+  <h2>Cài đặt, cập nhật và gỡ MCAH (ứng dụng trên máy tính)</h2>
+
+  <h3>Tải và cài</h3>
+  <p>Vào <b>mcah.axalize.vn/download</b>, tải bộ cài đúng hệ điều hành. Yêu cầu: Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit; máy chính 8 GB RAM và 10 GB trống, máy nhân viên 4 GB RAM.</p>
+  <p><b>Windows:</b> mở tệp <span class="ui">MCAH Setup ….exe</span>. Nếu Windows hiện "Windows đã bảo vệ máy tính của bạn", bấm <span class="ui">Thêm thông tin</span> → <span class="ui">Vẫn chạy</span>. Trên máy chính, Windows hỏi quyền quản trị một lần để mở cổng cho máy nhân viên.</p>
+  <p><b>Ubuntu:</b> mở tệp <span class="ui">mcah-desktop_….deb</span> bằng App Center, hoặc chạy <span class="ui">sudo apt install ./mcah-desktop_….deb</span>. Nên cài thêm LibreOffice để xuất PDF.</p>
+
+  <h3>Cập nhật</h3>
+  <p>MCAH tự kiểm bản mới khi mở và mỗi 6 giờ. Có bản mới thì hiện hộp ghi rõ có gì mới; bấm <span class="ui">Cập nhật ngay</span>. Bản cập nhật được MCAH ký, app kiểm chữ ký trước khi cài. Máy nhân viên cập nhật theo máy chính, không cần internet.</p>
+  <p>Quản trị chọn kênh ở <span class="ui">Cài đặt trên máy này</span> → <span class="ui">Cập nhật</span> trên máy chính: <b>Ổn định</b> (mặc định) hoặc <b>Thử nghiệm</b> (nhận bản sớm, có thể còn lỗi).</p>
+
+  <h3>Gỡ cài đặt</h3>
+  <p><b>Windows:</b> gỡ trong Cài đặt → Ứng dụng. Mặc định dữ liệu được giữ lại, cài lại là dùng tiếp. Muốn xoá hẳn thì tích <span class="ui">Xoá cả dữ liệu trên máy này</span> và xác nhận lần hai.</p>
+  <p><b>Ubuntu:</b> <span class="ui">sudo apt remove mcah-desktop</span>. Dữ liệu vẫn giữ ở <span class="ui">~/.config/MCAH</span> và thư mục <span class="ui">Tài liệu/MCAH - Hồ sơ</span>; xoá tay hai thư mục này nếu muốn xoá hẳn.</p>
+  <p class="note">Gỡ MCAH trên máy chính là cả văn phòng không làm việc được. Muốn đổi máy chính, liên hệ hỗ trợ MCAH trước.</p>
+    </section>
+
     <section id="dien-thoai" data-jobs="mg dy kt qt">
       <div class="kicker">Khác · 01</div>
       <h2>Dùng trên điện thoại</h2>

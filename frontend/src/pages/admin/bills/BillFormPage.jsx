@@ -1,5 +1,8 @@
 import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useRef } from 'react'
+import useEditConflict from '../../../hooks/useEditConflict'
+import { useQueryClient } from '@tanstack/react-query'
+import { billApi } from '../../../api/voyageApi'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Form, Input, Skeleton } from 'antd'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
@@ -43,6 +46,7 @@ function BillForm({ data }) {
   const initial = useMemo(() => toFormValues(data), [data])
   const values = Form.useWatch([], form) || initial
   const { save } = useBillMutations()
+  const queryClient = useQueryClient()
   const { bill } = data
   const dueDateError = useRef(null)
   const dueBeforePeriod = `Hạn thanh toán không được trước ${formatDate(bill.period_start)}.`
@@ -74,6 +78,16 @@ function BillForm({ data }) {
     }
     return error ? Promise.reject(new Error(error)) : Promise.resolve()
   }
+  const conflict = useEditConflict({
+    form,
+    initial,
+    labels: { items: 'Các khoản tiền', note: 'Ghi chú', due_date: 'Hạn thanh toán' },
+    reload: async () => {
+      const latest = await billApi.get(bill.id)
+      queryClient.setQueryData(['bills', 'item', String(bill.id)], latest)
+      return toFormValues(latest)
+    },
+  })
 
   async function submit(formValues) {
     if (negative) return
@@ -83,11 +97,12 @@ function BillForm({ data }) {
       return
     }
     try {
-      await save.mutateAsync({ id: bill.id, ...payload })
+      await save.mutateAsync({ id: bill.id, ...payload, version: bill.version })
       toast.success(`Đã lưu ${bill.code}`)
       leave.allow()
       navigate(back)
     } catch (error) {
+      if (await conflict.handleError(error)) return
       toast.error(`Không lưu được ${bill.code}`, { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
   }
@@ -174,6 +189,7 @@ function BillForm({ data }) {
           </div>
         </div>
       </Form>
+      {conflict.dialog}
     </div>
   )
 }

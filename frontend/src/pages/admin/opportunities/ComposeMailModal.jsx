@@ -4,12 +4,13 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Input, Tooltip } from 'antd'
 import Select from '../../../components/ds/SearchSelect'
-import { CloseOutlined, DeleteOutlined, ExpandAltOutlined, MinusOutlined, PaperClipOutlined, ShrinkOutlined } from '@ant-design/icons'
+import { CloseOutlined, DeleteOutlined, ExpandAltOutlined, MailOutlined, MinusOutlined, PaperClipOutlined, ShrinkOutlined } from '@ant-design/icons'
 import useToast from '../../../components/ds/useToast'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useOpportunityMutations } from '../../../hooks/useOpportunities'
 import useAuthStore from '../../../stores/authStore'
 import apiErrorText from '../../../utils/apiError'
+import { desktop, isDesktop, useDeviceSettings } from '../../../lib/desktop'
 import { mailBody, mailSubject, pickContact } from './sendToOwner'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -51,12 +52,18 @@ function RecipientSelect({ id, value, onChange, options, status, autoFocus }) {
 // Cửa sổ soạn thư gửi chủ tàu, dáng như Gmail: nổi ở góc dưới phải, thu nhỏ / phóng to / đóng, ô nhập không viền.
 // Nội dung điền sẵn, sửa tự do; thư đi bằng mail server công ty, đính kèm .zip hồ sơ từng người, Reply-To là người gửi.
 // Gửi xong ghi nhận ngay, lỗi thì giữ cửa sổ để sửa và gửi lại. candidates: [{ id, seafarer_id, full_name }].
+// App máy tính, cách "app mail" (docs/mcah-ke-hoach-desktop-gd1.md 3.5): mở thư mới trong app mail của máy với .zip tự
+// đính kèm, rồi hỏi "Đã gửi chưa?" mới ghi nhận; cách "gửi thẳng" gửi bằng email của người dùng trên máy này.
 export default function ComposeMailModal({ opportunity, candidates, onClose }) {
   const toast = useToast()
   const navigate = useNavigate()
   const { modal } = App.useApp()
   const me = useAuthStore((state) => state.user)
-  const { sendMail } = useOpportunityMutations()
+  const { sendMail, prepareMail, recordMail } = useOpportunityMutations()
+  const device = useDeviceSettings()
+  const appMail = isDesktop() && device.data?.mailMode === 'app'
+  const [opening, setOpening] = useState(false)
+  const busy = sendMail.isPending || opening
   const owner = useQuery({ queryKey: ['ship-owner', opportunity.ship_owner_id], queryFn: () => shipOwnerApi.get(opportunity.ship_owner_id) })
   const contacts = (owner.data?.contacts || []).filter((c) => c.email)
 
@@ -83,7 +90,7 @@ export default function ComposeMailModal({ opportunity, candidates, onClose }) {
 
   // Đóng: có chỉnh sửa thì hỏi trước khi bỏ thư đang soạn.
   function close() {
-    if (sendMail.isPending) return
+    if (busy) return
     if (!edited) return onClose()
     return modal.confirm({ title: 'Bỏ thư đang soạn?', content: 'Nội dung bạn vừa sửa sẽ mất.', okText: 'Bỏ thư', okType: 'danger', cancelText: 'Tiếp tục soạn', onOk: onClose })
   }
@@ -139,6 +146,74 @@ export default function ComposeMailModal({ opportunity, candidates, onClose }) {
       onClose()
     } catch (error) {
       toast.error('Chưa gửi được thư', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+    }
+  }
+
+  const mailFields = () => ({
+    candidate_ids: people.map((c) => c.id),
+    ship_owner_contact_id: contact?.id || null,
+    to: toList,
+    cc,
+    bcc,
+    subject: subject.trim(),
+    body,
+  })
+
+  // Hỏi đã gửi trong app mail chưa (wireframe 2); chỉ ghi nhận khi chọn Đã gửi.
+  function askSent(fields) {
+    modal.confirm({
+      title: `Đã gửi thư cho ${opportunity.ship_owner_name} chưa?`,
+      content: 'Thư đã mở trong app mail của máy. Bấm Đã gửi sau khi bạn gửi thư để ghi vào cơ hội.',
+      okText: 'Đã gửi',
+      cancelText: 'Chưa gửi',
+      onOk: async () => {
+        try {
+          await recordMail.mutateAsync({ id: opportunity.id, ...fields })
+          toast.success('Đã ghi lần gửi vào cơ hội')
+          onClose()
+        } catch (error) {
+          toast.error('Chưa ghi được lần gửi', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
+          throw error
+        }
+      },
+      onCancel: onClose,
+    })
+  }
+
+  // Máy chưa có app mail (wireframe 3): app đã mở thư mục chứa hồ sơ; gợi ý cài Thunderbird, rồi vẫn hỏi đã gửi chưa.
+  function noMailApp(fields) {
+    modal.confirm({
+      title: 'Máy này chưa có app mail',
+      content: (
+        <>
+          <p>Đã mở thư mục chứa hồ sơ. Bạn kéo các tệp vào thư trong Gmail (trình duyệt) hoặc cài Thunderbird để lần sau app tự đính kèm.</p>
+          <p>Dùng Gmail: cài Thunderbird rồi chọn "Đăng nhập bằng Google" khi thêm tài khoản.</p>
+          <button type="button" className="ds-link" onClick={() => desktop.openMailFolder()}>Mở lại thư mục</button>
+        </>
+      ),
+      okText: 'Cài Thunderbird',
+      cancelText: 'Đóng',
+      onOk: () => {
+        desktop.openExternal('thunderbird')
+        askSent(fields)
+      },
+      onCancel: () => askSent(fields),
+    })
+  }
+
+  async function openInMailApp() {
+    if (!validate()) return
+    const fields = mailFields()
+    setOpening(true)
+    try {
+      const { files } = await prepareMail.mutateAsync({ id: opportunity.id, candidateIds: fields.candidate_ids })
+      const result = await desktop.openMail({ to: fields.to, cc: fields.cc, bcc: fields.bcc, subject: fields.subject, body: fields.body, files: files.map((f) => f.name) })
+      if (result.opened) askSent(fields)
+      else noMailApp(fields)
+    } catch (error) {
+      toast.error('Chưa mở được thư', { description: apiErrorText(error, error.message || 'Thử lại sau ít phút.') })
+    } finally {
+      setOpening(false)
     }
   }
 
@@ -201,7 +276,7 @@ export default function ComposeMailModal({ opportunity, candidates, onClose }) {
                 </Tooltip>
               </li>
             ))}
-            {extras.map((file, index) => (
+            {(appMail ? [] : extras).map((file, index) => (
               <li key={`${file.name}-${index}`}>
                 <PaperClipOutlined aria-hidden />
                 <b>{file.name}</b>
@@ -211,11 +286,20 @@ export default function ComposeMailModal({ opportunity, candidates, onClose }) {
             ))}
           </ul>
           <footer className="op-mail__foot">
-            <Button type="primary" shape="round" loading={sendMail.isPending} onClick={submit}>Gửi</Button>
-            <input ref={fileInput} type="file" multiple hidden accept={EXTRA_EXT.map((ext) => `.${ext}`).join(',')} onChange={addFiles} />
-            <Tooltip title="Đính kèm tệp"><Button type="text" icon={<PaperClipOutlined />} aria-label="Đính kèm tệp" disabled={sendMail.isPending} onClick={() => fileInput.current?.click()} /></Tooltip>
-            <span className="op-mail__note">Gửi từ mail server công ty · bạn đứng tên Reply-To</span>
-            <Tooltip title="Bỏ thư"><Button type="text" icon={<DeleteOutlined />} aria-label="Bỏ thư" disabled={sendMail.isPending} onClick={close} /></Tooltip>
+            {appMail ? (
+              <>
+                <Button type="primary" shape="round" icon={<MailOutlined />} loading={opening} onClick={openInMailApp}>Mở trong app mail</Button>
+                <span className="op-mail__note">Mở thư mới trong app mail của máy · hồ sơ tự đính kèm, bạn thêm tệp trong app mail</span>
+              </>
+            ) : (
+              <>
+                <Button type="primary" shape="round" loading={sendMail.isPending} onClick={submit}>Gửi</Button>
+                <input ref={fileInput} type="file" multiple hidden accept={EXTRA_EXT.map((ext) => `.${ext}`).join(',')} onChange={addFiles} />
+                <Tooltip title="Đính kèm tệp"><Button type="text" icon={<PaperClipOutlined />} aria-label="Đính kèm tệp" disabled={sendMail.isPending} onClick={() => fileInput.current?.click()} /></Tooltip>
+                <span className="op-mail__note">{isDesktop() ? 'Gửi từ email của bạn (Cài đặt trên máy này)' : 'Gửi từ mail server công ty · bạn đứng tên Reply-To'}</span>
+              </>
+            )}
+            <Tooltip title="Bỏ thư"><Button type="text" icon={<DeleteOutlined />} aria-label="Bỏ thư" disabled={busy} onClick={close} /></Tooltip>
           </footer>
         </>
       )}

@@ -7,6 +7,18 @@ const { loadRefs } = require('./refs')
 // Mỗi nguồn xuất { name, fetchByImo(imo) }. Thêm nguồn mới = thêm một dòng ở đây.
 const PROVIDERS = {
   legacy_proxy: (cfg) => (cfg.baseUrl && cfg.encKey ? createLegacyProxy(cfg) : null),
+  // App máy tính: tra qua máy chủ dịch vụ MCAH (giữ khoá nguồn ngoài), trả cùng dạng { found, raw } như legacy_proxy.
+  cloud: () => ({
+    name: 'cloud',
+    async fetchByImo(imo) {
+      try {
+        return await require('../../utils/desktop_cloud').call(`/api/vessels/imo/${imo}`, null, { method: 'GET' })
+      } catch (error) {
+        if (error.code === 'CLOUD_OFFLINE' || error.code === 'SIGNER_DOWN') throw { statusCode: 503, message: 'Cần kết nối internet để tra tàu theo IMO' }
+        throw error
+      }
+    },
+  }),
 }
 
 // Cấu hình có thể thiếu (test dựng config giả), khi đó coi như tắt.

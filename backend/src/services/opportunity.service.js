@@ -1,3 +1,4 @@
+const { assertVersion } = require('../utils/row_version')
 const { pickAllowed, paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
 const { nextCode, nextVoyageCode } = require('../utils/code_counter')
@@ -25,7 +26,7 @@ const MAX_ADD = 50
 const num = (v) => (v == null ? null : Number(v))
 const iso = (v) => (v == null ? null : String(v instanceof Date ? v.toISOString() : v).slice(0, 10))
 
-const LIST_SELECT = `SELECT o.id, o.code, o.status, o.close_reason, o.rank_id, r.name_vi AS rank_name, r.name_en AS rank_name_en,
+const LIST_SELECT = `SELECT o.id, o.version, o.code, o.status, o.close_reason, o.rank_id, r.name_vi AS rank_name, r.name_en AS rank_name_en,
     o.vessel_id, ves.vessel_name, o.ship_owner_id, so.company_name AS ship_owner_name,
     o.planned_join_date, o.planned_join_port_id, jp.name AS planned_join_port_name,
     o.planned_leave_date, o.planned_leave_port_id, lp.name AS planned_leave_port_name,
@@ -285,7 +286,10 @@ const opportunityService = {
     await refGuard(withTransaction(pool, async (conn) => {
       const [[current]] = await conn.query('SELECT * FROM opportunity WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
       if (!current) throw { statusCode: 404, message: NOT_FOUND }
+      await assertVersion(conn, current, body.version)
       if (current.status !== 'OPEN') throw { statusCode: 409, message: 'Cơ hội đã đóng, không sửa được' }
+      // Sửa chỉ yêu cầu cũng tăng số phiên bản.
+      await conn.query('UPDATE opportunity SET updated_at = NOW() WHERE id = ?', [id])
       const merged = { ...current, planned_join_date: iso(current.planned_join_date), planned_leave_date: iso(current.planned_leave_date), ...patch }
       // Đổi ngày mà không gửi budget: giữ budget/tháng, tính lại cả chuyến.
       if (patch.budget_monthly_usd == null && patch.budget_total_usd == null) merged.budget_total_usd = null

@@ -37,6 +37,7 @@ beforeAll(async () => {
     request.access = { userId: a.userId, isAdmin: Boolean(a.isAdmin), permissions: new Set(a.permissions), scopes: a.scopes || {} }
   })
   app.decorate('can', can)
+  app.decorate('requireAiConsent', async () => {})
   await app.register(require('../seafarer.routes'), { prefix: '/seafarers' })
   await app.register(require('../seafarer.routes').seafarerContactRoutes, { prefix: '/seafarers/:seafarerId/contacts' })
   await app.register(require('../certificate.routes'), { prefix: '/seafarers/:seafarerId/certificates' })

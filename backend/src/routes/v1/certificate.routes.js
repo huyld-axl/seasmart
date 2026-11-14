@@ -1,4 +1,3 @@
-const fs = require('fs')
 const certificateService = require('../../services/certificate.service')
 const { assertSeafarerInScope } = require('../../utils/scope')
 
@@ -120,7 +119,7 @@ async function certificateRoutes(fastify) {
       const file = await certificateService.manualFile(parseInt(request.params.id), parseInt(request.params.seafarerId))
       reply.header('Content-Type', file.mime)
       reply.header('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`)
-      return reply.send(fs.createReadStream(file.path))
+      return reply.send(file.stream)
     }
   )
 

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hướng dẫn hồ sơ và sao lưu MCAH</title>
+<style>
+  /* Bản nháp phần thư mục hồ sơ, sao lưu cho mục "Ứng dụng trên máy tính" (frontend/public/huong-dan/index.html), bước 11 của
+     docs/mcah-ke-hoach-desktop-gd4.md. Khi chép vào, bỏ thẻ <style> này và dùng class sẵn có của trang. */
+  :root { color-scheme: light; --border: #e5e6ea; --bg: #f4f4f6; }
+  body { margin: 0; background: var(--bg); color: #2c2c2c; font: 15px/1.6 'Inter', system-ui, sans-serif; }
+  section { max-width: 760px; margin: 32px auto; padding: 24px 28px; background: #fff; border-radius: 16px; }
+  h2 { margin-top: 0; }
+  .ui { padding: 1px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-weight: 500; white-space: nowrap; }
+  .note { padding: 10px 14px; border-radius: 10px; background: #fffbeb; color: #bb4d00; }
+</style>
+</head>
+<body>
+<section id="app-sao-luu">
+  <h2>Thư mục hồ sơ (ứng dụng trên máy tính)</h2>
+
+  <h3>Thư mục hồ sơ</h3>
+  <p>Mọi giấy tờ, ảnh, hồ sơ đã gửi nằm trên máy chính trong thư mục <b>MCAH - Hồ sơ</b> (mặc định trong Tài liệu / Documents), xếp sẵn theo thuyền viên, tàu, đối tác. Tên tệp ghi loại giấy, số giấy và ngày hết hạn. Đổi tên thuyền viên hay thêm bản mới, MCAH tự đổi tên và chuyển bản cũ vào thư mục <b>Bản cũ</b>.</p>
+  <p class="note">Xem và copy thoải mái. Muốn thêm, sửa, xoá giấy tờ thì làm trong MCAH. Đổi tên hoặc xoá tệp trực tiếp trong thư mục có thể làm MCAH không tìm thấy tệp.</p>
+  <p>Ở trang thuyền viên (hoặc tàu, đối tác) bấm <span class="ui">Mở thư mục hồ sơ</span> để mở đúng thư mục của người đó. Trên máy nhân viên, MCAH tải về một bản chỉ đọc, tự xoá khi đóng app.</p>
+  <p>Cần mang đi, ở danh sách thuyền viên chọn hồ sơ rồi bấm <span class="ui">Xuất hồ sơ ra thư mục</span> (cần quyền xuất hàng loạt).</p>
+
+  <h3>Bảo vệ máy chính</h3>
+  <p>Giấy tờ không được mã hoá: ai đăng nhập được vào máy chính là mở được. Máy chính cần mật khẩu đăng nhập và nên bật mã hoá ổ đĩa (BitLocker / Mã hoá thiết bị trên Windows, hoặc cài Ubuntu với tuỳ chọn mã hoá). MCAH kiểm và nhắc trong <span class="ui">Cài đặt trên máy này</span>.</p>
+
+  <h3>Không có sao lưu trong MCAH</h3>
+  <p class="note">MCAH không tự sao lưu và không có nút sao lưu. Toàn bộ dữ liệu chỉ nằm trên máy chính: ổ đĩa hỏng, mất máy hay dính mã độc là mất dữ liệu. Văn phòng nên tự giữ máy chính cẩn thận và tự có cách sao lưu máy riêng. Cần chuyển văn phòng sang máy khác thì liên hệ hỗ trợ MCAH.</p>
+
+  <h3>Quét giấy tờ bằng AI</h3>
+  <p>Lần đầu bấm quét, MCAH hỏi bạn đồng ý gửi ảnh lên máy chủ MCAH cho AI đọc. Máy chủ không lưu ảnh. Không đồng ý thì vẫn nhập tay như thường.</p>
+
+  <h3>Cập nhật</h3>
+  <p>Khi bản mới đổi cấu trúc dữ liệu, máy chính tạm dừng việc lưu trên mọi máy, tự chụp lại dữ liệu, rồi mới cập nhật. Cập nhật lỗi thì MCAH tự trả dữ liệu và bản app về như trước.</p>
+</section>
+</body>
+</html>

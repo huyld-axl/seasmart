@@ -10,6 +10,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/vi'
 import { toast } from '../ds/useToast'
 import useViewport from '../../hooks/useViewport'
+import { isDesktop } from '../../lib/desktop'
 
 dayjs.extend(relativeTime)
 dayjs.locale('vi')
@@ -35,6 +36,34 @@ function getNavigatePath(item) {
     default:
       return `/seafarers/${item.ref_id}`
   }
+}
+
+const LAST_NOTIFIED = 'mcah.lastNotifiedId'
+
+// App máy tính: thông báo mới (id lớn hơn lần báo trước) hiện thêm ở góc màn hình máy tính; bấm vào thì mở đúng trang.
+// Lần đầu trên máy chỉ ghi mốc, không báo dồn các thông báo cũ.
+function useDesktopNotifications(count, openRef) {
+  useEffect(() => {
+    if (!isDesktop() || !count || typeof Notification === 'undefined') return
+    let cancelled = false
+    notificationApi.getNotifications({ is_read: false, limit: 10 }).then((items) => {
+      if (cancelled || !items.length) return
+      const maxId = Math.max(...items.map((item) => item.id))
+      const last = Number(localStorage.getItem(LAST_NOTIFIED))
+      localStorage.setItem(LAST_NOTIFIED, String(Math.max(maxId, last || 0)))
+      if (!last) return
+      for (const item of items.filter((i) => i.id > last).reverse()) {
+        const notice = new Notification(item.title, { body: item.body || '' })
+        notice.onclick = () => {
+          window.focus()
+          openRef.current(item)
+        }
+      }
+    }).catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [count, openRef])
 }
 
 export default function NotificationBell() {
@@ -102,7 +131,6 @@ export default function NotificationBell() {
     queryKey: ['notifications-unread-count'],
     queryFn: () => notificationApi.getUnreadCount(),
     refetchInterval: 60 * 1000,
-    enabled: false,
   })
 
   const { data: list = [], isLoading } = useQuery({
@@ -135,6 +163,11 @@ export default function NotificationBell() {
     setOpen(false)
     if (path) navigate(path)
   }
+  const openRef = useRef(handleItemClick)
+  useEffect(() => {
+    openRef.current = handleItemClick
+  })
+  useDesktopNotifications(count, openRef)
 
   const dropdownContent = (
     <div

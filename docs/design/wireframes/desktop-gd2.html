@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App máy tính GĐ2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe giai đoạn 2 app máy tính (docs/mcah-ke-hoach-desktop-gd2.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1360px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 72ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 80ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; color: var(--foreground); max-width: 80ch; }
+  .notes li { margin-bottom: 4px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .titlebar { display: flex; align-items: center; gap: 16px; padding: 6px 12px; background: #2f3237; color: #e8e8ea; font-size: 12px; }
+  .titlebar .menu span { margin-right: 14px; }
+  .titlebar .dots { margin-left: auto; letter-spacing: 6px; }
+  .shell { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 460px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { padding: 0; display: grid; grid-template-rows: auto 1fr; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .topbar .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+  .page { padding: 20px; display: grid; gap: 16px; align-content: start; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .card h4 { margin: 0 0 12px; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: grid; gap: 4px; font-size: 13px; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); min-height: 36px; }
+  .input.area { min-height: 90px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 6px 4px; }
+  .btn.dis { opacity: .45; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--secondary); font-size: 12px; }
+  .radio { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+  .radio.on { border-color: var(--primary); background: var(--primary-light); }
+  .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--border-strong); margin-top: 2px; flex-shrink: 0; }
+  .radio.on .dot { border: 5px solid var(--primary); }
+  .banner { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .banner.ok { background: var(--success-bg); color: var(--success); }
+  .banner.err { background: var(--error-bg); color: var(--error-strong); }
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(560px, 100%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 14px; }
+  .modal.wide { width: min(720px, 100%); }
+  .modal h4 { margin: 0; font-size: 16px; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .files { display: grid; gap: 6px; }
+  .file { display: flex; gap: 8px; align-items: center; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
+  .file .muted { margin-left: auto; }
+  .progress { height: 6px; border-radius: 3px; background: var(--secondary); overflow: hidden; }
+  .progress i { display: block; height: 100%; width: 45%; background: var(--primary); }
+  .dropdown { position: absolute; right: 16px; top: 52px; width: 260px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); box-shadow: var(--elevation-modal); padding: 6px; font-size: 13px; }
+  .dropdown div { padding: 8px 10px; border-radius: var(--radius-sm); }
+  .dropdown .on { background: var(--secondary); font-weight: 600; }
+  .dropdown hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+  .splash { min-height: 420px; display: grid; place-items: center; background: var(--background); }
+  .splash .box { width: min(480px, 100%); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 14px; text-align: left; }
+  .code { font-family: ui-monospace, monospace; font-size: 12px; background: var(--secondary); padding: 8px 10px; border-radius: var(--radius-sm); }
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .shell { grid-template-columns: 1fr; } .side { display: none; } .grid2 { grid-template-columns: 1fr; } }
+  .web { min-height: 440px; display: grid; place-items: center; background: #eef0f4; position: relative; }
+  .web .bar { position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: #dfe2e8; font-size: 12px; color: var(--muted); }
+  .web .box { width: min(400px, calc(100% - 32px)); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 12px; margin-top: 24px; }
+  .web h4 { margin: 0; font-size: 18px; }
+  .or { text-align: center; color: var(--muted); font-size: 12px; }
+  .pin { display: flex; gap: 8px; justify-content: center; }
+  .pin span { width: 40px; height: 48px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 22px; }
+  .code-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-family: ui-monospace, monospace; font-size: 15px; text-align: center; }
+  .code-grid span { padding: 8px; background: var(--secondary); border-radius: var(--radius-sm); }
+  .ribbon { padding: 8px 20px; background: var(--warning-bg); border-bottom: 1px solid var(--warning-border); color: var(--warning); font-size: 13px; display: flex; gap: 12px; align-items: center; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .tbl th { color: var(--muted); font-weight: 500; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--secondary); }
+  .tag.warn { background: var(--warning-bg); color: var(--warning); }
+  .tag.ok { background: var(--success-bg); color: var(--success); }
+</style>
+
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">GĐ2 tài khoản</p>
+    <a href="#w1"><b>1</b>Đăng nhập trong app</a><a href="#w2"><b>2</b>Trang web tài khoản</a><a href="#w3"><b>3</b>Lần đầu trên máy</a><a href="#w4"><b>4</b>Tạo văn phòng</a><a href="#w5"><b>5</b>Mã PIN, màn khoá</a><a href="#w6"><b>6</b>Tài khoản: Mời</a><a href="#w7"><b>7</b>Dải 7 ngày</a><a href="#w8"><b>8</b>Quản trị nội bộ</a>
+  </nav>
+  <main class="main">
+    <header>
+      <h1>App máy tính — giai đoạn 2: tài khoản và máy chủ dịch vụ</h1>
+      <p class="lead">Chỉ những màn mới hoặc đổi. Màn trong app dựng bằng control antd / components/ds như các màn hiện có; trang web của máy chủ dịch vụ dựng đơn giản cùng màu và chữ. Chỉ cần chạy tốt trên màn máy tính.</p>
+    </header>
+    <section id="w1">
+      <h2><b>1</b> Đăng nhập trong app</h2>
+      <p class="why">Thay màn đăng nhập email + mật khẩu hiện có (trong app máy tính). App không bao giờ nhận mật khẩu; đăng ký, đăng nhập, quên mật khẩu đều làm trên trang web.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Đăng nhập MCAH</h4><p class="muted" style="margin:0">Trình duyệt sẽ mở trang đăng nhập. Xong bạn quay lại đây, app tự vào.</p><span class="btn pri" style="justify-content:center">Đăng nhập qua trình duyệt</span><div class="or">Chưa có tài khoản? Bấm nút trên rồi chọn Đăng ký.</div><hr style="border:0;border-top:1px solid var(--border);margin:4px 0"><div class="muted" style="font-size:13px"><b>Đang chờ trình duyệt…</b> (sau khi bấm) · <span class="btn link">Mở lại trình duyệt</span> · <span class="btn link">Nhập mã thủ công</span> · <span class="btn link">Huỷ</span></div></div></div></div>
+      <ul class="notes"><li>Bấm nút: nút chuyển sang trạng thái "Đang chờ trình duyệt…" kèm 3 liên kết. Xong đăng nhập trên web → app tự vào màn tiếp theo (W4 lần đầu, Tổng quan các lần sau).</li><li><b>Nhập mã thủ công</b> (khi phần mềm chặn chuyển về app): ô dán mã 8 ký tự mà trang web hiện ra (W2, khung cuối).</li><li>Không có internet: nút mờ, ghi "Cần kết nối internet để đăng nhập".</li></ul>
+    </section>
+    <section id="w2">
+      <h2><b>2</b> Trang web: đăng nhập, đăng ký, quên mật khẩu</h2>
+      <p class="why">Trang của máy chủ dịch vụ, mở trong trình duyệt mặc định. Một khung, đổi qua lại bằng liên kết. Dựng đơn giản, cùng màu và chữ với app.</p>
+      <div class="grid2"><div class="app"><div class="web"><div class="bar">🔒 dangnhap.mcah.vn</div><div class="box"><h4>Đăng nhập</h4><span class="btn" style="justify-content:center">G  Tiếp tục với Google</span><div class="or">hoặc</div><div class="field">Email<div class="input">halinh@congty.vn</div></div><div class="field">Mật khẩu<div class="input">••••••••</div></div><span class="btn pri" style="justify-content:center">Đăng nhập</span><div class="row" style="justify-content:space-between"><span class="btn link">Quên mật khẩu?</span><span class="btn link">Đăng ký</span></div></div></div></div><div class="app"><div class="web"><div class="bar">🔒 dangnhap.mcah.vn/dang-ky</div><div class="box"><h4>Đăng ký</h4><span class="btn" style="justify-content:center">G  Đăng ký bằng Google</span><div class="or">hoặc</div><div class="field">Họ tên<div class="input"></div></div><div class="field">Email<div class="input"></div></div><div class="field">Mật khẩu (ít nhất 10 ký tự)<div class="input"></div></div><span class="btn pri" style="justify-content:center">Đăng ký</span><div class="banner info">Bấm liên kết trong thư xác minh rồi quay lại đây.</div></div></div></div><div class="app"><div class="web"><div class="bar">🔒 dangnhap.mcah.vn/quen-mat-khau</div><div class="box"><h4>Quên mật khẩu</h4><div class="field">Email<div class="input"></div></div><span class="btn pri" style="justify-content:center">Gửi liên kết đặt lại</span><p class="muted" style="margin:0">Liên kết có hạn 30 phút.</p></div></div></div><div class="app"><div class="web"><div class="bar">🔒 dangnhap.mcah.vn/xong</div><div class="box"><h4>Đã đăng nhập</h4><p style="margin:0">Quay lại app MCAH. Có thể đóng tab này.</p><hr style="border:0;border-top:1px solid var(--border)"><p class="muted" style="margin:0">App không tự vào? Nhập mã này trong app:</p><div class="code">K7P2-9QXM</div></div></div></div></div>
+      <ul class="notes"><li>Có lời mời (đi từ thư mời): khung Đăng ký điền sẵn email, ghi "Bạn được mời vào văn phòng <b>Công ty ABC</b>".</li><li>Sai PIN 5 lần ở app: trang Đăng nhập luôn hỏi lại mật khẩu (hoặc Google hỏi lại), không tự qua bằng phiên trình duyệt cũ.</li></ul>
+    </section>
+    <section id="w3">
+      <h2><b>3</b> Lần đầu trên máy: chọn việc</h2>
+      <p class="why">Sau đăng nhập lần đầu, máy chưa có dữ liệu văn phòng. Giai đoạn 2 chỉ có một máy (máy chính); nối máy nhân viên ở giai đoạn 3.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:18px">Chào Hà Linh</h4><p class="muted" style="margin:0">Máy này chưa có dữ liệu văn phòng.</p><div class="radio on"><span class="dot"></span><div><b>Tạo văn phòng mới</b><div class="muted">Máy này giữ dữ liệu của văn phòng. Bạn là quản trị.</div></div></div><div class="radio"><span class="dot"></span><div><b>Khôi phục từ bản sao lưu</b><div class="muted">Chuyển văn phòng sang máy này (giai đoạn 4).</div></div></div><div class="row" style="justify-content:space-between"><span class="btn link">Đăng xuất</span><span class="btn pri">Tiếp tục</span></div></div></div></div>
+      <ul class="notes"><li>Tài khoản đã thuộc một văn phòng (được mời) mà máy chưa có dữ liệu: giai đoạn 2 báo "Mở MCAH trên máy chính của văn phòng <b>Công ty ABC</b>"; giai đoạn 3 thay bằng ghép máy.</li><li>Máy đã có dữ liệu văn phòng thì bỏ qua màn này.</li></ul>
+    </section>
+    <section id="w4">
+      <h2><b>4</b> Tạo văn phòng: tên + mật khẩu sao lưu + mã khôi phục</h2>
+      <p class="why">Ba bước trong một hộp, không quay lại được ở bước 3 (mã chỉ hiện một lần). Theo kế hoạch tổng mục 5.4.</p>
+      <div class="grid2"><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><div class="muted" style="font-size:12px">Bước 1/3</div><h4 style="margin:0;font-size:16px">Tên văn phòng</h4><div class="field">Tên hiện cho mọi người<div class="input">Công ty TNHH Thuyền viên ABC</div></div><div class="row" style="justify-content:flex-end"><span class="btn pri">Tiếp</span></div></div></div></div><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><div class="muted" style="font-size:12px">Bước 2/3</div><h4 style="margin:0;font-size:16px">Mật khẩu sao lưu</h4><p class="muted" style="margin:0">Dùng để mở bản sao lưu khi chuyển sang máy khác. Khác mật khẩu đăng nhập.</p><div class="field">Mật khẩu (ít nhất 10 ký tự)<div class="input">••••••••••••</div></div><div class="field">Nhập lại<div class="input">••••••••••••</div></div><div class="row" style="justify-content:space-between"><span class="btn">Quay lại</span><span class="btn pri">Tiếp</span></div></div></div></div><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><div class="muted" style="font-size:12px">Bước 3/3</div><h4 style="margin:0;font-size:16px">Mã khôi phục dữ liệu</h4><div class="banner warn">Chỉ hiện một lần. In hoặc chép ra giấy, cất nơi an toàn. Mất cả mật khẩu sao lưu lẫn mã này thì không mở được tài liệu, bên MCAH cũng không mở được.</div><div class="code-grid"><span>K7P2</span><span>9QXM</span><span>T4RW</span><span>BH8N</span><span>3ZCF</span><span>V6DJ</span></div><div class="row"><span class="btn">In</span><span class="btn">Chép</span></div></div></div></div><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:16px">Kiểm tra mã</h4><p class="muted" style="margin:0">Nhập nhóm thứ 2 và thứ 5 của mã vừa chép.</p><div class="grid2"><div class="field">Nhóm 2<div class="input">9QXM</div></div><div class="field">Nhóm 5<div class="input">3ZCF</div></div></div><div class="row" style="justify-content:space-between"><span class="btn">Xem lại mã</span><span class="btn pri">Tạo văn phòng</span></div></div></div></div></div>
+      <ul class="notes"><li>Tạo văn phòng cần internet (đăng ký văn phòng và dấu vân tay máy chính với máy chủ dịch vụ). Lỗi mạng: giữ nguyên các ô đã nhập, nút Thử lại.</li><li>Xong: vào W5 (đặt mã PIN) rồi Tổng quan.</li></ul>
+    </section>
+    <section id="w5">
+      <h2><b>5</b> Đặt mã PIN và màn khoá</h2>
+      <p class="why">PIN 6 số theo máy, đặt sau lần đăng nhập đầu trên máy đó. App tự khoá sau 15 phút không dùng (chỉnh 5–60 ở Cài đặt trên máy này).</p>
+      <div class="grid2"><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><h4 style="margin:0;font-size:16px">Đặt mã PIN cho máy này</h4><p class="muted" style="margin:0">Dùng để mở khoá app khi để máy một lúc. Không cần internet.</p><div class="pin"><span>•</span><span>•</span><span>•</span><span></span><span></span><span></span></div><div class="row" style="justify-content:flex-end"><span class="btn pri">Lưu</span></div></div></div></div><div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box"><div style="display:grid;justify-items:center;gap:10px"><div class="avatar" style="width:48px;height:48px;font-size:16px">HL</div><b>Hà Linh</b><span class="muted">MCAH đã khoá</span><div class="pin"><span>•</span><span>•</span><span></span><span></span><span></span><span></span></div><div class="banner err" style="font-size:12px">Sai mã PIN. Còn 3 lần thử.</div><span class="btn link">Quên mã PIN? Đăng nhập lại</span></div></div></div></div></div>
+      <ul class="notes"><li>Sai 5 lần: xoá phiên trên máy, về W1; lần đăng nhập đó web bắt nhập lại mật khẩu.</li><li>Đang khoá: app chặn mọi thao tác dữ liệu (cả cửa sổ hướng dẫn chỉ đọc vẫn mở được).</li></ul>
+    </section>
+    <section id="w6">
+      <h2><b>6</b> Quản trị → Tài khoản: Mời</h2>
+      <p class="why">Dựng trên màn Tài khoản hiện có. Nút "Tạo tài khoản" đổi thành "Mời"; form chỉ còn email, họ tên, vai trò. Thư mời đi từ máy chủ dịch vụ.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it">Tổng quan</div><div class="it">Thuyền viên</div><div class="grp">Hệ thống</div><div class="it on">Quản trị</div></div><div class="content"><div class="topbar"><h3>Quản trị / Tài khoản</h3><div class="user"><div class="avatar">HL</div>Hà Linh ▾</div></div><div class="page"><div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><div class="input" style="width:260px">🔍 Tìm email, tên</div><span class="btn pri">+ Mời</span></div><table class="tbl"><tr><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr><tr><td>halinh@congty.vn</td><td>Quản trị viên</td><td><span class="tag ok">Đang hoạt động</span></td><td></td></tr><tr><td>nguyenan@congty.vn</td><td>Môi giới</td><td><span class="tag warn">Đã mời · chờ đăng ký</span></td><td><span class="btn link">Gửi lại thư mời</span></td></tr></table></div></div></div><div class="scrim"><div class="modal" role="dialog" aria-label="Mời"><h4>Mời vào văn phòng</h4><div class="field">Email<div class="input">nguyenan@congty.vn</div></div><div class="field">Họ tên<div class="input">Nguyễn An</div></div><div class="field">Vai trò<div class="input">Môi giới ▾</div></div><div class="foot"><span class="btn">Huỷ</span><span class="btn pri">Gửi thư mời</span></div></div></div></div></div>
+      <ul class="notes"><li>Cần internet; không có thì nút Gửi mờ, ghi lý do.</li><li>Người được mời đăng ký trên web rồi đăng nhập app trên máy chính (giai đoạn 2) → tự gắn với dòng "Đã mời", chuyển "Đang hoạt động".</li><li>Tắt "Đăng nhập" của một người: chặn ngay trên máy chính, đồng thời báo máy chủ dịch vụ bỏ người đó khỏi văn phòng.</li></ul>
+    </section>
+    <section id="w7">
+      <h2><b>7</b> Dải vàng: sắp hết 7 ngày không có internet</h2>
+      <p class="why">Dải mỏng dưới thanh trên của app, chỉ hiện khi còn ≤ 2 ngày; không chặn thao tác.</p>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="shell"><div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it">Tổng quan</div><div class="it">Thuyền viên</div><div class="grp">Hệ thống</div><div class="it on">Quản trị</div></div><div class="content"><div class="topbar"><h3>Tổng quan</h3><div class="user"><div class="avatar">HL</div>Hà Linh ▾</div></div><div class="ribbon">⚠ Máy chưa kết nối internet 5 ngày. Kết nối trước 14/11 để giữ đăng nhập. <span class="btn link" style="margin-left:auto">Thử lại</span></div><div class="page"><div class="card" style="min-height:200px"><p class="muted">… Tổng quan như hiện nay …</p></div></div></div></div></div>
+      <ul class="notes"><li>Quá hạn: về W1 với thông báo "Đã 7 ngày không kết nối internet. Kết nối rồi đăng nhập lại."</li></ul>
+    </section>
+    <section id="w8">
+      <h2><b>8</b> Trang quản trị nội bộ (bên mình)</h2>
+      <p class="why">Trang web của máy chủ dịch vụ, chỉ tài khoản nội bộ của bên mình vào được. Không có dữ liệu nghiệp vụ của khách.</p>
+      <div class="app"><div class="web"><div class="bar">🔒 admin.mcah.vn</div><div class="box"><h4>Văn phòng</h4><table class="tbl"><tr><th>Văn phòng</th><th>Thành viên</th><th>Quét AI tháng này</th><th></th></tr><tr><td>Công ty ABC</td><td>4</td><td>312 trang · 1,9 USD</td><td><span class="btn link">Khoá</span></td></tr><tr><td>Thuyền viên XYZ</td><td>2</td><td>40 trang · 0,3 USD</td><td><span class="btn link">Khoá</span></td></tr></table></div></div></div>
+      <ul class="notes"><li>Khoá văn phòng: chặn quét AI, tìm tàu, đăng nhập mới; người đang làm vẫn làm offline tới hết mốc 7 ngày.</li></ul>
+    </section>
+  </main>
+</div>
+</body>
+</html>

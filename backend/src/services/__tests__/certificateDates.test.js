@@ -37,3 +37,17 @@ describe('ngày chứng chỉ khi thêm/sửa', () => {
     expect(query).toHaveBeenCalledWith(expect.stringContaining('UPDATE seafarer_certificate'), [patch, 3, 1])
   })
 })
+
+
+it('giữ kiểm tra version của dev đồng thời nhận ngày hợp lệ', async () => {
+  vi.spyOn(service, 'getById').mockResolvedValue({ issued_date: '2020-01-01', expiry_date: '2021-01-01', no_expiry: 0, version: 2 })
+  const query = vi.spyOn(pool, 'query').mockResolvedValue([{ affectedRows: 1 }])
+  await service.update(1, 2, { expiry_date: '2022-01-01', version: 2 }, 3)
+  expect(query).toHaveBeenCalledWith(expect.stringContaining('AND version = ?'), [{ expiry_date: '2022-01-01' }, 3, 1, 2])
+})
+
+it('trả xung đột khi phiên bản chứng chỉ đã cũ, không bỏ cơ chế của dev', async () => {
+  vi.spyOn(service, 'getById').mockResolvedValue({ issued_date: '2020-01-01', expiry_date: '2021-01-01', no_expiry: 0, version: 2 })
+  vi.spyOn(pool, 'query').mockImplementation(async (sql) => sql.startsWith('UPDATE') ? [{ affectedRows: 0 }] : [[{ version: 2, updated_by: null }]])
+  await expect(service.update(1, 2, { expiry_date: '2022-01-01', version: 1 }, 3)).rejects.toMatchObject({ statusCode: 409, code: 'CONFLICT', conflict: { version: 2 } })
+})

@@ -43,6 +43,8 @@ import { EmailActions, PhoneActions } from '../components/ds/ContactActions'
 import PermissionCheck from '../components/ds/PermissionCheck'
 import { SegmentedPick } from './admin/fleet/FleetParts'
 import LogoField from '../components/ds/LogoField'
+import { ConflictBody } from '../components/ds/ConflictDialog'
+import { conflictTitle } from '../components/ds/conflictMerge'
 import ScanButton from '../components/ds/ScanButton'
 import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
@@ -759,6 +761,30 @@ export default function DesignSystemPage() {
                 <Input.TextArea rows={3} placeholder="Ví dụ: AI đọc nhầm tháng, đối chiếu dấu xuất cảnh" />
               </Form.Item>
             </Form>
+          </Modal._InternalPanelDoNotUseOrYouWillBeFired>
+        </div>
+      </Section>
+
+      <Section id="xung-dot" title="Hộp xung đột khi hai người cùng sửa">
+        <div className="dsp-modal">
+          <Modal._InternalPanelDoNotUseOrYouWillBeFired
+            title={conflictTitle('hoa@abc.vn', '2026-11-12T10:42:00')}
+            footer={
+              <div className="dsp-modal__footer">
+                <Button color="default" variant="filled">Huỷ phần của tôi</Button>
+                <Button type="primary">Lấy bản mới, giữ phần tôi đã đổi</Button>
+              </div>
+            }
+          >
+            <ConflictBody
+              by="hoa@abc.vn"
+              labels={{ phone: 'Điện thoại', permanent_address: 'Địa chỉ thường trú', email: 'Email' }}
+              rows={[
+                { key: 'phone', kind: 'theirs', theirs: '0912 345 678' },
+                { key: 'permanent_address', kind: 'mine', mine: '12 Lê Lợi, Hải Phòng' },
+                { key: 'email', kind: 'both', theirs: 'an@abc.vn', mine: 'an.nguyen@abc.vn' },
+              ]}
+            />
           </Modal._InternalPanelDoNotUseOrYouWillBeFired>
         </div>
       </Section>

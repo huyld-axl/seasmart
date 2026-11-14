@@ -1,6 +1,7 @@
 import { notBefore } from '../../../utils/fieldRules'
 import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useRef, useState } from 'react'
+import useEditConflict from '../../../hooks/useEditConflict'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Modal, Form, Input, Checkbox, Space, Skeleton, Spin } from 'antd'
 import Select from '../../../components/ds/SearchSelect'
@@ -28,6 +29,15 @@ const fmtDate = (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '')
 // Tab Giấy tờ: mọi giấy lấy trọn vẹn từ thuyền viên (ảnh thẻ, CCCD, hộ chiếu, sổ thuyền viên, chứng chỉ), chỉ cần nạp ảnh.
 // Một bảng chung, lọc theo loại. Biểu tượng bút ở mỗi dòng mở hộp thoại giấy đó: xem bản gốc, tải về,
 // thay / nạp ảnh (chọn tệp là lưu ngay) và Sửa thông tin (loại, số, ngày cấp, hạn).
+
+const CERT_LABELS = { certificate_type_id: 'Loại giấy', certificate_number: 'Số giấy', issued_date: 'Ngày cấp', expiry_date: 'Ngày hết hạn', no_expiry: 'Không thời hạn' }
+const certInit = (row) => ({
+  certificate_type_id: row.certificate_type_id,
+  certificate_number: row.certificate_number,
+  issued_date: row.issued_date ? dayjs(row.issued_date) : null,
+  expiry_date: row.expiry_date ? dayjs(row.expiry_date) : null,
+  no_expiry: Boolean(row.no_expiry),
+})
 export default function DocumentsSection({ seafarerId, seafarer, photo, dismissed, onDismiss, onRestore }) {
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -61,6 +71,21 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     queryFn: () => lookupApi.certificateTypes().then((r) => r.data),
   })
 
+  // Chống ghi đè khi sửa giấy tờ (docs/mcah-ke-hoach-desktop-gd3.md 3.4): nạp bản mới vào hộp sửa đang mở.
+  const conflict = useEditConflict({
+    form,
+    initial: formInit,
+    labels: CERT_LABELS,
+    reload: async () => {
+      const list = (await certificateApi.list(seafarerId)).data
+      const latest = (list?.data || list || []).find((c) => c.id === editing.id)
+      setEditing(latest)
+      setFormInit(certInit(latest))
+      refresh()
+      return certInit(latest)
+    },
+  })
+
   const close = () => { setEditing(null); setRenewing(null); setCertFile(null); setAiRead(null); setSkipFields([]); setSetAvatar(true) }
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['certificates', seafarerId] })
   const saved = (text) => () => {
@@ -81,7 +106,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         no_expiry: noExpiry,
       }
       if (row) {
-        await certificateApi.update(seafarerId, row.id, { ...payload, expiry_date: payload.expiry_date || null, issued_date: payload.issued_date || null })
+        await certificateApi.update(seafarerId, row.id, { ...payload, expiry_date: payload.expiry_date || null, issued_date: payload.issued_date || null, version: row.version })
         if (certFile) await certificateApi.upload(seafarerId, row.id, certFile)
         return row
       }
@@ -113,7 +138,10 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
       }
       saved(row ? 'Đã lưu giấy tờ' : 'Đã thêm giấy tờ')()
     },
-    onError: failed('Không lưu được giấy tờ'),
+    onError: async (e) => {
+      if (await conflict.handleError(e)) return
+      failed('Không lưu được giấy tờ')(e)
+    },
   })
 
   const deleteMutation = useMutation({
@@ -199,13 +227,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   function startEdit(row) {
     setPreviewAt(null)
     setEditing(row)
-    setFormInit({
-      certificate_type_id: row.certificate_type_id,
-      certificate_number: row.certificate_number,
-      issued_date: row.issued_date ? dayjs(row.issued_date) : null,
-      expiry_date: row.expiry_date ? dayjs(row.expiry_date) : null,
-      no_expiry: Boolean(row.no_expiry),
-    })
+    setFormInit(certInit(row))
   }
 
   const startNew = () => { setFormInit({}); setEditing('new') }
@@ -496,6 +518,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           </Form.Item>
         </Form>
       </Modal>
+      {conflict.dialog}
     </section>
   )
 }

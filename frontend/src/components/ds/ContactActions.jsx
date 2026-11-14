@@ -4,6 +4,7 @@ import ZaloButton from '../common/ZaloButton'
 import CopyButton from './CopyButton'
 import { chatHref } from '../../utils/chatQr'
 import './ds.css'
+import { isDesktop } from '../../lib/desktop'
 
 function LinkButton({ href, label, children, external }) {
   return (
@@ -22,7 +23,8 @@ export function PhoneActions({ phone }) {
     <span className="ds-contact-actions" role="group" aria-label="Thao tác liên hệ">
       <CopyButton value={phone} />
       <LinkButton href={`tel:${digits(phone)}`} label="Gọi điện"><PhoneOutlined /></LinkButton>
-      <LinkButton href={`sms:${digits(phone)}`} label="Nhắn SMS"><MessageOutlined /></LinkButton>
+      {/* App máy tính không nhắn SMS được (bỏ SMS, giữ code cho bản web). */}
+      {isDesktop() ? null : <LinkButton href={`sms:${digits(phone)}`} label="Nhắn SMS"><MessageOutlined /></LinkButton>}
     </span>
   )
 }
@@ -81,8 +83,8 @@ export function QuickContact({ phone, zalo, email, whatsapp, line, wechat }) {
   if (phone) {
     channels.push(
       <LinkButton key="tel" href={`tel:${digits(phone)}`} label={`Gọi ${phone}`}><PhoneOutlined /></LinkButton>,
-      <LinkButton key="sms" href={`sms:${digits(phone)}`} label="Nhắn SMS"><MessageOutlined /></LinkButton>,
     )
+    if (!isDesktop()) channels.push(<LinkButton key="sms" href={`sms:${digits(phone)}`} label="Nhắn SMS"><MessageOutlined /></LinkButton>)
   }
   if (zalo) channels.push(<ZaloButton key="zalo" phone={zalo} />)
   if (whatsapp) channels.push(<LinkButton key="wa" href={chatHref('whatsapp', whatsapp)} label="Nhắn WhatsApp" external><ChatIcon channel="whatsapp" /></LinkButton>)

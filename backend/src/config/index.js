@@ -11,6 +11,10 @@ if (!jwtSecret || INSECURE_JWT_DEFAULTS.includes(jwtSecret)) {
 }
 
 module.exports = {
+  // Chạy trong app máy tính (desktop/ đặt MCAH_DESKTOP=1): bật các khác biệt của docs/mcah-ke-hoach-desktop-gd1.md.
+  desktop: process.env.MCAH_DESKTOP === '1',
+  // Thư mục gửi thư của app máy tính: .zip đính kèm ghi vào đây để app mail của máy đọc được.
+  mailDir: process.env.MAIL_DIR || '',
   port: parseInt(process.env.PORT) || 3000,
   host: process.env.HOST || '0.0.0.0',
   db: {
@@ -59,7 +63,7 @@ module.exports = {
     useSsl: process.env.SMTP_USE_SSL === 'true',
     useTls: process.env.SMTP_USE_TLS === 'true',
     fromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@marineport.vn',
-    fromName: process.env.SMTP_FROM_NAME || 'MarinePort',
+    fromName: process.env.SMTP_FROM_NAME || 'MCAH',
   },
   appUrl: (process.env.APP_URL || 'http://localhost:5173').replace(/\/+$/, ''),
 }

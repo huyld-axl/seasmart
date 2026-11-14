@@ -5,7 +5,6 @@ const ai = require('../../services/ai')
 const { MAX_FILE_BYTES } = require('../../constants/document_types')
 
 const { assertSeafarerInScope, assertChildInScope, assertDocumentsInScope } = require('../../utils/scope')
-const fs = require('fs')
 const idParams = { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } }
 const seafarerParams = { type: 'object', required: ['seafarerId'], properties: { seafarerId: { type: 'integer', minimum: 1 } } }
 
@@ -26,14 +25,15 @@ async function documentRoutes(fastify) {
   })
 
   // Quét nhanh một tệp để điền form: multipart gồm `file` và `kind` (auto | cccd | passport | seaman_book | diploma | certificate). Không lưu gì.
-  fastify.post('/scan', guard, async (request) => {
+  const ai = { preHandler: [fastify.requireAiConsent] }
+  fastify.post('/scan', { ...guard, ...ai }, async (request) => {
     const part = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })
     if (!part) throw { statusCode: 400, message: 'Chưa chọn tệp' }
     const kind = part.fields?.kind?.value || 'auto'
     return documentScan.scan(part, kind)
   })
 
-  fastify.post('/seafarer/:seafarerId', { ...guard, schema: { params: seafarerParams } }, async (request, reply) => {
+  fastify.post('/seafarer/:seafarerId', { ...guard, ...ai, schema: { params: seafarerParams } }, async (request, reply) => {
     await assertSeafarerInScope(request, request.params.seafarerId)
     const file = await request.file({ limits: { fileSize: MAX_FILE_BYTES, files: 1 } })
     if (!file) throw { statusCode: 400, message: 'Chưa chọn tệp' }
@@ -46,7 +46,7 @@ async function documentRoutes(fastify) {
     const upload = await documentService.uploadFile(request.params.id)
     reply.header('Content-Type', upload.mime_type)
     reply.header('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(upload.file_name)}`)
-    return reply.send(fs.createReadStream(upload.storage_path))
+    return reply.send(upload.stream)
   })
 
   fastify.get('/uploads/:id/pages/:pageNo/image', {
@@ -60,7 +60,7 @@ async function documentRoutes(fastify) {
     const file = await documentService.pageImage(request.params.id, request.params.pageNo, request.query.size)
     reply.header('Content-Type', 'image/jpeg')
     reply.header('Cache-Control', 'private, max-age=3600')
-    return reply.send(fs.createReadStream(file))
+    return reply.send(file)
   })
 
   fastify.post('/uploads/:id/regroup', {
@@ -95,7 +95,7 @@ async function documentRoutes(fastify) {
     return documentService.regroup(request.params.id, request.body.parts)
   })
 
-  fastify.post('/uploads/:id/retry', { ...guard, schema: { params: idParams } }, async (request) => {
+  fastify.post('/uploads/:id/retry', { ...guard, ...ai, schema: { params: idParams } }, async (request) => {
     await assertChildInScope(request, 'upload', request.params.id)
     return documentService.retryUpload(request.params.id)
   })
@@ -135,7 +135,7 @@ async function documentRoutes(fastify) {
     const doc = await documentService.fileOf(request.params.id)
     reply.header('Content-Type', doc.mime_type)
     reply.header('Content-Disposition', `inline; filename*=UTF-8''${encodeURIComponent(doc.file_name)}`)
-    return reply.send(fs.createReadStream(doc.storage_path))
+    return reply.send(doc.stream)
   })
 
   fastify.put('/:id/fields/:key', {

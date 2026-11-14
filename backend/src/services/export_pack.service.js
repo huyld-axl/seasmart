@@ -1,7 +1,7 @@
-const fs = require('fs')
 const path = require('path')
 const PizZip = require('pizzip')
-const config = require('../config')
+const fileStore = require('../utils/file_store')
+const { certificateFilePath } = require('../utils/file_trash')
 const { withTransaction } = require('../utils/transaction')
 const { xlsxToPdf } = require('../utils/xlsx_pdf')
 const { PACK_TEMPLATES, TEMPLATE_KEYS, STAGE_TITLE, templateOf } = require('../constants/pack_templates')
@@ -178,14 +178,16 @@ async function requirementFiles(pool, opportunityId, seafarerId) {
       file = doc ? await uploadPath(doc.id) : null
     } else {
       const [[cert]] = await pool.query(
-        `SELECT document_url, source_document_id FROM seafarer_certificate
+        `SELECT document_url, source_document_id, tree_file FROM seafarer_certificate
          WHERE seafarer_id = ? AND certificate_type_id = ? AND deleted_at IS NULL AND status <> 'REVOKED'
          ORDER BY (document_url IS NOT NULL OR source_document_id IS NOT NULL) DESC, expiry_date DESC NULLS LAST LIMIT 1`,
         [seafarerId, req.certificate_type_id])
-      if (cert?.document_url) file = path.join(config.upload.dir, 'certificates', String(seafarerId), path.basename(cert.document_url))
+      if (cert?.document_url) file = certificateFilePath(seafarerId, cert.document_url)
+      // Giấy AI đọc: tệp riêng của giấy đó trong thư mục hồ sơ; chưa có thì cả bản tải lên như trước.
+      else if (cert?.tree_file) file = cert.tree_file
       else if (cert?.source_document_id) file = await uploadPath(cert.source_document_id)
     }
-    if (file && fs.existsSync(file)) found.push({ name: req.name_vi, path: file })
+    if (file && (await fileStore.exists(file, pool))) found.push({ name: req.name_vi, path: file })
     else lacking.push(req.name_vi)
   }
   return { found, lacking }
@@ -338,7 +340,7 @@ const exportPackService = {
     // Bộ của một cơ hội: thêm file giấy tờ, chứng chỉ theo hồ sơ yêu cầu; mục không tìm được file ghi vào THIEU-GIAY.txt.
     if (row.opportunity_id) {
       const { found, lacking } = await requirementFiles(pool, row.opportunity_id, row.seafarer_id)
-      found.forEach((file, i) => zip.file(`${folder}/GIAY-TO/${String(i + 1).padStart(2, '0')}-${safeName(file.name)}${path.extname(file.path).toLowerCase()}`, fs.readFileSync(file.path)))
+      for (const [i, file] of found.entries()) zip.file(`${folder}/GIAY-TO/${String(i + 1).padStart(2, '0')}-${safeName(file.name)}${path.extname(fileStore.abs(file.path)).toLowerCase()}`, await fileStore.read(file.path, pool))
       if (lacking.length) zip.file(`${folder}/THIEU-GIAY.txt`, `Chưa có file trên hồ sơ:\n${lacking.join('\n')}\n`)
     }
     return { buffer: zip.generate({ type: 'nodebuffer', compression: 'DEFLATE' }), filename: `${folder}.zip` }

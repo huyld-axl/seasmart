@@ -1,5 +1,4 @@
 const fp = require('fastify-plugin')
-const path = require('path')
 const cors = require('@fastify/cors')
 const jwt = require('@fastify/jwt')
 const multipart = require('@fastify/multipart')
@@ -46,7 +45,7 @@ module.exports = fp(async function (fastify) {
 
   // Static files
   await fastify.register(staticFiles, {
-    root: path.join(__dirname, '../../public'),
+    root: require('../config/paths').PUBLIC_DIR,
     prefix: '/public/',
   })
 
@@ -57,6 +56,10 @@ module.exports = fp(async function (fastify) {
     } catch (err) {
       return reply.code(401).send({ error: 'Unauthorized' })
     }
+    // App máy tính: phiên không sống quá mốc offline của vé (7 ngày kể từ lần làm mới cuối với máy chủ dịch vụ).
+    if (config.desktop && !(request.user.offline_until > Date.now() / 1000)) {
+      return reply.code(401).send({ error: 'Đã quá 7 ngày không kết nối internet. Kết nối rồi đăng nhập lại.', code: 'OFFLINE_EXPIRED' })
+    }
     const access = await loadAccess(request.user.id)
     if (!access) return reply.code(401).send({ error: 'Unauthorized' })
     request.access = access
@@ -64,4 +67,16 @@ module.exports = fp(async function (fastify) {
 
   // Dùng sau authenticate: { onRequest: [fastify.authenticate, fastify.can('voyage.update')] }
   fastify.decorate('can', can)
+
+  // Dùng sau authenticate cho mọi API gửi ảnh cho AI đọc: chưa đồng ý thì 409 AI_CONSENT_REQUIRED, giao diện hỏi
+  // (docs/mcah-ke-hoach-desktop-gd4.md 3.8) rồi gửi lại.
+  fastify.decorate('requireAiConsent', async function (request, reply) {
+    if (!request.access?.aiConsentAt) {
+      return reply.code(409).send({ error: 'Cần đồng ý gửi ảnh cho AI đọc trước khi quét', code: 'AI_CONSENT_REQUIRED' })
+    }
+  })
+
+  await fastify.register(require('./maintenance'))
+  await fastify.register(require('./lan_device'))
+  await fastify.register(require('./idempotency'))
 })

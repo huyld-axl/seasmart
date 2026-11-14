@@ -10,7 +10,7 @@ const { vndWords, parseAmount } = require('../utils/vnd_words')
 const { markCell, markParts, fillMarkedText, markInput } = require('../utils/form_fields')
 
 // Thư mục mẫu Excel ở forms/ tại root dự án. Đặt FORMS_DIR nếu muốn dùng thư mục khác.
-const FORMS_DIR = process.env.FORMS_DIR || path.resolve(__dirname, '../../../forms')
+const { FORMS_DIR } = require('../config/paths')
 
 // Dòng thuyền viên thứ 2 trở đi trong QĐ điều động, QĐ rời tàu, Thư bảo lãnh: bộ giấy một người thì để trống.
 const EXTRA_ROWS_BLANK = Object.fromEntries(

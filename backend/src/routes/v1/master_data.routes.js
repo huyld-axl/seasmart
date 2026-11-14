@@ -1,4 +1,7 @@
 const pool = require('../../config/db')
+const { versionWhere, failIfStale } = require('../../utils/row_version')
+// Bảng danh mục có cột version (migration 045_row_version.sql).
+const VERSIONED = new Set(['rank', 'vessel_type', 'certificate_type', 'contract_type', 'manning_agent', 'training_center'])
 const { invalidateCache } = require('./lookup.routes')
 const { assertMasterData } = require('../../utils/field_rules')
 
@@ -136,8 +139,11 @@ function makeCrud(table, orderBy = 'name_vi') {
       if (table === 'certificate_type') normalizeCertificateType(body)
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
-      const sql = `UPDATE "${table}" SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ?`
-      await pool.query(sql, [...cols.map((c) => body[c]), parseInt(request.params.id)])
+      // Chống ghi đè: bảng có cột version thì kiểm (docs/mcah-ke-hoach-desktop-gd3.md 3.4).
+      const guard = VERSIONED.has(table) ? versionWhere(body.version) : versionWhere(null)
+      const sql = `UPDATE "${table}" SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ?${guard.sql}`
+      const [res] = await pool.query(sql, [...cols.map((c) => body[c]), parseInt(request.params.id), ...guard.params])
+      if (VERSIONED.has(table)) await failIfStale(pool, table, parseInt(request.params.id), body.version, res.affectedRows)
       invalidateCache(table)
       const [[updated]] = await pool.query(`SELECT * FROM "${table}" WHERE id = ?`, [
         parseInt(request.params.id),
@@ -216,14 +222,17 @@ async function portRoutes(fastify) {
 
   // UPDATE
   fastify.put('/:id', { onRequest: [fastify.authenticate, fastify.can('catalog.update')] }, async (request) => {
-    const { name, un_locode, country_id } = request.body
+    const { name, un_locode, country_id, version } = request.body
     assertMasterData('port', request.body)
-    await pool.query('UPDATE "port" SET name = ?, un_locode = ?, country_id = ? WHERE id = ?', [
+    const guard = versionWhere(version)
+    const [res] = await pool.query(`UPDATE "port" SET name = ?, un_locode = ?, country_id = ? WHERE id = ?${guard.sql}`, [
       name,
       un_locode || null,
       country_id,
       parseInt(request.params.id),
+      ...guard.params,
     ])
+    await failIfStale(pool, 'port', parseInt(request.params.id), version, res.affectedRows)
     const [[updated]] = await pool.query(
       'SELECT p.*, COALESCE(c.name_vi, c.name_en) AS country_name, c.code AS country_code, c.flag_emoji AS country_flag_emoji FROM "port" p LEFT JOIN "country" c ON c.id = p.country_id WHERE p.id = ?',
       [parseInt(request.params.id)]

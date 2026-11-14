@@ -1,6 +1,7 @@
 import useFormShortcuts from '../../hooks/useFormShortcuts'
 import { flagEmoji, withFlag } from '../../utils/flag'
 import { matchesSearch, normalizeSearch } from '../../utils/search'
+import useEditConflict from '../../hooks/useEditConflict'
 import { useParams, Navigate } from 'react-router-dom'
 import { Children, cloneElement, isValidElement, useState } from 'react'
 import { App, Table, Button, Form, Input, InputNumber, Skeleton } from 'antd'
@@ -110,6 +111,7 @@ function useMasterData(resource) {
 function MasterTable({ resource, columns, formFields, title }) {
   const can = useCan()
   const canEdit = can('catalog.update')
+  const queryClient = useQueryClient()
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -144,6 +146,26 @@ function MasterTable({ resource, columns, formFields, title }) {
     setChanged(new Set(Object.keys(values).filter((name) => !sameValue(values[name], editing[name]))))
   }
 
+  // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4): tên ô lấy từ label của các trường trong panel.
+  const fieldLabels = Object.fromEntries(
+    Children.toArray(isValidElement(formFields) ? formFields.props.children : formFields)
+      .filter((item) => isValidElement(item) && item.props.name && typeof item.props.label === 'string')
+      .map((item) => [item.props.name, item.props.label])
+  )
+  const conflict = useEditConflict({
+    form,
+    initial: editing?.id ? editing : {},
+    labels: fieldLabels,
+    onApplied: () => trackChanges(),
+    reload: async () => {
+      const { data } = await api.get(`/admin/master/${resource}/${editing.id}`)
+      setEditing(data)
+      setChanged(new Set())
+      queryClient.invalidateQueries({ queryKey: ['master', resource] })
+      return data
+    },
+  })
+
   async function submit({ addAnother = false } = {}) {
     let values
     try {
@@ -153,12 +175,13 @@ function MasterTable({ resource, columns, formFields, title }) {
       return
     }
     try {
-      if (editing?.id) await update.mutateAsync({ id: editing.id, ...values })
+      if (editing?.id) await update.mutateAsync({ id: editing.id, ...values, version: editing.version })
       else await create.mutateAsync(values)
       toast.success(editing?.id ? `Đã lưu ${title}` : `Đã thêm ${title}`)
       if (addAnother) form.resetFields()
       else setEditing(null)
     } catch (error) {
+      if (await conflict.handleError(error)) return
       toast.error(editing?.id ? `Không lưu được ${title}` : `Không thêm được ${title}`, { description: error?.response?.data?.error || 'Thử lại sau ít phút.' })
     }
   }
@@ -276,10 +299,11 @@ function MasterTable({ resource, columns, formFields, title }) {
           </div>
         }
       >
-        <Form ref={shortcuts} form={form} layout="vertical" onFinish={() => submit()} onValuesChange={trackChanges}>
+        <Form ref={shortcuts} form={form} layout="vertical" initialValues={editing?.id ? editing : undefined} onFinish={() => submit()} onValuesChange={trackChanges}>
           {fields}
         </Form>
       </SlidePanel>
+      {conflict.dialog}
       {canEdit ? <Fab label={`Thêm ${title}`} onClick={() => openPanel(null)} /> : null}
     </>
   )

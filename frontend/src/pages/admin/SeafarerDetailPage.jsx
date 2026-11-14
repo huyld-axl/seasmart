@@ -17,6 +17,8 @@ import {
   Skeleton,
 } from 'antd'
 import HeadActions from '../../components/ds/HeadActions'
+import OpenFolderButton from '../../components/common/OpenFolderButton'
+import { isDesktop } from '../../lib/desktop'
 import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, CloseOutlined, DownOutlined, ScanOutlined, PauseCircleOutlined, PlayCircleOutlined, EditOutlined, EllipsisOutlined, MoreOutlined, RightOutlined, SendOutlined } from '@ant-design/icons'
 import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import {
@@ -289,6 +291,7 @@ export default function SeafarerDetailPage() {
               <Button icon={<MoreOutlined />} aria-label="Thao tác khác" loading={deleteMutation.isPending || activeMutation.isPending} />
             </Dropdown>
           )}
+          {isDesktop() && <OpenFolderButton seafarerId={Number(id)} />}
           {can('seafarer.update') && <Button icon={<EditOutlined />} onClick={() => navigate(`/seafarers/${id}/edit`)}>Sửa thông tin</Button>}
         </HeadActions>
       </div>

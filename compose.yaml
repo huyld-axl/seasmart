@@ -66,6 +66,58 @@ services:
       start_period: 20s
     logging: *logging
 
+  # Máy chủ dịch vụ của app máy tính (cloud/, docs/mcah-ke-hoach-desktop-gd2.md): tài khoản, đăng nhập Google, lời mời,
+  # chuyển tiếp AI / tra tàu. Chạy dưới https://<tên miền>/tai-khoan qua nginx của frontend. Postgres riêng.
+  cloud-postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file:
+      - path: ./docker/cloud-postgres.env
+        format: raw
+    volumes:
+      - cloud_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    logging: *logging
+
+  cloud:
+    image: seasmart-cloud:local
+    build:
+      context: .
+      dockerfile: cloud/Dockerfile
+      network: ${BUILD_NETWORK:-default}
+    restart: unless-stopped
+    init: true
+    # cloud/.env trên server (không nằm trong repo): GOOGLE_*, CLOUD_PUBLIC_URL, CLOUD_COOKIE_SECRET, SMTP_*, khoá AI / tra tàu.
+    env_file:
+      - path: ./docker/cloud-postgres.env
+        format: raw
+      - path: ./cloud/.env
+        format: raw
+        # Thiếu cloud/.env thì deploy.sh bỏ qua cloud; để compose vẫn hợp lệ cho các dịch vụ khác.
+        required: false
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4100"
+      CLOUD_DB_HOST: cloud-postgres
+      CLOUD_DB_PORT: "5432"
+    depends_on:
+      cloud-postgres:
+        condition: service_healthy
+    volumes:
+      - cloud_data:/app/cloud/.data
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:4100/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    logging: *logging
+
   frontend:
     image: seasmart-frontend:local
     build:
@@ -79,6 +131,9 @@ services:
     restart: unless-stopped
     ports:
       - "${WEB_BIND:-0.0.0.0}:${WEB_PORT:-8080}:80"
+    volumes:
+      # Bộ cài app máy tính do script phát hành rsync lên (RELEASES_DIR trên server, mặc định /srv/mcah/releases).
+      - ${RELEASES_DIR:-/srv/mcah/releases}:/srv/releases:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -100,3 +155,5 @@ secrets:
 volumes:
   postgres_data:
   uploads:
+  cloud_postgres_data:
+  cloud_data:

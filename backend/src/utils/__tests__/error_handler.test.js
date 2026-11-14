@@ -53,3 +53,11 @@ describe('API error messages', () => {
     })
   })
 })
+
+
+it('giữ mã và dữ liệu xung đột của dev qua error handler dùng chung', async () => {
+  const conflict = { changed_by: 'qa@example.com', changed_at: '2026-11-14T00:00:00Z', version: 3 }
+  expect(await responseFor({ statusCode: 409, code: 'CONFLICT', message: 'Bản ghi vừa được người khác sửa', conflict })).toEqual({
+    status: 409, body: { error: 'Bản ghi vừa được người khác sửa', code: 'CONFLICT', conflict },
+  })
+})

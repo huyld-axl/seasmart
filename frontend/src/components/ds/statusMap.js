@@ -140,6 +140,13 @@ export const STATUS = {
     DONE: { label: 'Xong', tone: 'success', mark: 'check' },
     OTHER: { label: 'Khác', tone: 'neutral', mark: 'ring' },
   },
+  // Máy nhân viên trong văn phòng (app máy tính, giai đoạn 3).
+  device: {
+    active: { label: 'Đang dùng', tone: 'success', mark: 'check' },
+    pending: { label: 'Xin vào lại', tone: 'warning', mark: 'ellipsis' },
+    removed: { label: 'Đã gỡ', tone: 'neutral', mark: 'minus' },
+    rejected: { label: 'Đã từ chối', tone: 'neutral', mark: 'cross' },
+  },
 }
 
 export const STATUS_GROUP_LABELS = {
@@ -163,4 +170,5 @@ export const STATUS_GROUP_LABELS = {
   partner: 'Tình trạng đối tác',
   cert: 'Hạn giấy tờ',
   upload: 'Tệp tải lên',
+  device: 'Máy trong văn phòng',
 }

@@ -22,6 +22,8 @@ async function authRoutes(fastify) {
       },
     },
     async (request) => {
+      // App máy tính đăng nhập qua trình duyệt (desktop_ticket.routes.js), không nhận mật khẩu.
+      if (config.desktop) throw { statusCode: 404, message: 'Không có' }
       const user = await authService.login(request.body)
       const access = await loadAccess(user.id)
       const token = fastify.jwt.sign(
@@ -59,6 +61,12 @@ async function authRoutes(fastify) {
       return { user: toClientUser(request.access) }
     }
   )
+
+  // Đồng ý gửi ảnh cho AI đọc (một lần cho tài khoản, dùng cho mọi máy).
+  fastify.post('/ai-consent', { onRequest: [fastify.authenticate] }, async (request) => {
+    await require('../../config/db').query('UPDATE "user" SET ai_consent_at = COALESCE(ai_consent_at, NOW()) WHERE id = ?', [request.user.id])
+    return { ai_consent: true }
+  })
 }
 
 module.exports = authRoutes

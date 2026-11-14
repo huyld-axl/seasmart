@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { App, Button, Dropdown, Input, Skeleton, Table } from 'antd'
-import { EllipsisOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { EllipsisOutlined, FolderOpenOutlined, MoreOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import ExportFolderModal from '../../components/common/ExportFolderModal'
+import { isDesktop } from '../../lib/desktop'
 import { DownloadIcon, UploadIcon } from '../../components/ds/TransferIcons'
 import { seafarerApi } from '../../api'
 import api from '../../api/client'
@@ -61,6 +63,7 @@ export default function SeafarerListPage() {
   const setPageSize = setField('pageSize')
   const tableScroll = useListSticky()
   const [exporting, setExporting] = useState(false)
+  const [folderOpen, setFolderOpen] = useState(false)
 
   const query = { tab: tab === 'all' ? '' : tab, search: search.trim(), page, limit: pageSize, sort: sort === 'newest' ? '' : sort, ...filterParams(filters) }
   const { data, isLoading, isError, isFetching, refetch } = useQuery({
@@ -98,8 +101,9 @@ export default function SeafarerListPage() {
     items: [
       ...(can('seafarer.import') ? [{ key: 'import', icon: <UploadIcon />, label: 'Nhập từ Excel' }] : []),
       { key: 'export', icon: <DownloadIcon />, label: exporting ? 'Đang xuất…' : 'Xuất ra Excel', disabled: exporting },
+      ...(isDesktop() && can('seafarer.export_bulk') ? [{ key: 'folder', icon: <FolderOpenOutlined />, label: 'Xuất hồ sơ ra thư mục…' }] : []),
     ],
-    onClick: ({ key }) => (key === 'import' ? navigate('/seafarers/import') : handleExport()),
+    onClick: ({ key }) => (key === 'import' ? navigate('/seafarers/import') : key === 'folder' ? setFolderOpen(true) : handleExport()),
   }
 
   const columns = [
@@ -230,6 +234,7 @@ export default function SeafarerListPage() {
         )}
       </div>
       {can('seafarer.create') ? <Fab label="Thêm thuyền viên" onClick={() => navigate('/seafarers/new')} /> : null}
+      {folderOpen ? <ExportFolderModal open onClose={() => setFolderOpen(false)} pageIds={rows.map((r) => r.id)} /> : null}
     </div>
   )
 }

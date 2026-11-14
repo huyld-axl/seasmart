@@ -1,8 +1,10 @@
 import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { formatCalendarDuration } from '../../../utils/format'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import useEditConflict from '../../../hooks/useEditConflict'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { seafarerContractApi } from '../../../api/voyageApi'
 import { Button, Form, Input, Select, Skeleton } from 'antd'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
@@ -52,6 +54,7 @@ function voyageRowOfContract(detail) {
 // Màn 4 · Thêm / sửa hợp đồng. Hợp đồng luôn thuộc một chuyến (mỗi chuyến tối đa một hợp đồng); thuyền viên lấy từ chuyến.
 // lockVoyage: mở từ chi tiết chuyến (?voyage=) hoặc đang sửa thì ô Chuyến khoá.
 function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndNew }) {
+  const queryClient = useQueryClient()
   const isEdit = !!contract
   const navigate = useNavigate()
   const toast = useToast()
@@ -102,10 +105,22 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
     return true
   }
 
+  const conflict = useEditConflict({
+    form,
+    initial,
+    labels: { start_date: 'Ngày bắt đầu', end_date: 'Ngày kết thúc', items: 'Các khoản tiền', terms: 'Kỳ thanh toán', notes: 'Ghi chú' },
+    reload: async () => {
+      const latest = await seafarerContractApi.get(contract.contract.id)
+      queryClient.setQueryData(['contracts', 'item', String(contract.contract.id)], latest)
+      return toFormValues(latest)
+    },
+  })
+
   async function submit(formValues) {
     setBlocked(null)
     try {
-      const row = await save.mutateAsync({ id: contract?.contract.id, ...toPayload(formValues, { voyageId: isEdit ? undefined : formValues.seafarer_voyage_id }) })
+      const body = toPayload(formValues, { voyageId: isEdit ? undefined : formValues.seafarer_voyage_id })
+      const row = await save.mutateAsync(isEdit ? { id: contract.contract.id, ...body, version: contract.contract.version } : body)
       toast.success(isEdit ? `Đã lưu hợp đồng ${row.contract.contract_number}` : `Đã thêm hợp đồng ${row.contract.contract_number}`)
       if (againRef.current && !isEdit) {
         onSavedAndNew()
@@ -115,6 +130,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         navigate(`/contracts/${row.contract.id}`)
       }
     } catch (error) {
+      if (await conflict.handleError(error)) return
       if (showBlocked(error, formValues)) return
       toast.error(isEdit ? 'Không lưu được hợp đồng' : 'Không thêm được hợp đồng', { description: apiErrorText(error, 'Thử lại sau ít phút.') })
     }
@@ -252,6 +268,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
           </Button>
         </BalanceBar>
       </Form>
+      {conflict.dialog}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import BillFormPage from '../BillFormPage'
 
@@ -34,7 +35,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals() })
 
 function openForm() {
-  return render(<MemoryRouter><BillFormPage /></MemoryRouter>)
+  return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter><BillFormPage /></MemoryRouter></QueryClientProvider>)
 }
 
 it('hiện lỗi ngày không tồn tại sau blur, giữ chữ đã nhập và chặn lưu dù ghi chú đã thay đổi', async () => {

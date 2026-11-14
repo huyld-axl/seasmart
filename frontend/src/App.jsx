@@ -46,6 +46,10 @@ import StandaloneError from './pages/errors/StandaloneError'
 import NoRolePage from './pages/errors/NoRolePage'
 import RoleMatrixPage from './pages/admin/roles/RoleMatrixPage'
 import KpiTargetPage from './pages/admin/settings/KpiTargetPage'
+import DeviceSettingsPage from './pages/admin/settings/DeviceSettingsPage'
+import DevicesPage from './pages/admin/devices/DevicesPage'
+import FirstRunPage from './pages/desktop/FirstRunPage'
+import { isDesktop } from './lib/desktop'
 import ToastHost from './components/ds/ToastHost'
 
 const queryClient = new QueryClient({
@@ -57,6 +61,21 @@ function HomeRedirect() {
   const { user, ready } = useAuthStore()
   if (!ready) return null
   return <Navigate to={sectionsFor(user)[0]?.to || '/no-role'} replace />
+}
+
+// App máy tính: phiên ở tiến trình chính hết (quá 7 ngày, bị khoá, đăng xuất ở chỗ khác) → giao diện về đăng nhập.
+function useDesktopSession() {
+  useEffect(() => {
+    if (!isDesktop()) return undefined
+    return window.mcah.onSessionChanged((info) => {
+      const { token } = useAuthStore.getState()
+      if (!info.loggedIn && token) {
+        localStorage.removeItem('user')
+        useAuthStore.setState({ user: null, token: null, ready: true })
+        window.location.href = info.needsOffice ? '/bat-dau' : '/login'
+      }
+    })
+  }, [])
 }
 
 // Lấy quyền mới từ máy chủ một lần khi mở app (đổi quyền có hiệu lực ở lần tải trang tới).
@@ -77,6 +96,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      {isDesktop() ? <Route path="/bat-dau" element={<FirstRunPage />} /> : null}
       <Route path="/dat-mat-khau" element={<SetPasswordPage />} />
       <Route path="/design-system" element={<DesignSystemPage />} />
       <Route
@@ -104,6 +124,7 @@ function AppRoutes() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/cai-dat-may" element={<DeviceSettingsPage />} />
         <Route path="/seafarers" element={guard('seafarer.view', <SeafarerListPage />)} />
         <Route path="/seafarers/new" element={guard('seafarer.create', <SeafarerFormPage />)} />
         <Route
@@ -148,6 +169,7 @@ function AppRoutes() {
         <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
         <Route path="/master-data/:tab" element={guard('catalog.view', <MasterSubPage />)} />
         <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
+        <Route path="/admin/may-trong-van-phong" element={guard('account.view', <DevicesPage />)} />
         <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
         <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />
         <Route path="/admin/kpi-targets" element={guard('kpi.manage', <KpiTargetPage />)} />
@@ -175,6 +197,7 @@ function ThemeProvider({ children }) {
 
 export default function App() {
   useRefreshAccess()
+  useDesktopSession()
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

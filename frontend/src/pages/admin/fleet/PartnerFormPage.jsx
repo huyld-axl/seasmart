@@ -1,5 +1,7 @@
 import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import OwnershipFields, { ownershipProblem } from './OwnershipFields'
+import useEditConflict from '../../../hooks/useEditConflict'
+import { newRequestKey } from '../../../lib/idempotency'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -151,13 +153,25 @@ function PartnerForm({ owner }) {
   const ready = filled(values.company_name?.trim?.())
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
 
+  const requestKey = useRef(newRequestKey())
+  const conflict = useEditConflict({
+    form,
+    initial,
+    labels: FIELD_LABELS,
+    reload: async () => {
+      const latest = await shipOwnerApi.get(owner.id)
+      queryClient.setQueryData(['fleet', 'ship-owners', 'item', String(owner.id)], latest)
+      return partnerToFormValues(latest)
+    },
+  })
+
   async function submit(formValues) {
     const problem = vessels.filter((v) => v.dirty || !v.locked).map(ownershipProblem).find(Boolean)
     if (problem) { toast.error(problem); return }
     if (new Set(vessels.filter((v) => v.id).map((v) => v.id)).size !== vessels.filter((v) => v.id).length) { toast.error('Mỗi tàu chỉ được chọn một lần.'); return }
     setSubmitting(true)
     try {
-      const row = await save.mutateAsync({ id: owner?.id, ...partnerToPayload(formValues) })
+      const row = await save.mutateAsync(isEdit ? { id: owner.id, ...partnerToPayload(formValues), version: owner.version } : { ...partnerToPayload(formValues), requestKey: requestKey.current })
       const remaining = []
       for (const vessel of vessels.filter((v) => v.dirty || !v.locked)) {
         try {
@@ -178,6 +192,7 @@ function PartnerForm({ owner }) {
       if (logoFailed) toast.warning(`Đã lưu ${row.company_name}`, { description: logoFailed })
       else toast.success(isEdit ? `Đã lưu ${row.company_name}` : `Đã thêm ${row.company_name}`)
       if (againRef.current) {
+        requestKey.current = newRequestKey()
         form.resetFields()
         setVessels([])
         setLogoFile(null)
@@ -190,6 +205,7 @@ function PartnerForm({ owner }) {
         navigate(`/partners/${row.id}`)
       }
     } catch (error) {
+      if (await conflict.handleError(error)) return
       toast.error(isEdit ? 'Không lưu được đối tác' : 'Không thêm được đối tác', { description: errorText(error, 'Thử lại sau ít phút.') })
     } finally { setSubmitting(false) }
   }
@@ -388,6 +404,7 @@ function PartnerForm({ owner }) {
           </div>
         </div>
       </Form>
+      {conflict.dialog}
     </FormFrame>
   )
 }

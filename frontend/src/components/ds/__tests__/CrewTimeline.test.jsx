@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
-import CrewTimeline from '../CrewTimeline'
+import CrewTimeline from '../CrewTimeline.jsx'
 
 const rows = (onClick) => [{ id: 'v1', title: 'Nguyễn A', subtitle: 'Thuyền trưởng · CT-1', onClick, bars: [{ kind: 'onboard', start: '2026-10-25', end: '2026-11-05', label: 'Hải Phòng', tip: 'Lên tàu' }] }]
 const props = { from: '2026-10-22', to: '2026-11-19', today: '2026-11-05' }

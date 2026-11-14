@@ -1,15 +1,18 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Input, Select, Skeleton, Table } from 'antd'
+import { Button, Input, Skeleton, Table } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
 import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
+import useListScrollReset from '../../../components/ds/useListScrollReset'
 import ListFooter from '../../../components/ds/ListFooter'
-import { CrewFilterButton } from '../seafarers/CrewFilters'
+import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
 import { lookupApi } from '../../../api'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
@@ -57,13 +60,13 @@ export default function OpportunityListPage() {
   const can = useCan()
   const navigate = useNavigate()
   const isMobile = useViewport().isCompact
-  const [tab, setTab] = useState('open')
-  const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState({})
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [tab, setTab] = useListSessionState(`opportunities`, 'tab', 'open')
+  const [search, setSearch] = useListSessionState(`opportunities`, 'search', '')
+  const [filters, setFilters] = useListSessionState(`opportunities`, 'filters', {})
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`opportunities`, 'filtersOpen', false)
   const [vesselSearch, setVesselSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useListSessionState(`opportunities`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`opportunities`, 'pageSize', 20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
@@ -71,6 +74,7 @@ export default function OpportunityListPage() {
   const ranks = useQuery({ queryKey: ['ranks'], queryFn: () => lookupApi.ranks().then((r) => r.data), staleTime: 300000 })
   const vessels = useQuery({ queryKey: ['vessels-lookup', vesselSearch], queryFn: () => lookupApi.vessels(vesselSearch).then((r) => r.data), staleTime: 60000 })
   const list = useOpportunityList({ tab, search: keyword || undefined, ...filters, page, limit: pageSize })
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, list.isFetching)
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -130,7 +134,7 @@ export default function OpportunityListPage() {
   } else if (!rows.length && filtered) {
     body = <EmptyState title="Không có cơ hội nào khớp bộ lọc" description="Thử tìm bằng mã, chức danh hoặc tên tàu." action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có cơ hội nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có cơ hội nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có cơ hội nào" description="Mỗi cơ hội là một vị trí chủ tàu cần người. Cần nhiều vị trí thì tạo nhiều cơ hội." action={createButton} />
   } else if (isMobile) {
@@ -186,9 +190,9 @@ export default function OpportunityListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -227,7 +231,7 @@ export default function OpportunityListPage() {
         </ListFilters>
         {body}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="cơ hội" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="cơ hội" onChange={(next, size) => { scrollToListStart(); setPage(next); setPageSize(size) }} />
         )}
       </div>
       {can('opportunity.create') ? <Fab label="Tạo cơ hội" onClick={() => navigate('/opportunities/new')} /> : null}

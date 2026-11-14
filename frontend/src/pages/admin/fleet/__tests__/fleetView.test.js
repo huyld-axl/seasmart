@@ -10,6 +10,7 @@ import {
   cleanContactList,
   changedKeys,
   initialsOfName,
+  flagToNumber,
 } from '../fleetView'
 
 const vessel = {
@@ -28,6 +29,14 @@ const vessel = {
 }
 
 describe('fleetView', () => {
+  it('keeps the selected primary contact when API flags are strings', () => {
+    const owner = { contacts: [{ name: 'Other', is_primary: '0' }, { name: 'Primary', is_primary: '1' }] }
+    const values = partnerToFormValues(owner)
+    expect(values.contacts.map((contact) => contact.is_primary)).toEqual([false, true])
+    expect(partnerToPayload(values).contacts.map((contact) => contact.is_primary)).toEqual([false, true])
+    expect(flagToNumber('0')).toBe(0)
+    expect(flagToNumber('1')).toBe(1)
+  })
   it('tàu có 6 khối theo thứ tự đã chốt', () => {
     expect(vesselSections(vessel).map((s) => s.title)).toEqual([
       'Nhận dạng',

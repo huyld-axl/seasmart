@@ -188,7 +188,7 @@ const contractBillService = {
       params.push(Number(query.ownerId))
     }
     if (query.search) {
-      where += ' AND (b.code ILIKE ? OR unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
+      where += ' AND (unaccent(b.code::text) ILIKE unaccent(?) OR unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)
     }
     for (const [key, column] of [['ship_owner_id', 'o.id'], ['seafarer_voyage_id', 'c.seafarer_voyage_id'], ['contract_id', 'b.contract_id']]) {

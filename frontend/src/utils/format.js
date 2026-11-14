@@ -1,6 +1,18 @@
 // Định dạng ngày và tiền dùng chung. Ngày hiện DD/MM/YYYY (API gửi YYYY-MM-DD); tiền USD kiểu Việt Nam 1.150,00.
 import dayjs from 'dayjs'
 
+// Thời hạn để hiển thị, tách biệt với số tháng quy đổi dùng tính tiền.
+export function formatCalendarDuration(start, end) {
+  if (!start || !end) return ''
+  const a = dayjs(start).startOf('day')
+  const b = dayjs(end).startOf('day')
+  if (!a.isValid() || !b.isValid() || b.isBefore(a)) return ''
+  let months = (b.year() - a.year()) * 12 + b.month() - a.month()
+  while (months > 0 && a.add(months, 'month').isAfter(b)) months -= 1
+  const days = b.diff(a.add(months, 'month'), 'day')
+  return [months ? `${months} tháng` : '', days ? `${days} ngày` : ''].filter(Boolean).join(' ') || '0 ngày'
+}
+
 const usd = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const usdShort = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 2 })
 

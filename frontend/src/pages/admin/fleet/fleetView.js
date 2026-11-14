@@ -51,8 +51,8 @@ export function vesselSections(v, { linkOwner } = {}) {
       key: 'id',
       title: 'Nhận dạng',
       fields: [
-        ['Tên tàu', v.vessel_name, 6],
-        ['Tên cũ', v.vessel_name_prev, 6],
+        ['Tên tàu', v.vessel_name, 4],
+        ['Tên cũ', v.vessel_name_prev, 8],
         ['Số IMO', v.imo_number, 4, 'mono'],
         ['Call Sign', v.call_sign, 4],
         ['MMSI', v.mmsi, 4],
@@ -65,10 +65,10 @@ export function vesselSections(v, { linkOwner } = {}) {
         ['Loại tàu', v.vessel_type_name, 4],
         ['Cờ quốc gia', v.flag_name ? withFlag(v.flag_code, v.flag_name, v.flag_emoji) : null, 4],
         ['Năm đóng', v.year_built, 4],
-        ['Cảng đăng ký', v.port_of_registry_name, 6],
-        ['Tổ chức đăng kiểm', v.classification_society, 6],
-        ['Trạng thái', labelOf(VESSEL_STATUS_OPTIONS, v.status), 6],
-        ['Trạng thái đăng kiểm', labelOf(CLASS_STATUS_OPTIONS, v.class_status), 6],
+        ['Cảng đăng ký', v.port_of_registry_name, 4],
+        ['Tổ chức đăng kiểm', v.classification_society, 4],
+        ['Trạng thái', labelOf(VESSEL_STATUS_OPTIONS, v.status), 4],
+        ['Trạng thái đăng kiểm', labelOf(CLASS_STATUS_OPTIONS, v.class_status), 4],
       ],
     },
     {
@@ -90,15 +90,15 @@ export function vesselSections(v, { linkOwner } = {}) {
         ['Công suất máy', num(v.engine_power_kw, 'kW'), 4],
         ['Loại động cơ', v.engine_type, 4],
         ['DP Class', labelOf(DP_CLASS_OPTIONS, v.dp_class), 4],
-        ['Nồi hơi', yesNo(v.has_boiler), 6, 'always'],
-        ['Lạnh (Refrigeration)', yesNo(v.has_refrigeration), 6, 'always'],
+        ['Nồi hơi', yesNo(v.has_boiler), 4, 'always'],
+        ['Lạnh (Refrigeration)', yesNo(v.has_refrigeration), 4, 'always'],
       ],
     },
     {
       key: 'mgmt',
       title: 'Quản lý',
       fields: [
-        ['Chủ tàu', v.ship_owner_name ? (linkOwner ? linkOwner(v) : v.ship_owner_name) : null, 8],
+        ['Chủ tàu', v.ship_owner_name ? (linkOwner ? linkOwner(v) : v.ship_owner_name) : null, 12],
         ['Quản lý kỹ thuật', v.technical_manager, 6],
         ['Quản lý thương mại', v.commercial_manager, 6],
       ],
@@ -119,8 +119,8 @@ export function partnerSections(o, render = {}) {
       key: 'company',
       title: 'Công ty',
       fields: [
-        ['Tên công ty', o.company_name, 6],
-        ['Tên tiếng Anh', o.company_name_en, 6],
+        ['Tên công ty', o.company_name, 4],
+        ['Tên tiếng Anh', o.company_name_en, 8],
         ['Mã số thuế', render.tax ? render.tax(o.tax_id) : o.tax_id, 4],
         ['Quốc gia', o.country_name ? withFlag(o.country_code, o.country_name, o.country_flag_emoji) : null, 4],
         ['Tình trạng', render.status ? render.status(o.is_active) : Number(o.is_active) === 1 ? 'Đang hợp tác' : 'Ngừng hợp tác', 4],
@@ -170,7 +170,7 @@ export function countFilled(section) {
 }
 
 // Cờ từ form (Switch) sang cột 0/1 của DB, và ngược lại.
-export const flagToNumber = (value) => (value ? 1 : 0)
+export const flagToNumber = (value) => (Number(value) === 1 ? 1 : 0)
 export const flagToBool = (value) => Number(value) === 1
 
 const cleanText = (value) => {
@@ -213,7 +213,7 @@ export function partnerToFormValues(owner) {
   if (!owner) return values
   for (const key of PARTNER_TEXT_FIELDS) values[key] = owner[key] ?? null
   values.country_id = owner.country_id ?? null
-  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', zalo: c.zalo ?? '', email: c.email ?? '', whatsapp: c.whatsapp ?? '', line_id: c.line_id ?? '', wechat_id: c.wechat_id ?? '', is_primary: !!c.is_primary }))
+  values.contacts = (owner.contacts || []).map((c) => ({ name: c.name, position: c.position ?? '', phone: c.phone ?? '', zalo: c.zalo ?? '', email: c.email ?? '', whatsapp: c.whatsapp ?? '', line_id: c.line_id ?? '', wechat_id: c.wechat_id ?? '', is_primary: flagToBool(c.is_primary) }))
   values.is_active = Number(owner.is_active) === 0 ? 0 : 1
   return values
 }
@@ -221,7 +221,7 @@ export function partnerToFormValues(owner) {
 // Bỏ dòng trống, cắt khoảng trắng, đúng một liên hệ chính (mặc định người đầu tiên).
 export function cleanContactList(list) {
   const rows = (list || [])
-    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), zalo: cleanText(c?.zalo), email: cleanText(c?.email), whatsapp: cleanText(c?.whatsapp), line_id: cleanText(c?.line_id), wechat_id: cleanText(c?.wechat_id), is_primary: !!c?.is_primary }))
+    .map((c) => ({ name: cleanText(c?.name), position: cleanText(c?.position), phone: cleanText(c?.phone), zalo: cleanText(c?.zalo), email: cleanText(c?.email), whatsapp: cleanText(c?.whatsapp), line_id: cleanText(c?.line_id), wechat_id: cleanText(c?.wechat_id), is_primary: flagToBool(c?.is_primary) }))
     .filter((c) => c.name || c.position || c.phone || c.zalo || c.email || c.whatsapp || c.line_id || c.wechat_id)
   const primary = rows.findIndex((c) => c.is_primary)
   return rows.map((c, index) => ({ ...c, is_primary: index === (primary === -1 ? 0 : primary) }))

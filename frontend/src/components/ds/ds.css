@@ -356,6 +356,12 @@
 .ds-panel__desc { margin: 2px 0 0; color: var(--muted); font-size: 14px; font-weight: 400; text-wrap: pretty; }
 .ds-panel__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 
+/* Nút form danh mục không tự đổi hàng khi xuất hiện spinner đang lưu. */
+.master-panel-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; width: 100%; }
+.master-panel-actions--create { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.master-panel-actions--create > .ant-btn { min-width: 0; height: auto; min-height: 40px; white-space: normal; }
+.master-panel-actions--create .master-panel-actions__create { grid-column: 1 / -1; }
+
 /* ---------- Toast ---------- */
 /* ---------- Toast (useToast): một kiểu, bốn loại. Nền luôn trắng, chỉ icon mang màu theo nghĩa. ---------- */
 /* Lớp bọc của antd mang sẵn nền, bo 16, bóng và rộng 384: để trong suốt, co theo chữ; khung toast do .ds-toast vẽ. */
@@ -775,8 +781,8 @@ span.ds-thumb--empty { cursor: default; }
 .ds-cat--medical { --cat-bg: #fdecef; --cat-fg: #a3263f; --cat-dot: #d9476a; }
 .ds-cat--competency { --cat-bg: #efeafc; --cat-fg: #5233a8; --cat-dot: #7d5ce0; }
 .ds-cat--other { --cat-bg: var(--neutral-bg); --cat-fg: var(--neutral); --cat-dot: #a1a1aa; }
-.ds-cat-wrap { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
-.ds-cat-country { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.ds-cat-wrap { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; max-width: 100%; }
+.ds-cat-country { min-width: 0; max-width: 100%; color: var(--muted); font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
 .ds-chip__dot { width: 8px; height: 8px; flex: none; margin-right: 6px; border-radius: 50%; background: var(--cat-dot); }
 .ds-chip[aria-pressed="true"] .ds-chip__dot { box-shadow: 0 0 0 1.5px #fff; }
 
@@ -1169,11 +1175,12 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-lcard__tone--warn { color: var(--warning); }
 .ds-lcard__tone--pos { color: var(--success); }
 .ds-lcard__tone--muted { color: var(--muted); }
-.ds-lcard__money { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; padding: 8px 10px; border-radius: 10px; background: var(--neutral-bg); font-size: 13px; font-variant-numeric: tabular-nums; }
-.ds-lcard__money > span, .ds-lcard__money > b { white-space: nowrap; }
-.ds-lcard__money > span { color: var(--muted); }
-.ds-lcard__money > b { font-weight: 600; }
-.ds-lcard__money > .ds-lcard__money-eq { margin-left: auto; font-weight: 700; }
+.ds-lcard__money { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; border-radius: 10px; background: var(--neutral-bg); font-size: 13px; font-variant-numeric: tabular-nums; }
+.ds-lcard__money-parts, .ds-lcard__money-result { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; }
+.ds-lcard__money-part { display: inline-flex; gap: 4px; align-items: baseline; white-space: nowrap; }
+.ds-lcard__money-part > span, .ds-lcard__money-result > span, .ds-lcard__money-parts > span:not(.ds-lcard__money-part) { color: var(--muted); }
+.ds-lcard__money-part > b { font-weight: 600; }
+.ds-lcard__money-eq { white-space: nowrap; font-weight: 700; }
 .ds-lcard__alert { padding: 8px 14px; font-size: 13px; font-weight: 500; }
 .ds-lcard__alert--err { background: var(--error-bg); color: var(--error-strong); }
 .ds-lcard__alert--warn { background: var(--warning-bg); color: var(--warning); }
@@ -1196,6 +1203,10 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-tabs-chips__chip[aria-pressed='true'] .ds-tabs-chips__count { color: rgb(255 255 255 / 0.8); }
 @media (max-width: 767px) { .ds-toolbar > .ds-tabs-chips { flex: 0 0 100%; min-width: 0; } }
 
+/* Tách thời hạn khỏi ngày trên điện thoại, tránh ngắt giữa số tháng và ngày. */
+@media (max-width: 767px) {
+  .ds-duration-note { display: block; flex-basis: 100%; width: 100%; white-space: normal; }
+}
 /* Hộp xung đột khi hai người cùng sửa (ConflictDialog.jsx) */
 .ds-conflict { display: grid; gap: 12px; }
 .ds-conflict p { margin: 0; }

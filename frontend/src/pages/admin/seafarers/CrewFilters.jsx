@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Badge, Button, InputNumber, Select } from 'antd'
+import { Badge, Button, InputNumber } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { lookupApi } from '../../../api'
-import { filterCount } from './crewFilters'
+import { filterCount } from './crewFilters.js'
 
 // Nút mở / đóng hàng bộ lọc nâng cao; số trên nút là số nhóm lọc đang bật (`count` ghi đè khi màn khác dùng bộ lọc riêng).
 export function CrewFilterButton({ value, count = filterCount(value), open, onToggle }) {
@@ -19,6 +20,17 @@ export function CrewFilterButton({ value, count = filterCount(value), open, onTo
 // Các ô bộ lọc nâng cao của danh sách thuyền viên: chức danh (từng giữ), tàu đã từng đi, tuổi, chứng chỉ còn hiệu lực.
 // Đặt trong ListFilters (hàng lọc ở desktop, sheet ở điện thoại). value / onChange: đối tượng dạng EMPTY_FILTERS; áp dụng ngay khi đổi.
 export function CrewFilterFields({ value, onChange }) {
+  const [ageDraft, setAgeDraft] = useState(null)
+  const ages = ageDraft && ageDraft.baseMin === value.ageMin && ageDraft.baseMax === value.ageMax
+    ? ageDraft
+    : { ageMin: value.ageMin, ageMax: value.ageMax }
+  const ageError = ages.ageMin != null && ages.ageMax != null && ages.ageMin > ages.ageMax
+  const setAge = (patch) => {
+    const next = { ageMin: ages.ageMin, ageMax: ages.ageMax, ...patch }
+    setAgeDraft({ ...next, baseMin: value.ageMin, baseMax: value.ageMax })
+    if (next.ageMin != null && next.ageMax != null && next.ageMin > next.ageMax) return
+    onChange({ ...value, ...next })
+  }
   const [vesselSearch, setVesselSearch] = useState('')
   const [debounced, setDebounced] = useState('')
   useEffect(() => {
@@ -45,10 +57,11 @@ export function CrewFilterFields({ value, onChange }) {
       <div className="crew-filterbar__field crew-filterbar__field--age">
         <span>Tuổi</span>
         <div className="crew-filterbar__age">
-          <InputNumber min={0} max={120} placeholder="Từ" aria-label="Tuổi từ" value={value.ageMin} onChange={(v) => set({ ageMin: v ?? null })} />
+          <InputNumber min={0} max={120} precision={0} placeholder="Từ" aria-label="Tuổi từ" status={ageError ? 'error' : undefined} aria-invalid={ageError} value={ages.ageMin} onChange={(v) => setAge({ ageMin: v ?? null })} />
           <span aria-hidden>–</span>
-          <InputNumber min={0} max={120} placeholder="Đến" aria-label="Tuổi đến" value={value.ageMax} onChange={(v) => set({ ageMax: v ?? null })} />
+          <InputNumber min={0} max={120} precision={0} placeholder="Đến" aria-label="Tuổi đến" status={ageError ? 'error' : undefined} aria-invalid={ageError} value={ages.ageMax} onChange={(v) => setAge({ ageMax: v ?? null })} />
         </div>
+        {ageError && <span role="alert" style={{ color: 'var(--danger)' }}>Tuổi bắt đầu không được lớn hơn tuổi kết thúc.</span>}
       </div>
       <label className="crew-filterbar__field crew-filterbar__field--wide" title="Còn hiệu lực hoặc sắp hết hạn; phải có đủ các loại đã chọn">
         <span>Chứng chỉ còn hiệu lực</span>

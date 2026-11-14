@@ -1,7 +1,10 @@
+import { notBefore } from '../../../utils/fieldRules'
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useRef, useState } from 'react'
 import useEditConflict from '../../../hooks/useEditConflict'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Modal, Form, Input, Select, Checkbox, Space, Skeleton, Spin } from 'antd'
+import { App, Button, Modal, Form, Input, Checkbox, Space, Skeleton, Spin } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import DateField from '../../../components/ds/DateField'
 import { PlusOutlined, DeleteOutlined, CloseOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -297,6 +300,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
 
   const rows = useMemo(() => data?.data || [], [data])
   const isNew = editing === 'new'
+  const shortcuts = useFormShortcuts({ enabled: editing !== null, autoFocus: isNew, onCancel: close })
   const noExpiry = Form.useWatch('no_expiry', form)
   const watched = Form.useWatch([], form) || {}
   // Giấy tuỳ thân: ô hồ sơ sẽ đổi khi lưu (số, ngày theo hộp thoại; họ tên, ngày sinh… theo AI đọc), người dùng bỏ tích được.
@@ -452,7 +456,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
         </div>
         {aiRead ? <Banner tone="neutral" title="Thông tin AI đọc được" description="Các ô dưới đây AI điền từ ảnh. Kiểm tra và sửa nếu sai trước khi lưu." /> : null}
         {renewing ? <p className="crew-certs__renew">Bản mới thành một dòng riêng; bản hiện tại giữ lại, chuyển thành "Bản cũ" và hết cảnh báo.</p> : null}
-        <Form form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v, profile: chosenProfile, avatarFile: isPhotoType && setAvatar && certFile?.type?.startsWith('image/') ? certFile : null })}>
+        <Form ref={shortcuts} form={form} layout="vertical" initialValues={formInit} onFinish={(v) => saveMutation.mutate({ row: isNew ? null : editing, values: v, profile: chosenProfile, avatarFile: isPhotoType && setAvatar && certFile?.type?.startsWith('image/') ? certFile : null })}>
           <Form.Item name="certificate_type_id" label="Loại giấy tờ" rules={[{ required: true, message: 'Chọn loại giấy tờ' }]}>
             <Select
               allowClear
@@ -477,7 +481,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
           <Form.Item name="issued_date" label="Ngày cấp" rules={[{ required: true, message: 'Nhập ngày cấp' }]}>
             <DateField format="DD/MM/YYYY" style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="expiry_date" label="Có giá trị đến" rules={[{ required: !noExpiry, message: 'Nhập hạn hoặc đánh dấu không thời hạn' }]}>
+          <Form.Item name="expiry_date" label="Có giá trị đến" dependencies={['issued_date', 'no_expiry']} rules={[{ required: !noExpiry, message: 'Nhập hạn hoặc đánh dấu không thời hạn' }, ...(noExpiry ? [] : [notBefore('issued_date', 'Ngày hết hạn không được trước ngày cấp')])]}>
             <DateField format="DD/MM/YYYY" style={{ width: '100%' }} disabled={Boolean(noExpiry)} />
           </Form.Item>
           <Form.Item name="no_expiry" valuePropName="checked">

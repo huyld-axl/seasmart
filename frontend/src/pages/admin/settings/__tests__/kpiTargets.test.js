@@ -17,7 +17,13 @@ describe('mục tiêu tháng', () => {
   })
   it('lỗi: số âm, số lẻ ở hợp đồng, USD 3 số lẻ', () => {
     const e = cellErrors([{ user_id: 1, contracts: -1, revenue_usd: 10.005 }, { user_id: 2, contracts: 1.5, revenue_usd: 10.05 }])
-    expect(e).toEqual({ '1:contracts': 'Số nguyên từ 0', '1:revenue_usd': 'Tối đa 2 số lẻ', '2:contracts': 'Số nguyên từ 0' })
+    expect(e).toEqual({ '1:contracts': 'Số hợp đồng phải là số nguyên từ 1 đến 1.000', '1:revenue_usd': 'Tối đa 2 số lẻ', '2:contracts': 'Số hợp đồng phải là số nguyên từ 1 đến 1.000' })
+  })
+  it.each([0, -1])('chặn cả hai mục tiêu bằng %s', (value) => {
+    expect(Object.keys(cellErrors([{ user_id: 1, contracts: value, revenue_usd: value }]))).toEqual(['1:contracts', '1:revenue_usd'])
+  })
+  it('chấp nhận giới hạn hợp lệ nhỏ nhất và ô chưa đặt', () => {
+    expect(cellErrors([{ user_id: 1, contracts: 1, revenue_usd: 1 }, { user_id: 2, contracts: null, revenue_usd: null }])).toEqual({})
   })
   it('tổng công ty: chưa ai đặt thì null', () => {
     expect(totals(original)).toEqual({ contracts: 3, revenue_usd: 7500, done: 1, revenue: 7100 })

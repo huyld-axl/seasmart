@@ -6,7 +6,7 @@ import BottomSheet from '../BottomSheet'
 import DateField, { DateRangeField } from '../DateField'
 import RowList from '../RowList'
 import HeadActions from '../HeadActions'
-import { centerLeft, scrollFlags } from '../scrollRow'
+import { centerLeft, scrollFlags } from '../scrollRow.js'
 
 // Điện thoại: mọi truy vấn max-width khớp, min-width không. Desktop: ngược lại (hooks/useViewport.js).
 function screenAs(phone) {

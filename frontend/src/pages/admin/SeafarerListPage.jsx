@@ -13,18 +13,20 @@ import { CREW_TABS, seafarerAlert, vesselNow } from './seafarers/crewView'
 import ListCard, { ListCardList } from '../../components/ds/ListCard'
 import StatusBadge from '../../components/ds/StatusBadge'
 import CrewThumb from './seafarers/CrewThumb'
-import { CrewFilterFields, CrewFilterButton } from './seafarers/CrewFilters'
+import { CrewFilterFields, CrewFilterButton } from './seafarers/CrewFilters.jsx'
 import ListFilters from '../../components/ds/ListFilters'
 import Fab from '../../components/ds/Fab'
-import { EMPTY_FILTERS, filterCount, filterParams } from './seafarers/crewFilters'
+import { EMPTY_FILTERS, filterCount, filterParams } from './seafarers/crewFilters.js'
 import './seafarers/SeafarerListPage.css'
 import RowActions from '../../components/ds/RowActions'
 import { actionColumn } from '../../components/ds/actionColumn'
 import useListSticky from '../../components/ds/useListSticky'
+import useListScrollReset from '../../components/ds/useListScrollReset'
 import ListFooter from '../../components/ds/ListFooter'
 import { useCan } from '../../hooks/usePermission'
 import useToast from '../../components/ds/useToast'
 import useViewport from '../../hooks/useViewport'
+import useCrewListState from './seafarers/useCrewListState'
 
 const GENDER_LABELS = { M: 'Nam', F: 'Nữ', O: 'Khác' }
 
@@ -51,24 +53,26 @@ export default function SeafarerListPage() {
   const can = useCan()
   const toast = useToast()
   const isMobile = useViewport().isCompact
-  const [tab, setTab] = useState('all')
-  const [search, setSearch] = useState('')
-  const [sort, setSort] = useState('newest') // newest | name_asc | name_desc
-  const [filters, setFilters] = useState(EMPTY_FILTERS)
-  const [filtersOpen, setFiltersOpen] = useState(false)
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const { state: { tab, search, sort, filters, filtersOpen, page, pageSize }, setField } = useCrewListState()
+  const setTab = setField('tab')
+  const setSearch = setField('search')
+  const setSort = setField('sort')
+  const setFilters = setField('filters')
+  const setFiltersOpen = setField('filtersOpen')
+  const setPage = setField('page')
+  const setPageSize = setField('pageSize')
   const tableScroll = useListSticky()
   const [exporting, setExporting] = useState(false)
   const [folderOpen, setFolderOpen] = useState(false)
 
   const query = { tab: tab === 'all' ? '' : tab, search: search.trim(), page, limit: pageSize, sort: sort === 'newest' ? '' : sort, ...filterParams(filters) }
-  const { data, isLoading, isError, refetch } = useQuery({
+  const { data, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['seafarers', query],
     queryFn: () => seafarerApi.list(query).then((res) => res.data),
     placeholderData: (previous) => previous,
   })
 
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, isFetching)
   const rows = data?.data || []
   const counts = data?.counts
   const tabs = CREW_TABS.map((item) => ({ ...item, count: counts ? counts[item.value] : null }))
@@ -144,7 +148,7 @@ export default function SeafarerListPage() {
   } else if (!rows.length && keyword) {
     body = <EmptyState title={`Không có thuyền viên nào khớp "${keyword}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có thuyền viên nào trong mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có thuyền viên nào trong mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có thuyền viên nào" description="Thêm thuyền viên đầu tiên, hoặc nhập cả danh sách từ Excel." action={can('seafarer.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>Thêm thuyền viên</Button> : undefined} />
   } else if (isMobile) {
@@ -189,9 +193,9 @@ export default function SeafarerListPage() {
   const total = data?.total || 0
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -226,7 +230,7 @@ export default function SeafarerListPage() {
         </ListFilters>
         {body}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="thuyền viên" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="thuyền viên" onChange={(next, size) => { scrollToListStart(); setPage(next); setPageSize(size) }} />
         )}
       </div>
       {can('seafarer.create') ? <Fab label="Thêm thuyền viên" onClick={() => navigate('/seafarers/new')} /> : null}

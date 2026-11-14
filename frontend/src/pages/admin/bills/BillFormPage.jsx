@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
+import { useMemo, useRef } from 'react'
 import useEditConflict from '../../../hooks/useEditConflict'
 import { useQueryClient } from '@tanstack/react-query'
 import { billApi } from '../../../api/voyageApi'
@@ -7,6 +8,7 @@ import { Button, Form, Input, Skeleton } from 'antd'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
@@ -21,6 +23,11 @@ import '../seafarers/SeafarerProfile.css'
 import '../fleet/fleet.css'
 import '../contracts/contracts.css'
 import './bills.css'
+
+dayjs.extend(customParseFormat)
+
+const DUE_REQUIRED = 'Hạn thanh toán là trường bắt buộc.'
+const DUE_INVALID = 'Ngày không hợp lệ. Nhập theo định dạng DD/MM/YYYY.'
 
 function Figure({ label, value }) {
   return (
@@ -41,13 +48,36 @@ function BillForm({ data }) {
   const { save } = useBillMutations()
   const queryClient = useQueryClient()
   const { bill } = data
+  const dueDateError = useRef(null)
+  const dueBeforePeriod = `Hạn thanh toán không được trước ${formatDate(bill.period_start)}.`
   const back = `/bills/${bill.id}`
   const changes = countChanges(initial, { ...initial, ...values })
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại.
+  const shortcuts = useFormShortcuts({ onCancel: () => navigate(back) })
   const leave = useLeaveGuard(changes > 0)
   const { totals } = groupItems(values.items || [])
   const negative = totals.all < 0
 
+  const checkDueDateInput = (event) => {
+    const input = event.target
+    if (input.tagName !== 'INPUT') return
+    const text = input.value.trim()
+    const parsed = dayjs(text, input.type === 'date' ? 'YYYY-MM-DD' : 'DD/MM/YYYY', true)
+    if (input.validity?.badInput) dueDateError.current = DUE_INVALID
+    else if (!text) dueDateError.current = DUE_REQUIRED
+    else if (!parsed.isValid()) dueDateError.current = DUE_INVALID
+    else dueDateError.current = parsed.isBefore(dayjs(bill.period_start), 'day') ? dueBeforePeriod : null
+  }
+
+  const validateDueDate = (_, value) => {
+    let error = dueDateError.current
+    if (!error) {
+      if (!value) error = DUE_REQUIRED
+      else if (!value.isValid()) error = DUE_INVALID
+      else if (value.isBefore(dayjs(bill.period_start), 'day')) error = dueBeforePeriod
+    }
+    return error ? Promise.reject(new Error(error)) : Promise.resolve()
+  }
   const conflict = useEditConflict({
     form,
     initial,
@@ -92,7 +122,7 @@ function BillForm({ data }) {
         <p className="sf-head__desc">Kỳ {bill.seq}/{bill.periods} · {formatDate(bill.period_start)} → {formatDate(bill.period_end)} · {bill.contract.contract_number} · {bill.ship_owner.company_name}</p>
       </div>
 
-      <Form form={form} layout="vertical" className="ct-form" initialValues={initial} onFinish={submit}>
+      <Form ref={shortcuts} form={form} layout="vertical" className="ct-form" initialValues={initial} onFinish={submit}>
         <section className="sf-panel ct-panel" aria-labelledby="bl-general">
           <div className="sf-panel__head">
             <div>
@@ -102,15 +132,27 @@ function BillForm({ data }) {
           </div>
           <div className="sf-panel__body">
             <div className="sf-grid">
-              <Form.Item
-                name="due_date"
-                className={`sf-c4${dueChanged(initial, values) ? ' sf-changed' : ''}`}
-                label={<>Hạn thanh toán{dueChanged(initial, values) ? <span className="sf-chip">Đã sửa</span> : null}</>}
-                rules={[{ required: true, message: 'Chọn hạn thanh toán' }]}
-                extra="Tính tự động theo kỳ thanh toán của hợp đồng. Cần dời (ngày lễ…) thì sửa ở đây."
-              >
-                <DateField format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isBefore(dayjs(bill.period_start), 'day')} />
-              </Form.Item>
+              <div className="sf-c4" onInputCapture={checkDueDateInput} onChangeCapture={checkDueDateInput}>
+                <Form.Item
+                  name="due_date"
+                  className={dueChanged(initial, values) ? 'sf-changed' : undefined}
+                  label={<>Hạn thanh toán{dueChanged(initial, values) ? <span className="sf-chip">Đã sửa</span> : null}</>}
+                  validateTrigger={['onChange', 'onBlur']}
+                  required
+                  rules={[{ validator: validateDueDate }]}
+                  extra="Tính tự động theo kỳ thanh toán của hợp đồng. Cần dời (ngày lễ…) thì sửa ở đây."
+                >
+                  <DateField
+                    format="DD/MM/YYYY"
+                    placeholder="dd/mm/yyyy"
+                    style={{ width: '100%' }}
+                    preserveInvalidOnBlur
+                    onChange={() => { dueDateError.current = null }}
+                    onBlur={(event) => { if (!dueDateError.current) checkDueDateInput(event) }}
+                    disabledDate={(d) => d.isBefore(dayjs(bill.period_start), 'day')}
+                  />
+                </Form.Item>
+              </div>
               <Form.Item
                 name="note"
                 className={`sf-c8${(initial.note || '').trim() !== (values.note || '').trim() ? ' sf-changed' : ''}`}

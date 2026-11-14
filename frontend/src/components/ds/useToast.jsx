@@ -71,6 +71,23 @@ export const toast = {
 }
 
 // Đổi trang thì đóng các toast cũ (ToastHost gọi).
+export function clearToasts() {
+  if (!host.notification) return
+  for (const key of host.opened.keys()) host.notification.destroy(key)
+  host.opened.clear()
+  host.offlineAt = 0
+}
+
+export function clearErrorToasts() {
+  if (!host.notification) return
+  for (const key of host.opened.keys()) {
+    if (!key.startsWith('error:')) continue
+    host.notification.destroy(key)
+    host.opened.delete(key)
+  }
+  host.offlineAt = 0
+}
+
 export function clearStaleToasts() {
   const { notification, opened } = host
   if (!notification) return

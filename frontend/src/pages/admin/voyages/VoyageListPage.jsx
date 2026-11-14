@@ -1,12 +1,16 @@
+import dayjs from 'dayjs'
+import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Input, Select, Skeleton } from 'antd'
+import { Button, Input, Skeleton } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import useListSticky from '../../../components/ds/useListSticky'
+import useListScrollReset from '../../../components/ds/useListScrollReset'
 import ListFooter from '../../../components/ds/ListFooter'
-import { CrewFilterButton } from '../seafarers/CrewFilters'
+import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
 import { lookupApi } from '../../../api'
 import { shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetList } from '../../../hooks/useFleet'
@@ -27,6 +31,17 @@ import ListFilters from '../../../components/ds/ListFilters'
 import Fab from '../../../components/ds/Fab'
 import { DateRangeField } from '../../../components/ds/DateField'
 
+const reviveRange = (value) => {
+  if (value == null) return null
+  if (!Array.isArray(value) || value.length !== 2) throw new Error('Invalid range')
+  return value.map((date) => {
+    if (date == null) return null
+    const parsed = dayjs(date)
+    if (!parsed.isValid()) throw new Error('Invalid date')
+    return parsed
+  })
+}
+
 const TABS = VOYAGE_TABS.map((value) => ({ value, label: VOYAGE_TAB_LABELS[value] }))
 const SOURCE_OPTIONS = VOYAGE_SOURCES.map((value) => ({ value, label: SOURCE_LABELS[value] }))
 const LEAVING_OPTIONS = [{ value: 30, label: 'Sắp rời trong 30 ngày' }]
@@ -36,14 +51,14 @@ export default function VoyageListPage() {
   const can = useCan()
   const navigate = useNavigate()
   const { isCompact: isMobile, isPhone } = useViewport()
-  const [tab, setTab] = useState('onboard')
-  const [search, setSearch] = useState('')
-  const [range, setRange] = useState(thisMonth)
-  const [filters, setFilters] = useState({})
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [tab, setTab] = useListSessionState(`voyages`, 'tab', 'onboard')
+  const [search, setSearch] = useListSessionState(`voyages`, 'search', '')
+  const [range, setRange] = useListSessionState(`voyages`, 'range', thisMonth, reviveRange)
+  const [filters, setFilters] = useListSessionState(`voyages`, 'filters', {})
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`voyages`, 'filtersOpen', false)
   const [vesselSearch, setVesselSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useListSessionState(`voyages`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`voyages`, 'pageSize', 20)
   const [selected, setSelected] = useState([])
   const [leaving, setLeaving] = useState(null)
   const tableScroll = useListSticky()
@@ -61,6 +76,7 @@ export default function VoyageListPage() {
     page,
     limit: pageSize,
   })
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, list.isFetching)
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -89,7 +105,7 @@ export default function VoyageListPage() {
   } else if (!rows.length && (filtered || range)) {
     body = <EmptyState title="Không có chuyến nào khớp bộ lọc" description={range ? 'Thử nới khoảng "Trên tàu trong", hoặc tìm bằng tên, mã chuyến.' : 'Thử tìm bằng tên thuyền viên hoặc mã chuyến.'} action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có chuyến nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có chuyến nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có chuyến nào" description="Chuyến sinh ra khi chốt người trên cơ hội, hoặc tạo tay khi không qua tuyển." action={createButton} />
   } else if (isMobile) {
@@ -139,9 +155,9 @@ export default function VoyageListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={reset(setTab)} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { reset(setTab)(value); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -206,7 +222,7 @@ export default function VoyageListPage() {
         ) : null}
         {body}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="chuyến" onChange={(next, size) => { setPage(next); setPageSize(size); setSelected([]) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="chuyến" onChange={(next, size) => { scrollToListStart(); setPage(next); setPageSize(size); setSelected([]) }} />
         )}
       </div>
       {can('voyage.create') ? <Fab label="Tạo chuyến" onClick={() => navigate('/voyages/new')} /> : null}

@@ -1,7 +1,9 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Input, Select, Skeleton, Table } from 'antd'
+import { Button, Input, Skeleton, Table } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { ArrowDownOutlined, ArrowUpOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -16,9 +18,10 @@ import './contracts.css'
 import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
+import useListScrollReset from '../../../components/ds/useListScrollReset'
 import ListFooter from '../../../components/ds/ListFooter'
 import { useCan } from '../../../hooks/usePermission'
-import { CrewFilterButton } from '../seafarers/CrewFilters'
+import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
 import Fab from '../../../components/ds/Fab'
@@ -58,15 +61,15 @@ export default function ContractListPage() {
   const isMobile = useViewport().isCompact
   // ?tab= mở sẵn một tab (link từ Tổng quan).
   const [searchParams] = useSearchParams()
-  const [tab, setTab] = useState(() => (TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : 'all'))
-  const [search, setSearch] = useState('')
-  const [filters, setFilters] = useState({})
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [tab, setTab] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'tab', () => (TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : 'all'))
+  const [search, setSearch] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'search', '')
+  const [filters, setFilters] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'filters', {})
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'filtersOpen', false)
   const [acting, setActing] = useState(null)
   const [vesselSearch, setVesselSearch] = useState('')
   const [personSearch, setPersonSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [page, setPage] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`contracts:${searchParams.get('tab') || 'default'}`, 'pageSize', 20)
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
@@ -75,6 +78,7 @@ export default function ContractListPage() {
   const people = useQuery({ queryKey: ['seafarer-pick', personSearch], queryFn: () => seafarerApi.list({ search: personSearch || undefined, limit: 20 }).then((r) => r.data.data), enabled: can('seafarer.view') })
   const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: can('partner.view') })
   const list = useContractList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ...filters, page, limit: pageSize })
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, list.isFetching)
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -147,7 +151,7 @@ export default function ContractListPage() {
   } else if (!rows.length && filtered) {
     body = <EmptyState title="Không có hợp đồng nào khớp bộ lọc" description="Thử tìm bằng số hợp đồng hoặc tên thuyền viên." action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có hợp đồng nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có hợp đồng nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có hợp đồng nào" description="Hợp đồng sinh khi chốt người trên cơ hội, hoặc thêm tay cho chuyến chưa có hợp đồng." action={createButton} />
   } else if (isMobile) {
@@ -179,7 +183,7 @@ export default function ContractListPage() {
               fields={[
                 { label: 'Tàu', value: row.vessel_name },
                 { label: 'Chủ tàu', value: row.ship_owner_name },
-                { label: 'Thời hạn', value: `${range}${months ? ` · ${months}` : ''}${leftText}`, wide: true, tone: left != null && left < 0 ? 'err' : left != null && left <= EXPIRY_WARN_DAYS ? 'warn' : undefined },
+                { label: 'Thời hạn', value: <>{range}{months ? <span className="ds-duration-note">· {months}{leftText}</span> : leftText}</>, wide: true, tone: left != null && left < 0 ? 'err' : left != null && left <= EXPIRY_WARN_DAYS ? 'warn' : undefined },
               ]}
               extra={(
                 <MoneyStrip
@@ -214,9 +218,9 @@ export default function ContractListPage() {
 
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -265,7 +269,7 @@ export default function ContractListPage() {
         {acting?.kind === 'approve' ? <ApproveModal contract={{ contract: { id: acting.row.id, contract_number: acting.row.contract_number } }} open onClose={() => setActing(null)} /> : null}
         {acting?.kind === 'reject' ? <RejectModal contract={{ contract: { id: acting.row.id, contract_number: acting.row.contract_number } }} open onClose={() => setActing(null)} /> : null}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="hợp đồng" note="Số tiền tính bằng USD" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="hợp đồng" note="Số tiền tính bằng USD" onChange={(next, size) => { scrollToListStart(); setPage(next); setPageSize(size) }} />
         )}
       </div>
       {can('contract.create') ? <Fab label="Thêm hợp đồng" onClick={() => navigate('/contracts/new')} /> : null}

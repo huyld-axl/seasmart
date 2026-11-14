@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import useListSessionState from '../../../hooks/useListSessionState'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { App, Button, Input, Select, Skeleton, Table, Tooltip } from 'antd'
+import { App, Button, Input, Skeleton, Table, Tooltip } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { CheckOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -23,7 +25,7 @@ import { billNextAction, overdueLabel, periodLabel } from './billView'
 import ListCard, { ListCardList } from '../../../components/ds/ListCard'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
-import { CrewFilterButton } from '../seafarers/CrewFilters'
+import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },
@@ -46,13 +48,16 @@ export default function BillListPage({ shipOwnerId } = {}) {
   // ?tab= mở sẵn một tab (link từ Tổng quan).
   const [searchParams] = useSearchParams()
   const urlTab = TABS.some((t) => t.value === searchParams.get('tab')) ? searchParams.get('tab') : null
-  const [tab, setTab] = useState(shipOwnerId ? 'all' : urlTab || (can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND'))
-  const [search, setSearch] = useState('')
-  const [ownerId, setOwnerId] = useState()
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [tab, setTab] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'tab', shipOwnerId ? 'all' : urlTab || (can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND'))
+  const [search, setSearch] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'search', '')
+  const [ownerId, setOwnerId] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'ownerId', undefined)
+  const [page, setPage] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'pageSize', 20)
   const [collecting, setCollecting] = useState(null)
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'filtersOpen', false)
+  const listRef = useRef(null)
+  const tableRef = useRef(null)
+  const pendingScrollReset = useRef(false)
   const tableScroll = useListSticky()
   const toast = useToast()
   const { modal } = App.useApp()
@@ -69,6 +74,27 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const filtered = Boolean(keyword || ownerId)
   const showOwnerFilter = !shipOwnerId && can('partner.view')
   const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPage(1) }
+  useLayoutEffect(() => {
+    if (!pendingScrollReset.current || list.isPlaceholderData || list.isLoading) return
+    pendingScrollReset.current = false
+    if (isMobile) {
+      listRef.current?.scrollIntoView({ block: 'start', inline: 'nearest' })
+    } else {
+      tableRef.current?.scrollTo({ top: 0 })
+    }
+  }, [tab, page, pageSize, isMobile, list.isPlaceholderData, list.isLoading])
+  const changeTab = (value) => {
+    if (value === tab && page === 1) return
+    pendingScrollReset.current = true
+    setTab(value)
+    setPage(1)
+  }
+  const changePage = (next, size) => {
+    if (next === page && size === pageSize) return
+    pendingScrollReset.current = true
+    setPage(next)
+    setPageSize(size)
+  }
   async function run(row, action, message, body = {}) {
     try {
       await move.mutateAsync({ id: row.id, action, ...body })
@@ -163,7 +189,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
   } else if (!rows.length && filtered) {
     body = <EmptyState title="Không có yêu cầu thanh toán nào khớp bộ lọc" description="Thử tìm bằng mã bill, số hợp đồng hoặc tên thuyền viên." action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có yêu cầu thanh toán nào ở mục này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có yêu cầu thanh toán nào ở mục này" action={<Button onClick={() => changeTab('all')}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có yêu cầu thanh toán nào" description="Yêu cầu thanh toán tự tạo khi duyệt hợp đồng, mỗi kỳ chốt sổ một bill." action={can('contract.view') ? <Button type="primary" onClick={() => navigate('/contracts')}>Xem hợp đồng</Button> : undefined} />
   } else if (isMobile) {
@@ -198,6 +224,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
   } else {
     body = (
       <Table
+        ref={tableRef}
         rowKey="id"
         className="crew-table"
         dataSource={rows}
@@ -211,9 +238,9 @@ export default function BillListPage({ shipOwnerId } = {}) {
 
   return (
     <div className="ds-page">
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed bl-list">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs phone="chips" tabs={tabs} value={tab} onChange={changeTab} />
           <Input
             className="ds-toolbar__search"
             allowClear
@@ -273,7 +300,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
           />
         ) : null}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="yêu cầu" note={`Tổng ${formatUsd(list.data?.total_usd, { fixed: true })} USD`} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="yêu cầu" note={`Tổng ${formatUsd(list.data?.total_usd, { fixed: true })} USD`} onChange={changePage} />
         )}
       </div>
     </div>

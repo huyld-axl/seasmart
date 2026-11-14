@@ -1,10 +1,12 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import OwnershipFields, { ownershipProblem } from './OwnershipFields'
 import useEditConflict from '../../../hooks/useEditConflict'
 import { newRequestKey } from '../../../lib/idempotency'
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Form, Input, Select, Skeleton } from 'antd'
+import { Button, Form, Input, Skeleton } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -55,6 +57,7 @@ function PartnerForm({ owner }) {
   const navigate = useNavigate()
   const toast = useToast()
   const [form] = Form.useForm()
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(isEdit ? `/partners/${owner.id}` : '/partners') })
   const queryClient = useQueryClient()
   const initial = useMemo(() => partnerToFormValues(owner), [owner])
   const values = Form.useWatch([], form) || initial
@@ -237,7 +240,7 @@ function PartnerForm({ owner }) {
       done={stats.reduce((sum, count) => sum + count, 0)}
       total={total}
     >
-      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         <FormSection index={0} section={SECTIONS[0]} meta={metas[0]} action={<ScanButton label="Quét danh thiếp" loading={scanning === 'company'} disabled={Boolean(scanning)} onPick={scanCard} accept=".jpg,.jpeg,.png,.pdf" />}>
           <div className="sf-grid">
             <div className={cn('logo', 'sf-field')}>
@@ -272,7 +275,7 @@ function PartnerForm({ owner }) {
             <Form.Item name="address" className={cn('address')} label={label('address', 'Địa chỉ')}>
               <Input maxLength={500} />
             </Form.Item>
-            <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')} rules={ownerRules.phone}>
+            <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')} rules={ownerRules.companyPhone}>
               <Input maxLength={30} inputMode="tel" />
             </Form.Item>
             <Form.Item name="zalo" className={cn('zalo', 'sf-c4')} label="Zalo công ty">

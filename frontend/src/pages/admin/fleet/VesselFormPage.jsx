@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { withFlag } from '../../../utils/flag'
 import useEditConflict from '../../../hooks/useEditConflict'
 import { newRequestKey } from '../../../lib/idempotency'
@@ -5,7 +6,8 @@ import { useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { Button, Form, Input, InputNumber, Select, Skeleton, Space } from 'antd'
+import { Button, Form, Input, InputNumber, Skeleton, Space } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
@@ -14,6 +16,7 @@ import CooldownButton from '../../../components/ds/CooldownButton'
 import SourceChip from '../../../components/ds/SourceChip'
 import SparkIcon from '../../../components/ds/SparkIcon'
 import useToast from '../../../components/ds/useToast'
+import NumberInput from '../../../components/ds/NumberInput'
 import { lookupApi } from '../../../api'
 import { vesselApi, shipOwnerApi } from '../../../api/fleetApi'
 import { useFleetItem, useFleetMutations } from '../../../hooks/useFleet'
@@ -234,6 +237,7 @@ function VesselForm({ vessel }) {
 
   const sectionMeta = (index) => `${stats[index]}/${SECTIONS[index].fields.length}`
   const cancelTo = isEdit ? `/vessels/${vessel.id}` : '/vessels'
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(cancelTo) })
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
 
   return (
@@ -249,7 +253,7 @@ function VesselForm({ vessel }) {
       done={done}
       total={total}
     >
-      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={dropSources} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={dropSources} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         {notices.length || compare ? (
           <div className="fl-notes">
             {notices.map((notice) => (
@@ -294,7 +298,7 @@ function VesselForm({ vessel }) {
             <Form.Item name="call_sign" label={label('call_sign', 'Call Sign')} className={cn('call_sign', 'sf-c3')} normalize={upperAlnum} rules={vesselRules.callSign}>
               <Input maxLength={10} placeholder="Hô hiệu" />
             </Form.Item>
-            <Form.Item name="mmsi" label={label('mmsi', 'MMSI')} className={cn('mmsi', 'sf-c3')} normalize={digitsOnly} rules={[{ pattern: /^\d{9}$/, message: 'MMSI có 9 chữ số' }]}>
+            <Form.Item name="mmsi" label={label('mmsi', 'MMSI')} className={cn('mmsi', 'sf-c3')} normalize={digitsOnly} rules={vesselRules.mmsi}>
               <Input inputMode="numeric" maxLength={9} placeholder="9 chữ số" />
             </Form.Item>
           </div>
@@ -345,22 +349,22 @@ function VesselForm({ vessel }) {
         <FormSection index={2} section={SECTIONS[2]} meta={sectionMeta(2)}>
           <div className="sf-grid">
             <Form.Item name="gross_tonnage" label={label('gross_tonnage', <>GRT<span className="sf-opt">Tổng dung tích đăng ký</span></>)} className={cn('gross_tonnage', 'sf-c4')} rules={vesselRules.positive('GRT', 1000000)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="GT" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="GT" />
             </Form.Item>
             <Form.Item name="net_tonnage" label={label('net_tonnage', <>NT<span className="sf-opt">Dung tích thực</span></>)} className={cn('net_tonnage', 'sf-c4')} dependencies={['gross_tonnage']} rules={[...vesselRules.positive('NT', 1000000), vesselRules.netNotOverGross]}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="NT" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="NT" />
             </Form.Item>
             <Form.Item name="deadweight" label={label('deadweight', <>DWT<span className="sf-opt">Trọng tải toàn phần</span></>)} className={cn('deadweight', 'sf-c4')} rules={vesselRules.positive('DWT', 1000000)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="tấn" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="tấn" />
             </Form.Item>
-            <Form.Item name="length_overall" label={label('length_overall', <>LOA<span className="sf-opt">Chiều dài toàn bộ</span></>)} className={cn('length_overall', 'sf-c4')} rules={vesselRules.positive('LOA', 600)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="m" />
+            <Form.Item name="length_overall" label={label('length_overall', <>LOA<span className="sf-opt">Chiều dài toàn bộ</span></>)} className={cn('length_overall', 'sf-c4')} rules={vesselRules.positive('LOA', 600, false)}>
+              <NumberInput changeOnBlur={false} controls={false} style={{ width: '100%' }} suffix="m" />
             </Form.Item>
             <Form.Item name="passenger_capacity" label={label('passenger_capacity', 'Sức chứa hành khách')} className={cn('passenger_capacity', 'sf-c4')}>
-              <InputNumber min={0} max={20000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
+              <NumberInput min={0} max={20000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
             </Form.Item>
             <Form.Item name="crew_capacity" label={label('crew_capacity', 'Định biên thuyền viên')} className={cn('crew_capacity', 'sf-c4')}>
-              <InputNumber min={0} max={10000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
+              <NumberInput min={0} max={10000} precision={0} controls={false} style={{ width: '100%' }} suffix="người" />
             </Form.Item>
           </div>
         </FormSection>
@@ -368,7 +372,7 @@ function VesselForm({ vessel }) {
         <FormSection index={3} section={SECTIONS[3]} meta={sectionMeta(3)}>
           <div className="sf-grid">
             <Form.Item name="engine_power_kw" label={label('engine_power_kw', 'Công suất máy')} className={cn('engine_power_kw', 'sf-c4')} rules={vesselRules.positive('Công suất máy', 500000)}>
-              <InputNumber min={0} controls={false} style={{ width: '100%' }} suffix="kW" />
+              <NumberInput min={0} controls={false} style={{ width: '100%' }} suffix="kW" />
             </Form.Item>
             <Form.Item name="engine_type" label={label('engine_type', 'Loại động cơ')} className={cn('engine_type', 'sf-c4')}>
               <Input maxLength={100} placeholder="Ví dụ MAN B&W 6S50MC-C" />

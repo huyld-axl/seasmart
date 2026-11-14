@@ -1,6 +1,8 @@
 // Hàm thuần của ma trận vai trò: tính trạng thái ô, áp quy tắc "Xem là quyền gốc của mục", đếm và so nháp với bản đã lưu.
 // Dữ liệu vào là `modules` (từ GET /roles/catalog) và `roles` (từ GET /roles). Nháp của một vai trò: { perms: Set<string>, scopes: { [mục]: 'all' | 'own' } }.
 
+import { matchesSearch } from '../../../utils/search'
+
 export const SCOPE_LABEL = { all: 'Tất cả', own: 'Do mình tạo' }
 
 export const permsOf = (module) => module.permissions
@@ -145,11 +147,7 @@ export function toSavePayload(modules, changes, draft) {
   })
 }
 
-// Dòng mục / quyền hiện khi tìm kiếm: khớp tên mục, tên quyền hoặc mô tả (không phân biệt hoa thường).
+// Tìm theo tên mục, tên quyền hoặc mô tả, không phân biệt dấu và hoa thường.
 export function matchesQuery(module, perm, query) {
-  const q = query.trim().toLowerCase()
-  if (!q) return true
-  return [module.label, perm.name, perm.description || ''].some((text) =>
-    text.toLowerCase().includes(q)
-  )
+  return [module.label, perm.name, perm.description || ''].some((text) => matchesSearch(text, query))
 }

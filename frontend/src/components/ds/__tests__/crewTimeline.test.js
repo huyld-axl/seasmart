@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { timelineLayout } from '../crewTimeline'
+import { timelineLayout } from '../crewTimeline.js'
 
 describe('timelineLayout', () => {
   const base = { from: '2026-06-01', to: '2026-07-31', today: '2026-07-01' }

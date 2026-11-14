@@ -1,3 +1,5 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
+import { formatCalendarDuration } from '../../../utils/format'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import useEditConflict from '../../../hooks/useEditConflict'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -27,7 +29,6 @@ import '../fleet/fleet.css'
 import './contracts.css'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
-const formatMonths = (months) => `${String(months).replace('.', ',')} tháng`
 
 function safeMonths(start, end) {
   if (!start || !end) return null
@@ -82,6 +83,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
     return JSON.stringify(toPayload(initial)) !== JSON.stringify(toPayload(values))
   }, [isEdit, initial, values])
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(back) })
   const leave = useLeaveGuard(isEdit ? changed : form.isFieldsTouched())
 
   function onVoyageChange(_, option) {
@@ -151,7 +153,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         </p>
       </div>
 
-      <Form form={form} layout="vertical" requiredMark className="ct-form" initialValues={initial} onFinish={submit} onValuesChange={() => blocked && setBlocked(null)} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="ct-form" initialValues={initial} onFinish={submit} onValuesChange={() => blocked && setBlocked(null)} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         {blocked ? (
           <Banner
             tone="error"
@@ -219,7 +221,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                     },
                   },
                 ]}
-                extra={months != null ? formatMonths(months) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
+                extra={months != null ? formatCalendarDuration(values.start_date, values.end_date) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
               >
                 <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>

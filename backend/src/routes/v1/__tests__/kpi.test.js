@@ -128,7 +128,27 @@ describe('mục tiêu tháng', () => {
     expect((await req('PUT', '/kpi-targets', ['kpi.manage'], { month: '2026-11', rows: [{ user_id: 7, contracts: -1 }] })).statusCode).toBe(400)
     expect((await req('PUT', '/kpi-targets', ['kpi.manage'], { month: '2026-11', rows: [{ user_id: 7, revenue_usd: 10.005 }] })).statusCode).toBe(400)
     rules.unshift(['SELECT id FROM "user"', () => [[]]])
-    expect((await req('PUT', '/kpi-targets', ['kpi.manage'], { month: '2026-11', rows: [{ user_id: 99, contracts: 1 }] })).statusCode).toBe(404)
+    expect((await req('PUT', '/kpi-targets', ['kpi.manage'], { month: '2026-11', rows: [{ user_id: 99, contracts: 2 }] })).statusCode).toBe(404)
+  })
+
+  it.each([
+    { contracts: 0 }, { contracts: -1 }, { contracts: 1.5 },
+    { revenue_usd: 0 }, { revenue_usd: -1 }, { revenue_usd: 0.99 },
+  ])('chặn hợp đồng dưới 1, hợp đồng không nguyên hoặc doanh thu dưới 1 USD: %j', async (values) => {
+    const res = await req('PUT', '/kpi-targets', ['kpi.manage'], { month: '2026-11', rows: [{ user_id: 7, ...values }] })
+    expect(res.statusCode).toBe(400)
+    expect(calls.some((c) => c.sql.includes('INSERT INTO kpi_target'))).toBe(false)
+  })
+
+  it.each([
+    { contracts: 1, revenue_usd: 1 },
+    { contracts: null, revenue_usd: null },
+  ])('lưu giới hạn hợp lệ và cho phép bỏ mục tiêu: %j', async (values) => {
+    rules.unshift(['SELECT id FROM "user"', () => [[{ id: 7 }]]])
+    const res = await req('PUT', '/kpi-targets', ['kpi.manage'], { month: '2026-11', rows: [{ user_id: 7, ...values }] })
+    expect(res.statusCode).toBe(200)
+    const insert = calls.find((c) => c.sql.includes('INSERT INTO kpi_target'))
+    expect(insert.params.slice(2, 4)).toEqual([values.contracts, values.revenue_usd])
   })
 
   it('chép tháng trước chỉ điền ô trống (COALESCE giữ ô đã có)', async () => {
@@ -136,6 +156,8 @@ describe('mục tiêu tháng', () => {
     expect(res.statusCode).toBe(200)
     const copy = calls.find((c) => c.sql.includes('INSERT INTO kpi_target'))
     expect(copy.sql).toMatch(/contracts = COALESCE\(kpi_target\.contracts, EXCLUDED\.contracts\)/)
+    expect(copy.sql).toContain('CASE WHEN contracts >= 1 THEN contracts END')
+    expect(copy.sql).toContain('CASE WHEN revenue_usd >= 1 THEN revenue_usd END')
     expect(copy.params).toEqual(['2026-11-01', 7, 7, '2026-10-01'])
     expect((await req('POST', '/kpi-targets/copy', ['kpi.manage'], { from: '2026-11', to: '2026-11' })).statusCode).toBe(400)
   })

@@ -137,6 +137,7 @@
   .sf-aside { position: static; }
   .sf-progress { display: none; }
   .sf-toc { flex-direction: row; gap: 8px; overflow-x: auto; padding: 12px 16px; }
+  .sf-toc > .ds-scrollrow { flex: 1; min-width: 0; }
   .sf-toc a { flex-shrink: 0; min-height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 999px; white-space: nowrap; }
   .sf-toc a[aria-current='true'] { border-color: transparent; }
   .sf-toc__n, .sf-toc__cnt { display: none; }

@@ -19,7 +19,7 @@ import { AnchorSvg, Crumb, FleetTile } from '../fleet/FleetParts'
 import { NotePanel, ReadLayout } from '../seafarers/ReadSections'
 import LeaveModal from './LeaveModal'
 import { EditDatesModal, LeavePlanModal, RemoveModal } from './VoyageModals'
-import { deltaText, historyItems, leaveFlagLabel, monthsLeft } from './voyageList'
+import { deltaText, historyItems, leaveFlagLabel, timeLeft } from './voyageList'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
 import '../seafarers/SeafarerForm.css'
@@ -86,9 +86,9 @@ export default function VoyageDetailPage() {
   })[key]?.()
 
   const link = (allowed, to, text) => (allowed ? <Link to={to}>{text}</Link> : text)
-  const joinDelta = deltaText(v.join_delta_days)
-  const leaveDelta = deltaText(v.leave_delta_days)
-  const left = monthsLeft(v.planned_leave_date)
+  const joinDelta = deltaText(v.join_delta_days, v.opportunity?.planned_join_date, v.join_date)
+  const leaveDelta = deltaText(v.leave_delta_days, v.planned_leave_date, v.leave_date)
+  const left = timeLeft(v.planned_leave_date)
   const source = fromOpportunity
     ? <span>Từ cơ hội {v.opportunity ? link(can('opportunity.view'), `/opportunities/${v.opportunity.id}`, v.opportunity.code) : null}</span>
     : `Tạo tay · ${MANUAL_REASON_LABELS[v.manual_reason] || 'không rõ lý do'}`
@@ -125,7 +125,7 @@ export default function VoyageDetailPage() {
       key: 'join',
       title: 'Lên tàu',
       fields: [
-        ['Ngày lên tàu', `${formatDate(v.join_date)}${joinDelta ? ` · ${joinDelta} so với cơ hội` : ''}`, 6],
+        ['Ngày lên tàu', <>{formatDate(v.join_date)}{joinDelta ? <span className="ds-duration-note"> · {joinDelta} so với cơ hội</span> : null}</>, 6],
         ['Nơi lên tàu', v.join_port_name, 6],
         ['Ngày xuống dự kiến của cơ hội', v.opportunity?.planned_join_date ? formatDate(v.opportunity.planned_join_date) : null, 6],
       ],
@@ -135,12 +135,12 @@ export default function VoyageDetailPage() {
       title: 'Rời tàu',
       fields: onboard
         ? [
-            ['Rời tàu dự kiến', `${formatDate(v.planned_leave_date)}${left ? ` · còn ${left} tháng` : ''}`, 6],
+            ['Rời tàu dự kiến', <>{formatDate(v.planned_leave_date)}{left ? <span className="ds-duration-note"> · còn {left}</span> : null}</>, 6],
             ['Nơi rời dự kiến', v.planned_leave_port_name, 6],
             ['Ngày rời gốc', v.original_leave_date && v.original_leave_date !== v.planned_leave_date ? formatDate(v.original_leave_date) : null, 6],
           ]
         : [
-            ['Ngày rời tàu', `${formatDate(v.leave_date)}${leaveDelta ? ` · ${leaveDelta} so với dự kiến` : ''}`, 6],
+            ['Ngày rời tàu', <>{formatDate(v.leave_date)}{leaveDelta ? <span className="ds-duration-note"> · {leaveDelta} so với dự kiến</span> : null}</>, 6],
             ['Nơi rời tàu', v.leave_port_name, 6],
             ['Rời tàu dự kiến', formatDate(v.original_leave_date || v.planned_leave_date), 6],
             ['Ghi chú rời', v.leave_note, 12],

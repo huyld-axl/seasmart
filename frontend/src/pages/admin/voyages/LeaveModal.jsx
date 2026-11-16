@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Form, Input, Modal, Select } from 'antd'
+import { Button, Form, Input, Modal } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import useToast from '../../../components/ds/useToast'

@@ -31,6 +31,7 @@ describe('billView', () => {
     const values = { ...initial, due_date: dayjs('2026-11-12') }
     expect(countChanges(initial, values)).toBe(1)
     expect(toPayload(values).due_date).toBe('2026-11-12')
+    expect(countChanges(initial, { ...initial, due_date: null })).toBe(1)
   })
 
   it('nhãn quá hạn và ngày thanh toán', () => {

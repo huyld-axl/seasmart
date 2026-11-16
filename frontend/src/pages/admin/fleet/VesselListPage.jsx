@@ -1,3 +1,4 @@
+import useListSessionState from '../../../hooks/useListSessionState'
 import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -16,6 +17,7 @@ import './fleet.css'
 import RowActions from '../../../components/ds/RowActions'
 import { actionColumn } from '../../../components/ds/actionColumn'
 import useListSticky from '../../../components/ds/useListSticky'
+import useListScrollReset from '../../../components/ds/useListScrollReset'
 import ListFooter from '../../../components/ds/ListFooter'
 import useViewport from '../../../hooks/useViewport'
 import Fab from '../../../components/ds/Fab'
@@ -41,16 +43,17 @@ export default function VesselListPage() {
   const navigate = useNavigate()
   const can = useCan()
   const isMobile = useViewport().isCompact
-  const [tab, setTab] = useState('all')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [tab, setTab] = useListSessionState(`vessels`, 'tab', 'all')
+  const [search, setSearch] = useListSessionState(`vessels`, 'search', '')
+  const [page, setPage] = useListSessionState(`vessels`, 'page', 1)
+  const [pageSize, setPageSize] = useListSessionState(`vessels`, 'pageSize', 20)
   // Danh mục tàu thế giới: `key` đổi mỗi lần mở để panel bắt đầu lại từ ô tìm sạch (hoặc từ khoá đang tìm).
   const [catalog, setCatalog] = useState({ open: false, key: 0, query: '' })
   const tableScroll = useListSticky()
   const keyword = search.trim()
 
   const list = useFleetList('vessels', vesselApi, { status: tab === 'all' ? undefined : tab, search: keyword || undefined, page, limit: pageSize })
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, list.isFetching)
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
@@ -100,7 +103,7 @@ export default function VesselListPage() {
       />
     )
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có tàu nào ở trạng thái này" action={<Button onClick={() => setTab('all')}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có tàu nào ở trạng thái này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có tàu nào" description="Thêm tàu để dùng khi đối chiếu sea service và tạo bộ giấy." action={can('vessel.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button> : undefined} />
   } else if (isMobile) {
@@ -141,9 +144,9 @@ export default function VesselListPage() {
   return (
     <div className="ds-page">
       <VesselCatalogPanel key={catalog.key} open={catalog.open} initialQuery={catalog.query} onClose={() => setCatalog((previous) => ({ ...previous, open: false }))} />
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1) }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
           <span className="fl-searchgroup">
             <Input
               className="ds-toolbar__search"
@@ -168,7 +171,7 @@ export default function VesselListPage() {
         </div>
         {body}
         {rows.length > 0 && (
-          <ListFooter total={total} page={page} pageSize={pageSize} unit="tàu" onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+          <ListFooter total={total} page={page} pageSize={pageSize} unit="tàu" onChange={(next, size) => { scrollToListStart(); setPage(next); setPageSize(size) }} />
         )}
       </div>
       {can('vessel.create') ? <Fab label="Thêm tàu" onClick={() => navigate('/vessels/new')} /> : null}

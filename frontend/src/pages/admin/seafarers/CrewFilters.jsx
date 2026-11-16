@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Badge, Button, InputNumber, Select } from 'antd'
+import { Badge, Button, InputNumber } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { lookupApi } from '../../../api'
 import { filterCount } from './crewFilterState'
@@ -45,9 +46,9 @@ export function CrewFilterFields({ value, onChange }) {
       <div className="crew-filterbar__field crew-filterbar__field--age">
         <span>Tuổi</span>
         <div className="crew-filterbar__age">
-          <InputNumber min={0} max={120} placeholder="Từ" aria-label="Tuổi từ" value={value.ageMin} onChange={(v) => set({ ageMin: v ?? null })} />
+          <InputNumber min={0} max={120} precision={0} placeholder="Từ" aria-label="Tuổi từ" value={value.ageMin} onChange={(v) => set({ ageMin: v ?? null })} />
           <span aria-hidden>–</span>
-          <InputNumber min={0} max={120} placeholder="Đến" aria-label="Tuổi đến" value={value.ageMax} onChange={(v) => set({ ageMax: v ?? null })} />
+          <InputNumber min={0} max={120} precision={0} placeholder="Đến" aria-label="Tuổi đến" value={value.ageMax} onChange={(v) => set({ ageMax: v ?? null })} />
         </div>
       </div>
       <label className="crew-filterbar__field crew-filterbar__field--wide" title="Còn hiệu lực hoặc sắp hết hạn; phải có đủ các loại đã chọn">

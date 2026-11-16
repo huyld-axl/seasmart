@@ -3,6 +3,7 @@ import { Button } from 'antd'
 import { DeleteOutlined } from '@ant-design/icons'
 import { UploadIcon } from '../../../components/ds/TransferIcons'
 import ToggleRow from '../../../components/ds/ToggleRow'
+import useViewport from '../../../hooks/useViewport'
 
 
 // Một dòng trong danh sách nhiều mục (người thân, tài khoản, liên hệ đối tác): khung có thanh tiêu đề, nút xoá, thân là lưới 12 cột.
@@ -77,6 +78,7 @@ export function KindToggles({ value = [], onChange, options }) {
 
 // Ô ảnh chân dung: kéo thả hoặc bấm "Chọn ảnh" (hộp chọn tệp nằm ở trang, dùng chung với ảnh bên trái).
 export function PhotoField({ src, error, onChoose, onDropFile, onRemove }) {
+  const { isCompact } = useViewport()
   const [dragging, setDragging] = useState(false)
   return (
     <div
@@ -95,7 +97,7 @@ export function PhotoField({ src, error, onChoose, onDropFile, onRemove }) {
     >
       <PhotoFrame src={src} />
       <div className="sf-drop__text">
-        <b>{src ? 'Đã có ảnh chân dung' : 'Kéo ảnh vào đây'}</b>
+        <b>{src ? 'Đã có ảnh chân dung' : isCompact ? 'Tải ảnh lên' : 'Kéo ảnh vào đây'}</b>
         <span>JPG hoặc PNG, tối đa 10 MB. Nên dùng ảnh thẻ 4×6.</span>
         {error ? <span className="sf-drop__error" role="alert">{error}</span> : null}
       </div>

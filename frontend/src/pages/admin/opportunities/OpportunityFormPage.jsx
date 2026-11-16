@@ -1,9 +1,12 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
+import { formatCalendarDuration } from '../../../utils/format'
 import { useMemo, useRef, useState } from 'react'
 import useEditConflict from '../../../hooks/useEditConflict'
 import { newRequestKey } from '../../../lib/idempotency'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Form, Input, Select, Skeleton } from 'antd'
+import { App, Button, Form, Input, Skeleton } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
@@ -25,6 +28,7 @@ import { FleetTile, TargetSvg, FormFrame, FormSection, AddAnotherLabel } from '.
 import changedLabel from '../fleet/changedLabel'
 import { monthsBetween, splitBudget } from '../voyages/voyageView'
 import RequirementTable from './RequirementTable'
+import { createPresetRequest } from './presetRequest'
 import { EMPTY_FORM, nextPositionValues, toFormValues, toPayload, toRequirementRows } from './opportunityView'
 import '../fleet/fleet.css'
 import './opportunities.css'
@@ -46,7 +50,6 @@ function safeMonths(start, end) {
     return null
   }
 }
-const formatMonths = (months) => `${String(months).replace('.', ',')} tháng`
 
 function OpportunityForm({ opportunity, prefill }) {
   const isEdit = !!opportunity
@@ -56,6 +59,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const { modal } = App.useApp()
   const me = useAuthStore((state) => state.user)
   const [form] = Form.useForm()
+  const requestPreset = useMemo(() => createPresetRequest((params) => opportunityApi.presets(params), () => form.getFieldsValue(true)), [form])
   const initial = useMemo(() => (opportunity ? toFormValues(opportunity) : { ...EMPTY_FORM, owner_user_id: me?.id, ...prefill }), [opportunity, prefill, me])
   const values = Form.useWatch([], form) || initial
   const { save } = useOpportunityMutations()
@@ -104,6 +108,7 @@ function OpportunityForm({ opportunity, prefill }) {
   const label = (name, text) => changedLabel(text, changed.has(name))
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(isEdit ? `/opportunities/${opportunity.id}` : '/opportunities') })
   const leave = useLeaveGuard(isEdit ? changed.size > 0 : form.isFieldsTouched())
 
   const coreFields = ['ship_owner_id', 'vessel_id', 'rank_id', 'budget_monthly_usd', 'owner_user_id']
@@ -122,18 +127,20 @@ function OpportunityForm({ opportunity, prefill }) {
 
   // Hồ sơ yêu cầu điền sẵn khi chọn chức danh (và tàu). Bảng đã có dòng thì hỏi trước khi thay.
   async function loadPreset(all) {
-    if (!all.rank_id) return
-    const preset = await opportunityApi.presets({ rank_id: all.rank_id, vessel_id: all.vessel_id || undefined }).catch(() => null)
-    if (!preset) return
+    const result = await requestPreset(all)
+    if (!result) return
+    const { preset, isCurrent } = result
     const apply = () => {
+      if (!isCurrent()) return
       form.setFieldsValue({ requirements: toRequirementRows(preset.requirements) })
       setPresetSource(preset.source)
     }
-    if (!(all.requirements || []).length) return apply()
+    const requirements = form.getFieldValue('requirements') || []
+    if (!requirements.length) return apply()
     if (!preset.requirements.length) return setPresetSource(preset.source)
     modal.confirm({
       title: `Thay hồ sơ yêu cầu theo ${(ranks.data || []).find((r) => r.id === all.rank_id)?.name_vi || 'chức danh mới'}?`,
-      content: `${PRESET_SOURCE[preset.source]} Bảng hiện có ${all.requirements.length} dòng sẽ được thay.`,
+      content: `${PRESET_SOURCE[preset.source]} Bảng hiện có ${requirements.length} dòng sẽ được thay.`,
       okText: 'Thay',
       cancelText: 'Giữ bảng hiện tại',
       onOk: apply,
@@ -223,7 +230,7 @@ function OpportunityForm({ opportunity, prefill }) {
       done={filled(coreFields) + filled(timeFields)}
       total={coreFields.length + timeFields.length}
     >
-      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={onValuesChange} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={onValuesChange} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         <FormSection index={0} section={sections[0]} meta={metas[0]}>
           <div className="sf-grid">
             <Form.Item name="ship_owner_id" className={cn('ship_owner_id', 'sf-c4')} label={label('ship_owner_id', 'Chủ tàu')} rules={[{ required: true, message: vesselHasNoOwner ? 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng.' : 'Chọn chủ tàu' }]} extra={vesselHasNoOwner ? 'Tàu chưa có chủ tàu' : ownerFromVessel ? 'Lấy theo tàu' : undefined}>
@@ -238,7 +245,7 @@ function OpportunityForm({ opportunity, prefill }) {
             <Form.Item name="budget_monthly_usd" className={cn('budget_monthly_usd', 'sf-c4')} label={label('budget_monthly_usd', 'Budget/tháng (USD)')} rules={[{ required: true, message: 'Nhập budget/tháng' }]}>
               <MoneyInput aria-label="Budget mỗi tháng" />
             </Form.Item>
-            <Form.Item name="budget_total_usd" className={cn('budget_total_usd', 'sf-c4')} label={label('budget_total_usd', 'Budget cả chuyến (USD)')} extra={months != null ? `Tính theo ngày xuống → rời: ${formatMonths(months)}. Sửa ô nào ô kia tự tính.` : 'Nhập ngày xuống và rời để tự tính.'}>
+            <Form.Item name="budget_total_usd" className={cn('budget_total_usd', 'sf-c4')} label={label('budget_total_usd', 'Budget cả chuyến (USD)')} extra={months != null ? `Tính theo ngày xuống → rời: ${formatCalendarDuration(values.planned_join_date, values.planned_leave_date)}. Sửa ô nào ô kia tự tính.` : 'Nhập ngày xuống và rời để tự tính.'}>
               <MoneyInput aria-label="Budget cả chuyến" />
             </Form.Item>
             <Form.Item name="owner_user_id" className={cn('owner_user_id', 'sf-c4')} label={label('owner_user_id', 'Người phụ trách')} extra={can('account.view') ? undefined : 'Mặc định là bạn'}>

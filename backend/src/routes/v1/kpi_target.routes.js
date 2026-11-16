@@ -17,8 +17,8 @@ const saveBody = {
         additionalProperties: false,
         properties: {
           user_id: { type: 'integer', minimum: 1 },
-          contracts: { type: ['integer', 'null'], minimum: 0, maximum: 1000 },
-          revenue_usd: { type: ['number', 'null'], minimum: 0, maximum: 9999999999 },
+          contracts: { type: ['integer', 'null'], minimum: 1, maximum: 1000 },
+          revenue_usd: { type: ['number', 'null'], minimum: 1, maximum: 9999999999 },
         },
       },
     },

@@ -205,7 +205,7 @@ const seafarerService = {
       where.push(
         '(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seaman_book_number::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))'
       )
-      const q = `${search}%`
+      const q = `%${search.trim()}%`
       params.push(q, q, q, q)
     }
     if (status) {
@@ -427,6 +427,13 @@ const seafarerService = {
     await assertVersion(db, before, version)
     const { rank_name, nationality_name, nationality_code, nationality_flag_emoji, ...rest } = data
     const safeData = pickAllowed(rest)
+    // Kiểm tra cả ngày đang lưu khi yêu cầu chỉ sửa một trong hai ngày.
+    if ('date_of_birth' in safeData || 'passport_issued_date' in safeData) {
+      assertSeafarerData({
+        date_of_birth: 'date_of_birth' in safeData ? safeData.date_of_birth : before.date_of_birth,
+        passport_issued_date: 'passport_issued_date' in safeData ? safeData.passport_issued_date : before.passport_issued_date,
+      })
+    }
     const hasLists = Array.isArray(data.bank_accounts) || Array.isArray(data.contacts)
     if (Object.keys(safeData).length === 0 && !hasLists) {
       throw { statusCode: 400, message: 'Không có trường hợp lệ để cập nhật' }
@@ -537,9 +544,9 @@ const seafarerService = {
     }
 
     if (search) {
-      where.push('(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))')
-      const q = `${search}%`
-      params.push(q, q, q)
+      where.push('(unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.national_id::text) ILIKE unaccent(?) OR unaccent(s.seaman_book_number::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))')
+      const q = `%${search.trim()}%`
+      params.push(q, q, q, q)
     }
     if (status) {
       where.push('s.status = ?')

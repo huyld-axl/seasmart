@@ -1,3 +1,4 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useEffect, useMemo, useState } from 'react'
 import { Button, Form, Input, Modal, Select, Switch } from 'antd'
 import { MailOutlined } from '@ant-design/icons'
@@ -20,6 +21,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
   const [form] = Form.useForm()
   const me = useAuthStore((state) => state.user)
   const isEdit = !!initialValues?.id
+  const shortcuts = useFormShortcuts({ enabled: open, autoFocus: !isEdit, focusKey: resetKey, onCancel: onClose })
   const isSelf = isEdit && initialValues.id === me?.id
   const iAmAdmin = Boolean(me?.role?.is_system)
   const { data: roles = [] } = useRoleOptions({ enabled: open })
@@ -58,13 +60,13 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
   const handleFinish = (values) => onSubmit(isEdit ? { ...values, version: current.version } : values, form, { onConflict: conflict.handleError })
 
   const fields = (
-    <Form form={form} layout="vertical" initialValues={toValues(current)} onFinish={handleFinish}>
+    <Form ref={shortcuts} form={form} layout="vertical" initialValues={toValues(current)} onFinish={handleFinish}>
       <Form.Item
         name="full_name"
         label="Họ tên"
         rules={[{ required: true, whitespace: true, message: 'Nhập họ tên' }]}
       >
-        <Input autoFocus={!isEdit} />
+        <Input />
       </Form.Item>
 
       <Form.Item
@@ -135,7 +137,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
             <Button onClick={() => submit(true)} loading={loading}>
               {isDesktop() ? 'Gửi & mời người khác' : 'Lưu & thêm tài khoản khác'}
             </Button>
-            <Button type="primary" onClick={() => submit(false)} loading={loading}>
+            <Button data-form-submit type="primary" onClick={() => submit(false)} loading={loading}>
               {isDesktop() ? 'Gửi thư mời' : 'Thêm tài khoản'}
             </Button>
           </>
@@ -157,7 +159,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
       footer={
         <>
           <Button onClick={onClose}>Huỷ</Button>
-          <Button type="primary" onClick={() => form.submit()} loading={loading}>
+          <Button data-form-submit type="primary" onClick={() => form.submit()} loading={loading}>
             Lưu
           </Button>
         </>

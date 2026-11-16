@@ -1,7 +1,9 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Form, Input, Select } from 'antd'
+import { Button, Form, Input } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CheckCircleFilled, ExclamationCircleOutlined, InfoCircleOutlined, PlusOutlined } from '@ant-design/icons'
@@ -89,6 +91,7 @@ export default function VoyageFormPage() {
   const metas = [`${filled(coreFields)}/${coreFields.length}`, `${filled(timeFields)}/${timeFields.length}`]
   const ready = filled(coreFields) === coreFields.length && filled(timeFields) === timeFields.length && !blocked
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
+  const shortcuts = useFormShortcuts({ autoFocus: true, onCancel: () => navigate('/voyages') })
   const leave = useLeaveGuard(form.isFieldsTouched())
   const selectedVessel = vesselOptions.find((o) => o.value === values.vessel_id)
   const vesselHasNoOwner = Boolean(selectedVessel) && !selectedVessel.ownerId
@@ -96,7 +99,7 @@ export default function VoyageFormPage() {
   function onValuesChange(change) {
     if ('seafarer_id' in change) {
       const rankId = personOptions.find((o) => o.value === change.seafarer_id)?.rankId
-      if (rankId) form.setFieldsValue({ rank_id: rankId })
+      form.setFieldsValue({ rank_id: rankId ?? undefined })
     }
   }
 
@@ -160,7 +163,7 @@ export default function VoyageFormPage() {
       done={filled(coreFields) + filled(timeFields)}
       total={coreFields.length + timeFields.length}
     >
-      <Form form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={onValuesChange} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="sf-sections" initialValues={initial} onFinish={submit} onValuesChange={onValuesChange} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         <FormSection index={0} section={sections[0]} meta={metas[0]}>
           <div className="sf-grid">
             <Form.Item name="seafarer_id" className="sf-c4" label="Thuyền viên" rules={[{ required: true, message: 'Chọn thuyền viên' }]}>

@@ -1,4 +1,5 @@
-import { Button, InputNumber, Select, Tooltip } from 'antd'
+import { Button, InputNumber, Tooltip } from 'antd'
+import Select from '../../../components/ds/SearchSelect'
 import { CloseOutlined, PlusOutlined } from '@ant-design/icons'
 import { SegmentedPick } from '../fleet/FleetParts'
 import { LEVEL_LABELS, VALID_UNTIL_LABELS } from '../../../constants/opportunityVoyage'

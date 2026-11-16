@@ -1,3 +1,4 @@
+import { formatCalendarDuration } from '../../../utils/format'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -32,7 +33,6 @@ import '../seafarers/SeafarerForm.css'
 import '../voyages/voyages.css'
 import './opportunities.css'
 
-const formatMonths = (months) => `${String(months).replace('.', ',')} tháng`
 const FIT_STATE = { ok: 'Có', missing: 'Thiếu', expires_early: 'Hết hạn trước mốc' }
 
 // Bảng đối chiếu từng mục hồ sơ yêu cầu của một ứng viên.
@@ -342,10 +342,10 @@ export default function OpportunityDetailPage() {
         ['Mã cơ hội', o.code, 4],
         ['Chức danh', o.rank_name, 4],
         ['Người phụ trách', o.owner_user_email, 4],
-        ['Chủ tàu', can('partner.view') ? <Link to={`/partners/${o.ship_owner_id}`}>{o.ship_owner_name}</Link> : o.ship_owner_name, 6],
-        ['Tàu', o.vessel_name ? (can('vessel.view') ? <Link to={`/vessels/${o.vessel_id}`}>{o.vessel_name}</Link> : o.vessel_name) : null, 6],
-        ['Budget/tháng', `${formatUsd(o.budget_monthly_usd)} USD`, 6],
-        ['Budget cả chuyến', `${formatUsd(o.budget_total_usd)} USD`, 6],
+        ['Chủ tàu', can('partner.view') ? <Link to={`/partners/${o.ship_owner_id}`}>{o.ship_owner_name}</Link> : o.ship_owner_name, 4],
+        ['Tàu', o.vessel_name ? (can('vessel.view') ? <Link to={`/vessels/${o.vessel_id}`}>{o.vessel_name}</Link> : o.vessel_name) : null, 8],
+        ['Budget/tháng', `${formatUsd(o.budget_monthly_usd)} USD`, 4],
+        ['Budget cả chuyến', `${formatUsd(o.budget_total_usd)} USD`, 8],
       ],
     },
     {
@@ -354,8 +354,8 @@ export default function OpportunityDetailPage() {
       fields: [
         ['Xuống tàu', place(o.planned_join_date, o.planned_join_port_name), 6],
         ['Rời tàu', place(o.planned_leave_date, o.planned_leave_port_name), 6],
-        ['Thời gian', formatMonths(o.months), 4],
-        ['Hạn chốt', formatDate(o.deadline), 4],
+        ['Thời gian', formatCalendarDuration(o.planned_join_date, o.planned_leave_date), 6],
+        ['Hạn chốt', formatDate(o.deadline), 6],
       ],
     },
     {

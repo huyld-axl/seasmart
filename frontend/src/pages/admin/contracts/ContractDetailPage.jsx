@@ -1,3 +1,4 @@
+import { formatCalendarDuration } from '../../../utils/format'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Skeleton } from 'antd'
@@ -36,7 +37,6 @@ const CONTRACT_TABS = [
   { value: 'bills', label: 'Yêu cầu thanh toán' },
   { value: 'history', label: 'Lịch sử' },
 ]
-const formatMonths = (months) => `${String(months).replace('.', ',')} tháng`
 const LOG_VIEW = {
   CREATE: { title: 'Tạo hợp đồng', kind: 'upload', tone: 'neutral' },
   SUBMIT: { title: 'Xin duyệt', kind: 'export', tone: 'warning' },
@@ -258,7 +258,7 @@ export default function ContractDetailPage() {
                 </Field>
                 <Field label="Chức danh" span={6}>{position.rank_name}{contract.legacy_unlinked && position.sort_order != null ? ` · dòng ${position.sort_order + 1} của chuyến cũ` : ''}</Field>
                 <Field label="Ngày bắt đầu" span={3}>{formatDate(contract.start_date)}</Field>
-                <Field label="Ngày kết thúc" span={3}>{formatDate(contract.end_date)} <span className="vd-muted">· {formatMonths(contract.months)}</span></Field>
+                <Field label="Ngày kết thúc" span={3}>{formatDate(contract.end_date)} <span className="vd-muted ds-duration-note">· {formatCalendarDuration(contract.start_date, contract.end_date)}</span></Field>
                 <Field label="Chuyến" span={6}>
                   <TripLink trip={trip} legacyCode={legacyCode} />
                 </Field>
@@ -332,7 +332,7 @@ export default function ContractDetailPage() {
             <dt>Chuyến</dt>
             <dd><TripLink trip={trip} legacyCode={legacyCode} /></dd>
             <dt>Thời gian</dt>
-            <dd style={{ columnGap: 6 }}><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)}</span><span style={{ whiteSpace: 'nowrap' }}>· {formatMonths(contract.months)}</span></dd>
+            <dd style={{ columnGap: 6 }}><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)}</span><span className="ds-duration-note" style={{ whiteSpace: 'nowrap' }}>· {formatCalendarDuration(contract.start_date, contract.end_date)}</span></dd>
           </dl>
         </div>
         </div>

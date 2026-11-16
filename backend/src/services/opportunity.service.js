@@ -509,7 +509,7 @@ const opportunityService = {
     let where = 'WHERE s.deleted_at IS NULL AND s.status <> \'INACTIVE\''
     if (query.ownerId) { where += ' AND s.created_by = ?'; params.push(Number(query.ownerId)) }
     if (query.search) {
-      where += ' AND (unaccent(s.full_name::text) ILIKE unaccent(?) OR s.seafarer_code ILIKE ? OR s.passport_number ILIKE ?)'
+      where += ' AND (unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?) OR unaccent(s.passport_number::text) ILIKE unaccent(?))'
       params.push(...Array(3).fill(`%${query.search}%`))
     }
     if (query.rank_id) { where += ' AND s.current_rank_id = ?'; params.push(Number(query.rank_id)) }

@@ -1,7 +1,10 @@
+import useFormShortcuts from '../../hooks/useFormShortcuts'
+import { filterSearchOption } from '../../utils/search'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Select, Spin, Tooltip } from 'antd'
+import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Spin, Tooltip } from 'antd'
+import Select from '../../components/ds/SearchSelect'
 import useLeaveGuard from '../../hooks/useLeaveGuard'
 import { FormCrumb, FormToc, AddAnotherLabel } from './fleet/FleetParts'
 import DateInput from '../../components/ds/DateField'
@@ -496,6 +499,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
     setPickedPhoto(null)
     setPhotoRemoved(false)
     setPendingDocs([])
+    setPhotoError('')
+    setKeepPhotoDoc(false)
+    setMarks({})
+    setScanDone(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -510,6 +517,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         saved = (await seafarerApi.update(id, { ...payload, version: seafarer.version })).data
       }
       let photoError = null
+      let docCount = 0
       // Ảnh giấy tuỳ thân (và ảnh thẻ) đã đồng ý lưu: mỗi ảnh một dòng giấy mới, số và ngày lấy từ hồ sơ vừa lưu.
       const docsToSave = [...pendingDocs, ...(photoFile && keepPhotoDoc ? [{ type: 'photo', label: 'ảnh thẻ', file: photoFile }] : [])]
       if (docsToSave.length) {
@@ -519,7 +527,10 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
           for (const doc of docsToSave) {
             const identity = doc.type === 'photo' ? { code: 'PHOTO' } : IDENTITY[doc.type]
             const type = list.find((c) => c.code === identity.code || (identity.code === 'SEAMAN_BOOK' && c.code === 'SEAMAN-BOOK'))
-            if (!type) continue
+            if (!type) {
+              photoError = [photoError, `Chưa lưu được ${doc.label}: không tìm thấy loại giấy tờ ${identity.code}.`].filter(Boolean).join(' ')
+              continue
+            }
             const day = (v) => (v ? String(v).slice(0, 10) : undefined)
             const expiry = identity.expiry ? day(saved[identity.expiry]) : undefined
             const cert = (await certificateApi.create(saved.id, {
@@ -530,18 +541,19 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               no_expiry: !expiry,
             })).data
             await certificateApi.upload(saved.id, cert.id, doc.file)
+            docCount += 1
           }
         } catch (err) {
-          photoError = `Chưa lưu được ảnh giấy tờ: ${err.response?.data?.error || err.response?.data?.message || 'thử lại ở tab Giấy tờ'}`
+          photoError = [photoError, `Chưa lưu được ảnh giấy tờ: ${err.response?.data?.error || err.response?.data?.message || 'thử lại ở tab Giấy tờ'}`].filter(Boolean).join(' ')
         }
       }
       try {
         if (photoFile) await seafarerApi.uploadPhoto(saved.id, photoFile)
         else if (photoRemoved && seafarer?.has_photo) await seafarerApi.removePhoto(saved.id)
       } catch (err) {
-        photoError = err.response?.data?.error || err.response?.data?.message || 'Không lưu được ảnh chân dung'
+        photoError = [photoError, err.response?.data?.error || err.response?.data?.message || 'Không lưu được ảnh chân dung'].filter(Boolean).join(' ')
       }
-      return { saved, photoError, again, docCount: docsToSave.length }
+      return { saved, photoError, again, docCount }
     },
     onSuccess: ({ saved, photoError, again, docCount }) => {
       queryClient.invalidateQueries({ queryKey: ['seafarers'] })
@@ -586,11 +598,12 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   }
 
   const cancelTo = isEdit ? `/seafarers/${id}` : '/seafarers'
+  const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(cancelTo) })
   const name = values.full_name?.trim() || seafarer?.full_name || ''
-  const canSave = !isEdit || changedKeys.length > 0 || photoChanged
+  const canSave = !isEdit || changedKeys.length > 0 || photoChanged || pendingDocs.length > 0
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
   // Thêm mới: tính cả giấy tờ đã quét đang chờ lưu (tự điền từ giấy tờ không đánh dấu ô là đã chạm).
-  const leave = useLeaveGuard(isEdit ? changedKeys.length > 0 || photoChanged : form.isFieldsTouched() || photoChanged || pendingDocs.length > 0)
+  const leave = useLeaveGuard(isEdit ? changedKeys.length > 0 || photoChanged || pendingDocs.length > 0 : form.isFieldsTouched() || photoChanged || pendingDocs.length > 0)
 
   return (
     <ChangedContext.Provider value={changedSet}>
@@ -667,6 +680,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
         </aside>
 
         <Form
+          ref={shortcuts}
           form={form}
           layout="vertical"
           requiredMark={false}
@@ -730,12 +744,12 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="passport_number" label="Số hộ chiếu" span={4} normalize={upperAlnum} rules={fieldRules.passport}>
                 <Input placeholder="B1234567" maxLength={20} />
               </Field>
-              <DateField name="passport_issued_date" label="Ngày cấp hộ chiếu" span={4} rules={[notFuture('Ngày cấp')]} />
+              <DateField name="passport_issued_date" label="Ngày cấp hộ chiếu" span={4} dependencies={['date_of_birth']} rules={[notFuture('Ngày cấp'), notBefore('date_of_birth', 'Ngày cấp hộ chiếu không được trước ngày sinh')]} />
               <DateField name="passport_expiry" label="Ngày hết hạn hộ chiếu" span={4} dependencies={['passport_issued_date']} rules={[notBefore('passport_issued_date', 'Ngày hết hạn phải sau ngày cấp')]} />
-              <Field name="place_of_birth" label="Nơi sinh" span={6}>
+              <Field name="place_of_birth" label="Nơi sinh" span={4}>
                 <Input placeholder="VD: Thanh Hóa" maxLength={200} />
               </Field>
-              <Field name="nationality_id" label="Quốc tịch" span={6}>
+              <Field name="nationality_id" label="Quốc tịch" span={4}>
                 <Select
                   allowClear
                   showSearch
@@ -866,7 +880,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                         <Input maxLength={150} />
                       </Form.Item>
                       <Form.Item name={[name, 'relationship']} label="Quan hệ" className="sf-c4">
-                        <AutoComplete options={RELATIONSHIPS} placeholder="Chọn hoặc nhập" />
+                        <AutoComplete filterOption={filterSearchOption} options={RELATIONSHIPS} placeholder="Chọn hoặc nhập" />
                       </Form.Item>
                       <Form.Item name={[name, 'zalo']} label="Zalo" className="sf-c4"><ZaloInput phoneName={['contacts', name, 'phone_primary']} /></Form.Item>
                       <Form.Item name={[name, 'phone_primary']} label="Số điện thoại" className="sf-c4" rules={fieldRules.phone}>

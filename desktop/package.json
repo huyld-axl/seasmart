@@ -1,6 +1,6 @@
 {
   "name": "mcah-desktop",
-  "version": "0.0.1",
+  "version": "0.9.1",
   "private": true,
   "description": "App máy tính MCAH (Electron)",
   "main": "src/main.js",
@@ -120,7 +120,9 @@
   },
   "homepage": "https://mcah.vn",
   "dependencies": {
+    "@peculiar/asn1-schema": "^3.0.0",
     "@peculiar/x509": "^3.1.0",
+    "asn1js": "^4.0.0",
     "bonjour-service": "^1.4.4",
     "bytenode": "^1.5.7",
     "koffi": "^3.3.7",

@@ -39,3 +39,7 @@ Script đẩy bộ cài trước, `latest.json` sau cùng; giữ 3 phiên bản 
 2. Sửa `desktop/endpoints.json`, commit, phát một bản như thường. Đẩy `latest.json` lên **cả chỗ phát cũ lẫn mới** (chạy `npm run release` hai lần với hai `MCAH_RELEASE_TARGET`, hoặc chép tay `latest.json` sang chỗ cũ).
 3. App đang chạy kiểm bản mới ở chỗ cũ, thấy địa chỉ mới trong bản tin đã ký thì tự chuyển sang, không cần cài lại.
 4. Giữ tên cũ chuyển hướng 308 vài tháng cho máy lâu không mở. Thêm Redirect URI Google cho tên mới, đổi `CLOUD_PUBLIC_URL` trong `cloud/.env` trên server.
+
+## Phát thiếu một bản
+
+Chưa có bản Windows mà cần cho tải bản Ubuntu trước: thêm `--allow-missing win` (bản có mặt vẫn kiểm đủ). Khi có bản Windows cùng commit, chạy lại lệnh phát hành cùng phiên bản không có cờ này, `latest.json` sẽ có đủ hai bản.

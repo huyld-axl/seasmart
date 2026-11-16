@@ -99,10 +99,11 @@ async function copyNode() {
   fs.rmSync(tmp, { recursive: true, force: true })
 }
 
-// Khoá công khai kiểm vé đăng nhập, gói vào bộ cài. Build cho máy chủ thật (MCAH_CLOUD_URL không phải localhost): lấy từ
-// <máy chủ>/.well-known/mcah-keys. Build cho máy dev: suy ra từ cloud/.data/signing-key.pem.
+// Khoá công khai kiểm vé đăng nhập, gói vào bộ cài. Mặc định (và MCAH_CLOUD_URL không phải localhost): lấy từ
+// <máy chủ>/.well-known/mcah-keys, máy chủ là cloud_url trong endpoints.json. Build cho máy dev: suy ra từ cloud/.data/signing-key.pem.
 async function writeCloudKey() {
-  const url = (process.env.MCAH_CLOUD_URL || '').replace(/\/+$/, '')
+  const official = JSON.parse(fs.readFileSync(path.join(DESKTOP, 'endpoints.json'), 'utf8'))
+  const url = (process.env.MCAH_CLOUD_URL ?? official.cloud_url).replace(/\/+$/, '')
   let pem
   if (url && !/^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) {
     if (!url.startsWith('https://')) throw new Error('MCAH_CLOUD_URL của máy chủ thật phải là https')

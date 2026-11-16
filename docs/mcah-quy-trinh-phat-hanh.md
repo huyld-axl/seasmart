@@ -15,7 +15,7 @@ Lần đầu trên máy phát hành mới (chưa từng có khoá): `node deskto
 ## Mỗi lần phát hành
 
 1. Commit hết thay đổi. Đổi phiên bản: trong `desktop/`, `npm version 1.2.0 --no-git-tag-version`.
-2. Viết `desktop/release-notes/1.2.0.md`: gạch đầu dòng tiếng Việt, người dùng đọc được (không thuật ngữ code). Commit.
+2. Viết `desktop/release-notes/1.2.0.md`: gạch đầu dòng tiếng Việt, người dùng đọc được (không thuật ngữ code), không cần chi tiết. Trong `desktop/` chạy `npm run notes:page` để thêm bản vào trang ghi chú phát hành trên web (`frontend/public/phat-hanh/index.html`, `/phat-hanh/index.html`; test chặn nếu quên). Commit.
 3. Máy Ubuntu, trong `desktop/`:
 
    ```bash
@@ -43,3 +43,7 @@ Script đẩy bộ cài trước, `latest.json` sau cùng; giữ 3 phiên bản 
 ## Phát thiếu một bản
 
 Chưa có bản Windows mà cần cho tải bản Ubuntu trước: thêm `--allow-missing win` (bản có mặt vẫn kiểm đủ). Khi có bản Windows cùng commit, chạy lại lệnh phát hành cùng phiên bản không có cờ này, `latest.json` sẽ có đủ hai bản.
+
+## Trang hướng dẫn và ghi chú phát hành
+
+Chỉ có bản trên web: `/huong-dan/` và `/phat-hanh/` (thư mục `frontend/public/`). App máy tính không gói hai trang này; bấm link trong app thì mở bản web bằng trình duyệt, tên miền lấy theo máy chủ dịch vụ (`desktop/src/main.js`, `webPageUrl`). Sửa trang chỉ cần triển khai web, không cần phát bản app.

@@ -113,18 +113,21 @@ async function serveFrontend(request) {
   return new Response(res.body, { status: res.status, headers })
 }
 
-const GUIDE = /^app:\/\/mcah\/huong-dan\//
+const WEB_PAGES = /^app:\/\/mcah(\/(?:huong-dan|phat-hanh)\/[^?#]*)(?:\?[^#]*)?(#.*)?$/
 
-// Link ngoài mở bằng trình duyệt hệ thống; trang hướng dẫn mở trong cửa sổ app riêng (không preload); còn lại chặn.
+// Trang hướng dẫn và ghi chú phát hành không gói trong app: mở bản trên web (cùng tên miền máy chủ dịch vụ) bằng trình duyệt.
+// ?app=1 để trang hướng dẫn hiện các mục chỉ dành cho app máy tính.
+function webPageUrl(url) {
+  const m = WEB_PAGES.exec(url)
+  return m && `${new URL(cloudUrl()).origin}${m[1]}?app=1${m[2] || ''}`
+}
+
+// Link ngoài và trang hướng dẫn mở bằng trình duyệt hệ thống; còn lại chặn.
 function guardNavigation(win) {
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (GUIDE.test(url)) {
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: { width: 1100, height: 800, title: 'Hướng dẫn MCAH', webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false } },
-      }
-    }
-    if (/^(https?|mailto|tel):/.test(url)) shell.openExternal(url)
+    const web = webPageUrl(url)
+    if (web) shell.openExternal(web)
+    else if (/^(https?|mailto|tel):/.test(url)) shell.openExternal(url)
     return { action: 'deny' }
   })
   // Điều hướng ngay trong cửa sổ: giữ trong app://mcah; mailto:, tel:, http(s) giao cho hệ điều hành; còn lại chặn.

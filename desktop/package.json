@@ -12,7 +12,8 @@
     "dist:linux": "npm run build:frontend && npm run stage:linux && node scripts/build-main.js && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked && node scripts/build-info.js linux",
     "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked && node scripts/build-info.js win",
     "release": "node scripts/release.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "notes:page": "node scripts/notes-page.js"
   },
   "devDependencies": {
     "electron": "^39.8.10",

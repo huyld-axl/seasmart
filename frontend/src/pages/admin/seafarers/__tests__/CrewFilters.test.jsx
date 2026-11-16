@@ -8,15 +8,13 @@ vi.mock('../../../../components/ds/SearchSelect', () => ({ default: () => null }
 afterEach(cleanup)
 
 describe('crew age filter', () => {
-  it('shows an error and does not apply a reversed range, then accepts a correction', () => {
+  // Bộ lọc không kiểm tra: khoảng ngược vẫn áp dụng như người dùng nhập (feedback 92).
+  it('applies a reversed range without an error', () => {
     const onChange = vi.fn()
     render(<CrewFilterFields value={{ ...EMPTY_FILTERS, ageMin: 20, ageMax: 40 }} onChange={onChange} />)
     fireEvent.change(screen.getByLabelText('Tuổi từ'), { target: { value: '50' } })
-    expect(screen.getByRole('alert')).toHaveTextContent('Tuổi bắt đầu không được lớn hơn tuổi kết thúc.')
-    expect(onChange).not.toHaveBeenCalled()
-    fireEvent.change(screen.getByLabelText('Tuổi đến'), { target: { value: '60' } })
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ ageMin: 50, ageMax: 60 }))
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ ageMin: 50, ageMax: 40 }))
   })
   it('allows equal limits and clearing a limit', () => {
     const onChange = vi.fn()
@@ -24,6 +22,6 @@ describe('crew age filter', () => {
     fireEvent.change(screen.getByLabelText('Tuổi đến'), { target: { value: '20' } })
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ ageMin: 20, ageMax: 20 }))
     fireEvent.change(screen.getByLabelText('Tuổi từ'), { target: { value: '' } })
-    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ ageMin: null, ageMax: 20 }))
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ ageMin: null, ageMax: 40 }))
   })
 })

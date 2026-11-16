@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Tooltip } from 'antd'
-import { timelineLayout } from './crewTimeline.js'
+import { timelineLayout } from './crewTimelineLogic'
 import { EmptyState } from './Controls'
 import './ds.css'
 

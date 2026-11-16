@@ -16,7 +16,8 @@ const DESKTOP = path.join(__dirname, '..')
 const KEEP = 3
 
 // allowMissing: nền tảng được phép vắng mặt (vd. ['win'] khi chưa build được bản Windows); bản có mặt vẫn kiểm đủ.
-function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [] } = {}) {
+// cloudKey: dấu vân tay khoá máy chủ thật (lấy lúc phát hành); bản gói khoá khác thì không đăng nhập được.
+function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [], cloudKey } = {}) {
   const pkg = JSON.parse(fs.readFileSync(path.join(desktop, 'package.json'), 'utf8'))
   const { name: pkgName, version, build } = pkg
   const installers = path.join(desktop, build.directories.output)
@@ -43,6 +44,7 @@ function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [] } = {}) {
     if (info.scan !== 'clean') problems.push(`Bản ${platform} chưa quét bí mật sạch`)
     if (info.dirty) problems.push(`Bản ${platform} build khi còn thay đổi chưa commit`)
     if (info.cloud_url !== endpoints.cloud_url || info.update_url !== endpoints.update_url) problems.push(`Bản ${platform} gói địa chỉ ${info.update_url} / ${info.cloud_url}, khác endpoints.json`)
+    if (cloudKey && info.cloud_key !== cloudKey) problems.push(`Bản ${platform} gói khoá đăng nhập khác khoá máy chủ thật (build lại, không đặt MCAH_CLOUD_URL)`)
     const data = fs.readFileSync(src)
     files[platform] = { name, sha256: crypto.createHash('sha256').update(data).digest('hex'), size: data.length }
   }
@@ -80,8 +82,8 @@ function upload(dir, channel) {
   console.log(`Đã đẩy lên ${dest}`)
 }
 
-function release({ channel, key, allowMissing = [] }) {
-  const p = plan({ channel, allowMissing })
+function release({ channel, key, allowMissing = [], cloudKey }) {
+  const p = plan({ channel, allowMissing, cloudKey })
   if (p.problems.length) throw new Error(`Không phát hành ${p.version}:\n- ${p.problems.join('\n- ')}`)
   const dir = path.join(DESKTOP, 'dist/updates', channel)
   fs.mkdirSync(dir, { recursive: true })
@@ -109,14 +111,16 @@ function promote(version, key) {
 
 if (require.main === module) {
   const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : null }
-  try {
+  ;(async () => {
     const key = require('./release-key').privateKey()
-    if (arg('--promote')) promote(arg('--promote'), key)
-    else release({ channel: arg('--channel') || 'beta', key, allowMissing: (arg('--allow-missing') || '').split(',').filter(Boolean) })
-  } catch (error) {
+    if (arg('--promote')) return promote(arg('--promote'), key)
+    const { cloud_url } = JSON.parse(fs.readFileSync(path.join(DESKTOP, 'endpoints.json'), 'utf8'))
+    const cloudKey = await require('./cloud-key').fetchFingerprint(cloud_url)
+    release({ channel: arg('--channel') || 'beta', key, cloudKey, allowMissing: (arg('--allow-missing') || '').split(',').filter(Boolean) })
+  })().catch((error) => {
     console.error(error.message)
     process.exitCode = 1
-  }
+  })
 }
 
 module.exports = { plan, sign }

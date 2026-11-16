@@ -1,7 +1,7 @@
 import { Select } from 'antd'
 import { CheckOutlined } from '@ant-design/icons'
 import useViewport from '../../hooks/useViewport'
-import ScrollRow from './ScrollRow.jsx'
+import ScrollRow from './ScrollRow'
 import './ds.css'
 
 // Các control nhỏ dùng chung (components/small-controls.md, charts.md, loading.md, empty-state.md, list-row.md).

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import useAuthStore from '../../../stores/authStore'
-import { EMPTY_FILTERS } from './crewFilters'
+import { EMPTY_FILTERS } from './crewFilterState'
 
 const INITIAL = { tab: 'all', search: '', sort: 'newest', filters: EMPTY_FILTERS, filtersOpen: false, page: 1, pageSize: 20 }
 

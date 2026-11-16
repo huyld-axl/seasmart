@@ -25,7 +25,7 @@ import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
 import Fab from '../../../components/ds/Fab'
 import ListCard, { ListCardList } from '../../../components/ds/ListCard'
-import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
+import { CrewFilterButton } from '../seafarers/CrewFilters'
 
 const TAB_ACTIVE = { all: undefined, active: '1', inactive: '0' }
 const muted = (value) => (value == null || value === '' ? <span style={{ color: 'var(--muted)' }}>—</span> : value)

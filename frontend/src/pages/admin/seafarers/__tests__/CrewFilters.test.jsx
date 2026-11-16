@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { CrewFilterFields } from '../CrewFilters.jsx'
-import { EMPTY_FILTERS } from '../crewFilters'
+import { CrewFilterFields } from '../CrewFilters'
+import { EMPTY_FILTERS } from '../crewFilterState'
 
 vi.mock('@tanstack/react-query', () => ({ useQuery: () => ({ data: [], isLoading: false }) }))
 vi.mock('../../../../components/ds/SearchSelect', () => ({ default: () => null }))

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
-import { centerLeft, scrollFlags } from './scrollRow.js'
+import { centerLeft, scrollFlags } from './scrollRowLogic'
 import './ds.css'
 
 const ACTIVE = '[aria-current="true"], [aria-current="page"], [aria-selected="true"]'

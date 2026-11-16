@@ -17,7 +17,7 @@ function setup(opts = {}) {
   fs.writeFileSync(path.join(d, 'package.json'), JSON.stringify({ name: 'mcah-desktop', version: '1.2.0', build: { productName: 'MCAH', directories: { output: 'dist/installer' } } }))
   const put = (platform, name, commit) => {
     fs.writeFileSync(path.join(d, 'dist/installer', name), 'x')
-    fs.writeFileSync(path.join(d, 'dist/installer', `build-info-${platform}.json`), JSON.stringify({ version: '1.2.0', commit, scan: 'clean', dirty, cloud_url: platform === 'win' && opts.wrongUrl ? 'http://localhost:4100' : 'https://a.vn/tai-khoan', update_url: 'https://a.vn/download/files' }))
+    fs.writeFileSync(path.join(d, 'dist/installer', `build-info-${platform}.json`), JSON.stringify({ version: '1.2.0', commit, scan: 'clean', dirty, cloud_url: platform === 'win' && opts.wrongUrl ? 'http://localhost:4100' : 'https://a.vn/tai-khoan', update_url: 'https://a.vn/download/files', cloud_key: platform === 'win' && opts.wrongKey ? 'dev' : 'prod' }))
   }
   if (linux) put('linux', 'mcah-desktop_1.2.0_amd64.deb', 'abc')
   if (win) put('win', 'MCAH Setup 1.2.0.exe', winCommit)
@@ -57,4 +57,19 @@ test('phát hành: --allow-missing win cho phát một mình bản Ubuntu, vẫn
   ;({ root, d } = setup({ win: false, linux: false }))
   assert.ok(plan({ desktop: d, allowMissing: ['win', 'linux'] }).problems.includes('Không có bộ cài nào'))
   fs.rmSync(root, { recursive: true })
+})
+
+test('phát hành: chặn khi bộ cài gói khoá đăng nhập khác khoá máy chủ thật', () => {
+  const { root, d } = setup({ wrongKey: true })
+  assert.deepStrictEqual(plan({ desktop: d, cloudKey: 'prod' }).problems.map((x) => /khoá đăng nhập/.test(x) && x.slice(0, 7)), ['Bản win'])
+  fs.rmSync(root, { recursive: true })
+})
+
+test('dấu vân tay khoá: không phụ thuộc thứ tự, PEM lạ thì báo lỗi', () => {
+  const { fingerprint } = require('../scripts/cloud-key')
+  const pem = () => require('crypto').generateKeyPairSync('ed25519').publicKey.export({ type: 'spki', format: 'pem' })
+  const a = pem(), b = pem()
+  assert.strictEqual(fingerprint(a + b), fingerprint(b + a))
+  assert.notStrictEqual(fingerprint(a), fingerprint(b))
+  assert.throws(() => fingerprint('x'))
 })

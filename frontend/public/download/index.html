@@ -26,7 +26,7 @@
   a.btn[aria-disabled="true"] { background: #e7e8ec; color: var(--muted); pointer-events: none; }
   a { color: var(--primary); }
   ol { margin: 0; padding-left: 20px; }
-  /* .card đặt display: grid nên phải ép [hidden] ẩn thật (khung "Có gì mới" khi chưa có bản nào). */
+  /* Ép [hidden] ẩn thật kể cả khi phần tử có display riêng. */
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -37,6 +37,7 @@
     <h1>Tải MCAH cho máy tính</h1>
     <p>Quản lý thuyền viên, tàu, hợp đồng trên máy tính của văn phòng. Một máy chính giữ dữ liệu, các máy khác trong văn phòng nối vào.</p>
     <p class="muted" id="version">Đang kiểm bản mới nhất…</p>
+    <p class="muted"><a id="notes-all" href="/phat-hanh/index.html">Xem ghi chú tất cả các bản</a></p>
   </section>
   <section class="card">
     <div class="grid">
@@ -46,11 +47,6 @@
     <p class="muted">Yêu cầu: Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB RAM.</p>
     <p class="muted" id="smartscreen" hidden>Windows có thể hiện "Windows đã bảo vệ máy tính của bạn": bấm <b>Thêm thông tin</b> → <b>Vẫn chạy</b>.</p>
   </section>
-  <section class="card" id="notes-card" hidden>
-    <b>Có gì mới</b>
-    <ul id="notes"></ul>
-    <details class="muted"><summary>Mã SHA-256 để tham khảo</summary><div id="sums"></div></details>
-  </section>
   <section class="card">
     <b>Cài đặt</b>
     <ol>
@@ -58,7 +54,7 @@
       <li>Mở MCAH, bấm <b>Đăng nhập qua trình duyệt</b>, đăng nhập hoặc đăng ký tài khoản.</li>
       <li>Người đầu tiên tạo văn phòng trên máy chính; nhân viên đăng nhập trên máy mình, MCAH tự nối máy chính.</li>
     </ol>
-    <p class="muted">Xem thêm <a href="/huong-dan/">Hướng dẫn sử dụng</a> · <a href="/tai-khoan/dieu-khoan">Điều khoản</a> · <a href="/tai-khoan/quyen-rieng-tu">Quyền riêng tư</a></p>
+    <p class="muted">Xem thêm <a href="/huong-dan/">Hướng dẫn sử dụng</a> · <a href="/phat-hanh/index.html">Ghi chú phát hành</a> · <a href="/tai-khoan/dieu-khoan">Điều khoản</a> · <a href="/tai-khoan/quyen-rieng-tu">Quyền riêng tư</a></p>
   </section>
 </main>
 <script>
@@ -72,21 +68,7 @@
       const date = m.released_at ? ` · ${new Date(m.released_at).toLocaleDateString('vi-VN')}` : ''
       document.getElementById('version').textContent = `Bản mới nhất: ${m.version}${date}`
       document.getElementById('smartscreen').hidden = m.windows_signed !== false
-      const lines = String(m.notes || '').split('\n').map((l) => l.replace(/^\s*[-*]\s*/, '').trim()).filter(Boolean)
-      if (lines.length) {
-        document.getElementById('notes-card').hidden = false
-        for (const line of lines) {
-          const li = document.createElement('li')
-          li.textContent = line
-          document.getElementById('notes').appendChild(li)
-        }
-        for (const f of Object.values(m.files || {})) {
-          const div = document.createElement('div')
-          div.textContent = `${f.name}: ${f.sha256}`
-          div.style.wordBreak = 'break-all'
-          document.getElementById('sums').appendChild(div)
-        }
-      }
+      document.getElementById('notes-all').hash = `v${m.version}`
       for (const [key, id] of [['win', 'win'], ['linux', 'linux']]) {
         const f = m.files?.[key]
         if (!f) continue

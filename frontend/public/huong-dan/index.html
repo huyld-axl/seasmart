@@ -181,10 +181,10 @@
 </style>
 <!-- Trang hướng dẫn duy nhất của app (đã gộp tong-quan.html, hop-dong-va-chuyen.html, dien-thoai.html ngày 10/11/2026). App mở thẳng tới mục bằng #id (HelpLink.jsx). Quyền lấy từ backend/src/constants/permissions.js. -->
 <style>
-  /* Mục "Ứng dụng trên máy tính": chỉ hiện khi trang mở trong app máy tính (giao thức app:), bản web giữ nguyên. */
+  /* Mục "Ứng dụng trên máy tính": chỉ hiện khi mở từ app máy tính (app mở bản web kèm ?app=1), bản web giữ nguyên. */
   html:not(.trong-app) .chi-app { display: none !important; }
 </style>
-<script>if (location.protocol === 'app:') document.documentElement.classList.add('trong-app')</script>
+<script>if (location.protocol === 'app:' || new URLSearchParams(location.search).has('app')) document.documentElement.classList.add('trong-app')</script>
 </head>
 <body>
 <aside class="side" id="side" aria-label="Mục lục">
@@ -225,6 +225,7 @@
     <a href="#app-cai-dat" class="chi-app">Cài đặt, cập nhật, gỡ</a>
     <a href="#dien-thoai">Dùng trên điện thoại</a>
     <a href="#hoi-dap">Hỏi đáp</a>
+    <a href="../phat-hanh/index.html">Ghi chú phát hành</a>
     <span class="empty" id="toc-empty">Không có mục nào khớp.</span>
   </nav>
 </aside>

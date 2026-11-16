@@ -49,6 +49,7 @@
   <section class="card" id="notes-card" hidden>
     <b>Có gì mới</b>
     <ul id="notes"></ul>
+    <p class="muted"><a id="notes-all" href="/phat-hanh/index.html">Xem ghi chú tất cả các bản</a></p>
     <details class="muted"><summary>Mã SHA-256 để tham khảo</summary><div id="sums"></div></details>
   </section>
   <section class="card">
@@ -75,6 +76,7 @@
       const lines = String(m.notes || '').split('\n').map((l) => l.replace(/^\s*[-*]\s*/, '').trim()).filter(Boolean)
       if (lines.length) {
         document.getElementById('notes-card').hidden = false
+        document.getElementById('notes-all').hash = `v${m.version}`
         for (const line of lines) {
           const li = document.createElement('li')
           li.textContent = line

@@ -1,5 +1,6 @@
 // Hàm thuần của danh sách chuyến mới (mỗi chuyến một thuyền viên): nhãn lệch ngày lên, nhãn rời tàu, nguồn.
 import dayjs from 'dayjs'
+import { formatCalendarDuration } from '../../../utils/format'
 import { MANUAL_REASONS, MANUAL_REASON_LABELS } from '../../../constants/opportunityVoyage'
 
 // Khoảng "Trên tàu trong" mặc định: tháng này.
@@ -99,19 +100,18 @@ export function nextVoyageValues(_, saved) {
 }
 
 // ---------- Chi tiết chuyến ----------
-// Lệch ngày kiểu "muộn 13 ngày" / "sớm 4,7 tháng": dưới 60 ngày tính ngày, từ 60 ngày tính tháng (30 ngày một tháng).
-export function deltaText(days) {
+// Có đủ hai mốc thì hiển thị tháng lịch/ngày; nếu chỉ có số ngày lệch thì giữ số ngày chính xác.
+export function deltaText(days, from, to) {
   if (!days) return null
   const n = Math.abs(days)
-  const amount = n < 60 ? `${n} ngày` : `${String(Math.round((n / 30) * 10) / 10).replace('.', ',')} tháng`
+  const dates = from && to ? [from, to].sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf()) : []
+  const amount = formatCalendarDuration(dates[0], dates[1]) || `${n} ngày`
   return days > 0 ? `muộn ${amount}` : `sớm ${amount}`
 }
 
-// Số tháng còn lại tới ngày rời dự kiến, một chữ số thập phân; đã qua thì null.
-export function monthsLeft(planned, today = dayjs()) {
-  const days = dayjs(planned).startOf('day').diff(dayjs(today).startOf('day'), 'day')
-  if (days < 0) return null
-  return String(Math.round((days / 30) * 10) / 10).replace('.', ',')
+// Thời gian còn lại theo tháng lịch/ngày; thiếu ngày, ngày sai hoặc đã qua thì null.
+export function timeLeft(planned, today = dayjs()) {
+  return formatCalendarDuration(today, planned) || null
 }
 
 const HISTORY = {
@@ -170,14 +170,14 @@ export function crewRows({ voyages = [], openings = [], today, formatDate, onVoy
     let subtitle = `${v.rank_name} · ${v.code}`
     let warn = false
     if (v.leave_date) {
-      const delta = deltaText(v.leave_delta_days)
+      const delta = deltaText(v.leave_delta_days, v.planned_leave_date, v.leave_date)
       bars.push({
         kind: 'left', start: join, end: iso(v.leave_date),
         label: [v.leave_port_name, delta].filter(Boolean).join(' · '),
         tip: [joinLine, `Rời tàu ${formatDate(v.leave_date)}${v.leave_port_name ? ` tại ${v.leave_port_name}` : ''}`, delta].filter(Boolean).join('\n'),
       })
     } else {
-      const delta = deltaText(v.join_delta_days)
+      const delta = deltaText(v.join_delta_days, v.opportunity?.planned_join_date, v.join_date)
       bars.push({
         kind: 'onboard', start: join, end: today,
         label: [v.join_port_name, delta].filter(Boolean).join(' · '),

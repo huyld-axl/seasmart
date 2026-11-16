@@ -1,6 +1,7 @@
 const { versionWhere, failIfStale } = require('../utils/row_version')
 const path = require('path')
 const pool = require('../config/db')
+const { assertCertificateDates } = require('../utils/certificate_dates')
 const { trashFiles, certificateFilePath } = require('../utils/file_trash')
 const fileStore = require('../utils/file_store')
 const tree = require('../utils/readable_tree')
@@ -93,6 +94,7 @@ const certificateService = {
   },
 
   async create(seafarerId, data, created_by) {
+    assertCertificateDates(data)
     try {
       const [result] = await pool.query(
         'INSERT INTO seafarer_certificate SET ?',
@@ -109,8 +111,9 @@ const certificateService = {
 
   async update(id, seafarerId, body, updated_by) {
     const { version, ...data } = body || {}
-    await this.getById(id, seafarerId)
-    // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4).
+    const current = await this.getById(id, seafarerId)
+    assertCertificateDates({ ...current, ...data })
+    // Giữ kiểm tra phiên bản của dev khi cập nhật giấy tờ.
     const guard = versionWhere(version)
     const [res] = await pool.query(
       `UPDATE seafarer_certificate SET ?, updated_by = ?, updated_at = NOW() WHERE id = ?${guard.sql}`,

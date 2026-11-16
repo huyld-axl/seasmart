@@ -125,6 +125,7 @@ export const STATUS = {
   },
   partner: {
     ACTIVE: { label: 'Đang hợp tác', tone: 'success', mark: 'check' },
+    INACTIVE: { label: 'Ngừng hợp tác', tone: 'neutral', mark: 'minus' },
   },
   cert: {
     VALID: { label: 'Hiệu lực', tone: 'success', mark: 'check' },

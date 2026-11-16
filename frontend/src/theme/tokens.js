@@ -49,7 +49,7 @@ export const COLORS = {
   dangerBgHover: 'rgba(255, 32, 86, 0.15)',
 }
 
-export const FONT_FAMILY = "'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
+export const FONT_FAMILY = "'Twemoji Country Flags', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif"
 
 // Bo góc theo chiều cao (F1, luật chốt #10): dưới 40px là 8, từ 40px là 12, card và modal 16.
 export const RADIUS = { sm: 8, md: 12, lg: 16, full: 9999 }

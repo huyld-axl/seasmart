@@ -1,5 +1,6 @@
+import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useState } from 'react'
-import { Button, InputNumber, Skeleton, Table, Tooltip } from 'antd'
+import { Button, Skeleton, Table, Tooltip } from 'antd'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CopyOutlined } from '@ant-design/icons'
@@ -7,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { kpiTargetApi } from '../../../api'
 import MoneyInput from '../../../components/ds/MoneyInput'
+import NumberInput from '../../../components/ds/NumberInput'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import useViewport from '../../../hooks/useViewport'
@@ -67,11 +69,11 @@ export default function KpiTargetPage() {
     { title: 'Môi giới viên', dataIndex: 'name', render: (name) => <span className="kt-name">{name}</span> },
     {
       title: 'Hợp đồng', key: 'contracts', width: 150,
-      render: (_, row) => cell(row, 'contracts', <InputNumber min={0} max={1000} precision={0} controls={false} inputMode="numeric" value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
+      render: (_, row) => cell(row, 'contracts', <NumberInput changeOnBlur={false} controls={false} inputMode="numeric" value={row.contracts} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'contracts', v)} aria-label={`Mục tiêu hợp đồng của ${row.name}`} />),
     },
     {
       title: 'Doanh thu', key: 'revenue_usd', width: 200,
-      render: (_, row) => cell(row, 'revenue_usd', <MoneyInput value={row.revenue_usd} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'revenue_usd', v)} aria-label={`Mục tiêu doanh thu của ${row.name}`} />),
+      render: (_, row) => cell(row, 'revenue_usd', <MoneyInput min={undefined} max={undefined} changeOnBlur={false} value={row.revenue_usd} placeholder="Chưa đặt" onChange={(v) => setCell(row.user_id, 'revenue_usd', v)} aria-label={`Mục tiêu doanh thu của ${row.name}`} />),
     },
     { title: 'Tháng này: đã ký / dự kiến', key: 'actual', align: 'right', render: (_, row) => <span className="kt-actual">{row.done} HĐ · {usd(row.revenue)} USD</span> },
   ]
@@ -84,6 +86,8 @@ export default function KpiTargetPage() {
     }
     save.mutate()
   }
+
+  const shortcuts = useFormShortcuts({ onCancel: () => setEdit({ base: null, rows: [], tried: false }) })
 
   let body
   if (query.isLoading) body = <div className="crew-loading"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
@@ -135,11 +139,11 @@ export default function KpiTargetPage() {
   // Rời trang khi còn mục tiêu chưa lưu thì hỏi lại.
   useLeaveGuard(dirty)
   return (
-    <div className="ds-page">
+    <div ref={shortcuts} className="ds-page">
       <div className="ds-page__head">
         <div>
           <h1 className="ds-page__title">Mục tiêu tháng</h1>
-          <p className="ds-page__desc">Mỗi môi giới viên một mục tiêu số hợp đồng ký mới và doanh thu. Mục tiêu công ty là tổng. Ô để trống là chưa đặt.</p>
+          <p className="ds-page__desc">Mỗi môi giới viên một mục tiêu số hợp đồng ký mới và doanh thu. Mục tiêu công ty là tổng. Số hợp đồng từ 1; doanh thu từ 1 USD. Ô để trống là chưa đặt.</p>
         </div>
       </div>
       <div className="kt-toolbar">
@@ -163,7 +167,7 @@ export default function KpiTargetPage() {
         </div>
         <div className="sf-savebar__actions">
           <Button onClick={() => setEdit({ base: null, rows: [], tried: false })} disabled={!dirty || save.isPending}>Huỷ</Button>
-          <Button type="primary" onClick={submit} loading={save.isPending} disabled={!dirty}>Lưu thay đổi</Button>
+          <Button data-form-submit type="primary" onClick={submit} loading={save.isPending} disabled={!dirty}>Lưu thay đổi</Button>
         </div>
       </div>
     </div>

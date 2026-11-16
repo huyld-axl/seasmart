@@ -151,8 +151,8 @@ describe('bản xem trước bill khi duyệt lại', () => {
 
 describe('contractMonthsLabel', () => {
   it('tháng tròn, tháng lẻ ngày, dấu phẩy thập phân', () => {
-    expect(contractMonthsLabel('2026-10-15', '2027-04-14')).toBe('6 tháng')
-    expect(contractMonthsLabel('2026-09-01', '2027-03-16')).toBe('6,5 tháng')
+    expect(contractMonthsLabel('2026-10-15', '2027-04-14')).toBe('5 tháng 30 ngày')
+    expect(contractMonthsLabel('2026-09-01', '2027-03-16')).toBe('6 tháng 15 ngày')
     expect(contractMonthsLabel('2026-01-01', '2026-07-01')).toBe('6 tháng')
   })
   it('ngày kết thúc trước ngày bắt đầu hoặc thiếu ngày thì rỗng', () => {

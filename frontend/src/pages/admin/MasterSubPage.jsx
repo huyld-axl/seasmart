@@ -1,8 +1,11 @@
+import useFormShortcuts from '../../hooks/useFormShortcuts'
 import { flagEmoji, withFlag } from '../../utils/flag'
+import { matchesSearch, normalizeSearch } from '../../utils/search'
 import useEditConflict from '../../hooks/useEditConflict'
 import { useParams, Navigate } from 'react-router-dom'
 import { Children, cloneElement, isValidElement, useState } from 'react'
-import { App, Table, Button, Form, Input, InputNumber, Select, Skeleton } from 'antd'
+import { App, Table, Button, Form, Input, InputNumber, Skeleton } from 'antd'
+import Select from '../../components/ds/SearchSelect'
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../../api/client'
@@ -12,6 +15,7 @@ import { EmptyState } from '../../components/ds/Controls'
 import RowActions from '../../components/ds/RowActions'
 import ListFooter from '../../components/ds/ListFooter'
 import useListSticky from '../../components/ds/useListSticky'
+import useListScrollReset from '../../components/ds/useListScrollReset'
 import { actionColumn } from '../../components/ds/actionColumn'
 import { useCan } from '../../hooks/usePermission'
 import ToggleRow from '../../components/ds/ToggleRow'
@@ -114,14 +118,16 @@ function MasterTable({ resource, columns, formFields, title }) {
   const [pageSize, setPageSize] = useState(20)
   const tableScroll = useListSticky()
   const [form] = Form.useForm()
+  const shortcuts = useFormShortcuts({ enabled: !!editing, autoFocus: !editing?.id, focusKey: editing, onCancel: () => setEditing(null) })
   const [changed, setChanged] = useState(new Set())
   const isMobile = useViewport().isCompact
+  const { listRef, scrollToListStart } = useListScrollReset(isMobile, false)
   const toast = useToast()
   const { modal } = App.useApp()
   const { data, isLoading, isError, refetch, create, update, remove } = useMasterData(resource)
-  const keyword = search.trim().toLowerCase()
+  const keyword = normalizeSearch(search)
   const rows = keyword
-    ? data.filter((row) => Object.values(row).some((value) => typeof value === 'string' && value.toLowerCase().includes(keyword)))
+    ? data.filter((row) => Object.values(row).some((value) => typeof value === 'string' && matchesSearch(value, keyword)))
     : data
   // Danh mục tải hết một lần; chia trang ngay trên trình duyệt.
   const pageRows = rows.slice((page - 1) * pageSize, page * pageSize)
@@ -210,6 +216,8 @@ function MasterTable({ resource, columns, formFields, title }) {
   }
 
   const actionCol = actionColumn((row) => <RowActions name={row.name_vi || row.name || row.code} onEdit={canEdit ? () => openPanel(row) : undefined} onDelete={can('catalog.delete') ? () => confirmDelete(row) : undefined} />)
+  // Độ rộng dựa trên cấu hình cột, không dựa vào nội dung của trang hiện tại.
+  const tableMinWidth = Math.max(640, [...columns, actionCol].reduce((sum, column) => sum + (typeof column.width === 'number' ? column.width : 240), 0))
 
   let body
   if (isError) {
@@ -239,20 +247,21 @@ function MasterTable({ resource, columns, formFields, title }) {
             dataSource={pageRows}
             columns={[...columns, actionCol]}
             pagination={false}
-            scroll={tableScroll}
+            tableLayout="fixed"
+            scroll={{ ...tableScroll, x: tableMinWidth }}
             onRow={(row) => (canEdit ? { onClick: () => openPanel(row), onKeyDown: (event) => event.key === 'Enter' && openPanel(row), tabIndex: 0 } : {})}
           />
         )}
-        <ListFooter total={rows.length} page={page} pageSize={pageSize} unit={title} note={keyword ? `lọc từ ${data.length}` : null} onChange={(next, size) => { setPage(next); setPageSize(size) }} />
+        <ListFooter total={rows.length} page={page} pageSize={pageSize} unit={title} note={keyword ? `lọc từ ${data.length}` : null} onChange={(next, size) => { setPage(next); setPageSize(size); scrollToListStart() }} />
       </>
     )
   }
 
   return (
     <>
-      <div className="ds-card ds-card--fixed">
+      <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar">
-          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => { setPage(1); setSearch(event.target.value) }} />
+          <Input className="ds-toolbar__search" allowClear prefix={<SearchOutlined />} placeholder={`Tìm ${title}`} aria-label={`Tìm ${title}`} value={search} onChange={(event) => { setPage(1); setSearch(event.target.value); scrollToListStart() }} />
           {canEdit ? (
             <span className="ds-toolbar__end">
               <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
@@ -270,11 +279,11 @@ function MasterTable({ resource, columns, formFields, title }) {
         onClose={() => setEditing(null)}
         hasForm={false}
         footer={
-          <>
-            {editing?.id && changed.size > 0 ? <span style={{ marginRight: 'auto', color: 'var(--muted)' }}>{changed.size} thay đổi</span> : null}
+          <div className={`master-panel-actions${editing?.id ? '' : ' master-panel-actions--create'}`}>
+            {editing?.id && changed.size > 0 ? <span className="master-panel-actions__changes" style={{ marginRight: 'auto', color: 'var(--muted)' }}>{changed.size} thay đổi</span> : null}
             <Button onClick={() => setEditing(null)}>Huỷ</Button>
             {editing?.id ? (
-              <Button type="primary" disabled={!changed.size} loading={update.isPending} onClick={() => submit()}>
+              <Button data-form-submit type="primary" disabled={!changed.size} loading={update.isPending} onClick={() => submit()}>
                 Lưu thay đổi
               </Button>
             ) : (
@@ -282,15 +291,15 @@ function MasterTable({ resource, columns, formFields, title }) {
                 <Button loading={create.isPending} onClick={() => submit({ addAnother: true })}>
                   Lưu & thêm khác
                 </Button>
-                <Button type="primary" loading={create.isPending} onClick={() => submit()}>
+                <Button data-form-submit className="master-panel-actions__create" type="primary" loading={create.isPending} onClick={() => submit()}>
                   Thêm {title}
                 </Button>
               </>
             )}
-          </>
+          </div>
         }
       >
-        <Form form={form} layout="vertical" initialValues={editing?.id ? editing : undefined} onFinish={() => submit()} onValuesChange={trackChanges}>
+        <Form ref={shortcuts} form={form} layout="vertical" initialValues={editing?.id ? editing : undefined} onFinish={() => submit()} onValuesChange={trackChanges}>
           {fields}
         </Form>
       </SlidePanel>

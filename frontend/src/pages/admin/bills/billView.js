@@ -66,7 +66,10 @@ export function toPayload(values) {
   }
 }
 
-export const dueChanged = (initial, values) => Boolean(initial.due_date && values.due_date && !dayjs(values.due_date).isSame(initial.due_date, 'day'))
+export const dueChanged = (initial, values) => {
+  if (!initial.due_date || !values.due_date) return Boolean(initial.due_date) !== Boolean(values.due_date)
+  return !dayjs(values.due_date).isSame(initial.due_date, 'day')
+}
 
 // Số thay đổi so với lúc mở form: mỗi dòng đổi số hoặc tên, dòng thêm, dòng xoá, ghi chú.
 export function countChanges(initial, values) {

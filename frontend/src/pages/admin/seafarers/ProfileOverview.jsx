@@ -37,7 +37,7 @@ function buildSections(s, contacts) {
         ['Giới tính', GENDER[s.gender], 4],
         ['Tình trạng', <StatusBadge key="st" group="crew" value={s.status} />, 4],
         ['Chức danh', s.rank_name, 4],
-        ['Nguyên quán', s.place_of_origin, 8],
+        ['Nguyên quán', s.place_of_origin, 4],
         ['Địa chỉ thường trú', s.permanent_address, 12],
         ['Tình trạng hôn nhân', s.marital_status, 4],
         ['Số con', s.children_count, 4],
@@ -47,7 +47,7 @@ function buildSections(s, contacts) {
       key: 'identity',
       title: 'Giấy tờ tùy thân',
       groups: [
-        { sub: 'Hộ chiếu', fields: [['Số hộ chiếu', copyable(s.passport_number), 4], ['Ngày cấp', date(s.passport_issued_date), 4], ['Ngày hết hạn', date(s.passport_expiry), 4], ['Nơi sinh', s.place_of_birth, 6], ['Quốc tịch', s.nationality_name ? withFlag(s.nationality_code, s.nationality_name, s.nationality_flag_emoji) : null, 6]] },
+        { sub: 'Hộ chiếu', fields: [['Số hộ chiếu', copyable(s.passport_number), 4], ['Ngày cấp', date(s.passport_issued_date), 4], ['Ngày hết hạn', date(s.passport_expiry), 4], ['Nơi sinh', s.place_of_birth, 4], ['Quốc tịch', s.nationality_name ? withFlag(s.nationality_code, s.nationality_name, s.nationality_flag_emoji) : null, 4]] },
         { sub: 'Căn cước công dân', fields: [['Số CCCD', copyable(s.national_id), 4], ['Ngày cấp', date(s.national_id_issued_date), 4], ['Nơi cấp', s.national_id_issued_place, 4]] },
         { sub: 'Sổ thuyền viên', fields: [['Số sổ thuyền viên', copyable(s.seaman_book_number), 4]] },
       ],

@@ -65,17 +65,22 @@ describe('form Tạo chuyến', () => {
 })
 
 describe('chi tiết chuyến', () => {
-  it('lệch ngày theo ngày rồi theo tháng', async () => {
+  it('lệch ngày theo tháng lịch và ngày khi có đủ mốc', async () => {
     const { deltaText } = await import('../voyageList')
     expect(deltaText(0)).toBeNull()
     expect(deltaText(13)).toBe('muộn 13 ngày')
-    expect(deltaText(-141)).toBe('sớm 4,7 tháng')
+    expect(deltaText(-141)).toBe('sớm 141 ngày')
+    expect(deltaText(240, '2026-07-03', '2027-02-28')).toBe('muộn 7 tháng 25 ngày')
+    expect(deltaText(-240, '2027-02-28', '2026-07-03')).toBe('sớm 7 tháng 25 ngày')
   })
 
-  it('còn bao nhiêu tháng', async () => {
-    const { monthsLeft } = await import('../voyageList')
-    expect(monthsLeft('2027-01-30', '2026-10-27')).toBe('3,2')
-    expect(monthsLeft('2026-10-01', '2026-10-27')).toBeNull()
+  it('thời gian còn lại theo tháng lịch và ngày', async () => {
+    const { timeLeft } = await import('../voyageList')
+    expect(timeLeft('2027-01-30', '2026-10-27')).toBe('3 tháng 3 ngày')
+    expect(timeLeft('2026-10-01', '2026-10-27')).toBeNull()
+    expect(timeLeft(undefined, '2026-10-27')).toBeNull()
+    expect(timeLeft('2026-10-27', '2026-10-27')).toBe('0 ngày')
+    expect(timeLeft('2027-02-28', '2027-01-31')).toBe('1 tháng')
   })
 
   it('lịch sử ra dòng thời gian', async () => {
@@ -115,7 +120,7 @@ describe('thẻ Đội ngũ', () => {
     expect(rows[0].bars.map((b) => b.kind)).toEqual(['planned', 'onboard', 'moved'])
     expect(rows[0].bars[1]).toMatchObject({ end: '2026-10-27', label: 'Hải Phòng · muộn 13 ngày' })
     expect(rows[0].bars[2]).toMatchObject({ start: '2027-03-05', end: '2027-04-05' })
-    expect(rows[1].bars[1]).toMatchObject({ kind: 'left', end: '2026-09-14', label: 'sớm 4,8 tháng' })
+    expect(rows[1].bars[1]).toMatchObject({ kind: 'left', end: '2026-09-14', label: 'sớm 4 tháng 22 ngày' })
     expect(rows[2]).toMatchObject({ id: 'o9', title: 'CH26047' })
     expect(rows[0].bars[0]).toMatchObject({ label: 'rời 05/03/2027' })
     expect(rows[0].warn).toBe(false)

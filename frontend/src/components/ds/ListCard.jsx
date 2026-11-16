@@ -63,9 +63,15 @@ export function MoneyStrip({ income, expense, result, resultTone, empty = 'Chưa
   }
   return (
     <div className="ds-lcard__money">
-      <span>Thu</span><b>{income ?? '—'}</b>
-      <span>− Chi</span><b>{expense ?? '—'}</b>
-      <span className={`ds-lcard__money-eq${resultTone ? ` ds-lcard__tone--${resultTone}` : ''}`}>= {result}</span>
+      <div className="ds-lcard__money-parts">
+        <span className="ds-lcard__money-part"><span>Thu</span> <b>{income ?? '—'}</b></span>
+        <span aria-hidden>·</span>
+        <span className="ds-lcard__money-part"><span>Chi</span> <b>{expense ?? '—'}</b></span>
+      </div>
+      <div className="ds-lcard__money-result">
+        <span>Chênh lệch</span>
+        <b className={`ds-lcard__money-eq${resultTone ? ` ds-lcard__tone--${resultTone}` : ''}`}>{result}</b>
+      </div>
     </div>
   )
 }

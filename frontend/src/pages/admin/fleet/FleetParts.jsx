@@ -125,10 +125,10 @@ export function FormCrumb({ items }) {
 
 // Hàng mục của form: desktop là danh sách (dọc ở màn rộng, chip ở màn vừa); điện thoại là ScrollRow (mép mờ, vạch chỉ,
 // mục đang xem tự vào giữa). `activeKey` để ScrollRow cuộn theo mục đang xem.
-export function FormToc({ activeKey, children }) {
+export function FormToc({ activeKey, children, label = 'Các mục của form' }) {
   const { isPhone } = useViewport()
   return (
-    <nav className="sf-toc" aria-label="Các mục của form">
+    <nav className="sf-toc" aria-label={label}>
       {isPhone ? <ScrollRow activeKey={activeKey}>{children}</ScrollRow> : children}
     </nav>
   )

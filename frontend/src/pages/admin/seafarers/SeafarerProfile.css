@@ -11,8 +11,8 @@
 .crew-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px 16px; }
 .crew-head__person { display: flex; flex: 1 1 320px; align-items: flex-start; gap: 16px; min-width: 0; }
 .crew-head__text { min-width: 0; }
-.crew-head__title { margin: 0; font-size: 18px; font-weight: 600; text-wrap: balance; }
-.crew-head__desc { max-width: 60ch; margin: 4px 0 0; color: var(--muted); }
+.crew-head__title { min-width: 0; max-width: 100%; margin: 0; font-size: 18px; font-weight: 600; text-wrap: balance; overflow-wrap: anywhere; }
+.crew-head__desc { min-width: 0; max-width: 60ch; margin: 4px 0 0; color: var(--muted); overflow-wrap: anywhere; }
 .crew-head__badges { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; }
 /* Ảnh 4x6: khung tỉ lệ 2:3, ảnh cắt cover ở giữa (danh sách thuyền viên dùng đúng tỉ lệ và cách cắt này). */
 .crew-head__photo { position: relative; align-self: flex-start; width: 130px; height: 195px; flex-shrink: 0; }

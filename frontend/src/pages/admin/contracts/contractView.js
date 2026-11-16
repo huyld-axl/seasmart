@@ -1,3 +1,4 @@
+import { formatCalendarDuration } from '../../../utils/format'
 // Hàm thuần của màn Hợp đồng: cân đối, danh sách khoản, kỳ thanh toán, đổi dữ liệu form <-> API.
 // `balance` phải cho cùng kết quả với contractBalance ở backend/src/utils/voyage_math.js.
 import dayjs from 'dayjs'
@@ -222,17 +223,8 @@ export function planSummary(plan) {
 // Nhãn lệch ngày ở danh sách hợp đồng: "Đã rời tàu 17/10".
 export const dateMismatchText = (mismatch) => `Đã rời tàu ${dm(mismatch.leave_date)}`
 
-// Số tháng của hợp đồng như backend (monthsBetween): m tháng trọn + ngày lẻ / 30, làm tròn 2 chữ số. Ghi "6 tháng", "2,5 tháng".
-export function contractMonthsLabel(start, end) {
-  const a = dayjs(start)
-  const b = dayjs(end)
-  if (!a.isValid() || !b.isValid() || b.isBefore(a, 'day')) return ''
-  let months = (b.year() - a.year()) * 12 + (b.month() - a.month())
-  while (months > 0 && a.add(months, 'month').isAfter(b, 'day')) months -= 1
-  const days = b.startOf('day').diff(a.add(months, 'month').startOf('day'), 'day')
-  const value = round2(months + days / 30)
-  return `${String(value).replace('.', ',')} tháng`
-}
+// Hiển thị tháng lịch và ngày lẻ; không dùng để tính tiền.
+export const contractMonthsLabel = formatCalendarDuration
 
 // Hợp đồng Hiệu lực sắp hết hạn: số ngày còn lại tới ngày kết thúc (âm là đã quá). Trạng thái khác, hoặc chưa có ngày: null.
 export function daysLeft(row, today = dayjs()) {

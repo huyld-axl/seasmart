@@ -130,7 +130,7 @@ const voyageService = {
     let where = 'WHERE sv.deleted_at IS NULL'
     if (query.ownerId) { where += ' AND sv.created_by = ?'; params.push(Number(query.ownerId)) }
     if (query.search) {
-      where += ' AND (unaccent(s.full_name::text) ILIKE unaccent(?) OR sv.code ILIKE ? OR s.seafarer_code ILIKE ?)'
+      where += ' AND (unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(sv.code::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?))'
       params.push(...Array(3).fill(`%${query.search}%`))
     }
     for (const key of ['vessel_id', 'ship_owner_id', 'rank_id', 'seafarer_id']) {

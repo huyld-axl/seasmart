@@ -14,10 +14,10 @@ export default function CollectModal({ bill, open, pending, onCancel, onConfirm 
       cancelText="Huỷ"
       confirmLoading={pending}
       onCancel={onCancel}
-      onOk={() => form.validateFields().then((values) => onConfirm(values.paid_date.format('YYYY-MM-DD')))}
+      onOk={() => form.submit()}
       destroyOnHidden
     >
-      <Form form={form} layout="vertical" requiredMark initialValues={{ paid_date: dayjs() }}>
+      <Form form={form} layout="vertical" requiredMark clearOnDestroy initialValues={{ paid_date: dayjs() }} onFinish={(values) => onConfirm(values.paid_date.format('YYYY-MM-DD'))}>
         <Form.Item
           name="paid_date"
           label="Ngày thu"

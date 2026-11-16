@@ -39,8 +39,8 @@ async function cutPdf(buffer) {
   try {
     task = pdfjs.getDocument({
       data: new Uint8Array(buffer),
-      standardFontDataUrl: path.join(pdfRoot, 'standard_fonts') + path.sep,
-      cMapUrl: path.join(pdfRoot, 'cmaps') + path.sep,
+      standardFontDataUrl: path.join(pdfRoot, 'standard_fonts').replace(/\\/g, '/') + '/',
+      cMapUrl: path.join(pdfRoot, 'cmaps').replace(/\\/g, '/') + '/',
       cMapPacked: true,
       isEvalSupported: false,
       verbosity: 0,

@@ -9,27 +9,8 @@ const { documentService } = require('./src/services/document.service')
 // App máy tính: không ghi log từng request (đường dẫn có thể chứa tên, số giấy tờ trong ô tìm kiếm).
 const fastify = Fastify({ logger: config.desktop ? { level: 'warn' } : true })
 
-// Error handler — phân biệt lỗi user-facing vs internal
-fastify.setErrorHandler((error, request, reply) => {
-  const statusCode = error.statusCode || 500
-
-  if (statusCode >= 500) {
-    // Log chi tiết server-side, không lộ ra client
-    fastify.log.error(
-      { err: error, url: request.url, method: request.method },
-      'Internal server error'
-    )
-    return reply.code(500).send({ error: 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau' })
-  }
-
-  // 4xx: lỗi do client, trả về message an toàn
-  return reply.code(statusCode).send({
-    error: error.message || 'Yêu cầu không hợp lệ',
-    ...(error.code && /^[A-Z_]+$/.test(error.code) ? { code: error.code } : {}),
-    ...(error.blocked_bills ? { blocked_bills: error.blocked_bills } : {}),
-    ...(error.conflict ? { conflict: error.conflict } : {}),
-  })
-})
+const { errorHandler } = require('./src/utils/error_handler')
+fastify.setErrorHandler(errorHandler)
 
 async function start() {
   await fastify.register(plugins)

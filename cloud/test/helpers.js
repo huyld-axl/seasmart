@@ -12,7 +12,7 @@ async function resetDb() {
   await migrate()
   const pool = require('../src/db')
   await pool.query('TRUNCATE ship_catalog CASCADE')
-  await pool.query('TRUNCATE usage, audit, login_failure, refresh_token, auth_code, invite, office_member, office_machine, office, email_token, account RESTART IDENTITY CASCADE')
+  await pool.query('TRUNCATE usage, audit, login_failure, login_code, refresh_token, auth_code, invite, office_member, office_machine, office, email_token, account RESTART IDENTITY CASCADE')
 }
 
 module.exports = { resetDb }

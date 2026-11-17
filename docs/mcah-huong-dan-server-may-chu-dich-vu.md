@@ -27,10 +27,10 @@ chmod 600 cloud/.env
 | `CLOUD_PUBLIC_URL` | `https://mcah.axalize.vn/tai-khoan` (đúng như vậy, không có `/` cuối) |
 | `CLOUD_COOKIE_SECRET` | Chuỗi ngẫu nhiên: chạy `openssl rand -hex 32` rồi dán kết quả. Thiếu thì `cloud` không khởi động |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Lấy từ người phụ trách Google Cloud Console của MCAH |
-| `SMTP_*` | Chép nguyên các dòng `SMTP_*` của `backend/.env` (cùng tên). Dùng để gửi thư xác minh, quên mật khẩu, lời mời |
+| `SMTP_*` | Chép nguyên các dòng `SMTP_*` của `backend/.env` (cùng tên). **Bắt buộc**: gửi mã đăng nhập 6 số (không còn mật khẩu) |
 | `AI_PROVIDER`, `OPENAI_*` | Chép từ `backend/.env` (cùng tên) |
 | `VESSEL_LOOKUP_PROVIDER`, `VESSEL_API_BASE_URL`, `VESSEL_API_ENC_KEY` | Chép từ `backend/.env` nếu có; không có thì để trống (tắt tra tàu theo IMO) |
-| `CLOUD_ADMIN_EMAILS` | Email nội bộ được vào trang quản trị `https://mcah.axalize.vn/tai-khoan/quan-tri` |
+| `CLOUD_ADMIN_EMAILS` | Email nội bộ được vào trang quản trị `https://mcah.axalize.vn/tai-khoan/quan-tri` (tự có tài khoản ở lần đăng nhập đầu) |
 
 ### 2. Deploy như mọi lần
 
@@ -38,7 +38,7 @@ chmod 600 cloud/.env
 ./deploy.sh
 ```
 
-Kiểm: mở `https://mcah.axalize.vn/tai-khoan/health` thấy `{"status":"ok"}`; mở `https://mcah.axalize.vn/tai-khoan/dang-nhap` thấy trang đăng nhập MCAH có nút "Tiếp tục với Google".
+Kiểm: mở `https://mcah.axalize.vn/tai-khoan/health` thấy `{"status":"ok"}`; mở `https://mcah.axalize.vn/tai-khoan/dang-nhap` thấy trang đăng nhập MCAH có nút "Tiếp tục với Google" và ô email; nhập một email trong `CLOUD_ADMIN_EMAILS`, nhận được thư "Mã đăng nhập MCAH".
 
 Nếu trước Docker còn một proxy riêng (Caddy, nginx của máy, Cloudflare…) chỉ chuyển một số đường dẫn: cho `/tai-khoan/` đi qua như các đường dẫn khác. Nếu cả tên miền đã đổ vào container web thì không phải làm gì.
 
@@ -67,6 +67,16 @@ docker compose cp cloud:/app/cloud/.data/signing-key.pem ./signing-key.pem.backu
 ### 5. Báo lại cho người build app
 
 Sau khi `https://mcah.axalize.vn/tai-khoan/health` chạy, báo người build app máy tính. Bộ cài cho server này phải build với `MCAH_CLOUD_URL=https://mcah.axalize.vn/tai-khoan` (bộ cài tự lấy khoá công khai từ địa chỉ đó).
+
+## Trang quản trị Axalize: khách hàng, tài khoản, khoá
+
+Vào `https://mcah.axalize.vn/tai-khoan/quan-tri`, đăng nhập bằng email nằm trong `CLOUD_ADMIN_EMAILS` (Google hoặc mã 6 số gửi qua email; email nội bộ này tự có tài khoản ở lần đăng nhập đầu). Không có mật khẩu, không có trang đăng ký. Ba tab:
+
+- **Khách hàng:** khách mua MCAH thì nhập **Tên văn phòng**, ghi chú (tên công ty, số hợp đồng…), **email và họ tên quản trị văn phòng**, bấm **Thêm khách hàng**. Không có thư nào gửi đi: báo khách tải MCAH và đăng nhập bằng đúng email đó. Văn phòng ở trạng thái "Chờ cài máy chính" tới khi quản trị đăng nhập trên máy chính. **Thêm quản trị** khi quản trị cũ nghỉ. **Khoá** văn phòng (phải ghi lý do) làm mọi máy của văn phòng không vào được MCAH trong vòng 1 giờ; dữ liệu trên máy khách giữ nguyên; **Mở khoá** là dùng tiếp.
+- **Tài khoản:** mọi tài khoản, kể cả nhân viên do quản trị văn phòng tạo trong app: văn phòng, vai trò, người tạo, lần đăng nhập gần nhất (Google / mã email), trạng thái. **Khoá** một người (phải ghi lý do): người đó không đăng nhập được nữa, máy đang mở bị đưa ra trong vòng 1 giờ.
+- **Nhật ký:** thêm khách hàng / quản trị / tài khoản, cài máy chính, khoá / mở khoá kèm lý do.
+
+**Thư bắt buộc phải gửi được:** mã đăng nhập đi qua email, nên `SMTP_*` trong `cloud/.env` phải đúng. Sau khi deploy, đăng nhập thử bằng mã email; kiểm thư không vào Thư rác (tên miền gửi cần SPF / DKIM). Mỗi người phải đăng nhập lại qua trình duyệt sau 30 ngày.
 
 ## Việc liên quan tên miền (trước khi mở cho khách thật)
 

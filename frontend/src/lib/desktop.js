@@ -29,7 +29,8 @@ export const desktop = {
   setPin: (value) => bridge().setPin(value),
   unlock: (value) => bridge().unlock(value),
   onLockChanged: (fn) => bridge().onLockChanged(fn),
-  createOffice: (name) => bridge().createOffice(name),
+  setupMainMachine: () => bridge().setupMainMachine(),
+  recheckOffice: () => bridge().recheckOffice(),
   // Giai đoạn 3: máy chính / máy nhân viên (docs/mcah-ke-hoach-desktop-gd3.md).
   lanStatus: () => bridge().lanStatus(),
   lanFind: () => bridge().lanFind(),

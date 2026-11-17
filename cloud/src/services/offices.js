@@ -1,13 +1,13 @@
-// Văn phòng: tạo (kèm khoá máy chính), thành viên, lời mời, bỏ thành viên, khoá văn phòng.
+// Văn phòng: Axalize tạo (kèm quản trị, chưa có máy chính), máy chính đầu tiên / chuyển máy chính, thành viên do quản trị
+// văn phòng tạo, bỏ thành viên, khoá văn phòng (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.2–3.5).
 // Mỗi tài khoản thuộc tối đa một văn phòng đang hoạt động (chỉ mục office_member_one_office).
 const crypto = require('crypto')
 const pool = require('../db')
-const mailer = require('./mailer')
-const { audit } = require('./accounts')
-const { randomToken, sha256, EMAIL } = require('../util')
+const accounts = require('./accounts')
+
+const { audit } = accounts
 
 const fail = (statusCode, message) => ({ statusCode, message })
-const INVITE_DAYS = 14
 
 // Khoá công khai Ed25519 dạng PEM (SPKI); trả PEM đã chuẩn hoá hoặc lỗi.
 function checkPublicKey(pem) {
@@ -60,24 +60,26 @@ const offices = {
     return rows[0] || null
   },
 
-  // Tạo văn phòng + đăng ký khoá máy chính; người tạo là quản trị. Gọi lại với cùng khoá (thử lại sau lỗi mạng)
-  // trả văn phòng đã tạo, không tạo văn phòng thứ hai.
-  async create({ accountId, name, machinePublicKey, ip }) {
-    const publicKey = checkPublicKey(machinePublicKey)
+  // Axalize tạo khách hàng: văn phòng (chưa có máy chính) + tài khoản quản trị văn phòng.
+  async createCustomer({ name, note, adminEmail, adminName, createdBy, ip }) {
     name = String(name || '').trim()
-    if (!name || name.length > 200) throw fail(400, 'Nhập tên văn phòng')
+    note = String(note || '').trim()
+    if (!name || name.length > 200) throw { ...fail(400, 'Nhập tên văn phòng'), field: 'name' }
+    if (note.length > 500) throw { ...fail(400, 'Ghi chú quá dài'), field: 'note' }
     return withTx(async (db) => {
-      const current = await offices.membership(accountId, db)
-      if (current) {
-        const key = await offices.machineKey(current.office_id, db)
-        if (key === publicKey) return offices.get(current.office_id, db)
-        throw fail(409, 'Tài khoản này đã thuộc một văn phòng')
-      }
-      const { rows: [office] } = await db.query('INSERT INTO office (name, created_by) VALUES ($1, $2) RETURNING *', [name, accountId])
-      await db.query('INSERT INTO office_machine (office_id, public_key) VALUES ($1, $2)', [office.id, publicKey])
-      await db.query("INSERT INTO office_member (office_id, account_id, role) VALUES ($1, $2, 'admin')", [office.id, accountId])
-      await audit(accountId, 'office_create', ip, office.id, db)
-      return office
+      const { rows: [office] } = await db.query('INSERT INTO office (name, note, created_by) VALUES ($1, $2, $3) RETURNING *', [name, note || null, createdBy])
+      const admin = await accounts.addToOffice({ email: adminEmail, fullName: adminName, officeId: office.id, role: 'admin', createdBy }, db)
+      await audit(createdBy, 'customer_create', ip, office.id, db, `Quản trị ${admin.email}`)
+      return { office, admin }
+    })
+  },
+
+  // Thêm tài khoản vào văn phòng: Axalize thêm quản trị (by = admin Axalize), hoặc quản trị văn phòng tạo nhân viên.
+  async addMember({ officeId, email, fullName, role, createdBy, action, ip }) {
+    return withTx(async (db) => {
+      const account = await accounts.addToOffice({ email, fullName, officeId, role, createdBy }, db)
+      await audit(createdBy, action, ip, officeId, db, `${account.email} · ${role === 'admin' ? 'Quản trị' : 'Nhân viên'}`)
+      return account
     })
   },
 
@@ -88,11 +90,13 @@ const offices = {
     const done = await withTx(async (db) => {
       const member = await offices.membership(accountId, db)
       if (!member || member.office_id !== officeId || member.role !== 'admin') throw fail(403, 'Chỉ quản trị của văn phòng được chuyển máy chính')
-      if ((await offices.machineKey(officeId, db)) === publicKey) return false
+      const current = await offices.machineKey(officeId, db)
+      if (current === publicKey) return false
       await db.query('UPDATE office_machine SET revoked_at = NOW() WHERE office_id = $1 AND revoked_at IS NULL', [officeId])
       await db.query('INSERT INTO office_machine (office_id, public_key) VALUES ($1, $2)', [officeId, publicKey])
-      await audit(accountId, 'office_machine_replace', ip, officeId, db)
-      return true
+      // Máy chính đầu tiên (văn phòng Axalize vừa tạo) không tính là chuyển máy, không báo thư.
+      await audit(accountId, current ? 'office_machine_replace' : 'office_machine_setup', ip, officeId, db)
+      return Boolean(current)
     })
     if (done) {
       const office = await offices.get(officeId)
@@ -113,65 +117,6 @@ Không phải bạn hoặc người trong văn phòng làm việc này thì liê
     return Boolean(rows[0]?.revoked_at)
   },
 
-  async invite({ officeId, email, fullName, role = 'member', invitedBy }) {
-    email = String(email || '').trim().toLowerCase()
-    if (!EMAIL.test(email)) throw fail(400, 'Email không hợp lệ')
-    if (!['admin', 'member'].includes(role)) throw fail(400, 'Vai trò không hợp lệ')
-    const office = await offices.get(officeId)
-    const { rows: members } = await pool.query(
-      'SELECT 1 FROM office_member m JOIN account a ON a.id = m.account_id WHERE m.office_id = $1 AND a.email = $2 AND m.removed_at IS NULL',
-      [officeId, email]
-    )
-    if (members.length) throw fail(409, 'Người này đã ở trong văn phòng')
-    const token = randomToken()
-    // Lời mời cũ chưa dùng cho cùng email thì huỷ, chỉ giữ thư mới nhất.
-    await pool.query('UPDATE invite SET revoked_at = NOW() WHERE office_id = $1 AND email = $2 AND accepted_at IS NULL AND revoked_at IS NULL', [officeId, email])
-    const { rows: [invite] } = await pool.query(
-      `INSERT INTO invite (token_hash, office_id, email, full_name, role, invited_by, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6, NOW() + ($7 || ' days')::interval) RETURNING id, email, role, expires_at`,
-      [sha256(token), officeId, email, fullName || null, role, invitedBy || null, String(INVITE_DAYS)]
-    )
-    const inviter = invitedBy ? (await pool.query('SELECT full_name, email FROM account WHERE id = $1', [invitedBy])).rows[0] : null
-    await mailer.invite(email, { inviterName: inviter?.full_name || inviter?.email || office.name, officeName: office.name, token })
-    await audit(invitedBy, 'invite', null, officeId)
-    return invite
-  },
-
-  async revokeInvite({ officeId, email }) {
-    await pool.query('UPDATE invite SET revoked_at = NOW() WHERE office_id = $1 AND email = $2 AND accepted_at IS NULL AND revoked_at IS NULL', [officeId, String(email).toLowerCase()])
-  },
-
-  // Lời mời còn hiệu lực theo mã trong liên kết, kèm tên văn phòng; null nếu sai / hết hạn / đã dùng / đã huỷ.
-  async findInvite(token, db = pool) {
-    const { rows } = await db.query(
-      `SELECT i.*, o.name AS office_name FROM invite i JOIN office o ON o.id = i.office_id
-       WHERE i.token_hash = $1 AND i.accepted_at IS NULL AND i.revoked_at IS NULL AND i.expires_at > NOW() AND o.locked_at IS NULL`,
-      [sha256(token || '')]
-    )
-    return rows[0] || null
-  },
-
-  // Nhận lời mời: email tài khoản phải trùng email được mời; tài khoản đã thuộc văn phòng khác thì từ chối.
-  async acceptInvite(token, account, ip) {
-    return withTx(async (db) => {
-      const invite = await offices.findInvite(token, db)
-      if (!invite) throw fail(400, 'Lời mời không đúng, đã hết hạn hoặc đã bị huỷ')
-      if (invite.email.toLowerCase() !== account.email.toLowerCase()) throw fail(403, `Lời mời này dành cho ${invite.email}. Đăng nhập bằng email đó.`)
-      const current = await offices.membership(account.id, db)
-      if (current && current.office_id !== invite.office_id) throw fail(409, 'Tài khoản này đã thuộc một văn phòng khác')
-      if (!current) {
-        await db.query(
-          `INSERT INTO office_member (office_id, account_id, role) VALUES ($1, $2, $3)
-           ON CONFLICT (office_id, account_id) DO UPDATE SET role = EXCLUDED.role, removed_at = NULL, joined_at = NOW()`,
-          [invite.office_id, account.id, invite.role]
-        )
-      }
-      await db.query('UPDATE invite SET accepted_at = NOW() WHERE id = $1', [invite.id])
-      await audit(account.id, 'invite_accept', ip, invite.office_id, db)
-      return invite
-    })
-  },
-
   // Bỏ thành viên (tắt người dùng ở máy chính): lần làm mới vé sau, vé không còn văn phòng → máy chính từ chối.
   async removeMember({ officeId, email, by }) {
     const { rows } = await pool.query(
@@ -179,7 +124,6 @@ Không phải bạn hoặc người trong văn phòng làm việc này thì liê
        WHERE m.account_id = a.id AND m.office_id = $1 AND a.email = $2 AND m.removed_at IS NULL RETURNING m.account_id`,
       [officeId, String(email).toLowerCase()]
     )
-    await offices.revokeInvite({ officeId, email })
     if (rows[0]) await audit(by || null, 'member_remove', null, officeId)
     return { removed: rows.length > 0 }
   },

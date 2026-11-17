@@ -1,7 +1,8 @@
 // Mã PIN 6 số theo máy và tự khoá (docs/mcah-ke-hoach-desktop-gd2.md 4.4, wireframe 5).
 // PIN băm scrypt + muối, cùng số lần sai, cất bằng két hệ điều hành (pin.bin). Sai MAX_FAILS lần thì báo để
 // tiến trình chính bỏ phiên (đăng nhập lại qua trình duyệt, web bắt nhập lại mật khẩu).
-// Tự khoá: rỗi quá ngưỡng (Cài đặt trên máy này, 5–60 phút, mặc định 15) hoặc máy khoá màn hình.
+// Tự khoá: rỗi quá ngưỡng (đặt cho cả văn phòng, 5–60 phút, mặc định 15) hoặc máy khoá màn hình. Quản trị văn phòng tắt
+// "Khoá bằng mã PIN" thì không hỏi đặt PIN, không tự khoá (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
@@ -14,6 +15,7 @@ const SCRYPT = { N: 2 ** 14, r: 8, p: 1 }
 const events = new EventEmitter()
 let locked = false
 let timer = null
+let required = () => true
 
 const file = () => path.join(app.getPath('userData'), 'pin.bin')
 
@@ -78,12 +80,25 @@ const pin = {
     fs.rmSync(file(), { force: true })
   },
 
+  required: () => required(),
+
   lock() {
-    if (pin.hasPin()) setLocked(true)
+    if (required() && pin.hasPin()) setLocked(true)
   },
 
-  // Theo dõi rỗi; lockMinutes() đọc ngưỡng hiện tại; loggedIn() — chỉ khoá khi đang đăng nhập.
-  watch({ lockMinutes, loggedIn }) {
+  // Văn phòng vừa tắt khoá bằng PIN: bỏ PIN đã lưu, mở màn khoá nếu đang khoá. Báo giao diện đọc lại trạng thái.
+  applyPolicy() {
+    if (!required()) {
+      pin.clear()
+      locked = false
+    }
+    events.emit('changed', locked)
+  },
+
+  // Theo dõi rỗi; lockMinutes() đọc ngưỡng hiện tại; loggedIn() — chỉ khoá khi đang đăng nhập; isRequired() — văn phòng có
+  // bật khoá bằng PIN không.
+  watch({ lockMinutes, loggedIn, isRequired }) {
+    if (isRequired) required = isRequired
     clearInterval(timer)
     timer = setInterval(() => {
       if (!locked && loggedIn() && powerMonitor.getSystemIdleTime() >= lockMinutes() * 60) pin.lock()

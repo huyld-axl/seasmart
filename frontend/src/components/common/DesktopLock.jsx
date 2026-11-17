@@ -5,7 +5,8 @@ import Banner from '../ds/Banner'
 import useAuthStore from '../../stores/authStore'
 import { bridgeError, desktop, isDesktop } from '../../lib/desktop'
 
-// Wireframe 5 (docs/design/wireframes/desktop-gd2.html), chỉ trong app máy tính:
+// Wireframe 5 (docs/design/wireframes/desktop-gd2.html), chỉ trong app máy tính, khi văn phòng bật "Khoá bằng mã PIN"
+// (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7; tắt thì không hiện gì):
 // - chưa có PIN trên máy này (lần đăng nhập đầu): hộp đặt PIN 6 số, bắt buộc;
 // - app tự khoá (rỗi quá ngưỡng / máy khoá màn hình): màn khoá phủ cả cửa sổ, mở bằng PIN. Sai 5 lần → về đăng nhập.
 export default function DesktopLock() {
@@ -18,14 +19,15 @@ export default function DesktopLock() {
   useEffect(() => {
     if (!isDesktop()) return undefined
     desktop.lockState().then(setState)
-    return desktop.onLockChanged((locked) => {
+    // Mỗi lần báo đổi: đọc lại cả trạng thái (quản trị vừa bật / tắt khoá bằng PIN thì hasPin / required đổi theo).
+    return desktop.onLockChanged(() => {
       setValue('')
       setError('')
-      setState((s) => ({ ...s, locked }))
+      desktop.lockState().then(setState)
     })
   }, [])
 
-  if (!state) return null
+  if (!state || state.required === false) return null
 
   async function savePin() {
     if (!/^\d{6}$/.test(value)) return setError('Mã PIN gồm đúng 6 chữ số')

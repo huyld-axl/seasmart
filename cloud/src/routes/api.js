@@ -1,10 +1,11 @@
 // API cho app và máy chính (docs/mcah-ke-hoach-desktop-gd2.md 3.4).
-// - Bằng vé (Authorization: Bearer <vé>): tạo văn phòng (người tạo chưa có văn phòng).
+// - Bằng vé (Authorization: Bearer <vé>): cài máy chính đầu tiên / chuyển máy chính (quản trị văn phòng).
 // - Bằng chữ ký máy chính (kiểm ở preHandler, sau khi đã đọc thân): X-MCAH-Office, X-MCAH-Time (ms), X-MCAH-Signature = Ed25519 của
 //   "<METHOD>\n<path>\n<time>\n<sha256 hex của thân>" bằng khoá máy chính đã đăng ký; lệch giờ ≤ 5 phút.
 const crypto = require('crypto')
 const tickets = require('../services/tickets')
 const offices = require('../services/offices')
+const accounts = require('../services/accounts')
 
 const SKEW_MS = 5 * 60 * 1000
 const fail = (statusCode, message, error) => ({ statusCode, message, error })
@@ -52,30 +53,23 @@ async function apiRoutes(fastify) {
     request.office = office
   }
 
-  fastify.post('/api/offices', { onRequest: byTicket, config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }, async (request) => {
-    const { name, machine_public_key: machinePublicKey } = request.body || {}
-    const office = await offices.create({ accountId: request.claims.sub, name, machinePublicKey, ip: request.ip })
-    return { id: office.id, name: office.name }
-  })
-
-  // Chuyển máy chính (docs/mcah-ke-hoach-desktop-gd4.md 3.4): vé của quản trị vừa đăng nhập lại (auth_time ≤ 10 phút).
+  // Cài máy chính đầu tiên cho văn phòng Axalize vừa tạo (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5), hoặc chuyển
+  // máy chính (docs/mcah-ke-hoach-desktop-gd4.md 3.4): chuyển thì vé phải của quản trị vừa đăng nhập lại (auth_time ≤ 10 phút).
   fastify.post('/api/offices/:id/machine', { onRequest: byTicket, config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (request) => {
-    if (!(request.claims.auth_time > Date.now() / 1000 - 600)) throw fail(401, 'Đăng nhập lại để xác nhận chuyển máy chính', 'reauth_required')
+    const firstMachine = /^[0-9a-f-]{36}$/.test(request.params.id) && !(await offices.machineKey(request.params.id))
+    if (!firstMachine && !(request.claims.auth_time > Date.now() / 1000 - 600)) throw fail(401, 'Đăng nhập lại để xác nhận chuyển máy chính', 'reauth_required')
     return offices.replaceMachine({ officeId: request.params.id, accountId: request.claims.sub, machinePublicKey: request.body?.machine_public_key, ip: request.ip })
   })
 
   // Máy chính hỏi trạng thái của mình lúc mở app (máy cũ sau khi chuyển máy nhận 409 machine_replaced từ byMachine).
   fastify.get('/api/office/machine/status', { preHandler: byMachine }, async () => ({ ok: true }))
 
-  fastify.post('/api/office/invites', { preHandler: byMachine }, async (request) => {
-    const { email, full_name: fullName, role, invited_by_email: by } = request.body || {}
-    const inviter = by ? await require('../services/accounts').findByEmail(String(by).toLowerCase()) : null
-    return offices.invite({ officeId: request.office.id, email, fullName, role, invitedBy: inviter?.id })
-  })
-
-  fastify.post('/api/office/invites/revoke', { preHandler: byMachine }, async (request) => {
-    await offices.revokeInvite({ officeId: request.office.id, email: request.body?.email })
-    return { ok: true }
+  // Quản trị văn phòng tạo tài khoản trong app (thay thư mời): tài khoản có ngay, đăng nhập bằng Google / mã email.
+  fastify.post('/api/office/members', { preHandler: byMachine }, async (request) => {
+    const { email, full_name: fullName, role, created_by_email: by } = request.body || {}
+    const creator = by ? await accounts.findByEmail(by) : null
+    const account = await offices.addMember({ officeId: request.office.id, email, fullName, role, createdBy: creator?.id, action: 'member_create', ip: request.ip })
+    return { email: account.email, created: true }
   })
 
   fastify.post('/api/office/members/remove', { preHandler: byMachine }, async (request) =>

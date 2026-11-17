@@ -1,4 +1,4 @@
-// Thư hệ thống của bên mình (xác minh, đặt lại mật khẩu, lời mời). SMTP_HOST trống (máy dev) thì in thư ra log.
+// Thư hệ thống của bên mình (mã đăng nhập, báo chuyển máy chính). SMTP_HOST trống (máy dev) thì in thư ra log.
 const nodemailer = require('nodemailer')
 const config = require('../config')
 
@@ -25,19 +25,12 @@ async function send({ to, subject, text }) {
   await transport.sendMail({ from: { name: smtp.fromName, address: smtp.fromEmail }, to, subject, text })
 }
 
-const link = (path) => `${config.publicUrl}${path}`
-
 const mailer = {
   send,
   sent, // chỉ để test đọc thư đã "gửi" khi chạy không SMTP
-  verifyEmail: (to, token) =>
-    send({ to, subject: 'MCAH: xác minh email', text: `Bấm liên kết dưới để xác minh email và dùng MCAH:\n${link(`/xac-minh?token=${token}`)}\n\nLiên kết có hạn 24 giờ. Không phải bạn đăng ký thì bỏ qua thư này.` }),
-  resetPassword: (to, token) =>
-    send({ to, subject: 'MCAH: đặt lại mật khẩu', text: `Bấm liên kết dưới để đặt mật khẩu mới:\n${link(`/dat-lai?token=${token}`)}\n\nLiên kết có hạn 30 phút. Không phải bạn yêu cầu thì bỏ qua thư này, mật khẩu cũ vẫn dùng được.` }),
-  passwordChanged: (to) =>
-    send({ to, subject: 'MCAH: mật khẩu đã đổi', text: 'Mật khẩu tài khoản MCAH của bạn vừa được đổi. Không phải bạn đổi thì đặt lại mật khẩu ngay và báo quản trị văn phòng.' }),
-  invite: (to, { inviterName, officeName, token }) =>
-    send({ to, subject: `${inviterName} mời bạn vào ${officeName} trên MCAH`, text: `${inviterName} mời bạn vào văn phòng ${officeName} trên MCAH.\n\nBấm liên kết dưới để đăng ký (hoặc đăng nhập nếu đã có tài khoản):\n${link(`/moi?token=${token}`)}\n\nLời mời có hạn 14 ngày.` }),
+  // Không có liên kết: chỉ mã, để thư không giống thư lừa đảo và không ai bấm nhầm.
+  loginCode: (to, code) =>
+    send({ to, subject: `Mã đăng nhập MCAH: ${code}`, text: `Mã đăng nhập MCAH của bạn: ${code}\n\nMã có hạn 10 phút. Không phải bạn đang đăng nhập thì bỏ qua thư này.` }),
 }
 
 module.exports = mailer

@@ -242,7 +242,13 @@ function watchSession() {
     if (!staffMode && session.info().loggedIn && fs.existsSync(path.join(app.getPath('userData'), 'machine-key.bin'))) startLan()
   })
   pin.events.on('changed', (locked) => mainWindow?.webContents.send('mcah:lock-changed', locked))
-  pin.watch({ lockMinutes: () => getSettings().lockMinutes, loggedIn: () => Boolean(session.jwt()) })
+  // Khoá bằng PIN và thời gian tự khoá theo cài đặt của văn phòng (gửi kèm phiên), bản cũ thì theo cài đặt máy.
+  pin.watch({
+    lockMinutes: () => session.security()?.lock_minutes || getSettings().lockMinutes,
+    loggedIn: () => Boolean(session.jwt()),
+    isRequired: () => session.security()?.pin_required !== false,
+  })
+  session.events.on('changed', () => pin.applyPolicy())
 }
 
 // Máy nhân viên: báo giao diện khi mất / có lại máy chính; bị Gỡ thì mở lại app ở chế độ ghép.

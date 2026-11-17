@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tài khoản và đăng nhập MCAH</title>
+<style>
+  /* Bản nháp thay mục "Tài khoản và đăng nhập (ứng dụng trên máy tính)" (id app-tai-khoan) của
+     frontend/public/huong-dan/index.html, bước 7 của docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md.
+     Khi chép vào, bỏ thẻ <style> này và dùng class sẵn có của trang. Chỗ (liên hệ MCAH) điền theo Q-L2. */
+  :root { color-scheme: light; --border: #e5e6ea; --bg: #f4f4f6; }
+  body { margin: 0; background: var(--bg); color: #2c2c2c; font: 15px/1.6 'Inter', system-ui, sans-serif; }
+  section { max-width: 760px; margin: 32px auto; padding: 24px 28px; background: #fff; border-radius: 16px; }
+  h2 { margin-top: 0; }
+  .ui { padding: 1px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-weight: 500; white-space: nowrap; }
+  .note { padding: 10px 14px; border-radius: 10px; background: #fffbeb; color: #bb4d00; }
+</style>
+</head>
+<body>
+<section id="app-tai-khoan">
+  <h2>Tài khoản và đăng nhập (ứng dụng trên máy tính)</h2>
+
+  <h3>Ai có tài khoản</h3>
+  <p>MCAH không có trang đăng ký. Khi văn phòng mua MCAH, MCAH tạo tài khoản cho <b>quản trị văn phòng</b> bằng email bạn cung cấp. Quản trị văn phòng tạo tài khoản cho nhân viên trong <span class="ui">Quản trị</span> → <span class="ui">Tài khoản</span> → <span class="ui">Thêm tài khoản</span>. Chưa có tài khoản thì hỏi quản trị văn phòng của bạn.</p>
+
+  <h3>Đăng nhập</h3>
+  <p>MCAH không dùng mật khẩu. Trong app bấm <span class="ui">Đăng nhập qua trình duyệt</span>, trang đăng nhập MCAH mở ra:</p>
+  <ul>
+    <li><span class="ui">Tiếp tục với Google</span> nếu email của bạn là tài khoản Google; hoặc</li>
+    <li>nhập email, bấm <span class="ui">Tiếp tục với email</span>, mở hộp thư lấy <b>mã 6 số</b> (thư "Mã đăng nhập MCAH") và nhập vào trang. Mã có hạn 10 phút. Không thấy thư thì xem mục Thư rác, hoặc bấm <span class="ui">Gửi lại mã</span>.</li>
+  </ul>
+  <p>Xong, trang báo "Đã đăng nhập" và MCAH tự vào. MCAH không tự vào? Trang có một mã 8 ký tự: trong app bấm <span class="ui">Nhập mã thủ công</span> và dán mã vào.</p>
+
+  <h3>Lần đầu: cài máy chính</h3>
+  <p>Quản trị văn phòng đăng nhập trên máy sẽ giữ dữ liệu (nên là máy bàn luôn bật). MCAH hỏi <b>"Cài máy chính cho …"</b>: bấm <span class="ui">Dùng máy này làm máy chính</span>. Nhân viên cài MCAH trên máy mình, đăng nhập rồi nối vào máy chính. Nhân viên đăng nhập trước khi quản trị cài máy chính sẽ thấy "Văn phòng chưa có máy chính": chờ quản trị cài xong rồi bấm <span class="ui">Thử lại</span>.</p>
+
+  <h3>Thêm, tắt tài khoản nhân viên</h3>
+  <p>Quản trị vào <span class="ui">Quản trị</span> → <span class="ui">Tài khoản</span> → <span class="ui">Thêm tài khoản</span>, nhập email, họ tên và vai trò (cần internet). MCAH không gửi thư: bạn báo nhân viên cài MCAH và đăng nhập bằng đúng email đó. Tắt "Đăng nhập" của một người thì người đó không vào được nữa, kể cả đang mở ứng dụng.</p>
+
+  <h3>Đăng nhập lại sau 30 ngày</h3>
+  <p>Cứ 30 ngày kể từ lần đăng nhập trước, MCAH bắt đăng nhập lại qua trình duyệt (Google hoặc mã email). Còn 2 ngày, MCAH hiện dải vàng nhắc. Không có internet thì vẫn làm việc được tới 7 ngày, nhưng không quá mốc 30 ngày.</p>
+
+  <h3>Khoá bằng mã PIN (tuỳ văn phòng)</h3>
+  <p>Quản trị văn phòng bật hoặc tắt ở <span class="ui">Quản trị</span> → <span class="ui">Máy trong văn phòng</span> → <span class="ui">Khoá bằng mã PIN</span>, áp cho mọi máy trong văn phòng. Khi bật: mỗi người đặt mã PIN 6 số trên máy mình; MCAH tự khoá khi để máy rỗi (mặc định 15 phút) và mở bằng PIN. Sai PIN 5 lần thì phải đăng nhập lại qua trình duyệt. Khi tắt: MCAH không tự khoá, nên khoá màn hình máy tính khi rời máy. Mã PIN chỉ để mở khoá màn hình, không thay cho việc đăng nhập.</p>
+
+  <h3>Tài khoản hoặc văn phòng bị khoá</h3>
+  <p>Trang đăng nhập báo <b>"Tài khoản này đã bị khoá"</b>, hoặc app báo <b>"Văn phòng … đang bị khoá"</b>: liên hệ quản trị văn phòng hoặc MCAH <i>(liên hệ MCAH)</i>. Dữ liệu trên máy vẫn còn nguyên; mở khoá xong đăng nhập là dùng tiếp.</p>
+  <p class="note">Mất quyền vào hộp thư công ty thì không đăng nhập bằng mã email được nữa. Nhờ quản trị văn phòng tạo tài khoản với email mới.</p>
+</section>
+</body>
+</html>

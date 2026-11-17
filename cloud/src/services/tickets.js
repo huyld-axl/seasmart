@@ -23,14 +23,19 @@ function signingKey() {
   return key
 }
 
-// claims: { sub, email, name, office, office_role, machine, auth_time }. exp = mốc offline (now + 7 ngày).
+// claims: { sub, email, name, office, office_role, machine, auth_time }. exp = mốc offline (now + 7 ngày), không quá mốc
+// phải đăng nhập lại (auth_time + 30 ngày; docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.8).
 function issue(claims, now = Date.now()) {
   const { privateKey, kid } = signingKey()
   const iat = Math.floor(now / 1000)
+  let exp = iat + config.offlineDays * 86400
+  // login_until: mốc phải đăng nhập lại, app dùng để nhắc trước 2 ngày.
+  const extra = claims.auth_time ? { login_until: claims.auth_time + config.sessionMaxDays * 86400 } : {}
+  if (extra.login_until) exp = Math.min(exp, extra.login_until)
   const header = b64url(JSON.stringify({ alg: 'EdDSA', typ: 'JWT', kid }))
-  const payload = b64url(JSON.stringify({ iss: 'mcah-cloud', aud: AUDIENCE, iat, exp: iat + config.offlineDays * 86400, ...claims }))
+  const payload = b64url(JSON.stringify({ iss: 'mcah-cloud', aud: AUDIENCE, iat, exp, ...claims, ...extra }))
   const signature = crypto.sign(null, Buffer.from(`${header}.${payload}`), privateKey)
-  return { ticket: `${header}.${payload}.${b64url(signature)}`, exp: iat + config.offlineDays * 86400 }
+  return { ticket: `${header}.${payload}.${b64url(signature)}`, exp }
 }
 
 // Kiểm vé do chính máy chủ này ký (dùng khi app gọi API bằng vé, vd. tạo văn phòng). null nếu sai / hết hạn.

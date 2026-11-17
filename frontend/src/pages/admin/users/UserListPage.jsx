@@ -101,7 +101,7 @@ export default function UserListPage() {
       },
     })
     if (editTarget) updateUser.mutate({ id: editTarget.id, data: values }, done(`Đã lưu ${name}`))
-    else createUser.mutate(values, done(`Đã gửi thư mời tới ${values.email}`))
+    else createUser.mutate(values, done(isDesktop() ? `Đã tạo tài khoản ${values.email}. Báo người này mở MCAH và đăng nhập bằng email này.` : `Đã gửi thư mời tới ${values.email}`))
   }
 
   const confirmDelete = (user) =>
@@ -160,7 +160,7 @@ export default function UserListPage() {
         action={
           rights.canCreate ? (
             <Button icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-              {isDesktop() ? 'Mời' : 'Thêm tài khoản'}
+              Thêm tài khoản
             </Button>
           ) : undefined
         }
@@ -196,7 +196,7 @@ export default function UserListPage() {
           <StatusTabs
             tabs={[
               { value: 'all', label: 'Tất cả' },
-              { value: 'pending', label: 'Chờ kích hoạt' },
+              { value: 'pending', label: isDesktop() ? 'Chưa đăng nhập' : 'Chờ kích hoạt' },
               { value: 'active', label: 'Hoạt động' },
               { value: 'locked', label: 'Đã khoá' },
             ]}
@@ -228,7 +228,7 @@ export default function UserListPage() {
           {rights.canCreate ? (
             <span className="ds-toolbar__end">
               <Button className="ds-toolbar__add" type="primary" icon={<PlusOutlined />} onClick={() => openPanel(null)}>
-                {isDesktop() ? 'Mời' : 'Thêm tài khoản'}
+                Thêm tài khoản
               </Button>
             </span>
           ) : null}
@@ -243,7 +243,7 @@ export default function UserListPage() {
         loading={createUser.isPending || updateUser.isPending}
         resetKey={formKey}
       />
-      {rights.canCreate ? <Fab label={isDesktop() ? 'Mời' : 'Thêm tài khoản'} onClick={() => openPanel(null)} /> : null}
+      {rights.canCreate ? <Fab label="Thêm tài khoản" onClick={() => openPanel(null)} /> : null}
     </div>
   )
 }

@@ -39,6 +39,8 @@ module.exports = {
   // Khoá ký cookie phiên trang web.
   cookieSecret: process.env.CLOUD_COOKIE_SECRET || DEV_COOKIE_SECRET,
   offlineDays: 7,
+  // Hạn cứng: quá số ngày này từ lần đăng nhập thật qua trình duyệt thì phải đăng nhập lại, dù có mạng.
+  sessionMaxDays: 30,
   // Thư hệ thống: cùng tên biến với backend/.env (SMTP_*), chép nguyên sang được. Thiếu SMTP_HOST thì in thư ra log.
   smtp: {
     host: process.env.SMTP_HOST || '',

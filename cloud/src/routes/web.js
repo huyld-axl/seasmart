@@ -1,6 +1,7 @@
 // Trang web tài khoản và OAuth cho app (docs/mcah-ke-hoach-desktop-gd2.md 3.3).
 // Cookie ký (HttpOnly, SameSite=Lax): mcah_s = phiên trên trình duyệt (tài khoản + thời điểm đăng nhập, 8 giờ),
-// mcah_oauth = yêu cầu /authorize đang chờ (10 phút), mcah_inv = mã lời mời đang chờ (1 giờ).
+// mcah_oauth = yêu cầu /authorize đang chờ (10 phút), mcah_inv = mã lời mời đang chờ (1 giờ),
+// mcah_last = tài khoản vừa trao mã cho app (8 giờ), chỉ để điền sẵn email khi app bắt đăng nhập lại, không đăng nhập được.
 const config = require('../config')
 const pages = require('../views/pages')
 const accounts = require('../services/accounts')
@@ -32,8 +33,14 @@ const clearCookie = (reply, name) => reply.clearCookie(name, { path: config.base
 async function webRoutes(fastify) {
   // Đăng nhập xong (mật khẩu hoặc Google): nhận lời mời đang chờ, rồi trả mã cho app nếu có yêu cầu /authorize.
   // pendingNow: yêu cầu /authorize vừa nhận trong chính request này (cookie vừa đặt chưa có trong request).
+  // Đã trao mã cho app thì không giữ phiên trình duyệt: lần sau bấm Đăng nhập trên app (kể cả sau khi đăng xuất
+  // để đổi tài khoản) trình duyệt luôn hỏi lại, không lặng lẽ vào tài khoản cũ.
   async function finishLogin(request, reply, account, authTime = Date.now(), pendingNow = null) {
-    setCookie(reply, 'mcah_s', { a: account.id, t: authTime }, SESSION_HOURS * 3600)
+    const pending = pendingNow || readCookie(request, 'mcah_oauth')
+    if (pending) {
+      clearCookie(reply, 'mcah_s')
+      setCookie(reply, 'mcah_last', { a: account.id, t: authTime }, SESSION_HOURS * 3600)
+    } else setCookie(reply, 'mcah_s', { a: account.id, t: authTime }, SESSION_HOURS * 3600)
     const invite = readCookie(request, 'mcah_inv')
     if (invite?.token) {
       clearCookie(reply, 'mcah_inv')
@@ -43,7 +50,6 @@ async function webRoutes(fastify) {
         return html(reply, pages.message({ title: 'Chưa nhận được lời mời', kind: 'err', text: error.message, link: { href: `${config.basePath}/dang-nhap`, label: 'Đăng nhập bằng tài khoản khác' } }), error.statusCode || 400)
       }
     }
-    const pending = pendingNow || readCookie(request, 'mcah_oauth')
     if (pending) {
       clearCookie(reply, 'mcah_oauth')
       const { redirect, shortCode } = await oauth.issueCode(account.id, pending, authTime)
@@ -53,8 +59,8 @@ async function webRoutes(fastify) {
   }
 
   // Phiên trên trình duyệt còn hiệu lực và thoả max_age thì trả tài khoản.
-  async function sessionAccount(request, maxAge = null) {
-    const s = readCookie(request, 'mcah_s')
+  async function sessionAccount(request, maxAge = null, cookie = 'mcah_s') {
+    const s = readCookie(request, cookie)
     if (!s?.a || !s.t) return null
     if (maxAge !== null && Date.now() - s.t > maxAge * 1000) return null
     const account = await accounts.findById(s.a)
@@ -74,7 +80,7 @@ async function webRoutes(fastify) {
     setCookie(reply, 'mcah_oauth', pending, 600)
     const session = await sessionAccount(request, pending.max_age)
     if (session) return finishLogin(request, reply, session.account, session.authTime, pending)
-    const known = await sessionAccount(request)
+    const known = (await sessionAccount(request)) || (await sessionAccount(request, null, 'mcah_last'))
     const query = pending.max_age === 0 && known ? `?lai=1&email=${encodeURIComponent(known.account.email)}` : ''
     return reply.redirect(`${config.basePath}/dang-nhap${query}`)
   })
@@ -118,6 +124,7 @@ async function webRoutes(fastify) {
   })
   fastify.get('/dang-xuat', async (request, reply) => {
     clearCookie(reply, 'mcah_s')
+    clearCookie(reply, 'mcah_last')
     return reply.redirect(`${config.basePath}/dang-nhap`)
   })
 

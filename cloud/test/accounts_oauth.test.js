@@ -92,8 +92,9 @@ describe('OAuth cho app', () => {
     const done = await b.post('/dang-nhap', { email: 'halinh@thu.vn', password: 'MatKhauMoi4567' })
     const code = codeFrom(done.body)
     expect((await token({ grant_type: 'authorization_code', code, code_verifier: 'sai', redirect_uri: REDIRECT })).statusCode).toBe(400)
-    // Mã đã bị tiêu ở lần sai trên (dùng một lần) → phải lấy mã mới.
-    const again = await b.get(authorizeUrl(challenge))
+    // Mã đã bị tiêu ở lần sai trên (dùng một lần) → phải lấy mã mới (phiên trình duyệt đã xoá → đăng nhập lại).
+    await b.get(authorizeUrl(challenge))
+    const again = await b.post('/dang-nhap', { email: 'halinh@thu.vn', password: 'MatKhauMoi4567' })
     const ok = await token({ grant_type: 'authorization_code', code: codeFrom(again.body), code_verifier: verifier, redirect_uri: REDIRECT })
     expect(ok.statusCode).toBe(200)
     const body = ok.json()
@@ -127,6 +128,18 @@ describe('OAuth cho app', () => {
     expect((await token({ grant_type: 'refresh_token', refresh_token: first.refresh_token })).statusCode).toBe(400)
     // Token mới nhất cũng bị huỷ theo họ.
     expect((await token({ grant_type: 'refresh_token', refresh_token: second.refresh_token })).statusCode).toBe(400)
+  })
+
+  it('trao mã cho app xong thì xoá phiên trình duyệt: đăng nhập lần sau (đổi tài khoản) phải nhập lại', async () => {
+    const b = browser()
+    const { challenge } = pkce()
+    await b.post('/dang-nhap', { email: 'halinh@thu.vn', password: 'MatKhauMoi4567' })
+    expect((await b.get(authorizeUrl(challenge))).body).toContain('Đã đăng nhập')
+    const again = await b.get(authorizeUrl(challenge))
+    expect(again.statusCode).toBe(302)
+    expect(again.headers.location).toMatch(/\/dang-nhap$/)
+    // Sau 5 lần sai PIN (max_age=0) vẫn điền sẵn email tài khoản vừa dùng.
+    expect((await b.get(authorizeUrl(challenge, '&max_age=0'))).headers.location).toContain('/dang-nhap?lai=1&email=halinh')
   })
 
   it('max_age=0: có phiên trình duyệt vẫn bắt nhập lại mật khẩu', async () => {

@@ -12,6 +12,32 @@ Theo `docs/mcah-ke-hoach-desktop-gd6.md`. Người phát hành làm theo đúng 
 
 Lần đầu trên máy phát hành mới (chưa từng có khoá): `node desktop/scripts/release-key.js --init`, commit `desktop/build/release-public-key.pem`. Không chạy lại khi đã có khoá.
 
+## Luật phiên bản (đọc trước mỗi lần build)
+
+Máy Ubuntu ở văn phòng là máy phát hành (giữ khoá ký). Máy Windows ở nhà chỉ build và có thể sửa lỗi riêng Windows. Bộ cài Windows chỉ build được trên Windows.
+
+1. **Một phiên bản = một commit.** Bản Ubuntu và bản Windows của cùng phiên bản phải build từ đúng một commit. Script phát hành chặn nếu khác.
+2. **Máy nào sửa code sau cùng thì máy đó nâng phiên bản.** Sửa code thì trong cùng đợt: nâng `desktop/package.json`, viết `release-notes/<phiên bản>.md`, chạy `npm run notes:page`, commit, **push `dev`**, rồi mới build. Máy kia pull và build lại đúng commit đó, không sửa gì.
+3. **Không dùng lại số đã phát hành cho code khác.** Trước khi nâng, xem số đang phát: https://mcah.axalize.vn/download/files/beta/latest.json. Số đó đã có trên trang (dù chỉ một hệ điều hành) mà code đã đổi thì lên số kế tiếp.
+4. **Không đổi tên bộ cài.** Số phiên bản nằm bên trong tệp lúc build; đổi tên tệp không đổi được phiên bản.
+5. Số phiên bản không giới hạn: sau 0.9.9 là 0.9.10. Bản Windows bỏ qua vài số (vì có hotfix chỉ Ubuntu) là bình thường.
+
+### Luồng thường (hai bản cùng lúc)
+
+1. Văn phòng (Ubuntu): sửa, test, nâng phiên bản, commit, push `dev`, `npm run dist:linux`. **Chưa phát hành.**
+2. Ở nhà (Windows): pull `dev`, kiểm `git log -1` đúng commit, `npm run dist:win`, cài thử.
+   - Chạy tốt: chép `MCAH Setup <phiên bản>.exe` + `build-info-win.json` mang đi.
+   - Có lỗi riêng Windows: sửa ngay, rồi theo luật 2 (nâng số kế tiếp, ghi chú, notes:page, commit, push `dev`), build lại, cài thử, chép hai tệp.
+3. Văn phòng hôm sau: pull `dev`. Máy Windows có commit mới thì `npm run dist:linux` lại (vài phút). Chép hai tệp Windows vào `desktop/dist/installer/`, `npm run release -- --channel beta`, mở trang tải kiểm hai nút.
+
+### Hotfix chỉ Ubuntu (cho team test sớm)
+
+1. Sửa, nâng phiên bản, ghi chú, notes:page, commit, push `dev`, `npm run dist:linux`.
+2. `npm run release -- --channel beta --allow-missing win`.
+3. Muốn thêm bản Windows cho đúng số này: Windows phải build đúng commit đó, không sửa gì; rồi chạy lại lệnh phát hành không có `--allow-missing`. Windows cần sửa thì sang số kế tiếp (luật 2, 3).
+
+Lưu ý: hiện chỉ có kênh `beta`, mọi máy đã cài đều nhận hotfix. Khi có khách thật, đưa khách sang `stable` (`--promote`) và chỉ phát hotfix trên `beta`.
+
 ## Mỗi lần phát hành
 
 1. Commit hết thay đổi. Đổi phiên bản: trong `desktop/`, `npm version 1.2.0 --no-git-tag-version`.
@@ -23,7 +49,7 @@ Lần đầu trên máy phát hành mới (chưa từng có khoá): `node deskto
    ```
 
    Địa chỉ máy chủ và chỗ phát lấy từ `desktop/endpoints.json` (không đặt biến môi trường khi build bản phát hành).
-4. Máy Windows, cùng commit: `npm run dist:win`. Chép `dist/installer/MCAH Setup 1.2.0.exe` và `dist/installer/build-info-win.json` về `desktop/dist/installer/` của máy phát hành.
+4. Máy Windows, cùng commit (xem "Luật phiên bản"): `npm run dist:win`. Chép `dist/installer/MCAH Setup 1.2.0.exe` và `dist/installer/build-info-win.json` về `desktop/dist/installer/` của máy phát hành.
 5. Phát kênh thử nghiệm: `npm run release -- --channel beta`. Script dừng nếu thiếu một hệ điều hành, hai bản khác commit, còn thay đổi chưa commit, thiếu ghi chú, chưa quét bí mật, hoặc khoá không khớp.
 6. Chạy thử với văn phòng thử nghiệm. Ổn thì đưa sang kênh ổn định (không build lại): `npm run release -- --promote 1.2.0`.
 

@@ -8,7 +8,7 @@ Tệp này dành cho **máy Windows chưa có gì**: chưa có code, và Claude 
 - **Repo:** https://github.com/huyld-axl/seasmart (công khai, tải không cần đăng nhập). Thư mục `desktop/` là app máy tính, `backend/` là máy chủ chạy bên trong app, `frontend/` là giao diện.
 - **Vì sao phải build trên Windows:** code backend được dịch sang bytecode bằng chính Node của Windows. Build chéo từ Ubuntu sẽ ra bản không chạy được.
 - **Ai làm gì:**
-  - Máy Windows: chỉ **build** ra tệp `.exe`. Không ký, không đẩy lên server.
+  - Máy Windows: **build** ra tệp `.exe`; được **sửa lỗi riêng Windows** theo "Luật phiên bản" trong `docs/mcah-quy-trinh-phat-hanh.md` (sửa thì nâng phiên bản, commit, push `dev` trước khi build). Không ký, không đẩy bộ cài lên server.
   - Máy Ubuntu (máy phát hành, ở văn phòng): giữ khoá ký, ký và đẩy cả hai bộ cài lên https://mcah.axalize.vn/download/.
 - **Commit cần build:** người phát hành báo (ví dụ dưới đây ghi `<COMMIT>`). Bản Ubuntu build từ đúng commit đó. Hai bản phải cùng commit, nếu không script phát hành sẽ từ chối.
 
@@ -24,7 +24,10 @@ Hãy:
 2. Clone repo vào thư mục hiện tại, đọc docs/mcah-build-windows.md ở nhánh dev, rồi làm theo mục 3
    với commit <COMMIT> và phiên bản <PHIÊN BẢN> (người phát hành báo).
 Luật bắt buộc:
-- KHÔNG sửa code, KHÔNG commit, KHÔNG push, KHÔNG tạo nhánh. Repo phải sạch (git status trống) khi build.
+- Chỉ build trên nhánh dev, KHÔNG tạo nhánh. Repo phải sạch (git status trống) khi build.
+- Cài thử lỗi mà phải sửa code: làm theo "Luật phiên bản" trong docs/mcah-quy-trinh-phat-hanh.md
+  (nâng phiên bản lên số chưa phát hành, ghi chú phát hành, npm run notes:page, commit, hỏi tôi rồi push dev),
+  sau đó mới build lại. Không bao giờ đổi tên tệp .exe.
 - KHÔNG đọc hay tạo tệp .env nào. KHÔNG đặt biến môi trường MCAH_*.
 - Build lỗi thì dừng, tóm tắt lỗi bằng tiếng Việt đơn giản, đừng tự sửa code để vượt lỗi.
 - Giải thích cho tôi bằng tiếng Việt đơn giản, tôi không phải lập trình viên.
@@ -135,13 +138,15 @@ Sau đó nói Claude Code ở máy Ubuntu: "đã có bản Windows, phát hành 
 | `running scripts is disabled on this system` | Chạy một lần: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, chọn Y. |
 | Lỗi đường dẫn quá dài | Để code ở `C:\code` (ngắn) như hướng dẫn. |
 | Build lỗi vì thiếu `cloud/.data/signing-key.pem` | Đang build commit cũ (trước 0.9.1). Hỏi người phát hành commit mới. |
-| `npm run dist:win` lỗi | Chụp khoảng 30 dòng cuối, gửi người phát hành. Không tự sửa code. |
+| `npm run dist:win` lỗi | Chụp khoảng 30 dòng cuối, gửi người phát hành. Không tự sửa code để vượt lỗi build. |
+| Cài xong app không chạy (lỗi riêng Windows) | Được sửa: theo "Luật phiên bản" trong `docs/mcah-quy-trinh-phat-hanh.md` (nâng số, commit, push `dev`), rồi build lại. |
 | Windows Defender xoá / chặn `.exe` vừa build | Ghi lại tên cảnh báo, gửi người phát hành. |
 | build-info có "(có thay đổi chưa commit)" | `git status`, `git checkout -- .`, build lại. |
 
 ## 7. Những điều không làm
 
-- Không sửa code, không commit, không push, không tạo nhánh.
+- Không sửa code mà không nâng phiên bản; không push khi chưa hỏi người dùng; không tạo nhánh.
+- Không đổi tên tệp `.exe`.
 - Không tạo / đọc tệp `.env`, không đặt biến `MCAH_CLOUD_URL` / `MCAH_UPDATE_URL`.
 - Không cần, và không được chép khoá ký (`desktop/.release/`) sang máy Windows.
 - Không tự đẩy bộ cài lên server: máy Ubuntu làm việc đó.

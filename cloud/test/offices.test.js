@@ -136,9 +136,12 @@ describe('tính năng qua máy chủ', () => {
 })
 
 describe('trang quản trị nội bộ', () => {
-  it('chỉ email trong CLOUD_ADMIN_EMAILS vào được; thêm khách, thêm quản trị, khoá tài khoản, nhật ký', async () => {
+  it('chỉ admin CLOUD_ADMIN_EMAIL (mật khẩu + mã) vào được; thêm khách, thêm quản trị, khoá tài khoản, nhật ký', async () => {
     const config = require('../src/config')
-    config.adminEmails.push('sales@axalize.vn')
+    const adminAuth = require('../src/services/admin_auth')
+    const totp = require('../src/services/totp')
+    const saved = config.adminEmail
+    config.adminEmail = 'sales@axalize.vn'
     const jar = {}
     const go = async (method, url, form, headers = {}) => {
       const r = await app.inject({ method, url, remoteAddress: '10.9.9.9', headers: { cookie: Object.entries(jar).map(([k, v]) => `${k}=${v}`).join('; '), ...(form ? { 'content-type': 'application/x-www-form-urlencoded' } : {}), ...headers }, payload: form ? new URLSearchParams(form).toString() : undefined })
@@ -146,54 +149,60 @@ describe('trang quản trị nội bộ', () => {
       return r
     }
     const login = async (email) => {
-      await go('POST', '/dang-nhap/email', { email })
-      return go('POST', '/dang-nhap/ma', { code: /: (\d{6})/.exec(mailer.sent.filter((m) => m.to === email).at(-1).subject)[1] })
+      await go('POST', '/login/email', { email })
+      return go('POST', '/login/code', { code: /: (\d{6})/.exec(mailer.sent.filter((m) => m.to === email).at(-1).subject)[1] })
     }
+    const A = '/internal/admin'
     try {
-      expect((await go('GET', '/quan-tri')).headers.location).toBe('/dang-nhap')
-      // Quản trị văn phòng không vào được trang của Axalize.
+      expect((await go('GET', A)).headers.location).toBe(`/internal/login?next=${encodeURIComponent(A)}`)
+      // Đăng nhập tài khoản thường (kể cả quản trị văn phòng, kể cả chính email admin) không mở được khu nội bộ.
       await login('quantri@thu.vn')
-      expect((await go('GET', '/quan-tri')).headers.location).toBe('/dang-nhap')
+      expect((await go('GET', A)).headers.location).toMatch(/^\/internal\/login/)
+      const sales = await adminAuth.setPassword('mat-khau-noi-bo-1')
       await login('sales@axalize.vn')
-      const list = await go('GET', '/quan-tri')
+      expect((await go('GET', A)).headers.location).toMatch(/^\/internal\/login/)
+      await go('POST', '/internal/login', { email: 'sales@axalize.vn', password: 'mat-khau-noi-bo-1' })
+      const secret = await adminAuth.pendingSecret(sales.id)
+      expect((await go('POST', '/internal/login/setup', { code: totp.codeAt(secret, totp.stepAt()) })).body).toContain('Lưu mã khôi phục')
+      const list = await go('GET', A)
       expect(list.body).toContain('Công ty ABC')
       expect(list.body).toContain('Đang dùng')
       expect(list.body).toContain('Chờ cài máy chính')
 
-      const missing = await go('POST', '/quan-tri/khach', { name: 'Nam Hải Crew', note: 'HĐ 12', admin_email: '', admin_name: 'An' })
+      const missing = await go('POST', `${A}/customers`, { name: 'Nam Hải Crew', note: 'HĐ 12', admin_email: '', admin_name: 'An' })
       expect([missing.statusCode, missing.body.includes('Nhập email quản trị'), missing.body.includes('value="HĐ 12"')]).toEqual([400, true, true])
-      const taken = await go('POST', '/quan-tri/khach', { name: 'Nam Hải Crew', admin_email: 'quantri@thu.vn', admin_name: 'An' })
+      const taken = await go('POST', `${A}/customers`, { name: 'Nam Hải Crew', admin_email: 'quantri@thu.vn', admin_name: 'An' })
       expect([taken.statusCode, taken.body.includes('đã thuộc một văn phòng khác')]).toEqual([409, true])
       const before = mailer.sent.length
-      expect((await go('POST', '/quan-tri/khach', { name: 'Nam Hải Crew', admin_email: 'an@namhai.vn', admin_name: 'Nguyễn An' })).body).toContain('Đã thêm Nam Hải Crew')
+      expect((await go('POST', `${A}/customers`, { name: 'Nam Hải Crew', admin_email: 'an@namhai.vn', admin_name: 'Nguyễn An' })).body).toContain('Đã thêm Nam Hải Crew')
       expect(mailer.sent.length).toBe(before)
       const nh = (await pool().query("SELECT id FROM office WHERE name = 'Nam Hải Crew'")).rows[0]
-      expect((await go('GET', `/quan-tri/khach/quan-tri?office=${nh.id}`)).body).toContain('Thêm quản trị cho Nam Hải Crew')
-      expect((await go('POST', '/quan-tri/khach/quan-tri', { office: nh.id, email: 'an2@namhai.vn', full_name: 'An Hai' })).statusCode).toBe(302)
+      expect((await go('GET', `${A}/customers/admins?office=${nh.id}`)).body).toContain('Thêm quản trị cho Nam Hải Crew')
+      expect((await go('POST', `${A}/customers/admins`, { office: nh.id, email: 'an2@namhai.vn', full_name: 'An Hai' })).statusCode).toBe(302)
       expect((await offices.membership((await accounts.findByEmail('an2@namhai.vn')).id)).role).toBe('admin')
 
-      const accountsPage = await go('GET', '/quan-tri/tai-khoan?loc=chua')
+      const accountsPage = await go('GET', `${A}/accounts?filter=never`)
       expect(accountsPage.body).toContain('an@namhai.vn')
       expect(accountsPage.body).toContain('Chưa đăng nhập')
       expect(accountsPage.body).not.toContain('quantri@thu.vn')
 
       const target = await accounts.findByEmail('an@namhai.vn')
-      expect((await go('POST', '/quan-tri/tai-khoan/khoa', { account: target.id, lock: '1', reason: '' })).statusCode).toBe(400)
-      expect((await go('POST', '/quan-tri/tai-khoan/khoa', { account: target.id, lock: '1', reason: 'Nghỉ việc' }, { 'sec-fetch-site': 'cross-site' })).statusCode).toBe(403)
-      await go('POST', '/quan-tri/tai-khoan/khoa', { account: target.id, lock: '1', reason: 'Nghỉ việc' })
+      expect((await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '1', reason: '' })).statusCode).toBe(400)
+      expect((await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '1', reason: 'Nghỉ việc' }, { 'sec-fetch-site': 'cross-site' })).statusCode).toBe(403)
+      await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '1', reason: 'Nghỉ việc' })
       expect((await accounts.findById(target.id)).disabled_at).toBeTruthy()
-      await go('POST', '/quan-tri/tai-khoan/khoa', { account: target.id, lock: '0' })
+      await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '0' })
       expect((await accounts.findById(target.id)).disabled_at).toBeNull()
 
-      expect((await go('POST', '/quan-tri/khoa', { office: officeId, lock: '1', reason: '' })).statusCode).toBe(400)
-      await go('POST', '/quan-tri/khoa', { office: officeId, lock: '1', reason: 'Thử khoá' })
+      expect((await go('POST', `${A}/customers/lock`, { office: officeId, lock: '1', reason: '' })).statusCode).toBe(400)
+      await go('POST', `${A}/customers/lock`, { office: officeId, lock: '1', reason: 'Thử khoá' })
       expect((await offices.get(officeId)).locked_at).toBeTruthy()
-      await go('POST', '/quan-tri/khoa', { office: officeId, lock: '0' })
+      await go('POST', `${A}/customers/lock`, { office: officeId, lock: '0' })
 
-      const log = (await go('GET', '/quan-tri/nhat-ky')).body
-      for (const text of ['Thêm khách hàng', 'Thêm quản trị', 'Tạo tài khoản', 'Cài máy chính', 'Khoá tài khoản', 'Nghỉ việc', 'Khoá văn phòng', 'Thử khoá', 'Mở khoá văn phòng']) expect(log).toContain(text)
+      const log = (await go('GET', `${A}/audit-log`)).body
+      for (const text of ['Thêm khách hàng', 'Thêm quản trị', 'Tạo tài khoản', 'Cài máy chính', 'Khoá tài khoản', 'Nghỉ việc', 'Khoá văn phòng', 'Thử khoá', 'Mở khoá văn phòng', 'Đặt mật khẩu quản trị', 'Bật xác minh hai bước', 'Đăng nhập quản trị']) expect(log).toContain(text)
     } finally {
-      config.adminEmails.pop()
+      config.adminEmail = saved
     }
   })
 })

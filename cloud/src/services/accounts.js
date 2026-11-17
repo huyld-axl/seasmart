@@ -28,11 +28,11 @@ const accounts = {
   },
 
   // Tài khoản để đăng nhập theo email. Ngoại lệ duy nhất của "không tự tạo tài khoản": email nội bộ Axalize
-  // (CLOUD_ADMIN_EMAILS) tự có tài khoản ở lần đăng nhập đầu, vì không ai ở trên tạo cho họ.
+  // (CLOUD_ADMIN_EMAIL) tự có tài khoản ở lần đăng nhập đầu, vì không ai ở trên tạo cho họ.
   async forLogin(email, db = pool) {
     email = normalizeEmail(email)
     const account = await accounts.findByEmail(email, db)
-    if (account || !config.adminEmails.includes(email)) return account
+    if (account || !config.adminEmail || email !== config.adminEmail) return account
     const { rows } = await db.query('INSERT INTO account (email, full_name) VALUES ($1, $2) ON CONFLICT (email) DO NOTHING RETURNING *', [email, email.split('@')[0]])
     return rows[0] || accounts.findByEmail(email, db)
   },

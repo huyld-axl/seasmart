@@ -31,7 +31,7 @@ export default function WhatsNewRibbon() {
       <Modal open={open} title={`Có gì mới trong MCAH ${info.version}`} onCancel={dismiss} footer={<Button type="primary" onClick={dismiss}>Đã xem</Button>}>
         <NotesList notes={info.notes} />
         <p style={{ margin: '12px 0 0' }}>
-          <a href={`/phat-hanh/index.html#v${info.version}`} target="_blank" rel="noopener noreferrer">Xem ghi chú các bản trước</a>
+          <a href={`/release-notes/index.html#v${info.version}`} target="_blank" rel="noopener noreferrer">Xem ghi chú các bản trước</a>
         </p>
       </Modal>
     </>

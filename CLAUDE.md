@@ -107,7 +107,7 @@ Mọi form thêm / sửa theo một kiểu, lấy form thuyền viên làm chu�
 
 ### 3.4 Control dùng chung (design system)
 
-Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm vào `components/ds/`, minh hoạ ở `/design-system`, rồi mới dùng. Không tự dựng kiểu riêng trong từng trang.
+Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm vào `components/ds/`, minh hoạ ở `/internal/design-system/` (máy dev: `npm run dev` rồi mở `localhost:5173/internal/design-system/`), rồi mới dùng. Không tự dựng kiểu riêng trong từng trang.
 
 | Nhu cầu | Dùng | Không dùng |
 |---|---|---|

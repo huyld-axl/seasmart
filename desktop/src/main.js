@@ -113,7 +113,8 @@ async function serveFrontend(request) {
   return new Response(res.body, { status: res.status, headers })
 }
 
-const WEB_PAGES = /^app:\/\/mcah(\/(?:huong-dan|phat-hanh)\/[^?#]*)(?:\?[^#]*)?(#.*)?$/
+// Tên cũ huong-dan / phat-hanh vẫn nhận (máy chủ chuyển 301 sang /guide, /release-notes; docs/mcah-ke-hoach-khu-noi-bo.md).
+const WEB_PAGES = /^app:\/\/mcah(\/(?:guide|release-notes|huong-dan|phat-hanh)\/[^?#]*)(?:\?[^#]*)?(#.*)?$/
 
 // Trang hướng dẫn và ghi chú phát hành không gói trong app: mở bản trên web (cùng tên miền máy chủ dịch vụ) bằng trình duyệt.
 // ?app=1 để trang hướng dẫn hiện các mục chỉ dành cho app máy tính.

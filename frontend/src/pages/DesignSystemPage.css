@@ -1,4 +1,4 @@
-/* Trang /design-system. Flat như gu skill, không hero. Màu từ biến token. */
+/* Trang /internal/design-system/. Flat như gu skill, không hero. Màu từ biến token. */
 .dsp {
   display: grid;
   grid-template-columns: minmax(0, 1fr);

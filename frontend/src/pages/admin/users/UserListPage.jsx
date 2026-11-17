@@ -78,7 +78,7 @@ export default function UserListPage() {
       cancelText: 'Để sau',
       onOk: () => {
         logout()
-        navigate(`/dat-mat-khau?token=${encodeURIComponent(token)}`)
+        navigate(`/set-password?token=${encodeURIComponent(token)}`)
       },
     })
 

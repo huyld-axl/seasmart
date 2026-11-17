@@ -63,11 +63,12 @@ describe('Google', () => {
   })
 
   it('email nội bộ Axalize tự có tài khoản ở lần đăng nhập Google đầu', async () => {
-    config.adminEmails.push('admin@axalize.vn')
+    const saved = config.adminEmail
+    config.adminEmail = 'admin@axalize.vn'
     try {
       expect((await google.accountFor({ sub: 'g-ax', email: 'admin@axalize.vn' })).google_sub).toBe('g-ax')
     } finally {
-      config.adminEmails.pop()
+      config.adminEmail = saved
     }
   })
 })

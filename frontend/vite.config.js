@@ -1,9 +1,20 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'url'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // Hai trang: app (index.html) và design system ở khu nội bộ (internal/design-system/, docs/mcah-ke-hoach-khu-noi-bo.md 5.5).
+  // Build app máy tính (desktop/vite.frontend.config.mjs) thay cả khối build nên chỉ dựng index.html.
+  build: {
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('index.html', import.meta.url)),
+        designSystem: fileURLToPath(new URL('internal/design-system/index.html', import.meta.url)),
+      },
+    },
+  },
   // Thử trên điện thoại thật cùng LAN (testcase responsive bước 13): chạy dev với VITE_API_URL=/api/v1 và --host, điện thoại
   // gọi /api qua chính dev server nên không cần mở cổng backend hay thêm IP vào CORS. Dev thường (gọi localhost:3000) không đổi.
   server: {

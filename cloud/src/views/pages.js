@@ -3,7 +3,7 @@
 const { escapeHtml: e } = require('../util')
 const config = require('../config')
 
-// Tiền tố đường dẫn khi chạy dưới /tai-khoan (config.basePath).
+// Tiền tố đường dẫn khi chạy dưới /account (config.basePath). Trang pháp lý là tệp tĩnh của frontend ở /legal/.
 const B = config.basePath
 
 const CSS = `
@@ -37,30 +37,24 @@ const pages = {
 ${reauth ? notice('info', 'Vì lý do an toàn, xác nhận lại để tiếp tục.') : ''}
 ${notice('err', error)}
 ${googleButton(google, 'Tiếp tục với Google')}
-<form method="post" action="${B}/dang-nhap/email" style="display:grid;gap:12px" novalidate>
+<form method="post" action="${B}/login/email" style="display:grid;gap:12px" novalidate>
 <label>Email<input name="email" type="email" autocomplete="username" value="${e(email)}" ${reauth && email ? 'readonly' : 'autofocus'}${emailError ? ' aria-invalid="true" aria-describedby="email-err"' : ''}>${emailError ? `<span id="email-err" style="color:var(--err);font-size:13px">${e(emailError)}</span>` : ''}</label>
 <button class="pri">Tiếp tục với email</button></form>
 <p class="muted">Chưa có tài khoản? Tài khoản do quản trị văn phòng tạo. Hỏi quản trị văn phòng của bạn.</p>
-<div class="row muted"><a href="${B}/dieu-khoan">Điều khoản</a><a href="${B}/quyen-rieng-tu">Quyền riêng tư</a></div>`),
+<div class="row muted"><a href="/legal/terms">Điều khoản</a><a href="/legal/privacy">Quyền riêng tư</a></div>`),
 
   // Wireframe 2: nhập mã 6 số đã gửi qua email. Gửi lại là nút gửi form (không có script đếm giờ).
   code: ({ email, error = '', info = '' }) => layout('Nhập mã', `
 <h1>Nhập mã trong email</h1>
 <p class="muted">Đã gửi mã 6 số tới <b>${e(email)}</b>. Mã có hạn 10 phút.</p>
 ${notice('err', error)}${notice('ok', info)}
-<form method="post" action="${B}/dang-nhap/ma" style="display:grid;gap:12px" novalidate>
+<form method="post" action="${B}/login/code" style="display:grid;gap:12px" novalidate>
 <label>Mã 6 số<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" autofocus style="font:600 24px/1.2 ui-monospace,monospace;letter-spacing:.3em;text-align:center"></label>
 <button class="pri">Đăng nhập</button></form>
-<div class="row"><a href="${B}/dang-nhap/email-khac">Dùng email khác</a>
-<form method="post" action="${B}/dang-nhap/gui-lai" style="margin:0"><button style="min-height:0;padding:0;border:0;font-weight:400;color:var(--primary);background:none;text-decoration:underline">Gửi lại mã</button></form></div>
+<div class="row"><a href="${B}/login/change-email">Dùng email khác</a>
+<form method="post" action="${B}/login/resend" style="margin:0"><button style="min-height:0;padding:0;border:0;font-weight:400;color:var(--primary);background:none;text-decoration:underline">Gửi lại mã</button></form></div>
 <p class="muted">Không thấy thư? Xem mục Thư rác. Vẫn không có: email này có thể chưa được tạo tài khoản, hỏi quản trị văn phòng.</p>`),
 
-  // Điều khoản / quyền riêng tư (M5): nội dung chờ luật sư, tạm "TBC".
-  legal: ({ title }) => layout(title, `
-<h1>${e(title)}</h1>
-<p>Nội dung đang được hoàn thiện (TBC).</p>
-<p class="muted">Cần hỏi thêm, liên hệ MCAH.</p>
-<div class="row"><a href="${B}/dang-nhap">Về đăng nhập</a></div>`),
 
   message: ({ title, kind = 'info', text, link = null }) => layout(title, `
 <h1>${e(title)}</h1>${notice(kind, text)}${link ? `<a class="btn" href="${e(link.href)}">${e(link.label)}</a>` : ''}`),

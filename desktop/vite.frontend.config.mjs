@@ -3,6 +3,7 @@
 // Giao diện gọi API qua chính giao thức app:// bằng đường dẫn tương đối (axios từ chối URL tuyệt đối dạng app:);
 // tiến trình chính chuyển tiếp sang Fastify ở cổng ngẫu nhiên.
 // Trang hướng dẫn và ghi chú phát hành không gói vào app: app mở bản trên web (desktop/src/main.js, webPageUrl).
+// Trang nội bộ (internal/, design system) chỉ có trên web: build này chỉ dựng index.html (không nhận rollupOptions.input).
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
@@ -13,7 +14,7 @@ const { default: base } = await import(pathToFileURL(path.join(frontendDir, 'vit
 const outDir = path.join(here, 'dist/frontend')
 const webOnly = {
   name: 'mcah-web-only-pages',
-  closeBundle: () => ['huong-dan', 'phat-hanh'].forEach((dir) => fs.rmSync(path.join(outDir, dir), { recursive: true, force: true })),
+  closeBundle: () => ['guide', 'release-notes', 'internal'].forEach((dir) => fs.rmSync(path.join(outDir, dir), { recursive: true, force: true })),
 }
 
 export default {

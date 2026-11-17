@@ -14,7 +14,7 @@ const ICONS = {
 }
 
 // Nội dung một toast: [icon] [tiêu đề, mô tả] [hành động] [✕]. useToast đặt nó vào notification của antd;
-// /design-system bày dạng tĩnh bằng `static` (khung giống hệt toast thật).
+// /internal/design-system/ bày dạng tĩnh bằng `static` (khung giống hệt toast thật).
 export default function ToastContent({ kind, title, description, actionLabel, onAction, onClose, static: isStatic }) {
   const row = (
     <span className="ds-toast__row">

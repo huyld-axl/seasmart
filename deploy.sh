@@ -51,6 +51,11 @@ if [[ -f cloud/.env ]]; then
 else
   echo 'No cloud/.env: skipping the desktop service (cloud). See docs/mcah-huong-dan-server-may-chu-dich-vu.md.' >&2
 fi
+# Khu nội bộ /internal/ cần tệp Basic Auth; thiếu thì /internal/ trả 500 (phần còn lại vẫn chạy). Chỉ nhắc, không dừng.
+internal_auth="${INTERNAL_AUTH_DIR:-$(sed -n 's/^INTERNAL_AUTH_DIR=//p' .env 2>/dev/null | tail -1)}"
+if [[ ! -f "${internal_auth:-/srv/mcah/internal-auth}/htpasswd" ]]; then
+  echo "No ${internal_auth:-/srv/mcah/internal-auth}/htpasswd: /internal/ will return 500. See docs/mcah-huong-dan-server-may-chu-dich-vu.md." >&2
+fi
 
 if [[ ! -f docker/postgres.env ]]; then
   if [[ "$action" == --status || "$action" == --stop ]]; then

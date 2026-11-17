@@ -71,8 +71,8 @@ async function webRoutes(fastify) {
     const session = await sessionAccount(request, pending.max_age)
     if (session) return finishLogin(request, reply, session.account, session.authTime, pending)
     const known = (await sessionAccount(request)) || (await sessionAccount(request, null, 'mcah_last'))
-    const query = pending.max_age === 0 && known ? `?lai=1&email=${encodeURIComponent(known.account.email)}` : ''
-    return reply.redirect(`${config.basePath}/dang-nhap${query}`)
+    const query = pending.max_age === 0 && known ? `?reauth=1&email=${encodeURIComponent(known.account.email)}` : ''
+    return reply.redirect(`${config.basePath}/login${query}`)
   })
 
   fastify.post('/token', { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } }, async (request, reply) => {
@@ -93,18 +93,16 @@ async function webRoutes(fastify) {
   fastify.get('/.well-known/mcah-keys', async () => ({ keys: tickets.publicKeys() }))
 
   // Trang chuyển về sau khi app đã nhận mã (app chuyển trình duyệt tới đây).
-  fastify.get('/xong', async (request, reply) => html(reply, pages.backToApp()))
-  fastify.get('/dieu-khoan', async (request, reply) => html(reply, pages.legal({ title: 'Điều khoản sử dụng' })))
-  fastify.get('/quyen-rieng-tu', async (request, reply) => html(reply, pages.legal({ title: 'Chính sách quyền riêng tư' })))
+  fastify.get('/done', async (request, reply) => html(reply, pages.backToApp()))
 
   // ---- Đăng nhập: trang chính, mã qua email (wireframe 1, 2) ----
   const loginLimit = { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }
   const OTP_SEC = loginCodes.TTL_MIN * 60
   const codePage = (reply, email, extra = {}, code = 200) => html(reply, pages.code({ email, ...extra }), code)
 
-  fastify.get('/dang-nhap', async (request, reply) => html(reply, loginPage(request, { email: String(request.query.email || '') })))
+  fastify.get('/login', async (request, reply) => html(reply, loginPage(request, { email: String(request.query.email || '') })))
 
-  fastify.post('/dang-nhap/email', loginLimit, async (request, reply) => {
+  fastify.post('/login/email', loginLimit, async (request, reply) => {
     const email = accounts.normalizeEmail(request.body?.email)
     try {
       await loginCodes.send({ email, ip: request.ip })
@@ -119,18 +117,18 @@ async function webRoutes(fastify) {
       return html(reply, loginPage(request, { email, error: error.message }), error.statusCode)
     }
     setCookie(reply, 'mcah_otp', { e: email }, OTP_SEC)
-    return reply.code(303).redirect(`${config.basePath}/dang-nhap/ma`)
+    return reply.code(303).redirect(`${config.basePath}/login/code`)
   })
 
-  fastify.get('/dang-nhap/ma', async (request, reply) => {
+  fastify.get('/login/code', async (request, reply) => {
     const otp = readCookie(request, 'mcah_otp')
-    if (!otp?.e) return reply.redirect(`${config.basePath}/dang-nhap`)
+    if (!otp?.e) return reply.redirect(`${config.basePath}/login`)
     return codePage(reply, otp.e)
   })
 
-  fastify.post('/dang-nhap/ma', loginLimit, async (request, reply) => {
+  fastify.post('/login/code', loginLimit, async (request, reply) => {
     const otp = readCookie(request, 'mcah_otp')
-    if (!otp?.e) return reply.code(303).redirect(`${config.basePath}/dang-nhap`)
+    if (!otp?.e) return reply.code(303).redirect(`${config.basePath}/login`)
     let account
     try {
       account = await loginCodes.verify({ email: otp.e, code: request.body?.code })
@@ -143,9 +141,9 @@ async function webRoutes(fastify) {
     return finishLogin(request, reply, account)
   })
 
-  fastify.post('/dang-nhap/gui-lai', loginLimit, async (request, reply) => {
+  fastify.post('/login/resend', loginLimit, async (request, reply) => {
     const otp = readCookie(request, 'mcah_otp')
-    if (!otp?.e) return reply.code(303).redirect(`${config.basePath}/dang-nhap`)
+    if (!otp?.e) return reply.code(303).redirect(`${config.basePath}/login`)
     try {
       await loginCodes.send({ email: otp.e, ip: request.ip })
     } catch (error) {
@@ -156,20 +154,20 @@ async function webRoutes(fastify) {
     return codePage(reply, otp.e, { info: 'Đã gửi mã mới.' })
   })
 
-  fastify.get('/dang-nhap/email-khac', async (request, reply) => {
+  fastify.get('/login/change-email', async (request, reply) => {
     clearCookie(reply, 'mcah_otp')
-    return reply.redirect(`${config.basePath}/dang-nhap`)
+    return reply.redirect(`${config.basePath}/login`)
   })
 
-  fastify.get('/dang-xuat', async (request, reply) => {
+  fastify.get('/logout', async (request, reply) => {
     clearCookie(reply, 'mcah_s')
     clearCookie(reply, 'mcah_last')
-    return reply.redirect(`${config.basePath}/dang-nhap`)
+    return reply.redirect(`${config.basePath}/login`)
   })
 
   // ---- Google ----
   fastify.get('/google', loginLimit, async (request, reply) => {
-    if (!google.enabled()) return reply.redirect(`${config.basePath}/dang-nhap`)
+    if (!google.enabled()) return reply.redirect(`${config.basePath}/login`)
     // Đăng nhập lại bắt buộc (app gửi max_age=0 sau khi sai PIN): Google hỏi lại mật khẩu.
     const reauth = readCookie(request, 'mcah_oauth')?.max_age === 0
     const { url, pending } = google.start({ reauth })
@@ -191,4 +189,29 @@ async function webRoutes(fastify) {
   })
 }
 
+// Đường tiếng Việt cũ (docs/mcah-ke-hoach-khu-noi-bo.md mục 4): app máy tính đã phát hành chuyển trình duyệt về /xong, trang
+// đăng nhập cũ còn mở trong trình duyệt. GET chuyển 301, POST chuyển 308 (giữ thân form). Giữ cả query (?email=…).
+const LEGACY = {
+  '/dang-nhap': '/login',
+  '/dang-nhap/email': '/login/email',
+  '/dang-nhap/ma': '/login/code',
+  '/dang-nhap/gui-lai': '/login/resend',
+  '/dang-nhap/email-khac': '/login/change-email',
+  '/dang-xuat': '/logout',
+  '/xong': '/done',
+}
+
+async function legacyRoutes(fastify) {
+  for (const [from, to] of Object.entries(LEGACY)) {
+    const move = (code) => async (request, reply) => {
+      const query = request.url.includes('?') ? request.url.slice(request.url.indexOf('?')) : ''
+      return reply.code(code).redirect(`${config.basePath}${to}${query}`)
+    }
+    fastify.get(from, move(301))
+    fastify.post(from, move(308))
+  }
+}
+
 module.exports = webRoutes
+module.exports.legacyRoutes = legacyRoutes
+module.exports.LEGACY = LEGACY

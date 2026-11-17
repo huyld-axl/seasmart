@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MCAH - Ghi chú phát hành</title>
 <style>
-  /* Trang ghi chú phát hành tĩnh, cùng kiểu trang hướng dẫn (huong-dan/index.html). Một trang cho cả web và app máy tính:
+  /* Trang ghi chú phát hành tĩnh, cùng kiểu trang hướng dẫn (guide/index.html). Một trang cho cả web và app máy tính:
      app mở bản trên web. Phần danh sách bản do desktop/scripts/notes-page.js sinh từ desktop/release-notes/*.md. */
   :root {
     color-scheme: light;
@@ -81,13 +81,14 @@
   <nav class="toc" id="toc">
     <p>Phiên bản</p>
     <!-- MỤC LỤC: tự sinh -->
+    <a href="#v0.9.4">Bản 0.9.4</a>
     <a href="#v0.9.3">Bản 0.9.3</a>
     <a href="#v0.9.2">Bản 0.9.2</a>
     <a href="#v0.9.1">Bản 0.9.1</a>
     <a href="#v0.9.0">Bản 0.9.0</a>
     <!-- /MỤC LỤC -->
     <p>Khác</p>
-    <a href="../huong-dan/index.html">Hướng dẫn sử dụng</a>
+    <a href="../guide/index.html">Hướng dẫn sử dụng</a>
     <a href="../download/">Tải app máy tính</a>
   </nav>
 </aside>
@@ -109,8 +110,20 @@
     </header>
 
     <!-- BẢN PHÁT HÀNH: tự sinh -->
+    <section id="v0.9.4">
+      <h2>Bản 0.9.4 <span class="ver">Mới nhất</span></h2>
+      <ul>
+        <li>Đăng nhập không cần mật khẩu: dùng Google hoặc mã 6 số gửi qua email. Không còn đăng ký, quên mật khẩu, thư mời.</li>
+        <li>Quản trị văn phòng tạo tài khoản cho nhân viên ngay trong app (Quản trị → Tài khoản → Thêm tài khoản); người đó mở MCAH và đăng nhập bằng email được tạo.</li>
+        <li>Văn phòng do MCAH tạo sẵn: quản trị đăng nhập lần đầu chỉ cần chọn máy này làm máy chính.</li>
+        <li>Khoá bằng mã PIN thành tuỳ chọn của cả văn phòng (Quản trị → Máy trong văn phòng).</li>
+        <li>Cứ 30 ngày cần đăng nhập lại một lần qua trình duyệt.</li>
+        <li>Văn phòng hoặc tài khoản bị MCAH khoá thì không vào được app; dữ liệu trên máy vẫn giữ nguyên.</li>
+        <li>Trang hướng dẫn và ghi chú phát hành chuyển sang địa chỉ mới; link cũ vẫn mở được.</li>
+      </ul>
+    </section>
     <section id="v0.9.3">
-      <h2>Bản 0.9.3 <span class="ver">Mới nhất</span></h2>
+      <h2>Bản 0.9.3</h2>
       <ul>
         <li>Sửa lỗi app Windows không mở được sau khi cài.</li>
       </ul>
@@ -146,7 +159,7 @@
     </section>
     <!-- /BẢN PHÁT HÀNH -->
 
-    <footer>Xem cách dùng từng phần ở <a href="../huong-dan/index.html">Hướng dẫn sử dụng</a>.</footer>
+    <footer>Xem cách dùng từng phần ở <a href="../guide/index.html">Hướng dẫn sử dụng</a>.</footer>
   </main>
 </div>
 <script>

@@ -418,7 +418,7 @@ function PhoneDemos() {
       </div>
       {isPhone ? null : (
         <figure className="dsp-phone__frame">
-          <iframe title="Design system ở khổ điện thoại 375px" src="/design-system#dien-thoai" width="375" height="760" loading="lazy" />
+          <iframe title="Design system ở khổ điện thoại 375px" src="/internal/design-system/#dien-thoai" width="375" height="760" loading="lazy" />
           <figcaption>Cùng mục này ở khổ 375px</figcaption>
         </figure>
       )}

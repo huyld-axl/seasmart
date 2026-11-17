@@ -52,9 +52,9 @@ const ip = (n) => ({ remoteAddress: `10.1.0.${n}` })
 
 // Đăng nhập trên trang web bằng mã email; trả trang sau khi nhập mã (trang "Đã đăng nhập" / trao mã cho app).
 async function loginWithCode(b, email) {
-  const sent = await b.post('/dang-nhap/email', { email })
-  expect([sent.statusCode, sent.headers.location]).toEqual([303, '/dang-nhap/ma'])
-  return b.post('/dang-nhap/ma', { code: lastCode(email) })
+  const sent = await b.post('/login/email', { email })
+  expect([sent.statusCode, sent.headers.location]).toEqual([303, '/login/code'])
+  return b.post('/login/code', { code: lastCode(email) })
 }
 
 // Tài khoản do quản trị tạo (không qua đăng ký): chỉ có email + họ tên.
@@ -75,11 +75,11 @@ afterAll(() => app.close())
 
 describe('đăng nhập bằng mã email', () => {
   it('trang đăng nhập không còn mật khẩu, đăng ký, quên mật khẩu; địa chỉ cũ không còn', async () => {
-    const page = (await browser().get('/dang-nhap')).body
+    const page = (await browser().get('/login')).body
     expect(page).toContain('Tiếp tục với email')
     expect(page).not.toMatch(/type="password"|Đăng ký|Quên mật khẩu/)
     for (const url of ['/dang-ky', '/quen-mat-khau', '/dat-lai', '/xac-minh', '/moi?token=x']) expect((await browser().get(url)).statusCode).toBe(404)
-    expect((await browser().post('/dang-nhap', { email: 'halinh@thu.vn', password: 'x' })).statusCode).toBe(404)
+    expect((await browser().post('/login', { email: 'halinh@thu.vn', password: 'x' })).statusCode).toBe(404)
   })
 
   it('gửi mã → nhập đúng thì đăng nhập, đặt email_verified_at và lần đăng nhập; mã chỉ dùng một lần', async () => {
@@ -90,49 +90,49 @@ describe('đăng nhập bằng mã email', () => {
     expect(a.email_verified_at).toBeTruthy()
     expect(a.last_login_method).toBe('email_code')
     expect(mailer.sent.at(-1).text).not.toMatch(/https?:/)
-    const reuse = await browser().post('/dang-nhap/ma', { code: lastCode('halinh@thu.vn') })
-    expect(reuse.headers.location).toBe('/dang-nhap')
+    const reuse = await browser().post('/login/code', { code: lastCode('halinh@thu.vn') })
+    expect(reuse.headers.location).toBe('/login')
   })
 
   it('sai mã báo lỗi; sai 5 lần thì mã hết hiệu lực kể cả nhập đúng; quá 10 phút thì hết hạn', async () => {
     await allowResend('halinh@thu.vn')
     const b = browser()
-    await b.post('/dang-nhap/email', { email: 'halinh@thu.vn' })
+    await b.post('/login/email', { email: 'halinh@thu.vn' })
     const right = lastCode('halinh@thu.vn')
     const wrong = right === '000000' ? '111111' : '000000'
-    expect((await b.post('/dang-nhap/ma', { code: wrong })).body).toContain('Mã không đúng')
-    for (let i = 0; i < 4; i++) await b.post('/dang-nhap/ma', { code: wrong })
-    expect((await b.post('/dang-nhap/ma', { code: right })).body).toContain('hết hiệu lực')
+    expect((await b.post('/login/code', { code: wrong })).body).toContain('Mã không đúng')
+    for (let i = 0; i < 4; i++) await b.post('/login/code', { code: wrong })
+    expect((await b.post('/login/code', { code: right })).body).toContain('hết hiệu lực')
 
     await allowResend('halinh@thu.vn')
-    await b.post('/dang-nhap/gui-lai', {})
+    await b.post('/login/resend', {})
     await pool().query("UPDATE login_code SET expires_at = NOW() - INTERVAL '1 second' WHERE email = 'halinh@thu.vn'")
-    expect((await b.post('/dang-nhap/ma', { code: lastCode('halinh@thu.vn') })).body).toContain('hết hiệu lực')
+    expect((await b.post('/login/code', { code: lastCode('halinh@thu.vn') })).body).toContain('hết hiệu lực')
   })
 
   it('gửi lại: chặn trong 60 giây, sau đó gửi được và mã cũ không dùng được nữa', async () => {
     await allowResend('halinh@thu.vn')
     const b = browser()
-    await b.post('/dang-nhap/email', { email: 'halinh@thu.vn' })
+    await b.post('/login/email', { email: 'halinh@thu.vn' })
     const first = lastCode('halinh@thu.vn')
-    expect((await b.post('/dang-nhap/gui-lai', {})).body).toMatch(/Thử gửi lại sau \d+ giây/)
+    expect((await b.post('/login/resend', {})).body).toMatch(/Thử gửi lại sau \d+ giây/)
     await allowResend('halinh@thu.vn')
-    expect((await b.post('/dang-nhap/gui-lai', {})).body).toContain('Đã gửi mã mới')
+    expect((await b.post('/login/resend', {})).body).toContain('Đã gửi mã mới')
     const second = lastCode('halinh@thu.vn')
-    if (first !== second) expect((await b.post('/dang-nhap/ma', { code: first })).body).toContain('Mã không đúng')
-    expect((await b.post('/dang-nhap/ma', { code: second })).body).toContain('Đã đăng nhập')
+    if (first !== second) expect((await b.post('/login/code', { code: first })).body).toContain('Mã không đúng')
+    expect((await b.post('/login/code', { code: second })).body).toContain('Đã đăng nhập')
   })
 
   it('email chưa có tài khoản: trang như thường nhưng không có thư, không đăng nhập được; email sai dạng báo dưới ô', async () => {
     const before = mailer.sent.length
     const b = browser()
-    const res = await b.post('/dang-nhap/email', { email: 'la@khong-co.vn' })
-    expect(res.headers.location).toBe('/dang-nhap/ma')
-    expect((await b.get('/dang-nhap/ma')).body).toContain('la@khong-co.vn')
+    const res = await b.post('/login/email', { email: 'la@khong-co.vn' })
+    expect(res.headers.location).toBe('/login/code')
+    expect((await b.get('/login/code')).body).toContain('la@khong-co.vn')
     expect(mailer.sent.length).toBe(before)
-    expect((await b.post('/dang-nhap/ma', { code: '123456' })).body).toContain('Mã không đúng')
+    expect((await b.post('/login/code', { code: '123456' })).body).toContain('Mã không đúng')
     expect((await pool().query("SELECT COUNT(*)::int n FROM account WHERE email = 'la@khong-co.vn'")).rows[0].n).toBe(0)
-    const bad = await browser().post('/dang-nhap/email', { email: 'khong-phai-email' })
+    const bad = await browser().post('/login/email', { email: 'khong-phai-email' })
     expect([bad.statusCode, /aria-invalid="true"/.test(bad.body)]).toEqual([400, true])
   })
 
@@ -140,10 +140,10 @@ describe('đăng nhập bằng mã email', () => {
     await account('nhieu@thu.vn')
     for (let i = 0; i < 5; i++) {
       await allowResend('nhieu@thu.vn', 61)
-      expect((await app.inject({ method: 'POST', url: '/dang-nhap/email', payload: 'email=nhieu%40thu.vn', headers: { 'content-type': 'application/x-www-form-urlencoded' }, ...ip(i) })).statusCode).toBe(303)
+      expect((await app.inject({ method: 'POST', url: '/login/email', payload: 'email=nhieu%40thu.vn', headers: { 'content-type': 'application/x-www-form-urlencoded' }, ...ip(i) })).statusCode).toBe(303)
     }
     await allowResend('nhieu@thu.vn', 61)
-    const res = await app.inject({ method: 'POST', url: '/dang-nhap/email', payload: 'email=nhieu%40thu.vn', headers: { 'content-type': 'application/x-www-form-urlencoded' }, ...ip(9) })
+    const res = await app.inject({ method: 'POST', url: '/login/email', payload: 'email=nhieu%40thu.vn', headers: { 'content-type': 'application/x-www-form-urlencoded' }, ...ip(9) })
     expect(res.body).toContain('quá nhiều mã')
   })
 
@@ -152,16 +152,17 @@ describe('đăng nhập bằng mã email', () => {
     await require('../src/services/accounts').setDisabled(locked.id, true)
     const before = mailer.sent.length
     const b = browser()
-    await b.post('/dang-nhap/email', { email: 'khoa@thu.vn' })
+    await b.post('/login/email', { email: 'khoa@thu.vn' })
     expect(mailer.sent.length).toBe(before)
   })
 
-  it('email nội bộ Axalize (CLOUD_ADMIN_EMAILS) tự có tài khoản ở lần đăng nhập đầu; email khác thì không', async () => {
-    config.adminEmails.push('sales@axalize.vn')
+  it('email admin nội bộ (CLOUD_ADMIN_EMAIL) tự có tài khoản ở lần đăng nhập đầu; email khác thì không', async () => {
+    const saved = config.adminEmail
+    config.adminEmail = 'sales@axalize.vn'
     try {
       expect((await loginWithCode(browser(), 'sales@axalize.vn')).body).toContain('Đã đăng nhập')
     } finally {
-      config.adminEmails.pop()
+      config.adminEmail = saved
     }
   })
 })
@@ -170,7 +171,7 @@ describe('OAuth cho app', () => {
   it('PKCE: đăng nhập trên web → mã → vé + refresh; mã chỉ dùng một lần; verifier sai bị từ chối', async () => {
     const b = browser()
     const { verifier, challenge } = pkce()
-    expect((await b.get(authorizeUrl(challenge))).headers.location).toBe('/dang-nhap')
+    expect((await b.get(authorizeUrl(challenge))).headers.location).toBe('/login')
     await allowResend('halinh@thu.vn')
     const done = await loginWithCode(b, 'halinh@thu.vn')
     const code = codeFrom(done.body)
@@ -244,9 +245,9 @@ describe('OAuth cho app', () => {
   it('trao mã cho app xong thì xoá phiên trình duyệt; max_age=0 điền sẵn email và bắt nhập mã mới', async () => {
     const { b, challenge } = await appTokens()
     const again = await b.get(authorizeUrl(challenge))
-    expect([again.statusCode, again.headers.location]).toEqual([302, '/dang-nhap'])
+    expect([again.statusCode, again.headers.location]).toEqual([302, '/login'])
     const re = await b.get(authorizeUrl(challenge, '&max_age=0'))
-    expect(re.headers.location).toContain('/dang-nhap?lai=1&email=halinh')
+    expect(re.headers.location).toContain('/login?reauth=1&email=halinh')
     const page = (await b.get(re.headers.location)).body
     expect(page).toContain('Xác nhận lại')
     expect(page).toMatch(/value="halinh@thu.vn" readonly/)

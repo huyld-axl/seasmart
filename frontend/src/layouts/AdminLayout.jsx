@@ -37,7 +37,7 @@ import WhatsNewRibbon from '../components/common/WhatsNew'
 import DesktopLock from '../components/common/DesktopLock'
 import { desktop, isDesktop } from '../lib/desktop'
 
-// Trang có hướng dẫn trong app (public/huong-dan/): hiện link Hướng dẫn trong menu, mở đúng mục của trang hướng dẫn theo đường dẫn.
+// Trang có hướng dẫn trong app (public/guide/): hiện link Hướng dẫn trong menu, mở đúng mục của trang hướng dẫn theo đường dẫn.
 const guideUrl = (section) => `${GUIDE_HOME_URL}#${section}`
 const GUIDE_PATHS = [
   ['/voyages', guideUrl('chuyen-tau')], ['/contracts', guideUrl('hop-dong')], ['/bills', guideUrl('thanh-toan')],
@@ -219,7 +219,7 @@ export default function AdminLayout() {
     ],
     onClick: ({ key }) => {
       if (key === 'logout') signOut()
-      if (key === 'device') navigate('/cai-dat-may')
+      if (key === 'device') navigate('/device-settings')
       if (key === 'update') desktop.checkUpdate()
     },
   }
@@ -251,7 +251,7 @@ export default function AdminLayout() {
                 <span className="app-shell__title-parent">{current.label} /</span> {currentTab.label}
               </>
             ) : (
-              current?.label || (pathname === '/cai-dat-may' ? 'Cài đặt trên máy này' : 'MCAH')
+              current?.label || (pathname === '/device-settings' ? 'Cài đặt trên máy này' : 'MCAH')
             )}
           </h1>
 

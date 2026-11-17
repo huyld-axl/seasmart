@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khu nội bộ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe khu nội bộ /internal/ (docs/mcah-ke-hoach-khu-noi-bo.md). Theme sáng như app; token chép từ
+     frontend/src/theme/tokens.js. Mọi màn là trang web của máy chủ dịch vụ (cloud/), dựng tiếp kiểu trang quản trị
+     hiện có (HTML thuần, không script, CSP). */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --warning-border: #fee685;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1360px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 72ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 80ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; max-width: 80ch; }
+  .notes li { margin-bottom: 4px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; }
+  .card h4 { margin: 0 0 12px; font-size: 14px; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .field { display: grid; gap: 4px; font-size: 13px; }
+  .field-err { color: var(--error-strong); font-size: 12px; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 8px 10px; background: var(--surface); min-height: 36px; }
+  .input.err { border-color: var(--error-strong); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 6px 4px; }
+  .btn.dis { opacity: .45; }
+  .banner { padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.warn { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .banner.ok { background: var(--success-bg); color: var(--success); }
+  .banner.err { background: var(--error-bg); color: var(--error-strong); }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; background: var(--secondary); white-space: nowrap; }
+  .tag.warn { background: var(--warning-bg); color: var(--warning); }
+  .tag.ok { background: var(--success-bg); color: var(--success); }
+  .tag.err { background: var(--error-bg); color: var(--error-strong); }
+  .mono { font-family: ui-monospace, monospace; }
+
+  /* Khung trình duyệt */
+  .web { min-height: 440px; display: grid; place-items: center; background: #eef0f4; position: relative; border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; }
+  .bar { position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: #dfe2e8; font-size: 12px; color: var(--muted); }
+  .web .box { width: min(400px, calc(100% - 32px)); background: var(--surface); border-radius: var(--radius-lg); padding: 28px; display: grid; gap: 12px; margin: 48px 0 24px; }
+  .web .box.wide { width: min(520px, calc(100% - 32px)); }
+  .web h4 { margin: 0; font-size: 18px; }
+  .brand { display: flex; align-items: center; gap: 8px; }
+  .brand .lock { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--secondary); color: var(--muted); }
+  .otp { display: flex; gap: 8px; justify-content: center; }
+  .otp span { width: 42px; height: 50px; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); display: grid; place-items: center; font-size: 22px; font-family: ui-monospace, monospace; }
+  .steps { display: flex; gap: 6px; font-size: 12px; color: var(--muted); }
+  .steps span { padding: 2px 8px; border-radius: 999px; background: var(--secondary); }
+  .steps .on { background: var(--primary); color: #fff; }
+  .steps .done { background: var(--success-bg); color: var(--success); }
+
+  /* Hộp Basic Auth của trình duyệt */
+  .bdialog { width: min(420px, calc(100% - 32px)); background: #fff; border-radius: 10px; box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 10px; font-family: system-ui, sans-serif; margin-top: 24px; }
+  .bdialog h5 { margin: 0; font-size: 15px; font-weight: 600; }
+  .bdialog .input { border-radius: 4px; }
+  .bdialog .btn { border-radius: 4px; }
+  .dimmed { position: absolute; inset: 28px 0 0; background: #fafafa; display: grid; place-items: start center; }
+
+  /* QR minh hoạ */
+  .qrwrap { display: grid; grid-template-columns: 168px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .qr { width: 168px; height: 168px; padding: 10px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); position: relative; }
+  .qr .dots { position: absolute; inset: 10px; background:
+      repeating-conic-gradient(#111 0 25%, transparent 0 50%) 0 0 / 14px 14px; opacity: .85; }
+  .qr .f { position: absolute; width: 42px; height: 42px; border: 6px solid #111; background: #fff; box-shadow: inset 0 0 0 6px #fff, inset 0 0 0 14px #111; }
+  .qr .f1 { top: 10px; left: 10px; } .qr .f2 { top: 10px; right: 10px; } .qr .f3 { bottom: 10px; left: 10px; }
+  .secret { font-family: ui-monospace, monospace; font-size: 13px; letter-spacing: .08em; background: var(--secondary); padding: 8px 10px; border-radius: var(--radius-sm); word-break: break-all; }
+  .codes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-family: ui-monospace, monospace; font-size: 15px; text-align: center; }
+  .codes span { padding: 8px; background: var(--secondary); border-radius: var(--radius-sm); }
+
+  /* Trang quản trị */
+  .admin { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: #eef0f4; }
+  .admin .abar { padding: 6px 12px; background: #dfe2e8; font-size: 12px; color: var(--muted); }
+  .admin .wrap { padding: 20px; display: grid; gap: 14px; min-height: 340px; align-content: start; }
+  .tabs { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+  .tabs span { padding: 6px 12px; border-radius: 999px; font-size: 13px; }
+  .tabs .on { background: var(--surface); font-weight: 600; border: 1px solid var(--border); }
+  .tabs .who { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .admin .card { overflow-x: auto; }
+  .tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 720px; }
+  .tbl th, .tbl td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .tbl th { color: var(--muted); font-weight: 500; }
+
+  /* Sơ đồ lớp chặn */
+  .flow { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+  .flow .st { flex: 1; min-width: 150px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; display: grid; gap: 4px; align-content: start; }
+  .flow .st b { font-size: 13px; }
+  .flow .st small { color: var(--muted); font-size: 12px; }
+  .flow .arr { align-self: center; color: var(--muted); }
+  .map { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); border-radius: var(--radius-md); overflow: hidden; }
+  .map th, .map td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .map th { color: var(--muted); font-weight: 500; }
+  .map td:first-child { white-space: nowrap; font-weight: 600; }
+
+  /* Terminal */
+  .term { background: #1e1f22; color: #e6e6e6; border-radius: var(--radius-md); padding: 16px; font: 13px/1.6 ui-monospace, monospace; white-space: pre-wrap; overflow-x: auto; }
+  .term .p { color: #8ab4f8; } .term .c { color: #9aa0a6; } .term .ok { color: #81c995; } .term .er { color: #f28b82; }
+
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .qrwrap { grid-template-columns: 1fr; } .flow .arr { display: none; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">Khu nội bộ</p>
+    <a href="#w0"><b>0</b>Tổng quan: 3 lớp chặn</a>
+    <a href="#w1"><b>1</b>Basic Auth của trình duyệt</a>
+    <a href="#w2"><b>2</b>Email + mật khẩu</a>
+    <a href="#w3"><b>3</b>Mã Authenticator</a>
+    <a href="#w4"><b>4</b>Lần đầu: quét QR</a>
+    <a href="#w5"><b>5</b>Lần đầu: mã khôi phục</a>
+    <a href="#w6"><b>6</b>Dùng mã khôi phục</a>
+    <a href="#w7"><b>7</b>Sai quá nhiều lần</a>
+    <a href="#w8"><b>8</b>Trang quản trị, tab mới</a>
+    <a href="#w9"><b>9</b>Design system</a>
+    <a href="#w10"><b>10</b>Lệnh trên server</a>
+  </nav>
+  <main class="main">
+    <header>
+      <h1>Khu nội bộ /internal/</h1>
+      <p class="lead">Mọi trang riêng tư của Axalize gom về <span class="mono">mcah.axalize.vn/internal/</span>, qua 3 lớp: Basic Auth của trình duyệt → email + mật khẩu → mã 6 số từ app Authenticator. Chỉ có một tài khoản admin. Trang quản trị giữ nguyên nội dung, chỉ đổi địa chỉ và thêm tab Design system. Nhãn trên giao diện vẫn tiếng Việt; chỉ đường dẫn là tiếng Anh.</p>
+    </header>
+
+    <section id="w0">
+      <h2><b>0</b> Tổng quan: 3 lớp chặn</h2>
+      <p class="why">Lớp 1 do nginx làm, chưa qua thì không request nào tới ứng dụng. Lớp 2 và 3 do máy chủ dịch vụ làm.</p>
+      <div class="flow">
+        <div class="st"><b>1 · Basic Auth</b><small>Hộp của trình duyệt. Một tài khoản trong tệp htpasswd trên server. Trình duyệt tự nhớ tới khi đóng.</small></div>
+        <div class="arr">→</div>
+        <div class="st"><b>2 · Email + mật khẩu</b><small><span class="mono">/internal/login</span>. Mật khẩu đặt bằng lệnh trên server.</small></div>
+        <div class="arr">→</div>
+        <div class="st"><b>3 · Mã Authenticator</b><small><span class="mono">/internal/login/verify</span>. Lần đầu quét QR, nhận 8 mã khôi phục.</small></div>
+        <div class="arr">→</div>
+        <div class="st"><b>Vào khu nội bộ</b><small>Phiên 8 giờ. Quản trị khách hàng, tài khoản, nhật ký, design system.</small></div>
+      </div>
+      <table class="map" style="margin-top:16px">
+        <tr><th>Trang</th><th>Đường cũ</th><th>Đường mới</th></tr>
+        <tr><td>Khách hàng</td><td class="mono">/tai-khoan/quan-tri</td><td class="mono">/internal/admin</td></tr>
+        <tr><td>Thêm quản trị văn phòng</td><td class="mono">/tai-khoan/quan-tri/khach/quan-tri</td><td class="mono">/internal/admin/customers/admins</td></tr>
+        <tr><td>Khoá văn phòng</td><td class="mono">/tai-khoan/quan-tri/khoa</td><td class="mono">/internal/admin/customers/lock</td></tr>
+        <tr><td>Tài khoản</td><td class="mono">/tai-khoan/quan-tri/tai-khoan</td><td class="mono">/internal/admin/accounts</td></tr>
+        <tr><td>Khoá tài khoản</td><td class="mono">/tai-khoan/quan-tri/tai-khoan/khoa</td><td class="mono">/internal/admin/accounts/lock</td></tr>
+        <tr><td>Nhật ký</td><td class="mono">/tai-khoan/quan-tri/nhat-ky</td><td class="mono">/internal/admin/audit-log</td></tr>
+        <tr><td>Design system</td><td class="mono">/design-system</td><td class="mono">/internal/design-system/</td></tr>
+      </table>
+      <ul class="notes">
+        <li>Đường cũ của trang quản trị chuyển 301 sang đường mới. <span class="mono">/design-system</span> cũ trả 404, không chuyển hướng (không lộ có khu nội bộ).</li>
+        <li>Đổi tên các đường public (<span class="mono">/account</span>, <span class="mono">/guide</span>, <span class="mono">/release-notes</span>, <span class="mono">/legal/*</span>, <span class="mono">/set-password</span>…) không có màn mới, xem bảng mục 3 của kế hoạch.</li>
+      </ul>
+    </section>
+
+    <section id="w1">
+      <h2><b>1</b> Basic Auth của trình duyệt</h2>
+      <p class="why">Mở bất kỳ địa chỉ nào dưới /internal/. Hộp này là của trình duyệt (Chrome minh hoạ), MCAH không tự vẽ được.</p>
+      <div class="web">
+        <div class="bar">mcah.axalize.vn/internal/admin</div>
+        <div class="dimmed">
+          <div class="bdialog">
+            <h5>Đăng nhập</h5>
+            <div class="muted" style="font-size:13px">https://mcah.axalize.vn yêu cầu bạn đăng nhập.<br>Kết nối của bạn tới trang web này là riêng tư.</div>
+            <div class="field">Tên người dùng<div class="input">axalize</div></div>
+            <div class="field">Mật khẩu<div class="input">••••••••••••••••</div></div>
+            <div class="row" style="justify-content:flex-end"><span class="btn">Huỷ</span><span class="btn pri">Đăng nhập</span></div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Huỷ hoặc sai: trang trắng "401 Authorization Required" của nginx. Không có chữ MCAH nào, không lộ đây là trang gì.</li>
+        <li>Đúng: trình duyệt nhớ tới khi đóng hết cửa sổ; các lần mở sau trong phiên không hỏi lại.</li>
+        <li>Mật khẩu Basic Auth khác mật khẩu ở màn 2 (đặt ở hai chỗ khác nhau trên server).</li>
+      </ul>
+    </section>
+
+    <section id="w2">
+      <h2><b>2</b> Email + mật khẩu</h2>
+      <p class="why">Màn đầu tiên của MCAH sau Basic Auth. Không có Google, không gửi mã email, không có Quên mật khẩu hay Đăng ký.</p>
+      <div class="row" style="align-items:stretch;gap:16px">
+        <div class="web" style="flex:1;min-width:300px">
+          <div class="bar">mcah.axalize.vn/internal/login</div>
+          <div class="box">
+            <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+            <h4>Đăng nhập quản trị</h4>
+            <div class="steps"><span class="on">1 Mật khẩu</span><span>2 Mã xác minh</span></div>
+            <div class="field">Email<div class="input">admin@axalize.vn</div></div>
+            <div class="field">Mật khẩu<div class="input">••••••••••••••</div></div>
+            <span class="btn pri">Tiếp tục</span>
+            <p class="muted" style="margin:0;font-size:12px">Quên mật khẩu: đặt lại bằng lệnh trên server (người giữ server làm).</p>
+          </div>
+        </div>
+        <div class="web" style="flex:1;min-width:300px">
+          <div class="bar">mcah.axalize.vn/internal/login · sai</div>
+          <div class="box">
+            <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+            <h4>Đăng nhập quản trị</h4>
+            <div class="steps"><span class="on">1 Mật khẩu</span><span>2 Mã xác minh</span></div>
+            <div class="banner err">Email hoặc mật khẩu không đúng.</div>
+            <div class="field">Email<div class="input">admin@axalize.vn</div></div>
+            <div class="field">Mật khẩu<div class="input"></div></div>
+            <span class="btn pri">Tiếp tục</span>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Nút Tiếp tục luôn bấm được. Thiếu email hoặc mật khẩu: lỗi dưới đúng ô ("Nhập email", "Nhập mật khẩu").</li>
+        <li>Sai email hay sai mật khẩu đều cùng một câu, không cho biết email nào là admin. Giữ email đã nhập, xoá ô mật khẩu.</li>
+        <li>Đúng: đã cài 2FA thì sang màn 3, chưa cài thì sang màn 4. Trạng thái "đã qua mật khẩu" giữ 5 phút.</li>
+        <li>Mở kèm <span class="mono">?next=/internal/design-system/</span>: đăng nhập xong quay về đúng trang đó (chỉ nhận đường dưới /internal/).</li>
+      </ul>
+    </section>
+
+    <section id="w3">
+      <h2><b>3</b> Mã Authenticator</h2>
+      <p class="why">Đăng nhập hằng ngày: mở app Authenticator trên điện thoại, gõ mã 6 số đang hiện ở mục "MCAH internal".</p>
+      <div class="web">
+        <div class="bar">mcah.axalize.vn/internal/login/verify</div>
+        <div class="box">
+          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <h4>Nhập mã xác minh</h4>
+          <div class="steps"><span class="done">✓ Mật khẩu</span><span class="on">2 Mã xác minh</span></div>
+          <p class="muted" style="margin:0">Mở app Authenticator (Google Authenticator…) trên điện thoại, nhập mã 6 số ở mục <b>MCAH internal · admin@axalize.vn</b>.</p>
+          <div class="otp"><span>3</span><span>9</span><span>0</span><span>2</span><span>6</span><span>1</span></div>
+          <span class="btn pri">Xác minh</span>
+          <div class="row" style="justify-content:space-between"><span class="btn link">← Đăng nhập lại</span><span class="btn link">Mất điện thoại?</span></div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Là một ô nhập 6 số (bàn phím số, <span class="mono">autocomplete="one-time-code"</span>), không phải 6 ô rời — trang không có script.</li>
+        <li>Sai: "Mã không đúng. Mã đổi mỗi 30 giây, nhập mã đang hiện." Chấp nhận lệch ±30 giây.</li>
+        <li>Mã vừa dùng để vào thì không dùng lại được, kể cả còn trong 30 giây.</li>
+        <li>Quá 5 phút từ màn 2: về màn 2, báo "Hết thời gian, đăng nhập lại."</li>
+        <li>"Mất điện thoại?" → màn 6.</li>
+      </ul>
+    </section>
+
+    <section id="w4">
+      <h2><b>4</b> Lần đầu: quét QR</h2>
+      <p class="why">Chỉ hiện khi tài khoản admin chưa cài 2FA (lần đầu, hoặc sau lệnh reset-2fa). Không có nút Bỏ qua.</p>
+      <div class="web">
+        <div class="bar">mcah.axalize.vn/internal/login/setup</div>
+        <div class="box wide">
+          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <h4>Cài xác minh hai bước</h4>
+          <div class="steps"><span class="done">✓ Mật khẩu</span><span class="on">2 Quét mã</span><span>3 Mã khôi phục</span></div>
+          <div class="qrwrap">
+            <div class="qr"><div class="dots"></div><div class="f f1"></div><div class="f f2"></div><div class="f f3"></div></div>
+            <div style="display:grid;gap:8px">
+              <div><b>1.</b> Cài <b>Google Authenticator</b> (hoặc Microsoft Authenticator, Authy, 1Password…) trên điện thoại.</div>
+              <div><b>2.</b> Trong app bấm <b>+</b> → <b>Quét mã QR</b>, quét mã bên trái.</div>
+              <div class="muted" style="font-size:12px">Không quét được? Chọn "Nhập khoá thiết lập", gõ:</div>
+              <div class="secret">JBSW Y3DP EHPK 3PXP JBSW Y3DP EHPK 3PXP</div>
+            </div>
+          </div>
+          <div class="field"><span><b>3.</b> Nhập mã 6 số app vừa hiện</span><div class="input mono" style="letter-spacing:.3em">______</div></div>
+          <span class="btn pri">Xác nhận</span>
+          <p class="muted" style="margin:0;font-size:12px">Giờ máy chủ: 17/11/2026 15:42:08. Mã luôn sai thì kiểm giờ điện thoại có đặt tự động không.</p>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>QR là hình SVG do máy chủ dựng sẵn trong trang (không gọi dịch vụ ngoài, không script).</li>
+        <li>App Authenticator hiện mục "MCAH internal" kèm email admin.</li>
+        <li>Sai mã: "Mã không đúng", vẫn ở màn này, QR giữ nguyên. Tính vào giới hạn 5 lần sai (màn 7).</li>
+        <li>Tải lại trang hoặc quay lại sau: cùng QR (bí mật chưa xác nhận lưu ở máy chủ, chưa có hiệu lực tới khi nhập đúng mã).</li>
+      </ul>
+    </section>
+
+    <section id="w5">
+      <h2><b>5</b> Lần đầu: mã khôi phục</h2>
+      <p class="why">Ngay sau khi nhập đúng mã ở màn 4. Mã chỉ hiện một lần này.</p>
+      <div class="web">
+        <div class="bar">mcah.axalize.vn/internal/login/setup</div>
+        <div class="box wide">
+          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <h4>Lưu mã khôi phục</h4>
+          <div class="steps"><span class="done">✓ Mật khẩu</span><span class="done">✓ Quét mã</span><span class="on">3 Mã khôi phục</span></div>
+          <div class="banner ok">Đã bật xác minh hai bước.</div>
+          <p style="margin:0">Mất điện thoại thì dùng một mã dưới đây thay cho mã 6 số. Mỗi mã dùng được một lần. <b>Trang này chỉ hiện một lần</b> — chép vào trình quản lý mật khẩu hoặc in ra cất kỹ.</p>
+          <div class="codes"><span>7K2M-QX9P</span><span>D4RT-8VNA</span><span>H3WZ-M6CB</span><span>P9FE-2KJS</span><span>XT5Q-R7HD</span><span>B8NV-4GWM</span><span>E2YC-9PTK</span><span>Z6HA-3QRF</span></div>
+          <span class="btn pri">Tôi đã lưu, vào trang quản trị</span>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Bôi đen chọn được cả khối để chép (không có nút Chép vì trang không có script).</li>
+        <li>Trang gửi <span class="mono">Cache-Control: no-store</span>; tải lại hoặc bấm Back không hiện lại mã, mà về trang quản trị.</li>
+        <li>Mã lưu ở máy chủ dạng băm, không ai xem lại được. Hết mã hoặc làm mất: chạy reset-2fa (màn 10) rồi cài lại để có bộ mới.</li>
+      </ul>
+    </section>
+
+    <section id="w6">
+      <h2><b>6</b> Dùng mã khôi phục</h2>
+      <p class="why">Từ màn 3, bấm "Mất điện thoại?". Vẫn phải qua màn 2 trước.</p>
+      <div class="row" style="align-items:stretch;gap:16px">
+        <div class="web" style="flex:1;min-width:300px">
+          <div class="bar">mcah.axalize.vn/internal/login/recovery</div>
+          <div class="box">
+            <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+            <h4>Dùng mã khôi phục</h4>
+            <p class="muted" style="margin:0">Nhập một trong 8 mã khôi phục đã lưu khi cài xác minh hai bước.</p>
+            <div class="field">Mã khôi phục<div class="input mono">7K2M-QX9P</div></div>
+            <span class="btn pri">Xác minh</span>
+            <span class="btn link" style="justify-self:start">← Dùng mã từ app Authenticator</span>
+          </div>
+        </div>
+        <div class="admin" style="flex:1;min-width:300px">
+          <div class="abar">mcah.axalize.vn/internal/admin · sau khi dùng mã khôi phục</div>
+          <div class="wrap" style="min-height:0">
+            <div class="banner warn">Bạn vừa vào bằng mã khôi phục. Còn <b>7</b> mã. Đã có điện thoại mới: nhờ người giữ server chạy reset-2fa để cài lại.</div>
+            <div class="tabs"><span class="on">Khách hàng</span><span>Tài khoản</span><span>Nhật ký</span><span>Design system ↗</span></div>
+            <div class="card muted">… trang Khách hàng như hiện nay …</div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Gõ có hay không gạch, chữ thường hay hoa đều được; <span class="mono">O→0</span>, <span class="mono">I/L→1</span>.</li>
+        <li>Sai hoặc mã đã dùng: "Mã khôi phục không đúng hoặc đã dùng." Tính vào giới hạn 5 lần sai.</li>
+        <li>Dải vàng chỉ hiện ở trang đầu tiên sau khi vào. Còn 2 mã trở xuống thì chữ đỏ.</li>
+      </ul>
+    </section>
+
+    <section id="w7">
+      <h2><b>7</b> Sai quá nhiều lần</h2>
+      <p class="why">Sai mật khẩu, mã 6 số và mã khôi phục cộng chung: 5 lần trong 15 phút thì khoá đăng nhập quản trị 15 phút.</p>
+      <div class="web">
+        <div class="bar">mcah.axalize.vn/internal/login</div>
+        <div class="box">
+          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <h4>Đăng nhập quản trị</h4>
+          <div class="banner err">Sai quá nhiều lần. Thử lại sau 15 phút.</div>
+          <div class="field">Email<div class="input">admin@axalize.vn</div></div>
+          <div class="field">Mật khẩu<div class="input"></div></div>
+          <span class="btn pri">Tiếp tục</span>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Trong 15 phút đó nhập đúng cũng báo câu này (không cho thử tiếp để dò).</li>
+        <li>Không ghi giờ mở lại cụ thể; trang không tự đếm ngược (không script).</li>
+        <li>Mỗi lần sai ghi nhật ký (<span class="mono">admin_login_fail</span>, <span class="mono">admin_2fa_fail</span>) kèm IP, xem ở tab Nhật ký.</li>
+      </ul>
+    </section>
+
+    <section id="w8">
+      <h2><b>8</b> Trang quản trị, tab mới</h2>
+      <p class="why">Nội dung 3 tab giữ nguyên như hiện nay, chỉ đổi địa chỉ. Thêm tab Design system mở tab trình duyệt mới. Nhật ký có thêm dòng đăng nhập quản trị.</p>
+      <div class="admin">
+        <div class="abar">mcah.axalize.vn/internal/admin/audit-log</div>
+        <div class="wrap">
+          <div class="tabs"><span>Khách hàng</span><span>Tài khoản</span><span class="on">Nhật ký</span><span>Design system ↗</span><span class="who">admin@axalize.vn · <u>Đăng xuất</u></span></div>
+          <div class="card" style="padding:0">
+            <table class="tbl">
+              <tr><th>Lúc</th><th>Ai</th><th>Việc</th><th>Văn phòng</th><th>Chi tiết</th><th>IP</th></tr>
+              <tr><td>17/11/2026 15:43</td><td>admin@axalize.vn</td><td>Đăng nhập quản trị</td><td>—</td><td>Mã Authenticator</td><td class="mono">113.161.x.x</td></tr>
+              <tr><td>17/11/2026 15:42</td><td>admin@axalize.vn</td><td>Bật xác minh hai bước</td><td>—</td><td>—</td><td class="mono">113.161.x.x</td></tr>
+              <tr><td>17/11/2026 15:41</td><td>—</td><td><span class="tag err">Sai mật khẩu quản trị</span></td><td>—</td><td>admin@axalize.vn</td><td class="mono">27.72.x.x</td></tr>
+              <tr><td>17/11/2026 15:30</td><td>(server)</td><td>Đặt mật khẩu quản trị</td><td>—</td><td>Lệnh trên server</td><td>—</td></tr>
+              <tr><td>17/11/2026 14:10</td><td>admin@axalize.vn</td><td>Khoá văn phòng</td><td>Biển Xanh</td><td>Chưa thanh toán HĐ 10/2026</td><td class="mono">113.161.x.x</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Thêm vào nhật ký: Đăng nhập / Đăng xuất quản trị, Sai mật khẩu quản trị, Sai mã xác minh, Dùng mã khôi phục, Bật xác minh hai bước, Đặt mật khẩu quản trị, Reset xác minh hai bước.</li>
+        <li>Đăng xuất: xoá phiên quản trị, về màn 2. Không đụng phiên đăng nhập app / web của tài khoản đó. Basic Auth trình duyệt vẫn nhớ (muốn quên thì đóng trình duyệt).</li>
+        <li>Phiên quá 8 giờ, đổi mật khẩu hoặc reset-2fa: request kế tiếp về màn 2.</li>
+        <li>Tab Tài khoản: dòng của admin vẫn có nhãn "Nội bộ Axalize", không có nút Khoá (đã chặn tự khoá).</li>
+      </ul>
+    </section>
+
+    <section id="w9">
+      <h2><b>9</b> Design system</h2>
+      <p class="why">Trang design system hiện có, chuyển nguyên sang /internal/design-system/. Không thêm gì vào trang.</p>
+      <div class="admin">
+        <div class="abar">mcah.axalize.vn/internal/design-system/</div>
+        <div class="wrap" style="min-height:200px">
+          <div class="card muted">… trang Design system như hiện nay (control trong components/ds) …</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Phải qua Basic Auth và có phiên quản trị đã nhập mã. Chưa có phiên: về màn 2 kèm <span class="mono">?next=/internal/design-system/</span>.</li>
+        <li>Không có thanh tab quản trị trên trang này (là trang React riêng); quay lại trang quản trị bằng tab trình duyệt cũ.</li>
+        <li>Máy dev: <span class="mono">npm run dev</span> rồi mở <span class="mono">localhost:5173/internal/design-system/</span>, không cần đăng nhập.</li>
+        <li>Trong app (web lẫn máy tính) không còn trang <span class="mono">/design-system</span>.</li>
+      </ul>
+    </section>
+
+    <section id="w10">
+      <h2><b>10</b> Lệnh trên server</h2>
+      <p class="why">Người giữ server làm. Không có trang web nào tạo admin, đổi mật khẩu hay tắt 2FA.</p>
+<div class="term"><span class="c"># 1. Tệp Basic Auth (một lần, một dòng)</span>
+<span class="p">$</span> htpasswd -c -B /srv/mcah/internal-auth/htpasswd axalize
+New password: ••••••••••••••••
+Re-type new password: ••••••••••••••••
+Adding password for user axalize
+
+<span class="c"># 2. Mật khẩu admin (email lấy từ CLOUD_ADMIN_EMAIL)</span>
+<span class="p">$</span> docker compose exec cloud node scripts/admin.js set-password
+Đặt mật khẩu cho admin@axalize.vn
+Mật khẩu mới (ít nhất 12 ký tự): ••••••••••••••
+Nhập lại: ••••••••••••••
+<span class="ok">✓ Đã đặt mật khẩu. Các phiên quản trị đang mở đã bị đăng xuất.</span>
+
+<span class="c"># Mất điện thoại và hết mã khôi phục</span>
+<span class="p">$</span> docker compose exec cloud node scripts/admin.js reset-2fa
+Tắt xác minh hai bước của admin@axalize.vn? Lần đăng nhập sau sẽ phải quét mã QR mới. (gõ "co" để đồng ý): co
+<span class="ok">✓ Đã tắt. Các phiên quản trị đang mở đã bị đăng xuất.</span>
+
+<span class="c"># Lỗi thường gặp</span>
+<span class="p">$</span> docker compose exec cloud node scripts/admin.js set-password
+<span class="er">✗ Chưa đặt CLOUD_ADMIN_EMAIL trong cloud/.env</span></div>
+      <ul class="notes">
+        <li>Mật khẩu gõ ở dấu nhắc, không hiện ký tự, không nằm trong lịch sử shell.</li>
+        <li>Mật khẩu ngắn hơn 12 ký tự hoặc hai lần nhập khác nhau: báo lỗi, không đổi gì.</li>
+        <li>Tài khoản admin chưa có trên máy chủ dịch vụ: set-password tạo luôn.</li>
+        <li>Mỗi lệnh ghi một dòng nhật ký (màn 8).</li>
+      </ul>
+    </section>
+  </main>
+</div>
+</body>
+</html>

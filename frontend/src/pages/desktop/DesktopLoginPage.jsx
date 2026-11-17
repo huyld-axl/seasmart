@@ -36,7 +36,7 @@ export default function DesktopLoginPage() {
     window.addEventListener('offline', update)
     // Đã đăng nhập nhưng máy chưa có văn phòng (vd. mở lại app giữa chừng) → màn Lần đầu.
     desktop.session().then((info) => {
-      if (info.needsOffice) navigate('/bat-dau', { replace: true })
+      if (info.needsOffice) navigate('/setup', { replace: true })
       else if (info.reason) {
         setReason(info.reason)
         setError(REASONS[info.reason] || '')
@@ -53,7 +53,7 @@ export default function DesktopLoginPage() {
     setWaiting(true)
     try {
       const result = await desktop.login({ reauth: Boolean(location.state?.reauth) || reason === 'pin' })
-      if (result.needsOffice) navigate('/bat-dau', { replace: true })
+      if (result.needsOffice) navigate('/setup', { replace: true })
       else {
         setDesktopUser(result.user)
         navigate('/', { replace: true })

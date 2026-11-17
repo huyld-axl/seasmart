@@ -1,6 +1,6 @@
 {
   "name": "mcah-desktop",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "private": true,
   "description": "App máy tính MCAH (Electron)",
   "main": "src/main.js",
@@ -10,7 +10,7 @@
     "stage:linux": "node scripts/stage.js linux",
     "stage:win": "node scripts/stage.js win",
     "dist:linux": "npm run build:frontend && npm run stage:linux && node scripts/build-main.js && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked && node scripts/build-info.js linux",
-    "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked && node scripts/build-info.js win",
+    "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && node scripts/license-page.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked && node scripts/build-info.js win",
     "release": "node scripts/release.js",
     "test": "node --test test/*.test.js",
     "notes:page": "node scripts/notes-page.js"
@@ -102,7 +102,8 @@
       "oneClick": false,
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
-      "include": "build/installer.nsh"
+      "include": "build/installer.nsh",
+      "license": "dist/license/license.html"
     },
     "extraMetadata": {
       "main": "app-build/main.js"

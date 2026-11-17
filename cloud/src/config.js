@@ -18,12 +18,22 @@ if ((process.env.CLOUD_PUBLIC_URL || '').startsWith('https://') && (!process.env
   throw new Error('Thiếu CLOUD_COOKIE_SECRET (ít nhất 32 ký tự ngẫu nhiên) cho máy chủ chạy thật')
 }
 
+const DEV_TOTP_KEY = Buffer.alloc(32, 7).toString('base64')
+// Chạy thật mà thiếu khoá / dùng khoá dev thì dừng, như CLOUD_COOKIE_SECRET.
+function adminTotpKey() {
+  const raw = process.env.CLOUD_ADMIN_TOTP_KEY || ''
+  if (!(process.env.CLOUD_PUBLIC_URL || '').startsWith('https://')) return Buffer.from(raw || DEV_TOTP_KEY, 'base64')
+  const key = Buffer.from(raw, 'base64')
+  if (key.length !== 32 || raw === DEV_TOTP_KEY) throw new Error('Thiếu CLOUD_ADMIN_TOTP_KEY (openssl rand -base64 32) cho máy chủ chạy thật')
+  return key
+}
+
 module.exports = {
   port: parseInt(process.env.PORT) || 4100,
   host: process.env.HOST || '127.0.0.1',
   // Địa chỉ công khai của trang web (liên kết trong thư, chuyển hướng Google).
   publicUrl: (process.env.CLOUD_PUBLIC_URL || 'http://localhost:4100').replace(/\/+$/, ''),
-  // Đường dẫn con khi chạy sau proxy (vd. https://mcah.axalize.vn/tai-khoan → '/tai-khoan'); proxy bỏ tiền tố trước khi
+  // Đường dẫn con khi chạy sau proxy (vd. https://mcah.axalize.vn/account → '/account'); proxy bỏ tiền tố trước khi
   // chuyển vào, nên route vẫn là /dang-nhap, còn liên kết / chuyển hướng / cookie phải thêm tiền tố này.
   basePath: new URL(process.env.CLOUD_PUBLIC_URL || 'http://localhost:4100').pathname.replace(/\/+$/, ''),
   secureCookies: (process.env.CLOUD_PUBLIC_URL || '').startsWith('https://'),
@@ -39,6 +49,8 @@ module.exports = {
   // Khoá ký cookie phiên trang web.
   cookieSecret: process.env.CLOUD_COOKIE_SECRET || DEV_COOKIE_SECRET,
   offlineDays: 7,
+  // Hạn cứng: quá số ngày này từ lần đăng nhập thật qua trình duyệt thì phải đăng nhập lại, dù có mạng.
+  sessionMaxDays: 30,
   // Thư hệ thống: cùng tên biến với backend/.env (SMTP_*), chép nguyên sang được. Thiếu SMTP_HOST thì in thư ra log.
   smtp: {
     host: process.env.SMTP_HOST || '',
@@ -54,6 +66,11 @@ module.exports = {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
   },
-  // Tài khoản nội bộ của bên mình vào được trang quản trị (danh sách email, phẩy).
-  adminEmails: (process.env.CLOUD_ADMIN_EMAILS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
+  // Admin duy nhất của khu nội bộ /internal (docs/mcah-ke-hoach-khu-noi-bo.md 5.2). Server cũ còn CLOUD_ADMIN_EMAILS (danh
+  // sách) thì tạm lấy email đầu để deploy không gãy.
+  adminEmail: (process.env.CLOUD_ADMIN_EMAIL || (process.env.CLOUD_ADMIN_EMAILS || '').split(',')[0] || '').trim().toLowerCase(),
+  // Khu nội bộ: trang quản trị, đăng nhập quản trị, design system. nginx giữ nguyên tiền tố khi chuyển vào (khác /account).
+  internalBase: (process.env.CLOUD_INTERNAL_PATH || '/internal').replace(/\/+$/, ''),
+  // Khoá AES-256-GCM mã hoá bí mật TOTP của admin (32 byte, base64).
+  adminTotpKey: adminTotpKey(),
 }

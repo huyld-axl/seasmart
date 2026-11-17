@@ -258,7 +258,7 @@ seasmart/
 | **M5** | Điều khoản sử dụng, Chính sách quyền riêng tư | **2026-11-13:** dựng trang với nội dung "TBC" trước (`/tai-khoan/dieu-khoan`, `/tai-khoan/quyen-rieng-tu`; tệp tĩnh `frontend/public/phap-ly/*.html`, nginx trả thẳng nên không phụ thuộc máy chủ tài khoản), luật sư viết sau | Trước khi mở bán |
 | **M6** | Quy định 375px | **Chốt 2026-11-13:** bản web vẫn giữ giao diện điện thoại; màn chỉ có trong app máy tính không cần | Đã sửa `CLAUDE.md` 3.5 |
 | **M7** | Sếp đã biết các đánh đổi | **Đã chốt** 2026-11-13 (gồm Q14 không mã hoá, Q15 không sao lưu) | — |
-| **M8** | Cách tính tiền, bản quyền, số máy | **Không làm trong kế hoạch này** (2026-11-13) | — |
+| **M8** | Cách tính tiền, bản quyền, số máy | **Không làm trong kế hoạch này** (2026-11-13). Phần cấp quyền dùng làm riêng ở `docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md` (2026-11-17: Axalize tạo khách + tài khoản từ trên xuống, đăng nhập Google / mã email không mật khẩu, khoá văn phòng / tài khoản chặn app; thay kế hoạch mã kích hoạt); giá, gói, số máy vẫn để sau | — |
 | **M9** | Đăng ký app với Google (Google Cloud Console) để có nút "Tiếp tục với Google"; cần tên miền và trang quyền riêng tư | Bạn / sếp | Giai đoạn 2 |
 
 ### 4.3 Q4: vì sao không chuyển sang SQLite

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { createBrowserRouter, RouterProvider, Routes, Route, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ConfigProvider, App as AntApp } from 'antd'
 // Bản ESM: bản CommonJS 'antd/locale/vi_VN' qua Vite thành { default: … }, ConfigProvider rơi về tiếng Anh.
@@ -39,7 +39,6 @@ import BillDetailPage from './pages/admin/bills/BillDetailPage'
 import BillFormPage from './pages/admin/bills/BillFormPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
-import DesignSystemPage from './pages/DesignSystemPage'
 import ReviewPage from './pages/admin/review/ReviewPage'
 import UploadPage from './pages/admin/UploadPage'
 import StandaloneError from './pages/errors/StandaloneError'
@@ -72,7 +71,7 @@ function useDesktopSession() {
       if (!info.loggedIn && token) {
         localStorage.removeItem('user')
         useAuthStore.setState({ user: null, token: null, ready: true })
-        window.location.href = info.needsOffice ? '/bat-dau' : '/login'
+        window.location.href = info.needsOffice ? '/setup' : '/login'
       }
     })
   }, [])
@@ -92,13 +91,23 @@ function useRefreshAccess() {
 
 const guard = (perm, element) => <ProtectedRoute perm={perm}>{element}</ProtectedRoute>
 
+// Chuyển sang đường mới, giữ ?token=… và #mục.
+function Moved({ to }) {
+  const { search, hash } = useLocation()
+  return <Navigate to={`${to}${search}${hash}`} replace />
+}
+
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      {isDesktop() ? <Route path="/bat-dau" element={<FirstRunPage />} /> : null}
-      <Route path="/dat-mat-khau" element={<SetPasswordPage />} />
-      <Route path="/design-system" element={<DesignSystemPage />} />
+      {isDesktop() ? <Route path="/setup" element={<FirstRunPage />} /> : null}
+      <Route path="/set-password" element={<SetPasswordPage />} />
+      {/* Đường tiếng Việt cũ (docs/mcah-ke-hoach-khu-noi-bo.md mục 4): link trong thư mời đã gửi, bookmark, app bản cũ. */}
+      <Route path="/dat-mat-khau" element={<Moved to="/set-password" />} />
+      <Route path="/bat-dau" element={<Moved to="/setup" />} />
+      <Route path="/cai-dat-may" element={<Moved to="/device-settings" />} />
+      <Route path="/admin/may-trong-van-phong" element={<Moved to="/admin/devices" />} />
       <Route
         path="/"
         element={
@@ -124,7 +133,7 @@ function AppRoutes() {
         }
       >
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/cai-dat-may" element={<DeviceSettingsPage />} />
+        <Route path="/device-settings" element={<DeviceSettingsPage />} />
         <Route path="/seafarers" element={guard('seafarer.view', <SeafarerListPage />)} />
         <Route path="/seafarers/new" element={guard('seafarer.create', <SeafarerFormPage />)} />
         <Route
@@ -169,7 +178,7 @@ function AppRoutes() {
         <Route path="/master-data" element={<Navigate to="/master-data/cert" replace />} />
         <Route path="/master-data/:tab" element={guard('catalog.view', <MasterSubPage />)} />
         <Route path="/admin/users" element={guard('account.view', <UserListPage />)} />
-        <Route path="/admin/may-trong-van-phong" element={guard('account.view', <DevicesPage />)} />
+        <Route path="/admin/devices" element={guard('account.view', <DevicesPage />)} />
         <Route path="/admin/users/:id" element={guard('account.view', <UserDetailPage />)} />
         <Route path="/admin/roles" element={guard('role.manage', <RoleMatrixPage />)} />
         <Route path="/admin/kpi-targets" element={guard('kpi.manage', <KpiTargetPage />)} />

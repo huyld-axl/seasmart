@@ -92,7 +92,8 @@ services:
       network: ${BUILD_NETWORK:-default}
     restart: unless-stopped
     init: true
-    # cloud/.env trên server (không nằm trong repo): GOOGLE_*, CLOUD_PUBLIC_URL, CLOUD_COOKIE_SECRET, SMTP_*, khoá AI / tra tàu.
+    # cloud/.env trên server (không nằm trong repo): GOOGLE_*, CLOUD_PUBLIC_URL, CLOUD_COOKIE_SECRET, CLOUD_ADMIN_EMAIL,
+    # CLOUD_ADMIN_TOTP_KEY, SMTP_*, khoá AI / tra tàu.
     env_file:
       - path: ./docker/cloud-postgres.env
         format: raw
@@ -134,6 +135,9 @@ services:
     volumes:
       # Bộ cài app máy tính do script phát hành rsync lên (RELEASES_DIR trên server, mặc định /srv/mcah/releases).
       - ${RELEASES_DIR:-/srv/mcah/releases}:/srv/releases:ro
+      # Tệp Basic Auth của khu nội bộ /internal/ (docs/mcah-huong-dan-khu-noi-bo.md bước 1): thư mục ngoài repo chứa tệp
+      # htpasswd. Gắn thư mục (không gắn tệp) để thiếu tệp thì Docker không tạo thư mục rác; nginx thiếu tệp thì trả 500.
+      - ${INTERNAL_AUTH_DIR:-/srv/mcah/internal-auth}:/etc/nginx/internal-auth:ro
     depends_on:
       backend:
         condition: service_healthy

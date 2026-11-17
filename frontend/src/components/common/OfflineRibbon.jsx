@@ -7,6 +7,8 @@ const DAY = 86400000
 
 // Wireframe 7 (docs/design/wireframes/desktop-gd2.html): còn ≤ 2 ngày tới mốc offline thì nhắc kết nối internet.
 // Có mạng thì app tự làm mới mỗi giờ nên mốc luôn còn ~7 ngày và dải không hiện. Không chặn thao tác.
+// Mốc offline không vượt mốc phải đăng nhập lại (30 ngày, wireframe 10 của docs/design/wireframes/tai-khoan-tu-tren-xuong.html):
+// sắp tới mốc 30 ngày thì nhắc đăng nhập lại thay vì nhắc kết nối internet.
 export default function OfflineRibbon() {
   const [info, setInfo] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -23,6 +25,7 @@ export default function OfflineRibbon() {
   const left = new Date(info.offlineUntil) - new Date(info.now)
   if (left > 2 * DAY) return null
   const offlineDays = Math.max(1, 7 - Math.ceil(left / DAY))
+  const relogin = info.loginUntil && new Date(info.loginUntil) <= new Date(info.offlineUntil)
 
   async function retry() {
     setBusy(true)
@@ -37,8 +40,14 @@ export default function OfflineRibbon() {
 
   return (
     <div role="status" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '8px 20px', background: 'var(--warning-bg)', borderBottom: '1px solid var(--warning-border)', color: 'var(--warning)', fontSize: 13 }}>
-      <span>Máy chưa kết nối internet {offlineDays} ngày. Kết nối trước {dayjs(info.offlineUntil).format('HH:mm DD/MM')} để giữ đăng nhập.</span>
-      <Button type="link" size="small" loading={busy} style={{ marginLeft: 'auto' }} onClick={retry}>Thử lại</Button>
+      {relogin ? (
+        <span>Đã gần 30 ngày từ lần đăng nhập trước. Trước {dayjs(info.loginUntil).format('HH:mm DD/MM')} MCAH sẽ bắt đăng nhập lại qua trình duyệt.</span>
+      ) : (
+        <>
+          <span>Máy chưa kết nối internet {offlineDays} ngày. Kết nối trước {dayjs(info.offlineUntil).format('HH:mm DD/MM')} để giữ đăng nhập.</span>
+          <Button type="link" size="small" loading={busy} style={{ marginLeft: 'auto' }} onClick={retry}>Thử lại</Button>
+        </>
+      )}
     </div>
   )
 }

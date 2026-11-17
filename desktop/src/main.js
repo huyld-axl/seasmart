@@ -113,7 +113,8 @@ async function serveFrontend(request) {
   return new Response(res.body, { status: res.status, headers })
 }
 
-const WEB_PAGES = /^app:\/\/mcah(\/(?:huong-dan|phat-hanh)\/[^?#]*)(?:\?[^#]*)?(#.*)?$/
+// Tên cũ huong-dan / phat-hanh vẫn nhận (máy chủ chuyển 301 sang /guide, /release-notes; docs/mcah-ke-hoach-khu-noi-bo.md).
+const WEB_PAGES = /^app:\/\/mcah(\/(?:guide|release-notes|huong-dan|phat-hanh)\/[^?#]*)(?:\?[^#]*)?(#.*)?$/
 
 // Trang hướng dẫn và ghi chú phát hành không gói trong app: mở bản trên web (cùng tên miền máy chủ dịch vụ) bằng trình duyệt.
 // ?app=1 để trang hướng dẫn hiện các mục chỉ dành cho app máy tính.
@@ -242,7 +243,13 @@ function watchSession() {
     if (!staffMode && session.info().loggedIn && fs.existsSync(path.join(app.getPath('userData'), 'machine-key.bin'))) startLan()
   })
   pin.events.on('changed', (locked) => mainWindow?.webContents.send('mcah:lock-changed', locked))
-  pin.watch({ lockMinutes: () => getSettings().lockMinutes, loggedIn: () => Boolean(session.jwt()) })
+  // Khoá bằng PIN và thời gian tự khoá theo cài đặt của văn phòng (gửi kèm phiên), bản cũ thì theo cài đặt máy.
+  pin.watch({
+    lockMinutes: () => session.security()?.lock_minutes || getSettings().lockMinutes,
+    loggedIn: () => Boolean(session.jwt()),
+    isRequired: () => session.security()?.pin_required !== false,
+  })
+  session.events.on('changed', () => pin.applyPolicy())
 }
 
 // Máy nhân viên: báo giao diện khi mất / có lại máy chính; bị Gỡ thì mở lại app ở chế độ ghép.

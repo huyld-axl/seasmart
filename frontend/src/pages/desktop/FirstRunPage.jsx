@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, Input } from 'antd'
+import { Button } from 'antd'
 import Banner from '../../components/ds/Banner'
 import ProductBrand from '../../components/common/ProductBrand'
 import useAuthStore from '../../stores/authStore'
@@ -8,15 +8,16 @@ import { bridgeError, desktop } from '../../lib/desktop'
 import PairPanel from './PairPanel'
 import '../admin/LoginPage.css'
 
-// Wireframe 3 + 4 (docs/design/wireframes/desktop-gd2.html): máy chưa có dữ liệu văn phòng sau lần đăng nhập đầu.
-// Tạo văn phòng: chỉ đặt tên (Q14, docs/mcah-ke-hoach-desktop-gd4.md 3.6: không còn mật khẩu sao lưu / mã khôi phục).
-// Tài khoản đã thuộc văn phòng (được mời): máy này là máy nhân viên, tìm và nối máy chính (PairPanel, giai đoạn 3).
+// Máy chưa có dữ liệu văn phòng sau lần đăng nhập đầu (wireframe 7, 8 của docs/design/wireframes/tai-khoan-tu-tren-xuong.html).
+// Văn phòng do Axalize tạo sẵn, không tự tạo trong app:
+// - quản trị văn phòng, văn phòng chưa có máy chính → cài máy này làm máy chính;
+// - nhân viên, văn phòng chưa có máy chính → chờ quản trị cài, bấm Thử lại;
+// - văn phòng đã có máy chính → máy này là máy nhân viên, tìm và nối máy chính (PairPanel, giai đoạn 3);
+// - tài khoản chưa thuộc văn phòng nào → hỏi quản trị văn phòng.
 export default function FirstRunPage() {
   const navigate = useNavigate()
   const setDesktopUser = useAuthStore((state) => state.setDesktopUser)
   const [info, setInfo] = useState(null)
-  const [step, setStep] = useState(0)
-  const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -30,14 +31,15 @@ export default function FirstRunPage() {
 
   if (!info) return null
 
-  async function create() {
+  async function run(action) {
     setError('')
-    if (!name.trim()) return setError('Nhập tên văn phòng')
     setBusy(true)
     try {
-      const result = await desktop.createOffice(name)
-      setDesktopUser(result.user)
-      navigate('/', { replace: true })
+      const result = await action()
+      if (result?.user) {
+        setDesktopUser(result.user)
+        navigate('/', { replace: true })
+      } else if (result?.needsOffice) setInfo(result.account)
     } catch (err) {
       setError(bridgeError(err))
     } finally {
@@ -56,26 +58,35 @@ export default function FirstRunPage() {
   const logout = (
     <Button type="link" onClick={() => desktop.logout().then(() => navigate('/login', { replace: true }))}>Đăng xuất</Button>
   )
+  const who = `${info.name} · ${info.email}`
 
   let body
-  if (info.office) {
+  if (info.office && info.office_has_machine) {
     body = <PairPanel info={info} head={head} logout={logout} />
-  } else if (step === 0) {
+  } else if (info.office && info.office_role === 'admin') {
     body = (
       <>
-        {head(`Chào ${info.name}`)}
-        <p className="muted" style={{ margin: 0 }}>Máy này chưa có dữ liệu văn phòng.</p>
-        <p style={{ margin: 0 }}><b>Tạo văn phòng mới</b>: máy này giữ dữ liệu của văn phòng, bạn là quản trị. Nhân viên cài MCAH trên máy mình sẽ nối vào máy này.</p>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>{logout}<Button type="primary" onClick={() => setStep(1)}>Tiếp tục</Button></div>
+        {head(`Cài máy chính cho ${info.office_name}`, who)}
+        {err}
+        <p style={{ margin: 0 }}>Máy này sẽ giữ toàn bộ dữ liệu của văn phòng. Nhân viên cài MCAH trên máy mình sẽ nối vào máy này. Nên chọn máy bàn luôn bật.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>{logout}<Button type="primary" loading={busy} onClick={() => run(() => desktop.setupMainMachine())}>Dùng máy này làm máy chính</Button></div>
       </>
     )
-  } else if (step === 1) {
+  } else if (info.office) {
     body = (
       <>
-        {head('Tên văn phòng')}
+        {head('Văn phòng chưa có máy chính', who)}
         {err}
-        <label style={{ display: 'grid', gap: 4 }}>Tên hiện cho mọi người<Input size="large" maxLength={200} value={name} autoFocus onChange={(e) => setName(e.target.value)} onPressEnter={create} /></label>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}><Button onClick={() => setStep(0)}>Quay lại</Button><Button type="primary" loading={busy} onClick={create}>Tạo văn phòng</Button></div>
+        <p style={{ margin: 0 }}>{info.office_name} chưa cài máy chính. Nhờ quản trị văn phòng cài MCAH trên máy chính và đăng nhập trước, rồi bấm Thử lại.</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>{logout}<Button type="primary" loading={busy} onClick={() => run(() => desktop.recheckOffice())}>Thử lại</Button></div>
+      </>
+    )
+  } else {
+    body = (
+      <>
+        {head('Tài khoản chưa thuộc văn phòng nào', who)}
+        <p style={{ margin: 0 }}>Hỏi quản trị văn phòng của bạn thêm tài khoản này vào văn phòng, rồi đăng nhập lại.</p>
+        <div>{logout}</div>
       </>
     )
   }

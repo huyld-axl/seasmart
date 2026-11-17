@@ -41,7 +41,7 @@ export const NAV_SECTIONS = [
       { to: '/admin/users', label: 'Tài khoản', perm: 'account.view' },
       { to: '/admin/roles', label: 'Vai trò và quyền', perm: 'role.manage' },
       { to: '/admin/kpi-targets', label: 'Mục tiêu tháng', perm: 'kpi.manage' },
-      { to: '/admin/may-trong-van-phong', label: 'Máy trong văn phòng', perm: 'account.view', desktop: true },
+      { to: '/admin/devices', label: 'Máy trong văn phòng', perm: 'account.view', desktop: true },
     ],
   },
 ]

@@ -107,7 +107,7 @@ Mọi form thêm / sửa theo một kiểu, lấy form thuyền viên làm chu�
 
 ### 3.4 Control dùng chung (design system)
 
-Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm vào `components/ds/`, minh hoạ ở `/design-system`, rồi mới dùng. Không tự dựng kiểu riêng trong từng trang.
+Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm vào `components/ds/`, minh hoạ ở `/internal/design-system/` (máy dev: `npm run dev` rồi mở `localhost:5173/internal/design-system/`), rồi mới dùng. Không tự dựng kiểu riêng trong từng trang.
 
 | Nhu cầu | Dùng | Không dùng |
 |---|---|---|
@@ -193,6 +193,7 @@ Before merging any code, verify:
 - **Never push directly to `main`** — use feature branches + review
 - Run `npm run lint` in both backend/ and frontend/ before committing
 - Pre-commit hook runs ESLint + Prettier automatically via husky
+- **App máy tính (desktop/):** trước khi nâng phiên bản, build hay phát hành, đọc "Luật phiên bản" trong `docs/mcah-quy-trinh-phat-hanh.md`. Tóm tắt: hai bản Ubuntu/Windows cùng một commit; máy nào sửa code sau cùng thì nâng phiên bản và push `dev` trước khi build; không dùng lại số đã phát hành; không đổi tên bộ cài.
 
 ## 9. Testing
 

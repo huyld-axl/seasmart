@@ -37,8 +37,11 @@ function build(opts = {}) {
 
   fastify.get('/health', async () => ({ status: 'ok' }))
   fastify.register(require('./src/routes/web'))
+  fastify.register(require('./src/routes/web').legacyRoutes)
   fastify.register(require('./src/routes/api'))
+  fastify.register(require('./src/routes/internal_login'))
   fastify.register(require('./src/routes/admin'))
+  fastify.register(require('./src/routes/admin').legacyAdminRoutes)
   return fastify
 }
 

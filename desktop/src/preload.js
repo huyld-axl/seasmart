@@ -37,7 +37,8 @@ contextBridge.exposeInMainWorld('mcah', {
     ipcRenderer.on('mcah:lock-changed', listener)
     return () => ipcRenderer.removeListener('mcah:lock-changed', listener)
   },
-  createOffice: call('create-office'),
+  setupMainMachine: call('setup-main-machine'),
+  recheckOffice: call('recheck-office'),
   getSettings: call('get-settings'),
   saveSettings: call('save-settings'),
   checkUpdate: call('check-update'),

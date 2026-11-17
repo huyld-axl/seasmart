@@ -71,7 +71,7 @@ function startLogin({ maxAge = null } = {}) {
       if (url.searchParams.get('state') !== state || !url.searchParams.get('code')) {
         return res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' }).end('Yêu cầu không hợp lệ')
       }
-      res.writeHead(302, { location: `${cloudUrl()}/xong` }).end()
+      res.writeHead(302, { location: `${cloudUrl()}/done` }).end()
       const current = pending
       try {
         const tokens = await postToken({ grant_type: 'authorization_code', code: url.searchParams.get('code'), code_verifier: verifier, redirect_uri: redirectUri })

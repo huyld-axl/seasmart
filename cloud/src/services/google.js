@@ -5,7 +5,7 @@
 const crypto = require('crypto')
 const config = require('../config')
 const pool = require('../db')
-const { audit } = require('./accounts')
+const accounts = require('./accounts')
 const { b64url, randomToken } = require('../util')
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -65,27 +65,29 @@ async function finish({ code, state, pending, fetchImpl = fetch }) {
   return { sub: String(claims.sub), email: String(claims.email).toLowerCase(), name: claims.name || null }
 }
 
-// Tài khoản cho người dùng Google: theo google_sub; chưa có thì theo email (Google đã xác minh) và gắn google_sub;
-// chưa có nữa thì tạo tài khoản mới (không mật khẩu).
-async function accountFor({ sub, email, name }, ip) {
+// Tài khoản cho người dùng Google: theo google_sub; chưa có thì theo email (Google đã xác minh) và gắn google_sub.
+// Không tự tạo tài khoản: tài khoản do Axalize / quản trị văn phòng tạo (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md).
+async function accountFor({ sub, email, name }) {
   let { rows } = await pool.query('SELECT * FROM account WHERE google_sub = $1', [sub])
   let account = rows[0]
   if (!account) {
     ;({ rows } = await pool.query(
-      'UPDATE account SET google_sub = $2, email_verified_at = COALESCE(email_verified_at, NOW()), full_name = COALESCE(full_name, $3) WHERE email = $1 AND google_sub IS NULL RETURNING *',
+      'UPDATE account SET google_sub = $2, full_name = COALESCE(full_name, $3) WHERE email = $1 AND google_sub IS NULL RETURNING *',
       [email, sub, name]
     ))
     account = rows[0]
   }
-  if (!account) {
-    ;({ rows } = await pool.query('INSERT INTO account (email, full_name, google_sub, email_verified_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT (email) DO NOTHING RETURNING *', [email, name, sub]))
+  if (!account && (await accounts.forLogin(email))) {
+    ;({ rows } = await pool.query('UPDATE account SET google_sub = $2 WHERE email = $1 AND google_sub IS NULL RETURNING *', [email, sub]))
     account = rows[0]
-    // Email đã có tài khoản gắn với một tài khoản Google khác.
-    if (!account) throw fail('Email này đã gắn với một tài khoản Google khác. Đăng nhập bằng mật khẩu, hoặc liên hệ MCAH.')
-    await audit(account.id, 'register_google', ip)
   }
-  if (account.disabled_at) throw { statusCode: 403, message: 'Tài khoản đã bị khoá' }
-  await audit(account.id, 'login_google', ip)
+  if (!account) {
+    const existing = (await pool.query('SELECT 1 FROM account WHERE email = $1', [email])).rows[0]
+    // Email đã gắn với một tài khoản Google khác (đổi tài khoản Google cùng email): dùng mã email.
+    if (existing) throw fail('Email này đã gắn với một tài khoản Google khác. Đăng nhập bằng mã gửi qua email.')
+    throw fail(`Email ${email} chưa có tài khoản MCAH. Hỏi quản trị văn phòng tạo tài khoản cho email này, hoặc đăng nhập bằng email khác.`)
+  }
+  if (account.disabled_at) throw { statusCode: 403, message: 'Tài khoản này đã bị khoá. Liên hệ quản trị.' }
   return account
 }
 

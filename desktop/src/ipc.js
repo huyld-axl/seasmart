@@ -108,7 +108,7 @@ function registerIpc(hooks) {
   handle('reopen-browser', () => session.reopenBrowser())
   handle('logout', () => session.logout())
   // Mã PIN và màn khoá (4.4).
-  handle('lock-state', () => ({ locked: pin.isLocked(), hasPin: pin.hasPin() }))
+  handle('lock-state', () => ({ locked: pin.isLocked(), hasPin: pin.hasPin(), required: pin.required() }))
   handle('set-pin', (value) => pin.setPin(str(String(value), 6, 'Mã PIN')))
   handle('unlock', (value) => {
     const result = pin.unlock(str(String(value ?? ''), 6, 'Mã PIN'))
@@ -119,11 +119,8 @@ function registerIpc(hooks) {
     await session.refresh()
     return session.info()
   })
-  handle('create-office', (name) => {
-    const clean = str(name, 200, 'Tên văn phòng').trim()
-    if (!clean) throw new Error('Nhập tên văn phòng')
-    return session.createOffice(clean)
-  })
+  handle('setup-main-machine', () => session.setupMainMachine())
+  handle('recheck-office', () => session.recheckOffice())
   handle('get-settings', () => getSettings())
   handle('save-settings', (s) => saveSettings(checkSettings(s)))
   handle('check-update', () => hooks.checkUpdate())

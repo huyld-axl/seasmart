@@ -158,22 +158,7 @@ export default function DeviceSettingsPage() {
         </Card>
       ) : null}
 
-      <Card title="Tự khoá">
-        <p className="muted" style={{ marginTop: 0 }}>Không dùng máy quá thời gian này thì MCAH tự khoá, mở bằng mã PIN.</p>
-        <Select
-          style={{ width: 200 }}
-          value={data.lockMinutes}
-          options={[5, 10, 15, 30, 60].map((m) => ({ value: m, label: `${m} phút` }))}
-          onChange={async (lockMinutes) => {
-            try {
-              await save.mutateAsync({ lockMinutes })
-            } catch (error) {
-              toast.error('Chưa lưu được', { description: bridgeError(error) })
-            }
-          }}
-        />
-      </Card>
-
+      {/* Tự khoá và mã PIN đặt cho cả văn phòng ở Quản trị → Máy trong văn phòng (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7). */}
       <Card title="Xuất PDF">
         {pdf.isLoading ? <Skeleton active paragraph={false} /> : pdf.data?.installed ? (
           <Alert type="success" showIcon message="Đã có thành phần xuất PDF (LibreOffice)." />

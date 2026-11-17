@@ -3,7 +3,7 @@
 const { escapeHtml: e } = require('../util')
 const config = require('../config')
 
-// Tiền tố đường dẫn khi chạy dưới /tai-khoan (config.basePath).
+// Tiền tố đường dẫn khi chạy dưới /account (config.basePath). Trang pháp lý là tệp tĩnh của frontend ở /legal/.
 const B = config.basePath
 
 const CSS = `
@@ -30,56 +30,31 @@ const notice = (kind, text) => (text ? `<div class="msg ${kind}" role="${kind ==
 const googleButton = (enabled, label) => (enabled ? `<a class="btn" href="${B}/google">G&nbsp;&nbsp;${e(label)}</a><div class="or">hoặc</div>` : '')
 
 const pages = {
-  login: ({ email = '', error = '', info = '', google = false, reauth = false, invite = null }) => layout('Đăng nhập', `
-<h1>${reauth ? 'Đăng nhập lại' : 'Đăng nhập'}</h1>
-${invite ? notice('info', `Bạn được mời vào văn phòng ${invite.officeName}. Đăng nhập để nhận lời mời.`) : ''}
-${reauth ? notice('info', 'Vì lý do an toàn, nhập lại mật khẩu để tiếp tục.') : ''}
-${notice('err', error)}${notice('ok', info)}
-${googleButton(google, 'Tiếp tục với Google')}
-<form method="post" action="${B}/dang-nhap" style="display:grid;gap:12px">
-<label>Email<input name="email" type="email" autocomplete="username" required value="${e(email)}" ${reauth && email ? 'readonly' : 'autofocus'}></label>
-<label>Mật khẩu<input name="password" type="password" autocomplete="current-password" required ${reauth && email ? 'autofocus' : ''}></label>
-<button class="pri">Đăng nhập</button></form>
-<div class="row"><a href="${B}/quen-mat-khau">Quên mật khẩu?</a><a href="${B}/dang-ky">Đăng ký</a></div>
-<div class="row muted"><a href="${B}/dieu-khoan">Điều khoản</a><a href="${B}/quyen-rieng-tu">Quyền riêng tư</a></div>`),
-
-  register: ({ email = '', fullName = '', error = '', google = false, invite = null }) => layout('Đăng ký', `
-<h1>Đăng ký</h1>
-${invite ? notice('info', `Bạn được mời vào văn phòng ${invite.officeName}.`) : ''}
+  // Wireframe 1, 3 của docs/design/wireframes/tai-khoan-tu-tren-xuong.html: Google hoặc mã qua email, không mật khẩu,
+  // không đăng ký. reauth (sau 5 lần sai PIN): email khoá sẵn, phải xác nhận lại.
+  login: ({ email = '', error = '', emailError = '', google = false, reauth = false }) => layout('Đăng nhập', `
+<h1>${reauth ? 'Xác nhận lại' : 'Đăng nhập MCAH'}</h1>
+${reauth ? notice('info', 'Vì lý do an toàn, xác nhận lại để tiếp tục.') : ''}
 ${notice('err', error)}
-${googleButton(google, 'Đăng ký bằng Google')}
-<form method="post" action="${B}/dang-ky" style="display:grid;gap:12px">
-<label>Họ tên<input name="full_name" autocomplete="name" required value="${e(fullName)}"></label>
-<label>Email<input name="email" type="email" autocomplete="email" required value="${e(email)}" ${invite ? 'readonly' : ''}></label>
-<label>Mật khẩu (ít nhất 10 ký tự)<input name="password" type="password" autocomplete="new-password" minlength="10" required></label>
-<button class="pri">Đăng ký</button></form>
-<p class="muted">Bằng việc đăng ký, bạn đồng ý với <a href="${B}/dieu-khoan">Điều khoản sử dụng</a> và <a href="${B}/quyen-rieng-tu">Chính sách quyền riêng tư</a> của MCAH.</p>
-<div class="row"><span class="muted">Đã có tài khoản?</span><a href="${B}/dang-nhap">Đăng nhập</a></div>`),
+${googleButton(google, 'Tiếp tục với Google')}
+<form method="post" action="${B}/login/email" style="display:grid;gap:12px" novalidate>
+<label>Email<input name="email" type="email" autocomplete="username" value="${e(email)}" ${reauth && email ? 'readonly' : 'autofocus'}${emailError ? ' aria-invalid="true" aria-describedby="email-err"' : ''}>${emailError ? `<span id="email-err" style="color:var(--err);font-size:13px">${e(emailError)}</span>` : ''}</label>
+<button class="pri">Tiếp tục với email</button></form>
+<p class="muted">Chưa có tài khoản? Tài khoản do quản trị văn phòng tạo. Hỏi quản trị văn phòng của bạn.</p>
+<div class="row muted"><a href="/legal/terms">Điều khoản</a><a href="/legal/privacy">Quyền riêng tư</a></div>`),
 
-  // Điều khoản / quyền riêng tư (M5): nội dung chờ luật sư, tạm "TBC".
-  legal: ({ title }) => layout(title, `
-<h1>${e(title)}</h1>
-<p>Nội dung đang được hoàn thiện (TBC).</p>
-<p class="muted">Cần hỏi thêm, liên hệ MCAH.</p>
-<div class="row"><a href="${B}/dang-nhap">Về đăng nhập</a></div>`),
+  // Wireframe 2: nhập mã 6 số đã gửi qua email. Gửi lại là nút gửi form (không có script đếm giờ).
+  code: ({ email, error = '', info = '' }) => layout('Nhập mã', `
+<h1>Nhập mã trong email</h1>
+<p class="muted">Đã gửi mã 6 số tới <b>${e(email)}</b>. Mã có hạn 10 phút.</p>
+${notice('err', error)}${notice('ok', info)}
+<form method="post" action="${B}/login/code" style="display:grid;gap:12px" novalidate>
+<label>Mã 6 số<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" autofocus style="font:600 24px/1.2 ui-monospace,monospace;letter-spacing:.3em;text-align:center"></label>
+<button class="pri">Đăng nhập</button></form>
+<div class="row"><a href="${B}/login/change-email">Dùng email khác</a>
+<form method="post" action="${B}/login/resend" style="margin:0"><button style="min-height:0;padding:0;border:0;font-weight:400;color:var(--primary);background:none;text-decoration:underline">Gửi lại mã</button></form></div>
+<p class="muted">Không thấy thư? Xem mục Thư rác. Vẫn không có: email này có thể chưa được tạo tài khoản, hỏi quản trị văn phòng.</p>`),
 
-  checkEmail: ({ email }) => layout('Xác minh email', `
-<h1>Xác minh email</h1>${notice('info', `Đã gửi thư tới ${email}. Bấm liên kết trong thư rồi quay lại đây đăng nhập.`)}
-<p class="muted">Không thấy thư? Xem mục Thư rác, hoặc <a href="${B}/gui-lai-xac-minh?email=${encodeURIComponent(email)}">gửi lại</a>.</p>`),
-
-  forgot: ({ error = '', sentTo = '' }) => layout('Quên mật khẩu', `
-<h1>Quên mật khẩu</h1>
-${sentTo ? notice('ok', `Nếu ${sentTo} có tài khoản MCAH, thư đặt lại mật khẩu đã được gửi. Liên kết có hạn 30 phút.`) : notice('err', error)}
-<form method="post" action="${B}/quen-mat-khau" style="display:grid;gap:12px">
-<label>Email<input name="email" type="email" autocomplete="email" required autofocus></label>
-<button class="pri">Gửi liên kết đặt lại</button></form>
-<div class="row"><a href="${B}/dang-nhap">Về đăng nhập</a></div>`),
-
-  reset: ({ token, error = '' }) => layout('Đặt mật khẩu mới', `
-<h1>Đặt mật khẩu mới</h1>${notice('err', error)}
-<form method="post" action="${B}/dat-lai" style="display:grid;gap:12px"><input type="hidden" name="token" value="${e(token)}">
-<label>Mật khẩu mới (ít nhất 10 ký tự)<input name="password" type="password" autocomplete="new-password" minlength="10" required autofocus></label>
-<button class="pri">Lưu mật khẩu</button></form>`),
 
   message: ({ title, kind = 'info', text, link = null }) => layout(title, `
 <h1>${e(title)}</h1>${notice(kind, text)}${link ? `<a class="btn" href="${e(link.href)}">${e(link.label)}</a>` : ''}`),

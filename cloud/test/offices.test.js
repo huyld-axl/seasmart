@@ -1,4 +1,5 @@
-// Văn phòng: tạo bằng vé, mời / bỏ thành viên bằng chữ ký máy chính, nhận lời mời trên web, vé mang văn phòng.
+// Văn phòng: Axalize tạo khách (văn phòng + quản trị), quản trị cài máy chính đầu tiên bằng vé, tạo / bỏ thành viên bằng chữ ký
+// máy chính, vé mang văn phòng (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.2–3.5).
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createRequire } from 'module'
 import crypto from 'crypto'
@@ -11,14 +12,14 @@ const tickets = require('../src/services/tickets')
 const accounts = require('../src/services/accounts')
 const oauth = require('../src/services/oauth')
 const { signingInput } = require('../src/routes/api')
+const offices = require('../src/services/offices')
 
-let app, admin, machine, officeId
+let app, axalize, admin, machine, officeId
 const pool = () => require('../src/db')
 
 async function verifiedAccount(email, name) {
-  const a = await accounts.register({ email, fullName: name, password: 'MatKhauDai123' })
-  await pool().query('UPDATE account SET email_verified_at = NOW() WHERE id = $1', [a.id])
-  return accounts.findById(a.id)
+  const { rows } = await pool().query('INSERT INTO account (email, full_name, email_verified_at) VALUES ($1, $2, NOW()) RETURNING *', [email, name])
+  return rows[0]
 }
 
 function signed(method, url, body, key = machine.privateKey, time = Date.now()) {
@@ -31,51 +32,52 @@ beforeAll(async () => {
   await resetDb()
   app = build({ logger: false })
   await app.ready()
-  admin = await verifiedAccount('quantri@thu.vn', 'Quản trị')
+  axalize = await verifiedAccount('sales@axalize.vn', 'Sales')
   machine = crypto.generateKeyPairSync('ed25519')
 })
 afterAll(() => app.close())
 
 describe('văn phòng', () => {
-  it('tạo văn phòng bằng vé; gọi lại cùng khoá không tạo văn phòng thứ hai', async () => {
-    const { ticket } = await oauth.buildTicket(admin, Date.now())
-    const body = { name: 'Công ty ABC', machine_public_key: machine.publicKey.export({ type: 'spki', format: 'pem' }) }
-    const res = await app.inject({ method: 'POST', url: '/api/offices', headers: { authorization: `Bearer ${ticket}` }, payload: body })
+  it('Axalize tạo khách: văn phòng chưa có máy chính; quản trị cài máy chính đầu tiên không cần đăng nhập lại', async () => {
+    const { office } = await offices.createCustomer({ name: 'Công ty ABC', note: 'HĐ 1', adminEmail: 'QuanTri@thu.vn', adminName: 'Quản trị', createdBy: axalize.id })
+    officeId = office.id
+    admin = await accounts.findByEmail('quantri@thu.vn')
+    expect(admin.created_by).toBe(axalize.id)
+    expect(tickets.verify((await oauth.buildTicket(admin, Date.now())).ticket)).toMatchObject({ office: officeId, office_role: 'admin', office_name: 'Công ty ABC', office_has_machine: false, machine: null })
+    await expect(offices.createCustomer({ name: 'Khác', adminEmail: 'quantri@thu.vn', adminName: 'X', createdBy: axalize.id })).rejects.toMatchObject({ statusCode: 409, field: 'email' })
+    // Không còn tạo văn phòng từ app.
+    expect((await app.inject({ method: 'POST', url: '/api/offices', payload: {} })).statusCode).toBe(404)
+
+    const pem = machine.publicKey.export({ type: 'spki', format: 'pem' })
+    const old = (await oauth.buildTicket(admin, Date.now() - 3600 * 1000)).ticket
+    const res = await app.inject({ method: 'POST', url: `/api/offices/${officeId}/machine`, headers: { authorization: `Bearer ${old}` }, payload: { machine_public_key: pem } })
     expect(res.statusCode).toBe(200)
-    officeId = res.json().id
-    const again = await app.inject({ method: 'POST', url: '/api/offices', headers: { authorization: `Bearer ${ticket}` }, payload: body })
-    expect(again.json().id).toBe(officeId)
     const claims = tickets.verify((await oauth.buildTicket(admin, Date.now())).ticket)
-    expect(claims).toMatchObject({ office: officeId, office_role: 'admin', office_name: 'Công ty ABC' })
+    expect(claims.office_has_machine).toBe(true)
     expect(claims.machine).toMatch(/^[0-9a-f]{32}$/)
+    // Cài máy chính đầu tiên không gửi thư báo chuyển máy.
+    expect(mailer.sent.some((m) => m.subject.includes('máy chính mới'))).toBe(false)
   })
 
-  it('mời cần chữ ký máy chính: sai khoá, lệch giờ bị từ chối', async () => {
+  it('tạo tài khoản cần chữ ký máy chính: sai khoá, lệch giờ bị từ chối', async () => {
     const other = crypto.generateKeyPairSync('ed25519')
-    expect((await signed('POST', '/api/office/invites', { email: 'nv@thu.vn' }, other.privateKey)).statusCode).toBe(401)
-    expect((await signed('POST', '/api/office/invites', { email: 'nv@thu.vn' }, machine.privateKey, Date.now() - 10 * 60 * 1000)).statusCode).toBe(401)
+    expect((await signed('POST', '/api/office/members', { email: 'nv@thu.vn', full_name: 'NV', role: 'member' }, other.privateKey)).statusCode).toBe(401)
+    expect((await signed('POST', '/api/office/members', { email: 'nv@thu.vn', full_name: 'NV', role: 'member' }, machine.privateKey, Date.now() - 10 * 60 * 1000)).statusCode).toBe(401)
+    expect((await signed('POST', '/api/office/invites', { email: 'nv@thu.vn' })).statusCode).toBe(404)
   })
 
-  it('mời → thư mời → đăng ký từ liên kết (không cần xác minh) → vào văn phòng; bỏ thành viên thì vé mất văn phòng', async () => {
-    const res = await signed('POST', '/api/office/invites', { email: 'nv@thu.vn', full_name: 'Nhân viên', role: 'member', invited_by_email: 'quantri@thu.vn' })
-    expect(res.statusCode).toBe(200)
-    const mail = mailer.sent.at(-1)
-    expect(mail.subject).toContain('Công ty ABC')
-    const inviteToken = /token=([\w-]+)/.exec(mail.text)[1]
-    const jar = {}
-    const go = async (method, url, form) => {
-      const r = await app.inject({ method, url, headers: { cookie: Object.entries(jar).map(([k, v]) => `${k}=${v}`).join('; '), ...(form ? { 'content-type': 'application/x-www-form-urlencoded' } : {}) }, payload: form ? new URLSearchParams(form).toString() : undefined })
-      for (const c of [].concat(r.headers['set-cookie'] || [])) { const [p] = c.split(';'); const [k, ...v] = p.split('='); jar[k] = v.join('=') }
-      return r
-    }
-    expect((await go('GET', `/moi?token=${inviteToken}`)).headers.location).toBe('/dang-ky')
-    expect((await go('GET', '/dang-ky')).body).toContain('Công ty ABC')
-    const reg = await go('POST', '/dang-ky', { full_name: 'Nhân viên', email: 'nv@thu.vn', password: 'MatKhauDai456' })
-    expect(reg.body).toContain('Đã nhận lời mời')
+  it('quản trị tạo nhân viên: có tài khoản ngay, không gửi thư; email thuộc văn phòng khác bị từ chối; bỏ thành viên thì vé mất văn phòng', async () => {
+    const before = mailer.sent.length
+    const res = await signed('POST', '/api/office/members', { email: 'NV@thu.vn', full_name: 'Nhân viên', role: 'member', created_by_email: 'quantri@thu.vn' })
+    expect(res.json()).toEqual({ email: 'nv@thu.vn', created: true })
+    expect(mailer.sent.length).toBe(before)
     const nv = await accounts.findByEmail('nv@thu.vn')
-    expect(tickets.verify((await oauth.buildTicket(nv, Date.now())).ticket)).toMatchObject({ office: officeId, office_role: 'member' })
-    // Liên kết mời đã dùng thì hết hiệu lực.
-    expect((await go('GET', `/moi?token=${inviteToken}`)).statusCode).toBe(400)
+    expect(nv.created_by).toBe(admin.id)
+    expect(tickets.verify((await oauth.buildTicket(nv, Date.now())).ticket)).toMatchObject({ office: officeId, office_role: 'member', office_has_machine: true })
+    expect((await signed('POST', '/api/office/members', { email: 'nv@thu.vn', full_name: 'Nhân viên', role: 'member' })).statusCode).toBe(409)
+    await offices.createCustomer({ name: 'Văn phòng khác', adminEmail: 'khac@thu.vn', adminName: 'Khác', createdBy: axalize.id })
+    const elsewhere = await signed('POST', '/api/office/members', { email: 'khac@thu.vn', full_name: 'Khác', role: 'member' })
+    expect([elsewhere.statusCode, elsewhere.json().error]).toEqual([409, 'member_elsewhere'])
 
     expect((await signed('POST', '/api/office/members/remove', { email: 'nv@thu.vn' })).json()).toEqual({ removed: true })
     expect(tickets.verify((await oauth.buildTicket(nv, Date.now())).ticket).office).toBeNull()
@@ -106,7 +108,7 @@ describe('văn phòng', () => {
 
   it('văn phòng bị khoá thì máy chính bị từ chối', async () => {
     await require('../src/services/offices').setLocked(officeId, true)
-    expect((await signed('POST', '/api/office/invites', { email: 'x@thu.vn' })).statusCode).toBe(403)
+    expect((await signed('POST', '/api/office/members', { email: 'x@thu.vn', full_name: 'X', role: 'member' })).statusCode).toBe(403)
     await require('../src/services/offices').setLocked(officeId, false)
   })
 })
@@ -134,22 +136,73 @@ describe('tính năng qua máy chủ', () => {
 })
 
 describe('trang quản trị nội bộ', () => {
-  it('chỉ email trong CLOUD_ADMIN_EMAILS vào được; khoá văn phòng có hiệu lực', async () => {
+  it('chỉ admin CLOUD_ADMIN_EMAIL (mật khẩu + mã) vào được; thêm khách, thêm quản trị, khoá tài khoản, nhật ký', async () => {
     const config = require('../src/config')
-    config.adminEmails.push('quantri@thu.vn')
+    const adminAuth = require('../src/services/admin_auth')
+    const totp = require('../src/services/totp')
+    const saved = config.adminEmail
+    config.adminEmail = 'sales@axalize.vn'
     const jar = {}
-    const go = async (method, url, form) => {
-      const r = await app.inject({ method, url, headers: { cookie: Object.entries(jar).map(([k, v]) => `${k}=${v}`).join('; '), ...(form ? { 'content-type': 'application/x-www-form-urlencoded' } : {}) }, payload: form ? new URLSearchParams(form).toString() : undefined })
+    const go = async (method, url, form, headers = {}) => {
+      const r = await app.inject({ method, url, remoteAddress: '10.9.9.9', headers: { cookie: Object.entries(jar).map(([k, v]) => `${k}=${v}`).join('; '), ...(form ? { 'content-type': 'application/x-www-form-urlencoded' } : {}), ...headers }, payload: form ? new URLSearchParams(form).toString() : undefined })
       for (const c of [].concat(r.headers['set-cookie'] || [])) { const [p] = c.split(';'); const [k, ...v] = p.split('='); jar[k] = v.join('=') }
       return r
     }
-    expect((await go('GET', '/quan-tri')).headers.location).toBe('/dang-nhap')
-    await go('POST', '/dang-nhap', { email: 'quantri@thu.vn', password: 'MatKhauDai123' })
-    const page = await go('GET', '/quan-tri')
-    expect(page.body).toContain('Công ty ABC')
-    await go('POST', '/quan-tri/khoa', { office: officeId, lock: '1' })
-    expect((await require('../src/services/offices').get(officeId)).locked_at).toBeTruthy()
-    await go('POST', '/quan-tri/khoa', { office: officeId, lock: '0' })
-    config.adminEmails.pop()
+    const login = async (email) => {
+      await go('POST', '/login/email', { email })
+      return go('POST', '/login/code', { code: /: (\d{6})/.exec(mailer.sent.filter((m) => m.to === email).at(-1).subject)[1] })
+    }
+    const A = '/internal/admin'
+    try {
+      expect((await go('GET', A)).headers.location).toBe(`/internal/login?next=${encodeURIComponent(A)}`)
+      // Đăng nhập tài khoản thường (kể cả quản trị văn phòng, kể cả chính email admin) không mở được khu nội bộ.
+      await login('quantri@thu.vn')
+      expect((await go('GET', A)).headers.location).toMatch(/^\/internal\/login/)
+      const sales = await adminAuth.setPassword('mat-khau-noi-bo-1')
+      await login('sales@axalize.vn')
+      expect((await go('GET', A)).headers.location).toMatch(/^\/internal\/login/)
+      await go('POST', '/internal/login', { email: 'sales@axalize.vn', password: 'mat-khau-noi-bo-1' })
+      const secret = await adminAuth.pendingSecret(sales.id)
+      expect((await go('POST', '/internal/login/setup', { code: totp.codeAt(secret, totp.stepAt()) })).body).toContain('Lưu mã khôi phục')
+      const list = await go('GET', A)
+      expect(list.body).toContain('Công ty ABC')
+      expect(list.body).toContain('Đang dùng')
+      expect(list.body).toContain('Chờ cài máy chính')
+
+      const missing = await go('POST', `${A}/customers`, { name: 'Nam Hải Crew', note: 'HĐ 12', admin_email: '', admin_name: 'An' })
+      expect([missing.statusCode, missing.body.includes('Nhập email quản trị'), missing.body.includes('value="HĐ 12"')]).toEqual([400, true, true])
+      const taken = await go('POST', `${A}/customers`, { name: 'Nam Hải Crew', admin_email: 'quantri@thu.vn', admin_name: 'An' })
+      expect([taken.statusCode, taken.body.includes('đã thuộc một văn phòng khác')]).toEqual([409, true])
+      const before = mailer.sent.length
+      expect((await go('POST', `${A}/customers`, { name: 'Nam Hải Crew', admin_email: 'an@namhai.vn', admin_name: 'Nguyễn An' })).body).toContain('Đã thêm Nam Hải Crew')
+      expect(mailer.sent.length).toBe(before)
+      const nh = (await pool().query("SELECT id FROM office WHERE name = 'Nam Hải Crew'")).rows[0]
+      expect((await go('GET', `${A}/customers/admins?office=${nh.id}`)).body).toContain('Thêm quản trị cho Nam Hải Crew')
+      expect((await go('POST', `${A}/customers/admins`, { office: nh.id, email: 'an2@namhai.vn', full_name: 'An Hai' })).statusCode).toBe(302)
+      expect((await offices.membership((await accounts.findByEmail('an2@namhai.vn')).id)).role).toBe('admin')
+
+      const accountsPage = await go('GET', `${A}/accounts?filter=never`)
+      expect(accountsPage.body).toContain('an@namhai.vn')
+      expect(accountsPage.body).toContain('Chưa đăng nhập')
+      expect(accountsPage.body).not.toContain('quantri@thu.vn')
+
+      const target = await accounts.findByEmail('an@namhai.vn')
+      expect((await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '1', reason: '' })).statusCode).toBe(400)
+      expect((await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '1', reason: 'Nghỉ việc' }, { 'sec-fetch-site': 'cross-site' })).statusCode).toBe(403)
+      await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '1', reason: 'Nghỉ việc' })
+      expect((await accounts.findById(target.id)).disabled_at).toBeTruthy()
+      await go('POST', `${A}/accounts/lock`, { account: target.id, lock: '0' })
+      expect((await accounts.findById(target.id)).disabled_at).toBeNull()
+
+      expect((await go('POST', `${A}/customers/lock`, { office: officeId, lock: '1', reason: '' })).statusCode).toBe(400)
+      await go('POST', `${A}/customers/lock`, { office: officeId, lock: '1', reason: 'Thử khoá' })
+      expect((await offices.get(officeId)).locked_at).toBeTruthy()
+      await go('POST', `${A}/customers/lock`, { office: officeId, lock: '0' })
+
+      const log = (await go('GET', `${A}/audit-log`)).body
+      for (const text of ['Thêm khách hàng', 'Thêm quản trị', 'Tạo tài khoản', 'Cài máy chính', 'Khoá tài khoản', 'Nghỉ việc', 'Khoá văn phòng', 'Thử khoá', 'Mở khoá văn phòng', 'Đặt mật khẩu quản trị', 'Bật xác minh hai bước', 'Đăng nhập quản trị']) expect(log).toContain(text)
+    } finally {
+      config.adminEmail = saved
+    }
   })
 })

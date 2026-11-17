@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { App, Button } from 'antd'
+import { App, Button, Select } from 'antd'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import api from '../../../api/client'
 import RowList from '../../../components/ds/RowList'
 import StatusBadge from '../../../components/ds/StatusBadge'
+import ToggleRow from '../../../components/ds/ToggleRow'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import { useCan } from '../../../hooks/usePermission'
@@ -12,6 +13,8 @@ import { desktop } from '../../../lib/desktop'
 
 // Máy trong văn phòng (wireframe docs/design/wireframes/desktop-gd3.html màn 2): máy nhân viên đã ghép với máy chính.
 // Gỡ: mã thiết bị mất ngay, lệnh kế tiếp của máy đó bị từ chối. Máy đã bị Gỡ xin vào lại: Duyệt / Từ chối.
+// Thẻ "Bảo vệ khi rời máy" (wireframe 9, docs/design/wireframes/tai-khoan-tu-tren-xuong.html): khoá bằng mã PIN và thời gian
+// tự khoá cho cả văn phòng; có hiệu lực trên mọi máy ở lần làm mới phiên tiếp theo (tối đa 1 giờ) hoặc khi mở lại app.
 const errorText = (err) => err?.response?.data?.error || err?.response?.data?.message || 'Thử lại sau ít phút.'
 
 export default function DevicesPage() {
@@ -33,6 +36,16 @@ export default function DevicesPage() {
       toast.success({ remove: `Đã gỡ máy ${name}`, approve: `Đã duyệt máy ${name}`, reject: `Đã từ chối máy ${name}` }[action])
     },
     onError: (err) => toast.error('Không đổi được trạng thái máy', { description: errorText(err) }),
+  })
+
+  const security = useQuery({ queryKey: ['office-security'], queryFn: () => api.get('/auth/office-security').then((r) => r.data) })
+  const saveSecurity = useMutation({
+    mutationFn: (data) => api.put('/auth/office-security', data).then((r) => r.data),
+    onSuccess: (data) => {
+      queryClient.setQueryData(['office-security'], data)
+      toast.success(data.pin_required ? 'Đã bật khoá bằng mã PIN cho cả văn phòng' : 'Đã tắt khoá bằng mã PIN cho cả văn phòng', { description: 'Các máy nhận thay đổi khi mở lại app hoặc trong vòng 1 giờ.' })
+    },
+    onError: (err) => toast.error('Chưa lưu được', { description: errorText(err) }),
   })
 
   const remove = (row) =>
@@ -76,6 +89,30 @@ export default function DevicesPage() {
         <b>{main ? `Máy chính: ${main.name} · ${main.addresses.join(', ')}` : 'Máy chính'}</b>
         {main ? <span className="muted">Đang mở{main.keepAwake ? ' · không cho máy ngủ' : ''}</span> : null}
       </div>
+      {security.data ? (
+        <div className="ds-card" style={{ display: 'grid', gap: 12, marginBottom: 16, padding: 16 }}>
+          <b>Bảo vệ khi rời máy</b>
+          <ToggleRow
+            label="Khoá bằng mã PIN"
+            hint={`Mọi máy trong văn phòng tự khoá khi không dùng ${security.data.lock_minutes} phút; mở bằng mã PIN 6 số của từng người. Tắt thì MCAH không tự khoá — nhắc mọi người khoá màn hình máy tính khi rời máy.`}
+            value={security.data.pin_required}
+            disabled={!manage || saveSecurity.isPending}
+            onChange={(value) => saveSecurity.mutate({ pin_required: value })}
+          />
+          {security.data.pin_required ? (
+            <label style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              Tự khoá sau
+              <Select
+                style={{ width: 160 }}
+                value={security.data.lock_minutes}
+                disabled={!manage || saveSecurity.isPending}
+                options={[5, 10, 15, 30, 60].map((m) => ({ value: m, label: `${m} phút` }))}
+                onChange={(value) => saveSecurity.mutate({ lock_minutes: value })}
+              />
+            </label>
+          ) : null}
+        </div>
+      ) : null}
       <RowList
         columns={columns}
         dataSource={data}

@@ -72,7 +72,9 @@ async function initCluster(dataDir, password) {
   const pwFile = path.join(path.dirname(dataDir), '.pw-init')
   fs.writeFileSync(pwFile, password, { mode: 0o600 })
   try {
-    await run(bin('initdb'), ['-D', dataDir, '-U', DB_USER, '--pwfile', pwFile, '-A', 'scram-sha-256', '-E', 'UTF8', '--locale=C.UTF-8'])
+    // Locale "builtin" C.UTF-8 của Postgres 17: giống nhau trên mọi hệ điều hành (Windows không có locale C.UTF-8 của hệ điều hành),
+    // đổi hoa/thường tiếng Việt vẫn đúng. Locale hệ điều hành để C.
+    await run(bin('initdb'), ['-D', dataDir, '-U', DB_USER, '--pwfile', pwFile, '-A', 'scram-sha-256', '-E', 'UTF8', '--locale=C', '--locale-provider=builtin', '--builtin-locale=C.UTF-8'])
   } finally {
     fs.rmSync(pwFile, { force: true })
   }

@@ -153,10 +153,11 @@ async function createUser(data, actor, db = pool) {
   const [existing] = await db.query('SELECT id FROM "user" WHERE email = ? AND deleted_at IS NULL', [email])
   if (existing.length > 0) throw fail(400, 'Email đã tồn tại')
 
-  // App máy tính đã có văn phòng: máy chủ dịch vụ gửi thư mời (docs/mcah-ke-hoach-desktop-gd2.md 4.2). Gọi trước khi tạo
-  // dòng ở máy này: không có mạng thì không tạo gì. Người được mời gắn vào dòng này ở lần đăng nhập đầu (theo email).
+  // App máy tính đã có văn phòng: tạo tài khoản trên máy chủ dịch vụ, không thư mời; người dùng đăng nhập bằng Google / mã
+  // email (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.4). Gọi trước khi tạo dòng ở máy này: không có mạng thì không
+  // tạo gì. Dòng này gắn với tài khoản ở lần đăng nhập đầu (theo email).
   if (await desktopCloud.enabled(db)) {
-    await desktopCloud.call('/api/office/invites', { email, full_name: full_name.trim(), role: role.code === ADMIN_ROLE_CODE ? 'admin' : 'member', invited_by_email: actor.email })
+    await desktopCloud.call('/api/office/members', { email, full_name: full_name.trim(), role: role.code === ADMIN_ROLE_CODE ? 'admin' : 'member', created_by_email: actor.email })
     const [created] = await db.query(
       `INSERT INTO "user" (email, full_name, password_hash, role_id, is_active, created_at, updated_at)
        VALUES (?, ?, NULL, ?, 1, NOW(), NOW())`,
@@ -178,10 +179,8 @@ async function createUser(data, actor, db = pool) {
 async function resendInvite(id, db = pool) {
   const user = await loadTarget(db, id)
   if (user.status !== 'PENDING') throw fail(400, 'Tài khoản này đã kích hoạt')
-  if (await desktopCloud.enabled(db)) {
-    await desktopCloud.call('/api/office/invites', { email: user.email, full_name: user.full_name, role: user.is_admin ? 'admin' : 'member' })
-    return { ...user, invite_sent: true }
-  }
+  // App máy tính: không có thư mời; người dùng tự đăng nhập bằng Google / mã email.
+  if (await desktopCloud.enabled(db)) throw fail(400, 'App máy tính không gửi thư mời. Báo người này mở MCAH và đăng nhập bằng email của họ.')
   return { ...user, ...(await sendInvite(user, await issueInviteToken(db, id))) }
 }
 

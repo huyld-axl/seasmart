@@ -1,4 +1,4 @@
-// Sinh phần danh sách bản của trang ghi chú phát hành (frontend/public/phat-hanh/index.html) từ desktop/release-notes/*.md.
+// Sinh phần danh sách bản của trang ghi chú phát hành (frontend/public/release-notes/index.html) từ desktop/release-notes/*.md.
 //   npm run notes:page            ghi lại trang
 //   npm run notes:page -- --check báo lỗi nếu trang chưa khớp ghi chú (test chạy kiểm này)
 // Chỉ thay phần giữa các dấu <!-- MỤC LỤC: tự sinh --> và <!-- BẢN PHÁT HÀNH: tự sinh -->; còn lại của trang sửa tay.
@@ -6,7 +6,7 @@ const fs = require('fs')
 const path = require('path')
 
 const NOTES = path.join(__dirname, '../release-notes')
-const PAGE = path.join(__dirname, '../../frontend/public/phat-hanh/index.html')
+const PAGE = path.join(__dirname, '../../frontend/public/release-notes/index.html')
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const byVersionDesc = (a, b) => {

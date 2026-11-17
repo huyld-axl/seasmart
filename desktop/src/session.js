@@ -1,7 +1,8 @@
 // Phiên đăng nhập ở tiến trình chính (docs/mcah-ke-hoach-desktop-gd2.md 4.1). Giao diện không giữ token: tiến trình
 // chính gắn Authorization khi chuyển tiếp /api. JWT + refresh token cất bằng két hệ điều hành (session.bin); Ubuntu
 // chỉ có basic_text thì không lưu (đăng nhập lại mỗi lần mở app).
-// Vòng đời: login → vé → máy chính (desktop-ticket) → JWT. Máy chưa có văn phòng → chờ tạo văn phòng (createOffice).
+// Vòng đời: login → vé → máy chính (desktop-ticket) → JWT. Máy chưa có văn phòng → quản trị cài máy chính
+// (setupMainMachine) hoặc nhân viên nối máy chính.
 // Có mạng thì làm mới mỗi giờ (refresh token → vé mới → JWT mới, đẩy mốc offline); mất mạng giữ phiên tới mốc.
 const fs = require('fs')
 const path = require('path')
@@ -29,6 +30,16 @@ function clockOk() {
   }
   return true
 }
+// Mốc phải đăng nhập lại qua trình duyệt (vé mang login_until = lần đăng nhập thật + 30 ngày), để nhắc trước 2 ngày.
+function loginUntil(ticket) {
+  try {
+    const claims = JSON.parse(Buffer.from(String(ticket).split('.')[1], 'base64url'))
+    return claims.login_until ? new Date(claims.login_until * 1000).toISOString() : null
+  } catch {
+    return null
+  }
+}
+
 const events = new EventEmitter()
 let state = null // { jwt, refreshToken, offlineUntil, user }
 let pendingOffice = null // { tokens, account } khi máy chưa có văn phòng
@@ -100,7 +111,7 @@ async function completeMove(tokens) {
   if (!r.ok) throw new Error(data.message || 'Máy chủ MCAH không cho chuyển máy chính')
   const fresh = await login.refreshTokens(tokens.refresh_token)
   const result = await backend('/api/v1/auth/desktop-machine', { ticket: fresh.ticket, machine_public_key: publicPem })
-  state = { jwt: result.token, refreshToken: fresh.refresh_token, offlineUntil: result.offline_until, user: result.user, maxSeen: now() }
+  state = { jwt: result.token, refreshToken: fresh.refresh_token, offlineUntil: result.offline_until, loginUntil: loginUntil(fresh.ticket), user: result.user, security: result.security || null, maxSeen: now() }
   office.clearMove()
   save()
   events.emit('changed')
@@ -121,7 +132,7 @@ async function adopt(tokens) {
     events.emit('changed')
     return { needsOffice: true, account: result.account }
   }
-  state = { jwt: result.token, refreshToken: tokens.refresh_token, offlineUntil: result.offline_until, user: result.user, maxSeen: now() }
+  state = { jwt: result.token, refreshToken: tokens.refresh_token, offlineUntil: result.offline_until, loginUntil: loginUntil(tokens.ticket), user: result.user, security: result.security || null, maxSeen: now() }
   pendingOffice = null
   save()
   events.emit('changed')
@@ -153,7 +164,7 @@ const session = {
 
   info() {
     session.checkExpiry()
-    if (state) return { loggedIn: true, staff: Boolean(transport), user: state.user, offlineUntil: state.offlineUntil, now: new Date(now()).toISOString(), persisted: secretStoreAvailable() }
+    if (state) return { loggedIn: true, staff: Boolean(transport), user: state.user, offlineUntil: state.offlineUntil, loginUntil: state.loginUntil || null, now: new Date(now()).toISOString(), persisted: secretStoreAvailable() }
     if (pendingOffice) return { loggedIn: false, needsOffice: true, account: pendingOffice.account }
     return { loggedIn: false, reason: lastReason }
   },
@@ -170,27 +181,35 @@ const session = {
   cancelLogin: login.cancelLogin,
   reopenBrowser: login.reopenBrowser,
 
-  // Tạo văn phòng ở máy chủ dịch vụ (bằng vé), làm mới vé để có văn phòng + máy, rồi ghi vào máy chính.
-  async createOffice(name) {
-    if (!pendingOffice) throw new Error('Đăng nhập trước khi tạo văn phòng')
+  // Quản trị văn phòng Axalize vừa tạo (chưa có máy chính) đăng nhập lần đầu: đăng ký máy này làm máy chính ở máy chủ
+  // dịch vụ (bằng vé), làm mới vé để có khoá máy, rồi ghi văn phòng vào máy này (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5).
+  async setupMainMachine() {
+    if (!pendingOffice?.account?.office) throw new Error('Đăng nhập trước khi cài máy chính')
     const { publicPem } = office.machineKey()
-    const r = await fetch(`${login.cloudUrl()}/api/offices`, {
+    const r = await fetch(`${login.cloudUrl()}/api/offices/${pendingOffice.account.office}/machine`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${pendingOffice.tokens.ticket}` },
-      body: JSON.stringify({ name, machine_public_key: publicPem }),
+      body: JSON.stringify({ machine_public_key: publicPem }),
       signal: AbortSignal.timeout(20000),
     }).catch(() => {
       throw new Error('Không kết nối được máy chủ MCAH. Kiểm tra internet rồi bấm Thử lại.')
     })
     const data = await r.json().catch(() => ({}))
-    if (!r.ok) throw new Error(data.message || 'Máy chủ MCAH không tạo được văn phòng')
+    if (!r.ok) throw new Error(data.message || 'Máy chủ MCAH không cài được máy chính')
     const tokens = await login.refreshTokens(pendingOffice.tokens.refresh_token)
     const result = await backend('/api/v1/auth/desktop-office', { ticket: tokens.ticket, machine_public_key: publicPem })
-    state = { jwt: result.token, refreshToken: tokens.refresh_token, offlineUntil: result.offline_until, user: result.user }
+    state = { jwt: result.token, refreshToken: tokens.refresh_token, offlineUntil: result.offline_until, loginUntil: loginUntil(tokens.ticket), user: result.user, security: result.security || null, maxSeen: now() }
     pendingOffice = null
     save()
     events.emit('changed')
     return { user: result.user }
+  },
+
+  // Nhân viên chờ quản trị cài máy chính (wireframe 8): làm mới vé để biết văn phòng đã có máy chính chưa.
+  async recheckOffice() {
+    if (!pendingOffice) return session.info()
+    await adopt(await login.refreshTokens(pendingOffice.tokens.refresh_token))
+    return session.info()
   },
 
   // Làm mới khi có mạng. Lỗi mạng: giữ phiên tới mốc. Máy chủ từ chối (bị bỏ khỏi văn phòng, đổi mật khẩu…): đăng xuất.
@@ -201,13 +220,16 @@ const session = {
       tokens = await login.refreshTokens(state.refreshToken)
     } catch (error) {
       if (error.offline) return
-      clear()
+      // Quá 30 ngày từ lần đăng nhập thật qua trình duyệt (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.8).
+      clear(error.grant === 'session_expired' ? 'expired' : null)
       throw error
     }
     try {
       await adopt(tokens)
     } catch (error) {
-      if (error.status === 401 || error.status === 403) clear()
+      // Văn phòng bị Axalize khoá: về màn đăng nhập kèm lý do.
+      if (error.code === 'OFFICE_LOCKED') clear('locked')
+      else if (error.status === 401 || error.status === 403) clear()
       throw error
     }
   },
@@ -228,6 +250,10 @@ const session = {
   },
 
   pendingTicket: () => pendingOffice?.tokens?.ticket || null,
+
+  // Cài đặt khoá bằng PIN của cả văn phòng (máy chính gửi kèm phiên; docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
+  // Máy chính bản cũ chưa gửi thì null: giữ như trước (bắt PIN, thời gian tự khoá theo máy).
+  security: () => state?.security || null,
 
   // Máy chính báo phiên hết (401): bỏ phiên, giao diện về màn đăng nhập.
   expired: clear,

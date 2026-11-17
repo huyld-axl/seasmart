@@ -1,14 +1,14 @@
 // OAuth cho app cài trên máy (RFC 8252 + PKCE S256): mã dùng một lần (kèm mã ngắn dự phòng), vé Ed25519,
-// refresh token xoay vòng (dùng lại token đã thay = bị lộ → huỷ cả họ).
+// refresh token xoay vòng (dùng lại token đã thay = bị lộ → huỷ cả họ), hết hạn cứng 30 ngày sau lần đăng nhập thật.
 const crypto = require('crypto')
 const pool = require('../db')
 const tickets = require('./tickets')
+const config = require('../config')
 const { randomToken, sha256, shortCode, normalizeShortCode, b64url } = require('../util')
 
 const CLIENT_ID = 'mcah-desktop'
 const LOOPBACK = /^http:\/\/127\.0\.0\.1:\d{2,5}\/callback$/
 const CODE_TTL_MIN = 5
-const REFRESH_DAYS = 90
 const fail = (statusCode, message, error = 'invalid_request') => ({ statusCode, message, error })
 
 // Tham số /authorize hợp lệ thì trả bản đã chuẩn hoá, sai thì null.
@@ -52,6 +52,8 @@ async function buildTicket(account, authTime, db = pool) {
     office_name: member?.office_name || null,
     office_role: member?.role || null,
     office_locked: Boolean(member?.locked_at),
+    // Văn phòng Axalize vừa tạo chưa có máy chính: quản trị cài máy chính, nhân viên chờ (wireframe 7, 8).
+    office_has_machine: Boolean(member?.public_key),
     machine: member?.public_key ? crypto.createHash('sha256').update(member.public_key).digest('hex').slice(0, 32) : null,
     // Máy nhân viên ghim chứng chỉ máy chính theo dấu vân tay này (docs/mcah-ke-hoach-desktop-gd3.md 3.2).
     machine_cert: member?.cert_fingerprint || null,
@@ -64,8 +66,8 @@ async function buildTicket(account, authTime, db = pool) {
 async function issueRefresh(accountId, authTime, familyId = crypto.randomUUID(), db = pool) {
   const token = randomToken(40)
   await db.query(
-    `INSERT INTO refresh_token (token_hash, account_id, family_id, auth_time, expires_at) VALUES ($1, $2, $3, $4, NOW() + ($5 || ' days')::interval)`,
-    [sha256(token), accountId, familyId, new Date(authTime), String(REFRESH_DAYS)]
+    `INSERT INTO refresh_token (token_hash, account_id, family_id, auth_time, expires_at) VALUES ($1, $2, $3, $4, $4::timestamptz + ($5 || ' days')::interval)`,
+    [sha256(token), accountId, familyId, new Date(authTime), String(config.sessionMaxDays)]
   )
   return token
 }
@@ -108,7 +110,9 @@ const oauth = {
   async refresh(token, db = pool) {
     const { rows } = await db.query('SELECT * FROM refresh_token WHERE token_hash = $1', [sha256(token || '')])
     const row = rows[0]
-    if (!row || row.expires_at < new Date()) throw fail(400, 'Phiên đã hết, đăng nhập lại', 'invalid_grant')
+    if (!row) throw fail(400, 'Phiên đã hết, đăng nhập lại', 'invalid_grant')
+    // Hạn cứng 30 ngày từ lần đăng nhập thật (refresh token hết hạn theo auth_time, không kéo dài khi làm mới).
+    if (row.expires_at < new Date()) throw fail(400, `Đã ${config.sessionMaxDays} ngày từ lần đăng nhập trước. Đăng nhập lại.`, 'session_expired')
     if (row.revoked_at) {
       if (row.replaced_by) await db.query('UPDATE refresh_token SET revoked_at = COALESCE(revoked_at, NOW()) WHERE family_id = $1', [row.family_id])
       throw fail(400, 'Phiên đã hết, đăng nhập lại', 'invalid_grant')

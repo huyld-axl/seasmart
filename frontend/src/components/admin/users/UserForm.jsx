@@ -13,7 +13,8 @@ import { usersApi } from '../../../api/usersApi'
 const toValues = (u) => (u ? { full_name: u.full_name, email: u.email, role_id: u.role?.id, is_active: !!u.is_active } : {})
 const LABELS = { full_name: 'Họ tên', email: 'Email', role_id: 'Vai trò', is_active: 'Đang hoạt động' }
 
-// Tạo tài khoản: hộp thoại (họ tên, email, vai trò; mật khẩu do người dùng tự đặt qua thư mời).
+// Tạo tài khoản: hộp thoại (họ tên, email, vai trò). Bản web: mật khẩu do người dùng tự đặt qua thư mời. App máy tính:
+// không mật khẩu, người dùng đăng nhập bằng Google / mã email.
 // Sửa tài khoản: panel trượt (khuôn D3).
 // Vai trò lấy từ danh sách vai trò. Người không phải Quản trị viên không thấy lựa chọn Quản trị viên;
 // sửa tài khoản của chính mình thì khoá ô vai trò.
@@ -130,20 +131,25 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
       <Modal
         open={open}
         onCancel={onClose}
-        title={isDesktop() ? 'Mời vào văn phòng' : 'Thêm tài khoản'}
+        title="Thêm tài khoản"
         footer={
           <>
             <Button onClick={onClose}>Huỷ</Button>
             <Button onClick={() => submit(true)} loading={loading}>
-              {isDesktop() ? 'Gửi & mời người khác' : 'Lưu & thêm tài khoản khác'}
+              Lưu & thêm tài khoản khác
             </Button>
             <Button data-form-submit type="primary" onClick={() => submit(false)} loading={loading}>
-              {isDesktop() ? 'Gửi thư mời' : 'Thêm tài khoản'}
+              Thêm tài khoản
             </Button>
           </>
         }
       >
-        <Banner tone="neutral" icon={MailOutlined} title="Hệ thống sẽ gửi email mời" description={isDesktop() ? 'Người được mời đăng ký trên trang MCAH rồi đăng nhập app. Cần kết nối internet.' : 'Người dùng bấm liên kết trong email để tự đặt mật khẩu.'} />
+        {/* App máy tính (wireframe 6, docs/design/wireframes/tai-khoan-tu-tren-xuong.html): không thư mời, không mật khẩu. */}
+        {isDesktop() ? (
+          <Banner tone="neutral" icon={MailOutlined} title="Không cần mật khẩu" description="Người này mở MCAH, bấm Đăng nhập và dùng Google hoặc mã gửi tới email dưới. Cần kết nối internet để tạo tài khoản." />
+        ) : (
+          <Banner tone="neutral" icon={MailOutlined} title="Hệ thống sẽ gửi email mời" description="Người dùng bấm liên kết trong email để tự đặt mật khẩu." />
+        )}
         <div style={{ marginTop: 16 }}>{fields}</div>
       </Modal>
     )

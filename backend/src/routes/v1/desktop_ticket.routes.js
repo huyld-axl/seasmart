@@ -27,6 +27,15 @@ function verifyTicket(ticket, keys) {
   return claims
 }
 
+// Axalize khoá văn phòng (trang quản trị của máy chủ dịch vụ; docs/mcah-ke-hoach-ma-kich-hoat.md 3.5): vé vẫn được cấp
+// nhưng mang office_locked, máy chính không cho vào (máy đang mở bị đưa ra ở lần làm mới phiên). Dữ liệu không đụng tới.
+function assertNotLocked(claims) {
+  if (claims.office_locked) {
+    const name = claims.office_name ? `Văn phòng ${claims.office_name}` : 'Văn phòng'
+    throw fail(403, `${name} đang bị khoá. Dữ liệu trên máy vẫn còn nguyên. Liên hệ MCAH để mở lại.`, 'OFFICE_LOCKED')
+  }
+}
+
 async function officeInfo(db = pool) {
   const [rows] = await db.query('SELECT * FROM office_info WHERE id = 1')
   return rows[0] || null
@@ -47,25 +56,36 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
     return claims
   }
 
+  // security: cài đặt khoá bằng PIN của cả văn phòng, mọi máy (kể cả máy nhân viên, qua máy chính) nhận ở mỗi lần
+  // đăng nhập / làm mới phiên (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
   async function session(user, claims) {
     await pool.query('UPDATE "user" SET last_login_at = NOW() WHERE id = ?', [user.id])
     const access = await loadAccess(user.id)
     const secondsLeft = claims.exp - Math.floor(Date.now() / 1000)
     const token = fastify.jwt.sign({ id: user.id, email: user.email, offline_until: claims.exp }, { expiresIn: secondsLeft })
-    return { user: toClientUser(access), token, offline_until: new Date(claims.exp * 1000).toISOString() }
+    const office = await officeInfo()
+    const security = { pin_required: office?.pin_required !== false, lock_minutes: office?.lock_minutes || 15 }
+    return { user: toClientUser(access), token, offline_until: new Date(claims.exp * 1000).toISOString(), security }
   }
 
   const ticketBody = { type: 'object', required: ['ticket'], properties: { ticket: { type: 'string', maxLength: 8192 } } }
   const limit = { rateLimit: { max: 20, timeWindow: '1 minute' } }
 
-  // Đăng nhập bằng vé. Máy chưa có văn phòng → { needs_office } (app hiện màn Lần đầu, wireframe 3).
+  // Đăng nhập bằng vé. Máy chưa có văn phòng → { needs_office } (app hiện màn Lần đầu): quản trị văn phòng chưa có máy
+  // chính thì cài máy này (wireframe 7, docs/design/wireframes/tai-khoan-tu-tren-xuong.html), có rồi thì nối máy chính.
   fastify.post('/desktop-ticket', { config: limit, schema: { body: ticketBody } }, async (request) => {
     const claims = readTicket(request.body.ticket)
     const office = await officeInfo()
-    if (!office) return { needs_office: true, account: { email: claims.email, name: claims.name, office: claims.office, office_name: claims.office_name } }
+    if (!office) {
+      return {
+        needs_office: true,
+        account: { email: claims.email, name: claims.name, office: claims.office, office_name: claims.office_name, office_role: claims.office_role || null, office_has_machine: Boolean(claims.office_has_machine) },
+      }
+    }
     if (claims.office !== office.office_id || claims.machine !== machineId(office.machine_public_key)) {
       throw fail(403, claims.office ? 'Tài khoản thuộc văn phòng khác, hoặc máy này không phải máy chính của văn phòng' : 'Tài khoản chưa thuộc văn phòng này. Nhờ quản trị mời bạn.', 'NOT_IN_OFFICE')
     }
+    assertNotLocked(claims)
     let [[user]] = await pool.query('SELECT id, email, is_active, activated_at FROM "user" WHERE cloud_account_id = ? AND deleted_at IS NULL', [claims.sub])
     if (!user) {
       // Người được mời: dòng "Đã mời" tạo ở màn Tài khoản, gắn tài khoản ở lần đăng nhập đầu theo email.
@@ -141,6 +161,7 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
     if (!office || claims.office !== office.office_id || claims.office_role !== 'admin' || claims.machine !== machineId(pem)) {
       throw fail(403, 'Vé không khớp văn phòng của bản chụp', 'NOT_IN_OFFICE')
     }
+    assertNotLocked(claims)
     await pool.query('UPDATE office_info SET machine_public_key = ? WHERE id = 1', [pem])
     const [[user]] = await pool.query('SELECT id, email, is_active FROM "user" WHERE (cloud_account_id = ? OR lower(email) = lower(?)) AND deleted_at IS NULL ORDER BY cloud_account_id IS NULL LIMIT 1', [claims.sub, claims.email])
     if (!user?.is_active) throw fail(403, 'Tài khoản không còn trong văn phòng', 'NOT_IN_OFFICE')
@@ -152,6 +173,23 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
   fastify.get('/desktop-office', { onRequest: [fastify.authenticate] }, async () => {
     const office = await officeInfo()
     return office ? { office_id: office.office_id, name: office.name } : null
+  })
+
+  // Quản trị → Máy trong văn phòng → Khoá bằng mã PIN (wireframe 9, docs/design/wireframes/tai-khoan-tu-tren-xuong.html).
+  fastify.get('/office-security', { onRequest: [fastify.authenticate, fastify.can('account.view')] }, async () => {
+    const office = await officeInfo()
+    if (!office) throw fail(404, 'Máy này chưa có văn phòng')
+    return { pin_required: office.pin_required, lock_minutes: office.lock_minutes }
+  })
+  fastify.put('/office-security', {
+    onRequest: [fastify.authenticate, fastify.can('account.update')],
+    schema: { body: { type: 'object', additionalProperties: false, properties: { pin_required: { type: 'boolean' }, lock_minutes: { type: 'integer', enum: [5, 10, 15, 30, 60] } } } },
+  }, async (request) => {
+    if (!(await officeInfo())) throw fail(404, 'Máy này chưa có văn phòng')
+    const { pin_required: pinRequired, lock_minutes: lockMinutes } = request.body
+    await pool.query('UPDATE office_info SET pin_required = COALESCE(?, pin_required), lock_minutes = COALESCE(?, lock_minutes) WHERE id = 1', [pinRequired ?? null, lockMinutes ?? null])
+    const office = await officeInfo()
+    return { pin_required: office.pin_required, lock_minutes: office.lock_minutes }
   })
 }
 

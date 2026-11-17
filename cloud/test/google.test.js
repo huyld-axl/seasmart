@@ -1,5 +1,5 @@
 // "Tiếp tục với Google" với Google giả: kiểm state / nonce / aud / iss / email đã xác minh / auth_time khi đăng nhập
-// lại; gắn tài khoản theo google_sub rồi theo email; tạo tài khoản mới.
+// lại; gắn tài khoản theo google_sub rồi theo email; email chưa có tài khoản thì từ chối (không tự tạo).
 import { describe, it, expect, beforeAll } from 'vitest'
 import { createRequire } from 'module'
 
@@ -51,12 +51,24 @@ describe('Google', () => {
     expect(fresh.email).toBe('ha.linh@gmail.com')
   })
 
-  it('tạo tài khoản mới; lần sau tìm theo google_sub; tài khoản email có sẵn thì gắn vào', async () => {
-    const a = await google.accountFor({ sub: 'g-123', email: 'ha.linh@gmail.com', name: 'Hà Linh' })
-    expect(a.email_verified_at).toBeTruthy()
-    expect((await google.accountFor({ sub: 'g-123', email: 'ha.linh@gmail.com' })).id).toBe(a.id)
-    const existing = await accounts.register({ email: 'co.san@thu.vn', fullName: 'Có Sẵn', password: 'MatKhauDai123' })
+  it('không tự tạo tài khoản; tài khoản có sẵn theo email thì gắn google_sub, lần sau tìm theo google_sub', async () => {
+    await expect(google.accountFor({ sub: 'g-123', email: 'ha.linh@gmail.com', name: 'Hà Linh' })).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('chưa có tài khoản MCAH') })
+    const pool = require('../src/db')
+    const { rows: [existing] } = await pool.query("INSERT INTO account (email, full_name) VALUES ('co.san@thu.vn', 'Có Sẵn') RETURNING *")
+    expect((await google.accountFor({ sub: 'g-999', email: 'co.san@thu.vn' })).id).toBe(existing.id)
     expect((await google.accountFor({ sub: 'g-999', email: 'co.san@thu.vn' })).id).toBe(existing.id)
     await expect(google.accountFor({ sub: 'g-khac', email: 'co.san@thu.vn' })).rejects.toMatchObject({ statusCode: 400 })
+    await accounts.setDisabled(existing.id, true)
+    await expect(google.accountFor({ sub: 'g-999', email: 'co.san@thu.vn' })).rejects.toMatchObject({ statusCode: 403 })
+  })
+
+  it('email nội bộ Axalize tự có tài khoản ở lần đăng nhập Google đầu', async () => {
+    const saved = config.adminEmail
+    config.adminEmail = 'admin@axalize.vn'
+    try {
+      expect((await google.accountFor({ sub: 'g-ax', email: 'admin@axalize.vn' })).google_sub).toBe('g-ax')
+    } finally {
+      config.adminEmail = saved
+    }
   })
 })

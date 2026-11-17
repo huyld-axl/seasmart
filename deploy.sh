@@ -52,7 +52,11 @@ else
   echo 'No cloud/.env: skipping the desktop service (cloud). See docs/mcah-huong-dan-server-may-chu-dich-vu.md.' >&2
 fi
 # Khu nội bộ /internal/ cần tệp Basic Auth; thiếu thì /internal/ trả 500 (phần còn lại vẫn chạy). Chỉ nhắc, không dừng.
-internal_auth="${INTERNAL_AUTH_DIR:-$(sed -n 's/^INTERNAL_AUTH_DIR=//p' .env 2>/dev/null | tail -1)}"
+# .env cạnh compose.yaml không bắt buộc: chỉ đọc khi có, vì sed lỗi dưới pipefail làm script dừng mà không báo gì.
+internal_auth="${INTERNAL_AUTH_DIR:-}"
+if [[ -z "$internal_auth" && -f .env ]]; then
+  internal_auth="$(sed -n 's/^INTERNAL_AUTH_DIR=//p' .env | tail -1)"
+fi
 if [[ ! -f "${internal_auth:-/srv/mcah/internal-auth}/htpasswd" ]]; then
   echo "No ${internal_auth:-/srv/mcah/internal-auth}/htpasswd: /internal/ will return 500. See docs/mcah-huong-dan-server-may-chu-dich-vu.md." >&2
 fi

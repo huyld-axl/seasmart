@@ -22,6 +22,12 @@ const DUPLICATE_FIELDS = {
 }
 
 function errorHandler(error, request, reply) {
+  if (error.validationContext === 'body') {
+    const nameLength = error.validation?.find((item) => item.instancePath === '/full_name' && item.keyword === 'maxLength')
+    if (nameLength) {
+      return reply.code(400).send({ error: `Họ tên không được vượt quá ${nameLength.params.limit} ký tự` })
+    }
+  }
   // Giữ nguyên thông báo nghiệp vụ cụ thể do service đã xử lý.
   if (!error.statusCode && error.code === '23505') {
     const field = DUPLICATE_FIELDS[error.constraint]

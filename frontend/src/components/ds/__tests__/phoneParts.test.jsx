@@ -50,6 +50,21 @@ describe('BottomSheet', () => {
 })
 
 describe('DateField', () => {
+  it('desktop nhận ngày gõ liền và chỉ lưu ngày hợp lệ', () => {
+    screenAs(false)
+    const onChange = vi.fn()
+    const { container } = render(<DateField open={false} format="DD/MM/YYYY" onChange={onChange} />)
+    const input = container.querySelector('input')
+    fireEvent.change(input, { target: { value: '29102005' } })
+    expect(input.value).toBe('29/10/2005')
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+    expect(onChange.mock.calls.at(-1)[0].format('YYYY-MM-DD')).toBe('2005-10-29')
+    onChange.mockClear()
+    fireEvent.change(input, { target: { value: '31022026' } })
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   it('desktop là DatePicker của antd', () => {
     screenAs(false)
     const { container } = render(<DateField value={dayjs('2026-11-05')} format="DD/MM/YYYY" />)

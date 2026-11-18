@@ -119,6 +119,7 @@ export default function KpiTargetPage() {
       <Table
         rowKey="user_id"
         className="kt-table"
+        tableLayout="fixed"
         dataSource={draft}
         columns={columns}
         pagination={false}

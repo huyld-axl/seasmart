@@ -10,7 +10,7 @@ Tệp này dành cho **máy Windows chưa có gì**: chưa có code, và Claude 
 - **Ai làm gì:**
   - Máy Windows: chỉ **build** ra tệp `.exe`. Không ký, không đẩy lên server.
   - Máy Ubuntu (máy phát hành, ở văn phòng): giữ khoá ký, ký và đẩy cả hai bộ cài lên https://mcah.axalize.vn/download/.
-- **Commit cần build:** `2bda402`. Bản Ubuntu 0.9.0 đã build từ commit này. Hai bản phải cùng commit, nếu không script phát hành sẽ từ chối.
+- **Commit cần build:** người phát hành báo (ví dụ dưới đây ghi `<COMMIT>`). Bản Ubuntu build từ đúng commit đó. Hai bản phải cùng commit, nếu không script phát hành sẽ từ chối.
 
 ## 1. Đoạn dán cho Claude Code ở máy nhà
 
@@ -21,7 +21,8 @@ Tôi cần build bộ cài Windows cho dự án MCAH. Hướng dẫn đầy đ�
 https://github.com/huyld-axl/seasmart, tệp docs/mcah-build-windows.md (nhánh dev).
 Hãy:
 1. Kiểm tra Git và Node (phải đúng v24.19.0 x64). Thiếu gì thì nói tôi cài, đưa link.
-2. Clone repo vào thư mục hiện tại, đọc docs/mcah-build-windows.md ở nhánh dev, rồi làm theo mục 3.
+2. Clone repo vào thư mục hiện tại, đọc docs/mcah-build-windows.md ở nhánh dev, rồi làm theo mục 3
+   với commit <COMMIT> và phiên bản <PHIÊN BẢN> (người phát hành báo).
 Luật bắt buộc:
 - KHÔNG sửa code, KHÔNG commit, KHÔNG push, KHÔNG tạo nhánh. Repo phải sạch (git status trống) khi build.
 - KHÔNG đọc hay tạo tệp .env nào. KHÔNG đặt biến môi trường MCAH_*.
@@ -58,15 +59,15 @@ Dùng **PowerShell**. Đừng để code trong thư mục OneDrive (OneDrive kho
    mkdir C:\code -Force; cd C:\code
    git clone https://github.com/huyld-axl/seasmart.git
    cd seasmart
-   git checkout 2bda402
+   git checkout <COMMIT>
    git log -1 --oneline
    git status
    ```
 
-   - Dòng log phải bắt đầu bằng `2bda402`. Git báo "detached HEAD" là bình thường.
+   - Dòng log phải bắt đầu bằng `<COMMIT>`. Git báo "detached HEAD" là bình thường.
    - `git status` phải báo không có thay đổi (working tree clean).
-   - Đã clone từ trước: `cd C:\code\seasmart; git fetch; git checkout 2bda402`.
-   - Lần sau người phát hành báo commit mới thì thay `2bda402` bằng commit đó.
+   - Đã clone từ trước: `cd C:\code\seasmart; git fetch; git checkout <COMMIT>`.
+   - Lần sau người phát hành báo commit mới thì thay `<COMMIT>` bằng commit đó.
 
 2. Cài thư viện (lần đầu 5–15 phút):
 
@@ -85,7 +86,7 @@ Dùng **PowerShell**. Đừng để code trong thư mục OneDrive (OneDrive kho
    ```
 
    - Chạy khoảng 5–15 phút. Lần đầu nó tải thêm Node cho Windows và Electron.
-   - **Thành công** khi gần cuối có dòng `build-info-win: 0.9.0 @ 2bda402`, **không** có chữ "(có thay đổi chưa commit)".
+   - **Thành công** khi gần cuối có dòng `build-info-win: <PHIÊN BẢN> @ <COMMIT>`, **không** có chữ "(có thay đổi chưa commit)".
    - Có chữ đó nghĩa là repo bị sửa gì đó: chạy `git status` xem tệp nào, `git checkout -- .` để bỏ, build lại.
 
 4. Kiểm tra kết quả:
@@ -95,14 +96,14 @@ Dùng **PowerShell**. Đừng để code trong thư mục OneDrive (OneDrive kho
    type C:\code\seasmart\desktop\dist\installer\build-info-win.json
    ```
 
-   Phải có tệp `MCAH Setup 0.9.0.exe` (khoảng 150–200 MB). `build-info-win.json` phải có:
-   - `"commit": "2bda4023..."`, `"dirty": false`, `"scan": "clean"`;
+   Phải có tệp `MCAH Setup <PHIÊN BẢN>.exe` (khoảng 150–200 MB). `build-info-win.json` phải có:
+   - `"commit": "<COMMIT>..."`, `"dirty": false`, `"scan": "clean"`;
    - `"cloud_url": "https://mcah.axalize.vn/tai-khoan"`;
    - `"update_url": "https://mcah.axalize.vn/download/files"`.
 
 ## 4. Thử cài
 
-1. Mở `C:\code\seasmart\desktop\dist\installer\MCAH Setup 0.9.0.exe`.
+1. Mở `C:\code\seasmart\desktop\dist\installer\MCAH Setup <PHIÊN BẢN>.exe`.
 2. Windows hiện "Windows đã bảo vệ máy tính của bạn": bấm **Thêm thông tin → Vẫn chạy** (bản chưa có chữ ký số, bình thường).
 3. Windows có thể hỏi quyền quản trị (để mở cổng mạng cho máy chính trong văn phòng): đồng ý.
 4. Đạt khi: app mở lên, không báo lỗi, tới được màn đầu (đăng nhập / chọn máy). Không cần đăng nhập thật.
@@ -114,14 +115,14 @@ Ghi lại nếu có gì lạ (chụp màn hình) để báo người phát hành
 
 Chép **đúng hai tệp**, **không đổi tên**, từ `C:\code\seasmart\desktop\dist\installer\`:
 
-- `MCAH Setup 0.9.0.exe`
+- `MCAH Setup <PHIÊN BẢN>.exe`
 - `build-info-win.json`
 
 Cách chép: Google Drive, USB, hoặc bất kỳ cách nào. Trên máy Ubuntu, đặt vào:
 
 `/home/axalize/Public/code/SeaSmart MVP/seasmart/desktop/dist/installer/`
 
-Sau đó nói Claude Code ở máy Ubuntu: "đã có bản Windows, phát hành 0.9.0 đủ hai bản".
+Sau đó nói Claude Code ở máy Ubuntu: "đã có bản Windows, phát hành <PHIÊN BẢN> đủ hai bản".
 
 ## 6. Gặp lỗi
 
@@ -133,6 +134,7 @@ Sau đó nói Claude Code ở máy Ubuntu: "đã có bản Windows, phát hành 
 | `npm ci` lỗi `EPERM` / `EBUSY` | Đóng VS Code, Explorer đang mở thư mục đó; tạm tắt diệt virus quét thư mục `C:\code`; chạy lại. |
 | `running scripts is disabled on this system` | Chạy một lần: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, chọn Y. |
 | Lỗi đường dẫn quá dài | Để code ở `C:\code` (ngắn) như hướng dẫn. |
+| Build lỗi vì thiếu `cloud/.data/signing-key.pem` | Đang build commit cũ (trước 0.9.1). Hỏi người phát hành commit mới. |
 | `npm run dist:win` lỗi | Chụp khoảng 30 dòng cuối, gửi người phát hành. Không tự sửa code. |
 | Windows Defender xoá / chặn `.exe` vừa build | Ghi lại tên cảnh báo, gửi người phát hành. |
 | build-info có "(có thay đổi chưa commit)" | `git status`, `git checkout -- .`, build lại. |

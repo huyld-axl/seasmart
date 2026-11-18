@@ -193,9 +193,6 @@ const SORTS = {
 
 const seafarerService = {
   async list({ page = 1, limit = 20, search, status, rank_id, tab, ownerId, rankIds = [], vesselIds = [], certTypeIds = [], ageMin = null, ageMax = null, sort = null }) {
-    if (ageMin !== null && ageMax !== null && ageMin > ageMax) {
-      throw { statusCode: 400, message: 'Tuổi bắt đầu không được lớn hơn tuổi kết thúc.' }
-    }
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []

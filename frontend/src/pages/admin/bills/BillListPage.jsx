@@ -25,7 +25,7 @@ import { billNextAction, overdueLabel, periodLabel } from './billView'
 import ListCard, { ListCardList } from '../../../components/ds/ListCard'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
-import { CrewFilterButton } from '../seafarers/CrewFilters.jsx'
+import { CrewFilterButton } from '../seafarers/CrewFilters'
 
 const TABS = [
   { value: 'all', label: 'Tất cả' },

@@ -12,6 +12,7 @@ const { spawn } = require('child_process')
 const { app, dialog } = require('electron')
 const { releasePublicKeyFile } = require('./paths')
 const { canonical } = require('./manifest')
+const progress = require('./update-progress')
 
 // Đọc mỗi lần dùng: app có thể đã học địa chỉ mới từ bản tin cập nhật (endpoints.js).
 const endpoints = require('./endpoints')
@@ -64,13 +65,22 @@ async function checkForUpdate() {
   return { version: manifest.version, has_migrations: manifest.last_migration !== lastMigration(), notes: manifest.notes || '', base, ...file }
 }
 
-async function download(update) {
+// onProgress(done, total): gọi theo từng phần tải về, để cửa sổ cập nhật vẽ phần trăm.
+async function download(update, onProgress = () => {}) {
   const dir = path.join(app.getPath('userData'), 'updates')
   fs.rmSync(dir, { recursive: true, force: true })
   fs.mkdirSync(dir, { recursive: true })
   const r = await fetch(`${update.base || updateBase()}/${encodeURIComponent(update.name)}`)
   if (!r.ok) throw new Error(`Không tải được bản cập nhật (${r.status})`)
-  const data = Buffer.from(await r.arrayBuffer())
+  const total = Number(r.headers.get('content-length')) || update.size || 0
+  const chunks = []
+  let done = 0
+  for await (const chunk of r.body) {
+    chunks.push(chunk)
+    done += chunk.length
+    onProgress(done, total)
+  }
+  const data = Buffer.concat(chunks)
   if (crypto.createHash('sha256').update(data).digest('hex') !== update.sha256) throw new Error('Tệp cập nhật tải về bị sai (SHA-256 không khớp)')
   const file = path.join(dir, update.name)
   fs.writeFileSync(file, data)
@@ -91,8 +101,22 @@ function install(file) {
   })
 }
 
+const INSTALL_HINT = PLATFORM === 'linux' ? 'Ubuntu sẽ hiện hộp hỏi mật khẩu quản trị của máy: nhập để cài tiếp.' : 'MCAH sẽ tự đóng rồi mở lại bản mới.'
+
+// Cài bộ cài đã tải, cửa sổ tiến độ báo đang cài; xong thì đóng app để bản mới chạy.
+async function installAndRestart(file, shown, version) {
+  shown.set({ title: `Đang cài MCAH ${version}…`, hint: INSTALL_HINT })
+  await install(file)
+  shown.set({ title: `Đã cài MCAH ${version}, đang mở lại…`, hint: 'MCAH sẽ tự mở lại sau vài giây.' })
+  if (PLATFORM === 'linux') app.relaunch()
+  app.quit()
+}
+
 // Kiểm, hỏi, tải, cài. Trả về true khi app sắp thoát để bản mới chạy.
+// quiet (tự kiểm định kỳ): không báo "đang dùng bản mới nhất" và lỗi lúc kiểm; nhưng người dùng đã bấm
+// "Cập nhật ngay" thì lỗi tải / cài luôn được báo.
 async function runUpdate(window, { quiet = false, beforeInstall = null } = {}) {
+  let shown = null
   try {
     const update = await checkForUpdate()
     if (!update) {
@@ -114,15 +138,20 @@ async function runUpdate(window, { quiet = false, beforeInstall = null } = {}) {
       ].filter(Boolean).join('\n\n'),
     })
     if (response !== 0) return false
-    const file = await download(update)
+    shown = progress.open(window)
+    const title = `Đang tải MCAH ${update.version}…`
+    shown.set({ title, done: 0, total: update.size })
+    const file = await download(update, (done, total) => shown.set({ title, done, total }))
     // Máy chính, bản mới có đổi dữ liệu (docs/mcah-ke-hoach-desktop-gd4.md 3.5): dừng ghi, chụp DB, giữ bộ cài bản đang chạy.
-    if (update.has_migrations && beforeInstall) await beforeInstall(update)
-    await install(file)
-    if (PLATFORM === 'linux') app.relaunch()
-    app.quit()
+    if (update.has_migrations && beforeInstall) {
+      shown.set({ title: 'Đang chụp lại dữ liệu trước khi cài…', hint: 'Các máy trong văn phòng tạm không lưu được trong vài phút.' })
+      await beforeInstall(update)
+    }
+    await installAndRestart(file, shown, update.version)
     return true
   } catch (error) {
-    if (!quiet) dialog.showErrorBox('Không cập nhật được', error.message)
+    shown?.close()
+    if (!quiet || shown) dialog.showErrorBox('Không cập nhật được', error.message)
     else console.error(`Cập nhật: ${error.message}`)
     return false
   }
@@ -181,16 +210,21 @@ async function updateFromMain(window, fetchFromMain) {
     detail: `Máy chính đang dùng MCAH ${manifest.version}, máy này ${app.getVersion()}. MCAH sẽ tải bộ cài từ máy chính (không cần internet) rồi cài.${PLATFORM === 'linux' ? ' Ubuntu sẽ hỏi mật khẩu quản trị.' : ''}`,
     buttons: ['Cập nhật'],
   })
-  const data = await fetchFromMain(file.name)
-  if (crypto.createHash('sha256').update(data).digest('hex') !== file.sha256) throw new Error('Bộ cài tải từ máy chính bị sai (SHA-256 không khớp), không cài')
-  const dir = path.join(app.getPath('userData'), 'updates')
-  fs.rmSync(dir, { recursive: true, force: true })
-  fs.mkdirSync(dir, { recursive: true })
-  const target = path.join(dir, file.name)
-  fs.writeFileSync(target, data)
-  await install(target)
-  if (PLATFORM === 'linux') app.relaunch()
-  app.quit()
+  const shown = progress.open(window)
+  try {
+    shown.set({ title: `Đang tải MCAH ${manifest.version} từ máy chính…` })
+    const data = await fetchFromMain(file.name)
+    if (crypto.createHash('sha256').update(data).digest('hex') !== file.sha256) throw new Error('Bộ cài tải từ máy chính bị sai (SHA-256 không khớp), không cài')
+    const dir = path.join(app.getPath('userData'), 'updates')
+    fs.rmSync(dir, { recursive: true, force: true })
+    fs.mkdirSync(dir, { recursive: true })
+    const target = path.join(dir, file.name)
+    fs.writeFileSync(target, data)
+    await installAndRestart(target, shown, manifest.version)
+  } catch (error) {
+    shown.close()
+    throw error
+  }
 }
 
 module.exports = { setChannelSource, install, PLATFORM, runUpdate, checkForUpdate, download, verifyManifest, mirrorInstallers, serveInstaller, updateFromMain }

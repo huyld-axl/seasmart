@@ -1,0 +1,41 @@
+# Build bộ cài app máy tính (Ubuntu + Windows) từ đúng một commit.
+# Chạy tay: GitHub > Actions > "Desktop build" > Run workflow, chọn nhánh (thường là dev).
+# Máy phát hành tải artifact về desktop/dist/installer/ rồi chạy `npm run release` (khoá ký chỉ nằm ở máy phát hành).
+# docs/mcah-quy-trinh-phat-hanh.md
+name: Desktop build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux
+          - os: windows-2022
+            target: win
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.19.0
+      - run: npm ci --prefix ../frontend
+        # Gói chạy kèm trong bộ cài (backend) do stage.js tự `npm ci`.
+      - run: npm ci
+      - run: npm run dist:${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcah-installer-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            desktop/dist/installer/*.deb
+            desktop/dist/installer/MCAH Setup *.exe
+            desktop/dist/installer/build-info-${{ matrix.target }}.json

@@ -149,7 +149,7 @@ export default function SeafarerListPage() {
   } else if (!rows.length && keyword) {
     body = <EmptyState title={`Không có thuyền viên nào khớp "${keyword}"`} action={<Button onClick={() => setSearch('')}>Xoá tìm kiếm</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có thuyền viên nào trong mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có thuyền viên nào trong mục này" action={<Button onClick={() => { setTab('all'); setSearch(''); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có thuyền viên nào" description="Thêm thuyền viên đầu tiên, hoặc nhập cả danh sách từ Excel." action={can('seafarer.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/seafarers/new')}>Thêm thuyền viên</Button> : undefined} />
   } else if (isMobile) {
@@ -196,7 +196,7 @@ export default function SeafarerListPage() {
     <div className="ds-page">
       <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setSearch(''); setPage(1); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear

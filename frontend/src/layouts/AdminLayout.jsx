@@ -134,7 +134,7 @@ function SideNav({ sections, current, currentTab, collapsed, onNavigate, guideHr
               menu={{
                 items: [{ key: 'title', type: 'group', label: section.label, children: section.tabs.map((tab) => ({ key: tab.to, label: tab.label })) }],
                 selectedKeys: active && currentTab ? [currentTab.to] : [],
-                onClick: ({ key }) => navigate(key),
+                onClick: ({ key }) => { resetListSearch(); navigate(key) },
               }}
             >
               {item}
@@ -231,7 +231,7 @@ export default function AdminLayout() {
           <div className="app-shell__brand">
             <ProductBrand collapsed={collapsed} />
           </div>
-          <SideNav sections={sections} current={current} currentTab={currentTab} collapsed={collapsed} guideHref={guide} />
+          <SideNav sections={sections} current={current} currentTab={currentTab} collapsed={collapsed} onNavigate={resetListSearch} guideHref={guide} />
         </aside>
       )}
 
@@ -304,8 +304,9 @@ export default function AdminLayout() {
           </div>
         }
       >
-        <SideNav sections={sections} current={current} currentTab={currentTab} onNavigate={() => setDrawerOpen(false)} guideHref={guide} />
+        <SideNav sections={sections} current={current} currentTab={currentTab} onNavigate={() => { resetListSearch(); setDrawerOpen(false) }} guideHref={guide} />
       </Drawer>
     </div>
   )
 }
+import { resetListSearch } from '../utils/resetListSearch'

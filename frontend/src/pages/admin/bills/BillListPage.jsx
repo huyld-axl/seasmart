@@ -88,6 +88,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
     if (value === tab && page === 1) return
     pendingScrollReset.current = true
     setTab(value)
+    setSearch('')
     setPage(1)
   }
   const changePage = (next, size) => {

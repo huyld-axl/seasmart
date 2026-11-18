@@ -134,7 +134,7 @@ export default function OpportunityListPage() {
   } else if (!rows.length && filtered) {
     body = <EmptyState title="Không có cơ hội nào khớp bộ lọc" description="Thử tìm bằng mã, chức danh hoặc tên tàu." action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có cơ hội nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có cơ hội nào ở mục này" action={<Button onClick={() => { setTab('all'); setSearch(''); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có cơ hội nào" description="Mỗi cơ hội là một vị trí chủ tàu cần người. Cần nhiều vị trí thì tạo nhiều cơ hội." action={createButton} />
   } else if (isMobile) {
@@ -192,7 +192,7 @@ export default function OpportunityListPage() {
     <div className="ds-page">
       <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setSearch(''); setPage(1); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear

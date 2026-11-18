@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import useAuthStore from '../stores/authStore'
+import { RESET_LIST_SEARCH } from '../utils/resetListSearch'
 
 // Chỉ lưu các điều kiện hiển thị danh sách, tách theo tài khoản, màn hình và tab trình duyệt.
 export default function useListSessionState(scope, field, initial, revive = (value) => value) {
@@ -21,6 +22,13 @@ export default function useListSessionState(scope, field, initial, revive = (val
     } catch { return fallback() }
   }
   const [saved, setSaved] = useState(() => ({ key, value: read() }))
+  useEffect(() => {
+    const reset = () => {
+      if (field === 'search' || field === 'page') setSaved({ key, value: field === 'search' ? '' : 1 })
+    }
+    window.addEventListener(RESET_LIST_SEARCH, reset)
+    return () => window.removeEventListener(RESET_LIST_SEARCH, reset)
+  }, [key, field])
   const value = saved.key === key ? saved.value : read()
   useEffect(() => {
     try { sessionStorage.setItem(key, JSON.stringify({ version: 1, value })) } catch { /* Storage có thể bị chặn. */ }

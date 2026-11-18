@@ -103,7 +103,7 @@ export default function VesselListPage() {
       />
     )
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có tàu nào ở trạng thái này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có tàu nào ở trạng thái này" action={<Button onClick={() => { setTab('all'); setSearch(''); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có tàu nào" description="Thêm tàu để dùng khi đối chiếu sea service và tạo bộ giấy." action={can('vessel.create') ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu</Button> : undefined} />
   } else if (isMobile) {
@@ -146,7 +146,7 @@ export default function VesselListPage() {
       <VesselCatalogPanel key={catalog.key} open={catalog.open} initialQuery={catalog.query} onClose={() => setCatalog((previous) => ({ ...previous, open: false }))} />
       <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setSearch(''); setPage(1); scrollToListStart() }} />
           <span className="fl-searchgroup">
             <Input
               className="ds-toolbar__search"

@@ -5,7 +5,8 @@
 const http = require('http')
 const crypto = require('crypto')
 
-const ALLOWED = /^\/api\/office\/(invites|invites\/revoke|members\/remove|members\/restore|machine\/lan|machine\/status)$|^\/api\/(ai\/vision|vessels\/imo\/\d{7}|vessels\/catalog)$/
+// Khớp các đường máy chủ dịch vụ kiểm bằng chữ ký máy chính (preHandler byMachine); test/signer.test.js đối chiếu.
+const ALLOWED = /^\/api\/office\/(members|members\/remove|members\/restore|machine\/lan|machine\/status)$|^\/api\/(ai\/vision|vessels\/imo\/\d{7}|vessels\/catalog)$/
 
 function start({ cloudUrl, machineKey }) {
   const token = crypto.randomBytes(24).toString('base64url')
@@ -57,4 +58,4 @@ function start({ cloudUrl, machineKey }) {
   })
 }
 
-module.exports = { start }
+module.exports = { start, ALLOWED }

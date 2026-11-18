@@ -23,6 +23,9 @@ const PG_VERSION = require(path.join(DESKTOP, 'package.json')).devDependencies['
 // Windows: npm là npm.cmd, phải chạy qua shell; tar.exe có sẵn từ Windows 10 (giải nén được cả .zip).
 const sh = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' })
 
+// Windows: dùng đúng tar.exe của hệ thống (bsdtar, giải nén được .zip); tar trong PATH có thể là GNU tar của Git Bash (CI) và không giải được .zip.
+const TAR = process.platform === 'win32' ? path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe') : 'tar'
+
 function copyBackend() {
   const dest = path.join(OUT, 'backend')
   const skip = new Set(['node_modules', '.env', 'uploads', 'storage', 'test_support', '__tests__', 'Dockerfile', 'docker-entrypoint.sh', '.dockerignore', 'eslint.config.js', 'vitest.config.js'])
@@ -53,7 +56,7 @@ function copyPostgres() {
   fs.mkdirSync(tmp, { recursive: true })
   sh('npm', ['pack', `@embedded-postgres/${pkg}@${PG_VERSION}`, '--silent'], tmp)
   const tgz = fs.readdirSync(tmp).find((f) => f.endsWith('.tgz'))
-  sh('tar', ['-xzf', tgz], tmp)
+  sh(TAR, ['-xzf', tgz], tmp)
   const native = path.join(tmp, 'package/native')
   // Gói Linux lưu symlink của thư viện .so trong pg-symlinks.json; dựng lại cho đúng.
   const links = path.join(native, 'pg-symlinks.json')
@@ -87,8 +90,8 @@ async function copyNode() {
   fs.rmSync(tmp, { recursive: true, force: true })
   fs.mkdirSync(tmp, { recursive: true })
   fs.writeFileSync(path.join(tmp, name), archive)
-  if (target === 'win') sh(process.platform === 'win32' ? 'tar' : 'unzip', process.platform === 'win32' ? ['-xf', name] : ['-q', name], tmp)
-  else sh('tar', ['-xJf', name], tmp)
+  if (target === 'win') sh(process.platform === 'win32' ? TAR : 'unzip', process.platform === 'win32' ? ['-xf', name] : ['-q', name], tmp)
+  else sh(TAR, ['-xJf', name], tmp)
   const dir = path.join(tmp, name.replace(/\.(zip|tar\.xz)$/, ''))
   const dest = path.join(OUT, 'node')
   fs.mkdirSync(dest, { recursive: true })

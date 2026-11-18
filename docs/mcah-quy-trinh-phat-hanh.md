@@ -25,7 +25,7 @@ Máy Ubuntu ở văn phòng là máy phát hành (giữ khoá ký). Bộ cài Ub
 ### Luồng thường
 
 1. Sửa, test, nâng phiên bản, ghi chú, `notes:page`, commit, push `dev`.
-2. GitHub > Actions > "Desktop build" > Run workflow (nhánh `dev`). Đợi cả hai job xanh.
+2. Push `dev` có đổi `desktop/` thì CI tự chạy (hoặc GitHub > Actions > "Desktop build" > Run workflow, khi workflow đã có ở nhánh mặc định). Đợi cả hai job xanh.
 3. Cài thử bản Windows và Ubuntu từ artifact (phần này vẫn là người làm).
 4. Máy phát hành, trong `desktop/`: tải artifact `mcah-installer-linux` và `mcah-installer-win` về `dist/installer/` (một thư mục phẳng, gồm `.deb`, `.exe`, hai `build-info-*.json`), rồi `npm run release -- --channel beta`. Mở trang tải kiểm hai nút.
 

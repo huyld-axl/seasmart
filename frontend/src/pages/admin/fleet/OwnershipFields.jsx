@@ -4,6 +4,8 @@ import { Form, Input, Select } from 'antd'
 import ToggleRow from '../../../components/ds/ToggleRow'
 import { Link } from 'react-router-dom'
 import { vesselApi } from '../../../api/fleetApi'
+import dayjs from 'dayjs'
+import DateField from '../../../components/ds/DateField'
 
 export default function OwnershipFields({ value, onChange, canCreate = false }) {
   const [search, setSearch] = useState('')
@@ -15,8 +17,8 @@ export default function OwnershipFields({ value, onChange, canCreate = false }) 
 
     </Form.Item>
     <Form.Item label="Sở hữu" className="sf-c4"><ToggleRow label="Đang sở hữu" value={value.is_current !== false} onChange={(on) => patch({ is_current: on, ended_at: on ? null : value.ended_at })} /></Form.Item>
-    <Form.Item label="Sở hữu từ ngày" className="sf-c6" required><Input type="date" value={value.started_at?.slice(0, 10) || ''} onChange={(e) => patch({ started_at: e.target.value })} /></Form.Item>
-    <Form.Item label="Đến ngày" className="sf-c6" required={value.is_current === false}><Input type="date" disabled={value.is_current !== false} min={value.started_at?.slice(0, 10)} value={value.is_current !== false ? '' : value.ended_at?.slice(0, 10) || ''} onChange={(e) => patch({ ended_at: e.target.value })} /></Form.Item>
+    <Form.Item label="Sở hữu từ ngày" className="sf-c6" required><DateField format="DD/MM/YYYY" placeholder="DD/MM/YYYY" style={{ width: '100%' }} value={value.started_at ? dayjs(value.started_at.slice(0, 10)) : null} onChange={(date) => patch({ started_at: date ? date.format('YYYY-MM-DD') : '' })} /></Form.Item>
+    <Form.Item label="Đến ngày" className="sf-c6" required={value.is_current === false}><DateField format="DD/MM/YYYY" placeholder="DD/MM/YYYY" style={{ width: '100%' }} disabled={value.is_current !== false} minDate={value.started_at ? dayjs(value.started_at.slice(0, 10)) : undefined} value={value.is_current === false && value.ended_at ? dayjs(value.ended_at.slice(0, 10)) : null} onChange={(date) => patch({ ended_at: date ? date.format('YYYY-MM-DD') : '' })} /></Form.Item>
   </div>
 }
 export function ownershipProblem(v) {

@@ -20,7 +20,7 @@ if (!fs.existsSync(secretFile)) fs.writeFileSync(secretFile, crypto.randomBytes(
 if (!fs.existsSync(path.join(PGDATA, 'PG_VERSION'))) {
   const pw = path.join(DATA, '.pw')
   fs.copyFileSync(secretFile, pw)
-  execFileSync(bin('initdb'), ['-D', PGDATA, '-U', 'mcah_cloud', '--pwfile', pw, '-A', 'scram-sha-256', '-E', 'UTF8', '--locale=C.UTF-8'], { stdio: 'inherit' })
+  execFileSync(bin('initdb'), ['-D', PGDATA, '-U', 'mcah_cloud', '--pwfile', pw, '-A', 'scram-sha-256', '-E', 'UTF8', '--locale=C', '--locale-provider=builtin', '--builtin-locale=C.UTF-8'], { stdio: 'inherit' })
   fs.rmSync(pw)
   execFileSync(bin('postgres'), ['--single', '-D', PGDATA, 'postgres'], { input: 'CREATE DATABASE mcah_cloud;\n' })
 }

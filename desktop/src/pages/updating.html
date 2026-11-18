@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'unsafe-inline'; script-src 'self'">
+<title>Cập nhật MCAH</title>
+<style>
+  /* Cửa sổ tiến độ cập nhật: hiện từ lúc bấm "Cập nhật ngay" tới lúc app đóng để cài (update-progress.js). */
+  html { overflow: hidden; }
+  body { margin: 0; padding: 22px 24px; background: #fff; color: #2c2c2c; font: 14px/1.5 'Inter', system-ui, 'Segoe UI', sans-serif; display: grid; gap: 12px; }
+  h1 { margin: 0; font-size: 16px; }
+  p { margin: 0; color: #707070; }
+  .bar { height: 6px; border-radius: 3px; background: #e7e8ec; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: #003366; border-radius: 3px; transition: width .2s; }
+  .bar.wait i { width: 40%; animation: slide 1.2s ease-in-out infinite; }
+  @keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+  @media (prefers-reduced-motion: reduce) { .bar.wait i { animation: none; width: 100%; } }
+  .row { display: flex; justify-content: space-between; font-size: 12.5px; color: #707070; }
+</style>
+</head>
+<body>
+  <h1 id="title" role="status">Đang chuẩn bị cập nhật…</h1>
+  <div class="bar wait" id="bar"><i id="fill"></i></div>
+  <div class="row"><span id="amount"></span><span id="percent"></span></div>
+  <p id="hint">Đừng tắt máy. MCAH sẽ tự đóng và mở lại khi xong.</p>
+  <script src="updating.js"></script>
+</body>
+</html>

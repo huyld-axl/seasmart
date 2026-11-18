@@ -63,5 +63,5 @@ contextBridge.exposeInMainWorld('mcah', {
     return () => ipcRenderer.removeListener('mcah:lan-online', listener)
   },
   // Màn lỗi khởi động
-  startup: { retry: call('startup-retry'), openLogs: call('open-logs'), quit: call('quit') },
+  startup: { retry: call('startup-retry'), openLogs: call('open-logs'), quit: call('quit'), sendReport: call('report-send'), revealReport: call('report-reveal') },
 })

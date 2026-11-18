@@ -3,6 +3,46 @@
 ; Windows tự hỏi lúc máy chính mở cổng lần đầu. Gỡ app thì xoá luật.
 !macro customInstall
   ExecShell "runas" "netsh" 'advfirewall firewall add rule name="MCAH may chinh" dir=in action=allow protocol=TCP localport=7443 profile=private program="$INSTDIR\MCAH.exe"' SW_HIDE
+  ; Người dùng bỏ chọn "Tạo biểu tượng trên Desktop" ở bước Tuỳ chọn: xoá biểu tượng electron-builder vừa tạo.
+  ; Cài im lặng / tự cập nhật không qua bước đó (biến rỗng): giữ nguyên như cũ.
+  ${if} $mcahDesktopShortcut == "0"
+    WinShell::UninstShortcut "$newDesktopLink"
+    Delete "$newDesktopLink"
+  ${endIf}
+!macroend
+
+; Bước "Tuỳ chọn" sau bước chọn thư mục: có tạo biểu tượng trên Desktop không (mặc định có).
+; Tự cập nhật (--updated) bỏ qua bước này; biểu tượng giữ như người dùng đã chọn lúc cài.
+!macro customPageAfterChangeDir
+  Var mcahDesktopShortcut
+  Var mcahDesktopCheckbox
+  Page custom mcahOptionsShow mcahOptionsLeave
+
+  Function mcahOptionsShow
+    ${if} ${isUpdated}
+      Abort
+    ${endIf}
+    !insertmacro MUI_HEADER_TEXT "Tuỳ chọn" "Chọn cách mở MCAH sau khi cài."
+    nsDialogs::Create 1018
+    Pop $0
+    ${NSD_CreateLabel} 0 0 100% 24u "Biểu tượng giúp mở MCAH nhanh từ màn hình chính. Luôn có MCAH trong menu Start."
+    Pop $0
+    ${NSD_CreateCheckbox} 0 32u 100% 12u "Tạo biểu tượng MCAH trên màn hình Desktop"
+    Pop $mcahDesktopCheckbox
+    ${if} $mcahDesktopShortcut != "0"
+      ${NSD_Check} $mcahDesktopCheckbox
+    ${endIf}
+    nsDialogs::Show
+  FunctionEnd
+
+  Function mcahOptionsLeave
+    ${NSD_GetState} $mcahDesktopCheckbox $0
+    ${if} $0 == ${BST_CHECKED}
+      StrCpy $mcahDesktopShortcut "1"
+    ${else}
+      StrCpy $mcahDesktopShortcut "0"
+    ${endIf}
+  FunctionEnd
 !macroend
 
 !macro customUnInstall

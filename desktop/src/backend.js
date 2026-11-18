@@ -80,7 +80,8 @@ async function startBackend(env, cwd, log) {
     console.error(`Tiến trình Fastify thoát, mã ${code ?? signal}`)
   })
   const url = `http://127.0.0.1:${env.PORT}`
-  for (let i = 0; i < 300; i++) {
+  // Lần đầu trên máy chậm (diệt virus quét từng tệp, ổ đĩa chậm) nạp backend có thể mất hơn 30 giây: chờ tới 3 phút.
+  for (let i = 0; i < 1800; i++) {
     if (exited) throw new Error('Fastify thoát khi đang khởi động')
     try {
       if ((await fetch(`${url}/health`)).ok) return { child, url }
@@ -88,7 +89,7 @@ async function startBackend(env, cwd, log) {
     await new Promise((r) => setTimeout(r, 100))
   }
   child.kill()
-  throw new Error('Fastify không trả lời /health sau 30 giây')
+  throw new Error('Fastify không trả lời /health sau 3 phút')
 }
 
 module.exports = { backendEnv, runScript, startBackend }

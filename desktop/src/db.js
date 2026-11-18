@@ -6,7 +6,7 @@ const path = require('path')
 const fs = require('fs')
 const net = require('net')
 const crypto = require('crypto')
-const { execFile, spawn } = require('child_process')
+const { execFile, execFileSync, spawn } = require('child_process')
 const { postgresBin, EXE } = require('./paths')
 
 const DB_NAME = 'seasmart'
@@ -57,14 +57,37 @@ function runningPostmaster(dataDir) {
 async function stopStale(dataDir) {
   const pid = runningPostmaster(dataDir)
   if (!pid) return
-  process.kill(pid, 'SIGINT')
+  if (process.platform === 'win32') await run(bin('pg_ctl'), ['stop', '-D', dataDir, '-m', 'fast', '-w']).catch(() => {})
+  else process.kill(pid, 'SIGINT')
   for (let i = 0; i < 100 && runningPostmaster(dataDir); i++) await new Promise((r) => setTimeout(r, 100))
+}
+
+// Cổng mở chưa có nghĩa Postgres nhận được kết nối: sau lần tắt đột ngột nó còn khôi phục (lỗi 57P03) và đã mở cổng.
+// Gửi gói khởi động giao thức Postgres: trả 'R' (yêu cầu xác thực) là sẵn sàng, 'E' (lỗi) là chưa.
+function acceptsConnections(port) {
+  return new Promise((resolve) => {
+    const user = Buffer.from(`user\0${DB_USER}\0database\0${DB_NAME}\0\0`)
+    const packet = Buffer.alloc(8 + user.length)
+    packet.writeInt32BE(packet.length, 0)
+    packet.writeInt32BE(196608, 4)
+    user.copy(packet, 8)
+    const s = net.connect(port, '127.0.0.1', () => s.write(packet))
+    s.setTimeout(3000, () => s.destroy())
+    s.once('data', (data) => {
+      resolve(data[0] === 0x52)
+      s.destroy()
+    })
+    s.on('error', () => resolve(false))
+    s.on('close', () => resolve(false))
+  })
 }
 
 // Tắt đồng bộ, dùng được trong process.on('exit') khi không còn chờ promise được.
 function killNow(dataDir) {
   const pid = runningPostmaster(dataDir)
-  if (pid) process.kill(pid, 'SIGINT')
+  if (!pid) return
+  if (process.platform === 'win32') execFileSync(bin('pg_ctl'), ['stop', '-D', dataDir, '-m', 'fast', '-w'], { stdio: 'ignore' })
+  else process.kill(pid, 'SIGINT')
 }
 
 // Lần đầu: tạo cụm dữ liệu (chỉ chủ tài khoản hệ điều hành đọc được) và CSDL, khi Postgres chưa mở cổng nào.
@@ -87,23 +110,28 @@ async function startDatabase(userData) {
   const password = readOrCreateSecret(path.join(userData, 'db-secret'))
   if (!fs.existsSync(path.join(dataDir, 'PG_VERSION'))) await initCluster(dataDir, password)
   const port = await freePort()
-  const child = spawn(bin('postgres'), ['-D', dataDir, '-p', String(port), '-c', 'listen_addresses=127.0.0.1'], { stdio: 'ignore' })
+  // Nhật ký Postgres (khôi phục sau tắt đột ngột, hết chỗ…) vào logs/postgres.log để báo lỗi có cái mà đọc; quá 5 MB thì làm lại.
+  const logFile = path.join(userData, 'logs', 'postgres.log')
+  fs.mkdirSync(path.dirname(logFile), { recursive: true })
+  if (fs.existsSync(logFile) && fs.statSync(logFile).size > 5 * 1024 * 1024) fs.rmSync(logFile)
+  const logFd = fs.openSync(logFile, 'a', 0o600)
+  const child = spawn(bin('postgres'), ['-D', dataDir, '-p', String(port), '-c', 'listen_addresses=127.0.0.1'], { stdio: ['ignore', logFd, logFd] })
+  fs.closeSync(logFd)
   child.on('error', () => {})
   // Chờ Postgres nhận kết nối.
   for (let i = 0; ; i++) {
     if (child.exitCode !== null) throw new Error(`Postgres thoát khi khởi động (mã ${child.exitCode})`)
-    const ok = await new Promise((resolve) => {
-      const s = net.connect(port, '127.0.0.1', () => s.end(() => resolve(true)))
-      s.on('error', () => resolve(false))
-    })
-    if (ok && runningPostmaster(dataDir)) break
-    if (i > 300) throw new Error('Postgres không khởi động sau 30 giây')
+    if (runningPostmaster(dataDir) && (await acceptsConnections(port))) break
+    // Máy yếu / khôi phục sau tắt đột ngột có thể lâu: chờ tới 2 phút.
+    if (i > 1200) throw new Error('Postgres không khởi động sau 2 phút')
     await new Promise((r) => setTimeout(r, 100))
   }
   const stop = () => new Promise((resolve) => {
     if (child.exitCode !== null) return resolve()
     child.once('exit', resolve)
-    child.kill('SIGINT')
+    // Windows không có SIGINT thật (kill = giết cứng, lần sau phải khôi phục): nhờ pg_ctl tắt nhanh, an toàn.
+    if (process.platform === 'win32') run(bin('pg_ctl'), ['stop', '-D', dataDir, '-m', 'fast', '-w']).catch(() => child.kill())
+    else child.kill('SIGINT')
   })
   const env = { DB_HOST: '127.0.0.1', DB_PORT: String(port), DB_USER, DB_PASSWORD: password, DB_NAME }
   return { pg: { stop }, env, dataDir }

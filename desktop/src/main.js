@@ -33,6 +33,7 @@ const discovery = require('./discovery')
 const lanClient = require('./lan-client')
 const readableView = require('./readable-view')
 const diskEncryption = require('./disk-encryption')
+const bugReport = require('./bug-report')
 
 // Bản phát hành không cho gắn trình gỡ lỗi (docs/mcah-ke-hoach-desktop-gd5.md 3.5): --inspect đã bị cầu chì tắt;
 // cờ Chromium --remote-debugging-port / pipe thì thoát ngay.
@@ -158,7 +159,11 @@ function createWindow() {
   return win
 }
 
-function showError(code) {
+// Lỗi khởi động gần nhất: nút "Gửi báo lỗi" của màn lỗi gửi kèm.
+let startupFailure = null
+
+function showError(code, message) {
+  startupFailure = { code, message, at: new Date().toISOString() }
   if (!mainWindow || mainWindow.isDestroyed()) return
   mainWindow.loadFile(path.join(PAGES, 'error.html'), { query: { code, at: new Date().toLocaleString('vi-VN') } })
 }
@@ -490,6 +495,14 @@ async function main() {
       app.quit()
     },
     openLogs: () => shell.openPath(logDir()),
+    // Gửi báo lỗi lên máy chủ MCAH; không gửi được thì lưu tệp vào Tải xuống để gửi tay.
+    sendReport: (note) => bugReport.sendOrSave(
+      bugReport.build({ userData: app.getPath('userData'), errorCode: startupFailure?.code, errorMessage: startupFailure?.message, at: startupFailure?.at, note, appVersion: app.getVersion(), packaged: app.isPackaged }),
+      { cloudUrl: cloudUrl(), dir: app.getPath('downloads') }
+    ),
+    revealReport: (file) => {
+      if (path.dirname(file) === app.getPath('downloads') && /^mcah-bao-loi-[\d-]+\.txt$/.test(path.basename(file))) shell.showItemInFolder(file)
+    },
     restartBackend,
     checkUpdate: () => runUpdate(mainWindow, staffMode ? {} : { beforeInstall }),
     lanStatus,
@@ -528,7 +541,7 @@ async function main() {
     await startup()
   } catch (error) {
     console.error(`Khởi động lỗi (${error.startupCode || 'UNKNOWN'}): ${error.stack || error.message}`)
-    showError(error.startupCode || 'UNKNOWN')
+    showError(error.startupCode || 'UNKNOWN', error.stack || error.message)
   }
 }
 

@@ -109,3 +109,19 @@ describe('chi tiết văn phòng', () => {
     expect((await b.post(`${A}/accounts/lock`, { account: nv1.id, lock: '0' })).headers.location).toBe(`${A}/accounts`)
   })
 })
+
+describe('báo lỗi từ app', () => {
+  it('danh sách và tải về chỉ cho admin đã đăng nhập; tệp tải về có thông tin máy và log', async () => {
+    const zlib = require('zlib')
+    const bundle = zlib.gzipSync(JSON.stringify({ meta: { errorCode: 'DB_MIGRATE' }, files: { 'main.log': 'Khởi động lỗi <x>' } }))
+    const { rows } = await pool().query("INSERT INTO bug_report (error_code, app_version, platform, note, meta, bundle) VALUES ('DB_MIGRATE', '0.9.5', 'win32', 'ghi <chú>', '{}', $1) RETURNING id", [bundle])
+    const list = await b.get(`${A}/bug-reports`)
+    expect(list.body).toContain('DB_MIGRATE')
+    expect(list.body).toContain('ghi &#60;chú&#62;')
+    const file = await b.get(`${A}/bug-reports/download?id=${rows[0].id}`)
+    expect(file.headers['content-disposition']).toContain(`mcah-bao-loi-${rows[0].id}.txt`)
+    expect(file.body).toContain('===== main.log =====\nKhởi động lỗi <x>')
+    expect((await b.get(`${A}/bug-reports/download?id=abc`)).statusCode).toBe(404)
+    expect((await browser().get(`${A}/bug-reports`)).headers.location).toContain(`${I}/login?next=`)
+  })
+})

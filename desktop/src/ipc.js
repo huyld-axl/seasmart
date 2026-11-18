@@ -150,6 +150,9 @@ function registerIpc(hooks) {
   })
   handle('startup-retry', () => hooks.relaunch())
   handle('open-logs', () => hooks.openLogs())
+  // Báo lỗi khởi động: ghi chú của người dùng tối đa 2000 ký tự; app tự gom log, người dùng không chọn được tệp nào.
+  handle('report-send', (note) => hooks.sendReport(str(note ?? '', 2000, 'Ghi chú')))
+  handle('report-reveal', (file) => hooks.revealReport(str(file, 1000, 'Tệp')))
   handle('quit', () => app.quit())
 }
 

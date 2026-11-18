@@ -15,6 +15,12 @@
   .row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
   button { font: inherit; border: 1px solid #d3d5db; background: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
   button.pri { background: #003366; border-color: #003366; color: #fff; }
+  textarea { font: inherit; border: 1px solid #d3d5db; border-radius: 8px; padding: 8px 10px; min-height: 64px; resize: vertical; }
+  .report { display: grid; gap: 8px; }
+  .report[hidden] { display: none; }
+  .ok { padding: 10px 12px; border-radius: 8px; background: #ecfdf5; color: #007a55; }
+  .ok[hidden], .err[hidden] { display: none; }
+  button:disabled { opacity: .6; cursor: default; }
   button:focus-visible { outline: 2px solid #003366; outline-offset: 2px; }
 </style>
 </head>
@@ -22,10 +28,21 @@
   <main class="box">
     <h1>MCAH chưa mở được</h1>
     <div class="err" id="reason"></div>
-    <p class="muted">Thử: đóng app và mở lại; kiểm còn chỗ trống trên ổ đĩa; nếu vẫn lỗi, gửi mã lỗi và tệp nhật ký cho bộ phận hỗ trợ.</p>
+    <p class="muted">Thử: đóng app và mở lại; kiểm còn chỗ trống trên ổ đĩa; nếu vẫn lỗi, bấm “Gửi báo lỗi” để MCAH xem giúp.</p>
     <div class="code" id="code"></div>
+    <div class="report" id="report" hidden>
+      <label for="note">Bạn đã làm gì trước khi lỗi xảy ra? (không bắt buộc)</label>
+      <textarea id="note" maxlength="2000"></textarea>
+      <p class="muted">Sẽ gửi cho MCAH: mã lỗi, phiên bản app, cấu hình máy (hệ điều hành, RAM, chỗ trống ổ đĩa) và phần cuối các tệp nhật ký. Email, số điện thoại, số giấy tờ và tên người dùng máy trong nhật ký đã được ẩn. Không gửi hồ sơ thuyền viên hay tệp nào khác.</p>
+      <div class="row">
+        <button type="button" id="cancel">Huỷ</button>
+        <button type="button" class="pri" id="send">Gửi</button>
+      </div>
+    </div>
+    <div class="ok" id="result" role="status" hidden></div>
     <div class="row">
       <button type="button" id="logs">Mở thư mục nhật ký</button>
+      <button type="button" id="open-report">Gửi báo lỗi</button>
       <button type="button" id="quit">Thoát</button>
       <button type="button" class="pri" id="retry">Thử lại</button>
     </div>

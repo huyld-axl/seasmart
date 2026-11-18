@@ -5,6 +5,7 @@
 // mật khẩu + mã TOTP (routes/internal_login.js). Không có dữ liệu nghiệp vụ của
 // khách. HTML thuần không script (CSP): tìm là form GET, xác nhận là trang riêng. POST chỉ nhận từ chính trang này
 // (cookie SameSite=Lax + Sec-Fetch-Site; Origin không dùng được vì Referrer-Policy no-referrer làm nó thành "null").
+const zlib = require('zlib')
 const config = require('../config')
 const pool = require('../db')
 const accounts = require('../services/accounts')
@@ -48,7 +49,7 @@ const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('vi-VN', { timeZone: 
 const fmtTime = (d) => (d ? new Date(d).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', dateStyle: 'short', timeStyle: 'short' }) : '')
 const html = (reply, body, code = 200) => reply.code(code).type('text/html; charset=utf-8').send(body)
 
-const TABS = [['', 'Khách hàng'], ['/accounts', 'Tài khoản'], ['/audit-log', 'Nhật ký']]
+const TABS = [['', 'Khách hàng'], ['/accounts', 'Tài khoản'], ['/bug-reports', 'Báo lỗi'], ['/audit-log', 'Nhật ký']]
 function page(admin, tab, title, content) {
   const tabs = TABS.map(([p, label]) => `<a href="${A}${p}"${p === tab ? ' class="on" aria-current="page"' : ''}>${label}</a>`).join('')
     + `<a href="${config.internalBase}/design-system/" target="_blank" rel="noopener">Design system ↗</a>`
@@ -415,6 +416,25 @@ ${lock ? '<label>Lý do *<textarea name="reason" maxlength="500" required></text
     const membership = await offices.membership(id)
     await accounts.audit(request.admin.id, lock ? 'account_lock' : 'account_unlock', request.ip, membership?.office_id || null, pool, lock ? `${account.email} · ${reason}` : account.email)
     return reply.redirect(backTo(request.body?.back, `${A}/accounts`))
+  })
+
+  // ---- Báo lỗi từ app (routes/bug_report.js) ----
+  fastify.get(`${A}/bug-reports`, { preHandler: guard }, async (request, reply) => {
+    const { rows } = await pool.query('SELECT id, received_at, error_code, app_version, platform, note, ip, length(bundle) AS size FROM bug_report ORDER BY received_at DESC, id DESC LIMIT 200')
+    const body = rows.map((r) => `<tr><td>${e(fmtTime(r.received_at))}</td><td><span class="tag err">${e(r.error_code)}</span></td><td>${e(r.app_version)}</td><td>${e(r.platform)}</td><td>${e(r.note || '—')}</td><td class="mono">${e(r.ip || '—')}</td><td class="actions"><a class="btn" href="${A}/bug-reports/download?id=${r.id}">Tải về (${Math.ceil(r.size / 1024)} KB)</a></td></tr>`).join('')
+    return html(reply, page(request.admin, '/bug-reports', 'Báo lỗi', `<div class="scroll"><table><tr><th>Lúc</th><th>Mã lỗi</th><th>Phiên bản</th><th>Hệ điều hành</th><th>Ghi chú của người dùng</th><th>IP</th><th></th></tr>
+${body || '<tr><td colspan="7" class="muted">Chưa có báo lỗi nào.</td></tr>'}</table></div><p class="muted small" style="margin:0">200 báo lỗi gần nhất. Log đã ẩn email, số điện thoại, số giấy tờ ở máy khách.</p>`))
+  })
+
+  // Tải một báo lỗi thành tệp văn bản: thông tin máy rồi từng tệp log, dễ đọc / grep.
+  fastify.get(`${A}/bug-reports/download`, { preHandler: guard }, async (request, reply) => {
+    const id = String(request.query.id || '')
+    if (!/^\d{1,12}$/.test(id)) return reply.code(404).send('Không có')
+    const { rows } = await pool.query('SELECT bundle FROM bug_report WHERE id = $1', [id])
+    if (!rows.length) return reply.code(404).send('Không có')
+    const { meta, files } = JSON.parse(zlib.gunzipSync(rows[0].bundle).toString('utf8'))
+    const text = [JSON.stringify(meta, null, 2), ...Object.entries(files).map(([name, content]) => `\n===== ${name} =====\n${content}`)].join('\n')
+    return reply.header('Content-Disposition', `attachment; filename="mcah-bao-loi-${id}.txt"`).header('Cache-Control', 'no-store').type('text/plain; charset=utf-8').send(text)
   })
 
   // ---- Nhật ký ----

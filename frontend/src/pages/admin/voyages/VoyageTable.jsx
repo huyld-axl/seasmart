@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import { Link } from 'react-router-dom'
 import { Table } from 'antd'
 import RowActions from '../../../components/ds/RowActions'
@@ -30,9 +31,11 @@ export default function VoyageTable({ rows, scroll, selected = null, onSelect, o
     {
       title: 'Thuyền viên · chuyến',
       key: 'person',
+      width: 240,
+      ellipsis: true,
       render: (_, row) => (
         <span className="ds-cell2">
-          <span className="ds-cell2__main">{can('seafarer.view') ? <RowLink to={`/seafarers/${row.seafarer_id}`}>{row.seafarer_name}</RowLink> : row.seafarer_name}</span>
+          <span className="ds-cell2__main">{can('seafarer.view') ? <RowLink to={`/seafarers/${row.seafarer_id}`}><PersonName>{row.seafarer_name}</PersonName></RowLink> : <PersonName>{row.seafarer_name}</PersonName>}</span>
           <span className="ds-cell2__sub ds-mono">{row.code}</span>
         </span>
       ),
@@ -81,6 +84,7 @@ export default function VoyageTable({ rows, scroll, selected = null, onSelect, o
     <Table
       rowKey="id"
       className="crew-table"
+      tableLayout="fixed"
       dataSource={rows}
       columns={columns}
       pagination={false}

@@ -603,7 +603,15 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   const canSave = !isEdit || changedKeys.length > 0 || photoChanged || pendingDocs.length > 0
   // Rời form khi còn thay đổi chưa lưu thì hỏi lại; form thêm mới tính từ lúc chạm vào ô đầu tiên.
   // Thêm mới: tính cả giấy tờ đã quét đang chờ lưu (tự điền từ giấy tờ không đánh dấu ô là đã chạm).
-  const leave = useLeaveGuard(isEdit ? changedKeys.length > 0 || photoChanged || pendingDocs.length > 0 : form.isFieldsTouched() || photoChanged || pendingDocs.length > 0)
+  // Các trường mặc định và dòng trống không phải dữ liệu người dùng đã nhập.
+  // So sánh dữ liệu thực gửi thay vì isFieldsTouched (có thể bị bật khi form khởi tạo).
+  const newFormChanged = useMemo(() => {
+    if (isEdit) return false
+    const baseline = toPayload({ ...initialValues, nationality_id: vnId ?? null })
+    const current = toPayload(values)
+    return Object.keys(current).some((key) => JSON.stringify(current[key]) !== JSON.stringify(baseline[key]))
+  }, [isEdit, initialValues, vnId, values])
+  const leave = useLeaveGuard((isEdit ? changedKeys.length > 0 : newFormChanged) || photoChanged || pendingDocs.length > 0)
 
   return (
     <ChangedContext.Provider value={changedSet}>
@@ -714,8 +722,11 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="marital_status" label="Tình trạng hôn nhân" span={8}>
                 <ChoiceGroup options={MARITAL_OPTIONS} label="Tình trạng hôn nhân" />
               </Field>
-              <Field name="children_count" label="Số con" span={4}>
-                <InputNumber min={0} max={30} style={{ width: '100%' }} />
+              <Field name="children_count" label="Số con" span={4} rules={[
+                { type: 'integer', message: 'Số con phải là số nguyên' },
+                { type: 'number', min: 0, max: 30, message: 'Số con từ 0 đến 30' },
+              ]}>
+                <InputNumber min={0} max={30} changeOnBlur={false} style={{ width: '100%' }} />
               </Field>
               <div className={photoChanged ? 'sf-changed' : undefined}>
                 <p className="sf-label">

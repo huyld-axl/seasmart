@@ -99,6 +99,8 @@ function parseRequirements(input) {
     const has = (key) => row[key] != null
     if (row.kind === 'CERTIFICATE' && !(has('certificate_type_id') && !has('rank_id') && !has('vessel_type_id') && !has('template_key'))) bad('chọn loại giấy')
     if (row.kind === 'EXPERIENCE') {
+      if (has('min_months') && !Number.isInteger(Number(row.min_months))) throw { statusCode: 400, message: 'Số tháng phải là số nguyên' }
+      if (has('min_trips') && !Number.isInteger(Number(row.min_trips))) throw { statusCode: 400, message: 'Số chuyến phải là số nguyên' }
       const byRank = has('rank_id') && Number(row.min_months) > 0 && !has('vessel_type_id')
       const byType = has('vessel_type_id') && Number(row.min_trips) > 0 && !has('rank_id')
       if (has('certificate_type_id') || has('template_key') || byRank === byType) bad('kinh nghiệm cần chức danh + số tháng, hoặc loại tàu + số chuyến')

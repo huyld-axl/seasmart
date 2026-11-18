@@ -18,7 +18,7 @@ function SideHead({ tag, tone, name }) {
   return (
     <span className="ct-side">
       <span className={`ct-tag ct-tag--${tone}`}>{tag}</span>
-      <span className="ct-side__name">{name}</span>
+      <span className="ct-side__name" title={name}>{name}</span>
     </span>
   )
 }

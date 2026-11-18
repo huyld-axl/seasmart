@@ -38,6 +38,12 @@ const onboard = ["sv.leave_date IS NULL AND sv.deleted_at IS NULL FOR UPDATE OF 
 const vesselOwner = (ownerId) => ['SELECT ship_owner_id FROM vessel', () => [[{ ship_owner_id: ownerId }]]]
 
 describe('voyage.service: tạo chuyến tay', () => {
+  it('chặn ngày lên tàu trước ngày sinh, không ghi chuyến', async () => {
+    const pool = fakePool([todayRoute, ['FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', () => [[{ id: 5, full_name: 'QA', status: 'AVAILABLE', date_of_birth: '2000-01-01' }]]]])
+    await expect(voyageService.create(pool, body({ join_date: '1990-01-01', planned_leave_date: '1990-06-01' }), 1))
+      .rejects.toMatchObject({ statusCode: 400, message: 'Ngày lên tàu không được trước ngày sinh của thuyền viên' })
+    expect(writes(pool)).toHaveLength(0)
+  })
   it('chủ tàu không khớp chủ của tàu thì 400, không ghi gì', async () => {
     const pool = fakePool([todayRoute, person, vesselOwner(2)])
     await expect(voyageService.create(pool, body(), 1)).rejects.toMatchObject({ statusCode: 400, message: 'Chủ tàu không khớp với chủ tàu của tàu này' })

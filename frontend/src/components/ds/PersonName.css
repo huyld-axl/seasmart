@@ -1,0 +1,11 @@
+.ds-person-name {
+  display: inline-block;
+  /* Giới hạn tuyệt đối để bảng không lấy tên gốc làm độ rộng nội dung. */
+  width: min(100%, 28ch);
+  max-width: 28ch;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}

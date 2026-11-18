@@ -1,3 +1,4 @@
+import PersonName from '../../components/ds/PersonName'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -35,7 +36,7 @@ function Person({ row }) {
     <span className="crew-person">
       <CrewThumb id={row.id} hasPhoto={row.has_photo} version={row.photo_updated_at} />
       <span className="ds-cell2">
-        <span className="ds-cell2__main">{row.full_name}</span>
+        <span className="ds-cell2__main"><PersonName>{row.full_name}</PersonName></span>
         <span className="ds-cell2__sub">{row.rank_name || 'Chưa có chức danh'}</span>
         {row.pending_review_count > 0 && (
           <span className="crew-pending">
@@ -160,7 +161,7 @@ export default function SeafarerListPage() {
             <ListCard
               key={row.id}
               media={<CrewThumb id={row.id} hasPhoto={row.has_photo} version={row.photo_updated_at} />}
-              title={row.full_name}
+              title={<PersonName>{row.full_name}</PersonName>}
               sub={row.rank_name || 'Chưa có chức danh'}
               badge={<StatusBadge group="crew" value={row.status} />}
               fields={[

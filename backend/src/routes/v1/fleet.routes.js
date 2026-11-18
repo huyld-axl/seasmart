@@ -87,6 +87,10 @@ const ownerBody = {
     fax: nullableText(30),
     email: nullableText(150),
     website: nullableText(200),
+    ownerships: { type: 'array', maxItems: 100, items: {
+      type: 'object', required: ['vessel_id', 'expected_owner_id', 'started_at'], additionalProperties: false,
+      properties: { vessel_id: { type: 'integer', minimum: 1 }, expected_owner_id: nullableInt, ownership_id: nullableInt, started_at: { type: 'string', format: 'date' }, ended_at: { type: ['string', 'null'], format: 'date' }, is_current: { type: 'boolean' } },
+    } },
     contacts: {
       type: 'array',
       maxItems: 20,
@@ -111,6 +115,10 @@ function crudRoutes({ table, perm, list, get, create, update, extra }) {
     fastify.get('/:id', { ...read, schema: { params: idParams } }, async (request) => get(pool, request.params.id))
     if (extra) extra(fastify, { read, idParams })
     fastify.post('/', { ...onRequest('create'), schema: { body: { ...create.schema, required: create.required } } }, async (request, reply) => {
+      if (perm === 'partner' && request.body.ownerships?.length) {
+        await fastify.can('partner.update', 'vessel.view', 'vessel.update')(request, reply)
+        if (reply.sent) return
+      }
       const row = await create.fn(pool, request.body)
       return reply.code(201).send(row)
     })

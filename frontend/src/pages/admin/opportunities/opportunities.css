@@ -11,6 +11,9 @@
 .rq__count { margin-left: 4px; color: var(--muted); font-weight: 500; }
 .rq__group-hint { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
 .rq__fields { display: grid; gap: 6px; min-width: 0; }
+.rq__field { display: grid; gap: 4px; min-width: 0; }
+.rq__field > label { color: var(--muted); font-size: 13px; }
+.rq__field + .rq__field { margin-top: 6px; }
 .rq__inline { display: flex; flex-wrap: wrap; gap: 8px; }
 .rq__inline > .ant-select { flex: 1 1 200px; min-width: 0; }
 .rq__inline > .ant-input-number, .rq__inline > .ant-input-number-affix-wrapper { width: 130px; }
@@ -138,3 +141,4 @@
   .op-mail, .op-mail--max { right: 0; bottom: 0; width: 100vw; max-width: 100vw; height: 92vh; border-radius: 16px 16px 0 0; transform: none; }
   .op-mail--min { width: 100vw; height: auto; }
 }
+.rq__error { color: var(--error-text); font-size: 12px; }

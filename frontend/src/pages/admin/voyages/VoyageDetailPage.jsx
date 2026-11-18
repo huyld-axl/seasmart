@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
@@ -163,7 +164,7 @@ export default function VoyageDetailPage() {
           </div>
           <div className="crew-head__text">
             <div className="crew-head__titlerow">
-              <h1 className="crew-head__title">{v.seafarer_name}</h1>
+              <h1 className="crew-head__title"><PersonName>{v.seafarer_name}</PersonName></h1>
               {flag ? <span className={`crew-docs crew-docs--${flag.tone}`}>{flag.text}</span> : null}
             </div>
             <dl className="crew-head__meta">

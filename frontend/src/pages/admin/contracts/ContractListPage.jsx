@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -124,7 +125,7 @@ export default function ContractListPage() {
       render: (_, row) => (
         <span className="ds-cell2">
           <span className="ds-cell2__main ct-plain">
-            {can('seafarer.view') ? <Link to={`/seafarers/${row.seafarer_id}`} onClick={stop}>{row.seafarer_name}</Link> : row.seafarer_name}
+            {can('seafarer.view') ? <Link to={`/seafarers/${row.seafarer_id}`} onClick={stop}><PersonName>{row.seafarer_name}</PersonName></Link> : <PersonName>{row.seafarer_name}</PersonName>}
           </span>
           <span className="ds-cell2__sub">{row.rank_name}</span>
         </span>
@@ -176,7 +177,7 @@ export default function ContractListPage() {
           return (
             <ListCard
               key={row.id}
-              title={row.seafarer_name}
+              title={<PersonName>{row.seafarer_name}</PersonName>}
               figure={{ value: formatDiff(diff), unit: 'USD/th', tone: !hasMoney || diff === 0 ? 'muted' : diff > 0 ? 'pos' : 'neg' }}
               sub={<>{row.rank_name} · <span className="ds-mono">{row.contract_number}</span></>}
               badge={<StatusBadge group="contract" value={row.status} />}

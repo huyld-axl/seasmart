@@ -227,3 +227,10 @@ export function candidateStages(candidate) {
   const states = done.map((isDone, i) => (all ? 'complete' : isDone ? 'done' : i === nextIndex ? 'next' : 'todo'))
   return { states, dates }
 }
+export function experienceIntegerError(row) {
+  if (row.kind !== 'EXPERIENCE') return null
+  const byRank = row._by ? row._by === 'rank' : !!row.rank_id || !row.vessel_type_id
+  const value = byRank ? row.min_months : row.min_trips
+  return value != null && value !== '' && !Number.isInteger(Number(value))
+    ? (byRank ? 'Số tháng phải là số nguyên' : 'Số chuyến phải là số nguyên') : null
+}

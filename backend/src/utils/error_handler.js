@@ -23,6 +23,8 @@ const DUPLICATE_FIELDS = {
 
 function errorHandler(error, request, reply) {
   if (error.validationContext === 'body') {
+    const experienceNumber = error.validation?.find((item) => /^\/requirements\/\d+\/(min_months|min_trips)$/.test(item.instancePath) && item.keyword === 'type')
+    if (experienceNumber) return reply.code(400).send({ error: experienceNumber.instancePath.endsWith('/min_months') ? 'Số tháng phải là số nguyên' : 'Số chuyến phải là số nguyên' })
     const nameLength = error.validation?.find((item) => item.instancePath === '/full_name' && item.keyword === 'maxLength')
     if (nameLength) {
       return reply.code(400).send({ error: `Họ tên không được vượt quá ${nameLength.params.limit} ký tự` })

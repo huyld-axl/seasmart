@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import { Link } from 'react-router-dom'
 import { Button, Tooltip } from 'antd'
 import RowList from '../../../components/ds/RowList'
@@ -27,7 +28,7 @@ export default function CandidateTable({ candidates, requirements, editable, sel
       render: (_, c) => (
         <span className="ds-cell2">
           <span className="ds-cell2__main op-cand">
-            <Link to={`/seafarers/${c.seafarer_id}`} onClick={(e) => e.stopPropagation()}>{c.full_name}</Link>
+            <Link to={`/seafarers/${c.seafarer_id}`} onClick={(e) => e.stopPropagation()}><PersonName>{c.full_name}</PersonName></Link>
             {c.owner_selected_at ? <span className="op-selected">Chủ tàu đã chọn</span> : null}
           </span>
           <span className="ds-cell2__sub">

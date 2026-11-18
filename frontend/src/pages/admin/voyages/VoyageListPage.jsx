@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import dayjs from 'dayjs'
 import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
@@ -117,7 +118,7 @@ export default function VoyageListPage() {
           return (
             <ListCard
               key={row.id}
-              title={row.seafarer_name}
+              title={<PersonName>{row.seafarer_name}</PersonName>}
               sub={<>{row.rank_name} · <span className="ds-mono">{row.code}</span></>}
               badge={<StatusBadge group="voyage" value={row.leave_date ? 'LEFT' : 'ONBOARD'} />}
               fields={[

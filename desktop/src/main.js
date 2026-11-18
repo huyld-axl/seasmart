@@ -152,6 +152,8 @@ function createWindow() {
     icon: path.join(__dirname, '../build/icon.png'),
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') },
   })
+  // Ẩn thanh menu (chỉ có "Sửa"); vẫn giữ menu ngầm để Ctrl+C/V/X/Z hoạt động.
+  win.setMenuBarVisibility(false)
   guardNavigation(win)
   // Bản phát hành: không cho mở DevTools (Ctrl+Shift+I…). Cờ --inspect bị tắt bằng Electron fuses lúc đóng gói.
   if (app.isPackaged) win.webContents.on('devtools-opened', () => win.webContents.closeDevTools())
@@ -487,7 +489,7 @@ async function main() {
   logs = { main: rotatingLog(path.join(logDir(), 'main.log')), backend: rotatingLog(path.join(logDir(), 'backend.log')) }
   captureConsole(logs.main)
   protocol.handle('app', serveFrontend)
-  // Bỏ menu Tài khoản của giai đoạn 0 (đã vào menu tài khoản trong giao diện); giữ menu Sửa cho cắt / dán.
+  // Bỏ menu Tài khoản của giai đoạn 0 (đã vào menu tài khoản trong giao diện); giữ menu Sửa (ẩn khỏi cửa sổ) cho phím tắt cắt / dán.
   Menu.setApplicationMenu(Menu.buildFromTemplate([{ role: 'editMenu', label: 'Sửa' }]))
   registerIpc({
     relaunch: () => {

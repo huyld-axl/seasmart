@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -106,7 +107,7 @@ export default function CandidatePanel({ opportunity, onClose }) {
           const info = [p.rank_name, age(p.date_of_birth) != null ? `${age(p.date_of_birth)} tuổi` : null].filter(Boolean).join(' · ')
           return (
             <div className="op-sug__cell">
-              <b className={p.in_list ? 'op-sug__name op-sug__name--dim' : 'op-sug__name'}>{p.full_name}</b>
+              <b className={p.in_list ? 'op-sug__name op-sug__name--dim' : 'op-sug__name'}><PersonName>{p.full_name}</PersonName></b>
               {info ? <span>{info}</span> : null}
               {!p.in_list && tags.position ? <Tag tag={tags.position} /> : null}
             </div>

@@ -17,6 +17,22 @@ async function responseFor(error, method = 'POST') {
 }
 
 describe('API error messages', () => {
+  it('dịch lỗi giới hạn họ tên từ schema sang tiếng Việt', async () => {
+    const app = Fastify()
+    app.setErrorHandler(errorHandler)
+    app.post('/users', {
+      schema: { body: { type: 'object', properties: { full_name: { type: 'string', maxLength: 150 } } } },
+    }, async () => ({ saved: true }))
+    try {
+      const invalid = await app.inject({ method: 'POST', url: '/users', payload: { full_name: 'a'.repeat(151) } })
+      expect(invalid.statusCode).toBe(400)
+      expect(invalid.json()).toEqual({ error: 'Họ tên không được vượt quá 150 ký tự' })
+      const valid = await app.inject({ method: 'POST', url: '/users', payload: { full_name: 'a'.repeat(150) } })
+      expect(valid.statusCode).toBe(200)
+    } finally {
+      await app.close()
+    }
+  })
   it.each([
     ['country_code', 'Mã quốc gia'],
     ['rank_code', 'Mã chức danh'],

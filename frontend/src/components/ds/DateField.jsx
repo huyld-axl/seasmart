@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { forwardRef, useState } from 'react'
 import { DatePicker, Form } from 'antd'
 import { CalendarOutlined, CloseCircleFilled } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -17,15 +17,31 @@ const NATIVE = {
 
 const BLOCKED = 'Ngày này không chọn được'
 
+// Chuẩn hoá trước khi DatePicker phân tích ngày, kể cả khi dán đủ 8 chữ số.
+const CompactDateInput = forwardRef(function CompactDateInput({ onChange, ...props }, ref) {
+  return <input {...props} ref={ref} onChange={(event) => {
+    const raw = event.target.value
+    if (/^\d{8}$/.test(raw)) event.target.value = `${raw.slice(0, 2)}/${raw.slice(2, 4)}/${raw.slice(4)}`
+    onChange?.(event)
+  }} />
+})
+
+function dateComponents(props) {
+  const format = Array.isArray(props.format) ? props.format[0] : props.format
+  return format === 'DD/MM/YYYY' && !props.components?.input
+    ? { ...props.components, input: CompactDateInput }
+    : props.components
+}
+
 export default function DateField(props) {
   const { isPhone } = useViewport()
-  if (!isPhone || !NATIVE[props.picker || 'date'] || props.showTime) return <DatePicker {...props} />
+  if (!isPhone || !NATIVE[props.picker || 'date'] || props.showTime) return <DatePicker {...props} components={dateComponents(props)} />
   return <NativeDate {...props} />
 }
 
 export function DateRangeField(props) {
   const { isPhone } = useViewport()
-  if (!isPhone || props.showTime) return <DatePicker.RangePicker {...props} />
+  if (!isPhone || props.showTime) return <DatePicker.RangePicker {...props} components={dateComponents(props)} />
   return <NativeRange {...props} />
 }
 

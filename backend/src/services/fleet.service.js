@@ -317,8 +317,8 @@ const fleetService = {
     return { data: rows }
   },
 
-  async linkOwnerVessel(pool, ownerId, body) {
-    await withTransaction(pool, async (conn) => {
+  async linkOwnerVessel(pool, ownerId, body, connection = null) {
+    const link = async (conn) => {
       const [[owner]] = await conn.query('SELECT id, is_active FROM ship_owner WHERE id = ? AND deleted_at IS NULL FOR SHARE', [ownerId])
       if (!owner) throw { statusCode: 404, message: 'Không tìm thấy đối tác' }
       if (Number(owner.is_active) !== 1) throw { statusCode: 409, message: 'Đối tác đã ngừng hợp tác' }
@@ -329,6 +329,11 @@ const fleetService = {
       const end = current ? null : body.ended_at
       if (!current && (!start || !end || end < start)) throw { statusCode: 400, message: 'Thời gian sở hữu không hợp lệ' }
       if (vessel.ship_owner_id !== body.expected_owner_id) throw { statusCode: 409, message: 'Chủ tàu đã thay đổi. Hãy tải lại danh sách và chọn lại tàu.' }
+      if (current && vessel.ship_owner_id && vessel.ship_owner_id !== ownerId && start) {
+        const [[previous]] = await conn.query('SELECT started_at FROM vessel_ownership WHERE vessel_id = ? AND ship_owner_id = ? AND ended_at IS NULL ORDER BY id DESC LIMIT 1', [vessel.id, vessel.ship_owner_id])
+        const previousStart = previous?.started_at instanceof Date ? previous.started_at.toISOString().slice(0, 10) : String(previous?.started_at || '').slice(0, 10)
+        if (previousStart && start < previousStart) throw { statusCode: 400, message: 'Ngày bắt đầu sở hữu mới không được trước ngày bắt đầu sở hữu của chủ tàu hiện tại' }
+      }
       if (current) {
         if (vessel.ship_owner_id !== ownerId) await conn.query('UPDATE vessel SET ship_owner_id = ? WHERE id = ?', [ownerId, vessel.id])
         if (start) {
@@ -343,7 +348,9 @@ const fleetService = {
       } else {
         await conn.query('INSERT INTO vessel_ownership (vessel_id, ship_owner_id, started_at, ended_at) VALUES (?, ?, ?, ?)', [vessel.id, ownerId, start, end])
       }
-    })
+    }
+    if (connection) await link(connection)
+    else await withTransaction(pool, link)
     return { success: true }
   },
 
@@ -378,6 +385,7 @@ const fleetService = {
         'Đối tác đã tồn tại'
       )
       await replaceContacts(conn, result.insertId, contacts)
+      for (const ownership of body.ownerships || []) await this.linkOwnerVessel(pool, result.insertId, ownership, conn)
       return result.insertId
     })
     return this.getOwner(pool, id)

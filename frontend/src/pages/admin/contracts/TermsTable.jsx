@@ -30,7 +30,7 @@ export default function TermsTable({ value, onChange, ownerName, seafarerName, r
           <tr>
             <th scope="col">Khoản</th>
             <th scope="col"><span className="ct-side"><span className="ct-tag ct-tag--receivable">Phải thu</span><span className="ct-side__name">{ownerName}</span></span></th>
-            <th scope="col"><span className="ct-side"><span className="ct-tag ct-tag--payable">Phải chi</span><span className="ct-side__name">{seafarerName}</span></span></th>
+            <th scope="col"><span className="ct-side"><span className="ct-tag ct-tag--payable">Phải chi</span><span className="ct-side__name" title={seafarerName}>{seafarerName}</span></span></th>
           </tr>
         </thead>
         <tbody>

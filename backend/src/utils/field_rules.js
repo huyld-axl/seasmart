@@ -51,6 +51,7 @@ function seafarerErrors(data, today = new Date().toISOString().slice(0, 10)) {
     rangeCheck(data.height_cm, 50, 300, 'Chiều cao từ 50 đến 300 cm'),
     rangeCheck(data.weight_kg, 20, 500, 'Cân nặng từ 20 đến 500 kg'),
     rangeCheck(data.children_count, 0, 30, 'Số con từ 0 đến 30'),
+    text(data.children_count) !== '' && !Number.isInteger(Number(data.children_count)) ? 'Số con phải là số nguyên' : null,
     phoneCheck(data.phone_primary, 'Số điện thoại không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true),
     phoneCheck(data.phone_secondary, 'Số điện thoại phụ không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true),
     check(data.email, REGEX.email, 'Email chưa đúng dạng'),
@@ -105,7 +106,9 @@ function websiteCheck(value) {
   const message = 'URL không hợp lệ. Website phải dùng http:// hoặc https:// và có cổng hợp lệ.'
   if (!REGEX.website.test(website)) return message
   try {
-    new URL(website)
+    const { hostname } = new URL(website)
+    const labels = hostname.split('.')
+    if (hostname.length > 253 || labels.some((label) => !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) return 'Tên miền website không hợp lệ'
     return null
   } catch {
     return message
@@ -126,6 +129,17 @@ function throwFirst(errors) {
   if (list.length) throw { statusCode: 400, message: list.length > 1 ? `${list[0]} (còn ${list.length - 1} lỗi nữa)` : list[0] }
 }
 
+function zaloCheck(value) {
+  const valueText = text(value)
+  if (!valueText) return null
+  if (!phoneCheck(valueText, 'invalid', true)) return null
+  try {
+    const url = new URL(valueText)
+    if (url.protocol === 'https:' && url.hostname === 'zalo.me' && !url.username && !url.password && !url.port && /^\/[A-Za-z0-9_/-]+$/.test(url.pathname) && /[1-9A-Za-z]/.test(url.pathname)) return null
+  } catch { /* Không phải liên kết Zalo hợp lệ. */ }
+  return 'Zalo phải là số điện thoại hợp lệ (8–15 chữ số, không toàn số 0) hoặc liên kết https://zalo.me/...'
+}
+
 function ownerErrors(data) {
   const errors = [
     blankCheck(data.company_name, 'Tên công ty không được để trống'),
@@ -133,6 +147,7 @@ function ownerErrors(data) {
     text(data.tax_id) && !/[0-9A-Za-z]/.test(text(data.tax_id)) ? 'Mã số thuế phải có ít nhất một chữ hoặc số' : null,
     /^0+$/.test(text(data.tax_id).replace(/[\s.-]/g, '')) ? 'Mã số thuế không hợp lệ: không được toàn số 0' : null,
     phoneCheck(data.phone, 'Số điện thoại công ty không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true),
+    zaloCheck(data.zalo),
     phoneCheck(data.fax, 'Fax gồm 8–15 chữ số'),
     check(data.email, REGEX.email, 'Email phải có dạng ten@congty.com'),
     websiteCheck(data.website),
@@ -140,6 +155,7 @@ function ownerErrors(data) {
   for (const [i, row] of (Array.isArray(data.contacts) ? data.contacts : []).entries()) {
     errors.push(
       phoneCheck(row?.phone, `Người liên hệ ${i + 1}: điện thoại gồm 8–15 chữ số`) ||
+        (zaloCheck(row?.zalo) ? `Người liên hệ ${i + 1}: ${zaloCheck(row?.zalo)}` : null) ||
         check(row?.email, REGEX.email, `Người liên hệ ${i + 1}: email chưa đúng dạng`) ||
         blankCheck(row?.name, `Người liên hệ ${i + 1}: họ tên không được để trống`)
     )

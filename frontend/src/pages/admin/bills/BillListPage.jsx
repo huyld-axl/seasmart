@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import useListSessionState from '../../../hooks/useListSessionState'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -87,6 +88,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
     if (value === tab && page === 1) return
     pendingScrollReset.current = true
     setTab(value)
+    setSearch('')
     setPage(1)
   }
   const changePage = (next, size) => {
@@ -156,7 +158,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
       key: 'seafarer',
       render: (_, row) => (
         <span className="ds-cell2">
-          <span className="ds-cell2__main">{row.seafarer.full_name}</span>
+          <span className="ds-cell2__main"><PersonName>{row.seafarer.full_name}</PersonName></span>
           <span className="ds-cell2__sub">{row.seafarer.rank_name}</span>
         </span>
       ),
@@ -202,7 +204,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
           return (
             <ListCard
               key={row.id}
-              title={row.seafarer.full_name}
+              title={<PersonName>{row.seafarer.full_name}</PersonName>}
               figure={{ value: formatUsd(row.total_usd), unit: 'USD' }}
               sub={<>Kỳ {row.seq}/{row.periods} · <span className="ds-mono">{row.code}</span></>}
               badge={<StatusBadge group="bill" value={row.display_status} />}

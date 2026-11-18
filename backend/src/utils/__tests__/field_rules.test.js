@@ -2,6 +2,15 @@ import { describe, it, expect } from 'vitest'
 import { assertSeafarerData, seafarerErrors } from '../field_rules'
 
 describe('field_rules: hồ sơ thuyền viên', () => {
+  it('số con phải là số nguyên, nhận 0 và ô trống', () => {
+    for (const children_count of [1.5, '1.5']) {
+      expect(seafarerErrors({ children_count })).toContain('Số con phải là số nguyên')
+      expect(() => assertSeafarerData({ children_count })).toThrow()
+    }
+    for (const children_count of [0, 1, 30, null, undefined, '']) {
+      expect(seafarerErrors({ children_count })).toEqual([])
+    }
+  })
   it('chặn CCCD/CMND toàn số 0, giữ số 0 đầu và cho phép để trống', () => {
     for (const national_id of ['000000000000', '000000000', ' 000000000000 ']) {
       expect(seafarerErrors({ national_id })).toEqual(['Số CCCD không hợp lệ: gồm 12 chữ số (CMND cũ 9 chữ số) và không được toàn số 0'])

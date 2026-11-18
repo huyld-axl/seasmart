@@ -1,11 +1,12 @@
-import { Button, InputNumber, Tooltip } from 'antd'
+import { useId } from 'react'
+import { Button, Form, InputNumber, Tooltip } from 'antd'
 import Select from '../../../components/ds/SearchSelect'
 import { CloseOutlined, PlusOutlined } from '@ant-design/icons'
 import { SegmentedPick } from '../fleet/FleetParts'
 import { LEVEL_LABELS, VALID_UNTIL_LABELS } from '../../../constants/opportunityVoyage'
 import { TEMPLATES } from '../exports/packModel'
 import { CATEGORY } from '../seafarers/certificateView'
-import { REQUIREMENT_GROUPS, requirementGroup } from './opportunityView'
+import { REQUIREMENT_GROUPS, requirementGroup, experienceIntegerError } from './opportunityView'
 
 const LEVEL_OPTIONS = Object.entries(LEVEL_LABELS).map(([value, label]) => ({ value, label }))
 const VALID_OPTIONS = Object.entries(VALID_UNTIL_LABELS).map(([value, label]) => ({ value, label }))
@@ -23,6 +24,7 @@ const BLANK = {
 // Biểu mẫu: mẫu cần nộp. Kinh nghiệm: số tháng theo chức danh hoặc số chuyến theo loại tàu, mức.
 // certTypes: [{ id, name_vi, category }], ranks, vesselTypes: lookup.
 export default function RequirementTable({ value = [], onChange, certTypes = [], ranks = [], vesselTypes = [], changed = false }) {
+  const fieldId = useId()
   const categoryOf = (id) => certTypes.find((c) => c.id === id)?.category
   const set = (index, patch) => onChange(value.map((row, i) => (i === index ? { ...row, ...patch } : row)))
   const remove = (index) => onChange(value.filter((_, i) => i !== index))
@@ -58,17 +60,24 @@ export default function RequirementTable({ value = [], onChange, certTypes = [],
     return (
       <div key={index} className="rq__row">
         <div className="rq__fields">
+          <div className="rq__field">
+          <label htmlFor={`${fieldId}-doc-${index}`}>Loại giấy tờ</label>
           <Select
             {...selectProps}
+            id={`${fieldId}-doc-${index}`}
             value={row.certificate_type_id ?? undefined}
             options={docOptions(row.certificate_type_id)}
             placeholder="Chọn giấy tờ"
-            aria-label="Giấy tờ"
+            aria-label="Loại giấy tờ"
             onChange={(v) => set(index, { certificate_type_id: v, certificate_category: categoryOf(v) })}
           />
+          </div>
+          <div className="rq__field">
+          <label htmlFor={`${fieldId}-valid-${index}`}>Điều kiện hiệu lực</label>
           <div className="rq__inline">
-            <Select value={row.valid_until} options={VALID_OPTIONS} aria-label="Còn hạn tới" popupMatchSelectWidth={false} onChange={(v) => set(index, { valid_until: v, plus_months: v === 'LEAVE_PLUS' ? row.plus_months || 6 : null })} />
+            <Select id={`${fieldId}-valid-${index}`} value={row.valid_until} options={VALID_OPTIONS} aria-label="Điều kiện hiệu lực" popupMatchSelectWidth={false} onChange={(v) => set(index, { valid_until: v, plus_months: v === 'LEAVE_PLUS' ? row.plus_months || 6 : null })} />
             {row.valid_until === 'LEAVE_PLUS' ? <InputNumber min={1} max={60} value={row.plus_months} suffix="tháng" aria-label="Số tháng sau ngày rời" onChange={(v) => set(index, { plus_months: v })} /> : null}
+          </div>
           </div>
         </div>
         {level(row, index)}
@@ -106,9 +115,10 @@ export default function RequirementTable({ value = [], onChange, certTypes = [],
               ? <Select {...selectProps} value={row.rank_id ?? undefined} options={rankOptions} placeholder="Đã đi chức danh" aria-label="Chức danh đã đi" onChange={(v) => set(index, { rank_id: v })} />
               : <Select {...selectProps} value={row.vessel_type_id ?? undefined} options={typeOptions} placeholder="Đã đi loại tàu" aria-label="Loại tàu đã đi" onChange={(v) => set(index, { vessel_type_id: v })} />}
             {byRank
-              ? <InputNumber min={1} max={600} value={row.min_months} suffix="tháng" aria-label="Số tháng tối thiểu" onChange={(v) => set(index, { min_months: v })} />
-              : <InputNumber min={1} max={100} value={row.min_trips} suffix="chuyến" aria-label="Số chuyến tối thiểu" onChange={(v) => set(index, { min_trips: v })} />}
+              ? <InputNumber min={1} max={600} changeOnBlur={false} status={experienceIntegerError(row) ? 'error' : undefined} value={row.min_months} suffix="tháng" aria-label="Số tháng tối thiểu" onChange={(v) => set(index, { min_months: v })} />
+              : <InputNumber min={1} max={100} changeOnBlur={false} status={experienceIntegerError(row) ? 'error' : undefined} value={row.min_trips} suffix="chuyến" aria-label="Số chuyến tối thiểu" onChange={(v) => set(index, { min_trips: v })} />}
           </div>
+          {experienceIntegerError(row) ? <div className="rq__error" role="alert">{experienceIntegerError(row)}</div> : null}
         </div>
         {level(row, index)}
         {removeButton(index)}
@@ -118,6 +128,7 @@ export default function RequirementTable({ value = [], onChange, certTypes = [],
 
   const ROW = { doc: docRow, tpl: templateRow, exp: experienceRow }
   return (
+    <Form.Item noStyle validateStatus="" hasFeedback={false}>
     <div className={`rq${changed ? ' rq--changed' : ''}`}>
       {REQUIREMENT_GROUPS.map((group) => {
         const rows = indexed.filter((item) => item.group === group.key)
@@ -135,5 +146,6 @@ export default function RequirementTable({ value = [], onChange, certTypes = [],
         )
       })}
     </div>
+    </Form.Item>
   )
 }

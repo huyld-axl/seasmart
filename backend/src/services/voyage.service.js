@@ -189,8 +189,9 @@ const voyageService = {
       const today = await todayOf(conn)
       if (body.join_date > today) throw { statusCode: 400, message: 'Ngày lên tàu không được sau hôm nay' }
       if (ended && body.leave_date > today) throw { statusCode: 400, message: 'Ngày rời tàu không được sau hôm nay' }
-      const [[person]] = await conn.query('SELECT id, full_name, status FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [body.seafarer_id])
+      const [[person]] = await conn.query('SELECT id, full_name, status, date_of_birth FROM seafarer WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [body.seafarer_id])
       if (!person) throw { statusCode: 400, message: 'Không tìm thấy thuyền viên' }
+      if (person.date_of_birth && body.join_date < iso(person.date_of_birth)) throw { statusCode: 400, message: 'Ngày lên tàu không được trước ngày sinh của thuyền viên' }
       if (person.status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng' }
       const endDate = ended ? body.leave_date : body.planned_leave_date
       const [[overlap]] = await conn.query(

@@ -2,6 +2,7 @@ import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import dayjs from 'dayjs'
 import useListSessionState from '../useListSessionState'
+import { resetListSearch } from '../../utils/resetListSearch'
 
 let userId = 1
 vi.mock('../../stores/authStore', () => ({ default: (select) => select({ user: { id: userId } }) }))
@@ -9,6 +10,17 @@ beforeEach(() => { sessionStorage.clear(); userId = 1 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('list session state', () => {
+  it('menu navigation clears search and page for mounted and saved lists', () => {
+    const first = renderHook(() => ({ search: useListSessionState('partners', 'search', ''), page: useListSessionState('partners', 'page', 1) }))
+    act(() => { first.result.current.search[1]('QA'); first.result.current.page[1](3) })
+    sessionStorage.setItem('list:1:vessels:search', JSON.stringify({ version: 1, value: 'Old' }))
+    sessionStorage.setItem('seafarers:list:1', JSON.stringify({ search: 'Old', page: 4 }))
+    act(() => resetListSearch())
+    expect(first.result.current.search[0]).toBe('')
+    expect(first.result.current.page[0]).toBe(1)
+    expect(sessionStorage.getItem('list:1:vessels:search')).toBeNull()
+    expect(JSON.parse(sessionStorage.getItem('seafarers:list:1'))).toMatchObject({ search: '', page: 1 })
+  })
   it.each(['partners', 'vessels', 'opportunities', 'voyages', 'contracts:default', 'bills:all:default'])('restores search, filters and page for %s after remount', (scope) => {
     const useList = () => ({
       search: useListSessionState(scope, 'search', ''),

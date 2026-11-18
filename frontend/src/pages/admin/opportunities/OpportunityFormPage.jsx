@@ -29,7 +29,7 @@ import changedLabel from '../fleet/changedLabel'
 import { monthsBetween, splitBudget } from '../voyages/voyageView'
 import RequirementTable from './RequirementTable'
 import { createPresetRequest } from './presetRequest'
-import { EMPTY_FORM, nextPositionValues, toFormValues, toPayload, toRequirementRows } from './opportunityView'
+import { EMPTY_FORM, nextPositionValues, toFormValues, toPayload, toRequirementRows, experienceIntegerError } from './opportunityView'
 import '../fleet/fleet.css'
 import './opportunities.css'
 
@@ -278,7 +278,10 @@ function OpportunityForm({ opportunity, prefill }) {
         </FormSection>
 
         <FormSection index={2} section={sections[2]} meta={`${requirements.length} yêu cầu`}>
-          <Form.Item name="requirements" noStyle>
+          <Form.Item name="requirements" noStyle rules={[{ validator: (_, rows) => {
+            const error = (rows || []).map(experienceIntegerError).find(Boolean)
+            return error ? Promise.reject(new Error(error)) : Promise.resolve()
+          } }]}>
             <RequirementTable
               certTypes={certTypes.data || []}
               ranks={ranks.data || []}

@@ -65,7 +65,10 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
       <Form.Item
         name="full_name"
         label="Họ tên"
-        rules={[{ required: true, whitespace: true, message: 'Nhập họ tên' }]}
+        rules={[
+          { required: true, whitespace: true, message: 'Nhập họ tên' },
+          { max: 150, message: 'Họ tên không được vượt quá 150 ký tự' },
+        ]}
       >
         <Input />
       </Form.Item>

@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -124,7 +125,7 @@ export default function ContractListPage() {
       render: (_, row) => (
         <span className="ds-cell2">
           <span className="ds-cell2__main ct-plain">
-            {can('seafarer.view') ? <Link to={`/seafarers/${row.seafarer_id}`} onClick={stop}>{row.seafarer_name}</Link> : row.seafarer_name}
+            {can('seafarer.view') ? <Link to={`/seafarers/${row.seafarer_id}`} onClick={stop}><PersonName>{row.seafarer_name}</PersonName></Link> : <PersonName>{row.seafarer_name}</PersonName>}
           </span>
           <span className="ds-cell2__sub">{row.rank_name}</span>
         </span>
@@ -151,7 +152,7 @@ export default function ContractListPage() {
   } else if (!rows.length && filtered) {
     body = <EmptyState title="Không có hợp đồng nào khớp bộ lọc" description="Thử tìm bằng số hợp đồng hoặc tên thuyền viên." action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có hợp đồng nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có hợp đồng nào ở mục này" action={<Button onClick={() => { setTab('all'); setSearch(''); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có hợp đồng nào" description="Hợp đồng sinh khi chốt người trên cơ hội, hoặc thêm tay cho chuyến chưa có hợp đồng." action={createButton} />
   } else if (isMobile) {
@@ -176,7 +177,7 @@ export default function ContractListPage() {
           return (
             <ListCard
               key={row.id}
-              title={row.seafarer_name}
+              title={<PersonName>{row.seafarer_name}</PersonName>}
               figure={{ value: formatDiff(diff), unit: 'USD/th', tone: !hasMoney || diff === 0 ? 'muted' : diff > 0 ? 'pos' : 'neg' }}
               sub={<>{row.rank_name} · <span className="ds-mono">{row.contract_number}</span></>}
               badge={<StatusBadge group="contract" value={row.status} />}
@@ -220,7 +221,7 @@ export default function ContractListPage() {
     <div className="ds-page">
       <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setPage(1); scrollToListStart() }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { setTab(value); setSearch(''); setPage(1); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear

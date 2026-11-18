@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import { formatCalendarDuration } from '../../../utils/format'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -317,7 +318,7 @@ export default function OpportunityDetailPage() {
 
   const place = (date, port) => `${formatDate(date)}${port ? ` · ${port}` : ''}`
   const stageInfo = [
-    ['Chủ tàu chọn', held && (can('seafarer.view') ? <Link to={`/seafarers/${held.seafarer_id}`}>{held.full_name}</Link> : held.full_name)],
+    ['Chủ tàu chọn', held && (can('seafarer.view') ? <Link to={`/seafarers/${held.seafarer_id}`}><PersonName>{held.full_name}</PersonName></Link> : held.full_name)],
     ['Số ứng viên', live.length || null],
     ['Gửi hồ sơ', lastSend ? formatDate(lastSend.sent_at) : null],
     ['Hạn chốt', o.deadline ? `${formatDate(o.deadline)}${flag ? ` · ${flag.text}` : ''}` : null],

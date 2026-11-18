@@ -171,9 +171,10 @@ function PartnerForm({ owner }) {
     if (new Set(vessels.filter((v) => v.id).map((v) => v.id)).size !== vessels.filter((v) => v.id).length) { toast.error('Mỗi tàu chỉ được chọn một lần.'); return }
     setSubmitting(true)
     try {
-      const row = await save.mutateAsync(isEdit ? { id: owner.id, ...partnerToPayload(formValues), version: owner.version } : { ...partnerToPayload(formValues), requestKey: requestKey.current })
+      const ownerships = vessels.filter((v) => v.dirty || !v.locked).map((v) => ({ vessel_id: v.id, ownership_id: v.ownership_id || null, expected_owner_id: v.ship_owner_id ?? null, started_at: v.started_at, ended_at: v.is_current === false ? v.ended_at : null, is_current: v.is_current !== false }))
+      const row = await save.mutateAsync(isEdit ? { id: owner.id, ...partnerToPayload(formValues), version: owner.version } : { ...partnerToPayload(formValues), ownerships, requestKey: requestKey.current })
       const remaining = []
-      for (const vessel of vessels.filter((v) => v.dirty || !v.locked)) {
+      for (const vessel of isEdit ? vessels.filter((v) => v.dirty || !v.locked) : []) {
         try {
           if (vessel.locked && vessel.vessel_name.trim() !== vessel.original_name) await vesselApi.update(vessel.id, { vessel_name: vessel.vessel_name.trim() })
           const selected = vessel
@@ -278,7 +279,7 @@ function PartnerForm({ owner }) {
             <Form.Item name="phone" className={cn('phone', 'sf-c4')} label={label('phone', 'Điện thoại')} rules={ownerRules.companyPhone}>
               <Input maxLength={30} inputMode="tel" />
             </Form.Item>
-            <Form.Item name="zalo" className={cn('zalo', 'sf-c4')} label="Zalo công ty">
+            <Form.Item name="zalo" className={cn('zalo', 'sf-c4')} label="Zalo công ty" rules={ownerRules.zalo}>
               <ZaloInput phoneName="phone" />
             </Form.Item>
             <Form.Item name="fax" className={cn('fax', 'sf-c4')} label={label('fax', 'Fax')} rules={ownerRules.phone}>
@@ -321,7 +322,7 @@ function PartnerForm({ owner }) {
                       <Form.Item name={[field.name, 'email']} label="Email" rules={[emailRule]}>
                         <Input maxLength={150} inputMode="email" />
                       </Form.Item>
-                      <Form.Item name={[field.name, 'zalo']} className="sf-c4" label="Zalo">
+                      <Form.Item name={[field.name, 'zalo']} className="sf-c4" label="Zalo" rules={ownerRules.zalo}>
                         <ZaloInput phoneName={['contacts', field.name, 'phone']} suffix={qrButton(field.name)} />
                       </Form.Item>
                       <Form.Item name={[field.name, 'whatsapp']} className="sf-c4" label="WhatsApp">

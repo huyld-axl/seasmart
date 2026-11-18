@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import { formatCalendarDuration } from '../../../utils/format'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -254,7 +255,7 @@ export default function ContractDetailPage() {
             <div className="crew-panel__body">
               <dl className="sf-grid">
                 <Field label="Thuyền viên" span={6}>
-                  <Link to={`/seafarers/${seafarer.id}`}>{seafarer.full_name}</Link>{seafarer.seafarer_code ? ` · ${seafarer.seafarer_code}` : ''} <StatusBadge group="crew" value={seafarer.status} />
+                  <Link to={`/seafarers/${seafarer.id}`}><PersonName>{seafarer.full_name}</PersonName></Link>{seafarer.seafarer_code ? ` · ${seafarer.seafarer_code}` : ''} <StatusBadge group="crew" value={seafarer.status} />
                 </Field>
                 <Field label="Chức danh" span={6}>{position.rank_name}{contract.legacy_unlinked && position.sort_order != null ? ` · dòng ${position.sort_order + 1} của chuyến cũ` : ''}</Field>
                 <Field label="Ngày bắt đầu" span={3}>{formatDate(contract.start_date)}</Field>
@@ -320,7 +321,7 @@ export default function ContractDetailPage() {
           <p className="crew-head__desc">Chức danh {position.rank_name}</p>
           <dl className="crew-head__meta">
             <dt>Thuyền viên</dt>
-            <dd>{can('seafarer.view') ? <Link to={`/seafarers/${seafarer.id}`}>{seafarer.full_name}</Link> : seafarer.full_name}</dd>
+            <dd>{can('seafarer.view') ? <Link to={`/seafarers/${seafarer.id}`}><PersonName>{seafarer.full_name}</PersonName></Link> : <PersonName>{seafarer.full_name}</PersonName>}</dd>
             {place.ship_owner_name ? (
               <>
                 <dt>Chủ tàu</dt>

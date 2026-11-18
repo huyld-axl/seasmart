@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { App, Button, Dropdown, Skeleton, Tooltip } from 'antd'
@@ -165,7 +166,7 @@ export default function BillDetailPage() {
             <div className="crew-panel__body">
               <dl className="sf-grid">
                 <Field label="Hợp đồng"><Link className="ds-mono" to={`/contracts/${bill.contract.id}`}>{bill.contract.contract_number}</Link></Field>
-                <Field label="Thuyền viên"><Link to={`/seafarers/${bill.seafarer.id}`}>{bill.seafarer.full_name}</Link> <span className="vd-muted">· {bill.seafarer.rank_name}</span></Field>
+                <Field label="Thuyền viên"><Link to={`/seafarers/${bill.seafarer.id}`}><PersonName>{bill.seafarer.full_name}</PersonName></Link> <span className="vd-muted">· {bill.seafarer.rank_name}</span></Field>
                 <Field label="Đối tác"><Link to={`/partners/${bill.ship_owner.id}`}>{bill.ship_owner.company_name}</Link></Field>
                 <Field label="Tàu"><Link to={`/vessels/${bill.vessel.id}`}>{bill.vessel.vessel_name}</Link> <span className="vd-muted">· chuyến <TripLink trip={bill.trip} legacyCode={bill.voyage?.code} /></span></Field>
                 <Field label="Kỳ" span={3}>{formatDate(bill.period_start)} → {formatDate(bill.period_end)}</Field>

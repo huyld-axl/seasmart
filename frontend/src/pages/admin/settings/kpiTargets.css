@@ -1,5 +1,8 @@
 .kt-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.kt-cell .ant-input-number, .kt-cell .ds-money { width: 100%; }
+.kt-cell { min-width: 0; max-width: 100%; }
+.kt-cell .ant-input-number, .kt-cell .ds-money { width: 100%; min-width: 0; max-width: 100%; }
+.kt-table .ant-table-cell { overflow-wrap: anywhere; }
+.kt-table .kt-actual { white-space: normal; }
 .kt-err { margin: 4px 0 0; color: var(--error-text); font-size: 12px; }
 .kt-name { font-weight: 500; }
 .kt-actual { color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -14,4 +17,4 @@
 .kt-card__fields { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 8px; margin-top: 8px; }
 .kt-card__field { display: grid; gap: 4px; min-width: 0; }
 .kt-card__field > span { color: var(--muted); font-size: 12px; }
-.kt-card .kt-actual { font-size: 13px; white-space: normal; }
+.kt-card .kt-actual { font-size: 13px; white-space: normal; overflow-wrap: anywhere; min-width: 0; }

@@ -50,6 +50,17 @@ export const notBefore = (otherName, message) => ({ getFieldValue }) => ({
 
 // Đối tác, tàu, danh mục (bản sao của backend/src/utils/field_rules.js).
 export const ownerRules = {
+  zalo: [{ validator: async (_, value) => {
+    const text = String(value ?? '').trim()
+    if (!text) return
+    const digits = text.replace(/\D/g, '')
+    if (/^\+?[\d\s.\-()]{8,20}$/.test(text) && digits.length >= 8 && digits.length <= 15 && !/^0+$/.test(digits)) return
+    try {
+      const url = new URL(text)
+      if (url.protocol === 'https:' && url.hostname === 'zalo.me' && !url.username && !url.password && !url.port && /^\/[A-Za-z0-9_/-]+$/.test(url.pathname) && /[1-9A-Za-z]/.test(url.pathname)) return
+    } catch { /* Kiểm tra tiếp bằng thông báo tại trường. */ }
+    throw new Error('Zalo phải là số điện thoại hợp lệ (8–15 chữ số, không toàn số 0) hoặc liên kết https://zalo.me/...')
+  } }],
   companyPhone: [phoneRule('Số điện thoại công ty không hợp lệ: gồm 8–15 chữ số và không được toàn số 0', true)],
   taxId: [
     ...pattern(/^[0-9A-Za-z\-. ]{5,50}$/, 'Mã số thuế gồm 5–50 chữ, số hoặc dấu - .'),
@@ -69,7 +80,12 @@ export const ownerRules = {
       if (!/^https?:\/\/[^\s/]+\.[^\s/]+\S*$/i.test(website)) return Promise.reject(new Error(message))
       try {
         // Bộ phân tích URL kiểm tra cả hostname và cổng, kể cả cổng vượt giới hạn.
-        new URL(website)
+        const { hostname } = new URL(website)
+        // URL() vẫn nhận các hostname như a..com, -a.com và a_b.com.
+        const labels = hostname.split('.')
+        if (hostname.length > 253 || labels.some((label) => !/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(label))) {
+          return Promise.reject(new Error('Tên miền website không hợp lệ'))
+        }
         return Promise.resolve()
       } catch {
         return Promise.reject(new Error(message))

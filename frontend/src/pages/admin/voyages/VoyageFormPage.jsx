@@ -201,7 +201,11 @@ export default function VoyageFormPage() {
 
         <FormSection index={1} section={sections[1]} meta={metas[1]}>
           <div className="sf-grid">
-            <Form.Item name="join_date" className="sf-c3" label="Ngày lên tàu" rules={[{ required: true, message: 'Chọn ngày lên tàu' }]} extra="Không được sau hôm nay">
+            <Form.Item name="join_date" className="sf-c3" label="Ngày lên tàu" dependencies={['seafarer_id']} rules={[
+              { required: true, message: 'Chọn ngày lên tàu' },
+              { validator: (_, value) => value && person.data?.date_of_birth && value.isBefore(dayjs(person.data.date_of_birth), 'day')
+                ? Promise.reject(new Error('Ngày lên tàu không được trước ngày sinh của thuyền viên')) : Promise.resolve() },
+            ]} extra="Không được trước ngày sinh hoặc sau hôm nay">
               <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
             </Form.Item>
             <Form.Item name="join_port_id" className="sf-c3" label="Nơi lên tàu" rules={[{ required: true, message: 'Chọn nơi lên tàu' }]}>

@@ -1,3 +1,4 @@
+import PersonName from '../../../components/ds/PersonName'
 import dayjs from 'dayjs'
 import useListSessionState from '../../../hooks/useListSessionState'
 import { useState } from 'react'
@@ -105,7 +106,7 @@ export default function VoyageListPage() {
   } else if (!rows.length && (filtered || range)) {
     body = <EmptyState title="Không có chuyến nào khớp bộ lọc" description={range ? 'Thử nới khoảng "Trên tàu trong", hoặc tìm bằng tên, mã chuyến.' : 'Thử tìm bằng tên thuyền viên hoặc mã chuyến.'} action={<Button onClick={resetFilters}>Xoá bộ lọc</Button>} />
   } else if (!rows.length && tab !== 'all') {
-    body = <EmptyState title="Không có chuyến nào ở mục này" action={<Button onClick={() => { setTab('all'); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
+    body = <EmptyState title="Không có chuyến nào ở mục này" action={<Button onClick={() => { setTab('all'); setSearch(''); setPage(1); scrollToListStart() }}>Xem tất cả</Button>} />
   } else if (!rows.length) {
     body = <EmptyState title="Chưa có chuyến nào" description="Chuyến sinh ra khi chốt người trên cơ hội, hoặc tạo tay khi không qua tuyển." action={createButton} />
   } else if (isMobile) {
@@ -117,7 +118,7 @@ export default function VoyageListPage() {
           return (
             <ListCard
               key={row.id}
-              title={row.seafarer_name}
+              title={<PersonName>{row.seafarer_name}</PersonName>}
               sub={<>{row.rank_name} · <span className="ds-mono">{row.code}</span></>}
               badge={<StatusBadge group="voyage" value={row.leave_date ? 'LEFT' : 'ONBOARD'} />}
               fields={[
@@ -157,7 +158,7 @@ export default function VoyageListPage() {
     <div className="ds-page">
       <div ref={listRef} className="ds-card ds-card--fixed">
         <div className="ds-toolbar crew-toolbar">
-          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { reset(setTab)(value); scrollToListStart() }} />
+          <StatusTabs compact phone="chips" tabs={tabs} value={tab} onChange={(value) => { reset(setTab)(value); setSearch(''); scrollToListStart() }} />
           <Input
             className="ds-toolbar__search"
             allowClear

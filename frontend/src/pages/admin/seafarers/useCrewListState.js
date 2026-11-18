@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import useAuthStore from '../../../stores/authStore'
 import { EMPTY_FILTERS } from './crewFilterState'
+import { RESET_LIST_SEARCH } from '../../../utils/resetListSearch'
 
 const INITIAL = { tab: 'all', search: '', sort: 'newest', filters: EMPTY_FILTERS, filtersOpen: false, page: 1, pageSize: 20 }
 
@@ -9,6 +10,11 @@ export default function useCrewListState() {
   const userId = useAuthStore((state) => state.user?.id)
   const key = `seafarers:list:${userId ?? 'anonymous'}`
   const [saved, setSaved] = useState(() => read(key))
+  useEffect(() => {
+    const reset = () => setSaved((previous) => ({ key, value: { ...(previous.key === key ? previous.value : read(key).value), search: '', page: 1 } }))
+    window.addEventListener(RESET_LIST_SEARCH, reset)
+    return () => window.removeEventListener(RESET_LIST_SEARCH, reset)
+  }, [key])
   const state = saved.key === key ? saved.value : read(key).value
   useEffect(() => {
     try { sessionStorage.setItem(key, JSON.stringify(state)) } catch { /* Trình duyệt có thể chặn storage. */ }

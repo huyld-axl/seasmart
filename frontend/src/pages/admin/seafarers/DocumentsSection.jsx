@@ -355,8 +355,15 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
   const editingHasFile = editing && editing !== 'new' && Boolean(editing.document_url || editing.source_document_id)
 
   return (
-    <section className="ct-block crew-docs-sec" aria-label="Giấy tờ">
-      {/* Thanh công cụ: lọc theo loại bên trái, Tải cả bộ / Nạp giấy tờ bên phải */}
+    <section className="crew-panel crew-docs-sec" aria-label="Giấy tờ">
+      {/* Đầu khung: tên, số giấy; Tải cả bộ / Nạp giấy tờ bên phải. Hàng lọc theo loại ngay dưới. */}
+      <div className="crew-panel__head">
+        <h2 className="crew-panel__title">Giấy tờ</h2>
+        <span className="crew-panel__acts">
+          {docs.some((d) => d.hasFile) ? <Button icon={<DownloadIcon />} loading={bundling} onClick={downloadAll}>Tải cả bộ</Button> : null}
+          {canEdit && !empty ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : null}
+        </span>
+      </div>
       <div className="ds-toolbar crew-docs-toolbar">
         <div className="crew-docs-toolbar__filter">
           {!isLoading && tabs.length > 2 ? (
@@ -367,10 +374,6 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
             />
           ) : null}
         </div>
-        <Space wrap className="crew-docs-toolbar__acts">
-          {docs.some((d) => d.hasFile) ? <Button icon={<DownloadIcon />} loading={bundling} onClick={downloadAll}>Tải cả bộ</Button> : null}
-          {canEdit && !empty ? <Button type="primary" icon={<UploadIcon />} onClick={startNew}>Nạp giấy tờ</Button> : null}
-        </Space>
         <input
           ref={fileInput}
           type="file"

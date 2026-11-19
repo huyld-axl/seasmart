@@ -717,7 +717,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               <Field name="children_count" label="Số con" span={4}>
                 <InputNumber min={0} max={30} style={{ width: '100%' }} />
               </Field>
-              <div className={photoChanged ? 'sf-changed' : undefined}>
+              <div className={`sf-photo-row${photoChanged ? ' sf-changed' : ''}`}>
                 <p className="sf-label">
                   Ảnh chân dung (4×6)
                   {photoChanged && isEdit ? <span className="sf-chip">Đã sửa</span> : null}
@@ -801,7 +801,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
 
           <Section index={3} section={SECTIONS[3]} stats={stats[3]}>
             <div className="sf-grid">
-              <Field name="phone_primary" label="Số điện thoại" span={6} extra="Dùng để gửi link ký qua SMS." rules={fieldRules.phone}>
+              <Field name="phone_primary" label="Số điện thoại" span={6} extra="Dùng để gửi link ký qua SMS." tooltip="Dùng để gửi link ký qua SMS." rules={fieldRules.phone}>
                 <Input type="tel" placeholder="0901 234 567" maxLength={20} />
               </Field>
               <Field name="zalo" label="Zalo" span={6}>
@@ -905,7 +905,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
                               className="sf-link"
                               onClick={() => form.setFieldValue(['contacts', name, 'address'], values.permanent_address)}
                             >
-                              Dùng địa chỉ thường trú của thuyền viên
+                              Dùng địa chỉ thường trú
                             </button>
                           ) : null
                         }

@@ -14,27 +14,26 @@ Lần đầu trên máy phát hành mới (chưa từng có khoá): `node deskto
 
 ## Luật phiên bản (đọc trước mỗi lần build)
 
-Máy Ubuntu ở văn phòng là máy phát hành (giữ khoá ký). Máy Windows ở nhà chỉ build và có thể sửa lỗi riêng Windows. Bộ cài Windows chỉ build được trên Windows.
+Máy Ubuntu ở văn phòng là máy phát hành (giữ khoá ký). Bộ cài Ubuntu và Windows do CI build (`.github/workflows/desktop-build.yml`, hai job song song trên đúng một commit); không build Windows tay nữa.
 
-1. **Một phiên bản = một commit.** Bản Ubuntu và bản Windows của cùng phiên bản phải build từ đúng một commit. Script phát hành chặn nếu khác.
-2. **Máy nào sửa code sau cùng thì máy đó nâng phiên bản.** Sửa code thì trong cùng đợt: nâng `desktop/package.json`, viết `release-notes/<phiên bản>.md`, chạy `npm run notes:page`, commit, **push `dev`**, rồi mới build. Máy kia pull và build lại đúng commit đó, không sửa gì.
-3. **Không dùng lại số đã phát hành cho code khác.** Trước khi nâng, xem số đang phát: https://mcah.axalize.vn/download/files/beta/latest.json. Số đó đã có trên trang (dù chỉ một hệ điều hành) mà code đã đổi thì lên số kế tiếp.
+1. **Một phiên bản = một commit.** CI build cả hai từ cùng commit nên luôn đúng. Script phát hành vẫn chặn nếu hai bản khác commit.
+2. **Sửa code thì nâng phiên bản trong cùng đợt:** nâng `desktop/package.json`, viết `release-notes/<phiên bản>.md`, chạy `npm run notes:page`, commit, **push `dev`**.
+3. **Không dùng lại số đã phát hành cho code khác.** Trước khi nâng, xem số đang phát: https://mcah.axalize.vn/download/files/beta/latest.json. Số đó đã có trên trang mà code đã đổi thì lên số kế tiếp.
 4. **Không đổi tên bộ cài.** Số phiên bản nằm bên trong tệp lúc build; đổi tên tệp không đổi được phiên bản.
-5. Số phiên bản không giới hạn: sau 0.9.9 là 0.9.10. Bản Windows bỏ qua vài số (vì có hotfix chỉ Ubuntu) là bình thường.
+5. Số phiên bản không giới hạn: sau 0.9.9 là 0.9.10.
 
-### Luồng thường (hai bản cùng lúc)
+### Luồng thường
 
-1. Văn phòng (Ubuntu): sửa, test, nâng phiên bản, commit, push `dev`, `npm run dist:linux`. **Chưa phát hành.**
-2. Ở nhà (Windows): pull `dev`, kiểm `git log -1` đúng commit, `npm run dist:win`, cài thử.
-   - Chạy tốt: chép `MCAH Setup <phiên bản>.exe` + `build-info-win.json` mang đi.
-   - Có lỗi riêng Windows: sửa ngay, rồi theo luật 2 (nâng số kế tiếp, ghi chú, notes:page, commit, push `dev`), build lại, cài thử, chép hai tệp.
-3. Văn phòng hôm sau: pull `dev`. Máy Windows có commit mới thì `npm run dist:linux` lại (vài phút). Chép hai tệp Windows vào `desktop/dist/installer/`, `npm run release -- --channel beta`, mở trang tải kiểm hai nút.
+1. Sửa, test, nâng phiên bản, ghi chú, `notes:page`, commit, push `dev`.
+2. Push `dev` có đổi `desktop/` thì CI tự chạy (hoặc GitHub > Actions > "Desktop build" > Run workflow, khi workflow đã có ở nhánh mặc định). Đợi cả hai job xanh.
+3. Cài thử bản Windows và Ubuntu từ artifact (phần này vẫn là người làm).
+4. Máy phát hành, trong `desktop/`: tải artifact `mcah-installer-linux` và `mcah-installer-win` về `dist/installer/` (một thư mục phẳng, gồm `.deb`, `.exe`, hai `build-info-*.json`), rồi `npm run release -- --channel beta`. Mở trang tải kiểm hai nút.
 
-### Hotfix chỉ Ubuntu (cho team test sớm)
+Sửa lỗi sau khi cài thử: nâng số kế tiếp, push, chạy lại CI. Không cần phối hợp giữa hai máy.
 
-1. Sửa, nâng phiên bản, ghi chú, notes:page, commit, push `dev`, `npm run dist:linux`.
-2. `npm run release -- --channel beta --allow-missing win`.
-3. Muốn thêm bản Windows cho đúng số này: Windows phải build đúng commit đó, không sửa gì; rồi chạy lại lệnh phát hành không có `--allow-missing`. Windows cần sửa thì sang số kế tiếp (luật 2, 3).
+### Hotfix một hệ điều hành
+
+Vẫn nâng số chung và chạy CI cả hai job; bản của hệ điều hành kia chỉ khác số phiên bản. Chỉ khi cần phát gấp một bản trước mới dùng `npm run release -- --channel beta --allow-missing win` (hoặc `linux`), rồi phát lại không cờ khi có đủ.
 
 Lưu ý: hiện chỉ có kênh `beta`, mọi máy đã cài đều nhận hotfix. Khi có khách thật, đưa khách sang `stable` (`--promote`) và chỉ phát hotfix trên `beta`.
 
@@ -42,14 +41,8 @@ Lưu ý: hiện chỉ có kênh `beta`, mọi máy đã cài đều nhận hotfi
 
 1. Commit hết thay đổi. Đổi phiên bản: trong `desktop/`, `npm version 1.2.0 --no-git-tag-version`.
 2. Viết `desktop/release-notes/1.2.0.md`: gạch đầu dòng tiếng Việt, người dùng đọc được (không thuật ngữ code), không cần chi tiết. Trong `desktop/` chạy `npm run notes:page` để thêm bản vào trang ghi chú phát hành trên web (`frontend/public/release-notes/index.html`, `/release-notes/index.html`; test chặn nếu quên). Commit.
-3. Máy Ubuntu, trong `desktop/`:
-
-   ```bash
-   npm run dist:linux
-   ```
-
-   Địa chỉ máy chủ và chỗ phát lấy từ `desktop/endpoints.json` (không đặt biến môi trường khi build bản phát hành).
-4. Máy Windows, cùng commit (xem "Luật phiên bản"): `npm run dist:win`. Chép `dist/installer/MCAH Setup 1.2.0.exe` và `dist/installer/build-info-win.json` về `desktop/dist/installer/` của máy phát hành.
+3. Push `dev`, chạy workflow "Desktop build" trên GitHub (xem "Luồng thường"), tải hai artifact về `desktop/dist/installer/` của máy phát hành. Địa chỉ máy chủ và chỗ phát lấy từ `desktop/endpoints.json`.
+4. Cài thử cả hai bản.
 5. Phát kênh thử nghiệm: `npm run release -- --channel beta`. Script dừng nếu thiếu một hệ điều hành, hai bản khác commit, còn thay đổi chưa commit, thiếu ghi chú, chưa quét bí mật, hoặc khoá không khớp.
 6. Chạy thử với văn phòng thử nghiệm. Ổn thì đưa sang kênh ổn định (không build lại): `npm run release -- --promote 1.2.0`.
 
@@ -68,7 +61,7 @@ Script đẩy bộ cài trước, `latest.json` sau cùng; giữ 3 phiên bản 
 
 ## Phát thiếu một bản
 
-Chưa có bản Windows mà cần cho tải bản Ubuntu trước: thêm `--allow-missing win` (bản có mặt vẫn kiểm đủ). Khi có bản Windows cùng commit, chạy lại lệnh phát hành cùng phiên bản không có cờ này, `latest.json` sẽ có đủ hai bản.
+Cần phát một bản trước khi bản kia xong: thêm `--allow-missing win` (bản có mặt vẫn kiểm đủ). Khi có bản Windows cùng commit, chạy lại lệnh phát hành cùng phiên bản không có cờ này, `latest.json` sẽ có đủ hai bản.
 
 ## Trang hướng dẫn và ghi chú phát hành
 

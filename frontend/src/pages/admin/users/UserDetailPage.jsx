@@ -5,7 +5,8 @@ import { EditOutlined } from '@ant-design/icons'
 import { useUser, useUpdateUser, useToggleActive, useDeleteUser } from '../../../hooks/useUsers'
 import RoleBadge from '../../../components/admin/users/RoleBadge'
 import UserForm from '../../../components/admin/users/UserForm'
-import DescriptionList from '../../../components/ds/DescriptionList'
+import InfoTable from '../../../components/ds/InfoTable'
+import '../seafarers/SeafarerProfile.css'
 import useToast from '../../../components/ds/useToast'
 import useAccountRights from '../../../hooks/useAccountRights'
 import { Crumb } from '../fleet/FleetParts'
@@ -91,16 +92,17 @@ export default function UserDetailPage() {
           ) : null}
         </div>
       </div>
-      <div className="ds-card" style={{ padding: 20 }}>
-        <DescriptionList
-          items={[
-            { label: 'Email', value: user.email },
-            { label: 'Vai trò', value: <RoleBadge role={user.role} /> },
-            { label: 'Ngày tạo', value: formatDateTime(user.created_at) },
-            { label: 'Cập nhật lần cuối', value: formatDateTime(user.updated_at) },
+      <section className="crew-panel crew-panel--table" aria-label="Thông tin tài khoản">
+        <div className="crew-panel__head"><h2 className="crew-panel__title">Thông tin tài khoản</h2></div>
+        <InfoTable
+          fields={[
+            ['Email', user.email],
+            ['Vai trò', <RoleBadge key="role" role={user.role} />],
+            ['Ngày tạo', formatDateTime(user.created_at)],
+            ['Cập nhật lần cuối', formatDateTime(user.updated_at)],
           ]}
         />
-      </div>
+      </section>
       {rights.canRemove(user) ? (
         <div>
           <Button danger onClick={confirmDelete}>

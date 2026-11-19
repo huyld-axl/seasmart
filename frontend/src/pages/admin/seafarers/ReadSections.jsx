@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Button, Input, Skeleton, Tag } from 'antd'
+import { Button, Input, Skeleton } from 'antd'
 import { countFilled, filled } from './readSectionUtils'
 import useScrollSpy from '../fleet/useScrollSpy'
 import { FormToc } from '../fleet/FleetParts'
+import InfoTable, { InfoList } from '../../../components/ds/InfoTable'
 
 // Các khối chỉ đọc dùng chung cho màn chi tiết thuyền viên và đối tác: mục lục bên trái, các khối đánh số bên phải.
 // Mỗi khối: { key, title, fields | groups | items, unit?, footnote? }; mỗi trường: [nhãn, giá trị, độ rộng 12 cột].
@@ -21,49 +22,40 @@ export const Grid = ({ fields }) => (
   </dl>
 )
 
-export function Panel({ index, section }) {
+// Khối chỉ đọc dạng bảng gọn: trường và nhóm thành InfoTable, bản ghi lặp thành InfoList.
+export function Panel({ section, half = false }) {
+  const tableFields = [
+    ...(section.fields || []),
+    ...(section.groups || []).flatMap((group) => [{ sub: group.sub }, ...group.fields]),
+  ]
   return (
-    <section className="sf-panel" id={`sf-${section.key}`} aria-labelledby={`sf-${section.key}-title`}>
+    <section className={`sf-panel sf-panel--ro${half ? ' sf-panel--half' : ''}`} id={`sf-${section.key}`} aria-labelledby={`sf-${section.key}-title`}>
       <div className="sf-panel__head">
-        <span className="sf-step">{index + 1}</span>
-        <div><h3 className="sf-panel__title" id={`sf-${section.key}-title`}>{section.title}</h3></div>
+        <h3 className="sf-panel__title" id={`sf-${section.key}-title`}>{section.title}</h3>
         {(!section.content || section.countLabel !== undefined) && <span className="sf-panel__meta">{countFilled(section)}</span>}
       </div>
-      <div className="sf-panel__body">
-        {section.content}
-        {section.fields ? <Grid fields={section.fields} /> : null}
-        {section.items ? (
-          section.items.length ? (
-            <div className="sf-items">
-              {section.items.map((item, index) => (
-                <div className="sf-item" key={item.id || index}>
-                  <div className="sf-item__head">
-                    <h4 className="sf-item__title">{item.title}</h4>
-                    {item.tags?.map((tag) => <Tag key={tag} color={tag === 'Bảo lãnh' ? 'orange' : 'blue'}>{tag}</Tag>)}
-                    {item.actions ? <span style={{ marginLeft: 'auto' }}>{item.actions}</span> : null}
-                  </div>
-                  <div className="sf-item__body"><Grid fields={item.fields} /></div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="sf-ro__empty">{section.itemsEmpty}</p>
-          )
-        ) : null}
-        {section.groups?.map((group) => (
-          <div key={group.sub} className="sf-ro-group">
-            <div className="sf-sub">{group.sub}</div>
-            <Grid fields={group.fields} />
-          </div>
-        ))}
-        {section.footnote ? <p className="sf-ro__empty" style={{ margin: '12px 0 0' }}>{section.footnote}</p> : null}
-      </div>
+      {section.content ? <div className="sf-panel__body">{section.content}</div> : null}
+      {section.items ? (
+        section.items.length ? <InfoList items={section.items} /> : <p className="sf-ro__empty sf-panel__none">{section.itemsEmpty}</p>
+      ) : null}
+      {tableFields.length ? <InfoTable fields={tableFields} pairs={half ? 1 : 2} /> : null}
+      {section.footnote ? <p className="sf-ro__empty sf-panel__none">{section.footnote}</p> : null}
     </section>
   )
 }
 
+// Khối ngắn (chỉ có trường, ≤ 8 trường) đứng cạnh khối ngắn liền sau nó thành hai cột.
+const isShort = (s) => s.fields && !s.items && !s.groups && !s.content && s.fields.length <= 8
+function halfKeys(sections) {
+  const keys = new Set()
+  for (let i = 0; i < sections.length - 1; i++) {
+    if (isShort(sections[i]) && isShort(sections[i + 1])) { keys.add(sections[i].key); keys.add(sections[i + 1].key); i++ }
+  }
+  return keys
+}
 
 export function ReadLayout({ sections, loading, label = 'hồ sơ' }) {
+  const half = halfKeys(sections)
   const [active, setActive] = useScrollSpy(sections.map((s) => s.key), !loading)
 
   const goTo = (key) => (event) => {
@@ -73,7 +65,7 @@ export function ReadLayout({ sections, loading, label = 'hồ sơ' }) {
   }
 
   return (
-    <div className="sf-layout">
+    <div className="sf-layout sf-layout--ro">
       <aside className="sf-aside" aria-label={`Tóm tắt ${label}`}>
         <FormToc activeKey={active} label={`Các mục của ${label}`}>
           {sections.map((s, i) => (
@@ -86,7 +78,7 @@ export function ReadLayout({ sections, loading, label = 'hồ sơ' }) {
         </FormToc>
       </aside>
       <div className="sf-sections">
-        {loading ? <Skeleton active paragraph={{ rows: 6 }} /> : sections.map((s, i) => <Panel key={s.key} index={i} section={s} />)}
+        {loading ? <Skeleton active paragraph={{ rows: 6 }} /> : sections.map((s) => <Panel key={s.key} section={s} half={half.has(s.key)} />)}
       </div>
     </div>
   )

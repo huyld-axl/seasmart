@@ -8,6 +8,7 @@ import useToast from '../../../components/ds/useToast'
 import api from '../../../api/client'
 import { EmptyState } from '../../../components/ds/Controls'
 import { FIELD_LABELS } from './fieldLabels'
+import '../contracts/contracts.css'
 import { historyValue } from './historyValue'
 
 const PARTNER_LABELS = { company_name: 'Tên công ty', company_name_en: 'Tên tiếng Anh', country_id: 'Quốc gia', tax_id: 'Mã số thuế', address: 'Địa chỉ', phone: 'Điện thoại', zalo: 'Zalo', fax: 'Fax', email: 'Email', website: 'Website', is_active: 'Trạng thái', notes: 'Ghi chú', contacts: 'Người liên hệ' }
@@ -54,7 +55,7 @@ export default function ProfileHistory({ seafarerId, partnerId }) {
   if (isError && !history.data) return <EmptyState isError title="Không tải được lịch sử" action={<Button onClick={() => refetch()}>Thử lại</Button>} />
   return (
     <section className="crew-panel">
-      <div className="crew-panel__head"><h2 className="crew-panel__title">Lịch sử chỉnh sửa</h2><Button icon={<DownloadIcon />} loading={downloading} onClick={downloadLog}>Tải log</Button></div>
+      <div className="crew-panel__head"><h2 className="crew-panel__title">Lịch sử chỉnh sửa</h2><Button className="crew-panel__acts" icon={<DownloadIcon />} loading={downloading} onClick={downloadLog}>Tải log</Button></div>
       {!data.length && <EmptyState title="Chưa có lần sửa nào" description="Mỗi lần sửa hồ sơ sẽ ghi lại ở đây." />}
       <ol className="ds-timeline crew-panel__body">
         {data.map((rev) => (
@@ -64,11 +65,16 @@ export default function ProfileHistory({ seafarerId, partnerId }) {
             <div className="ds-timeline__body">
               <p className="ds-timeline__title">{rev.reason}</p>
               <p className="ds-timeline__meta">{rev.changed_by_email || 'Không rõ người sửa'} · {dayjs(rev.created_at).format('HH:mm DD/MM/YYYY')}</p>
-              <ul className="rev-changes">
-                {Object.entries(rev.changes).map(([field, [from, to]]) => (
-                  <li key={field}><b>{(partnerId ? PARTNER_LABELS[field] : FIELD_LABELS[field]) || field}</b>: {show(field, from)} → {show(field, to)}</li>
-                ))}
-              </ul>
+              <div className="ct-deal rev-changes">
+                <table>
+                  <thead><tr><th scope="col">Trường</th><th scope="col">Trước</th><th scope="col">Sau</th></tr></thead>
+                  <tbody>
+                    {Object.entries(rev.changes).map(([field, [from, to]]) => (
+                      <tr key={field}><th scope="row">{(partnerId ? PARTNER_LABELS[field] : FIELD_LABELS[field]) || field}</th><td className="rev-changes__from">{show(field, from)}</td><td>{show(field, to)}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </li>
         ))}

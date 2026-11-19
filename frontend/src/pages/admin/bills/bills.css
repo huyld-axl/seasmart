@@ -37,3 +37,27 @@ button.bl-day:focus-visible { outline: 2px solid var(--primary); outline-offset:
 .bl-due[data-status='SENT'] { --bl-due: var(--neutral); color: var(--neutral); }
 .bl-due[data-status='OVERDUE'] { --bl-due: var(--error-text); background: var(--error-text); color: #fff; }
 .bl-due::after { content: 'H' attr(data-n); position: absolute; right: -6px; bottom: -6px; padding: 0 3px; border-radius: 6px; background: var(--surface); color: var(--muted); font-size: 10px; font-weight: 500; line-height: 13px; box-shadow: 0 0 0 1px var(--border); }
+
+/* Bảng các kỳ ở màn yêu cầu thanh toán (thay lịch tháng). */
+.bl-periods tbody tr[aria-current] > *, .bl-periods__cur > * { background: color-mix(in srgb, var(--primary) 8%, var(--surface)) !important; color: var(--foreground) !important; font-weight: 600; }
+.bl-periods tbody tr:not(.bl-periods__cur):not(.ct-deal__empty) { cursor: pointer; }
+.bl-periods tbody tr:not(.bl-periods__cur):not(.ct-deal__empty):hover > * { background: var(--item-hover); }
+.bl-periods td, .bl-periods th { white-space: nowrap; }
+.bl-periods .ct-deal__num { width: auto; }
+.bl-periods .ct-deal__empty .ant-btn { height: auto; padding: 0; }
+
+/* Danh sách yêu cầu thanh toán nhúng trong tab (màn đối tác): cùng nhịp bảng gọn của các tab chi tiết. */
+@media (min-width: 640px) {
+  .bl-embed .ds-card { overflow: hidden; border: 1px solid var(--border); border-radius: 12px; box-shadow: none; }
+  .bl-embed .ds-toolbar { gap: 6px 10px; padding: 6px 10px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+  .bl-embed .ds-toolbar [role='tab'] { height: 26px; padding: 0 8px; font-size: 13px; }
+  .bl-embed .ds-toolbar .ant-input-affix-wrapper, .bl-embed .ds-toolbar .ant-select { --ant-control-height: 28px; height: 28px; font-size: 13px; }
+  .bl-embed .ant-table { font-size: 13px; }
+  .bl-embed .ant-table-thead > tr > th { padding: 5px 10px !important; border-bottom: 1px solid var(--border-strong) !important; background: var(--secondary) !important; color: var(--muted) !important; font-size: 13px; font-weight: 500; }
+  .bl-embed .ant-table-tbody > tr > td { padding: 4px 10px !important; border-bottom-color: var(--border-strong) !important; }
+  .bl-embed .ant-table-tbody > tr > td + td, .bl-embed .ant-table-thead > tr > th + th { border-left: 1px solid var(--border-strong); }
+  .bl-embed .ds-cell2__sub { font-size: 12px; }
+  .bl-embed .ds-table-foot { min-height: 0; padding: 4px 10px; font-size: 13px; }
+  .bl-embed .ds-table-foot .ant-btn, .bl-embed .ds-table-foot .ant-select { --ant-control-height: 26px; height: 26px; min-width: 26px; }
+  .bl-embed .ds-cell2 { line-height: 1.3; }
+}

@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import BillFormPage from '../BillFormPage'
 
+// Form gõ ngày, blur, chờ kiểm tra: chạy chung cả bộ test thì có lúc quá 5 giây.
+vi.setConfig({ testTimeout: 15000 })
+
 const { save } = vi.hoisted(() => ({ save: vi.fn().mockResolvedValue({}) }))
 vi.mock('../../../../hooks/useLeaveGuard', () => ({ default: () => ({ allow() {} }) }))
 vi.mock('../../../../components/ds/useToast', () => ({ default: () => ({ success() {}, error() {} }) }))

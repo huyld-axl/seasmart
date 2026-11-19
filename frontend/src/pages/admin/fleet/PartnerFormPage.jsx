@@ -263,7 +263,7 @@ function PartnerForm({ owner }) {
               name="is_active"
               className={cn('is_active')}
               label={label('is_active', 'Tình trạng')}
-              extra="Ngừng hợp tác thì đối tác không còn hiện khi chọn “Nộp cho” ở bộ giấy mới."
+              extra="Ngừng hợp tác thì đối tác không còn hiện khi chọn “Nộp cho” ở bộ giấy mới." tooltip="Ngừng hợp tác thì đối tác không còn hiện khi chọn “Nộp cho” ở bộ giấy mới."
             >
               <SegmentedPick options={PARTNER_STATUS_OPTIONS} label="Tình trạng" />
             </Form.Item>
@@ -356,9 +356,11 @@ function PartnerForm({ owner }) {
           </div>}
         </FormSection>
         <FormSection index={4} section={SECTIONS[4]} meta={metas[4]}>
-          <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')} style={{ marginBottom: 0 }}>
-            <Input.TextArea rows={3} maxLength={2000} showCount />
-          </Form.Item>
+          <div className="sf-grid">
+            <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')} style={{ marginBottom: 0 }}>
+              <Input.TextArea rows={3} maxLength={2000} showCount />
+            </Form.Item>
+          </div>
         </FormSection>
 
         <div className="sf-savebar">

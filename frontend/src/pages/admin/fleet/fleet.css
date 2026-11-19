@@ -129,3 +129,19 @@
 .fl-searchgroup { display: flex; flex: 1 1 220px; gap: 8px; min-width: 0; max-width: 368px; }
 .fl-searchgroup .ds-toolbar__search { flex: 1 1 auto; min-width: 0; max-width: none; }
 .fl-searchgroup > .ant-btn { flex-shrink: 0; }
+
+/* Đầu trang gọn ở màn rộng: logo cùng cỡ ảnh thu nhỏ của hồ sơ thuyền viên. */
+@media (min-width: 640px) {
+  .crew-head__photo.crew-head__photo--logo { width: 64px; height: 64px; }
+  .crew-head__photo--logo .fl-tile { border-radius: 12px; font-size: 18px; }
+  .crew-head__photo--logo .fl-tile .anticon { font-size: 28px; }
+  .partner-profile .crew-head__meta { gap: 2px 12px; margin-top: 6px; padding-top: 6px; }
+  .partner-primary { margin-top: 6px; padding-top: 6px; }
+}
+
+/* Tàu sở hữu ở màn đối tác: bảng InfoList sát khung khối, không lồng thẻ. */
+.sf-panel--ro .sf-panel__body:has(> .pv-section .ds-info-list) { padding: 0; }
+.pv-badges { display: inline-flex; gap: 4px; }
+@media (max-width: 639px) {
+  .pv-section .ds-info-cards { padding: 10px; }
+}

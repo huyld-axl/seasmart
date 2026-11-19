@@ -15,7 +15,7 @@ export default function ProfileSeaService({ seafarerId }) {
   const voyages = useVoyageList({ seafarer_id: seafarerId, tab: 'all', limit: 100 }, { enabled: can('voyage.view') })
   const trips = voyageTrips(voyages.data?.data || [])
   const create = can('voyage.create')
-    ? <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(`/voyages/new?seafarer=${seafarerId}`)}>Tạo chuyến</Button>
+    ? <Button type="primary" size="small" icon={<PlusOutlined />} onClick={() => navigate(`/voyages/new?seafarer=${seafarerId}`)}>Tạo chuyến</Button>
     : null
 
   const items = trips.map((t) => ({
@@ -38,14 +38,19 @@ export default function ProfileSeaService({ seafarerId }) {
   )
 
   return (
-    <section className="ct-block crew-docs-sec" aria-label="Đi tàu">
-      {trips.length ? <div className="ds-toolbar crew-docs-toolbar"><span /><span className="crew-docs-toolbar__acts">{create}</span></div> : null}
+    <section className="crew-panel crew-panel--table sea-svc" aria-label="Đi tàu">
+      {trips.length ? (
+        <div className="crew-panel__head">
+          <h2 className="crew-panel__title">Các chuyến tàu <span className="ct-block__unit">{trips.length} chuyến</span></h2>
+          {create}
+        </div>
+      ) : null}
       {voyages.isLoading ? (
         <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
       ) : voyages.isError ? (
         <EmptyState isError title="Không tải được các chuyến tàu" description="Mất kết nối với máy chủ." action={<Button onClick={() => voyages.refetch()}>Thử lại</Button>} />
       ) : (
-        <VoyageTimeline items={items} today={new Date().toISOString().slice(0, 10)} empty={empty} />
+        <div className="sea-svc__body"><VoyageTimeline items={items} today={new Date().toISOString().slice(0, 10)} empty={empty} /></div>
       )}
     </section>
   )

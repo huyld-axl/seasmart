@@ -167,12 +167,12 @@ export default function VoyageDetailPage() {
               {flag ? <span className={`crew-docs crew-docs--${flag.tone}`}>{flag.text}</span> : null}
             </div>
             <dl className="crew-head__meta">
-              <dt>Chuyến</dt>
-              <dd className="ds-mono">{v.code}</dd>
-              <dt>Vị trí</dt>
-              <dd><span>{v.rank_name} trên {link(can('vessel.view'), `/vessels/${v.vessel_id}`, v.vessel_name)}</span></dd>
-              <dt>Nguồn</dt>
-              <dd>{source}</dd>
+              <div className="crew-head__pair"><dt>Chuyến</dt>
+              <dd className="ds-mono">{v.code}</dd></div>
+              <div className="crew-head__pair"><dt>Vị trí</dt>
+              <dd><span>{v.rank_name} trên {link(can('vessel.view'), `/vessels/${v.vessel_id}`, v.vessel_name)}</span></dd></div>
+              <div className="crew-head__pair"><dt>Nguồn</dt>
+              <dd>{source}</dd></div>
             </dl>
           </div>
         </div>

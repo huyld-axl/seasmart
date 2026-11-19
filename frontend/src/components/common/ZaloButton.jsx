@@ -2,7 +2,7 @@ import { chatHref } from '../../utils/chatQr'
 import { Tooltip } from 'antd'
 import '../ds/ds.css'
 
-export default function ZaloButton({ phone, size = 22 }) {
+export default function ZaloButton({ phone }) {
   if (!phone) return null
   return (
     <Tooltip title={`Nhắn Zalo: ${phone}`}>
@@ -14,11 +14,7 @@ export default function ZaloButton({ phone, size = 22 }) {
         aria-label={`Nhắn Zalo: ${phone}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src="/images/contact/zalo.svg"
-          alt="Zalo"
-          style={{ width: size, height: size, borderRadius: 4 }}
-        />
+        <img className="ds-chat-logo" src="/images/contact/zalo.svg" alt="Zalo" style={{ borderRadius: 4 }} />
       </a>
     </Tooltip>
   )

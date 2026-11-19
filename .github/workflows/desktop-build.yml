@@ -1,0 +1,54 @@
+# Build bộ cài app máy tính (Ubuntu + Windows) từ đúng một commit.
+# Tự chạy khi push dev có đổi desktop/. Chạy tay (Run workflow) chỉ hiện khi file này đã có ở nhánh mặc định.
+# Máy phát hành tải artifact về desktop/dist/installer/ rồi chạy `npm run release` (khoá ký chỉ nằm ở máy phát hành).
+# docs/mcah-quy-trinh-phat-hanh.md
+name: Desktop build
+
+on:
+  workflow_dispatch:
+  # Push dev có đổi desktop/ (mỗi bản phát hành đều nâng desktop/package.json) thì tự build.
+  push:
+    branches: [dev]
+    paths: ['desktop/**', '.github/workflows/desktop-build.yml']
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux
+          - os: windows-2022
+            target: win
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.19.0
+      - run: npm ci --prefix ../frontend
+        # Gói chạy kèm trong bộ cài (backend) do stage.js tự `npm ci`.
+      - run: npm ci
+      - run: npm run dist:linux
+        if: matrix.target == 'linux'
+      # Windows: tách từng bước của `npm run dist:win` để lỗi chỉ đúng bước hỏng.
+      - { name: build:frontend, if: "matrix.target == 'win'", run: npm run build:frontend }
+      - { name: stage:win, if: "matrix.target == 'win'", run: npm run stage:win }
+      - { name: build-main, if: "matrix.target == 'win'", run: node scripts/build-main.js }
+      - { name: license-page, if: "matrix.target == 'win'", run: node scripts/license-page.js }
+      - { name: electron-builder, if: "matrix.target == 'win'", run: npx electron-builder --win nsis dir }
+      - { name: scan-secrets, if: "matrix.target == 'win'", run: node scripts/scan-secrets.js dist/installer/win-unpacked }
+      - { name: build-info, if: "matrix.target == 'win'", run: node scripts/build-info.js win }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mcah-installer-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            desktop/dist/installer/*.deb
+            desktop/dist/installer/MCAH Setup *.exe
+            desktop/dist/installer/build-info-${{ matrix.target }}.json

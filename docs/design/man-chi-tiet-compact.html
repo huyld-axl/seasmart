@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Màn chi tiết gọn</title>
+<style>
+:root{--bg:#f4f5f7;--surface:#fff;--border:#e3e5e8;--line:#eef0f2;--fg:#2c2c2c;--muted:#6b7280;--label:#f8f9fa;--primary:#0b3a6e;--sec:#e8ecf1;--ok:#1f8a4c;--okbg:#e6f4ec;--warn:#a15c00;--warnbg:#fff4e0;--err:#b42318;--errbg:#fdecea;--info:#1d4ed8;--infobg:#e8effd}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171a;--surface:#1e2125;--border:#33373d;--line:#2a2e33;--fg:#e6e6e6;--muted:#9aa1ab;--label:#23272c;--primary:#8db4e8;--sec:#2a3038}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 Inter,system-ui,sans-serif}
+a{color:var(--primary);text-decoration:none}
+.top{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.top b{margin-right:8px;align-self:center}
+.top button{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
+.top button[aria-pressed=true]{background:var(--primary);color:#fff;border-color:var(--primary)}
+.note-design{max-width:1180px;margin:12px auto 0;padding:10px 14px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:var(--surface)}
+.page{max-width:1180px;margin:0 auto;padding:12px 16px 40px}
+.screen{display:none}.screen.on{display:block}
+.crumb{color:var(--muted);font-size:12px;margin-bottom:6px}
+/* Đầu trang gọn: 1 dải */
+.head{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.photo{width:56px;height:72px;border-radius:6px;background:var(--sec);flex:none;display:grid;place-items:center;color:var(--muted);font-weight:600}
+.logo{width:48px;height:48px;border-radius:8px}
+.head__main{flex:1;min-width:0}
+.head__title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.head__title h1{margin:0;font-size:18px}
+.head__sub{color:var(--muted);margin:2px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px}
+.chips span{color:var(--muted)}.chips b{font-weight:500;color:var(--fg)}
+.head__note{width:260px;flex:none;border-left:1px solid var(--line);padding-left:12px;font-size:12.5px;color:var(--muted)}
+.head__note b{display:block;color:var(--fg);font-size:12px;margin-bottom:2px}
+.head__act{display:flex;gap:6px;flex:none}
+.btn{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:8px;padding:4px 10px;font:inherit;cursor:default;white-space:nowrap}
+.btn--p{background:var(--primary);border-color:var(--primary);color:#fff}
+.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;font-weight:500}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-info{background:var(--infobg);color:var(--info)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-err{background:var(--errbg);color:var(--err)}.b-n{background:var(--sec);color:var(--muted)}
+.alert{margin-top:8px;padding:6px 12px;border-radius:8px;background:var(--warnbg);color:var(--warn);display:flex;gap:10px;align-items:center;font-size:12.5px}
+.alert .btn{margin-left:auto;padding:2px 8px}
+.tabs{display:flex;gap:2px;margin:10px 0 8px;border-bottom:1px solid var(--border)}
+.tabs span{padding:6px 12px;color:var(--muted);border-bottom:2px solid transparent}
+.tabs span.on{color:var(--fg);border-color:var(--primary);font-weight:500}
+.tabs i{font-style:normal;font-size:11px;color:var(--muted);margin-left:4px}
+/* Bố cục: mục lục mảnh + bảng */
+.layout{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start}
+.toc{position:sticky;top:60px;font-size:12.5px;display:flex;flex-direction:column;gap:1px}
+.toc a{color:var(--muted);padding:3px 8px;border-radius:6px;display:flex;justify-content:space-between}
+.toc a.on{background:var(--sec);color:var(--fg)}
+.toc small{color:var(--muted)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+/* Bảng thông tin key-value */
+.kv{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;table-layout:fixed}
+.kv caption{text-align:left;font-weight:600;padding:0 0 4px 2px;font-size:12.5px;caption-side:top}
+.kv caption small{font-weight:400;color:var(--muted);margin-left:6px}
+.kv th,.kv td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;word-break:break-word}
+.kv tr:last-child>*{border-bottom:0}
+.kv th{background:var(--label);color:var(--muted);font-weight:500;width:17%}
+.kv td{width:33%}
+.kv .sub th,.kv .sub td{background:var(--sec);color:var(--fg);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 10px}
+.kv .wide td{width:auto}
+.empty{color:var(--muted);opacity:.7}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.cp{color:var(--muted);font-size:11px;margin-left:4px;cursor:default}
+/* Bảng danh sách */
+.list{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.list caption{text-align:left;font-weight:600;padding:0 0 4px 2px;font-size:12.5px}
+.list caption small{font-weight:400;color:var(--muted);margin-left:6px}
+.list th{background:var(--label);color:var(--muted);font-weight:500;text-align:left;padding:5px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+.list td{padding:5px 10px;border-bottom:1px solid var(--line)}
+.list tr:last-child td{border-bottom:0}
+.list .r{text-align:right}
+.list tfoot td{background:var(--label);font-weight:600}
+.side{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.card h3{margin:0 0 6px;font-size:12.5px}
+.bar{height:6px;background:var(--sec);border-radius:99px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;width:62%;background:var(--primary)}
+.row{display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0}
+.row span{color:var(--muted)}
+.ct{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start}
+@media (max-width:1023px){.layout{grid-template-columns:minmax(0,1fr)}.toc{display:none}.cols,.ct{grid-template-columns:minmax(0,1fr)}.head{flex-wrap:wrap}.head__note{width:100%;border:0;padding:0}}
+@media (max-width:639px){
+ .page{padding:8px 12px 32px}
+ .kv{display:block;border:0;background:none}
+ .kv caption{display:block}
+ .kv colgroup{display:none}
+ .kv tbody{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+ .kv tr{display:grid;grid-template-columns:120px minmax(0,1fr)}
+ .kv th,.kv td{display:block;width:auto!important;min-width:0}
+ .kv th:empty,.kv td:empty{display:none}
+ .kv .sub td{grid-column:1/-1}
+ .list{display:block;overflow-x:auto;white-space:nowrap}
+ .list caption{white-space:normal}
+ .head__act{width:100%}
+ .alert{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<div class="top" role="tablist">
+  <b>Bản mẫu màn chi tiết gọn</b>
+  <button aria-pressed="true" data-s="sf">Thuyền viên</button>
+  <button aria-pressed="false" data-s="ct">Hợp đồng</button>
+  <button aria-pressed="false" data-s="pt">Đối tác</button>
+  <button aria-pressed="false" data-s="vs">Tàu</button>
+</div>
+<div class="note-design">
+  <b>Thay đổi chính:</b> (1) đầu trang thu thành một dải cao ~90px, ghi chú nằm bên phải; (2) mỗi mục là một <b>bảng nhãn | giá trị, 2 cặp mỗi dòng</b> thay cho thẻ + lưới 12 cột, đánh số bỏ đi; (3) mục ngắn xếp <b>2 cột cạnh nhau</b>; (4) danh sách lặp (tài khoản, người thân, người liên hệ) thành <b>bảng có cột</b>, mỗi người một dòng; (5) chữ 13px, dòng cao ~28px. Dưới 640px mỗi dòng bảng tách về 1 cặp nhãn–giá trị.
+</div>
+
+<div class="page">
+
+<!-- ============ THUYỀN VIÊN ============ -->
+<section class="screen on" id="sf">
+  <div class="crumb">Thuyền viên / Nguyễn Văn Hải</div>
+  <div class="head">
+    <div class="photo">Ảnh</div>
+    <div class="head__main">
+      <div class="head__title"><h1>Nguyễn Văn Hải</h1><span class="badge b-info">Đang trên tàu</span><span class="badge b-err">1 giấy tờ hết hạn</span></div>
+      <div class="head__sub">TV-0142 · Máy hai · 34 tuổi</div>
+      <div class="chips">
+        <div><span>Tàu</span> <b><a href="#">PACIFIC STAR</a></b></div>
+        <div><span>Chuyến</span> <b><a href="#">CT-2611-03</a> · đến 14/03/2027</b></div>
+        <div><span>ĐT</span> <b>0912 345 678</b></div>
+        <div><span>Zalo</span> <b>0912 345 678</b></div>
+        <div><span>Email</span> <b>hai.nv@gmail.com</b></div>
+      </div>
+    </div>
+    <div class="head__note"><b>Ghi chú <a href="#">Sửa</a></b>Muốn về trước Tết. Đã nhắc gia hạn GMDSS.</div>
+    <div class="head__act"><button class="btn">⋯</button><button class="btn">Mở thư mục</button><button class="btn btn--p">Sửa thông tin</button></div>
+  </div>
+  <div class="alert">⚠ 2 chứng chỉ sắp hết hạn trong 60 ngày: <b>GMDSS</b> (còn 21 ngày), <b>Basic Safety</b> (còn 48 ngày) <button class="btn">Tắt cảnh báo</button></div>
+  <div class="tabs"><span class="on">Tổng quan</span><span>Giấy tờ<i>12</i></span><span>Đi tàu</span><span>Hợp đồng<i>3</i></span><span>Lịch sử</span></div>
+
+  <div class="layout">
+    <nav class="toc"><a class="on">Thông tin chung <small>11/12</small></a><a>Giấy tờ tùy thân <small>8/9</small></a><a>Thể chất <small>7/7</small></a><a>Liên hệ <small>3/3</small></a><a>Ngân hàng & BHXH <small>2</small></a><a>Gia quyến <small>2</small></a><a>Học vấn <small>4/4</small></a></nav>
+    <div class="stack">
+      <table class="kv"><caption>Thông tin chung <small>11/12</small></caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+        <tr><th>Mã thuyền viên</th><td class="mono">TV-0142</td><th>Chức danh</th><td>Máy hai</td></tr>
+        <tr><th>Tên tiếng Anh</th><td>NGUYEN VAN HAI</td><th>Tên tiếng Trung</th><td class="empty">Chưa có</td></tr>
+        <tr><th>Ngày sinh</th><td class="mono">12/05/1992</td><th>Giới tính</th><td>Nam</td></tr>
+        <tr><th>Nguyên quán</th><td>Nam Định</td><th>Tình trạng</th><td><span class="badge b-info">Đang trên tàu</span></td></tr>
+        <tr><th>Hôn nhân</th><td>Đã kết hôn</td><th>Số con</th><td>2</td></tr>
+        <tr><th>Địa chỉ thường trú</th><td colspan="3">Số 18, ngõ 42 Trần Hưng Đạo, P. Bà Triệu, TP. Nam Định</td></tr>
+      </tbody></table>
+
+      <table class="kv"><caption>Giấy tờ tùy thân <small>8/9</small></caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+        <tr class="sub"><td colspan="4">Hộ chiếu</td></tr>
+        <tr><th>Số hộ chiếu</th><td class="mono">C1234567 <span class="cp">⧉</span></td><th>Quốc tịch</th><td>🇻🇳 Việt Nam</td></tr>
+        <tr><th>Ngày cấp</th><td class="mono">03/08/2021</td><th>Ngày hết hạn</th><td class="mono">03/08/2031</td></tr>
+        <tr><th>Nơi sinh</th><td colspan="3">Nam Định</td></tr>
+        <tr class="sub"><td colspan="4">Căn cước công dân</td></tr>
+        <tr><th>Số CCCD</th><td class="mono">036092001234 <span class="cp">⧉</span></td><th>Ngày cấp</th><td class="mono">10/04/2021</td></tr>
+        <tr><th>Nơi cấp</th><td colspan="3">Cục CS QLHC về TTXH</td></tr>
+        <tr class="sub"><td colspan="4">Sổ thuyền viên</td></tr>
+        <tr><th>Số sổ</th><td class="mono">HP-028811 <span class="cp">⧉</span></td><th></th><td></td></tr>
+      </tbody></table>
+
+      <div class="cols">
+        <table class="kv"><caption>Thể chất <small>7/7</small></caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Chiều cao</th><td>170 cm</td><th>Cân nặng</th><td>68 kg</td></tr>
+          <tr><th>Nhóm máu</th><td>O</td><th>Size giày</th><td>41</td></tr>
+          <tr><th>Size áo</th><td>L</td><th>Size quần</th><td>31</td></tr>
+          <tr><th>Size bảo hộ</th><td colspan="3">L</td></tr>
+        </tbody></table>
+        <table class="kv"><caption>Liên hệ <small>3/3</small></caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Điện thoại</th><td colspan="3">0912 345 678 <span class="cp">☎ ⧉</span></td></tr>
+          <tr><th>Zalo</th><td colspan="3">0912 345 678 <span class="cp">⧉</span></td></tr>
+          <tr><th>Email</th><td colspan="3">hai.nv@gmail.com <span class="cp">✉ ⧉</span></td></tr>
+        </tbody></table>
+      </div>
+
+      <table class="list"><caption>Ngân hàng & BHXH <small>2 tài khoản · BHXH: Có, số 0123456789</small></caption>
+        <thead><tr><th>Ngân hàng</th><th>Số tài khoản</th><th>Chủ tài khoản</th></tr></thead>
+        <tbody><tr><td>Vietcombank</td><td class="mono">0011 0042 8812 ⧉</td><td>NGUYEN VAN HAI</td></tr>
+        <tr><td>Techcombank</td><td class="mono">1903 5566 7788 ⧉</td><td>NGUYEN VAN HAI</td></tr></tbody>
+      </table>
+
+      <table class="list"><caption>Gia quyến <small>2 người</small></caption>
+        <thead><tr><th>Họ tên</th><th>Quan hệ</th><th>Điện thoại / Zalo</th><th>CCCD · cấp</th><th>Địa chỉ</th><th></th></tr></thead>
+        <tbody><tr><td>Trần Thị Lan</td><td>Vợ</td><td class="mono">0987 111 222</td><td class="mono">036194004321 · 02/2022</td><td>Như trên</td><td><span class="badge b-info">Liên lạc</span> <span class="badge b-warn">Bảo lãnh</span></td></tr>
+        <tr><td>Nguyễn Văn Bình</td><td>Bố</td><td class="mono">0915 333 444</td><td class="empty">Chưa có</td><td>Xã Hải Hậu, Nam Định</td><td></td></tr></tbody>
+      </table>
+
+      <table class="kv"><caption>Học vấn <small>4/4</small></caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+        <tr><th>Bằng cấp</th><td>Cao đẳng</td><th>Tiếng Anh</th><td>Khá</td></tr>
+        <tr><th>Trường</th><td>CĐ Hàng hải I</td><th>Ngành</th><td>Máy tàu biển</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HỢP ĐỒNG ============ -->
+<section class="screen" id="ct">
+  <div class="crumb">Hợp đồng / HĐ-2611-0031</div>
+  <div class="head">
+    <div class="head__main">
+      <div class="head__title"><h1>HĐ-2611-0031</h1><span class="badge b-ok">Có hiệu lực</span><span class="badge b-n">🔒 Đã khoá</span></div>
+      <div class="chips">
+        <div><span>Thuyền viên</span> <b><a href="#">Nguyễn Văn Hải</a> · TV-0142</b></div>
+        <div><span>Chức danh</span> <b>Máy hai</b></div>
+        <div><span>Tàu</span> <b><a href="#">PACIFIC STAR</a></b></div>
+        <div><span>Chủ tàu</span> <b>Ocean Link Co.</b></div>
+        <div><span>Chuyến</span> <b><a href="#">CT-2611-03</a></b></div>
+        <div><span>Thời gian</span> <b class="mono">15/09/2026 → 14/03/2027</b> <span>· 6 tháng</span></div>
+      </div>
+    </div>
+    <div class="head__act"><button class="btn">⋯</button><button class="btn">In hợp đồng</button><button class="btn btn--p">Kết thúc hợp đồng</button></div>
+  </div>
+  <div class="tabs"><span class="on">Tổng quan</span><span>Yêu cầu thanh toán<i>6</i></span><span>Lịch sử<i>4</i></span></div>
+  <div class="ct">
+    <div class="stack">
+      <table class="list"><caption>Thoả thuận tiền <small>đơn vị USD / tháng</small></caption>
+        <thead><tr><th>Khoản</th><th>Bên trả</th><th>Bên nhận</th><th class="r">Số tiền</th><th>Kỳ</th></tr></thead>
+        <tbody>
+          <tr><td>Lương cơ bản</td><td>Ocean Link Co.</td><td>Công ty</td><td class="r mono">1,800.00</td><td>Hằng tháng</td></tr>
+          <tr><td>Phụ cấp làm thêm</td><td>Ocean Link Co.</td><td>Công ty</td><td class="r mono">350.00</td><td>Hằng tháng</td></tr>
+          <tr><td>Lương thuyền viên</td><td>Công ty</td><td>Nguyễn Văn Hải</td><td class="r mono">1,600.00</td><td>Hằng tháng</td></tr>
+          <tr><td>Phí môi giới</td><td>Nguyễn Văn Hải</td><td>Công ty</td><td class="r mono">500.00</td><td>Một lần</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="3">Chênh lệch / tháng</td><td class="r mono">550.00</td><td></td></tr></tfoot>
+      </table>
+      <table class="kv"><caption>Điều khoản</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+        <tr><th>Ngày chốt bill</th><td>Ngày 25 hằng tháng</td><th>Hạn thanh toán</th><td>10 ngày sau chốt</td></tr>
+        <tr><th>Vé máy bay</th><td>Chủ tàu trả</td><th>Thử việc</th><td>2 tháng</td></tr>
+        <tr><th>Ghi chú điều khoản</th><td colspan="3">Rời tàu sớm do cá nhân: thuyền viên chịu vé về.</td></tr>
+      </tbody></table>
+    </div>
+    <aside class="side">
+      <div class="card"><h3>Số dư hợp đồng</h3>
+        <div class="row"><span>Ngân sách</span><b class="mono">12,900.00</b></div>
+        <div class="row"><span>Đã thu</span><b class="mono">8,000.00</b></div>
+        <div class="bar"><i></i></div>
+        <div class="row"><span>Còn lại</span><b class="mono">4,900.00</b></div>
+      </div>
+      <div class="card"><h3>Lịch sử gần nhất</h3>
+        <div class="row"><span>Duyệt · có hiệu lực</span><b>20/09</b></div>
+        <div class="row"><span>Xin duyệt</span><b>18/09</b></div>
+        <div class="row"><span>Tạo hợp đồng</span><b>15/09</b></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ ĐỐI TÁC ============ -->
+<section class="screen" id="pt">
+  <div class="crumb">Đối tác / Ocean Link Co.</div>
+  <div class="head">
+    <div class="photo logo">OL</div>
+    <div class="head__main">
+      <div class="head__title"><h1>Ocean Link Co., Ltd.</h1><span class="badge b-ok">Đang hợp tác</span></div>
+      <div class="chips">
+        <div><span>Quốc gia</span> <b>🇸🇬 Singapore</b></div>
+        <div><span>MST</span> <b class="mono">201912345K</b></div>
+        <div><span>Liên hệ chính</span> <b>Mr. Tan Wei · Crewing Manager</b></div>
+        <div><span>ĐT</span> <b>+65 6123 4567</b></div>
+        <div><span>Tàu</span> <b>4</b></div>
+      </div>
+    </div>
+    <div class="head__note"><b>Ghi chú <a href="#">Sửa</a></b>Thanh toán đúng hạn. Ưu tiên thuyền viên có kinh nghiệm DP.</div>
+    <div class="head__act"><button class="btn">⋯</button><button class="btn btn--p">Sửa thông tin</button></div>
+  </div>
+  <div class="tabs"><span class="on">Tổng quan</span><span>Hợp đồng<i>9</i></span><span>Lịch sử</span></div>
+  <div class="layout">
+    <nav class="toc"><a class="on">Công ty</a><a>Liên hệ công ty</a><a>Người liên hệ <small>3</small></a><a>Tàu sở hữu <small>4</small></a></nav>
+    <div class="stack">
+      <div class="cols">
+        <table class="kv"><caption>Công ty</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Tên công ty</th><td colspan="3">Ocean Link Co., Ltd.</td></tr>
+          <tr><th>Tên tiếng Anh</th><td colspan="3">Ocean Link Shipping</td></tr>
+          <tr><th>Mã số thuế</th><td class="mono">201912345K ⧉</td><th>Quốc gia</th><td>🇸🇬 Singapore</td></tr>
+          <tr><th>Tình trạng</th><td colspan="3"><span class="badge b-ok">Đang hợp tác</span></td></tr>
+        </tbody></table>
+        <table class="kv"><caption>Liên hệ công ty</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Địa chỉ</th><td colspan="3">80 Robinson Rd, #10-01, Singapore 068898</td></tr>
+          <tr><th>Điện thoại</th><td>+65 6123 4567</td><th>Fax</th><td>+65 6123 4500</td></tr>
+          <tr><th>Email</th><td>crew@oceanlink.sg</td><th>Zalo</th><td class="empty">Chưa có</td></tr>
+          <tr><th>Website</th><td colspan="3"><a href="#">oceanlink.sg ↗</a></td></tr>
+        </tbody></table>
+      </div>
+      <table class="list"><caption>Người liên hệ <small>3 người</small></caption>
+        <thead><tr><th>Họ tên</th><th>Chức vụ</th><th>Điện thoại</th><th>Email</th><th>Chat</th><th></th></tr></thead>
+        <tbody>
+          <tr><td>Tan Wei</td><td>Crewing Manager</td><td class="mono">+65 9123 4567</td><td>tan.wei@oceanlink.sg</td><td>WhatsApp · WeChat</td><td><span class="badge b-info">Liên hệ chính</span></td></tr>
+          <tr><td>Lim Hui</td><td>Kế toán</td><td class="mono">+65 9876 5432</td><td>acc@oceanlink.sg</td><td>WhatsApp</td><td></td></tr>
+          <tr><td>Phạm Quốc Anh</td><td>Đại diện VN</td><td class="mono">0903 222 111</td><td class="empty">Chưa có</td><td>Zalo</td><td></td></tr>
+        </tbody></table>
+      <table class="list"><caption>Tàu sở hữu <small>4 tàu</small></caption>
+        <thead><tr><th>Tên tàu</th><th>IMO</th><th>Loại</th><th>Cờ</th><th class="r">Đang có TV</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          <tr><td><a href="#">PACIFIC STAR</a></td><td class="mono">9712345</td><td>Supply</td><td>🇸🇬</td><td class="r">7</td><td><span class="badge b-ok">Hoạt động</span></td></tr>
+          <tr><td><a href="#">OCEAN PEARL</a></td><td class="mono">9698877</td><td>AHTS</td><td>🇵🇦</td><td class="r">5</td><td><span class="badge b-ok">Hoạt động</span></td></tr>
+          <tr><td><a href="#">SEA FALCON</a></td><td class="mono">9655110</td><td>Crew boat</td><td>🇸🇬</td><td class="r">0</td><td><span class="badge b-n">Neo bờ</span></td></tr>
+          <tr><td><a href="#">BLUE HORIZON</a></td><td class="mono">9601234</td><td>Tanker</td><td>🇲🇭</td><td class="r">12</td><td><span class="badge b-ok">Hoạt động</span></td></tr>
+        </tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TÀU ============ -->
+<section class="screen" id="vs">
+  <div class="crumb">Tàu / PACIFIC STAR</div>
+  <div class="head">
+    <div class="head__main">
+      <div class="head__title"><h1>PACIFIC STAR</h1><span class="badge b-ok">Hoạt động</span><span class="badge b-ok">Đăng kiểm còn hạn</span></div>
+      <div class="chips">
+        <div><span>IMO</span> <b class="mono">9712345</b></div>
+        <div><span>Loại</span> <b>Supply</b></div>
+        <div><span>Cờ</span> <b>🇸🇬 Singapore</b></div>
+        <div><span>Chủ tàu</span> <b><a href="#">Ocean Link Co.</a></b></div>
+        <div><span>Thuyền viên</span> <b>7 / 12 định biên</b></div>
+      </div>
+    </div>
+    <div class="head__note"><b>Ghi chú <a href="#">Sửa</a></b>Đổi ca tháng 3 tại Vũng Tàu.</div>
+    <div class="head__act"><button class="btn">⋯</button><button class="btn btn--p">Sửa thông tin</button></div>
+  </div>
+  <div class="tabs"><span class="on">Tổng quan</span><span>Thuyền viên<i>7</i></span><span>Lịch sử</span></div>
+  <div class="layout">
+    <nav class="toc"><a class="on">Nhận dạng</a><a>Đăng ký & phân loại</a><a>Thông số</a><a>Máy & thiết bị</a><a>Quản lý</a></nav>
+    <div class="stack">
+      <div class="cols">
+        <table class="kv"><caption>Nhận dạng</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Tên tàu</th><td>PACIFIC STAR</td><th>Tên cũ</th><td>STAR ONE</td></tr>
+          <tr><th>Số IMO</th><td class="mono">9712345</td><th>Call Sign</th><td class="mono">9V1234</td></tr>
+          <tr><th>MMSI</th><td class="mono" colspan="3">563012345</td></tr>
+        </tbody></table>
+        <table class="kv"><caption>Đăng ký và phân loại</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Loại tàu</th><td>Supply</td><th>Năm đóng</th><td>2014</td></tr>
+          <tr><th>Cờ</th><td>🇸🇬 Singapore</td><th>Cảng ĐK</th><td>Singapore</td></tr>
+          <tr><th>Đăng kiểm</th><td>DNV</td><th>TT đăng kiểm</th><td>Còn hạn</td></tr>
+        </tbody></table>
+        <table class="kv"><caption>Thông số</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>GRT</th><td class="mono">2,450 GT</td><th>NT</th><td class="mono">735 NT</td></tr>
+          <tr><th>DWT</th><td class="mono">3,100 tấn</td><th>LOA</th><td class="mono">72.0 m</td></tr>
+          <tr><th>Hành khách</th><td>—</td><th>Định biên</th><td>12 người</td></tr>
+        </tbody></table>
+        <table class="kv"><caption>Máy và thiết bị</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Công suất</th><td class="mono">4,000 kW</td><th>Động cơ</th><td>Diesel-electric</td></tr>
+          <tr><th>DP Class</th><td>DP2</td><th>Nồi hơi</th><td>Không</td></tr>
+          <tr><th>Lạnh</th><td colspan="3">Có</td></tr>
+        </tbody></table>
+      </div>
+      <table class="kv"><caption>Quản lý</caption><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+        <tr><th>Chủ tàu</th><td colspan="3"><a href="#">Ocean Link Co., Ltd.</a></td></tr>
+        <tr><th>QL kỹ thuật</th><td>Ocean Link Technical</td><th>QL thương mại</th><td>Ocean Link Chartering</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+</section>
+</div>
+<script>
+document.querySelectorAll('.top button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.top button').forEach(x=>x.setAttribute('aria-pressed',x===b))
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s))
+})
+</script>
+</body>
+</html>

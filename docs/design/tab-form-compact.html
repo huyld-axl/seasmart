@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tab và form gọn</title>
+<style>
+:root{--bg:#f4f5f7;--surface:#fff;--border:#e3e5e8;--line:#eef0f2;--fg:#2c2c2c;--muted:#6b7280;--label:#f8f9fa;--primary:#0b3a6e;--sec:#e8ecf1;--ok:#1f8a4c;--okbg:#e6f4ec;--warn:#a15c00;--warnbg:#fff4e0;--err:#b42318;--errbg:#fdecea;--info:#1d4ed8;--infobg:#e8effd}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171a;--surface:#1e2125;--border:#33373d;--line:#2a2e33;--fg:#e6e6e6;--muted:#9aa1ab;--label:#23272c;--primary:#8db4e8;--sec:#2a3038}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 Inter,system-ui,sans-serif}
+a{color:var(--primary);text-decoration:none}
+.top{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.top b{margin-right:8px;align-self:center}
+.top button{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
+.top button[aria-pressed=true]{background:var(--primary);color:#fff;border-color:var(--primary)}
+.note-design{max-width:1180px;margin:12px auto 0;padding:10px 14px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:var(--surface)}
+.page{max-width:1180px;margin:0 auto;padding:12px 16px 40px}
+.screen{display:none}.screen.on{display:block}
+.crumb{color:var(--muted);font-size:12px;margin-bottom:6px}
+/* Đầu trang gọn: 1 dải */
+.head{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.photo{width:56px;height:72px;border-radius:6px;background:var(--sec);flex:none;display:grid;place-items:center;color:var(--muted);font-weight:600}
+.logo{width:48px;height:48px;border-radius:8px}
+.head__main{flex:1;min-width:0}
+.head__title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.head__title h1{margin:0;font-size:18px}
+.head__sub{color:var(--muted);margin:2px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px}
+.chips span{color:var(--muted)}.chips b{font-weight:500;color:var(--fg)}
+.head__note{width:260px;flex:none;border-left:1px solid var(--line);padding-left:12px;font-size:12.5px;color:var(--muted)}
+.head__note b{display:block;color:var(--fg);font-size:12px;margin-bottom:2px}
+.head__act{display:flex;gap:6px;flex:none}
+.btn{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:8px;padding:4px 10px;font:inherit;cursor:default;white-space:nowrap}
+.btn--p{background:var(--primary);border-color:var(--primary);color:#fff}
+.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;font-weight:500}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-info{background:var(--infobg);color:var(--info)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-err{background:var(--errbg);color:var(--err)}.b-n{background:var(--sec);color:var(--muted)}
+.alert{margin-top:8px;padding:6px 12px;border-radius:8px;background:var(--warnbg);color:var(--warn);display:flex;gap:10px;align-items:center;font-size:12.5px}
+.alert .btn{margin-left:auto;padding:2px 8px}
+.tabs{display:flex;gap:2px;margin:10px 0 8px;border-bottom:1px solid var(--border)}
+.tabs span{padding:6px 12px;color:var(--muted);border-bottom:2px solid transparent}
+.tabs span.on{color:var(--fg);border-color:var(--primary);font-weight:500}
+.tabs i{font-style:normal;font-size:11px;color:var(--muted);margin-left:4px}
+/* Bố cục: mục lục mảnh + bảng */
+.layout{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start}
+.toc{position:sticky;top:60px;font-size:12.5px;display:flex;flex-direction:column;gap:1px}
+.toc a{color:var(--muted);padding:3px 8px;border-radius:6px;display:flex;justify-content:space-between}
+.toc a.on{background:var(--sec);color:var(--fg)}
+.toc small{color:var(--muted)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+/* Bảng thông tin key-value */
+.kv{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;table-layout:fixed}
+.kv caption{text-align:left;font-weight:600;padding:0 0 4px 2px;font-size:12.5px;caption-side:top}
+.kv caption small{font-weight:400;color:var(--muted);margin-left:6px}
+.kv th,.kv td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;word-break:break-word}
+.kv tr:last-child>*{border-bottom:0}
+.kv th{background:var(--label);color:var(--muted);font-weight:500;width:17%}
+.kv td{width:33%}
+.kv .sub th,.kv .sub td{background:var(--sec);color:var(--fg);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 10px}
+.kv .wide td{width:auto}
+.empty{color:var(--muted);opacity:.7}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.cp{color:var(--muted);font-size:11px;margin-left:4px;cursor:default}
+/* Bảng danh sách */
+.list{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.list caption{text-align:left;font-weight:600;padding:0 0 4px 2px;font-size:12.5px}
+.list caption small{font-weight:400;color:var(--muted);margin-left:6px}
+.list th{background:var(--label);color:var(--muted);font-weight:500;text-align:left;padding:5px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+.list td{padding:5px 10px;border-bottom:1px solid var(--line)}
+.list tr:last-child td{border-bottom:0}
+.list .r{text-align:right}
+.list tfoot td{background:var(--label);font-weight:600}
+.side{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.card h3{margin:0 0 6px;font-size:12.5px}
+.bar{height:6px;background:var(--sec);border-radius:99px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;width:62%;background:var(--primary)}
+.row{display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0}
+.row span{color:var(--muted)}
+.ct{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start}
+@media (max-width:1023px){.layout{grid-template-columns:minmax(0,1fr)}.toc{display:none}.cols,.ct{grid-template-columns:minmax(0,1fr)}.head{flex-wrap:wrap}.head__note{width:100%;border:0;padding:0}}
+@media (max-width:639px){
+ .page{padding:8px 12px 32px}
+ .kv{display:block;border:0;background:none}
+ .kv caption{display:block}
+ .kv colgroup{display:none}
+ .kv tbody{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+ .kv tr{display:grid;grid-template-columns:120px minmax(0,1fr)}
+ .kv th,.kv td{display:block;width:auto!important;min-width:0}
+ .kv th:empty,.kv td:empty{display:none}
+ .kv .sub td{grid-column:1/-1}
+ .list{display:block;overflow-x:auto;white-space:nowrap}
+ .list caption{white-space:normal}
+ .head__act{width:100%}
+ .alert{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<style>
+.pn{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.pn__h{display:flex;align-items:center;gap:8px;padding:6px 10px;background:color-mix(in srgb,var(--primary) 14%,var(--surface));font-weight:600;font-size:13px;min-height:36px}
+.pn__h small{font-weight:400;color:var(--muted)}
+.pn__h .acts{margin-left:auto;display:flex;gap:6px}
+.sbtn{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:6px;padding:2px 8px;font:inherit;font-size:12px;font-weight:500}
+.sbtn--p{background:var(--primary);border-color:var(--primary);color:#fff}
+.t{width:100%;border-collapse:collapse;font-size:13px}
+.t th{background:var(--sec);color:var(--muted);font-weight:500;text-align:left;padding:5px 10px;white-space:nowrap}
+.t td{padding:5px 10px;border-top:1px solid var(--line);vertical-align:middle}
+.t th+th,.t td+td{border-left:1px solid var(--line)}
+.t .r{text-align:right}
+.t .ic{color:var(--muted);letter-spacing:6px;white-space:nowrap}
+.thumb{display:inline-block;width:22px;height:28px;border-radius:3px;background:var(--sec);vertical-align:middle;margin-right:6px}
+.foot{padding:6px 10px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.chips2{display:flex;gap:6px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px}
+.chips2 span{padding:1px 8px;border-radius:99px;background:var(--sec)}
+.chips2 span.on{background:var(--primary);color:#fff}
+/* dòng thời gian gọn */
+.tl2{list-style:none;margin:0;padding:6px 10px 6px 26px;position:relative;font-size:13px}
+.tl2:before{content:'';position:absolute;left:14px;top:12px;bottom:12px;width:2px;background:var(--line)}
+.tl2 li{position:relative;display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line)}
+.tl2 li:last-child{border-bottom:0}
+.tl2 li:before{content:'';position:absolute;left:-16px;top:10px;width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.tl2 li.gap:before{background:var(--surface);border:2px solid var(--muted);width:6px;height:6px}
+.tl2 .d{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tl2 .gap{color:var(--muted);font-style:italic}
+/* lịch sử */
+.hist{list-style:none;margin:0;padding:0}
+.hist>li{border-top:1px solid var(--line)}
+.hist>li:first-child{border-top:0}
+.hist .hh{display:flex;gap:8px;align-items:center;padding:6px 10px;font-size:13px}
+.hist .hh b{font-weight:600}.hist .hh span{color:var(--muted);margin-left:auto;font-size:12px}
+.hist table{margin:0 10px 8px;width:calc(100% - 20px);border:1px solid var(--line)}
+/* form gọn */
+.fm{width:100%;border-collapse:collapse;table-layout:fixed;font-size:13px}
+.fm th{width:17%;background:var(--sec);color:var(--muted);font-weight:500;text-align:left;padding:4px 10px;border-top:1px solid var(--line);vertical-align:middle}
+.fm td{width:33%;padding:3px 6px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.fm th+td,.fm td+th{border-left:1px solid var(--line)}
+.fm tr:first-child>*{border-top:0}
+.fm th i{color:var(--err);font-style:normal}
+.in{width:100%;height:28px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font:inherit;font-size:13px;background:var(--surface);color:var(--fg)}
+.in.ch{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.seg span{padding:3px 10px;font-size:12px}.seg span.on{background:var(--primary);color:#fff}
+.photo2{width:72px;height:96px;border:1px dashed var(--border);border-radius:6px;display:grid;place-items:center;color:var(--muted);font-size:11px;text-align:center}
+.savebar{position:sticky;bottom:0;display:flex;gap:8px;align-items:center;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-top:12px;box-shadow:0 -2px 8px rgb(0 0 0/.06)}
+.savebar small{color:var(--muted)}.savebar .sp{margin-left:auto}
+.rules{margin:0;padding-left:18px}.rules li{margin:2px 0}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:1023px){.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:639px){
+ .t{display:block;overflow-x:auto;white-space:nowrap}
+ .tl2 li{grid-template-columns:minmax(0,1fr)}
+ .fm,.fm tbody{display:block}.fm tr{display:grid;grid-template-columns:minmax(0,1fr)}.fm th,.fm td{width:auto!important;border-left:0!important}
+ .fm th{background:none;padding:6px 10px 0;border-top:1px solid var(--line)}.fm td{border-top:0;padding:4px 10px 8px}.in{height:44px;font-size:16px}
+}
+</style>
+<div class="top">
+  <b>Bản mẫu: các tab & form gọn</b>
+  <button aria-pressed="true" data-s="rule">Nguyên tắc</button>
+  <button aria-pressed="false" data-s="docs">Giấy tờ</button>
+  <button aria-pressed="false" data-s="svc">Đi tàu</button>
+  <button aria-pressed="false" data-s="ct">Hợp đồng</button>
+  <button aria-pressed="false" data-s="hist">Lịch sử</button>
+  <button aria-pressed="false" data-s="form">Form sửa</button>
+</div>
+<div class="page">
+
+<section class="screen on" id="rule">
+  <div class="pn"><div class="pn__h">Nguyên tắc chung cho mọi tab và form</div>
+  <div style="padding:10px 14px;font-size:13px">
+    <ol class="rules">
+      <li><b>Một khung chung</b> cho mọi tab: khối có viền, thanh tiêu đề nền nhấn (tên · số lượng bên trái, nút thao tác cỡ nhỏ bên phải) — đúng kiểu khối ở tab Tổng quan. Không còn thanh công cụ trơ trọi hay nút lơ lửng ngoài khung.</li>
+      <li><b>Cùng cỡ chữ & nhịp dòng</b>: chữ 13px, dòng cao ~30px, đầu cột nền xám, kẻ ô mảnh như bảng Tổng quan.</li>
+      <li><b>Không bắt tab nào cũng thành bảng</b>: Đi tàu và Lịch sử vẫn là dòng thời gian, nhưng mỗi mục <b>một dòng</b> (thay vì thẻ to), cùng khung và cùng cỡ chữ.</li>
+      <li><b>Nút trong dòng</b> là chữ/icon nhỏ (Mở, Sửa, Tải), không phải nút viền to.</li>
+      <li><b>Form thêm / sửa</b> dùng lại chính bảng nhãn | giá trị của Tổng quan, ô giá trị thay bằng ô nhập cao 28px → sửa và xem trông như nhau, chỉ khác có ô nhập. Điện thoại giữ ô cao 44px, nhãn trên ô như hiện tại.</li>
+      <li>Áp dụng cho các tab tương tự ở Đối tác (Hợp đồng, Lịch sử), Tàu (Thuyền viên, Lịch sử), Hợp đồng (Yêu cầu thanh toán, Lịch sử), Chuyến tàu, Cơ hội.</li>
+    </ol>
+  </div></div>
+</section>
+
+<section class="screen" id="docs">
+  <div class="pn">
+    <div class="pn__h">Giấy tờ <small>12 giấy · 1 hết hạn · 2 sắp hết hạn</small><span class="acts"><button class="sbtn">Quét</button><button class="sbtn sbtn--p">+ Nạp giấy tờ</button></span></div>
+    <div class="chips2"><span class="on">Tất cả 12</span><span>Tuỳ thân 3</span><span>Chứng chỉ 7</span><span>Sức khoẻ 2</span><span>Bản cũ 4</span></div>
+    <table class="t">
+      <thead><tr><th>Tên</th><th>Loại</th><th>Số</th><th>Cấp ngày</th><th>Hết hạn</th><th>Trạng thái</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><span class="thumb"></span>Hộ chiếu</td><td>Tuỳ thân</td><td class="mono">C1234567</td><td class="mono">03/08/2021</td><td class="mono">03/08/2031</td><td><span class="badge b-ok">Hiệu lực</span></td><td class="ic">👁 ✎ ⤓</td></tr>
+        <tr><td><span class="thumb"></span>Nhận thức an ninh tàu biển</td><td>Chứng chỉ</td><td class="mono">SSA-22-118</td><td class="mono">24/10/2021</td><td class="mono">24/10/2026</td><td><span class="badge b-err">Quá hạn 26 ngày</span></td><td class="ic">👁 ✎ ⤓</td></tr>
+        <tr><td><span class="thumb"></span>Hải đồ điện tử (ECDIS)</td><td>Chứng chỉ</td><td class="mono">EC-0042</td><td class="mono">20/11/2021</td><td class="mono">20/11/2026</td><td><span class="badge b-warn">Còn 1 ngày</span></td><td class="ic">👁 ✎ ⤓</td></tr>
+        <tr><td><span class="thumb"></span>GMDSS tổng quát</td><td>Chứng chỉ</td><td class="mono">GOC-77</td><td class="mono">18/12/2021</td><td class="mono">18/12/2026</td><td><span class="badge b-warn">Còn 29 ngày</span></td><td class="ic">👁 ✎ ⤓</td></tr>
+        <tr><td><span class="thumb"></span>Khám sức khoẻ</td><td>Sức khoẻ</td><td class="mono">KSK-2026-11</td><td class="mono">02/01/2026</td><td class="mono">02/01/2028</td><td><span class="badge b-ok">Hiệu lực</span></td><td class="ic">👁 ✎ ⤓</td></tr>
+      </tbody>
+    </table>
+    <div class="foot">1 giấy chưa có ảnh — bấm ✎ ở dòng đó để nạp ảnh. Kéo thả tệp vào khung này để nạp nhanh.</div>
+  </div>
+</section>
+
+<section class="screen" id="svc">
+  <div class="pn">
+    <div class="pn__h">Các chuyến tàu <small>3 chuyến · 14 tháng trên tàu · chuyến đầu 05/2024</small><span class="acts"><button class="sbtn sbtn--p">+ Tạo chuyến</button></span></div>
+    <ul class="tl2">
+      <li class="gap"><span class="d">02/11/2026 → nay</span><span class="gap">Đang ở bờ 17 ngày</span><span></span></li>
+      <li><span class="d">05/09 → 02/11/2026</span><span><a href="#">MV Mekong Star</a> · Thuyền trưởng · <span class="empty">Halong Maritime JSC</span> · 1 tháng 28 ngày</span><span><a href="#" class="mono">CT-2026-0053</a></span></li>
+      <li class="gap"><span class="d">10/06 → 05/09/2026</span><span class="gap">Ở bờ 2 tháng 26 ngày</span><span></span></li>
+      <li><span class="d">10/01 → 10/06/2026</span><span><a href="#">MV Ocean Glory</a> · Đại phó · <span class="empty">Lotus Shipping</span> · 5 tháng</span><span><a href="#" class="mono">CT-2026-0006</a></span></li>
+      <li><span class="d">05/05 → 12/12/2024</span><span><a href="#">MV Pacific Dawn</a> · Đại phó · <span class="empty">Halong Maritime JSC</span> · 7 tháng 7 ngày</span><span><a href="#" class="mono">CT-2024-0031</a></span></li>
+    </ul>
+  </div>
+  <p class="empty" style="font-size:12px;margin:8px 2px">Giữ dạng dòng thời gian (khoảng ở bờ xen giữa các chuyến) nhưng mỗi chuyến một dòng ~30px thay cho thẻ cao 125px.</p>
+</section>
+
+<section class="screen" id="ct">
+  <div class="pn">
+    <div class="pn__h">Hợp đồng <small>3 hợp đồng</small></div>
+    <table class="t">
+      <thead><tr><th>Số hợp đồng</th><th>Tàu</th><th>Chuyến</th><th>Thời gian</th><th>Trạng thái</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><a href="#" class="mono">HĐ-2026-0057</a></td><td><a href="#">MV Mekong Star</a></td><td class="mono">CT-2026-0053</td><td class="mono">01/09/2026 → 31/03/2027</td><td><span class="badge b-ok">Hiệu lực</span></td><td class="r"><a href="#">Mở</a></td></tr>
+        <tr><td><a href="#" class="mono">HĐ-2026-0012</a></td><td><a href="#">MV Ocean Glory</a></td><td class="mono">CT-2026-0006</td><td class="mono">10/01/2026 → 10/06/2026</td><td><span class="badge b-n">Đã kết thúc</span></td><td class="r"><a href="#">Mở</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="empty" style="font-size:12px;margin:8px 2px">Cùng kiểu cho tab "Yêu cầu thanh toán" của hợp đồng, "Thuyền viên" của tàu, "Hợp đồng" của đối tác.</p>
+</section>
+
+<section class="screen" id="hist">
+  <div class="pn">
+    <div class="pn__h">Lịch sử chỉnh sửa <small>4 lần</small><span class="acts"><button class="sbtn">⤓ Tải log</button></span></div>
+    <ul class="hist">
+      <li><div class="hh">✎ <b>Cập nhật hồ sơ</b> <span>admin@seasmart.local · 06:56 05/11/2026</span></div>
+        <table class="t"><thead><tr><th>Trường</th><th>Trước</th><th>Sau</th></tr></thead><tbody>
+          <tr><td>Họ và tên</td><td class="empty">[KT-HĐ2] B6</td><td>huy</td></tr>
+          <tr><td>Họ tên (EN)</td><td class="empty">trống</td><td>HUY</td></tr>
+          <tr><td>Mã thuyền viên</td><td class="empty">trống</td><td class="mono">HP-0098765</td></tr>
+        </tbody></table></li>
+      <li><div class="hh">⤒ <b>Nạp giấy tờ</b> · Hộ chiếu <span>admin · 15:20 03/11/2026</span></div></li>
+      <li><div class="hh">✓ <b>Duyệt giấy tờ</b> · 3 trường <span>admin · 15:31 03/11/2026</span></div></li>
+      <li><div class="hh">＋ <b>Tạo hồ sơ</b> <span>admin · 09:02 01/11/2026</span></div></li>
+    </ul>
+  </div>
+</section>
+
+<section class="screen" id="form">
+  <div class="crumb">Thuyền viên / Nguyễn Văn Minh / Sửa</div>
+  <div class="two">
+    <div class="pn">
+      <div class="pn__h">Thông tin chung <small>8/10</small><span class="acts"><button class="sbtn">Quét CCCD</button><button class="sbtn">Quét hộ chiếu</button></span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 92px">
+        <table class="fm"><tbody>
+          <tr><th>Họ và tên <i>*</i></th><td colspan="3"><input class="in ch" value="Nguyễn Văn Minh"></td></tr>
+          <tr><th>Tên tiếng Anh</th><td><input class="in" value="NGUYEN VAN MINH"></td><th>Tên tiếng Trung</th><td><input class="in"></td></tr>
+          <tr><th>Ngày sinh</th><td><input class="in" value="12/05/1992"></td><th>Giới tính</th><td><span class="seg"><span class="on">Nam</span><span>Nữ</span><span>Khác</span></span></td></tr>
+          <tr><th>Nguyên quán</th><td><input class="in" value="Nam Định"></td><th>Số con</th><td><input class="in" value="2"></td></tr>
+          <tr><th>Hôn nhân</th><td colspan="3"><span class="seg"><span>Độc thân</span><span class="on">Đã kết hôn</span><span>Ly hôn</span><span>Goá</span></span></td></tr>
+          <tr><th>Địa chỉ</th><td colspan="3"><input class="in" value="Số 18, ngõ 42 Trần Hưng Đạo, TP. Nam Định"></td></tr>
+        </tbody></table>
+        <div style="padding:8px;border-left:1px solid var(--line)"><div class="photo2">Ảnh 4×6<br>kéo vào đây</div></div>
+      </div>
+    </div>
+    <div class="pn">
+      <div class="pn__h">Thể chất <small>5/7</small></div>
+      <table class="fm"><tbody>
+        <tr><th>Chiều cao</th><td><input class="in" value="170 cm"></td><th>Cân nặng</th><td><input class="in" value="68 kg"></td></tr>
+        <tr><th>Nhóm máu</th><td colspan="3"><span class="seg"><span>A</span><span>B</span><span>AB</span><span class="on">O</span></span></td></tr>
+        <tr><th>Size giày</th><td><input class="in" value="41"></td><th>Size áo</th><td><input class="in" value="L"></td></tr>
+        <tr><th>Size quần</th><td><input class="in"></td><th>Size bảo hộ</th><td><input class="in"></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <div class="pn" style="margin-top:12px">
+    <div class="pn__h">Gia quyến <small>2 người</small><span class="acts"><button class="sbtn">+ Thêm người</button></span></div>
+    <table class="t">
+      <thead><tr><th>Họ tên</th><th>Quan hệ</th><th>Điện thoại</th><th>CCCD</th><th>Liên lạc</th><th>Bảo lãnh</th><th></th></tr></thead>
+      <tbody>
+        <tr><td><input class="in" value="Trần Thị Lan"></td><td><input class="in" value="Vợ"></td><td><input class="in" value="0987 111 222"></td><td><input class="in" value="036194004321"></td><td>☑</td><td>☑</td><td class="ic">✕</td></tr>
+        <tr><td><input class="in" value="Nguyễn Văn Bình"></td><td><input class="in" value="Bố"></td><td><input class="in" value="0915 333 444"></td><td><input class="in"></td><td>☐</td><td>☐</td><td class="ic">✕</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="savebar"><b>2 thay đổi</b> <small>Họ và tên · Nhóm máu</small><span class="sp"></span><button class="btn">Huỷ</button><button class="btn btn--p">Lưu thay đổi</button></div>
+  <p class="empty" style="font-size:12px;margin:8px 2px">Form thuyền viên hiện dài ~3.800px (nhãn trên ô, mỗi trường cao 70px). Dạng bảng ước tính còn ~1.500px. Giữ nguyên quy tắc lưu, chip "Đã sửa"/viền đổi màu, thanh lưu dính đáy. Mục lục bên trái giữ như màn xem.</p>
+</section>
+
+</div>
+<script>
+document.querySelectorAll('.top button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.top button').forEach(x=>x.setAttribute('aria-pressed',x===b))
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s))
+})
+</script>
+</body>
+</html>

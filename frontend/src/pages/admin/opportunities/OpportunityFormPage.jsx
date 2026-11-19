@@ -236,7 +236,7 @@ function OpportunityForm({ opportunity, prefill }) {
             <Form.Item name="ship_owner_id" className={cn('ship_owner_id', 'sf-c4')} label={label('ship_owner_id', 'Chủ tàu')} rules={[{ required: true, message: vesselHasNoOwner ? 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng.' : 'Chọn chủ tàu' }]} extra={vesselHasNoOwner ? 'Tàu chưa có chủ tàu' : ownerFromVessel ? 'Lấy theo tàu' : undefined}>
               <Select {...selectProps} loading={owners.isLoading} options={vesselHasNoOwner ? [] : ownerOptions} disabled={vesselHasNoOwner} placeholder="Chọn chủ tàu" onChange={onOwnerChange} />
             </Form.Item>
-            <Form.Item name="vessel_id" className={cn('vessel_id', 'sf-c4')} label={label('vessel_id', 'Tàu')} extra="Để trống nếu chủ tàu chưa báo tàu. Phải có khi chốt.">
+            <Form.Item name="vessel_id" className={cn('vessel_id', 'sf-c4')} label={label('vessel_id', 'Tàu')} extra="Để trống nếu chủ tàu chưa báo tàu. Phải có khi chốt." tooltip="Để trống nếu chủ tàu chưa báo tàu. Phải có khi chốt.">
               <Select {...selectProps} filterOption={false} onSearch={setVesselSearch} onChange={onVesselChange} loading={vessels.isLoading} options={vesselOptions} placeholder="Chọn tàu" />
             </Form.Item>
             <Form.Item name="rank_id" className={cn('rank_id', 'sf-c4')} label={label('rank_id', 'Chức danh')} rules={[{ required: true, message: 'Chọn chức danh' }]}>
@@ -268,7 +268,7 @@ function OpportunityForm({ opportunity, prefill }) {
             <Form.Item name="planned_leave_port_id" className={cn('planned_leave_port_id', 'sf-c3')} label={label('planned_leave_port_id', 'Nơi rời tàu')}>
               <Select {...selectProps} loading={ports.isLoading} options={portOptions} placeholder="Chọn cảng" />
             </Form.Item>
-            <Form.Item name="deadline" className={cn('deadline', 'sf-c3')} label={label('deadline', 'Hạn chốt')} rules={[{ required: true, message: 'Chọn hạn chốt' }]} extra="Ngày chủ tàu cần danh sách">
+            <Form.Item name="deadline" className={cn('deadline', 'sf-c3')} label={label('deadline', 'Hạn chốt')} rules={[{ required: true, message: 'Chọn hạn chốt' }]} extra="Ngày chủ tàu cần danh sách" tooltip="Ngày chủ tàu cần danh sách">
               <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
             </Form.Item>
             <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')}>

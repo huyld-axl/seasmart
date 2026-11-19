@@ -153,7 +153,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
         </p>
       </div>
 
-      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="ct-form" initialValues={initial} onFinish={submit} onValuesChange={() => blocked && setBlocked(null)} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
+      <Form ref={shortcuts} form={form} layout="vertical" requiredMark className="ct-form sf-compact" initialValues={initial} onFinish={submit} onValuesChange={() => blocked && setBlocked(null)} scrollToFirstError={{ behavior: 'smooth', block: 'center' }}>
         {blocked ? (
           <Banner
             tone="error"
@@ -194,7 +194,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                   notFoundContent={voyages.isLoading ? 'Đang tìm…' : 'Không có chuyến nào chưa có hợp đồng'}
                 />
               </Form.Item>
-              <Form.Item className="sf-c6 ct-pos" label="Chức danh" extra="Theo chuyến">
+              <Form.Item className="sf-c6 ct-pos" label="Chức danh" extra="Theo chuyến" tooltip="Theo chuyến">
                 <Input value={picked?.rank_name || ''} disabled />
               </Form.Item>
               <Form.Item

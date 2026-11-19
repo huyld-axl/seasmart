@@ -11,7 +11,7 @@ export default function useCrewListState() {
   const key = `seafarers:list:${userId ?? 'anonymous'}`
   const [saved, setSaved] = useState(() => read(key))
   useEffect(() => {
-    const reset = () => setSaved((previous) => ({ key, value: { ...(previous.key === key ? previous.value : read(key).value), search: '', page: 1 } }))
+    const reset = () => setSaved({ key, value: INITIAL })
     window.addEventListener(RESET_LIST_SEARCH, reset)
     return () => window.removeEventListener(RESET_LIST_SEARCH, reset)
   }, [key])

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import dayjs from 'dayjs'
 import useListSessionState from '../useListSessionState'
 import { resetListSearch } from '../../utils/resetListSearch'
+import useCrewListState from '../../pages/admin/seafarers/useCrewListState'
 
 let userId = 1
 vi.mock('../../stores/authStore', () => ({ default: (select) => select({ user: { id: userId } }) }))
@@ -10,6 +11,44 @@ beforeEach(() => { sessionStorage.clear(); userId = 1 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 describe('list session state', () => {
+  it('menu resets status and all filters, detail remount preserves them', () => {
+    const useList = () => ({
+      tab: useListSessionState('partners', 'tab', 'all'),
+      filters: useListSessionState('partners', 'filters', {}),
+      channels: useListSessionState('partners', 'channels', []),
+      country: useListSessionState('partners', 'countryId', undefined),
+    })
+    const first = renderHook(useList)
+    act(() => {
+      first.result.current.tab[1]('inactive')
+      first.result.current.filters[1]({ rank_id: 2 })
+      first.result.current.channels[1](['zalo'])
+      first.result.current.country[1](7)
+    })
+    first.unmount()
+    const back = renderHook(useList)
+    expect(back.result.current.tab[0]).toBe('inactive')
+    expect(back.result.current.filters[0]).toEqual({ rank_id: 2 })
+    act(() => resetListSearch())
+    expect(back.result.current.tab[0]).toBe('all')
+    expect(back.result.current.filters[0]).toEqual({})
+    expect(back.result.current.channels[0]).toEqual([])
+    expect(back.result.current.country[0]).toBeUndefined()
+  })
+  it('crew list keeps context on detail return and clears it on menu navigation', () => {
+    const first = renderHook(useCrewListState)
+    act(() => {
+      first.result.current.setField('tab')('standby')
+      first.result.current.setField('search')('QA')
+      first.result.current.setField('page')(3)
+      first.result.current.setField('filters')({ ranks: [{ value: 2 }], vessels: [], certs: [], ageMin: 20, ageMax: 40 })
+    })
+    first.unmount()
+    const back = renderHook(useCrewListState)
+    expect(back.result.current.state).toMatchObject({ tab: 'standby', search: 'QA', page: 3 })
+    act(() => resetListSearch())
+    expect(back.result.current.state).toMatchObject({ tab: 'all', search: '', page: 1, filters: { ranks: [], vessels: [], certs: [], ageMin: null, ageMax: null } })
+  })
   it('menu navigation clears search and page for mounted and saved lists', () => {
     const first = renderHook(() => ({ search: useListSessionState('partners', 'search', ''), page: useListSessionState('partners', 'page', 1) }))
     act(() => { first.result.current.search[1]('QA'); first.result.current.page[1](3) })
@@ -19,7 +58,7 @@ describe('list session state', () => {
     expect(first.result.current.search[0]).toBe('')
     expect(first.result.current.page[0]).toBe(1)
     expect(sessionStorage.getItem('list:1:vessels:search')).toBeNull()
-    expect(JSON.parse(sessionStorage.getItem('seafarers:list:1'))).toMatchObject({ search: '', page: 1 })
+    expect(sessionStorage.getItem('seafarers:list:1')).toBeNull()
   })
   it.each(['partners', 'vessels', 'opportunities', 'voyages', 'contracts:default', 'bills:all:default'])('restores search, filters and page for %s after remount', (scope) => {
     const useList = () => ({

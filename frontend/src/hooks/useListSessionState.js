@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import useAuthStore from '../stores/authStore'
 import { RESET_LIST_SEARCH } from '../utils/resetListSearch'
 
@@ -6,6 +6,8 @@ import { RESET_LIST_SEARCH } from '../utils/resetListSearch'
 export default function useListSessionState(scope, field, initial, revive = (value) => value) {
   const userId = useAuthStore((state) => state.user?.id)
   const key = `list:${userId ?? 'anonymous'}:${scope}:${field}`
+  const initialRef = useRef(initial)
+  initialRef.current = initial
   const read = () => {
     const fallback = () => typeof initial === 'function' ? initial() : initial
     try {
@@ -24,7 +26,8 @@ export default function useListSessionState(scope, field, initial, revive = (val
   const [saved, setSaved] = useState(() => ({ key, value: read() }))
   useEffect(() => {
     const reset = () => {
-      if (field === 'search' || field === 'page') setSaved({ key, value: field === 'search' ? '' : 1 })
+      const initialValue = initialRef.current
+      setSaved({ key, value: typeof initialValue === 'function' ? initialValue() : initialValue })
     }
     window.addEventListener(RESET_LIST_SEARCH, reset)
     return () => window.removeEventListener(RESET_LIST_SEARCH, reset)

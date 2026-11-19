@@ -48,6 +48,7 @@
 .crew-head__photo--logo .fl-tile .anticon { font-size: 72px; }
 
 /* Tách liên hệ công ty và người phụ trách thành hai vùng, cho phép email dài xuống dòng. */
+.partner-profile .crew-head__person { flex-basis: 600px; }
 .partner-profile .crew-head__text { flex: 1; }
 .partner-profile .crew-head__meta { align-items: center; gap: 6px 12px; margin-top: 8px; padding-top: 8px; }
 .partner-profile .crew-head__meta dd { gap: 8px; overflow-wrap: anywhere; }
@@ -60,13 +61,24 @@
 .partner-primary__content > .ds-quick { flex-shrink: 0; }
 .partner-profile .crew-head__meta dt, .partner-primary h2 { font-size: 12px; }
 .partner-profile .crew-head__text { font-size: 14px; }
+/* Cửa sổ chia đôi: không ép logo + liên hệ và ghi chú vào cùng một hàng. */
+@media (min-width: 640px) and (max-width: 1199px) {
+  .partner-profile .crew-head__person { flex: 1 1 100%; }
+  .partner-profile .crew-head__photo--logo { width: 112px; height: 112px; }
+  .partner-profile .sf-note--head { flex-basis: 100%; max-width: none; padding-left: 0; border-left: 0; }
+  .partner-profile .crew-head__meta, .partner-profile .partner-primary { grid-template-columns: 112px minmax(0, 1fr); }
+  .partner-profile .crew-head__meta dd { align-items: flex-start; }
+  .partner-profile .ds-contact-actions { flex-shrink: 0; }
+  .partner-profile .partner-primary__content > .ds-quick { flex-shrink: 1; max-width: 100%; }
+}
 @media (max-width: 639px) {
   .partner-profile .crew-head__meta { align-items: start; gap: 0; padding-top: 0; border-top: 0; }
   .partner-profile .crew-head__meta dt, .partner-profile .crew-head__meta dd { align-self: stretch; line-height: 22px; }
   .partner-profile .crew-head__meta dd { flex-direction: column; align-items: flex-start; gap: 6px; }
-  .partner-primary { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr); }
+  .partner-primary { grid-column: 1 / -1; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); align-items: start; gap: 4px 12px; }
   .partner-primary__content { flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; }
-  .partner-primary__content > .ds-quick { margin-left: calc(max(96px, 38%) + 12px); max-width: calc(100% - max(96px, 38%) - 12px); }
+  .partner-primary .partner-primary__identity { margin-left: 0; max-width: 100%; }
+  .partner-primary__content > .ds-quick { margin-left: 0; max-width: 100%; }
   .partner-profile #sf-contact .sf-ro, .partner-profile #sf-person .sf-ro { grid-template-columns: minmax(72px, 28%) minmax(0, 1fr); column-gap: 8px; }
   .partner-profile #sf-person .sf-item__head { flex-wrap: wrap; padding: 10px 12px; gap: 8px; }
   .partner-profile #sf-person .sf-item__title { flex: 1 0 100%; min-width: 0; overflow-wrap: anywhere; }

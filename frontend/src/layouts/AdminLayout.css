@@ -13,13 +13,16 @@
 }
 
 .app-shell__sider {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   width: 240px;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   border-right: 1px solid var(--border);
   background: var(--surface);
@@ -29,6 +32,10 @@
 .app-shell__sider--collapsed {
   width: 64px;
 }
+
+/* Chừa đúng chỗ cho menu cố định, kể cả khi thu gọn; mobile không có aside. */
+.app-shell:has(> .app-shell__sider) { padding-left: 240px; }
+.app-shell:has(> .app-shell__sider--collapsed) { padding-left: 64px; }
 
 .app-shell__brand {
   display: flex;
@@ -47,6 +54,7 @@
   min-height: 0;
   padding: 12px;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   scrollbar-width: thin;
 }
 

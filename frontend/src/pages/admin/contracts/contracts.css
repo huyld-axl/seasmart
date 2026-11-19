@@ -146,3 +146,67 @@
   .ct-bar .ct-fig__label, .ct-bar .ct-fig__unit { font-size: 11px; }
   .ct-bar .sf-savebar__actions { flex: 1 1 100%; }
 }
+
+/* Màn xem hợp đồng / yêu cầu thanh toán: bảng gọn kẻ ô (DealView, BalanceTable, BillMoneyView, BillPeriods). */
+.ct-deal { overflow-x: auto; }
+.ct-deal table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ct-deal th, .ct-deal td { padding: 5px 10px; border-bottom: 1px solid var(--border-strong); text-align: left; font-weight: 400; vertical-align: top; }
+.ct-deal tr > * + * { border-left: 1px solid var(--border-strong); }
+.ct-deal thead th { background: var(--secondary); color: var(--muted); font-weight: 500; white-space: nowrap; }
+.ct-deal tbody th { background: var(--secondary); color: var(--muted); font-weight: 500; }
+.ct-deal tr:last-child > * { border-bottom: 0; }
+.ct-deal__num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.ct-deal__empty td { color: var(--muted); font-size: 12px; }
+.ct-deal__total th, .ct-deal__total td { color: var(--foreground) !important; font-weight: 600 !important; }
+.ct-deal__note { display: block; color: var(--muted); font-size: 11.5px; font-weight: 400; }
+.ct-deal__fig { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; white-space: nowrap; }
+/* Hai bên Phải thu | Phải chi: cột cố định, nền nhạt theo bên để mắt dóng thẳng từ trên xuống. */
+.ct-deal--sides table { table-layout: fixed; }
+.ct-deal__c-name { width: 30%; }
+.ct-deal__c-side { width: 35%; }
+.ct-deal--sides thead th { text-align: right; }
+.ct-deal--sides thead th:first-child { text-align: left; }
+.ct-deal__who { overflow: hidden; font-weight: 600; text-overflow: ellipsis; }
+.ct-detail--deal { gap: 12px; }
+@media (min-width: 1100px) { /* mốc riêng: cùng mốc 2 cột của .ct-detail */
+  .ct-detail.ct-detail--deal { grid-template-columns: minmax(0, 1fr) 300px; }
+}
+@media (max-width: 639px) {
+  .ct-deal thead th { white-space: normal; }
+  .ct-deal__c-name { width: 34%; }
+  .ct-deal__c-side { width: 33%; }
+}
+
+.ct-deal--sides thead th { background: var(--secondary); color: var(--muted); }
+/* Ba khung Hằng tháng / Một lần / Kỳ thanh toán tách nhau một khoảng nhỏ trong khối Thoả thuận. */
+.ct-deal-split { display: grid; gap: 12px; }
+
+/* Thứ bậc khối thoả thuận: hàng Khoản | Phải thu | Phải chi (to nhất, nền nhấn) > tên nhóm (nền xám) > dòng khoản (nền trắng). */
+.ct-deal-box { overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.ct-deal-box thead th { padding: 10px; background: color-mix(in srgb, var(--primary) 14%, var(--surface)); color: var(--foreground); font-size: 14px; font-weight: 600; white-space: normal; }
+.ct-deal-box .ct-deal__group th { padding: 6px 10px; background: var(--secondary); color: var(--foreground); font-size: 13px; font-weight: 600; }
+.ct-deal-box .ct-deal__group .ct-block__unit { float: right; font-weight: 400; }
+.ct-deal-box tbody tr:not(.ct-deal__group) > th { background: var(--surface); color: var(--foreground); }
+
+/* Bảng khoản / kỳ thanh toán khi sửa (DealTable, TermsTable, BillMoneyTable) trong form gọn: cùng kiểu bảng xem. */
+@media (min-width: 1024px) {
+  .sf-compact .ct-block { gap: 0; }
+  .sf-compact .ct-block__title { margin: 0; padding: 6px 12px; border: 1px solid var(--border); border-bottom: 0; border-radius: 12px 12px 0 0; background: color-mix(in srgb, var(--primary) 14%, var(--surface)); font-size: 14px; }
+  .sf-compact .ct-table-wrap { border-color: var(--border); border-radius: 0 0 12px 12px; }
+  .sf-compact .ct-table { font-size: 13px; }
+  .sf-compact .ct-table th, .sf-compact .ct-table td { padding: 3px 10px; border-top-color: var(--border-strong); }
+  .sf-compact .ct-table td + td, .sf-compact .ct-table thead th + th { border-left-color: var(--border-strong); }
+  .sf-compact .ct-table thead th { padding: 5px 10px; border-bottom: 1px solid var(--border-strong); background: var(--secondary); color: var(--muted); font-size: 13px; }
+  .sf-compact .ct-table tbody th { background: var(--secondary); color: var(--muted); font-weight: 400; }
+  .sf-compact .ct-table .ct-total th, .sf-compact .ct-table .ct-total td { background: var(--surface); color: var(--foreground); font-weight: 600; }
+  .sf-compact .ct-side { font-size: 13px; }
+  .sf-compact .ct-add td { padding: 2px 6px; }
+  .sf-compact .ct-add .ant-btn { height: 26px; font-size: 12px; }
+  .sf-compact .ct-table .ant-input, .sf-compact .ct-table .ant-input-number, .sf-compact .ct-table .ant-input-number-affix-wrapper, .sf-compact .ct-table .ant-select {
+    --ant-control-height: 28px; --ant-input-padding-block: 3px; --ant-input-number-padding-block: 3px; --ant-input-number-input-font-size: 13px; --ant-input-input-font-size: 13px; --ant-select-font-size: 13px;
+  }
+  .sf-compact .sf-savebar.ct-bar { padding: 6px 12px; }
+  .sf-compact .ct-budget { padding: 4px 10px; }
+  .sf-compact .ct-budget__value b { font-size: 18px; }
+  .sf-compact .ct-fig__value b { font-size: 15px; }
+}

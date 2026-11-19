@@ -48,6 +48,7 @@ import { conflictTitle } from '../components/ds/conflictMerge'
 import ScanButton from '../components/ds/ScanButton'
 import AutofillBanner from '../components/ds/AutofillBanner'
 import DescriptionList from '../components/ds/DescriptionList'
+import InfoTable, { InfoList } from '../components/ds/InfoTable'
 import SlidePanel from '../components/ds/SlidePanel'
 import RequirementFit from '../components/ds/RequirementFit'
 import CrewTimeline, { CrewTimelineLegend } from '../components/ds/CrewTimeline'
@@ -194,6 +195,18 @@ const AUDIT = [
   { id: 3, kind: 'edit', tone: 'success', title: 'Sửa Sign on · dòng 2', time: '14:58 · 06/10/2026', before: '05/07/2022', after: '05/01/2022', reason: 'AI đọc nhầm tháng 07 thành 01, đối chiếu dấu xuất cảnh', actor: 'Lê Thu Hà', source: 'Trang 3 · so-thuyen-vien-nguyen-thi-hong-nhung.pdf' },
   { id: 2, kind: 'accept', tone: 'success', title: 'Chấp nhận 14 trường AI đề xuất', time: '14:51 · 06/10/2026', actor: 'Lê Thu Hà', source: 'Trang 1–3' },
   { id: 1, kind: 'upload', tone: 'neutral', title: 'Tải lên sổ thuyền viên', time: '14:40 · 06/10/2026', actor: 'Phạm Văn Tùng', source: 'so-thuyen-vien-nguyen-thi-hong-nhung.pdf · 12 trang' },
+]
+
+const INFO_FIELDS = [
+  ['Mã thuyền viên', 'TV-0142', 4], ['Chức danh', 'Máy hai', 4],
+  ['Ngày sinh', '12/05/1992', 4], ['Tên tiếng Trung', null, 4],
+  ['Địa chỉ thường trú', 'Số 18, ngõ 42 Trần Hưng Đạo, TP. Nam Định', 12],
+  { sub: 'Hộ chiếu' },
+  ['Số hộ chiếu', 'C1234567', 4], ['Ngày hết hạn', '03/08/2031', 4],
+]
+const INFO_ITEMS = [
+  { title: 'Trần Thị Lan', tags: ['Liên lạc', 'Bảo lãnh'], fields: [['Họ tên', 'Trần Thị Lan'], ['Quan hệ', 'Vợ'], ['Số điện thoại', '0987 111 222'], ['Zalo', null]] },
+  { title: 'Nguyễn Văn Bình', fields: [['Họ tên', 'Nguyễn Văn Bình'], ['Quan hệ', 'Bố'], ['Số điện thoại', '0915 333 444'], ['Zalo', null]] },
 ]
 
 const DETAILS = [
@@ -722,6 +735,12 @@ export default function DesignSystemPage() {
             <DescriptionList items={DETAILS} />
           </Card>
         </div>
+        <Demo label="InfoTable: bảng nhãn | giá trị của màn chi tiết, hai cặp mỗi dòng; điện thoại một cặp" wide>
+          <div className="dsp-box"><InfoTable fields={INFO_FIELDS} /></div>
+        </Demo>
+        <Demo label="InfoList: bản ghi lặp (tài khoản, người thân) mỗi bản ghi một dòng; điện thoại thành thẻ" wide>
+          <div className="dsp-box"><InfoList items={INFO_ITEMS} /></div>
+        </Demo>
       </Section>
 
       <Section id="khung-danh-sach" title="Khung danh sách">

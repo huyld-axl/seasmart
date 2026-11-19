@@ -160,15 +160,15 @@ export default function PartnerDetailPage() {
             <dl className="crew-head__meta">
               {owner.phone && (
                 <>
-                  <dt>Điện thoại công ty</dt>
-                  <dd>{owner.phone}<PhoneActions phone={owner.phone} /></dd>
+                  <div className="crew-head__pair"><dt>Điện thoại công ty</dt>
+                  <dd>{owner.phone}<PhoneActions phone={owner.phone} /></dd></div>
                 </>
               )}
-              {owner.zalo && <><dt>Zalo công ty</dt><dd>{owner.zalo}<ZaloActions value={owner.zalo} /></dd></>}
+              {owner.zalo && <><div className="crew-head__pair"><dt>Zalo công ty</dt><dd>{owner.zalo}<ZaloActions value={owner.zalo} /></dd></div></>}
               {owner.email && (
                 <>
-                  <dt>Email công ty</dt>
-                  <dd>{owner.email}<EmailActions email={owner.email} /></dd>
+                  <div className="crew-head__pair"><dt>Email công ty</dt>
+                  <dd>{owner.email}<EmailActions email={owner.email} /></dd></div>
                 </>
               )}
             </dl>

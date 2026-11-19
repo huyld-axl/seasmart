@@ -138,3 +138,28 @@
   .op-mail, .op-mail--max { right: 0; bottom: 0; width: 100vw; max-width: 100vw; height: 92vh; border-radius: 16px 16px 0 0; transform: none; }
   .op-mail--min { width: 100vw; height: auto; }
 }
+
+/* Hồ sơ yêu cầu trong form gọn (màn rộng): bỏ khung lồng, đầu nhóm là dải xám mỏng, mỗi yêu cầu một dòng,
+   các ô đứng cạnh nhau cao 28px, kẻ ô mảnh như bảng nhãn | giá trị. */
+@media (min-width: 1024px) {
+  .sf-layout .rq { margin: 0; border: 0; border-radius: 0; font-size: 13px; }
+  .sf-layout .rq__group + .rq__group { border-top: 1px solid var(--border-strong); }
+  .sf-layout .rq__group-head { align-items: center; padding: 4px 10px; border-bottom: 1px solid var(--border-strong); background: var(--secondary); }
+  .sf-layout .rq__group-head > div:first-child { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; min-width: 0; }
+  .sf-layout .rq__group-title { color: var(--foreground); font-size: 13px; }
+  .sf-layout .rq__group-hint { margin: 0; font-size: 12px; }
+  .sf-layout .rq__group-head .ant-btn { height: 24px; padding: 0 8px; font-size: 12px; }
+  .sf-layout .rq__row { grid-template-columns: minmax(0, 1fr) 150px 28px; gap: 0 8px; padding: 3px 10px; border-top-color: var(--border-strong); }
+  .sf-layout .rq__group-head + .rq__row { border-top: 0; }
+  .sf-layout .rq__fields { grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: center; gap: 6px; }
+  .sf-layout .rq__fields:has(.ant-segmented) { grid-template-columns: 170px minmax(0, 1fr); grid-auto-flow: row; }
+  .sf-layout .rq__inline { flex-wrap: nowrap; gap: 6px; }
+  .sf-layout .rq__inline > .ant-input-number, .sf-layout .rq__inline > .ant-input-number-affix-wrapper { width: 110px; flex: none; }
+  .sf-layout .rq__empty { padding: 6px 10px; font-size: 12px; }
+  .sf-layout .rq .ant-btn-icon-only { width: 28px; height: 28px; }
+  .sf-layout .rq .ant-select, .sf-layout .rq .ant-input-number, .sf-layout .rq .ant-input-number-affix-wrapper, .sf-layout .rq .ant-picker {
+    --ant-control-height: 28px; --ant-font-size: 13px; --ant-select-font-size: 13px; --ant-input-number-padding-block: 3px; --ant-input-number-input-font-size: 13px;
+  }
+  .sf-layout .rq .ant-segmented { --ant-segmented-item-selected-bg: var(--surface); font-size: 12px; }
+  .sf-layout .rq .ant-segmented .ant-segmented-item-label { min-height: 22px; line-height: 22px; padding: 0 8px; }
+}

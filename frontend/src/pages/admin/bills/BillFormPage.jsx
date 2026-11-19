@@ -122,7 +122,7 @@ function BillForm({ data }) {
         <p className="sf-head__desc">Kỳ {bill.seq}/{bill.periods} · {formatDate(bill.period_start)} → {formatDate(bill.period_end)} · {bill.contract.contract_number} · {bill.ship_owner.company_name}</p>
       </div>
 
-      <Form ref={shortcuts} form={form} layout="vertical" className="ct-form" initialValues={initial} onFinish={submit}>
+      <Form ref={shortcuts} form={form} layout="vertical" className="ct-form sf-compact" initialValues={initial} onFinish={submit}>
         <section className="sf-panel ct-panel" aria-labelledby="bl-general">
           <div className="sf-panel__head">
             <div>
@@ -140,7 +140,7 @@ function BillForm({ data }) {
                   validateTrigger={['onChange', 'onBlur']}
                   required
                   rules={[{ validator: validateDueDate }]}
-                  extra="Tính tự động theo kỳ thanh toán của hợp đồng. Cần dời (ngày lễ…) thì sửa ở đây."
+                  extra="Tính tự động theo kỳ thanh toán của hợp đồng. Cần dời (ngày lễ…) thì sửa ở đây." tooltip="Tính tự động theo kỳ thanh toán của hợp đồng. Cần dời (ngày lễ…) thì sửa ở đây."
                 >
                   <DateField
                     format="DD/MM/YYYY"

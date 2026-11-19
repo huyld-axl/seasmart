@@ -110,22 +110,6 @@ export default function VesselCrewTab({ vessel }) {
 
   return (
     <div style={{ display: 'grid', gap: 16 }}>
-      <div className="vy-crew-tools">
-        <Select
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder="Tất cả chức danh"
-          aria-label="Lọc theo chức danh"
-          style={{ width: 200 }}
-          value={rankId}
-          onChange={(value) => { setRankId(value); setSelected([]) }}
-          loading={ranks.isLoading}
-          options={(ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi }))}
-        />
-        {phone ? null : <SegmentedPick className="vy-crew-tools__end" value={view} options={VIEWS} label="Cách xem" onChange={setView} />}
-      </div>
-
       <section className="crew-panel">
         <div className="crew-panel__head">
           <h2 className="crew-panel__title">
@@ -139,6 +123,21 @@ export default function VesselCrewTab({ vessel }) {
               <Button size="small" icon={<RightOutlined />} aria-label="Tiến 1 tuần" title="Tiến 1 tuần" onClick={() => setShift((current) => current + 7)} />
             </span>
           ) : null}
+        </div>
+        <div className="vy-crew-tools">
+          <Select
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            placeholder="Tất cả chức danh"
+            aria-label="Lọc theo chức danh"
+            style={{ width: 200 }}
+            value={rankId}
+            onChange={(value) => { setRankId(value); setSelected([]) }}
+            loading={ranks.isLoading}
+            options={(ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi }))}
+          />
+          {phone ? null : <SegmentedPick className="vy-crew-tools__end" value={view} options={VIEWS} label="Cách xem" onChange={setView} />}
         </div>
         {body}
       </section>

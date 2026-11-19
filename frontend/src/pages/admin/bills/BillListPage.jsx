@@ -228,7 +228,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
         rowKey="id"
         className="crew-table"
         dataSource={rows}
-        columns={columns}
+        columns={shipOwnerId ? columns.filter((c) => c.key !== 'owner') : columns}
         pagination={false}
         scroll={tableScroll}
         onRow={(row) => ({ onClick: () => open(row), onKeyDown: (event) => event.key === 'Enter' && open(row), tabIndex: 0 })}
@@ -237,7 +237,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
   }
 
   return (
-    <div className="ds-page">
+    <div className={shipOwnerId ? 'ds-page bl-embed' : 'ds-page'}>
       <div ref={listRef} className="ds-card ds-card--fixed bl-list">
         <div className="ds-toolbar crew-toolbar">
           <StatusTabs phone="chips" tabs={tabs} value={tab} onChange={changeTab} />

@@ -240,6 +240,7 @@ function VesselForm({ vessel }) {
   const shortcuts = useFormShortcuts({ autoFocus: !isEdit, onCancel: () => navigate(cancelTo) })
   const changeLabels = [...changed].map((key) => FIELD_LABELS[key] || key)
 
+  const imoHint = smartOn ? (!imo ? 'Nhập số IMO để dùng Lấy thông minh.' : !imoValid ? 'IMO sai số kiểm tra nên không lấy thông minh được.' : cooldown > 0 ? 'Hệ thống chỉ lấy thông minh 1 lần mỗi 2 phút. Có thể lấy sau khi hết giờ.' : 'Điền thêm năm đóng, tải trọng, quản lý… từ nguồn bên ngoài. Toàn hệ thống chỉ 1 lần mỗi 2 phút.') : 'Để trống nếu tàu không có IMO.'
   return (
     <FormFrame
       crumbs={isEdit ? [{ label: 'Tàu', to: '/vessels' }, { label: vessel.vessel_name, to: `/vessels/${vessel.id}` }, { label: 'Sửa' }] : [{ label: 'Tàu', to: '/vessels' }, { label: 'Thêm tàu' }]}
@@ -282,7 +283,8 @@ function VesselForm({ vessel }) {
               label={label('imo_number', 'Số IMO')}
               htmlFor="imo_number"
               className={cn('imo_number', 'sf-c6')}
-              extra={smartOn ? (!imo ? 'Nhập số IMO để dùng Lấy thông minh.' : !imoValid ? 'IMO sai số kiểm tra nên không lấy thông minh được.' : cooldown > 0 ? 'Hệ thống chỉ lấy thông minh 1 lần mỗi 2 phút. Có thể lấy sau khi hết giờ.' : 'Điền thêm năm đóng, tải trọng, quản lý… từ nguồn bên ngoài. Toàn hệ thống chỉ 1 lần mỗi 2 phút.') : 'Để trống nếu tàu không có IMO.'}
+              extra={imoHint}
+              tooltip={imoHint}
             >
               <Space.Compact block>
                 <Form.Item name="imo_number" noStyle rules={[imoRule]} normalize={digitsOnly}>
@@ -307,9 +309,7 @@ function VesselForm({ vessel }) {
         <FormSection index={1} section={SECTIONS[1]} meta={sectionMeta(1)}>
           <div className="sf-grid">
             <Form.Item name="vessel_type_id" label={label('vessel_type_id', 'Loại tàu')} className={cn('vessel_type_id', 'sf-c4')} extra={
-              <>
-                Lấy từ danh mục Loại tàu.
-                {hints.vessel_type ? (
+              hints.vessel_type ? (
                   quickType ? (
                     <QuickAddVesselType nameEn={hints.vessel_type} existingCodes={(types.data || []).map((row) => row.code)} onCreated={typeCreated} onCancel={() => setQuickType(false)} />
                   ) : (
@@ -320,12 +320,11 @@ function VesselForm({ vessel }) {
                       ) : null}
                     </>
                   )
-                ) : null}
-              </>
+              ) : null
             }>
               <Select {...selectProps} loading={types.isLoading} options={toOptions(types.data, (row) => row.name_vi)} placeholder="Chọn loại tàu" />
             </Form.Item>
-            <Form.Item name="flag_country_id" label={label('flag_country_id', 'Cờ quốc gia')} className={cn('flag_country_id', 'sf-c4')} extra={<>Lấy từ danh mục Quốc gia.{hints.flag ? <p className="fl-fieldhint">Nguồn ghi cờ: {hints.flag}. MCAH chưa có quốc gia tương ứng.</p> : null}</>}>
+            <Form.Item name="flag_country_id" label={label('flag_country_id', 'Cờ quốc gia')} className={cn('flag_country_id', 'sf-c4')} extra={hints.flag ? <p className="fl-fieldhint">Nguồn ghi cờ: {hints.flag}. MCAH chưa có quốc gia tương ứng.</p> : null}>
               <Select {...selectProps} loading={countries.isLoading} options={toOptions(countries.data, (row) => withFlag(row.code, row.name_vi || row.name_en, row.flag_emoji))} placeholder="Chọn quốc gia" />
             </Form.Item>
             <Form.Item name="year_built" label={label('year_built', 'Năm đóng')} className={cn('year_built', 'sf-c4')}>
@@ -404,9 +403,11 @@ function VesselForm({ vessel }) {
         </FormSection>
 
         <FormSection index={5} section={SECTIONS[5]} meta={sectionMeta(5)}>
-          <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')} style={{ marginBottom: 0 }}>
-            <Input.TextArea rows={3} maxLength={500} showCount />
-          </Form.Item>
+          <div className="sf-grid">
+            <Form.Item name="notes" className={cn('notes')} label={label('notes', 'Ghi chú')} style={{ marginBottom: 0 }}>
+              <Input.TextArea rows={3} maxLength={500} showCount />
+            </Form.Item>
+          </div>
         </FormSection>
 
         <div className="sf-savebar">

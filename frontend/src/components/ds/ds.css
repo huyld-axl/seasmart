@@ -1215,3 +1215,123 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-conflict__table th, .ds-conflict__table td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
 .ds-conflict__table td .sf-seg { margin-top: 6px; }
 .ds-conflict__same { color: var(--muted); }
+
+/* InfoTable / InfoList: bảng nhãn | giá trị gọn của màn chi tiết. */
+.ds-info { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; line-height: 1.45; }
+.ds-info__lc { width: 17%; }
+.ds-info--single .ds-info__lc { width: 34%; }
+.ds-info th, .ds-info td { padding: 5px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.ds-info tr:last-child > * { border-bottom: 0; }
+.ds-info th { background: var(--secondary); color: var(--muted); font-weight: 500; }
+.ds-info td { color: var(--foreground); }
+.ds-info .ds-info__sub th { padding: 3px 10px; color: var(--foreground); font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.ds-info__empty { color: var(--muted); }
+/* Kẻ khung cả ô nhãn: viền dọc giữa các ô, viền ngang đậm hơn để thấy trên nền xám. */
+.ds-info th, .ds-info td, .ds-info-list th, .ds-info-list td { border-bottom-color: var(--border-strong, var(--border)); }
+.ds-info tr > * + *, .ds-info-list tr > * + * { border-left: 1px solid var(--border-strong, var(--border)); }
+.ds-info-list { overflow-x: auto; }
+.ds-info-list table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ds-info-list th { padding: 5px 10px; border-bottom: 1px solid var(--border); background: var(--secondary); color: var(--muted); font-weight: 500; text-align: left; white-space: nowrap; }
+.ds-info-list td { padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+/* Giá trị liên hệ kèm nút không xuống dòng; bảng rộng thì cuộn trong khung. */
+.ds-info-list .ds-contact-value { white-space: nowrap; }
+/* Nút liên hệ nổi lên khi rê / tab vào ô, không chiếm bề ngang cột. */
+.ds-info-list td { position: relative; white-space: nowrap; }
+@media (min-width: 640px) {
+.ds-info td { position: relative; }
+.ds-info .ds-contact-actions, .ds-info-list .ds-contact-actions { position: absolute; top: 50%; right: 4px; flex-wrap: nowrap; padding: 0 2px; border-radius: 6px; background: var(--surface); box-shadow: 0 1px 4px rgb(0 0 0 / 0.12); opacity: 0; transform: translateY(-50%); transition: opacity 0.12s; }
+.ds-info td:hover .ds-contact-actions, .ds-info td:focus-within .ds-contact-actions,
+.ds-info-list td:hover .ds-contact-actions, .ds-info-list td:focus-within .ds-contact-actions { opacity: 1; }
+}
+.ds-info-list tr:last-child td { border-bottom: 0; }
+.ds-info-list__extra { white-space: nowrap; text-align: right; }
+.ds-info-cards { display: none; }
+@media (max-width: 639px) {
+  .ds-info, .ds-info tbody { display: block; }
+  .ds-info colgroup { display: none; }
+  .ds-info tr { display: grid; grid-template-columns: minmax(96px, 38%) minmax(0, 1fr); }
+  .ds-info tr > * { display: block; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .ds-info tbody > tr:last-child > * { border-bottom: 1px solid var(--border); }
+  .ds-info tbody > tr:last-child > *:nth-last-child(-n + 2) { border-bottom: 0; }
+  .ds-info .ds-info__sub th { grid-column: 1 / -1; }
+  .ds-info tr > :nth-child(odd) { border-left: 0; }
+  .ds-info-list { display: none; }
+  .ds-info-cards { display: flex; flex-direction: column; gap: 10px; }
+  .ds-info-card { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .ds-info-card__head { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .ds-info-card__head b { margin-right: auto; }
+}
+
+/* Nút liên hệ nhanh gọn ở màn rộng: 24px, không viền, chỉ hiện nền khi rê. Điện thoại giữ cỡ chạm 32px+. */
+@media (min-width: 640px) {
+  .ds-copy, .ds-quick .ds-copy { width: 24px; height: 24px; border-color: transparent; border-radius: 6px; background: transparent; color: var(--muted); font-size: 13px; }
+  .ds-copy:hover, .ds-quick .ds-copy:hover { border-color: transparent; background: var(--primary-light); color: var(--primary); }
+  .ds-quick, .ds-contact-actions { flex-wrap: nowrap; gap: 0; }
+  .ds-contact-value { gap: 4px; }
+  .ds-chat-logo, .ds-quick .ds-copy img { width: 15px; height: 15px; }
+}
+
+/* Gọn thống nhất với bảng Tổng quan: chữ 13px, dòng ~30px, đầu cột nền xám, kẻ ô mảnh. */
+.ds-ctable { border-color: var(--border); border-radius: 12px; font-size: 13px; }
+.ds-ctable__table th { height: 30px; padding: 5px 10px; border-bottom: 1px solid var(--border-strong); background: var(--secondary); color: var(--muted); font-size: 13px; }
+.ds-ctable__table td { padding: 3px 10px; border-top-color: var(--border-strong); }
+.ds-ctable__table td + td, .ds-ctable__table th + th { border-left-color: var(--border-strong); }
+.ds-ctable__table td:first-child { min-width: 160px; }
+.ds-ctable__name { gap: 8px; min-width: 180px; }
+
+/* Dòng thời gian (lịch sử, duyệt) gọn: icon 22px, mỗi mục sát nhau. */
+.ds-timeline { font-size: 13px; }
+.ds-timeline__item { gap: 8px; padding-bottom: 10px; }
+.ds-timeline__line { top: 26px; left: 10px; }
+.ds-timeline__icon { width: 22px; height: 22px; font-size: 11px; }
+.ds-timeline__body { padding-top: 2px; }
+.ds-timeline__meta, .ds-timeline__detail, .ds-timeline__change { margin-top: 1px; }
+
+/* Đi tàu gọn: mỗi chuyến một dòng ở màn rộng (ngày | tàu · chức danh · chủ tàu | thời gian | mã · mở). */
+.ds-vt { gap: 6px; padding: 0; font-size: 13px; }
+.ds-vt__list { gap: 0; padding-left: 64px; }
+.ds-vt__list::before { left: 51px; }
+.ds-vt__year { top: 6px; left: -64px; width: 34px; text-align: right; }
+.ds-vt__dot { top: 11px; left: -16px; width: 8px; height: 8px; }
+.ds-vt__ashore-dot { left: -16px; width: 8px; height: 8px; margin-top: -4px; }
+.ds-vt__item, .ds-vt__ashore { border-bottom: 1px solid var(--border); }
+.ds-vt__card { gap: 2px; padding: 5px 0; border: 0; border-radius: 0; background: none; }
+.ds-vt__item[data-now='true'] .ds-vt__card { border: 0; }
+.ds-vt__ashore-box { gap: 2px 10px; padding: 5px 0; border: 0; border-radius: 0; background: none; color: var(--muted); font-style: italic; }
+.ds-vt__ashore-box b { font-size: 13px; font-weight: 500; }
+@media (min-width: 640px) {
+  .ds-vt__card { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; }
+  .ds-vt__top { grid-column: 2; grid-row: 1; display: inline-flex; flex-wrap: nowrap; justify-content: flex-start; }
+  .ds-vt__sub { grid-column: 2; grid-row: 2; font-size: 12px; }
+  .ds-vt__meta { grid-column: 1; grid-row: 1 / span 2; flex-direction: column; gap: 0; }
+  .ds-vt__foot { grid-column: 3; grid-row: 1 / span 2; }
+  .ds-vt__ashore-box { padding-left: 182px; }
+}
+
+/* Hộp thoại gọn ở màn rộng: đầu hộp nền nhấn như thanh tiêu đề khung, trường trong form là dòng bảng nhãn | ô nhập,
+   ô cao 28px, chữ 13px. Điện thoại giữ dạng sheet từ đáy như cũ. */
+@media (min-width: 1024px) {
+  .ant-modal .ant-modal-container { overflow: hidden; padding: 0; border-radius: 12px; }
+  .ant-modal .ant-modal-header { margin: 0; padding: 10px 44px 10px 16px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+  .ant-modal .ant-modal-title { font-size: 15px; }
+  .ant-modal .ant-modal-close { top: 8px; inset-inline-end: 10px; }
+  .ant-modal .ant-modal-body { padding: 12px 16px; font-size: 13px; }
+  .ant-modal .ant-modal-footer { margin: 0; padding: 8px 16px; border-top: 1px solid var(--border); }
+  .ant-modal .ant-modal-confirm-body-wrapper { padding: 16px; }
+  .ant-modal-confirm .ant-modal-container { padding: 0; }
+  .ant-modal .ant-form-vertical .ant-form-item { margin: 0; border: 1px solid var(--border-strong); border-top-width: 0; }
+  .ant-modal .ant-form-vertical .ant-form-item:first-child, .ant-modal .ant-form-vertical :not(.ant-form-item) + .ant-form-item { border-top-width: 1px; }
+  .ant-modal .ant-form-vertical .ant-form-item + :not(.ant-form-item) { margin-top: 10px; }
+  .ant-modal .ant-form-vertical .ant-form-item > .ant-form-item-row { flex-flow: row nowrap; align-items: stretch; }
+  .ant-modal .ant-form-vertical .ant-form-item-label { display: flex; flex: 0 0 150px; max-width: 150px; align-items: center; padding: 4px 10px; border-right: 1px solid var(--border-strong); background: var(--secondary); white-space: normal; }
+  .ant-modal .ant-form-vertical .ant-form-item-label > label { display: block; height: auto; color: var(--muted); font-size: 13px; line-height: 1.35; }
+  .ant-modal .ant-form-vertical .ant-form-item-control { flex: 1 1 0; min-width: 0; padding: 4px 6px; }
+  .ant-modal .ant-form-vertical .ant-form-item-extra, .ant-modal .ant-form-vertical .ant-form-item-explain { font-size: 12px; }
+  .ant-modal .ant-form-vertical .ant-input:not(textarea), .ant-modal .ant-form-vertical .ant-input-affix-wrapper, .ant-modal .ant-form-vertical .ant-input-number,
+  .ant-modal .ant-form-vertical .ant-select, .ant-modal .ant-form-vertical .ant-picker {
+    --ant-control-height: 28px; --ant-font-size: 13px; --ant-input-padding-block: 3px; --ant-input-input-font-size: 13px;
+    --ant-input-number-padding-block: 3px; --ant-input-number-input-font-size: 13px; --ant-select-font-size: 13px; --ant-picker-input-font-size: 13px;
+  }
+  .ant-modal .ant-form-vertical .ant-picker { height: 28px; padding-block: 0; }
+  .ant-modal .ant-form-vertical .ant-form-item-control-input { min-height: 28px; }
+}

@@ -100,3 +100,14 @@
 /* Thẻ Đội ngũ trên trang tàu: hàng công cụ (khoảng, chức danh, cách xem) và bốn ô tóm tắt. */
 .vy-crew-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .vy-crew-tools__end { margin-left: auto; }
+/* Thanh lọc đội ngũ nằm trong khung, ngay dưới thanh tiêu đề (cùng kiểu hàng lọc tab Giấy tờ). */
+.crew-panel > .vy-crew-tools { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+@media (min-width: 640px) {
+  .crew-panel > .vy-crew-tools .ant-select { --ant-control-height: 28px; --ant-select-font-size: 13px; height: 28px; font-size: 13px; }
+  .crew-panel > .vy-crew-tools .ant-segmented { font-size: 12px; }
+  .crew-panel > .vy-crew-tools .ant-segmented .ant-segmented-item-label { min-height: 22px; line-height: 22px; }
+}
+@media (min-width: 640px) {
+  .crew-panel > .vy-crew-tools .sf-seg { padding: 2px; }
+  .crew-panel > .vy-crew-tools .sf-seg button { height: 24px; font-size: 12px; }
+}

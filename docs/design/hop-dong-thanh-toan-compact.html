@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hợp đồng và thanh toán gọn</title>
+<style>
+:root{--bg:#f4f5f7;--surface:#fff;--border:#e3e5e8;--line:#eef0f2;--fg:#2c2c2c;--muted:#6b7280;--label:#f8f9fa;--primary:#0b3a6e;--sec:#e8ecf1;--ok:#1f8a4c;--okbg:#e6f4ec;--warn:#a15c00;--warnbg:#fff4e0;--err:#b42318;--errbg:#fdecea;--info:#1d4ed8;--infobg:#e8effd}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15171a;--surface:#1e2125;--border:#33373d;--line:#2a2e33;--fg:#e6e6e6;--muted:#9aa1ab;--label:#23272c;--primary:#8db4e8;--sec:#2a3038}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.45 Inter,system-ui,sans-serif}
+a{color:var(--primary);text-decoration:none}
+.top{display:flex;gap:6px;flex-wrap:wrap;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.top b{margin-right:8px;align-self:center}
+.top button{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:8px;padding:5px 12px;cursor:pointer;font:inherit}
+.top button[aria-pressed=true]{background:var(--primary);color:#fff;border-color:var(--primary)}
+.note-design{max-width:1180px;margin:12px auto 0;padding:10px 14px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:var(--surface)}
+.page{max-width:1180px;margin:0 auto;padding:12px 16px 40px}
+.screen{display:none}.screen.on{display:block}
+.crumb{color:var(--muted);font-size:12px;margin-bottom:6px}
+/* Đầu trang gọn: 1 dải */
+.head{display:flex;gap:12px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.photo{width:56px;height:72px;border-radius:6px;background:var(--sec);flex:none;display:grid;place-items:center;color:var(--muted);font-weight:600}
+.logo{width:48px;height:48px;border-radius:8px}
+.head__main{flex:1;min-width:0}
+.head__title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.head__title h1{margin:0;font-size:18px}
+.head__sub{color:var(--muted);margin:2px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px}
+.chips span{color:var(--muted)}.chips b{font-weight:500;color:var(--fg)}
+.head__note{width:260px;flex:none;border-left:1px solid var(--line);padding-left:12px;font-size:12.5px;color:var(--muted)}
+.head__note b{display:block;color:var(--fg);font-size:12px;margin-bottom:2px}
+.head__act{display:flex;gap:6px;flex:none}
+.btn{border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:8px;padding:4px 10px;font:inherit;cursor:default;white-space:nowrap}
+.btn--p{background:var(--primary);border-color:var(--primary);color:#fff}
+.badge{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11.5px;font-weight:500}
+.b-ok{background:var(--okbg);color:var(--ok)}.b-info{background:var(--infobg);color:var(--info)}.b-warn{background:var(--warnbg);color:var(--warn)}.b-err{background:var(--errbg);color:var(--err)}.b-n{background:var(--sec);color:var(--muted)}
+.alert{margin-top:8px;padding:6px 12px;border-radius:8px;background:var(--warnbg);color:var(--warn);display:flex;gap:10px;align-items:center;font-size:12.5px}
+.alert .btn{margin-left:auto;padding:2px 8px}
+.tabs{display:flex;gap:2px;margin:10px 0 8px;border-bottom:1px solid var(--border)}
+.tabs span{padding:6px 12px;color:var(--muted);border-bottom:2px solid transparent}
+.tabs span.on{color:var(--fg);border-color:var(--primary);font-weight:500}
+.tabs i{font-style:normal;font-size:11px;color:var(--muted);margin-left:4px}
+/* Bố cục: mục lục mảnh + bảng */
+.layout{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:start}
+.toc{position:sticky;top:60px;font-size:12.5px;display:flex;flex-direction:column;gap:1px}
+.toc a{color:var(--muted);padding:3px 8px;border-radius:6px;display:flex;justify-content:space-between}
+.toc a.on{background:var(--sec);color:var(--fg)}
+.toc small{color:var(--muted)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+/* Bảng thông tin key-value */
+.kv{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;table-layout:fixed}
+.kv caption{text-align:left;font-weight:600;padding:0 0 4px 2px;font-size:12.5px;caption-side:top}
+.kv caption small{font-weight:400;color:var(--muted);margin-left:6px}
+.kv th,.kv td{padding:5px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;word-break:break-word}
+.kv tr:last-child>*{border-bottom:0}
+.kv th{background:var(--label);color:var(--muted);font-weight:500;width:17%}
+.kv td{width:33%}
+.kv .sub th,.kv .sub td{background:var(--sec);color:var(--fg);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 10px}
+.kv .wide td{width:auto}
+.empty{color:var(--muted);opacity:.7}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.cp{color:var(--muted);font-size:11px;margin-left:4px;cursor:default}
+/* Bảng danh sách */
+.list{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.list caption{text-align:left;font-weight:600;padding:0 0 4px 2px;font-size:12.5px}
+.list caption small{font-weight:400;color:var(--muted);margin-left:6px}
+.list th{background:var(--label);color:var(--muted);font-weight:500;text-align:left;padding:5px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+.list td{padding:5px 10px;border-bottom:1px solid var(--line)}
+.list tr:last-child td{border-bottom:0}
+.list .r{text-align:right}
+.list tfoot td{background:var(--label);font-weight:600}
+.side{display:flex;flex-direction:column;gap:12px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.card h3{margin:0 0 6px;font-size:12.5px}
+.bar{height:6px;background:var(--sec);border-radius:99px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;width:62%;background:var(--primary)}
+.row{display:flex;justify-content:space-between;font-size:12.5px;padding:2px 0}
+.row span{color:var(--muted)}
+.ct{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start}
+@media (max-width:1023px){.layout{grid-template-columns:minmax(0,1fr)}.toc{display:none}.cols,.ct{grid-template-columns:minmax(0,1fr)}.head{flex-wrap:wrap}.head__note{width:100%;border:0;padding:0}}
+@media (max-width:639px){
+ .page{padding:8px 12px 32px}
+ .kv{display:block;border:0;background:none}
+ .kv caption{display:block}
+ .kv colgroup{display:none}
+ .kv tbody{display:block;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+ .kv tr{display:grid;grid-template-columns:120px minmax(0,1fr)}
+ .kv th,.kv td{display:block;width:auto!important;min-width:0}
+ .kv th:empty,.kv td:empty{display:none}
+ .kv .sub td{grid-column:1/-1}
+ .list{display:block;overflow-x:auto;white-space:nowrap}
+ .list caption{white-space:normal}
+ .head__act{width:100%}
+ .alert{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<style>
+.pn{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.pn__h{display:flex;align-items:center;gap:8px;padding:7px 10px;background:color-mix(in srgb,var(--primary) 14%,var(--surface));font-weight:600;font-size:12.5px}
+.pn__h small{margin-left:auto;font-weight:400;color:var(--muted)}
+.pn .kv,.pn .list{border:0;border-radius:0}
+.pn .kv th{width:auto}
+.pn .list th+th,.pn .list td+td,.pn .kv th+td,.pn .kv td+th{border-left:1px solid var(--line)}
+.grp td{background:var(--sec);font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 10px!important}
+.more td{color:var(--muted);font-size:12px}
+.kpi{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.kpi div{padding:8px 10px}.kpi div+div{border-left:1px solid var(--line)}
+.kpi span{display:block;color:var(--muted);font-size:11.5px}.kpi b{font-size:16px}
+.kpi .ok{color:var(--ok)}.kpi .warn{color:var(--warn)}
+.cur td{background:color-mix(in srgb,var(--primary) 7%,var(--surface));font-weight:600}
+.tl{list-style:none;margin:0;padding:6px 10px;font-size:12.5px}
+.tl li{display:flex;gap:8px;padding:3px 0}.tl li span{color:var(--muted);margin-left:auto;white-space:nowrap}
+.ct2{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:12px;align-items:start}
+@media (max-width:1023px){.ct2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:639px){.kpi{grid-template-columns:1fr 1fr}.kpi div:nth-child(3){border-left:0}.kpi div:nth-child(n+3){border-top:1px solid var(--line)}}
+</style>
+<div class="top">
+  <b>Bản mẫu gọn: Hợp đồng & Yêu cầu thanh toán</b>
+  <button aria-pressed="true" data-s="ct">Hợp đồng</button>
+  <button aria-pressed="false" data-s="bl">Yêu cầu thanh toán</button>
+</div>
+<div class="note-design">
+  <b>Hợp đồng:</b> (1) đầu trang thu lại, đưa thuyền viên / tàu / thời gian lên hàng thông tin nhanh, bỏ khối "Thông tin chung" riêng; (2) gộp "Hằng tháng" và "Một lần" vào <b>một bảng Thoả thuận</b>, chỉ hiện khoản có số tiền, khoản trống gom vào dòng "6 khoản chưa có"; (3) "Kỳ thanh toán" thành bảng 2 cột Phải thu / Phải chi gọn; (4) thẻ "Cân đối" thành dải 4 số ngay trên bảng thoả thuận.<br>
+  <b>Yêu cầu thanh toán:</b> (1) đầu trang có hợp đồng / thuyền viên / tàu / hạn; (2) thông tin chung thành bảng 2 cặp mỗi dòng; (3) <b>lịch tháng thay bằng bảng "Các kỳ"</b> (kỳ, khoảng ngày, hạn, số tiền, trạng thái, kỳ đang xem tô đậm), bấm dòng để mở kỳ; (4) "Số tiền" gộp vào chân bảng khoản tiền.
+</div>
+<div class="page">
+
+<!-- ===== HỢP ĐỒNG ===== -->
+<section class="screen on" id="ct">
+  <div class="crumb">Hợp đồng / HĐ-2026-0041</div>
+  <div class="head">
+    <div class="head__main">
+      <div class="head__title"><h1>HĐ-2026-0041</h1><span class="badge b-ok">Có hiệu lực</span><span class="badge b-n">🔒 Đã khoá</span></div>
+      <div class="chips">
+        <div><span>Thuyền viên</span> <b><a href="#">Nguyễn Văn Hải</a> · HP-0098765</b></div>
+        <div><span>Chức danh</span> <b>Thuyền trưởng</b></div>
+        <div><span>Tàu</span> <b><a href="#">MV Mekong Star</a></b></div>
+        <div><span>Chuyến</span> <b><a href="#">CT-2026-0053</a></b></div>
+        <div><span>Thời gian</span> <b class="mono">01/09/2026 → 31/03/2027</b> <span>· 6 tháng 30 ngày</span></div>
+      </div>
+    </div>
+    <div class="head__note"><b>Ghi chú <a href="#">Sửa</a></b>Chủ tàu đồng ý tăng lương từ kỳ 4.</div>
+    <div class="head__act"><button class="btn">⋯</button><button class="btn">In hợp đồng</button><button class="btn btn--p">Kết thúc</button></div>
+  </div>
+  <div class="tabs"><span class="on">Tổng quan</span><span>Yêu cầu thanh toán<i>7</i></span><span>Lịch sử<i>4</i></span></div>
+
+  <div class="stack">
+    <div class="pn">
+      <div class="pn__h">Thoả thuận tiền <small>USD</small></div>
+      <div class="kpi">
+        <div><span>Budget / tháng</span><b>1.650</b></div>
+        <div><span>Phải thu / tháng</span><b>1.900</b> <small class="warn">vượt budget 250</small></div>
+        <div><span>Phải chi / tháng</span><b>1.650</b></div>
+        <div><span>Chênh lệch / tháng</span><b class="ok">+250</b> <small>· 1.750 cả HĐ</small></div>
+      </div>
+      <table class="list">
+        <thead><tr><th>Khoản</th><th class="r">Phải thu · Halong Maritime JSC</th><th class="r">Phải chi · Nguyễn Văn Hải</th></tr></thead>
+        <tbody>
+          <tr class="grp"><td colspan="3">Hằng tháng</td></tr>
+          <tr><td>Lương cơ bản</td><td class="r mono">1.900,00</td><td class="r mono">1.650,00</td></tr>
+          <tr><td>Phụ cấp</td><td class="r mono">150,00</td><td class="r mono">150,00</td></tr>
+          <tr class="more"><td colspan="3">+ 4 khoản chưa có: Làm thêm cố định, Lương phép, Thưởng, Phí dịch vụ</td></tr>
+          <tr class="grp"><td colspan="3">Một lần</td></tr>
+          <tr><td>Vé máy bay đi</td><td class="r mono">450,00</td><td class="r mono">—</td></tr>
+          <tr class="more"><td colspan="3">+ 5 khoản chưa có: Vé về, Phí visa, Khám sức khoẻ, Huấn luyện, Thưởng hoàn thành</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td>Tổng mỗi tháng</td><td class="r mono">2.050,00</td><td class="r mono">1.800,00</td></tr>
+          <tr><td>Tổng một lần</td><td class="r mono">450,00</td><td class="r mono">0,00</td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="pn">
+      <div class="pn__h">Kỳ thanh toán</div>
+      <table class="list">
+        <thead><tr><th></th><th>Phải thu · Halong Maritime JSC</th><th>Phải chi · Nguyễn Văn Hải</th></tr></thead>
+        <tbody>
+          <tr><td>Ngày chốt sổ</td><td>Cuối tháng</td><td>Cuối tháng</td></tr>
+          <tr><td>Ngày thanh toán</td><td>Ngày 10 tháng sau</td><td>Ngày 15 tháng sau</td></tr>
+          <tr><td>Gặp ngày nghỉ</td><td>Làm sau</td><td>Làm trước</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== YÊU CẦU THANH TOÁN ===== -->
+<section class="screen" id="bl">
+  <div class="crumb">Tàu / MV Mekong Star / CT-2026-0031 / HĐ-2026-0034 / TT-2026-00213</div>
+  <div class="head">
+    <div class="head__main">
+      <div class="head__title"><h1>TT-2026-00213 · Kỳ 7/9</h1><span class="badge b-warn">Chờ gửi</span></div>
+      <div class="chips">
+        <div><span>Hợp đồng</span> <b><a href="#" class="mono">HĐ-2026-0034</a></b></div>
+        <div><span>Thuyền viên</span> <b><a href="#">Trần Văn B</a> · Thuyền trưởng</b></div>
+        <div><span>Đối tác</span> <b><a href="#">Halong Maritime JSC</a></b></div>
+        <div><span>Kỳ</span> <b class="mono">01/05 → 31/05/2027</b></div>
+        <div><span>Hạn</span> <b class="mono">10/06/2027 (T5)</b></div>
+      </div>
+    </div>
+    <div class="head__act"><button class="btn">⋯</button><button class="btn btn--p">Đánh dấu đã gửi</button></div>
+  </div>
+
+  <div class="ct2" style="margin-top:12px">
+    <div class="stack">
+      <div class="pn">
+        <div class="pn__h">Thông tin chung</div>
+        <table class="kv"><colgroup><col style="width:17%"><col style="width:33%"><col style="width:17%"><col style="width:33%"></colgroup><tbody>
+          <tr><th>Tàu</th><td><a href="#">MV Mekong Star</a> · <a href="#">CT-2026-0031</a></td><th>Ngày chốt sổ</th><td>Cuối tháng</td></tr>
+          <tr><th>Hạn thanh toán</th><td class="mono">10/06/2027 (T5) <span class="empty">· ngày 10 tháng sau</span></td><th>Ngày gửi</th><td class="empty">Chưa gửi</td></tr>
+          <tr><th>Ngày thu</th><td class="empty">Chưa thu</td><th>Ghi chú</th><td class="empty">Không có</td></tr>
+        </tbody></table>
+      </div>
+      <div class="pn">
+        <div class="pn__h">Khoản tiền <small>USD</small></div>
+        <table class="list">
+          <thead><tr><th>Khoản</th><th>Loại</th><th class="r">Số tiền</th></tr></thead>
+          <tbody>
+            <tr><td>Lương cơ bản</td><td>Hằng tháng</td><td class="r mono">1.900,00</td></tr>
+            <tr><td>Phụ cấp</td><td>Hằng tháng</td><td class="r mono">150,00</td></tr>
+            <tr><td>Điều chỉnh làm thêm tháng 4</td><td>Điều chỉnh</td><td class="r mono">120,00</td></tr>
+          </tbody>
+          <tfoot><tr><td colspan="2">Tổng yêu cầu · Halong Maritime JSC</td><td class="r mono">2.170,00</td></tr></tfoot>
+        </table>
+      </div>
+    </div>
+    <aside class="side">
+      <div class="pn">
+        <div class="pn__h">Các kỳ của hợp đồng <small>9 kỳ</small></div>
+        <table class="list">
+          <thead><tr><th>Kỳ</th><th>Từ – đến</th><th class="r">USD</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>5</td><td class="mono">01/03–31/03</td><td class="r mono">2.050</td><td><span class="badge b-ok">Đã thu</span></td></tr>
+            <tr><td>6</td><td class="mono">01/04–30/04</td><td class="r mono">2.050</td><td><span class="badge b-info">Đã gửi</span></td></tr>
+            <tr class="cur"><td>7</td><td class="mono">01/05–31/05</td><td class="r mono">2.170</td><td><span class="badge b-warn">Chờ gửi</span></td></tr>
+            <tr><td>8</td><td class="mono">01/06–30/06</td><td class="r mono">2.050</td><td><span class="badge b-n">Sắp tới</span></td></tr>
+            <tr class="more"><td colspan="4">Hiện cả 9 kỳ</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pn">
+        <div class="pn__h">Lịch sử</div>
+        <ul class="tl"><li>Duyệt <span>05/06 · admin</span></li><li>Tạo khi duyệt hợp đồng <span>02/11/2026 · admin</span></li></ul>
+      </div>
+    </aside>
+  </div>
+</section>
+</div>
+<script>
+document.querySelectorAll('.top button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.top button').forEach(x=>x.setAttribute('aria-pressed',x===b))
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s))
+})
+</script>
+</body>
+</html>

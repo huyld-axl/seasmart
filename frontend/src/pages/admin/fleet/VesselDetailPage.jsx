@@ -1,12 +1,9 @@
 import { withFlag } from '../../../utils/flag'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
 import { App, Button, Dropdown, Skeleton } from 'antd'
-import RowList from '../../../components/ds/RowList'
 import HeadActions from '../../../components/ds/HeadActions'
 import { DeleteOutlined, EditOutlined, MoreOutlined, PlusOutlined, SwapOutlined } from '@ant-design/icons'
-import dayjs from 'dayjs'
 import Banner from '../../../components/ds/Banner'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
 import StatusBadge from '../../../components/ds/StatusBadge'
@@ -21,36 +18,7 @@ import { Crumb, FleetTile } from './FleetParts'
 import { NotePanel, ReadLayout } from '../seafarers/ReadSections'
 import '../seafarers/SeafarerListPage.css'
 
-const date = (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '—')
 const KEY_FIELDS = ['Số IMO', 'Call Sign', 'Cảng đăng ký', 'Trạng thái đăng kiểm', 'GRT', 'DWT']
-
-function PeopleTable({ rows, showStatus, loading }) {
-  return (
-    <section className="crew-panel">
-      <RowList
-        rowKey="id"
-        loading={loading}
-        dataSource={rows}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-        locale={{ emptyText: <EmptyState title={showStatus ? 'Chưa có chuyến đi tàu nào khớp với tàu này' : 'Hiện chưa có thuyền viên nào trên tàu'} /> }}
-        columns={[
-          { title: 'Thuyền viên', key: 'who', mobile: 'title', render: (_, row) => <Link to={`/seafarers/${row.seafarer_id}`}>{row.seafarer_name}</Link> },
-          { title: 'Chức danh', dataIndex: 'rank_name', mobile: 'sub', render: (value) => value || '—' },
-          { title: 'Ngày lên tàu', dataIndex: 'sign_on_date', render: (value) => <span className="ds-num">{date(value)}</span> },
-          // Điện thoại: một dòng ngày lên → rời thay cho hai cột.
-          { title: 'Thời gian', key: 'dates', hidden: true, mobile: 'meta', render: (_, row) => <span className="ds-num">{date(row.sign_on_date)}{showStatus ? ` → ${row.sign_off_date ? date(row.sign_off_date) : 'nay'}` : ''}</span> },
-          ...(showStatus
-            ? [
-                { title: 'Ngày rời tàu', dataIndex: 'sign_off_date', render: (value) => <span className="ds-num">{date(value)}</span> },
-                { title: 'Tình trạng', key: 'state', mobile: 'value', render: (_, row) => row.on_board ? <StatusBadge group="seaService" value="ONGOING" /> : <span className="ds-role">Đã rời tàu</span> },
-              ]
-            : []),
-        ]}
-      />
-    </section>
-  )
-}
 
 export default function VesselDetailPage() {
   const can = useCan()
@@ -61,7 +29,6 @@ export default function VesselDetailPage() {
   const [tab, setTab] = useState('overview')
 
   const { data: vessel, isLoading, isError, refetch } = useFleetItem('vessels', vesselApi, id)
-  const service = useQuery({ queryKey: ['fleet', 'vessels', 'service', id], queryFn: () => vesselApi.service(id), enabled: !!vessel })
   const { save, remove, restore } = useFleetMutations(vesselApi)
   // Đang trên tàu đọc từ chuyến (mỗi chuyến một thuyền viên), không còn từ lịch sử đi tàu khai báo.
   const crew = useVoyageList({ vessel_id: id, tab: 'onboard', limit: 100 }, { enabled: !!vessel && can('voyage.view') })
@@ -85,7 +52,6 @@ export default function VesselDetailPage() {
     )
   }
 
-  const serviceRows = service.data?.data || []
   const onBoard = crew.data?.data || []
   const inUse = vessel.usage?.total > 0
   const sections = vesselSections(vessel, {
@@ -176,7 +142,6 @@ export default function VesselDetailPage() {
   const tabs = [
     { value: 'overview', label: 'Tổng quan' },
     can('voyage.view') && { value: 'crew', label: 'Đội ngũ', count: crew.data?.counts?.onboard ?? onBoard.length },
-    { value: 'service', label: 'Đi tàu', count: serviceRows.length },
   ].filter(Boolean)
   const description = [vessel.vessel_type_name, vessel.flag_name && `Cờ ${withFlag(vessel.flag_code, vessel.flag_name, vessel.flag_emoji)}`].filter(Boolean).join(' · ')
 
@@ -199,16 +164,16 @@ export default function VesselDetailPage() {
             <dl className="crew-head__meta">
               {description ? (
                 <>
-                  <dt>Loại tàu</dt>
-                  <dd>{description}</dd>
+                  <div className="crew-head__pair"><dt>Loại tàu</dt>
+                  <dd>{description}</dd></div>
                 </>
               ) : null}
-              <dt>Chủ tàu</dt>
-              <dd>{vessel.ship_owner_name ? <Link to={`/partners/${vessel.ship_owner_id}`}>{vessel.ship_owner_name}</Link> : '—'}</dd>
-              <dt>Số IMO</dt>
-              <dd>{vessel.imo_number ? <span className="fl-mono">{vessel.imo_number}</span> : 'Không có IMO'}</dd>
-              <dt>Trên tàu</dt>
-              <dd>{can('voyage.view') ? (crew.data?.counts?.onboard ?? onBoard.length) : Number(vessel.crew_on_board)} thuyền viên</dd>
+              <div className="crew-head__pair"><dt>Chủ tàu</dt>
+              <dd>{vessel.ship_owner_name ? <Link to={`/partners/${vessel.ship_owner_id}`}>{vessel.ship_owner_name}</Link> : '—'}</dd></div>
+              <div className="crew-head__pair"><dt>Số IMO</dt>
+              <dd>{vessel.imo_number ? <span className="fl-mono">{vessel.imo_number}</span> : 'Không có IMO'}</dd></div>
+              <div className="crew-head__pair"><dt>Trên tàu</dt>
+              <dd>{can('voyage.view') ? (crew.data?.counts?.onboard ?? onBoard.length) : Number(vessel.crew_on_board)} thuyền viên</dd></div>
             </dl>
           </div>
         </div>
@@ -236,7 +201,6 @@ export default function VesselDetailPage() {
       <StatusTabs tabs={tabs} value={tab} onChange={setTab} mobileLabel="Mục:" sticky />
       {tab === 'overview' && overview}
       {tab === 'crew' && <VesselCrewTab vessel={vessel} />}
-      {tab === 'service' && <PeopleTable rows={serviceRows} showStatus loading={service.isLoading} />}
     </div>
   )
 }

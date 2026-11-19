@@ -214,3 +214,193 @@
   .sf-grid > .sf-ro:first-child { border-top: 0; padding-top: 0; }
   .sf-ro__label { margin: 0; }
 }
+
+/* Màn xem chi tiết (ReadLayout): khối là bảng gọn, mục lục hẹp, khối ngắn đứng hai cột. */
+.sf-layout--ro { grid-template-columns: 180px minmax(0, 1fr); gap: 16px; }
+.sf-layout--ro .sf-toc { padding: 4px; }
+.sf-layout--ro .sf-toc a { min-height: 30px; padding: 3px 8px; font-size: 13px; }
+.sf-layout--ro .sf-toc__n { display: none; }
+.sf-layout--ro .sf-sections { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.sf-panel--ro { overflow: hidden; }
+.sf-panel--ro .sf-panel__head { align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.sf-panel--ro .sf-panel__title { margin: 0; font-size: 13px; }
+.sf-panel--ro .sf-panel__meta { padding-top: 0; }
+.sf-panel--ro .sf-panel__body { padding: 10px; }
+.sf-panel--ro > .ds-info-list + .ds-info, .sf-panel--ro > .ds-info-cards + .ds-info { border-top: 1px solid var(--border); }
+.sf-panel__none { margin: 0; padding: 8px 10px; font-size: 13px; }
+@media (min-width: 1024px) {
+  .sf-layout--ro .sf-sections { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .sf-layout--ro .sf-panel { grid-column: 1 / -1; }
+  .sf-layout--ro .sf-panel--half { grid-column: auto; }
+}
+@media (max-width: 1023px) {
+  .sf-layout--ro { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 639px) {
+  .sf-panel--ro > .ds-info-cards { padding: 10px; }
+}
+
+/* Đầu mục màn xem: nền nhấn nhạt để tách khỏi bảng trắng. */
+.sf-panel--ro .sf-panel__head { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+
+/* Form thêm / sửa gọn ở màn rộng: cùng kiểu bảng nhãn | giá trị của màn xem. Mỗi trường là một ô nhãn nền xám + ô nhập,
+   hai trường mỗi dòng (trường rộng chiếm cả dòng). Điện thoại, máy tính bảng giữ nhãn trên ô như cũ. */
+@media (min-width: 1024px) {
+  .sf-layout:not(.sf-layout--ro) { grid-template-columns: 220px minmax(0, 1fr); gap: 16px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-sections { gap: 12px; }
+  /* antd gán biến kích thước ngay trên từng ô; selector dài hơn để ghi đè, ô cao 28px, chữ 13px. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-input, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-input-affix-wrapper, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-input-number,
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-select, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-picker {
+    --ant-control-height: 28px; --ant-font-size: 13px;
+    --ant-input-padding-block: 2px; --ant-input-padding-inline: 8px; --ant-input-input-font-size: 13px;
+    --ant-input-number-padding-block: 2px; --ant-input-number-input-font-size: 13px;
+    --ant-picker-padding-block: 2px; --ant-picker-input-font-size: 13px;
+    --ant-select-padding-block: 2px; --ant-select-font-size: 13px;
+  }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid textarea.ant-input { --ant-input-padding-block: 4px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-input:not(textarea), :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-input-number { --ant-input-padding-block: 3px; --ant-input-number-padding-block: 3px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-control-input { min-height: 28px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-picker { height: 28px; padding-block: 0; font-size: 13px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .sf-seg button { height: 26px; padding-block: 0; font-size: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-toc a { min-height: 30px; padding: 3px 8px; font-size: 13px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-who { padding: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel { overflow: hidden; border-radius: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel__head { align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-step { width: 20px; height: 20px; background: var(--surface); font-size: 11px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel__title { margin: 0; font-size: 14px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel__desc { font-size: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel__meta { padding-top: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel__scans .ant-btn { height: 26px; padding: 0 8px; font-size: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel__body { padding: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid { gap: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-c3, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-c4, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-c5, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-c6 { grid-column: span 6; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-c8 { grid-column: 1 / -1; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item { margin: 0; border-bottom: 1px solid var(--border-strong); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:nth-child(even of .sf-c3, .sf-c4, .sf-c5, .sf-c6) { border-left: 1px solid var(--border-strong); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item > .ant-form-item-row { flex-flow: row nowrap; align-items: stretch; height: 100%; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item .ant-form-item-label { display: flex; flex: 0 0 170px; max-width: 170px; overflow: hidden; align-items: center; padding: 3px 10px; border-right: 1px solid var(--border-strong); background: var(--secondary); text-align: left; white-space: normal; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item .ant-form-item-label > label { flex-wrap: wrap; height: auto; color: var(--muted); font-size: 13px; line-height: 1.35; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item .ant-form-item-control { flex: 1 1 0; min-width: 0; padding: 3px 6px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item .ant-form-item-explain { font-size: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-sub { margin: 0; padding: 4px 10px; grid-column: 1 / -1; border-bottom: 1px solid var(--border-strong); background: var(--surface); color: var(--foreground); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-sub::after { display: none; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-items { gap: 8px; padding: 8px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item { overflow: hidden; border-radius: 8px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item__head { min-height: 32px; padding: 2px 4px 2px 10px; background: var(--secondary); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item__title { font-size: 13px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item__body { padding: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item__body > .ant-form-item:last-child, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item__body > .ant-form-item:nth-last-child(2):nth-child(odd of .ant-form-item) { border-bottom: 0; }
+}
+/* Dòng ảnh chân dung trong form gọn: cùng kiểu một dòng nhãn | nội dung như các trường khác. */
+@media (min-width: 1024px) {
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-photo-row { display: flex; grid-column: 1 / -1; border-bottom: 1px solid var(--border-strong); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-photo-row > .sf-label { display: flex; flex: 0 0 170px; flex-wrap: wrap; align-content: center; gap: 4px; margin: 0; padding: 3px 10px; border-right: 1px solid var(--border-strong); background: var(--secondary); color: var(--muted); font-size: 13px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-photo-row > :not(.sf-label) { flex: 1 1 0; min-width: 0; margin: 6px; }
+}
+@media (min-width: 1024px) {
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-field { display: flex; grid-column: 1 / -1; border-bottom: 1px solid var(--border-strong); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-field > .ant-form-item-label { display: flex; flex: 0 0 170px; align-items: center; padding: 3px 10px; border-right: 1px solid var(--border-strong); background: var(--secondary); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-field > .ant-form-item-label > label { color: var(--muted); font-size: 13px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .sf-field > :not(.ant-form-item-label) { flex: 1 1 0; min-width: 0; margin: 6px; }
+}
+/* Form gọn: nút gợi ý ("Dùng số điện thoại", "Dùng địa chỉ thường trú") đứng cùng hàng bên phải ô nhập;
+   lỗi kiểm tra vẫn xuống dòng dưới ô. Nút bật / tắt (Liên lạc, Bảo lãnh) cùng nhịp 28px. */
+@media (min-width: 1024px) {
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-control { display: flex; flex-flow: row wrap; align-items: center; column-gap: 6px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-control > .ant-form-item-control-input { flex: 1 1 0; min-width: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-control > div:not(.ant-form-item-control-input) { flex: 0 0 auto; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-control > div:has(.ant-form-item-explain-error) { flex-basis: 100%; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-extra { min-height: 0; margin: 0; white-space: nowrap; font-size: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-extra .sf-link { font-size: 12px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-zalo { display: flex; align-items: center; gap: 6px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-zalo > .ant-input, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-zalo > .ant-input-affix-wrapper { flex: 1 1 0; min-width: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-zalo-use.ant-btn { flex: 0 0 auto; min-height: 0; height: 24px; padding: 0; font-size: 12px; white-space: nowrap; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-toggle-grid { gap: 6px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-toggle-row { min-height: 28px; padding: 0 10px; border-radius: 6px; font-size: 13px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-toggle-row .ant-switch { min-width: 32px; height: 18px; line-height: 18px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-toggle-row .ant-switch .ant-switch-handle { width: 14px; height: 14px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ds-toggle-row .ant-switch.ant-switch-checked .ant-switch-handle { inset-inline-start: calc(100% - 16px); }
+}
+@media (min-width: 1024px) {
+  /* Gợi ý dạng chữ (không phải nút) nằm dòng nhỏ dưới ô nhập. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-control > div:has(.ant-form-item-extra):not(:has(button)) { flex-basis: 100%; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-additional:not(:has(button)) .ant-form-item-extra { white-space: normal; color: var(--muted); font-size: 11.5px; }
+}
+@media (min-width: 1024px) {
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-additional:has(button):not(:has(.ant-form-item-explain-error)) { flex: 0 0 auto; width: max-content; }
+}
+/* Kẻ ô kín khi nhóm có số trường lẻ: ô nửa dòng tự kẻ cạnh phải, đường kẻ dưới kéo hết dòng (phần tràn bị khung cắt). */
+@media (min-width: 1024px) {
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:is(.sf-c3, .sf-c4, .sf-c5, .sf-c6) { position: relative; border-left: 0 !important; border-right: 1px solid var(--border-strong); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:is(.sf-c3, .sf-c4, .sf-c5, .sf-c6)::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 200%; border-bottom: 1px solid var(--border-strong); pointer-events: none; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-panel, :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item { overflow: hidden; }
+}
+/* Câu hướng dẫn dạng chữ: màn rộng (form gọn) ẩn dòng dưới ô, xem qua biểu tượng ⓘ cạnh nhãn; màn hẹp giữ dòng dưới ô, ẩn ⓘ. */
+@media (min-width: 1024px) {
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item:has(.ant-form-item-tooltip) .ant-form-item-additional:not(:has(.ant-form-item-explain-error)) { display: none; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .ant-form-item-tooltip { color: var(--muted); font-size: 12px; cursor: help; }
+}
+@media (max-width: 1023px) {
+  .sf-layout .ant-form-item-tooltip { display: none; }
+}
+@media (min-width: 1024px) {
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-space-compact > .ant-btn { height: 28px; padding: 0 8px; font-size: 12px; }
+}
+@media (min-width: 1024px) {
+  /* Nhãn có dòng giải thích (GRT – Tổng dung tích đăng ký…): dòng giải thích xuống dưới, thẳng lề với nhãn. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-label .sf-opt { flex-basis: 100%; margin: 0; font-size: 11.5px; line-height: 1.3; }
+  /* Gợi ý có link (Thêm đối tác mới…) đứng cùng hàng như nút gợi ý. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-additional:has(a):not(:has(.ant-form-item-explain-error)) { flex: 0 0 auto; width: max-content; max-width: 45%; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-extra a { font-size: 12px; }
+  /* Nút bật / tắt không có nhãn riêng (Nồi hơi, Lạnh, Chuyến đã kết thúc): chữ của nút thành ô nhãn, công tắc ở ô giá trị. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)):has(.ds-toggle-row) .ant-form-item-control { padding: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)) .ds-toggle-row { justify-content: flex-start; align-items: stretch; gap: 0; min-height: 34px; padding: 0; border: 0; border-radius: 0; background: none; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)) .ds-toggle-row__text { flex: 0 0 170px; align-content: center; padding: 3px 10px; border-right: 1px solid var(--border-strong); background: var(--secondary); color: var(--muted); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)) .ds-toggle-row__end { flex-direction: row-reverse; padding: 0 10px; }
+}
+@media (min-width: 1024px) {
+  /* Nhãn hai dòng (nhãn + giải thích) nằm gọn giữa ô, không giãn theo chiều cao. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-label > label { align-content: center; row-gap: 0; }
+  /* Nút bật / tắt: ô nhãn xám cao bằng cả dòng khi ô bên cạnh cao hơn. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)):has(.ds-toggle-row) .ant-form-item-control,
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)):has(.ds-toggle-row) .ant-form-item-control-input,
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)):has(.ds-toggle-row) .ant-form-item-control-input-content { height: 100%; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)) .ds-toggle-row { height: 100%; }
+}
+@media (min-width: 1024px) {
+  /* Nhãn thường chạy liền như chữ (dấu * bắt buộc không rớt thành dòng riêng); chỉ nhãn có dòng giải thích mới xếp hai dòng. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-label > label:not(:has(.sf-opt)) { display: block; }
+  /* Câu giải thích của nút bật / tắt đã có ở mô tả đầu khối: form gọn chỉ giữ tên nút. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid > .ant-form-item:not(:has(.ant-form-item-label)) .ds-toggle-row__hint { display: none; }
+}
+
+/* Form không dùng khung sf-layout (hợp đồng, yêu cầu thanh toán): cùng kiểu gọn qua lớp sf-compact. */
+@media (min-width: 1024px) {
+  /* Ô form nằm trong thẻ bọc riêng (hạn thanh toán bắt sự kiện gõ ngày): thẻ bọc là ô lưới, ô form bên trong cùng kiểu nhãn | giá trị. */
+  .sf-compact .sf-grid > div[class*='sf-c']:not(.ant-form-item) { grid-column: span 6; border-right: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong); }
+  .sf-compact .sf-grid > div:not(.ant-form-item) > .ant-form-item { margin: 0; height: 100%; }
+  .sf-compact .sf-grid > div:not(.ant-form-item) > .ant-form-item > .ant-form-item-row { flex-flow: row nowrap; align-items: stretch; height: 100%; }
+  .sf-compact .sf-grid > div:not(.ant-form-item) > .ant-form-item .ant-form-item-label { display: flex; flex: 0 0 170px; max-width: 170px; align-items: center; padding: 3px 10px; border-right: 1px solid var(--border-strong); background: var(--secondary); text-align: left; white-space: normal; }
+  .sf-compact .sf-grid > div:not(.ant-form-item) > .ant-form-item .ant-form-item-label > label { display: block; height: auto; color: var(--muted); font-size: 13px; }
+  .sf-compact .sf-grid > div:not(.ant-form-item) > .ant-form-item .ant-form-item-control { flex: 1 1 0; min-width: 0; padding: 3px 6px; }
+  .sf-compact .sf-grid > div:not(.ant-form-item) > .ant-form-item:has(.ant-form-item-tooltip) .ant-form-item-additional:not(:has(.ant-form-item-explain-error)) { display: none; }
+  .sf-compact .sf-grid > div:not(.ant-form-item) .ant-picker { height: 28px; padding-block: 0; font-size: 13px; }
+  .sf-compact .sf-head { margin-bottom: 8px; }
+  .sf-compact.ct-form, .sf-compact .ct-form { gap: 12px; }
+}
+@media (min-width: 1024px) {
+  /* Chữ phụ ngắn không phải đoạn văn (ví dụ thời lượng "9 tháng 21 ngày"): đứng cùng hàng bên phải ô nhập. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-control > .ant-form-item-additional:not(:has(button, a, p, .ant-form-item-explain-error)) { flex: 0 0 auto; flex-basis: auto; width: max-content; max-width: 45%; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-grid .ant-form-item-additional:not(:has(button, a, p)) .ant-form-item-extra { white-space: nowrap; color: var(--muted); font-size: 12px; }
+}
+@media (min-width: 1024px) {
+  /* Khung lặp trong form (Tài khoản, Người thân, Người liên hệ): không còn thẻ riêng, mỗi mục là một nhóm dòng bảng
+     có dòng tiêu đề xám (tên mục + nút xoá), nối liền nhau trong khối. */
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-items { gap: 0; padding: 0; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item { border: 0; border-radius: 0; border-bottom: 1px solid var(--border-strong); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item__head { min-height: 30px; padding: 0 4px 0 10px; border-bottom: 1px solid var(--border-strong); background: var(--secondary); }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-item__head .ant-btn { width: 26px; height: 26px; }
+  :is(.sf-layout:not(.sf-layout--ro), .sf-compact) .sf-items > .sf-add { width: calc(100% - 20px); min-height: 30px; margin: 6px 10px; font-size: 12px; }
+}
+/* Mọi khối xem / sửa bo góc 12px như các khung khác. */
+.sf-panel--ro { border-radius: 12px; }

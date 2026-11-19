@@ -256,29 +256,29 @@ export default function SeafarerDetailPage() {
             <dl className="crew-head__meta">
               {nowVoyage && (
                 <>
-                  <dt>Tàu</dt>
+                  <div className="crew-head__pair"><dt>Tàu</dt>
                   <dd>
                     {can('vessel.view') && nowVoyage.row.vessel_id ? <Link to={`/vessels/${nowVoyage.row.vessel_id}`}>{nowVoyage.row.vessel_name}</Link> : nowVoyage.row.vessel_name}
-                  </dd>
-                  <dt>{NOW_LABEL[nowVoyage.kind]}</dt>
+                  </dd></div>
+                  <div className="crew-head__pair"><dt>{NOW_LABEL[nowVoyage.kind]}</dt>
                   <dd>
                     <Link to={`/voyages/${nowVoyage.row.voyage_id}`}>{nowVoyage.row.voyage_code}</Link>
                     {nowVoyage.row.rank_name && nowVoyage.row.rank_name !== seafarer.rank_name ? ` · ${nowVoyage.row.rank_name}` : ''}
                     {nowVoyage.kind === 'current' ? ` · đến ${fmt(nowVoyage.row.end_date)}` : ` · ${fmt(nowVoyage.row.start_date)} → ${fmt(nowVoyage.row.end_date)}`}
-                  </dd>
+                  </dd></div>
                 </>
               )}
               {seafarer.phone_primary && (
                 <>
-                  <dt>Điện thoại</dt>
-                  <dd>{seafarer.phone_primary}<PhoneActions phone={seafarer.phone_primary} /></dd>
+                  <div className="crew-head__pair"><dt>Điện thoại</dt>
+                  <dd>{seafarer.phone_primary}<PhoneActions phone={seafarer.phone_primary} /></dd></div>
                 </>
               )}
-              {seafarer.zalo && <><dt>Zalo</dt><dd>{seafarer.zalo}<ZaloActions value={seafarer.zalo} /></dd></>}
+              {seafarer.zalo && <><div className="crew-head__pair"><dt>Zalo</dt><dd>{seafarer.zalo}<ZaloActions value={seafarer.zalo} /></dd></div></>}
               {seafarer.email && (
                 <>
-                  <dt>Email</dt>
-                  <dd>{seafarer.email}<EmailActions email={seafarer.email} /></dd>
+                  <div className="crew-head__pair"><dt>Email</dt>
+                  <dd>{seafarer.email}<EmailActions email={seafarer.email} /></dd></div>
                 </>
               )}
             </dl>
@@ -357,10 +357,11 @@ function ContractsSection({ seafarerId }) {
     { key: 'trip', title: 'Chuyến', mono: true, render: (row) => <TripLink trip={row.trip} legacyCode={row.voyage_code} /> },
     { key: 'dates', title: 'Thời gian', mono: true, render: (row) => `${fmt(row.start_date)} → ${fmt(row.end_date)}` },
     { key: 'status', title: 'Trạng thái', card: 'end', render: (row) => <StatusBadge group="contract" value={row.status} /> },
-    { key: 'open', title: 'Thao tác', right: true, render: (row) => <Link className="ds-link" to={`/contracts/${row.id}`}>Mở hợp đồng</Link> },
+    { key: 'open', title: '', right: true, render: (row) => <Link className="ds-link" to={`/contracts/${row.id}`}>Mở</Link> },
   ]
   return (
-    <section className="ct-block crew-docs-sec" aria-label="Hợp đồng">
+    <section className="crew-panel crew-docs-sec" aria-label="Hợp đồng">
+      <div className="crew-panel__head"><h2 className="crew-panel__title">Hợp đồng {data ? <span className="ct-block__unit">{data.data?.length || 0} hợp đồng</span> : null}</h2></div>
       {isLoading ? (
         <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 4 }} /></div>
       ) : (

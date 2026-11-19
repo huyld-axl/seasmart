@@ -93,8 +93,9 @@
   /* Breadcrumb điện thoại: một nấc về trang cha. */
   .crew-crumb--up a { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; font-weight: 500; }
 }
-.rev-changes { display: grid; gap: 2px; margin: 6px 0 0; padding-left: 16px; color: var(--muted); font-size: 13px; }
-.rev-changes b { color: var(--foreground); font-weight: 500; }
+.rev-changes { margin: 4px 0 0; overflow: hidden; border: 1px solid var(--border); border-radius: 8px; }
+.rev-changes th[scope='row'] { width: 28%; }
+.rev-changes__from { color: var(--muted); }
 
 /* Tiêu đề bảng thụt vào đúng bằng đệm ô đầu (12px + viền 1px): khung bo góc 16px làm chữ sát mép trông như bị lệch ra ngoài. */
 .crew-certs__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; min-height: 32px; }
@@ -161,3 +162,61 @@
 .crew-sync { display: grid; gap: 6px; margin: 4px 0 16px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface-hover); }
 .crew-sync__title { margin: 0; font-weight: 600; }
 .crew-sync__hint { margin: 0 0 4px; color: var(--muted); font-size: 12px; }
+
+/* Cặp nhãn – giá trị ở đầu trang: điện thoại vẫn xếp lưới hai cột như cũ. */
+.crew-head__pair { display: contents; }
+
+/* Đầu trang chi tiết gọn ở màn rộng: ảnh nhỏ, thông tin nhanh hai cặp mỗi dòng. */
+@media (min-width: 640px) {
+  .crew-head__photo { width: 72px; height: 96px; }
+  .crew-head__download { display: none; }
+  .crew-head__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 6px; padding-top: 6px; font-size: 13px; }
+  .crew-head__meta dt { font-size: 12px; }
+  .crew-head__meta dd { margin-right: 14px; }
+  /* Nhãn và giá trị luôn đi liền nhau, cả cặp mới xuống dòng. */
+  .crew-head__pair { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+}
+
+/* Khung có bảng InfoTable ngay dưới tiêu đề (thông tin chung hợp đồng). */
+.crew-panel--table .crew-panel__head { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+.crew-panel--table .crew-panel__title { font-size: 14px; }
+.crew-panel--table .crew-panel__head { background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+.sea-svc__body { padding: 12px; }
+@media (max-width: 639px) {
+  .sea-svc .crew-panel__head .ant-btn { min-height: 40px; }
+}
+
+/* Khung chung cho mọi khối / tab ở màn chi tiết và form: đầu khung nền nhấn, gọn; thân khung đệm nhỏ.
+   Bảng (ds-ctable) đặt trong khung thì bỏ viền riêng, sát mép khung. */
+.crew-panel { border-radius: 12px; }
+.crew-panel__head { gap: 8px; min-height: 36px; padding: 6px 12px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--primary) 14%, var(--surface)); }
+.crew-panel__title { display: flex; align-items: baseline; gap: 8px; font-size: 14px; }
+.crew-panel__body { padding: 10px 12px; }
+.crew-panel__acts { display: flex; flex-wrap: wrap; gap: 6px; margin-left: auto; }
+.crew-panel > .ds-ctable, .crew-panel > .crew-docs-toolbar + .ds-ctable { border: 0; border-radius: 0; }
+.crew-panel > .crew-docs-toolbar { margin: 0; padding: 6px 12px; border-bottom: 1px solid var(--border); }
+.crew-panel > .ds-ccards, .crew-panel .ds-ccards { padding: 0; }
+.crew-panel > .ds-empty, .crew-panel > .crew-panel__foot { padding: 8px 12px; }
+.crew-panel__foot { margin: 0; color: var(--muted); font-size: 12px; border-top: 1px solid var(--border); }
+@media (min-width: 640px) {
+  .crew-panel__head .ant-btn { height: 26px; padding: 0 8px; font-size: 12px; }
+}
+/* Hàng lọc trong khung tab: nút lọc nhỏ cùng nhịp bảng (màn rộng); điện thoại giữ cỡ chạm. */
+@media (min-width: 640px) {
+  .crew-panel > .crew-docs-toolbar { padding: 4px 10px; }
+  .crew-panel .ds-chips__row { gap: 4px; padding-inline: 0; }
+  .crew-panel .ds-chip { height: 24px; min-height: 0; padding: 0 10px; font-size: 12px; }
+}
+.crew-panel > .crew-docs-toolbar:not(:has(.ds-chips)) { padding: 0; border-bottom: 0; }
+/* Bảng antd trong khung tab (ứng viên, đội ngũ…): sát thanh tiêu đề, đầu cột xám, dòng mỏng, kẻ ô mảnh — cùng kiểu bảng gọn. */
+@media (min-width: 640px) {
+  .crew-panel .ant-table-wrapper { margin-top: 0; }
+  .crew-panel .ant-table { font-size: 13px; }
+  .crew-panel .ant-table-thead > tr > th { padding: 5px 10px !important; border-top: 0 !important; border-bottom: 1px solid var(--border-strong) !important; background: var(--secondary) !important; color: var(--muted) !important; font-size: 13px; font-weight: 500; white-space: nowrap; }
+  .crew-panel .ant-table-thead > tr > th::before { display: none; }
+  .crew-panel .ant-table-tbody > tr > td { padding: 4px 10px !important; border-bottom-color: var(--border-strong) !important; }
+  .crew-panel .ant-table-thead > tr > th + th, .crew-panel .ant-table-tbody > tr > td + td { border-left: 1px solid var(--border-strong); }
+  .crew-panel .ant-table-thead > tr > th:first-child, .crew-panel .ant-table-tbody > tr.ant-table-row > td:first-child { padding-left: 10px !important; }
+  .crew-panel .ant-table-thead > tr > th:last-child, .crew-panel .ant-table-tbody > tr.ant-table-row > td:last-child { padding-right: 10px !important; }
+  .crew-panel .ant-table .ds-cell2 { line-height: 1.3; }
+}

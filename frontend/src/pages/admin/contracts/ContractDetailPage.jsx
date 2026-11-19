@@ -20,10 +20,8 @@ import { ContractSvg, Crumb, FleetTile } from '../fleet/FleetParts'
 import ApproveModal from './ApproveModal'
 import { NotePanel } from '../seafarers/ReadSections'
 import TripLink from '../voyages/TripLink'
-import BalanceCard from './BalanceCard'
-import DealTable from './DealTable'
 import RejectModal from './RejectModal'
-import TermsTable from './TermsTable'
+import { BalanceTable, DealView } from './DealView'
 import { itemRows } from './contractView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerForm.css'
@@ -47,15 +45,6 @@ const LOG_VIEW = {
   END: { title: 'Kết thúc hợp đồng', kind: 'accept', tone: 'neutral' },
   APPLY_BILLS: { title: 'Áp thay đổi yêu cầu thanh toán', kind: 'edit', tone: 'warning' },
   DELETE: { title: 'Xoá theo chuyến', kind: 'reject', tone: 'error' },
-}
-
-function Field({ label, children, span }) {
-  return (
-    <div className={`sf-ro${span ? ` sf-c${span}` : ''}`}>
-      <dt className="sf-ro__label">{label}</dt>
-      <dd className="sf-ro__value">{children || <span className="sf-ro__empty">Không có</span>}</dd>
-    </div>
-  )
 }
 
 export default function ContractDetailPage() {
@@ -244,37 +233,18 @@ export default function ContractDetailPage() {
 
   const bodies = {
     overview: (
-      <div className="ct-detail">
+      <div className="ct-detail ct-detail--deal">
         <div className="ct-detail__main">
-          <section className="crew-panel">
-            <div className="crew-panel__head">
-              <h2 className="crew-panel__title">Thông tin chung</h2>
-              {locked ? <span className="ct-locked"><LockOutlined aria-hidden /> Đã khoá</span> : null}
-            </div>
-            <div className="crew-panel__body">
-              <dl className="sf-grid">
-                <Field label="Thuyền viên" span={6}>
-                  <Link to={`/seafarers/${seafarer.id}`}>{seafarer.full_name}</Link>{seafarer.seafarer_code ? ` · ${seafarer.seafarer_code}` : ''} <StatusBadge group="crew" value={seafarer.status} />
-                </Field>
-                <Field label="Chức danh" span={6}>{position.rank_name}{contract.legacy_unlinked && position.sort_order != null ? ` · dòng ${position.sort_order + 1} của chuyến cũ` : ''}</Field>
-                <Field label="Ngày bắt đầu" span={3}>{formatDate(contract.start_date)}</Field>
-                <Field label="Ngày kết thúc" span={3}>{formatDate(contract.end_date)} <span className="vd-muted ds-duration-note">· {formatCalendarDuration(contract.start_date, contract.end_date)}</span></Field>
-                <Field label="Chuyến" span={6}>
-                  <TripLink trip={trip} legacyCode={legacyCode} />
-                </Field>
-              </dl>
-            </div>
-          </section>
-          <DealTable readOnly value={items} ownerName={place.ship_owner_name} seafarerName={seafarer.full_name} />
-          <TermsTable readOnly value={data.terms} ownerName={place.ship_owner_name} seafarerName={seafarer.full_name} />
+          <DealView items={items} terms={data.terms} ownerName={place.ship_owner_name} seafarerName={seafarer.full_name} />
         </div>
         <aside className="ct-detail__side">
-          <BalanceCard balance={balance} budgetTotal={position.budget_total_usd} />
+          <BalanceTable balance={balance} budgetTotal={position.budget_total_usd} />
         </aside>
       </div>
     ),
     bills: (
-      <section className="ct-block crew-docs-sec" aria-label="Yêu cầu thanh toán">
+      <section className="crew-panel crew-docs-sec" aria-label="Yêu cầu thanh toán">
+        <div className="crew-panel__head"><h2 className="crew-panel__title">Yêu cầu thanh toán <span className="ct-block__unit">{billRows.length} kỳ</span></h2></div>
         {bills.isLoading ? (
           <div style={{ padding: 16 }}><Skeleton active paragraph={{ rows: 3 }} /></div>
         ) : (
@@ -286,12 +256,12 @@ export default function ContractDetailPage() {
               { key: 'due', title: 'Hạn', mono: true, render: (b) => formatDate(b.due_date) },
               { key: 'amount', title: 'Số tiền (USD)', mono: true, render: (b) => formatUsd(b.total_usd, { fixed: true }) },
               { key: 'status', title: 'Trạng thái', card: 'end', render: (b) => <StatusBadge group="bill" value={b.display_status} /> },
-              { key: 'open', title: 'Thao tác', right: true, render: (b) => <Link className="ds-link" to={`/bills/${b.id}`}>Mở yêu cầu</Link> },
+              { key: 'open', title: '', right: true, render: (b) => <Link className="ds-link" to={`/bills/${b.id}`}>Mở</Link> },
             ]}
             empty={<EmptyState title="Chưa có yêu cầu thanh toán nào" description="Yêu cầu thanh toán tự tạo khi duyệt hợp đồng." />}
           />
         )}
-        {billRows.length ? <p className="crew-muted" style={{ padding: '12px 16px' }}>Tổng cộng {billRows.length} kỳ: <b className="ds-num">{formatUsd(billTotal, { fixed: true })}</b> USD</p> : null}
+        {billRows.length ? <p className="crew-panel__foot">Tổng cộng {billRows.length} kỳ: <b className="ds-num">{formatUsd(billTotal, { fixed: true })}</b> USD</p> : null}
       </section>
     ),
     history: (
@@ -315,24 +285,25 @@ export default function ContractDetailPage() {
           <div className="crew-head__titlerow">
             <h1 className="crew-head__title">{number}</h1>
             <StatusBadge group="contract" value={status} />
+            {locked ? <span className="ct-locked"><LockOutlined aria-hidden /> Đã khoá</span> : null}
             {awaiting ? <span className="crew-docs crew-docs--warning">Chờ duyệt lại</span> : null}
           </div>
           <p className="crew-head__desc">Chức danh {position.rank_name}</p>
           <dl className="crew-head__meta">
-            <dt>Thuyền viên</dt>
-            <dd>{can('seafarer.view') ? <Link to={`/seafarers/${seafarer.id}`}>{seafarer.full_name}</Link> : seafarer.full_name}</dd>
+            <div className="crew-head__pair"><dt>Thuyền viên</dt>
+            <dd>{can('seafarer.view') ? <Link to={`/seafarers/${seafarer.id}`}>{seafarer.full_name}</Link> : seafarer.full_name}</dd></div>
             {place.ship_owner_name ? (
               <>
-                <dt>Chủ tàu</dt>
-                <dd>{can('partner.view') && place.ship_owner_id ? <Link to={`/partners/${place.ship_owner_id}`}>{place.ship_owner_name}</Link> : place.ship_owner_name}</dd>
+                <div className="crew-head__pair"><dt>Chủ tàu</dt>
+                <dd>{can('partner.view') && place.ship_owner_id ? <Link to={`/partners/${place.ship_owner_id}`}>{place.ship_owner_name}</Link> : place.ship_owner_name}</dd></div>
               </>
             ) : null}
-            <dt>Tàu</dt>
-            <dd>{place.vessel_id && can('vessel.view') ? <Link to={`/vessels/${place.vessel_id}`}>{place.vessel_name}</Link> : place.vessel_name}</dd>
-            <dt>Chuyến</dt>
-            <dd><TripLink trip={trip} legacyCode={legacyCode} /></dd>
-            <dt>Thời gian</dt>
-            <dd style={{ columnGap: 6 }}><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)}</span><span className="ds-duration-note" style={{ whiteSpace: 'nowrap' }}>· {formatCalendarDuration(contract.start_date, contract.end_date)}</span></dd>
+            <div className="crew-head__pair"><dt>Tàu</dt>
+            <dd>{place.vessel_id && can('vessel.view') ? <Link to={`/vessels/${place.vessel_id}`}>{place.vessel_name}</Link> : place.vessel_name}</dd></div>
+            <div className="crew-head__pair"><dt>Chuyến</dt>
+            <dd><TripLink trip={trip} legacyCode={legacyCode} /></dd></div>
+            <div className="crew-head__pair"><dt>Thời gian</dt>
+            <dd style={{ columnGap: 6 }}><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)}</span><span className="ds-duration-note" style={{ whiteSpace: 'nowrap' }}>· {formatCalendarDuration(contract.start_date, contract.end_date)}</span></dd></div>
           </dl>
         </div>
         </div>

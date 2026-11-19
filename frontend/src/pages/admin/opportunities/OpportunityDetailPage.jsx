@@ -385,12 +385,12 @@ export default function OpportunityDetailPage() {
               {flag ? <span className={`crew-docs crew-docs--${flag.tone}`}>Hạn chốt {flag.text}</span> : null}
             </div>
             <dl className="crew-head__meta">
-              <dt>Tàu</dt>
-              <dd>{o.vessel_name ? (can('vessel.view') ? <Link to={`/vessels/${o.vessel_id}`}>{o.vessel_name}</Link> : o.vessel_name) : 'Chưa rõ tàu'}</dd>
-              <dt>Chủ tàu</dt>
-              <dd>{can('partner.view') ? <Link to={`/partners/${o.ship_owner_id}`}>{o.ship_owner_name}</Link> : o.ship_owner_name}</dd>
-              <dt>Phụ trách</dt>
-              <dd>{o.owner_user_email || '—'}</dd>
+              <div className="crew-head__pair"><dt>Tàu</dt>
+              <dd>{o.vessel_name ? (can('vessel.view') ? <Link to={`/vessels/${o.vessel_id}`}>{o.vessel_name}</Link> : o.vessel_name) : 'Chưa rõ tàu'}</dd></div>
+              <div className="crew-head__pair"><dt>Chủ tàu</dt>
+              <dd>{can('partner.view') ? <Link to={`/partners/${o.ship_owner_id}`}>{o.ship_owner_name}</Link> : o.ship_owner_name}</dd></div>
+              <div className="crew-head__pair"><dt>Phụ trách</dt>
+              <dd>{o.owner_user_email || '—'}</dd></div>
             </dl>
           </div>
         </div>

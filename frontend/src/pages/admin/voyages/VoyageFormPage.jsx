@@ -169,7 +169,7 @@ export default function VoyageFormPage() {
             <Form.Item name="seafarer_id" className="sf-c4" label="Thuyền viên" rules={[{ required: true, message: 'Chọn thuyền viên' }]}>
               <Select {...selectProps} filterOption={false} onSearch={setPersonSearch} loading={people.isFetching} options={personOptions} placeholder="Tìm tên, mã thuyền viên" />
             </Form.Item>
-            <Form.Item name="rank_id" className="sf-c4" label="Chức danh" rules={[{ required: true, message: 'Chọn chức danh' }]} extra="Mặc định chức danh hiện tại">
+            <Form.Item name="rank_id" className="sf-c4" label="Chức danh" rules={[{ required: true, message: 'Chọn chức danh' }]} extra="Mặc định chức danh hiện tại" tooltip="Mặc định chức danh hiện tại">
               <Select {...selectProps} loading={ranks.isLoading} options={rankOptions} placeholder="Chọn chức danh" />
             </Form.Item>
             <Form.Item name="manual_reason" className="sf-c4" label="Lý do tạo không qua cơ hội" rules={[{ required: true, message: 'Chọn lý do' }]}>
@@ -193,7 +193,7 @@ export default function VoyageFormPage() {
             <Form.Item name="ship_owner_id" className="sf-c4" label="Chủ tàu" rules={[{ required: true, message: vesselHasNoOwner ? 'Tàu này chưa có chủ tàu. Gán chủ tàu cho tàu trước khi dùng.' : 'Chọn chủ tàu' }]} extra={vesselHasNoOwner ? 'Tàu chưa có chủ tàu' : ownerFromVessel ? 'Lấy theo tàu' : undefined}>
               <Select {...selectProps} loading={owners.isLoading} options={vesselHasNoOwner ? [] : selectedVessel?.ownerId ? ownerOptions.filter((o) => o.value === selectedVessel.ownerId) : ownerOptions} disabled={vesselHasNoOwner} placeholder="Chọn chủ tàu" onChange={onOwnerChange} />
             </Form.Item>
-            <Form.Item name="budget_monthly_usd" className="sf-c4" label="Budget/tháng (USD)" extra="Không bắt buộc">
+            <Form.Item name="budget_monthly_usd" className="sf-c4" label="Budget/tháng (USD)" extra="Không bắt buộc" tooltip="Không bắt buộc">
               <MoneyInput aria-label="Budget mỗi tháng" />
             </Form.Item>
           </div>
@@ -201,7 +201,7 @@ export default function VoyageFormPage() {
 
         <FormSection index={1} section={sections[1]} meta={metas[1]}>
           <div className="sf-grid">
-            <Form.Item name="join_date" className="sf-c3" label="Ngày lên tàu" rules={[{ required: true, message: 'Chọn ngày lên tàu' }]} extra="Không được sau hôm nay">
+            <Form.Item name="join_date" className="sf-c3" label="Ngày lên tàu" rules={[{ required: true, message: 'Chọn ngày lên tàu' }]} extra="Không được sau hôm nay" tooltip="Không được sau hôm nay">
               <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} disabledDate={(d) => d.isAfter(today)} />
             </Form.Item>
             <Form.Item name="join_port_id" className="sf-c3" label="Nơi lên tàu" rules={[{ required: true, message: 'Chọn nơi lên tàu' }]}>

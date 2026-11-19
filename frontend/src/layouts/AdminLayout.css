@@ -49,6 +49,10 @@
   scrollbar-width: thin;
 }
 
+.app-shell__nav > * {
+  flex-shrink: 0;
+}
+
 .app-shell__nav-item {
   display: flex;
   align-items: center;

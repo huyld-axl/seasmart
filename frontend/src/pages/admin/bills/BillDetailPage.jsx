@@ -11,12 +11,12 @@ import useToast from '../../../components/ds/useToast'
 import { useBill, useBillMutations } from '../../../hooks/useVoyages'
 import { useCan } from '../../../hooks/usePermission'
 import apiErrorText from '../../../utils/apiError'
-import { formatDate, formatDateTime, formatUsd } from '../../../utils/format'
+import { formatDate, formatDateTime } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
-import BillCalendar from './BillCalendar'
+import { BillMoneyView, BillPeriods } from './BillParts'
+import InfoTable from '../../../components/ds/InfoTable'
 import CollectModal from './CollectModal'
-import BillMoneyTable from './BillMoneyTable'
-import { closingLabel, groupItems, overdueLabel, payLabel } from './billView'
+import { closingLabel, overdueLabel, payLabel } from './billView'
 import '../seafarers/SeafarerListPage.css'
 import '../seafarers/SeafarerProfile.css'
 import TripLink from '../voyages/TripLink'
@@ -36,27 +36,8 @@ const LOG_VIEW = {
   UNCOLLECT: { title: 'Huỷ ghi nhận đã thu', kind: 'withdraw', tone: 'neutral' },
 }
 
-function Field({ label, children, span = 6 }) {
-  return (
-    <div className={`sf-ro sf-c${span}`}>
-      <dt className="sf-ro__label">{label}</dt>
-      <dd className="sf-ro__value">{children}</dd>
-    </div>
-  )
-}
 const Empty = ({ children }) => <span className="sf-ro__empty">{children}</span>
 
-function AmountRow({ label, value, note }) {
-  return (
-    <div className="ct-card-row">
-      <span className="ct-card-row__label">{label}</span>
-      <span className="ct-card-row__end">
-        <span className="ct-card-row__value"><b>{formatUsd(value)}</b> <span className="ct-fig__unit">USD</span></span>
-        {note ? <span className="ct-card-row__note">{note}</span> : null}
-      </span>
-    </div>
-  )
-}
 
 export default function BillDetailPage() {
   const can = useCan()
@@ -88,7 +69,6 @@ export default function BillDetailPage() {
   }
 
   const { bill, items, term, periods, log } = data
-  const { totals } = groupItems(items)
   const display = bill.display_status
 
   async function run(action, message, body = {}) {
@@ -151,51 +131,42 @@ export default function BillDetailPage() {
 
       <div className="crew-head">
         <div className="crew-head__text">
-          <h1 className="crew-head__title">{bill.code} · Kỳ {bill.seq}/{bill.periods}</h1>
-          <p className="crew-head__desc">{formatDate(bill.period_start)} → {formatDate(bill.period_end)} · hạn thanh toán {formatDate(bill.due_date)}</p>
-          <div className="crew-head__badges"><StatusBadge group="bill" value={display} label={overdueLabel(bill)} /></div>
+          <div className="crew-head__titlerow">
+            <h1 className="crew-head__title">{bill.code} · Kỳ {bill.seq}/{bill.periods}</h1>
+            <StatusBadge group="bill" value={display} label={overdueLabel(bill)} />
+          </div>
+          <dl className="crew-head__meta">
+            <div className="crew-head__pair"><dt>Hợp đồng</dt><dd><Link className="ds-mono" to={`/contracts/${bill.contract.id}`}>{bill.contract.contract_number}</Link></dd></div>
+            <div className="crew-head__pair"><dt>Thuyền viên</dt><dd><Link to={`/seafarers/${bill.seafarer.id}`}>{bill.seafarer.full_name}</Link>&nbsp;<span className="vd-muted">· {bill.seafarer.rank_name}</span></dd></div>
+            <div className="crew-head__pair"><dt>Đối tác</dt><dd><Link to={`/partners/${bill.ship_owner.id}`}>{bill.ship_owner.company_name}</Link></dd></div>
+            <div className="crew-head__pair"><dt>Kỳ</dt><dd className="ds-num">{formatDate(bill.period_start)} → {formatDate(bill.period_end)}</dd></div>
+            <div className="crew-head__pair"><dt>Hạn</dt><dd className="ds-num">{formatDate(bill.due_date)} ({WEEKDAY[dayjs(bill.due_date).day()]})</dd></div>
+          </dl>
         </div>
         <HeadActions>{actions}</HeadActions>
       </div>
 
-      <div className="ct-detail">
+      <div className="ct-detail ct-detail--bill">
         <div className="ct-detail__main">
-          <section className="crew-panel">
+          <section className="crew-panel crew-panel--table">
             <div className="crew-panel__head"><h2 className="crew-panel__title">Thông tin chung</h2></div>
-            <div className="crew-panel__body">
-              <dl className="sf-grid">
-                <Field label="Hợp đồng"><Link className="ds-mono" to={`/contracts/${bill.contract.id}`}>{bill.contract.contract_number}</Link></Field>
-                <Field label="Thuyền viên"><Link to={`/seafarers/${bill.seafarer.id}`}>{bill.seafarer.full_name}</Link> <span className="vd-muted">· {bill.seafarer.rank_name}</span></Field>
-                <Field label="Đối tác"><Link to={`/partners/${bill.ship_owner.id}`}>{bill.ship_owner.company_name}</Link></Field>
-                <Field label="Tàu"><Link to={`/vessels/${bill.vessel.id}`}>{bill.vessel.vessel_name}</Link> <span className="vd-muted">· chuyến <TripLink trip={bill.trip} legacyCode={bill.voyage?.code} /></span></Field>
-                <Field label="Kỳ" span={3}>{formatDate(bill.period_start)} → {formatDate(bill.period_end)}</Field>
-                <Field label="Ngày chốt sổ" span={3}>{term ? closingLabel(term.closing_day) : <Empty>—</Empty>}</Field>
-                <Field label="Hạn thanh toán">{formatDate(bill.due_date)} ({WEEKDAY[dayjs(bill.due_date).day()]}) {term ? <span className="vd-muted">· {payLabel(term).toLowerCase()}</span> : null}</Field>
-                <Field label="Ngày gửi" span={3}>{bill.sent_at ? formatDate(bill.sent_at) : <Empty>Chưa gửi</Empty>}</Field>
-                <Field label="Ngày thu" span={3}>{bill.paid_date ? formatDate(bill.paid_date) : <Empty>Chưa thu</Empty>}</Field>
-                <Field label="Ghi chú">{bill.note || <Empty>Không có</Empty>}</Field>
-              </dl>
-            </div>
+            <InfoTable
+              fields={[
+                ['Tàu', <><Link to={`/vessels/${bill.vessel.id}`}>{bill.vessel.vessel_name}</Link> <span className="vd-muted">· chuyến <TripLink trip={bill.trip} legacyCode={bill.voyage?.code} /></span></>],
+                ['Ngày chốt sổ', term ? closingLabel(term.closing_day) : null],
+                ['Hạn thanh toán', <>{formatDate(bill.due_date)} ({WEEKDAY[dayjs(bill.due_date).day()]}) {term ? <span className="vd-muted">· {payLabel(term).toLowerCase()}</span> : null}</>],
+                ['Ngày gửi', bill.sent_at ? formatDate(bill.sent_at) : <Empty>Chưa gửi</Empty>],
+                ['Ngày thu', bill.paid_date ? formatDate(bill.paid_date) : <Empty>Chưa thu</Empty>],
+                ['Ghi chú', bill.note || <Empty>Không có</Empty>],
+              ]}
+            />
           </section>
-          <BillMoneyTable value={items} readOnly />
+          <BillMoneyView items={items} ownerName={bill.ship_owner.company_name} />
         </div>
 
         <aside className="ct-detail__side">
-          <section className="crew-panel">
-            <div className="crew-panel__head"><h2 className="crew-panel__title">Số tiền</h2></div>
-            <div className="crew-panel__body ct-card">
-              <div className="ct-budget ct-budget--card">
-                <span className="ct-budget__label">Tổng yêu cầu</span>
-                <span className="ct-budget__value"><b>{formatUsd(totals.all)}</b> <span className="ct-fig__unit">USD</span></span>
-                <span className="ct-budget__sub">{bill.ship_owner.company_name}</span>
-              </div>
-              <AmountRow label="Hằng tháng" value={totals.monthly} />
-              {totals.once ? <AmountRow label="Một lần" value={totals.once} note="Chỉ có ở kỳ đầu" /> : null}
-              {totals.adjust ? <AmountRow label="Điều chỉnh" value={totals.adjust} /> : null}
-            </div>
-          </section>
-          <BillCalendar key={bill.id} periods={periods} currentId={bill.id} onOpen={(next) => navigate(`/bills/${next}`)} />
-          <section className="crew-panel">
+          <BillPeriods key={bill.id} periods={periods} currentId={bill.id} />
+          <section className="crew-panel crew-panel--table">
             <div className="crew-panel__head"><h2 className="crew-panel__title">Lịch sử</h2></div>
             <div className="crew-panel__body"><AuditTimeline items={timeline} /></div>
           </section>

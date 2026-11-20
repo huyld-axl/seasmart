@@ -1,7 +1,7 @@
 const pool = require('../../config/db')
 const { seafarerContractService } = require('../../services/seafarer_contract.service')
 const {
-  CONTRACT_STATUSES, CLOSING_DAYS, PAY_DAYS, PAY_MONTH_OFFSETS, HOLIDAY_RULES,
+  CONTRACT_STATUSES, CLOSING_DAYS, PAY_DAYS, PAY_MONTH_OFFSETS, HOLIDAY_RULES, DEFAULT_ITEMS,
 } = require('../../constants/voyage_contract')
 const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
 
@@ -41,12 +41,13 @@ const contractProps = {
   notes: { type: ['string', 'null'], maxLength: 2000 },
   items: {
     type: 'array',
-    maxItems: 40,
+    maxItems: DEFAULT_ITEMS.length,
     items: {
       type: 'object',
+      required: ['item_code'],
+      additionalProperties: false,
       properties: {
-        item_code: { type: ['string', 'null'], maxLength: 30 },
-        custom_name: { type: ['string', 'null'], maxLength: 100 },
+        item_code: { type: 'string', enum: DEFAULT_ITEMS.map((item) => item.code) },
         kind: { type: 'string', enum: ['MONTHLY', 'ONE_TIME'] },
         receivable_usd: amount,
         payable_usd: amount,

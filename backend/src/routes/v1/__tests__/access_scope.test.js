@@ -46,6 +46,7 @@ beforeAll(async () => {
   await app.register(require('../voyage.routes'), { prefix: '/voyages' })
   await app.register(require('../opportunity.routes'), { prefix: '/opportunities' })
   await app.register(require('../seafarer_contract.routes'), { prefix: '/contracts' })
+  await app.register(require('../payout.routes'), { prefix: '/payouts' })
   await app.register(require('../export_pack.routes').exportPackRoutes, { prefix: '/exports' })
   await app.register(require('../master_data.routes'), { prefix: '/admin/master' })
   await app.register(require('../fleet.routes'), { prefix: '/admin/master' })
@@ -394,5 +395,46 @@ describe('hợp đồng gắn chuyến: quyền các thao tác mới', () => {
     expect((await post('end', ['contract.end'])).statusCode).toBe(404)
     expect((await app.inject({ method: 'GET', url: '/contracts/9/bill-plan', headers: as([]) })).statusCode).toBe(403)
     expect((await app.inject({ method: 'GET', url: '/contracts/9/bill-plan', headers: as(['contract.view']) })).statusCode).toBe(404)
+  })
+})
+
+describe('trả lương: quyền, phạm vi, kiểm đầu vào', () => {
+  const zero = Object.fromEntries(require('../../../constants/voyage_contract').DEFAULT_ITEMS.map((i) => [i.code, 0]))
+  const pay = (headers, payload) => app.inject({ method: 'POST', url: '/payouts/pay', headers, payload })
+
+  it('xem cần payout.view, tháng bắt buộc đúng dạng', async () => {
+    expect((await get('/payouts?month=2026-10', as(['bill.view']))).statusCode).toBe(403)
+    expect((await get('/payouts', as(['payout.view']))).statusCode).toBe(400)
+    expect((await get('/payouts?month=2026-13', as(['payout.view']))).statusCode).toBe(400)
+    expect((await get('/payouts?month=2026-10', as(['payout.view']))).statusCode).toBe(200)
+  })
+
+  it('phạm vi "chỉ của mình" lọc theo người tạo bill', async () => {
+    await get('/payouts?month=2026-10', as(['payout.view'], { payout: 'own' }))
+    const main = calls.find((c) => c.sql.includes('LEFT JOIN seafarer_payout sp'))
+    expect(main.sql).toContain('b.created_by = ?')
+    expect(main.params.slice(2)).toEqual(['2026-10-01', '2026-10-31', 7])
+  })
+
+  it('chốt cần payout.pay; thiếu khoản hoặc số âm thì 400 trước khi đọc DB', async () => {
+    expect((await pay(as(['payout.view']), { rows: [{ bill_id: 1, version: null, amounts: zero }] })).statusCode).toBe(403)
+    expect((await pay(as(['payout.pay']), { rows: [{ bill_id: 1, version: null, amounts: { ...zero, BONUS: -1 } }] })).statusCode).toBe(400)
+    const { BONUS, ...missing } = zero
+    expect(BONUS).toBe(0)
+    expect((await pay(as(['payout.pay']), { rows: [{ bill_id: 1, version: null, amounts: missing }] })).statusCode).toBe(400)
+    expect(executed(/seafarer_payout/)).toBe(false)
+  })
+
+  it('bill ngoài phạm vi thì 404', async () => {
+    rules = [
+      ['CURRENT_DATE::text AS today', () => [[{ today: '2026-11-20' }]]],
+      ['FROM contract_bill WHERE id = ?', () => [[{ id: 1, code: 'B1', seq: 1, side: 'RECEIVABLE', contract_id: 2, created_by: 99 }]]],
+    ]
+    expect((await pay(as(['payout.pay'], { payout: 'own' }), { rows: [{ bill_id: 1, version: null, amounts: zero }] })).statusCode).toBe(404)
+  })
+
+  it('huỷ chốt cần payout.pay', async () => {
+    expect((await app.inject({ method: 'POST', url: '/payouts/9/unpay', headers: as(['payout.view']), payload: { version: 1 } })).statusCode).toBe(403)
+    expect((await app.inject({ method: 'POST', url: '/payouts/9/unpay', headers: as(['payout.pay']), payload: { version: 1 } })).statusCode).toBe(404)
   })
 })

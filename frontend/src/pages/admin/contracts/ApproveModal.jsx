@@ -29,6 +29,7 @@ export default function ApproveModal({ contract, open, onClose }) {
   const ready = Boolean(plan) && !blocked && (!changes || checked)
 
   const approvedBlocked = (plan?.blocked || []).filter((b) => b.status === 'APPROVED')
+  const payoutBlocked = (plan?.blocked || []).some((b) => b.payout_paid)
 
   async function unapproveBlocked() {
     try {
@@ -63,10 +64,14 @@ export default function ApproveModal({ contract, open, onClose }) {
     body = <Banner tone="error" title="Không tính được thay đổi yêu cầu thanh toán" description="Thử lại sau ít phút." action={<Button onClick={() => planQuery.refetch()}>Thử lại</Button>} />
   } else if (blocked) {
     body = (
-      <Banner tone="error" title="Không duyệt được: có yêu cầu thanh toán đã duyệt, đã gửi hoặc đã thu bị ảnh hưởng" description="Huỷ ghi nhận thu, thu hồi, bỏ duyệt các bill sau rồi duyệt lại.">
+      <Banner
+        tone="error"
+        title={`Không duyệt được: có yêu cầu thanh toán đã duyệt, đã gửi, đã thu${payoutBlocked ? ' hoặc đã trả lương' : ''} bị ảnh hưởng`}
+        description={`${payoutBlocked ? 'Huỷ chốt trả lương, h' : 'H'}uỷ ghi nhận thu, thu hồi, bỏ duyệt các bill sau rồi duyệt lại.`}
+      >
         <ul className="ct-blocked">
           {plan.blocked.map((b) => (
-            <li key={b.bill_id}><Link to={`/bills/${b.bill_id}`}>{b.code}</Link> kỳ {b.seq} ({BILL_STATUS_TEXT[b.status]})</li>
+            <li key={b.bill_id}><Link to={`/bills/${b.bill_id}`}>{b.code}</Link> kỳ {b.seq} ({[BILL_STATUS_TEXT[b.status], b.payout_paid ? 'Đã trả lương' : null].filter(Boolean).join(' · ')})</li>
           ))}
         </ul>
         {approvedBlocked.length && can('bill.approve') ? (

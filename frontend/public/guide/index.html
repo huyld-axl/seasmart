@@ -227,6 +227,7 @@
     <a href="#chuyen-tau">Chuyến tàu</a>
     <a href="#hop-dong">Hợp đồng</a>
     <a href="#thanh-toan">Yêu cầu thanh toán</a>
+    <a href="#tra-luong">Trả lương thuyền viên</a>
     <a href="#roi-tau">Rời tàu, sửa &amp; kết thúc hợp đồng</a>
     <p>Hệ thống</p>
     <a href="#danh-muc">Danh mục</a>
@@ -764,8 +765,9 @@
       </figure>
       <h3>Soạn hợp đồng</h3>
       <ul>
-        <li><b>Khoản hằng tháng:</b> lương cơ bản, làm thêm cố định, lương phép, phụ cấp, thưởng, phí dịch vụ.</li>
-        <li><b>Khoản một lần:</b> vé máy bay đi / về, phí visa, khám sức khoẻ, huấn luyện, thưởng hoàn thành hợp đồng.</li>
+        <li><b>Khoản hằng tháng:</b> lương cơ bản, làm thêm cố định, lương phép, phụ cấp, thưởng, phí dịch vụ, khác (hằng tháng).</li>
+        <li><b>Khoản một lần:</b> vé máy bay đi / về, phí visa, khám sức khoẻ, huấn luyện, thưởng hoàn thành hợp đồng, khác (một lần).</li>
+        <li>Danh sách khoản là cố định, không thêm khoản tự đặt tên. Khoản lẻ ngoài danh sách nhập vào <b>Khác</b> và ghi rõ trong ghi chú hợp đồng. Yêu cầu thanh toán và bảng trả lương dùng đúng các khoản này; khoản không có hiện 0.</li>
         <li><b>Kỳ thanh toán</b> của mỗi phía: ngày chốt sổ (5, 10, 15, 20, 25 hoặc cuối tháng), ngày trả, trả vào tháng sau 1, 2 hay 3 tháng, và gặp thứ Bảy, Chủ nhật thì làm trước hay sau.</li>
       </ul>
       <h3>Duyệt</h3>
@@ -805,7 +807,7 @@
       </figure>
       <ol class="steps">
         <li><span>Kỳ sinh ra ở trạng thái chưa duyệt; tới ngày chốt sổ thì vào tab Cần duyệt.</span></li>
-        <li><span>Sửa số tiền, dòng điều chỉnh, ghi chú hoặc hạn thanh toán nếu cần (chỉ khi chưa duyệt).</span></li>
+        <li><span>Sửa số tiền từng khoản, ghi chú hoặc hạn thanh toán nếu cần (chỉ khi chưa duyệt). Muốn trừ những ngày chưa làm thì giảm thẳng số của khoản đó, ví dụ Lương cơ bản.</span></li>
         <li><span><span class="ui">Duyệt</span>: người duyệt phải khác người sửa gần nhất. Kỳ đã duyệt bị khoá; muốn sửa thì Bỏ duyệt.</span></li>
         <li><span>Gửi cho chủ tàu ngoài hệ thống rồi đánh dấu <span class="ui">Đã gửi</span>. Thu hồi một kỳ đã gửi đưa nó về chưa duyệt.</span></li>
         <li><span>Nhận tiền thì <span class="ui">Ghi nhận đã thu</span> với ngày thu; ghi nhầm thì huỷ ghi nhận.</span></li>
@@ -814,11 +816,6 @@
         <a href="anh/bill-ct.webp" target="_blank" rel="noopener"><img src="anh/bill-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết một yêu cầu thanh toán với lịch các kỳ"></a>
         <figcaption>Chi tiết một kỳ: số tiền hằng tháng và một lần, ngày gửi, ngày thu; cột phải là lịch mọi kỳ của hợp đồng.</figcaption>
       </figure>
-      <div class="note">
-        <i>i</i>
-        <b>Phạm vi hiện tại</b>
-        <p>App đang làm phía thu tiền chủ tàu. Phía chi trả lương thuyền viên chưa có.</p>
-      </div>
       <div class="who">
         <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
         <div><span>Sửa số tiền, ghi chú</span><em>Yêu cầu thanh toán · Sửa số tiền và ghi chú</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
@@ -828,8 +825,43 @@
       </div>
     </section>
 
-    <section id="roi-tau" data-jobs="mg dy kt">
+    <section id="tra-luong" data-jobs="kt dy">
       <div class="kicker">Vận hành · 06</div>
+      <h2>Trả lương thuyền viên</h2>
+      <p>Màn <span class="ui">Trả lương</span> ghi nhận đã trả lương cho thuyền viên sau mỗi kỳ thu tiền đối tác. Việc chuyển tiền làm ngoài MCAH; trong app chỉ ghi lại đã trả hay chưa, trả bao nhiêu và ngày trả, để thống kê và đối chiếu với số thu.</p>
+      <p>Chọn tháng ở đầu trang (mặc định tháng trước). Mỗi yêu cầu thanh toán có ngày kết thúc kỳ trong tháng đó là một cặp dòng:</p>
+      <ul>
+        <li><b>Thu</b>: số tiền của yêu cầu thanh toán gửi đối tác, chỉ xem. Muốn đổi thì sửa ở màn Yêu cầu thanh toán. Bên cạnh có trạng thái của yêu cầu thanh toán (cần duyệt, đã gửi, đã thu…) để đối chiếu.</li>
+        <li><b>Trả</b>: số trả thuyền viên. Mặc định lấy cột <b>Phải chi</b> của hợp đồng: khoản hằng tháng mỗi kỳ, khoản một lần ở kỳ đầu. Sửa được từng khoản; muốn trừ thì giảm thẳng số của khoản đó.</li>
+      </ul>
+      <p>Bảng luôn có đủ 14 khoản cố định như hợp đồng; khoản không có hiện 0. Kéo ngang để xem hết, cột tên thuyền viên và cột nút luôn đứng yên. Cột <b>Hạn trả</b> tính theo kỳ thanh toán Phải chi của hợp đồng.</p>
+      <div class="flow">
+        <span>Chưa trả</span><i>→</i><span>Sửa số nếu cần</span><i>→</i><span class="key">Chốt: Đã trả</span>
+      </div>
+      <ol class="steps">
+        <li><span>Trả lương cho thuyền viên ngoài hệ thống.</span></li>
+        <li><span>Sửa số ở dòng Trả cho khớp số đã trả, nếu khác hợp đồng. Ô đã sửa có viền màu và chữ "Đã sửa"; <span class="ui">Bỏ sửa</span> trả về số cũ.</span></li>
+        <li><span>Bấm <span class="ui">Chốt</span> ở dòng đó. Ngày trả là ngày bấm. Bấm nhầm thì bấm <span class="ui">Hoàn tác</span> trên thông báo.</span></li>
+      </ol>
+      <p>Trả nhiều người một lúc: tích ô đầu các dòng rồi bấm <span class="ui">Chốt … dòng đã chọn</span>. Hộp xác nhận ghi tổng tiền và nhắc nếu có dòng mà đối tác chưa trả tiền. Nếu một dòng không chốt được (ví dụ người khác vừa chốt), không dòng nào được chốt; xem tên dòng trong thông báo rồi làm lại.</p>
+      <p>Số đã sửa chỉ được lưu khi bấm Chốt. Đổi tháng, đổi tab hay rời trang khi còn số chưa chốt, app hỏi trước.</p>
+      <h3>Sửa sau khi đã chốt</h3>
+      <p>Dòng đã trả bị khoá. Bấm <span class="ui">⋯</span> → <span class="ui">Huỷ chốt</span> để về Chưa trả, sửa rồi chốt lại. Số đã chốt được giữ, không quay về số của hợp đồng. Nếu yêu cầu thanh toán bị sửa số tiền sau khi đã chốt, dòng hiện nhãn vàng <b>Bill đổi sau khi chốt</b>; rê chuột để xem tổng lúc chốt.</p>
+      <div class="note">
+        <i>i</i>
+        <b>Khi sửa ngày hợp đồng</b>
+        <p>Kỳ đã chốt trả lương được giữ như kỳ đã gửi hay đã thu. Nếu sửa ngày làm kỳ đó bị cắt hoặc xoá, app chặn và nêu tên kỳ; huỷ chốt trả lương kỳ đó trước rồi làm lại.</p>
+      </div>
+      <p>Trên điện thoại, mỗi yêu cầu thanh toán là một thẻ; bấm thẻ để sửa và chốt từng người.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem bảng trả lương</span><em>Trả lương · Xem bảng trả lương</em><span class="chips"><span class="job j-kt">Kế toán</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Sửa số, chốt, huỷ chốt</span><em>Trả lương · Sửa số trả, chốt và huỷ chốt</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+      </div>
+    </section>
+
+    <section id="roi-tau" data-jobs="mg dy kt">
+      <div class="kicker">Vận hành · 07</div>
       <h2>Rời tàu, sửa và kết thúc hợp đồng</h2>
       <p>Điều quan trọng nhất: <b>sửa ngày của chuyến không bao giờ đụng tới tiền</b>. Muốn đổi tiền thì sửa hợp đồng, và tiền chỉ đổi khi hợp đồng được duyệt lại.</p>
       <div class="tbl">

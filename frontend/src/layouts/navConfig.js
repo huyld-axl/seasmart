@@ -14,6 +14,7 @@ export const NAV_SECTIONS = [
   { key: 'voyages', group: 2, label: 'Chuyến tàu', icon: 'anchor', to: '/voyages', match: ['/voyages'], perm: 'voyage.view' },
   { key: 'contracts', group: 2, label: 'Hợp đồng', icon: 'file', to: '/contracts', match: ['/contracts'], perm: 'contract.view' },
   { key: 'bills', group: 2, label: 'Yêu cầu thanh toán', icon: 'bill', to: '/bills', match: ['/bills'], perm: 'bill.view' },
+  { key: 'payouts', group: 2, label: 'Trả lương', icon: 'payout', to: '/payouts', match: ['/payouts'], perm: 'payout.view' },
   {
     key: 'catalog',
     group: 3,

@@ -49,31 +49,19 @@ export function balanceNotes(b) {
 
 const KIND_ORDER = ['MONTHLY', 'ONE_TIME']
 
-// Các dòng của bảng khoản: đủ 12 khoản mặc định (thiếu thì thêm dòng trống) rồi dòng tự đặt tên, chia theo nhóm.
+// Các dòng của bảng khoản: đủ các khoản cố định (thiếu thì dòng trống), chia theo nhóm.
 export function itemRows(items = []) {
-  const byCode = Object.fromEntries(items.filter((i) => i.item_code).map((i) => [i.item_code, i]))
-  const custom = items.filter((i) => !i.item_code)
+  const byCode = Object.fromEntries(items.map((i) => [i.item_code, i]))
   return Object.fromEntries(
     KIND_ORDER.map((kind) => [
       kind,
-      [
-        ...DEFAULT_ITEMS.filter((d) => d.kind === kind).map((d) => ({
-          kind,
-          item_code: d.code,
-          custom_name: null,
-          name: d.name,
-          receivable_usd: byCode[d.code]?.receivable_usd ?? null,
-          payable_usd: byCode[d.code]?.payable_usd ?? null,
-        })),
-        ...custom.filter((i) => i.kind === kind).map((i) => ({
-          kind,
-          item_code: null,
-          custom_name: i.custom_name ?? '',
-          name: i.custom_name ?? '',
-          receivable_usd: i.receivable_usd ?? null,
-          payable_usd: i.payable_usd ?? null,
-        })),
-      ],
+      DEFAULT_ITEMS.filter((d) => d.kind === kind).map((d) => ({
+        kind,
+        item_code: d.code,
+        name: d.name,
+        receivable_usd: byCode[d.code]?.receivable_usd ?? null,
+        payable_usd: byCode[d.code]?.payable_usd ?? null,
+      })),
     ])
   )
 }
@@ -149,14 +137,12 @@ export function toPayload(values, { voyageId } = {}) {
     start_date: fromDay(values.start_date),
     end_date: fromDay(values.end_date),
     notes: values.notes?.trim() || null,
-    items: (values.items || [])
-      .filter((i) => i.item_code || (i.custom_name && i.custom_name.trim()))
-      .map((i) => ({
-        kind: i.kind,
-        ...(i.item_code ? { item_code: i.item_code } : { custom_name: i.custom_name.trim() }),
-        receivable_usd: money(i.receivable_usd),
-        payable_usd: money(i.payable_usd),
-      })),
+    items: (values.items || []).map((i) => ({
+      kind: i.kind,
+      item_code: i.item_code,
+      receivable_usd: money(i.receivable_usd),
+      payable_usd: money(i.payable_usd),
+    })),
     terms: values.terms,
   }
 }

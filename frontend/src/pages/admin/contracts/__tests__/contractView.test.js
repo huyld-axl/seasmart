@@ -41,17 +41,18 @@ describe('termLabel', () => {
 })
 
 describe('itemRows', () => {
-  it('luôn đủ 12 khoản mặc định theo nhóm, thêm dòng tự đặt tên ở cuối nhóm', () => {
+  it('luôn đủ 14 khoản cố định theo nhóm, khoản thiếu là dòng trống', () => {
     const rows = itemRows([
       { kind: 'MONTHLY', item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 },
-      { kind: 'ONE_TIME', custom_name: 'Bảo hiểm', receivable_usd: 20, payable_usd: null },
+      { kind: 'ONE_TIME', item_code: 'OTHER_ONE_TIME', receivable_usd: 20, payable_usd: null },
     ])
-    expect(rows.MONTHLY).toHaveLength(6)
+    expect(rows.MONTHLY).toHaveLength(7)
     expect(rows.ONE_TIME).toHaveLength(7)
     expect(rows.MONTHLY[0]).toMatchObject({ name: 'Lương cơ bản', receivable_usd: 1150 })
     expect(rows.MONTHLY[1].receivable_usd).toBeNull()
-    expect(rows.ONE_TIME[6]).toMatchObject({ custom_name: 'Bảo hiểm', item_code: null })
-    expect(itemRows().MONTHLY).toHaveLength(6)
+    expect(rows.MONTHLY[6]).toMatchObject({ item_code: 'OTHER_MONTHLY', name: 'Khác (hằng tháng)' })
+    expect(rows.ONE_TIME[6]).toMatchObject({ item_code: 'OTHER_ONE_TIME', receivable_usd: 20 })
+    expect(itemRows().MONTHLY).toHaveLength(7)
   })
 })
 
@@ -61,26 +62,25 @@ describe('form <-> payload', () => {
     expect(values.seafarer_voyage_id).toBe(4)
     expect(values.start_date.format('YYYY-MM-DD')).toBe('2026-11-05')
     expect(values.end_date.format('YYYY-MM-DD')).toBe('2027-08-05')
-    expect(values.items).toHaveLength(12)
+    expect(values.items).toHaveLength(14)
     expect(values.terms.RECEIVABLE.pay_day).toBe(10)
     expect(values.terms.PAYABLE.holiday_rule).toBe('BEFORE')
   })
-  it('đi vòng qua form; bỏ dòng tự đặt tên trống; ô tiền trống thành null', () => {
+  it('đi vòng qua form; đủ 14 khoản theo mã; ô tiền trống thành null', () => {
     const detail = {
       contract: { seafarer_voyage_id: 4, start_date: '2026-11-05', end_date: '2027-08-05', notes: null },
       items: [{ kind: 'MONTHLY', item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 }],
       terms: {},
     }
     const values = toFormValues(detail)
-    values.items.push({ kind: 'MONTHLY', item_code: null, custom_name: '  ', receivable_usd: 5, payable_usd: null })
-    values.items.push({ kind: 'ONE_TIME', item_code: null, custom_name: ' Bảo hiểm ', receivable_usd: '', payable_usd: 7 })
+    values.items[13] = { ...values.items[13], receivable_usd: '', payable_usd: 7 }
     const payload = toPayload(values, { voyageId: 4 })
     expect(payload).toMatchObject({ seafarer_voyage_id: 4, start_date: '2026-11-05', end_date: '2027-08-05', notes: null })
     expect(payload).not.toHaveProperty('seafarer_id')
     expect(toPayload(values)).not.toHaveProperty('seafarer_voyage_id')
-    expect(payload.items).toHaveLength(13)
+    expect(payload.items).toHaveLength(14)
     expect(payload.items[0]).toEqual({ kind: 'MONTHLY', item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 })
-    expect(payload.items[12]).toEqual({ kind: 'ONE_TIME', custom_name: 'Bảo hiểm', receivable_usd: null, payable_usd: 7 })
+    expect(payload.items[13]).toEqual({ kind: 'ONE_TIME', item_code: 'OTHER_ONE_TIME', receivable_usd: null, payable_usd: 7 })
   })
 })
 

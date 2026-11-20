@@ -7,11 +7,11 @@ import { round2 } from './billView'
 import '../contracts/contracts.css'
 import './bills.css'
 
-const KIND = { MONTHLY: 'Hằng tháng', ONE_TIME: 'Một lần', ADJUSTMENT: 'Điều chỉnh' }
-const ORDER = ['MONTHLY', 'ONE_TIME', 'ADJUSTMENT']
+const KIND = { MONTHLY: 'Hằng tháng', ONE_TIME: 'Một lần' }
+const ORDER = ['MONTHLY', 'ONE_TIME']
 const short = (iso) => (iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}` : '')
 
-// Khoản tiền của yêu cầu thanh toán, chỉ đọc: một bảng, cột Loại, tổng ở chân bảng.
+// Khoản tiền của yêu cầu thanh toán, chỉ đọc: một bảng đủ 14 khoản cố định (khoản 0 vẫn hiện), cột Loại, tổng ở chân bảng.
 export function BillMoneyView({ items = [], ownerName }) {
   const rows = [...items].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind))
   const total = round2(rows.reduce((s, row) => s + Number(row.amount_usd || 0), 0))
@@ -23,7 +23,7 @@ export function BillMoneyView({ items = [], ownerName }) {
           <thead><tr><th scope="col">Khoản</th><th scope="col">Loại</th><th scope="col" className="ct-deal__num">Số tiền</th></tr></thead>
           <tbody>
             {rows.map((row, i) => (
-              <tr key={row.id || i}><th scope="row">{row.name}</th><td>{KIND[row.kind]}</td><td className="ct-deal__num">{formatUsd(row.amount_usd, { fixed: true })}</td></tr>
+              <tr key={row.item_code || i}><th scope="row">{row.name}</th><td>{KIND[row.kind]}</td><td className="ct-deal__num">{formatUsd(row.amount_usd, { fixed: true })}</td></tr>
             ))}
             <tr className="ct-deal__total"><th scope="row" colSpan={2}>Tổng yêu cầu{ownerName ? ` · ${ownerName}` : ''}</th><td className="ct-deal__num">{formatUsd(total, { fixed: true })}</td></tr>
           </tbody>

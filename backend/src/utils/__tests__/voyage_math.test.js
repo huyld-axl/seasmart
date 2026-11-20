@@ -156,6 +156,13 @@ describe('planBillChanges', () => {
     expect(plan('2026-03-10', '2027-02-28', approved).blocked).toEqual([])
   })
 
+  it('bill chưa duyệt nhưng đã chốt trả lương bị chặn; kỳ không bị đụng thì không', () => {
+    const paidOut = bills.map((b) => (b.seq === 9 ? { ...b, payout_paid: true } : b))
+    expect(plan('2026-03-10', '2026-11-20', paidOut).blocked).toEqual([expect.objectContaining({ seq: 9, status: 'OPEN', payout_paid: true })])
+    expect(plan('2026-03-10', '2026-11-30', paidOut).blocked).toEqual([])
+    expect(plan('2026-03-10', '2027-02-28', paidOut).blocked).toEqual([])
+  })
+
   it('E sớm làm đụng bill đã thu: blocked đúng tập', () => {
     const r = plan('2026-03-10', '2026-09-15')
     expect(r.cut.map((b) => b.code)).toEqual(['TT-7'])

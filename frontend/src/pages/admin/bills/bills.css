@@ -6,8 +6,6 @@
 .ct-table.ct-table--two { min-width: 0; }
 .bl-amount { display: flex; align-items: center; gap: 8px; }
 .bl-amount .ds-money { flex: 1; min-width: 0; }
-.sf-changed .ct-name__edit .ant-input { border-color: var(--primary) !important; background: var(--primary-light) !important; }
-.bl-negative { color: var(--error-text); }
 .bl-bar-msg { flex: 0 1 auto; margin: 0; }
 
 /* Lịch các kỳ ở cột phải màn chi tiết: một tháng, chuyển bằng ‹ ›. */

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { voyageApi, seafarerContractApi, billApi } from '../api/voyageApi'
+import { voyageApi, seafarerContractApi, billApi, payoutApi } from '../api/voyageApi'
 
 export function useVoyageList(params, options = {}) {
   return useQuery({
@@ -141,5 +141,24 @@ export function useBillMutations() {
     save: useMutation({ mutationFn: ({ id, ...body }) => billApi.update(id, body), ...options }),
     move: useMutation({ mutationFn: ({ id, action, ...body }) => billApi.move(id, action, body), ...options }),
     unapproveMany: useMutation({ mutationFn: (ids) => billApi.unapproveMany(ids), ...options }),
+  }
+}
+
+export function usePayoutList(params, options = {}) {
+  return useQuery({
+    queryKey: ['payouts', 'list', params],
+    queryFn: () => payoutApi.list(params),
+    placeholderData: (previous) => previous,
+    ...options,
+  })
+}
+
+// Chốt / huỷ chốt đổi cả bảng trả lương và dòng Trả lương ở chi tiết bill.
+export function usePayoutMutations() {
+  const queryClient = useQueryClient()
+  const onSuccess = () => Promise.all([queryClient.invalidateQueries({ queryKey: ['payouts'] }), queryClient.invalidateQueries({ queryKey: ['bills'] })])
+  return {
+    pay: useMutation({ mutationFn: (rows) => payoutApi.pay(rows), onSuccess }),
+    unpay: useMutation({ mutationFn: ({ id, version }) => payoutApi.unpay(id, version), onSuccess }),
   }
 }

@@ -1,6 +1,6 @@
 const pool = require('../../config/db')
 const { contractBillService } = require('../../services/contract_bill.service')
-const { BILL_DISPLAY_STATUSES } = require('../../constants/voyage_contract')
+const { BILL_DISPLAY_STATUSES, DEFAULT_ITEMS } = require('../../constants/voyage_contract')
 const { ownerIdFor, assertRecordInScope } = require('../../utils/scope')
 
 const NOT_FOUND = 'Không tìm thấy yêu cầu thanh toán'
@@ -28,14 +28,13 @@ const updateBody = {
     due_date: date,
     items: {
       type: 'array',
-      maxItems: 60,
+      maxItems: DEFAULT_ITEMS.length,
       items: {
         type: 'object',
-        required: ['amount_usd'],
+        required: ['item_code', 'amount_usd'],
         properties: {
-          id,
-          name: { type: ['string', 'null'], maxLength: 100 },
-          amount_usd: { type: 'number', minimum: -9999999999, maximum: 9999999999 },
+          item_code: { type: 'string', enum: DEFAULT_ITEMS.map((item) => item.code) },
+          amount_usd: { type: 'number', minimum: 0, maximum: 9999999999 },
         },
       },
     },

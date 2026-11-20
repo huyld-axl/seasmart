@@ -105,6 +105,12 @@ export const STATUS = {
     OVERDUE: { label: 'Quá hạn', tone: 'error', mark: 'clock' },
     PAID: { label: 'Đã thu', tone: 'success', mark: 'check' },
   },
+  // Trả lương thuyền viên (bảng Trả lương, chi tiết bill). PAID kèm ngày: label="Đã trả 18/11". BILL_CHANGED: tổng bill khác lúc chốt.
+  payout: {
+    UNPAID: { label: 'Chưa trả', tone: 'neutral', mark: 'ring' },
+    PAID: { label: 'Đã trả', tone: 'success', mark: 'check' },
+    BILL_CHANGED: { label: 'Bill đổi sau khi chốt', tone: 'warning', mark: 'clock' },
+  },
   // Nhãn KPI trên thẻ Tổng quan (label từ GET /dashboard/kpi). SHORT kèm số: label="Thiếu 1.100 USD".
   kpi: {
     DONE: { label: 'Đạt mục tiêu', tone: 'success', mark: 'check' },
@@ -164,6 +170,7 @@ export const STATUS_GROUP_LABELS = {
   candidate: 'Ứng viên',
   contract: 'Hợp đồng',
   bill: 'Yêu cầu thanh toán',
+  payout: 'Trả lương',
   kpi: 'KPI Tổng quan',
   vesselStatus: 'Trạng thái tàu',
   ownership: 'Tình trạng sở hữu tàu',

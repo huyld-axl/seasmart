@@ -8,7 +8,6 @@ const { DEFAULT_ITEMS, BILL_DISPLAY_STATUSES } = require('../constants/voyage_co
 
 const DEFAULT_NAME = Object.fromEntries(DEFAULT_ITEMS.map((item) => [item.code, item.name]))
 const AMOUNT_FIELD = { RECEIVABLE: 'receivable_usd', PAYABLE: 'payable_usd' }
-const MAX_ADJUSTMENTS = 20
 const num = (v) => (v == null ? null : Number(v))
 
 const STATUS_LABELS = { OPEN: 'Chưa duyệt', APPROVED: 'Đã duyệt', SENT: 'Đã gửi', PAID: 'Đã thu' }
@@ -65,6 +64,15 @@ function summary(row) {
   }
 }
 
+// Trả lương của bill (chi tiết bill). Đọc thẳng bảng để tránh nạp vòng payout.service.
+async function payoutSummary(pool, billId) {
+  const [[row]] = await pool.query(
+    `SELECT p.status, p.paid_date, COALESCE(SUM(i.amount_usd), 0) AS total
+     FROM seafarer_payout p LEFT JOIN seafarer_payout_item i ON i.payout_id = p.id WHERE p.bill_id = ? GROUP BY p.id`, [billId])
+  if (!row || row.status !== 'PAID') return { status: 'UNPAID', paid_date: null, total_usd: null }
+  return { status: 'PAID', paid_date: String(row.paid_date).slice(0, 10), total_usd: Number(row.total) }
+}
+
 async function writeLog(conn, billId, action, actorId, payload = null) {
   await conn.query('INSERT INTO contract_bill_log SET ?', [{ bill_id: billId, action, actor_id: actorId ?? null, payload: payload && JSON.stringify(payload) }])
 }
@@ -75,15 +83,15 @@ const iso = (v) => String(v).slice(0, 10)
 async function loadGeneration(conn, contractId, side) {
   const [[term]] = await conn.query('SELECT closing_day, pay_day, pay_month_offset, holiday_rule FROM contract_payment_term WHERE contract_id = ? AND side = ?', [contractId, side])
   if (!term) throw { statusCode: 409, message: 'Hợp đồng chưa có kỳ thanh toán' }
-  const [itemRows] = await conn.query('SELECT item_code, custom_name, kind, receivable_usd, payable_usd FROM contract_item WHERE contract_id = ? ORDER BY sort_order, id', [contractId])
+  const [itemRows] = await conn.query('SELECT item_code, receivable_usd, payable_usd FROM contract_item WHERE contract_id = ?', [contractId])
   const field = AMOUNT_FIELD[side]
-  const lines = itemRows
-    .map((row) => ({ item_code: row.item_code, kind: row.kind, name: row.item_code ? DEFAULT_NAME[row.item_code] || row.item_code : row.custom_name, amount: num(row[field]) }))
-    .filter((line) => line.amount > 0)
+  const byCode = Object.fromEntries(itemRows.map((row) => [row.item_code, num(row[field]) || 0]))
+  // Đủ 14 khoản cố định, đúng thứ tự; khoản trống là 0.
+  const lines = DEFAULT_ITEMS.map((item) => ({ item_code: item.code, kind: item.kind, name: item.name, amount: byCode[item.code] || 0 }))
   return { term, lines }
 }
 
-// Ghi một bill mới (kỳ, hạn, dòng tiền đủ tháng) kèm log CREATE. withOneTime: kèm các khoản một lần.
+// Ghi một bill mới (kỳ, hạn, đủ 14 khoản, tiền đủ tháng) kèm log CREATE. withOneTime: khoản một lần lấy số hợp đồng, không thì 0.
 async function insertBill(conn, { contractId, side, seq, start, end, due, lines, withOneTime, createdBy, actorId }) {
   const [[contract]] = await conn.query('SELECT contract_number FROM seafarer_contract WHERE id = ?', [contractId])
   const code = await uniqueCode(conn, 'contract_bill', 'code', `${contract.contract_number}/${side === 'PAYABLE' ? 'C' : 'T'}${seq}`)
@@ -91,10 +99,10 @@ async function insertBill(conn, { contractId, side, seq, start, end, due, lines,
     code, contract_id: contractId, side, seq, period_start: start, period_end: end, due_date: due, status: 'OPEN',
     created_by: createdBy ?? null, updated_by: actorId ?? null,
   }])
-  const billLines = lines.filter((line) => line.kind === 'MONTHLY' || withOneTime)
-  for (const [order, line] of billLines.entries()) {
+  for (const [order, line] of lines.entries()) {
+    const amount = line.kind === 'MONTHLY' || withOneTime ? line.amount : 0
     await conn.query('INSERT INTO contract_bill_item SET ?', [{
-      bill_id: result.insertId, item_code: line.item_code, kind: line.kind, name: line.name, default_usd: line.amount, amount_usd: line.amount, sort_order: order,
+      bill_id: result.insertId, item_code: line.item_code, kind: line.kind, name: line.name, default_usd: amount, amount_usd: amount, sort_order: order,
     }])
   }
   await writeLog(conn, result.insertId, 'CREATE', actorId)
@@ -138,16 +146,17 @@ const contractBillService = {
     if (!contract) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
     const [billRows] = await conn.query(
       `SELECT b.id, b.code, b.seq, b.period_start, b.period_end, b.due_date, b.status, b.updated_at, ${TOTAL_SQL} AS total_usd,
-          EXISTS (SELECT 1 FROM contract_bill_log l WHERE l.bill_id = b.id AND l.action = 'UPDATE') AS edited
+          EXISTS (SELECT 1 FROM contract_bill_log l WHERE l.bill_id = b.id AND l.action = 'UPDATE') AS edited,
+          EXISTS (SELECT 1 FROM seafarer_payout sp WHERE sp.bill_id = b.id AND sp.status = 'PAID') AS payout_paid
        FROM contract_bill b WHERE b.contract_id = ? AND b.side = ? AND b.deleted_at IS NULL ORDER BY b.seq${lock ? ' FOR UPDATE OF b' : ''}`,
       [contractId, side])
     const [[term]] = await conn.query('SELECT closing_day, pay_day, pay_month_offset, holiday_rule FROM contract_payment_term WHERE contract_id = ? AND side = ?', [contractId, side])
     const target = { start: iso(start || contract.start_date), end: iso(end || contract.end_date) }
-    const bills = billRows.map((b) => ({ ...b, edited: Boolean(b.edited) }))
+    const bills = billRows.map((b) => ({ ...b, edited: Boolean(b.edited), payout_paid: Boolean(b.payout_paid) }))
     if (!term) throw { statusCode: 409, message: 'Hợp đồng chưa có kỳ thanh toán' }
     const plan = planBillChanges({ ...target, bills, term })
     const fingerprint = crypto.createHash('sha1').update(JSON.stringify([
-      target, bills.map((b) => [b.id, b.seq, iso(b.period_start), iso(b.period_end), b.status, Number(b.total_usd), String(b.updated_at)]),
+      target, bills.map((b) => [b.id, b.seq, iso(b.period_start), iso(b.period_end), b.status, b.payout_paid, Number(b.total_usd), String(b.updated_at)]),
     ])).digest('hex')
     return {
       ...plan,
@@ -231,14 +240,15 @@ const contractBillService = {
     )
     return {
       bill: { ...summary(row), note: row.note, sent_at: row.sent_at, paid_date: row.paid_date, version: row.version },
-      items: itemRows.map((item) => ({ id: item.id, item_code: item.item_code, kind: item.kind, name: item.name, default_usd: num(item.default_usd), amount_usd: num(item.amount_usd) })),
+      items: itemRows.map((item) => ({ id: item.id, item_code: item.item_code, kind: item.kind, name: DEFAULT_NAME[item.item_code] ?? item.name, default_usd: num(item.default_usd), amount_usd: num(item.amount_usd) })),
       term: term || null,
+      payout: await payoutSummary(pool, id),
       periods: siblingRows.map((b) => ({ id: b.id, code: b.code, seq: b.seq, period_start: b.period_start, period_end: b.period_end, due_date: b.due_date, status: b.status, display_status: b.display_status, total_usd: Number(b.total_usd) })),
       log: logRows,
     }
   },
 
-  // body: { items: [{ id?, kind, name?, amount_usd }], note, due_date? }. Khoản chép từ hợp đồng chỉ đổi số; dòng điều chỉnh thêm, sửa, xoá được.
+  // body: { items: [{ item_code, amount_usd }], note, due_date? }. Khoản cố định chỉ đổi số (≥ 0); khoản không gửi giữ nguyên.
   async update(pool, id, body, userId) {
     const input = Array.isArray(body.items) ? body.items : []
     const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null
@@ -247,42 +257,15 @@ const contractBillService = {
       if (!bill) throw { statusCode: 404, message: 'Không tìm thấy yêu cầu thanh toán' }
       await assertVersion(conn, bill, body.version)
       if (bill.status !== 'OPEN') throw { statusCode: 409, message: `Yêu cầu thanh toán đang ở trạng thái ${STATUS_LABELS[bill.status]}, không sửa được` }
-      const [current] = await conn.query('SELECT id, kind, amount_usd FROM contract_bill_item WHERE bill_id = ?', [id])
-      const byId = new Map(current.map((item) => [item.id, item]))
       const seen = new Set()
-      const adjustments = input.filter((item) => !item.id || byId.get(item.id)?.kind === 'ADJUSTMENT')
-      if (adjustments.length > MAX_ADJUSTMENTS) throw { statusCode: 400, message: `Tối đa ${MAX_ADJUSTMENTS} dòng điều chỉnh` }
-      let total = 0
       for (const item of input) {
         const amount = Number(item.amount_usd)
-        if (!Number.isFinite(amount)) throw { statusCode: 400, message: 'Số tiền không hợp lệ' }
-        if (item.id) {
-          const existing = byId.get(item.id)
-          if (!existing || seen.has(item.id)) throw { statusCode: 400, message: 'Dòng tiền không thuộc yêu cầu thanh toán này' }
-          seen.add(item.id)
-        }
-        const isAdjustment = !item.id || byId.get(item.id).kind === 'ADJUSTMENT'
-        if (!isAdjustment && amount < 0) throw { statusCode: 400, message: 'Khoản chép từ hợp đồng không được âm' }
-        if (isAdjustment && !(typeof item.name === 'string' && item.name.trim())) throw { statusCode: 400, message: 'Dòng điều chỉnh cần tên' }
-        total += amount
+        if (!DEFAULT_NAME[item.item_code] || seen.has(item.item_code)) throw { statusCode: 400, message: 'Khoản không có trong danh sách khoản cố định hoặc bị lặp' }
+        if (!Number.isFinite(amount) || amount < 0) throw { statusCode: 400, message: 'Số tiền không hợp lệ, không được âm' }
+        seen.add(item.item_code)
       }
-      for (const item of current) {
-        if (item.kind !== 'ADJUSTMENT' && !seen.has(item.id)) total += Number(item.amount_usd)
-      }
-      if (round2(total) < 0) throw { statusCode: 400, message: 'Tổng yêu cầu thanh toán không được âm' }
       for (const item of input) {
-        const amount = round2(Number(item.amount_usd))
-        if (item.id && byId.get(item.id).kind !== 'ADJUSTMENT') {
-          await conn.query('UPDATE contract_bill_item SET amount_usd = ? WHERE id = ?', [amount, item.id])
-        } else if (item.id) {
-          await conn.query('UPDATE contract_bill_item SET name = ?, amount_usd = ? WHERE id = ?', [item.name.trim().slice(0, 100), amount, item.id])
-        }
-      }
-      for (const item of current) {
-        if (item.kind === 'ADJUSTMENT' && !seen.has(item.id)) await conn.query('DELETE FROM contract_bill_item WHERE id = ?', [item.id])
-      }
-      for (const [index, item] of input.filter((i) => !i.id).entries()) {
-        await conn.query('INSERT INTO contract_bill_item SET ?', [{ bill_id: id, kind: 'ADJUSTMENT', name: item.name.trim().slice(0, 100), default_usd: null, amount_usd: round2(Number(item.amount_usd)), sort_order: 1000 + index }])
+        await conn.query('UPDATE contract_bill_item SET amount_usd = ? WHERE bill_id = ? AND item_code = ?', [round2(Number(item.amount_usd)), id, item.item_code])
       }
       const fields = { note, updated_by: userId ?? null }
       if (body.due_date) {
@@ -347,4 +330,4 @@ const contractBillService = {
   },
 }
 
-module.exports = { contractBillService, TRANSITIONS, STATUS_LABELS }
+module.exports = { contractBillService, TRANSITIONS, STATUS_LABELS, BILL_FROM, DISPLAY_SQL, TOTAL_SQL }

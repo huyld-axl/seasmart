@@ -5,6 +5,7 @@ const CONTRACT_STATUSES = ['DRAFT', 'PENDING', 'REJECTED', 'ACTIVE', 'ENDED']
 const EDITABLE_CONTRACT_STATUSES = ['DRAFT', 'REJECTED']
 const CONTRACT_LOG_ACTIONS = ['CREATE', 'SUBMIT', 'WITHDRAW', 'APPROVE', 'REJECT', 'REVERT', 'END', 'APPLY_BILLS', 'DELETE']
 
+// 14 khoản tiền cố định, dùng chung cho hợp đồng, yêu cầu thanh toán và trả lương (migration 050). Không có khoản tự đặt tên.
 const DEFAULT_ITEMS = [
   { code: 'BASIC_WAGE', kind: 'MONTHLY', name: 'Lương cơ bản' },
   { code: 'FIXED_OVERTIME', kind: 'MONTHLY', name: 'Làm thêm cố định' },
@@ -12,12 +13,14 @@ const DEFAULT_ITEMS = [
   { code: 'ALLOWANCE', kind: 'MONTHLY', name: 'Phụ cấp' },
   { code: 'BONUS', kind: 'MONTHLY', name: 'Thưởng' },
   { code: 'SERVICE_FEE', kind: 'MONTHLY', name: 'Phí dịch vụ' },
+  { code: 'OTHER_MONTHLY', kind: 'MONTHLY', name: 'Khác (hằng tháng)' },
   { code: 'FLIGHT_OUT', kind: 'ONE_TIME', name: 'Vé máy bay đi' },
   { code: 'FLIGHT_BACK', kind: 'ONE_TIME', name: 'Vé máy bay về' },
   { code: 'VISA_FEE', kind: 'ONE_TIME', name: 'Phí visa' },
   { code: 'MEDICAL', kind: 'ONE_TIME', name: 'Khám sức khoẻ' },
   { code: 'TRAINING', kind: 'ONE_TIME', name: 'Huấn luyện/chứng chỉ' },
   { code: 'COMPLETION_BONUS', kind: 'ONE_TIME', name: 'Thưởng hoàn thành hợp đồng' },
+  { code: 'OTHER_ONE_TIME', kind: 'ONE_TIME', name: 'Khác (một lần)' },
 ]
 
 const CLOSING_DAYS = [5, 10, 15, 20, 25, 31]

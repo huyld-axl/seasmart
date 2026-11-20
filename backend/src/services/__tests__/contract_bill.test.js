@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const { contractBillService: service } = require('../contract_bill.service')
+const { DEFAULT_ITEMS } = require('../../constants/voyage_contract')
 
 // Pool giả như seafarer_contract.test.js: khớp đoạn SQL thô đầu tiên, ghi lại mọi câu đã chạy.
 function fakePool(routes) {
@@ -32,14 +33,14 @@ const generateRoutes = (over = {}) => {
       { item_code: 'BASIC_WAGE', kind: 'MONTHLY', receivable_usd: '1150', payable_usd: '1050' },
       { item_code: 'BONUS', kind: 'MONTHLY', receivable_usd: null, payable_usd: null },
       { item_code: 'FLIGHT_OUT', kind: 'ONE_TIME', receivable_usd: '650', payable_usd: null },
-      { item_code: null, custom_name: 'Phụ cấp tàu', kind: 'MONTHLY', receivable_usd: '50', payable_usd: '50' },
+      { item_code: 'OTHER_MONTHLY', kind: 'MONTHLY', receivable_usd: '50', payable_usd: '50' },
     ]]],
     ['INSERT INTO contract_bill SET', () => { billId += 1; return [{ insertId: billId }] }],
   ]
 }
 
 describe('contract_bill.service', () => {
-  it('sinh bill theo ngày chốt sổ: kỳ lẻ đầu, cuối; khoản một lần chỉ ở kỳ đầu; bỏ khoản trống', async () => {
+  it('sinh bill theo ngày chốt sổ: kỳ lẻ đầu, cuối; đủ 14 khoản; khoản một lần chỉ có số ở kỳ đầu, khoản trống là 0', async () => {
     const pool = fakePool(generateRoutes())
     const made = await service.generateForContract(pool, 9, 'RECEIVABLE', 3)
     expect(made).toBe(4)
@@ -52,8 +53,11 @@ describe('contract_bill.service', () => {
     ])
     expect(bills[0]).toMatchObject({ code: 'CH2601-01/HĐ/T1', status: 'OPEN', side: 'RECEIVABLE', created_by: 5 })
     const items = inserts(pool, 'contract_bill_item')
-    expect(items.filter((i) => i.bill_id === 101).map((i) => [i.name, i.amount_usd])).toEqual([['Lương cơ bản', 1150], ['Vé máy bay đi', 650], ['Phụ cấp tàu', 50]])
-    expect(items.filter((i) => i.bill_id === 102).map((i) => i.name)).toEqual(['Lương cơ bản', 'Phụ cấp tàu'])
+    const nonZero = (billId) => items.filter((i) => i.bill_id === billId && i.amount_usd).map((i) => [i.item_code, i.amount_usd])
+    expect(items.filter((i) => i.bill_id === 101).map((i) => i.item_code)).toEqual(DEFAULT_ITEMS.map((d) => d.code))
+    expect(nonZero(101)).toEqual([['BASIC_WAGE', 1150], ['OTHER_MONTHLY', 50], ['FLIGHT_OUT', 650]])
+    expect(items.filter((i) => i.bill_id === 102)).toHaveLength(14)
+    expect(nonZero(102)).toEqual([['BASIC_WAGE', 1150], ['OTHER_MONTHLY', 50]])
     expect(items.every((i) => i.default_usd === i.amount_usd)).toBe(true)
     expect(inserts(pool, 'contract_bill_log').map((l) => l.action)).toEqual(['CREATE', 'CREATE', 'CREATE', 'CREATE'])
   })
@@ -66,16 +70,14 @@ describe('contract_bill.service', () => {
 
   const editRoutes = (status = 'OPEN') => [
     ['FROM contract_bill WHERE id = ? AND deleted_at IS NULL FOR UPDATE', () => [[{ id: 7, status }]]],
-    ['SELECT id, kind, amount_usd FROM contract_bill_item', () => [[{ id: 1, kind: 'MONTHLY', amount_usd: '1000' }, { id: 2, kind: 'ONE_TIME', amount_usd: '650' }, { id: 3, kind: 'ADJUSTMENT', amount_usd: '-50' }]]],
   ]
 
-  it('sửa: đổi số khoản hợp đồng, thêm và xoá dòng điều chỉnh, ghi log UPDATE', async () => {
+  it('sửa: chỉ đổi số khoản cố định theo mã, không thêm / xoá dòng, ghi log UPDATE', async () => {
     const pool = fakePool(editRoutes())
-    await service.update(pool, 7, { items: [{ id: 1, amount_usd: 900 }, { name: ' Trừ ngày nghỉ ', amount_usd: -200 }], note: ' ghi chú ' }, 4).catch(() => {})
+    await service.update(pool, 7, { items: [{ item_code: 'BASIC_WAGE', amount_usd: 900 }, { item_code: 'FLIGHT_BACK', amount_usd: 0 }], note: ' ghi chú ' }, 4).catch(() => {})
     const sql = pool.calls.map((c) => c.sql)
-    expect(pool.calls.find((c) => c.sql.startsWith('UPDATE contract_bill_item SET amount_usd')).params).toEqual([900, 1])
-    expect(pool.calls.find((c) => c.sql.startsWith('DELETE FROM contract_bill_item')).params).toEqual([3])
-    expect(inserts(pool, 'contract_bill_item')[0]).toMatchObject({ kind: 'ADJUSTMENT', name: 'Trừ ngày nghỉ', amount_usd: -200, default_usd: null })
+    expect(pool.calls.filter((c) => c.sql.startsWith('UPDATE contract_bill_item SET amount_usd')).map((c) => c.params)).toEqual([[900, 7, 'BASIC_WAGE'], [0, 7, 'FLIGHT_BACK']])
+    expect(sql.some((s) => s.startsWith('DELETE FROM contract_bill_item') || s.startsWith('INSERT INTO contract_bill_item'))).toBe(false)
     expect(pool.calls.find((c) => c.sql.startsWith('UPDATE contract_bill SET')).params[0]).toMatchObject({ note: 'ghi chú', updated_by: 4 })
     expect(sql.some((s) => s.startsWith('INSERT INTO contract_bill_log'))).toBe(true)
   })
@@ -87,12 +89,12 @@ describe('contract_bill.service', () => {
     await expect(service.update(fakePool([['FOR UPDATE', () => [[{ id: 7, status: 'OPEN', period_start: '2026-10-01' }]]], ...editRoutes().slice(1)]), 7, { items: [], due_date: '2026-09-30' })).rejects.toMatchObject({ statusCode: 400 })
   })
 
-  it('sửa: đã gửi thì 409; tổng âm, khoản hợp đồng âm, dòng lạ thì 400', async () => {
+  it('sửa: đã gửi thì 409; số âm, mã lạ, không mã, mã lặp thì 400', async () => {
     await expect(service.update(fakePool(editRoutes('SENT')), 7, { items: [] })).rejects.toMatchObject({ statusCode: 409 })
-    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ name: 'Trừ', amount_usd: -5000 }] })).rejects.toMatchObject({ statusCode: 400, message: 'Tổng yêu cầu thanh toán không được âm' })
-    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ id: 1, amount_usd: -1 }] })).rejects.toMatchObject({ statusCode: 400 })
-    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ id: 99, amount_usd: 1 }] })).rejects.toMatchObject({ statusCode: 400 })
-    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ amount_usd: 1 }] })).rejects.toMatchObject({ statusCode: 400, message: 'Dòng điều chỉnh cần tên' })
+    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ item_code: 'BASIC_WAGE', amount_usd: -1 }] })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ item_code: 'ADJUSTMENT', amount_usd: 1 }] })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ amount_usd: 1 }] })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.update(fakePool(editRoutes()), 7, { items: [{ item_code: 'BONUS', amount_usd: 1 }, { item_code: 'BONUS', amount_usd: 2 }] })).rejects.toMatchObject({ statusCode: 400 })
   })
 
   const moveRoutes = (bill) => [['CURRENT_DATE::text AS today', () => [[{ id: 7, period_end: '2026-10-31', today: '2026-10-21', ...bill }]]]]

@@ -136,7 +136,8 @@ function billDisplayStatus({ status, periodEnd, dueDate: due, today }) {
 
 
 // Duyệt lại hợp đồng đã có bill: tính bill nào cắt, xoá mềm, sinh thêm, bị chặn. Không chạm DB.
-// bills: bill chưa xoá của một bên, sắp theo seq: { id, code, seq, period_start, period_end, status, edited }.
+// bills: bill chưa xoá của một bên, sắp theo seq: { id, code, seq, period_start, period_end, status, edited, payout_paid }.
+// Bill bị đụng mà đã duyệt / gửi / thu, hoặc đã chốt trả lương thuyền viên, thì bị chặn.
 // term: { closing_day, pay_day, pay_month_offset, holiday_rule }.
 function planBillChanges({ start, end, bills, term }) {
   const due = (periodEnd) => dueDate({ periodEnd, payDay: term.pay_day, payMonthOffset: term.pay_month_offset, holidayRule: term.holiday_rule })
@@ -144,7 +145,8 @@ function planBillChanges({ start, end, bills, term }) {
   const build = (periods, firstSeq, withOneTime) => periods.map((period, index) => ({
     seq: firstSeq + index, start: period.start, end: period.end, due_date: due(period.end), with_one_time: withOneTime && index === 0,
   }))
-  const brief = (bill) => ({ bill_id: bill.id, code: bill.code, seq: bill.seq, status: bill.status, start: day(bill.period_start), end: day(bill.period_end), edited: Boolean(bill.edited) })
+  const brief = (bill) => ({ bill_id: bill.id, code: bill.code, seq: bill.seq, status: bill.status, start: day(bill.period_start), end: day(bill.period_end), edited: Boolean(bill.edited), payout_paid: Boolean(bill.payout_paid) })
+  const locked = (bill) => bill.status !== 'OPEN' || Boolean(bill.payout_paid)
   const plan = { mode: 'NONE', cut: [], remove: [], create: [], blocked: [] }
   const startDay = day(start)
   const endDay = day(end)
@@ -159,7 +161,7 @@ function planBillChanges({ start, end, bills, term }) {
       mode: 'REGENERATE',
       remove: bills.map(brief),
       create: build(splitPeriods({ start: startDay, end: endDay, closingDay: term.closing_day }), 1, true),
-      blocked: bills.filter((b) => b.status !== 'OPEN').map(brief),
+      blocked: bills.filter(locked).map(brief),
     }
   }
   if (endDay < oldEnd) {
@@ -172,7 +174,7 @@ function planBillChanges({ start, end, bills, term }) {
       cut: cut.map((b) => ({
         ...brief(b), from: { start: day(b.period_start), end: day(b.period_end) }, to: { start: day(b.period_start), end: endDay }, due_date: due(endDay),
       })),
-      blocked: [...remove, ...cut].filter((b) => b.status !== 'OPEN').map(brief),
+      blocked: [...remove, ...cut].filter(locked).map(brief),
     }
   }
   if (endDay > oldEnd) {

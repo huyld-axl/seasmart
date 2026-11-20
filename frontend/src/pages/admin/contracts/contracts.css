@@ -15,8 +15,6 @@
 .ct-group__unit { margin-left: 4px; color: var(--muted); font-size: 12px; font-weight: 400; }
 .ct-name { font-weight: 400; }
 .ct-name__hint { display: block; color: var(--muted); font-size: 12px; }
-.ct-name__edit { display: flex; align-items: center; gap: 4px; }
-.ct-add td { padding: 4px 8px; }
 .ct-total th, .ct-total td { background: var(--surface); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
 .ct-total th { text-align: left; }
 .ct-total--once th, .ct-total--once td { font-weight: 500; }
@@ -118,7 +116,6 @@
   .ct-table:not(.ct-table--two) tbody th { grid-column: 1 / -1; }
   .ct-table:not(.ct-table--two) td[data-label]::before { content: attr(data-label); display: block; margin-bottom: 2px; color: var(--muted); font-size: 12px; font-weight: 400; }
   .ct-table:not(.ct-table--two) .ct-ro { text-align: left; }
-  .ct-table:not(.ct-table--two) .ct-add td { grid-column: 1 / -1; }
   .ct-table:not(.ct-table--two) .ct-total th, .ct-table:not(.ct-table--two) .ct-total td { text-align: left; }
   /* Chỉ xem (không có ô nhập): ba cột gọn tên | Phải thu | Phải chi, hàng đầu bảng còn hai nhãn làm chú thích. */
   .ct-table:not(.ct-table--two):not(:has(input)) thead { display: block; }
@@ -200,8 +197,6 @@
   .sf-compact .ct-table tbody th { background: var(--secondary); color: var(--muted); font-weight: 400; }
   .sf-compact .ct-table .ct-total th, .sf-compact .ct-table .ct-total td { background: var(--surface); color: var(--foreground); font-weight: 600; }
   .sf-compact .ct-side { font-size: 13px; }
-  .sf-compact .ct-add td { padding: 2px 6px; }
-  .sf-compact .ct-add .ant-btn { height: 26px; font-size: 12px; }
   .sf-compact .ct-table .ant-input, .sf-compact .ct-table .ant-input-number, .sf-compact .ct-table .ant-input-number-affix-wrapper, .sf-compact .ct-table .ant-select {
     --ant-control-height: 28px; --ant-input-padding-block: 3px; --ant-input-number-padding-block: 3px; --ant-input-number-input-font-size: 13px; --ant-input-input-font-size: 13px; --ant-select-font-size: 13px;
   }

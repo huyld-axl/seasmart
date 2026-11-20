@@ -9,27 +9,27 @@ const {
 } = require('../permissions')
 
 describe('danh mục quyền', () => {
-  it('có 49 quyền, 12 mục', () => {
-    expect(ALL_PERMISSIONS).toHaveLength(49)
-    expect(new Set(ALL_PERMISSIONS.map((c) => c.split('.')[0])).size).toBe(12)
-    expect(new Set(ALL_PERMISSIONS).size).toBe(49)
+  it('có 51 quyền, 13 mục', () => {
+    expect(ALL_PERMISSIONS).toHaveLength(51)
+    expect(new Set(ALL_PERMISSIONS.map((c) => c.split('.')[0])).size).toBe(13)
+    expect(new Set(ALL_PERMISSIONS).size).toBe(51)
   })
 
   it('role.manage chỉ Quản trị viên, không cấp được', () => {
     expect(ALL_PERMISSIONS).toContain('role.manage')
     expect(GRANTABLE_PERMISSIONS).not.toContain('role.manage')
-    expect(GRANTABLE_PERMISSIONS).toHaveLength(48)
+    expect(GRANTABLE_PERMISSIONS).toHaveLength(50)
   })
 
-  it('6 mục có phạm vi', () => {
-    expect(SCOPED_MODULES).toEqual(['seafarer', 'export', 'opportunity', 'voyage', 'contract', 'bill'])
+  it('7 mục có phạm vi', () => {
+    expect(SCOPED_MODULES).toEqual(['seafarer', 'export', 'opportunity', 'voyage', 'contract', 'bill', 'payout'])
   })
 
-  it('catalog cho giao diện đủ 49 quyền, đánh dấu admin_only', () => {
+  it('catalog cho giao diện đủ 51 quyền, đánh dấu admin_only', () => {
     const c = catalogForClient()
-    expect(c.total).toBe(49)
+    expect(c.total).toBe(51)
     const all = c.modules.flatMap((m) => m.permissions)
-    expect(all).toHaveLength(49)
+    expect(all).toHaveLength(51)
     expect(all.find((p) => p.code === 'role.manage').admin_only).toBe(true)
     expect(all.find((p) => p.code === 'seafarer.update').description).toMatch(/ảnh chân dung/)
   })

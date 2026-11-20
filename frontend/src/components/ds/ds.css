@@ -1027,6 +1027,8 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 
 /* BottomSheet: Drawer đáy cao theo nội dung, bo trên 20px, chân dính đáy với nút chia đều 44px. */
 .ds-sheet .ant-drawer-content-wrapper { height: auto !important; max-height: calc(100dvh - 24px); }
+/* Khung bên trong cũng chặn chiều cao: nội dung dài thì thân cuộn, chân (nút) luôn nằm trong màn hình. */
+.ds-sheet .ant-drawer-section { max-height: calc(100dvh - 24px); }
 .ds-sheet .ant-drawer-content-wrapper, .ds-sheet .ant-drawer-section, .ds-sheet .ant-drawer-content { border-radius: 20px 20px 0 0; }
 .ds-sheet .ant-drawer-body { padding: 0 16px 16px; overscroll-behavior: contain; }
 .ds-sheet .ant-drawer-footer { display: flex; gap: 8px; padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--border); }

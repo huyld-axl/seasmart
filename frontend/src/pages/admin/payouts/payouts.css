@@ -1,0 +1,72 @@
+/* Trả lương thuyền viên (PayoutListPage): bảng hai dòng mỗi bill, 14 cột khoản cuộn ngang. */
+.po-month { display: inline-flex; align-items: center; gap: 4px; }
+.po-month .ant-picker { width: 120px; }
+
+.po-table { font-size: 13px; }
+/* Gọn như bảng màn chi tiết (ct-deal), kẻ ô rõ: mọi ô viền border-strong; giữa hai bill một đường đậm (cùng màu chữ phụ)
+   để tách thuyền viên, không dùng nền xám (nền xám để dành cho dòng đã trả). */
+/* Đầu bảng giữ màu chuẩn của các danh sách (nền, chữ, gạch dưới màu nhấn theo theme), chỉ thu gọn đệm. */
+.po-table .ant-table-thead > tr > th { padding: 5px 6px; line-height: 1.3; white-space: normal; vertical-align: bottom; border-inline-end: 1px solid var(--border-strong); }
+.po-table .ant-table-thead > tr > th::before { display: none; }
+.po-table .ant-table-tbody > tr > td { padding: 3px 6px; vertical-align: middle; border-bottom: 1px solid var(--border-strong); border-inline-end: 1px solid var(--border-strong); }
+.po-table .ant-table-tbody > tr.po-row--tra > td,
+.po-table .ant-table-tbody > tr.po-row--thu > td[rowspan] { border-bottom: 2px solid var(--muted); }
+.po-name { font-weight: 600; }
+.po-table .po-sep { border-left: 1px solid var(--border-strong) !important; }
+.po-line { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.po-line--sub { color: var(--muted); font-size: 12px; }
+.po-side { font-size: 12px; color: var(--foreground); }
+.po-badges { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.po-actions { display: inline-flex; align-items: center; gap: 2px; }
+.po-col-actions { text-align: center; }
+
+/* Số tiền một màu; ô chỉ đọc lề phải bằng chữ trong ô nhập (đo trên antd 6) để số Thu và Trả thẳng cột. */
+.po-amt { display: block; padding-right: 12px; text-align: right; font-variant-numeric: tabular-nums; color: var(--foreground); white-space: nowrap; }
+.po-input.ant-input-number { width: 100%; padding: 0; }
+.po-input .ant-input-number-input { text-align: right; padding: 0 7px; font-variant-numeric: tabular-nums; color: var(--foreground); }
+.po-input--changed.ant-input-number,
+.po-input--changed.ant-input-number:hover { border-color: var(--primary); background: var(--primary-light); }
+
+.po-confirm dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 8px 0 0; }
+.po-confirm dt { color: var(--muted); }
+.po-confirm dd { margin: 0; }
+.po-confirm__note { margin: 12px 0 0; padding: 8px 12px; border-radius: 8px; background: var(--primary-light); color: var(--primary); }
+
+/* Bảng dưới (điện thoại) */
+.po-sheet { display: grid; gap: 12px; padding: 0 16px 8px; }
+.po-sheet__paid { margin: 0; color: var(--success); font-weight: 600; }
+.po-sheet__group { display: grid; gap: 8px; }
+.po-sheet__title { margin: 4px 0 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.po-sheet__line { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.po-sheet__name { display: grid; min-width: 0; }
+.po-sheet__hint { font-size: 12px; color: var(--muted); }
+.po-sheet__line .po-input.ant-input-number { width: 140px; flex-shrink: 0; }
+.po-sheet__line .ds-num { color: var(--foreground); }
+.po-sheet__foot { display: grid; gap: 8px; }
+.po-sheet__sum { font-size: 13px; color: var(--muted); }
+.po-sheet__buttons { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+
+/* Hàng nhóm "Hằng tháng" / "Một lần" của đầu bảng: kẻ dưới và hai bên cho rõ khung. */
+.po-table .ant-table-thead > tr:first-child > th[colspan] { border-bottom: 1px solid var(--border-strong); text-align: center; }
+.po-table .ant-table-thead > tr > th.po-sep { border-inline-start: 1px solid var(--border-strong); }
+.po-col-actions { padding-inline: 4px !important; }
+
+.po-clip { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Khoản một lần: đầu cột và ô nền vàng nhạt để tách với khoản hằng tháng (xám để dành dòng đã trả, xanh cho dòng đang chọn). */
+.po-table .ant-table-thead > tr > th.po-once { background: var(--warning-bg); color: var(--warning); }
+/* Cột Trạng thái gọn: badge nhỏ, nhiều nhãn thì xuống dòng trong ô. */
+.po-badges { gap: 2px; }
+.po-badges .ds-badge { font-size: 11px; padding-inline: 6px; }
+
+/* Nền ô theo trạng thái dòng (nền đặc vì có cột dính). Mỗi trạng thái hai màu: khoản thường / khoản một lần (cùng hue vàng).
+   Chưa trả: trắng / vàng nhạt · Đã trả: xám rõ / vàng xám · Đang chọn: xanh đầu bảng / vàng đậm hơn.
+   Rê chuột: tối thêm một nấc (--po-h) cho cả hai dòng Thu, Chi của bill đó. */
+.po-table .ant-table-tbody > tr { --po-bg: var(--surface); --po-once: #fffbeb; --po-h: 0; }
+.po-table .ant-table-tbody > tr.po-row--paid { --po-bg: #e3e5ea; --po-once: #ebe3c6; }
+.po-table .ant-table-tbody > tr.po-row--selected { --po-bg: #e1e9f4; --po-once: #f9ecbd; }
+.po-table .ant-table-tbody > tr:hover,
+.po-table .ant-table-tbody > tr.po-row--thu:hover + tr,
+.po-table .ant-table-tbody > tr.po-row--thu:has(+ tr:hover) { --po-h: 1; }
+.po-table .ant-table-tbody > tr > td,
+.po-table .ant-table-tbody > tr > td.ant-table-cell-fix { background: color-mix(in srgb, var(--po-bg), #1f2a44 calc(var(--po-h) * 6%)) !important; }
+.po-table .ant-table-tbody > tr > td.po-once { background: color-mix(in srgb, var(--po-once), #6b4e00 calc(var(--po-h) * 7%)) !important; }

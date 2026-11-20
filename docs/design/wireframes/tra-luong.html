@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khoản cố định và Trả lương</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe Khoản tiền cố định + Trả lương thuyền viên (docs/mcah-ke-hoach-tra-luong.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có.
+     Bảng dựng bằng script nhỏ ở cuối trang từ cùng một bộ số mẫu. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1500px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 12px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 80ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 90ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; max-width: 90ch; }
+  .notes li { margin-bottom: 4px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 420px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .topbar .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+  .page { padding: 16px 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 6px 10px; background: var(--surface); min-height: 34px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.sm { padding: 3px 10px; font-size: 12px; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 3px 4px; }
+  .tabs { display: inline-flex; background: var(--secondary); border-radius: 999px; padding: 3px; font-size: 13px; }
+  .tabs span { padding: 4px 12px; border-radius: 999px; }
+  .tabs .on { background: var(--surface); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+  .tabs i { font-style: normal; color: var(--muted); margin-left: 4px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; background: var(--secondary); }
+  .badge.ok { background: var(--success-bg); color: var(--success); }
+  .badge.warn { background: var(--warning-bg); color: var(--warning); }
+  .badge.info { background: var(--info-bg); color: var(--info); }
+  .chip-edit { font-size: 10px; color: var(--primary); font-weight: 600; white-space: nowrap; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; display: grid; gap: 6px; font-size: 13px; }
+  .card h4 { margin: 0; font-size: 14px; }
+
+  /* Bảng khoản (hợp đồng, bill) */
+  .items { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .items th, .items td { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .items thead th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  .items td.num, .items th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .items tr.grp th { background: #f8f9fb; font-size: 12px; color: var(--muted); }
+  .items tr.sum td, .items tr.sum th { font-weight: 600; border-bottom: 2px solid var(--border-strong); }
+  .items tr.new th::after { content: ' mới'; font-size: 10px; color: var(--success); font-weight: 600; }
+  .gone { margin-top: 8px; padding: 8px 12px; border: 1px dashed var(--error-strong); border-radius: var(--radius-sm); color: var(--error-strong); font-size: 12px; text-decoration: line-through; }
+
+  /* Bảng trả lương: hai dòng mỗi bill */
+  .scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  table.pay { border-collapse: separate; border-spacing: 0; font-size: 12.5px; width: max-content; min-width: 100%; }
+  .pay th, .pay td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; white-space: nowrap; }
+  .pay thead th { background: #f8f9fb; color: var(--muted); font-weight: 600; font-size: 12px; text-align: right; }
+  .pay thead tr.g th { text-align: center; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+  .pay thead th.l { text-align: left; }
+  .pay td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pay tr.thu td { border-bottom: 1px dashed var(--border); }
+  .pay tr.tra td { border-bottom: 2px solid var(--border-strong); }
+  .pay tr.thu td.num { color: var(--muted); }
+  .pay td.zero, .pay .cell.zero { color: #b3b5bb; }
+  .pay .side-l { font-size: 11px; font-weight: 600; color: var(--muted); text-align: center; }
+  .pay .stick { position: sticky; left: 0; background: var(--surface); z-index: 1; width: 36px; min-width: 36px; max-width: 36px; }
+  .pay .stick2 { position: sticky; left: 36px; background: var(--surface); z-index: 1; box-shadow: 1px 0 0 var(--border); }
+  .pay .act { position: sticky; right: 0; background: var(--surface); box-shadow: -1px 0 0 var(--border); text-align: left; }
+  .pay thead .stick, .pay thead .stick2, .pay thead .act { background: #f8f9fb; z-index: 2; }
+  .pay tr.paid td, .pay tr.paid .stick, .pay tr.paid .stick2, .pay tr.paid .act { background: #f7f8fa; }
+  .pay .sep { border-left: 1px solid var(--border-strong); }
+  .cell { display: inline-block; min-width: 72px; padding: 3px 8px; border: 1px solid var(--border-strong); border-radius: 6px; background: var(--surface); text-align: right; }
+  .cell.dirty { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); color: var(--foreground); }
+  .cell.ro { border-color: transparent; background: transparent; }
+  .who b { display: block; font-size: 13px; }
+  .who span { color: var(--muted); font-size: 11.5px; }
+  .cb { width: 16px; height: 16px; border: 1.5px solid var(--border-strong); border-radius: 4px; display: inline-block; vertical-align: middle; position: relative; }
+  .cb.on { background: var(--primary); border-color: var(--primary); }
+  .cb.on::after { content: '✓'; color: #fff; font-size: 11px; position: absolute; left: 2px; top: -2px; }
+  .cb.dis { background: var(--secondary); }
+  .total { font-weight: 600; }
+  .footer { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 13px; }
+  .footer b { font-variant-numeric: tabular-nums; }
+
+  /* Hộp thoại */
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(520px, 100%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 12px; }
+  .modal h4 { margin: 0; font-size: 16px; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .banner { padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .banner.err { background: var(--error-bg); color: var(--error-strong); }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; font-size: 13px; }
+  .kv span:nth-child(odd) { color: var(--muted); }
+
+  /* Điện thoại */
+  .phones { display: flex; gap: 24px; flex-wrap: wrap; }
+  .phone { width: 375px; height: 760px; border: 1px solid var(--border-strong); border-radius: 28px; overflow: hidden; background: var(--background); position: relative; display: grid; grid-template-rows: auto 1fr; }
+  .phone .top { background: var(--surface); padding: 14px 16px 10px; border-bottom: 1px solid var(--border); display: grid; gap: 8px; }
+  .phone .top h3 { margin: 0; font-size: 16px; }
+  .phone .list { padding: 10px 16px; display: grid; gap: 8px; align-content: start; overflow: hidden; }
+  .nums { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-variant-numeric: tabular-nums; }
+  .nums span { display: grid; font-size: 11px; color: var(--muted); }
+  .nums b { font-size: 14px; color: var(--foreground); }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 640px; background: var(--surface); border-radius: 20px 20px 0 0; padding: 10px 16px 16px; display: grid; grid-template-rows: auto auto auto 1fr auto auto; gap: 8px; box-shadow: var(--elevation-modal); }
+  .sheet .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border-strong); justify-self: center; }
+  .sheet .body { overflow-y: auto; display: grid; gap: 6px; align-content: start; padding-right: 4px; }
+  .sheet .gh { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+  .line { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; align-items: center; font-size: 13px; }
+  .line .hint { grid-column: 1; font-size: 11px; color: var(--muted); }
+  .line .cell { grid-row: 1 / span 2; grid-column: 2; min-width: 110px; }
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; } .toc { position: static; } .shell { grid-template-columns: 1fr; } .side { display: none; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">A · Khoản cố định</p>
+    <a href="#a1"><b>A1</b>Khoản tiền hợp đồng</a>
+    <a href="#a2"><b>A2</b>Sửa / xem bill</a>
+    <p class="toc__head">B · Trả lương</p>
+    <a href="#b1"><b>B1</b>Bảng trả lương theo tháng</a>
+    <a href="#b2"><b>B2</b>Chốt các dòng đã chọn</a>
+    <a href="#b3"><b>B3</b>Huỷ chốt</a>
+    <a href="#b4"><b>B4</b>Còn ô sửa chưa chốt</a>
+    <a href="#b5"><b>B5</b>Điện thoại</a>
+    <a href="#b6"><b>B6</b>Duyệt lại hợp đồng bị chặn</a>
+  </nav>
+  <main class="main">
+    <header>
+      <h1>Khoản tiền cố định và Trả lương thuyền viên</h1>
+      <p class="lead">Hợp đồng, yêu cầu thanh toán (bill) và bảng trả lương dùng chung <b>14 khoản cố định</b>, luôn hiện đủ, không có thì là 0. Không còn khoản tự đặt tên, không còn dòng điều chỉnh, không khoản nào âm. Bảng trả lương: mỗi bill hai dòng, <b>Thu</b> lấy từ bill (chỉ xem), <b>Trả</b> mặc định từ cột Phải chi của hợp đồng (sửa được); Chốt = ghi nhận đã trả, ngày trả = ngày bấm.</p>
+    </header>
+
+    <!-- ============ A1 ============ -->
+    <section id="a1">
+      <h2><b>A1</b> Khoản tiền hợp đồng (form thêm / sửa và chi tiết)</h2>
+      <p class="why">Giữ khung bảng hai cột Phải thu / Phải chi hiện có. Bỏ nút thêm khoản, ô tên tự đặt, nút xoá. Thêm hai khoản cố định "Khác" ở cuối mỗi nhóm.</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div></div>
+        <div class="content"><div class="topbar"><h3>Sửa hợp đồng CH2609-02/HĐ</h3></div>
+          <div class="page"><div class="card"><h4>Thoả thuận</h4><table class="items" id="contract-items"></table>
+            <div class="gone">+ Thêm khoản hằng tháng &nbsp;·&nbsp; + Thêm khoản một lần &nbsp;·&nbsp; ô "Tên khoản" &nbsp;·&nbsp; nút ✕ xoá khoản — bỏ</div></div></div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>14 khoản, đúng thứ tự trong kế hoạch mục A1. Ô trống được (lưu là trống, hiện 0 ở màn chi tiết và tính 0).</li>
+        <li>Chi tiết hợp đồng: cùng bảng, chỉ xem, đủ 14 dòng, trống hiện 0.00.</li>
+        <li>Hợp đồng cũ có khoản tự đặt tên: số được cộng vào Khác (hằng tháng / một lần) theo nhóm, tên cũ ghi vào Ghi chú hợp đồng (vd. "Khác (hằng tháng) gồm: Phụ cấp tàu dầu 100/80").</li>
+      </ul>
+    </section>
+
+    <!-- ============ A2 ============ -->
+    <section id="a2">
+      <h2><b>A2</b> Sửa yêu cầu thanh toán (và chi tiết)</h2>
+      <p class="why">Bill luôn có đủ 14 khoản. Kỳ 1 lấy số phải thu của hợp đồng cho mọi khoản; các kỳ sau khoản một lần là 0. Chỉ sửa số, không thêm / xoá dòng, không số âm.</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Hợp đồng</div><div class="it on">Yêu cầu thanh toán</div><div class="it">Trả lương</div></div>
+        <div class="content"><div class="topbar"><h3>Sửa CH2609-02/HĐ/T2 · 01/11–30/11</h3></div>
+          <div class="page"><div class="card"><h4>Số tiền</h4><table class="items" id="bill-items"></table>
+            <div class="gone">Nhóm "Điều chỉnh" &nbsp;·&nbsp; + Thêm dòng điều chỉnh &nbsp;·&nbsp; số âm — bỏ</div></div>
+            <div class="footer"><span>Tổng <b>1,600.00</b></span><span class="muted">Hằng tháng 1,600.00 · Một lần 0.00</span><span class="chip-edit">1 thay đổi</span><span style="margin-left:auto" class="btn">Huỷ</span><span class="btn pri">Lưu thay đổi</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Ví dụ kỳ 2: Lương cơ bản giảm 1,500 → 1,450 để trừ ngày chưa làm (trước đây dùng dòng điều chỉnh âm). Ô đổi: viền nhấn, chip "Đã sửa", số mặc định gạch ngang bên cạnh như hiện nay.</li>
+        <li>Khoản một lần ở kỳ sau mặc định 0 nhưng vẫn sửa được (vd. Vé máy bay về đưa vào kỳ cuối).</li>
+        <li>Chi tiết bill: bảng tiền luôn hai nhóm, đủ 14 dòng; khối "Số tiền" cột phải chỉ còn Tổng, Hằng tháng, Một lần.</li>
+        <li>Bill cũ có dòng điều chỉnh: số được cộng vào Khác (hằng tháng) của bill, tên cũ ghi vào ghi chú bill; tổng bill giữ nguyên.</li>
+      </ul>
+    </section>
+
+    <!-- ============ B1 ============ -->
+    <section id="b1">
+      <h2><b>B1</b> Bảng trả lương theo tháng</h2>
+      <p class="why">Menu mới <b>Trả lương</b> (nhóm Vận hành, sau Yêu cầu thanh toán). Lọc theo tháng của <b>ngày chốt sổ</b> (ngày kết thúc kỳ) của bill. Ví dụ tháng 10/2026, 5 bill: dòng 1 và 4 đã trả (xám, khoá), dòng 2 đang sửa chưa chốt. Bảng cuộn ngang để xem đủ 14 khoản; cột thuyền viên và cột thao tác dính hai bên.</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Chuyến tàu</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it on">Trả lương</div><div class="grp">Hệ thống</div><div class="it">Danh mục</div></div>
+        <div class="content">
+          <div class="topbar"><h3>Trả lương</h3><div class="user"><div class="avatar">KT</div>Kế toán ▾</div></div>
+          <div class="page">
+            <div class="row" style="justify-content:space-between">
+              <div class="row">
+                <span class="input">‹ &nbsp;<b>Tháng 10/2026</b>&nbsp; ›</span>
+                <span class="tabs"><span>Tất cả<i>5</i></span><span class="on">Chưa trả<i>3</i></span><span>Đã trả<i>2</i></span></span>
+                <span class="input" style="width:230px"><span class="muted">🔍 Thuyền viên, mã bill…</span></span>
+                <span class="input"><span class="muted">Đối tác</span> ▾</span>
+              </div>
+              <span class="btn pri">Chốt 2 dòng đã chọn</span>
+            </div>
+            <div class="scroll"><table class="pay" id="pay"></table></div>
+            <div class="footer">
+              <span class="muted">Tháng 10/2026 · 5 dòng · đã trả 2</span>
+              <span>Thu <b>13,250</b> USD</span>
+              <span>Trả <b>11,750</b> USD</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li><b>Dòng nào có:</b> mọi bill phải thu còn sống có <b>ngày kết thúc kỳ nằm trong tháng</b>, mọi trạng thái bill. Mặc định mở <b>tháng trước</b> và tab <b>Chưa trả</b>; ‹ › đổi tháng.</li>
+        <li><b>Cột tiền:</b> luôn đủ 14 khoản, chia hai nhóm Hằng tháng / Một lần, rồi Tổng. Không ẩn cột nào; khoản không có hiện 0 (chữ nhạt). <b>Không có cột Hoa hồng.</b></li>
+        <li><b>Dòng Thu:</b> số đang dùng của bill, chỉ xem; đổi ngay khi bill được sửa. Trạng thái bill hiện bên cạnh để đối chiếu, <b>không chặn chốt</b>.</li>
+        <li><b>Dòng Trả</b> (chưa chốt lần nào): mặc định = cột Phải chi của hợp đồng; khoản hằng tháng mọi kỳ, khoản một lần chỉ kỳ 1, kỳ khác 0. Mọi ô sửa được, ≥ 0.</li>
+        <li>Ô đã sửa có viền nhấn và chip <b>Đã sửa</b>; <b>Bỏ sửa</b> trả dòng về số trước khi sửa. Tổng và chân bảng tính lại ngay.</li>
+        <li><b>Hạn trả</b> tính từ kỳ thanh toán Phải chi của hợp đồng áp lên ngày kết thúc kỳ. Chỉ để xem.</li>
+        <li><b>Chốt</b> (từng dòng): lưu số đang hiện và ghi đã trả, ngày trả = hôm nay. Không hỏi lại; toast "Đã chốt trả lương Nguyễn Hữu Phước, 1,600 USD" kèm Hoàn tác (= Huỷ chốt).</li>
+        <li>Dòng đã trả: xám, ô chỉ xem, ô chọn tắt. Menu ⋯: <b>Huỷ chốt</b>, Xem bill, Xem hợp đồng. Bill đổi tổng sau khi chốt → chip vàng <b>Bill đổi sau khi chốt</b> (rê chuột: tổng lúc chốt).</li>
+        <li>Quyền: <b>Trả lương · Xem</b> để mở trang; <b>Trả lương · Chốt và huỷ chốt</b> để sửa ô và bấm Chốt. Không có quyền chốt: dòng Trả chỉ xem, không có ô chọn và cột Thao tác.</li>
+      </ul>
+    </section>
+
+    <!-- ============ B2 ============ -->
+    <section id="b2">
+      <h2><b>B2</b> Chốt các dòng đã chọn</h2>
+      <p class="why">Nút trên thanh công cụ, hiện số dòng đang chọn. Chọn tất cả ở đầu bảng chỉ chọn các dòng chưa trả của trang đang xem.</p>
+      <div class="app"><div class="shell" style="min-height:340px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Yêu cầu thanh toán</div><div class="it on">Trả lương</div></div>
+        <div class="content"><div class="topbar"><h3>Trả lương</h3></div><div class="page"><div class="card" style="min-height:200px"><p class="muted">… bảng tháng 10/2026 …</p></div></div></div>
+        <div class="scrim"><div class="modal" role="dialog">
+          <h4>Chốt trả lương 2 thuyền viên?</h4>
+          <div class="kv"><span>Tháng</span><span>10/2026</span><span>Tổng trả</span><span><b>2,750 USD</b></span><span>Ngày trả</span><span>20/11/2026 (hôm nay)</span></div>
+          <div class="banner info">1 dòng có bill chưa thu tiền đối tác: Lê Minh Tâm (Cần duyệt).</div>
+          <div class="foot"><span class="btn">Huỷ</span><span class="btn pri">Chốt 2 dòng</span></div>
+        </div></div>
+      </div></div>
+      <ul class="notes">
+        <li>Chốt theo số đang hiện của từng dòng, kể cả ô vừa sửa chưa lưu.</li>
+        <li>Dải xanh chỉ để biết, không chặn. Không có dòng nào chưa thu thì không có dải.</li>
+        <li>Tất cả hoặc không: có dòng lỗi (vd. người khác vừa chốt) thì không dòng nào được chốt; hộp báo lỗi ghi tên các dòng đó.</li>
+      </ul>
+    </section>
+
+    <!-- ============ B3 ============ -->
+    <section id="b3">
+      <h2><b>B3</b> Huỷ chốt</h2>
+      <p class="why">Từ menu ⋯ của dòng đã trả, hoặc Hoàn tác trên toast ngay sau khi chốt.</p>
+      <div class="app"><div class="shell" style="min-height:280px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Trả lương</div></div>
+        <div class="content"><div class="topbar"><h3>Trả lương</h3></div><div class="page"><div class="card" style="min-height:160px"><p class="muted">…</p></div></div></div>
+        <div class="scrim"><div class="modal" role="dialog">
+          <h4>Huỷ chốt trả lương Trần Văn Bình?</h4>
+          <p style="margin:0" class="muted">Dòng về Chưa trả, giữ số đã chốt (1,900 USD) để sửa tiếp.</p>
+          <div class="foot"><span class="btn">Không</span><span class="btn pri">Huỷ chốt</span></div>
+        </div></div>
+      </div></div>
+      <ul class="notes"><li>Sau khi huỷ chốt, dòng Trả giữ số đã lưu, <b>không</b> quay về mặc định hợp đồng.</li></ul>
+    </section>
+
+    <!-- ============ B4 ============ -->
+    <section id="b4">
+      <h2><b>B4</b> Còn ô sửa chưa chốt</h2>
+      <p class="why">Số sửa chỉ lưu khi Chốt. Đổi tháng, đổi tab / bộ lọc, sang trang khác khi còn dòng "Đã sửa" thì hỏi.</p>
+      <div class="app"><div class="shell" style="min-height:280px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Trả lương</div></div>
+        <div class="content"><div class="topbar"><h3>Trả lương</h3></div><div class="page"><div class="card" style="min-height:160px"><p class="muted">…</p></div></div></div>
+        <div class="scrim"><div class="modal" role="dialog">
+          <h4>Bỏ số đã sửa?</h4>
+          <p style="margin:0" class="muted">1 dòng có số sửa chưa chốt: Nguyễn Hữu Phước.</p>
+          <div class="foot"><span class="btn">Ở lại</span><span class="btn pri">Bỏ và rời đi</span></div>
+        </div></div>
+      </div></div>
+      <ul class="notes"><li>Đóng cửa sổ / tải lại trang: hộp mặc định của trình duyệt / app (beforeunload).</li></ul>
+    </section>
+
+    <!-- ============ B5 ============ -->
+    <section id="b5">
+      <h2><b>B5</b> Điện thoại (375px, bản web)</h2>
+      <p class="why">Thẻ thay bảng. Bấm thẻ mở bảng dưới liệt kê đủ 14 khoản để sửa và chốt từng dòng. Không chốt hàng loạt trên điện thoại.</p>
+      <div class="phones">
+        <div class="phone">
+          <div class="top"><h3>Trả lương</h3>
+            <div class="row"><span class="input">‹ <b>10/2026</b> ›</span><span class="tabs"><span>Tất cả</span><span class="on">Chưa trả<i>3</i></span><span>Đã trả</span></span></div>
+            <span class="input"><span class="muted">🔍 Thuyền viên, mã bill…</span></span>
+          </div>
+          <div class="list">
+            <div class="card"><div class="row" style="justify-content:space-between"><b>Nguyễn Hữu Phước</b><span class="badge">Chưa trả</span></div><span class="muted">Thợ máy · CH2609-02/HĐ/T1 · Hải Âu Shipping</span><span class="muted">15/10–31/10 · bill <span class="badge info">Đã gửi</span> <span class="chip-edit">● Đã sửa</span></span><div class="nums"><span>Thu<b>2,150</b></span><span>Trả<b>1,600</b></span></div></div>
+            <div class="card"><div class="row" style="justify-content:space-between"><b>Lê Minh Tâm</b><span class="badge">Chưa trả</span></div><span class="muted">Thủy thủ · CH2607-03/HĐ/T4 · Đông Á Marine</span><span class="muted">26/09–25/10 · bill <span class="badge warn">Cần duyệt</span></span><div class="nums"><span>Thu<b>1,550</b></span><span>Trả<b>1,150</b></span></div></div>
+            <div class="card"><div class="row" style="justify-content:space-between"><b>Đỗ Thành Long</b><span class="badge">Chưa trả</span></div><span class="muted">Thợ cả · CH2610-01/HĐ/T1 · Biển Xanh Co.</span><span class="muted">20/10–31/10 · bill <span class="badge">Chưa đến kỳ</span></span><div class="nums"><span>Thu<b>1,000</b></span><span>Trả<b>1,300</b></span></div></div>
+            <div class="card" style="padding:8px 12px"><span class="muted">Thu 13,250 · Trả 11,750 USD</span></div>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="top"><h3>Trả lương</h3></div>
+          <div class="list"><div class="card" style="opacity:.5"><b>Nguyễn Hữu Phước</b></div></div>
+          <div class="scrim" style="padding:0"></div>
+          <div class="sheet">
+            <span class="grab"></span>
+            <b>Nguyễn Hữu Phước · Thợ máy</b>
+            <span class="muted" style="font-size:12px">CH2609-02/HĐ/T1 · 15/10–31/10 · hạn trả 13/11</span>
+            <div class="body" id="sheet-body"></div>
+            <div class="card" style="background:var(--background)"><div class="nums"><span>Thu<b>2,150</b></span><span>Trả<b>1,600</b></span></div></div>
+            <div class="row" style="justify-content:flex-end"><span class="btn">Bỏ sửa</span><span class="btn pri">Chốt đã trả</span></div>
+          </div>
+        </div>
+      </div>
+      <ul class="notes"><li>Dùng <code>ListCard</code> + <code>BottomSheet</code> + <code>MoneyInput</code> sẵn có. Bảng dưới cuộn được, đủ 14 khoản kể cả khoản 0.</li><li>Đóng bảng dưới khi còn số sửa: giữ số sửa trên thẻ (chip Đã sửa), không hỏi; rời trang thì hỏi như B4.</li><li>Dòng đã trả: bảng dưới chỉ xem, nút <b>Huỷ chốt</b>.</li></ul>
+    </section>
+
+    <!-- ============ B6 ============ -->
+    <section id="b6">
+      <h2><b>B6</b> Duyệt lại hợp đồng bị chặn vì đã trả lương</h2>
+      <p class="why">Không có màn mới. Bill đã chốt trả lương bị khoá như bill đã gửi / đã thu khi sửa ngày hoặc duyệt lại hợp đồng làm bill đó bị cắt hoặc xoá.</p>
+      <div class="app"><div class="shell" style="min-height:260px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Hợp đồng</div></div>
+        <div class="content"><div class="topbar"><h3>Hợp đồng CH2608-01/HĐ</h3></div><div class="page"><div class="card" style="min-height:140px"><p class="muted">…</p></div></div></div>
+        <div class="scrim"><div class="modal" role="dialog">
+          <h4>Chưa duyệt được</h4>
+          <div class="banner err">Các yêu cầu thanh toán sau đã duyệt, đã gửi, đã thu hoặc đã trả lương: CH2608-01/HĐ/T3 (Đã thu · Đã trả lương). Huỷ chốt trả lương, huỷ ghi nhận thu, thu hồi, bỏ duyệt rồi thử lại.</div>
+          <div class="foot"><span class="btn pri">Đóng</span></div>
+        </div></div>
+      </div></div>
+      <ul class="notes"><li>Chỉ thêm "đã trả lương" vào thông báo chặn sẵn có.</li><li>Sửa số tiền bill, gửi, thu, thu hồi bill: <b>không</b> bị chặn bởi trả lương; chỉ hiện chip ở B1.</li></ul>
+    </section>
+  </main>
+</div>
+
+<script>
+  // 14 khoản cố định, đúng thứ tự kế hoạch mục A1.
+  const ITEMS = [
+    ['Lương cơ bản', 'M'], ['Làm thêm cố định', 'M'], ['Lương phép', 'M'], ['Phụ cấp', 'M'], ['Thưởng', 'M'], ['Phí dịch vụ', 'M'], ['Khác (hằng tháng)', 'M', 1],
+    ['Vé máy bay đi', 'O'], ['Vé máy bay về', 'O'], ['Phí visa', 'O'], ['Khám sức khoẻ', 'O'], ['Huấn luyện/chứng chỉ', 'O'], ['Thưởng hoàn thành hợp đồng', 'O'], ['Khác (một lần)', 'O', 1],
+  ]
+  const fmt = (n) => n.toLocaleString('en-US')
+  const fmt2 = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2 })
+  const pad = (obj) => ITEMS.map((_, i) => obj[i] || 0)
+  const sum = (a) => a.reduce((s, v) => s + v, 0)
+
+  // A1: hợp đồng (phải thu, phải chi). null = để trống.
+  const contract = { 0: [1500, 1300], 5: [150, null], 6: [100, 80], 7: [500, 500] }
+  let html = '<thead><tr><th>Khoản</th><th class="num">Phải thu · Hải Âu Shipping</th><th class="num">Phải chi · Nguyễn Hữu Phước</th></tr></thead><tbody>'
+  for (const [kind, title] of [['M', 'Hằng tháng · USD/tháng'], ['O', 'Một lần · USD']]) {
+    html += `<tr class="grp"><th colspan="3">${title}</th></tr>`
+    let r = 0, p = 0
+    ITEMS.forEach(([name, k, isNew], i) => {
+      if (k !== kind) return
+      const [rv, pv] = contract[i] || [null, null]
+      r += rv || 0; p += pv || 0
+      const box = (v) => `<span class="input" style="min-width:120px;justify-content:flex-end">${v == null ? '<span class="muted">—</span>' : fmt2(v)}</span>`
+      html += `<tr${isNew ? ' class="new"' : ''}><th style="font-weight:500">${name}</th><td class="num">${box(rv)}</td><td class="num">${box(pv)}</td></tr>`
+    })
+    html += `<tr class="sum"><th>Tổng ${kind === 'M' ? 'hằng tháng' : 'một lần'}</th><td class="num">${fmt2(r)}</td><td class="num">${fmt2(p)}</td></tr>`
+  }
+  document.getElementById('contract-items').innerHTML = html + '</tbody>'
+
+  // A2: bill kỳ 2 (phải thu), Lương cơ bản đã sửa 1,500 → 1,450.
+  const bill = pad({ 0: 1450, 5: 150, 6: 100 })
+  html = '<thead><tr><th>Khoản</th><th class="num">Số tiền (USD)</th></tr></thead><tbody>'
+  for (const [kind, title] of [['M', 'Hằng tháng'], ['O', 'Một lần']]) {
+    html += `<tr class="grp"><th colspan="2">${title}</th></tr>`
+    ITEMS.forEach(([name, k], i) => {
+      if (k !== kind) return
+      const edited = i === 0
+      html += `<tr><th style="font-weight:500">${name}${edited ? ' <span class="chip-edit">● Đã sửa</span>' : ''}</th><td class="num">${edited ? '<s class="muted" style="font-size:12px">1,500.00</s> ' : ''}<span class="input" style="min-width:120px;justify-content:flex-end;${edited ? 'border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light)' : ''}">${fmt2(bill[i])}</span></td></tr>`
+    })
+  }
+  document.getElementById('bill-items').innerHTML = html + '</tbody>'
+  document.querySelector('#a2 .footer b').textContent = fmt2(sum(bill))
+  document.querySelector('#a2 .footer .muted').textContent = `Hằng tháng ${fmt2(sum(bill.slice(0, 7)))} · Một lần ${fmt2(sum(bill.slice(7)))}`
+
+  // B1: năm bill tháng 10/2026.
+  const ROWS = [
+    { name: 'Trần Văn Bình', rank: 'Thuyền phó 2', code: 'CH2608-01/HĐ/T3', owner: 'Hải Âu Shipping', vessel: 'MV Pacific Star', period: '01/10–31/10 · kỳ 3/9',
+      bill: pad({ 0: 1900, 1: 300, 5: 150 }), billBadge: '<span class="badge ok">Đã thu</span>', pay: pad({ 0: 1650, 1: 250 }), paid: '18/11' },
+    { name: 'Nguyễn Hữu Phước', rank: 'Thợ máy', code: 'CH2609-02/HĐ/T1', owner: 'Hải Âu Shipping', vessel: 'MV Ocean Glory', period: '15/10–31/10 · kỳ 1/6',
+      bill: pad({ 0: 1500, 5: 150, 7: 500 }), billBadge: '<span class="badge info">Đã gửi</span>', pay: pad({ 0: 1100, 7: 500 }), dirty: [0], selected: true },
+    { name: 'Lê Minh Tâm', rank: 'Thủy thủ', code: 'CH2607-03/HĐ/T4', owner: 'Đông Á Marine', vessel: 'MV Saigon Star', period: '26/09–25/10 · kỳ 4/7',
+      bill: pad({ 0: 1200, 1: 200, 5: 150 }), billBadge: '<span class="badge warn">Cần duyệt</span>', pay: pad({ 0: 1000, 1: 150 }), selected: true },
+    { name: 'Phạm Quốc Huy', rank: 'Máy trưởng', code: 'CH2605-01/HĐ/T6', owner: 'Đông Á Marine', vessel: 'MV Hanoi Bridge', period: '01/10–31/10 · kỳ 6/8',
+      bill: pad({ 0: 6000, 4: 200 }), billBadge: '<span class="badge info">Đã gửi</span><br><span class="badge warn" title="Tổng bill lúc chốt: 6,000">Bill đổi sau khi chốt</span>', pay: pad({ 0: 5800 }), paid: '16/11' },
+    { name: 'Đỗ Thành Long', rank: 'Thợ cả', code: 'CH2610-01/HĐ/T1', owner: 'Biển Xanh Co.', vessel: 'MV Mekong Pearl', period: '20/10–31/10 · kỳ 1/4',
+      bill: pad({ 0: 1000 }), billBadge: '<span class="badge">Chưa đến kỳ</span>', pay: pad({ 0: 1300 }) },
+  ]
+  const head = `<thead>
+    <tr class="g"><th class="l stick"></th><th class="l stick2"></th><th class="l"></th><th class="l"></th><th></th>
+      <th colspan="7" class="sep">Hằng tháng</th><th colspan="7" class="sep">Một lần</th><th class="sep"></th><th></th><th class="act"></th></tr>
+    <tr><th class="l stick"><span class="cb"></span></th><th class="l stick2">Thuyền viên · Bill</th><th class="l">Đối tác · Tàu</th><th class="l">Kỳ · Hạn</th><th></th>
+      ${ITEMS.map(([n], i) => `<th class="${i === 0 || i === 7 ? 'sep' : ''}">${n}</th>`).join('')}
+      <th class="sep">Tổng</th><th class="l">Trạng thái</th><th class="l act">Thao tác</th></tr></thead>`
+  let body = '<tbody>'
+  for (const r of ROWS) {
+    const paidCls = r.paid ? ' paid' : ''
+    const cb = r.paid ? '<span class="cb dis"></span>' : `<span class="cb${r.selected ? ' on' : ''}"></span>`
+    const act = r.paid ? '<span class="btn link">⋯</span>' : `<span class="btn sm pri">Chốt</span>${r.dirty ? ' <span class="btn link">Bỏ sửa</span>' : ''}`
+    const sepc = (i) => (i === 0 || i === 7 ? ' sep' : '')
+    body += `<tr class="thu${paidCls}">
+      <td class="stick" rowspan="2">${cb}</td>
+      <td class="stick2 who" rowspan="2"><b>${r.name}</b><span>${r.rank} · <u>${r.code}</u></span></td>
+      <td class="who" rowspan="2"><b>${r.owner}</b><span>${r.vessel}</span></td>
+      <td class="who"><span>${r.period}</span><br><span>Hạn thu 10/11</span></td>
+      <td class="side-l">Thu</td>
+      ${r.bill.map((v, i) => `<td class="num${v ? '' : ' zero'}${sepc(i)}">${fmt(v)}</td>`).join('')}
+      <td class="num total sep">${fmt(sum(r.bill))}</td>
+      <td>${r.billBadge}</td>
+      <td class="act" rowspan="2">${act}</td></tr>`
+    body += `<tr class="tra${paidCls}">
+      <td class="who"><span>Hạn trả 13/11</span></td>
+      <td class="side-l">Trả</td>
+      ${r.pay.map((v, i) => `<td class="num${sepc(i)}"><span class="cell${r.paid ? ' ro' : ''}${v ? '' : ' zero'}${r.dirty?.includes(i) ? ' dirty' : ''}">${fmt(v)}</span></td>`).join('')}
+      <td class="num total sep">${fmt(sum(r.pay))}</td>
+      <td>${r.paid ? `<span class="badge ok">✓ Đã trả ${r.paid}</span>` : `<span class="badge">Chưa trả</span>${r.dirty ? ' <span class="chip-edit">● Đã sửa</span>' : ''}`}</td></tr>`
+  }
+  document.getElementById('pay').innerHTML = head + body + '</tbody>'
+
+  // B5: bảng dưới, dòng 2.
+  const r2 = ROWS[1]
+  let sheet = ''
+  for (const [kind, title] of [['M', 'Hằng tháng'], ['O', 'Một lần']]) {
+    sheet += `<div class="gh">${title}</div>`
+    ITEMS.forEach(([name, k], i) => {
+      if (k !== kind) return
+      const d = r2.dirty.includes(i)
+      sheet += `<div class="line"><span>${name}${d ? ' <span class="chip-edit">● Đã sửa</span>' : ''}</span><span class="hint">Thu ${fmt(r2.bill[i])}</span><span class="cell${d ? ' dirty' : ''}">${fmt(r2.pay[i])}</span></div>`
+    })
+  }
+  document.getElementById('sheet-body').innerHTML = sheet
+</script>
+</body>
+</html>

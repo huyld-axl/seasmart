@@ -9,7 +9,6 @@ import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat'
-import { ExclamationCircleOutlined } from '@ant-design/icons'
 import { EmptyState } from '../../../components/ds/Controls'
 import useToast from '../../../components/ds/useToast'
 import { useBill, useBillMutations } from '../../../hooks/useVoyages'
@@ -56,7 +55,6 @@ function BillForm({ data }) {
   const shortcuts = useFormShortcuts({ onCancel: () => navigate(back) })
   const leave = useLeaveGuard(changes > 0)
   const { totals } = groupItems(values.items || [])
-  const negative = totals.all < 0
 
   const checkDueDateInput = (event) => {
     const input = event.target
@@ -90,12 +88,7 @@ function BillForm({ data }) {
   })
 
   async function submit(formValues) {
-    if (negative) return
     const payload = toPayload(formValues)
-    if (payload.items.some((item) => 'name' in item && !item.name)) {
-      toast.error('Chưa lưu được', { description: 'Dòng điều chỉnh cần tên.' })
-      return
-    }
     try {
       await save.mutateAsync({ id: bill.id, ...payload, version: bill.version })
       toast.success(`Đã lưu ${bill.code}`)
@@ -171,21 +164,18 @@ function BillForm({ data }) {
         <div className="sf-savebar ct-bar">
           <div className="ct-budget">
             <span className="ct-budget__label">Tổng yêu cầu</span>
-            <span className={`ct-budget__value${negative ? ' bl-negative' : ''}`}><b>{formatUsd(totals.all)}</b> <span className="ct-fig__unit">USD</span></span>
+            <span className="ct-budget__value"><b>{formatUsd(totals.all)}</b> <span className="ct-fig__unit">USD</span></span>
           </div>
           <div className="ct-figs">
             <Figure label="Hằng tháng" value={totals.monthly} />
             <Figure label="Một lần" value={totals.once} />
-            <Figure label="Điều chỉnh" value={totals.adjust} />
           </div>
-          {negative ? (
-            <p className="sf-savebar__msg sf-savebar__msg--err bl-bar-msg"><ExclamationCircleOutlined aria-hidden /> Tổng không được âm. Sửa lại dòng điều chỉnh.</p>
-          ) : changes ? (
+          {changes ? (
             <p className="sf-savebar__msg bl-bar-msg"><b>{changes} thay đổi</b></p>
           ) : null}
           <div className="sf-savebar__actions">
             <Button className="sf-savebar__cancel" onClick={() => navigate(back)}>Huỷ</Button>
-            <Button type="primary" htmlType="submit" loading={save.isPending} disabled={!changes || negative}>Lưu thay đổi</Button>
+            <Button type="primary" htmlType="submit" loading={save.isPending} disabled={!changes}>Lưu thay đổi</Button>
           </div>
         </div>
       </Form>

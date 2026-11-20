@@ -11,7 +11,6 @@ const { displayStatus } = require('../utils/voyage_math')
 const { contractBillService } = require('./contract_bill.service')
 
 const CONTRACT_COLUMNS = ['start_date', 'end_date', 'notes']
-const MAX_ITEMS = 40
 const SIDES = ['RECEIVABLE', 'PAYABLE']
 
 const STATUS_LABELS = { DRAFT: 'Nháp', PENDING: 'Chờ duyệt', REJECTED: 'Bị từ chối', ACTIVE: 'Hiệu lực', ENDED: 'Đã kết thúc' }
@@ -60,35 +59,22 @@ const CONTRACT_SELECT = `SELECT c.id, c.version, c.contract_number, c.status, c.
     (SELECT COALESCE(SUM(i.payable_usd), 0) FROM contract_item i WHERE i.contract_id = c.id AND i.kind = 'MONTHLY') AS payable_monthly
   ${CONTRACT_FROM}`
 
+// Danh sách khoản cố định (DEFAULT_ITEMS): chỉ nhận mã có trong danh sách, không lặp; luôn trả đủ các khoản, thiếu thì dòng trống.
 function parseItems(input) {
   const rows = Array.isArray(input) ? input : []
-  if (rows.length > MAX_ITEMS) throw { statusCode: 400, message: `Tối đa ${MAX_ITEMS} khoản` }
-  const seen = new Set()
-  const custom = []
   const byCode = {}
   for (const row of rows) {
-    const code = row.item_code || null
-    const name = typeof row.custom_name === 'string' ? row.custom_name.trim() : ''
-    if ((code && name) || (!code && !name)) throw { statusCode: 400, message: 'Mỗi khoản cần mã mặc định hoặc tên tự đặt, không cả hai' }
-    const amounts = { receivable_usd: num(row.receivable_usd), payable_usd: num(row.payable_usd) }
-    if (code) {
-      if (!DEFAULT_BY_CODE[code]) throw { statusCode: 400, message: `Khoản "${code}" không có trong danh sách mặc định` }
-      if (seen.has(code)) throw { statusCode: 400, message: 'Khoản mặc định bị lặp' }
-      seen.add(code)
-      byCode[code] = amounts
-    } else {
-      if (!['MONTHLY', 'ONE_TIME'].includes(row.kind)) throw { statusCode: 400, message: 'Khoản tự đặt tên cần chọn nhóm hằng tháng hoặc một lần' }
-      custom.push({ kind: row.kind, custom_name: name, ...amounts })
-    }
+    const code = row.item_code
+    if (!DEFAULT_BY_CODE[code]) throw { statusCode: 400, message: `Khoản "${code ?? ''}" không có trong danh sách khoản cố định` }
+    if (byCode[code]) throw { statusCode: 400, message: 'Khoản bị lặp' }
+    byCode[code] = { receivable_usd: num(row.receivable_usd), payable_usd: num(row.payable_usd) }
   }
-  // Thiếu khoản mặc định nào thì tự thêm dòng trống, đúng thứ tự.
-  const defaults = DEFAULT_ITEMS.map((d) => ({
+  return DEFAULT_ITEMS.map((d) => ({
     kind: d.kind,
     item_code: d.code,
     receivable_usd: byCode[d.code]?.receivable_usd ?? null,
     payable_usd: byCode[d.code]?.payable_usd ?? null,
   }))
-  return [...defaults, ...custom]
 }
 
 function parseTerms(input) {
@@ -199,7 +185,7 @@ const seafarerContractService = {
     const [[row]] = await pool.query(`${CONTRACT_SELECT} WHERE c.id = ? AND c.deleted_at IS NULL`, [id])
     if (!row) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
     const [itemRows] = await pool.query(
-      'SELECT id, kind, item_code, custom_name, receivable_usd, payable_usd, sort_order FROM contract_item WHERE contract_id = ? ORDER BY sort_order, id',
+      'SELECT id, kind, item_code, receivable_usd, payable_usd, sort_order FROM contract_item WHERE contract_id = ? ORDER BY sort_order, id',
       [id]
     )
     const [termRows] = await pool.query(
@@ -216,8 +202,7 @@ const seafarerContractService = {
       id: i.id,
       kind: i.kind,
       item_code: i.item_code,
-      custom_name: i.custom_name,
-      name: i.item_code ? DEFAULT_BY_CODE[i.item_code]?.name ?? i.item_code : i.custom_name,
+      name: DEFAULT_BY_CODE[i.item_code]?.name ?? i.item_code,
       receivable_usd: num(i.receivable_usd),
       payable_usd: num(i.payable_usd),
     }))
@@ -467,10 +452,12 @@ const seafarerContractService = {
 // 409 kèm danh sách bill bị chặn (đã gửi / đã thu) cho giao diện liệt kê.
 function assertNotBlocked(plan) {
   if (!plan.blocked.length) return
-  const list = plan.blocked.map((b) => `${b.code} kỳ ${b.seq} (${BILL_STATUS_LABELS[b.status]})`).join(', ')
+  const label = (b) => [BILL_STATUS_LABELS[b.status], b.payout_paid ? 'Đã trả lương' : null].filter(Boolean).join(' · ')
+  const list = plan.blocked.map((b) => `${b.code} kỳ ${b.seq} (${label(b)})`).join(', ')
+  const paid = plan.blocked.some((b) => b.payout_paid)
   throw {
     statusCode: 409,
-    message: `Các yêu cầu thanh toán sau đã duyệt, đã gửi hoặc đã thu: ${list}. Huỷ ghi nhận thu, thu hồi, bỏ duyệt rồi thử lại.`,
+    message: `Các yêu cầu thanh toán sau đã duyệt, đã gửi, đã thu${paid ? ' hoặc đã trả lương' : ''}: ${list}. ${paid ? 'Huỷ chốt trả lương, huỷ' : 'Huỷ'} ghi nhận thu, thu hồi, bỏ duyệt rồi thử lại.`,
     blocked_bills: plan.blocked,
   }
 }

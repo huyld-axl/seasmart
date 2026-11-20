@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const { seafarerContractService: service } = require('../seafarer_contract.service')
+const { DEFAULT_ITEMS } = require('../../constants/voyage_contract')
 
 // Pool giả như voyage.test.js: khớp đoạn SQL thô đầu tiên, ghi lại mọi câu đã chạy.
 function fakePool(routes) {
@@ -63,18 +64,17 @@ const planRoutes = (bills = BILLS, contract = { id: 9, start_date: '2027-01-01',
 ]
 
 describe('seafarer_contract.service', () => {
-  it('tạo hợp đồng: số {mã chuyến}/HĐ, đủ 12 khoản mặc định, 2 kỳ thanh toán, gắn chuyến, log CREATE', async () => {
+  it('tạo hợp đồng: số {mã chuyến}/HĐ, đủ 14 khoản cố định, 2 kỳ thanh toán, gắn chuyến, log CREATE', async () => {
     const pool = fakePool(createRoutes())
     await service.create(pool, createBody({
-      items: [{ item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 }, { custom_name: ' Phụ cấp tàu ', kind: 'MONTHLY', receivable_usd: 10 }],
+      items: [{ item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 }, { item_code: 'OTHER_MONTHLY', receivable_usd: 10 }],
     }), 5)
     expect(inserts(pool, 'seafarer_contract')[0].params[0]).toMatchObject({ contract_number: 'CT-2026-0004/HĐ', status: 'DRAFT', seafarer_voyage_id: 4, created_by: 5 })
     const items = inserts(pool, 'contract_item').map((c) => c.params[0])
-    expect(items).toHaveLength(13)
-    expect(items.filter((i) => i.item_code)).toHaveLength(12)
+    expect(items.map((i) => i.item_code)).toEqual(DEFAULT_ITEMS.map((d) => d.code))
     expect(items[0]).toMatchObject({ item_code: 'BASIC_WAGE', receivable_usd: 1150, payable_usd: 1050 })
     expect(items[1]).toMatchObject({ item_code: 'FIXED_OVERTIME', receivable_usd: null })
-    expect(items[12]).toMatchObject({ custom_name: 'Phụ cấp tàu', kind: 'MONTHLY' })
+    expect(items[6]).toMatchObject({ item_code: 'OTHER_MONTHLY', kind: 'MONTHLY', receivable_usd: 10, payable_usd: null })
     const terms = inserts(pool, 'contract_payment_term').map((c) => c.params[0])
     expect(terms.map((t) => [t.side, t.pay_day, t.holiday_rule])).toEqual([['RECEIVABLE', 10, 'AFTER'], ['PAYABLE', 15, 'BEFORE']])
     expect(logActions(pool)).toEqual(['CREATE'])
@@ -96,6 +96,8 @@ describe('seafarer_contract.service', () => {
       service.create(fakePool(createRoutes({ overlap: [{ contract_number: 'HĐ-2026-0007', full_name: 'An' }] })), createBody())
     ).rejects.toMatchObject({ statusCode: 409, message: 'An đã có hợp đồng HĐ-2026-0007 trùng thời gian' })
     await expect(service.create(fakePool(createRoutes()), createBody({ items: [{ item_code: 'NOPE' }] }))).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.create(fakePool(createRoutes()), createBody({ items: [{ custom_name: 'Phụ cấp tàu', kind: 'MONTHLY', receivable_usd: 10 }] }))).rejects.toMatchObject({ statusCode: 400 })
+    await expect(service.create(fakePool(createRoutes()), createBody({ items: [{ item_code: 'BONUS' }, { item_code: 'BONUS' }] }))).rejects.toMatchObject({ statusCode: 400 })
     await expect(service.create(fakePool(createRoutes()), createBody({ end_date: '2026-01-01' }))).rejects.toMatchObject({ statusCode: 400 })
   })
 
@@ -113,7 +115,7 @@ describe('seafarer_contract.service', () => {
     await service.update(pool, 9, createBody(), 5)
     expect(pool.calls.some((c) => c.sql.startsWith('DELETE FROM contract_item'))).toBe(true)
     expect(pool.calls.some((c) => c.sql.startsWith('DELETE FROM contract_payment_term'))).toBe(true)
-    expect(inserts(pool, 'contract_item')).toHaveLength(12)
+    expect(inserts(pool, 'contract_item')).toHaveLength(14)
     expect(inserts(pool, 'contract_payment_term')).toHaveLength(2)
     // Ngày không đổi: không tính plan bill.
     expect(pool.calls.some((c) => c.sql.includes('b.side = ?'))).toBe(false)
@@ -237,7 +239,7 @@ describe('seafarer_contract.service', () => {
       ['FOR UPDATE OF c', () => [[{ status: 'PENDING', seafarer_id: 2, seafarer_voyage_id: 4, end_date: contract.end_date, today: '2026-11-02' }]]],
       ...extraRoutes,
       ...planRoutes(bills, contract),
-      ['SELECT item_code, custom_name, kind', () => [[{ item_code: 'BASIC_WAGE', custom_name: null, kind: 'MONTHLY', receivable_usd: '1650', payable_usd: null }]]],
+      ['SELECT item_code, receivable_usd, payable_usd FROM contract_item', () => [[{ item_code: 'BASIC_WAGE', receivable_usd: '1650', payable_usd: null }, { item_code: 'FLIGHT_OUT', receivable_usd: '500', payable_usd: null }]]],
       ['SELECT created_by FROM seafarer_contract', () => [[{ created_by: 3 }]]],
       ['AS taken', () => [[{ taken: 0 }]]],
       ['SELECT contract_number FROM seafarer_contract WHERE id', () => [[{ contract_number: 'CT-2026-0004/HĐ' }]]],
@@ -261,13 +263,16 @@ describe('seafarer_contract.service', () => {
       expect(inserts(pool, 'contract_bill_item')).toHaveLength(0)
     })
 
-    it('E muộn: giữ bill cũ, sinh thêm kỳ nối tiếp chỉ có khoản hằng tháng', async () => {
+    it('E muộn: giữ bill cũ, sinh thêm kỳ nối tiếp đủ 14 khoản, khoản một lần là 0', async () => {
       const contract = { id: 9, start_date: '2027-01-01', end_date: '2027-05-15' }
       const pool = reapprove(OPEN_BILLS, contract)
       await service.transition(pool, 9, 'approve', { expected_fingerprint: await fingerprintOf(OPEN_BILLS, contract) }, 5)
       const created = pool.calls.filter((c) => c.sql.startsWith('INSERT INTO contract_bill SET')).map((c) => c.params[0])
       expect(created.map((b) => [b.seq, b.period_start, b.period_end])).toEqual([[4, '2027-04-01', '2027-04-30'], [5, '2027-05-01', '2027-05-15']])
-      expect(inserts(pool, 'contract_bill_item').every((c) => c.params[0].kind === 'MONTHLY')).toBe(true)
+      const lines = inserts(pool, 'contract_bill_item').map((c) => c.params[0])
+      expect(lines).toHaveLength(28)
+      expect(lines.filter((l) => l.kind === 'ONE_TIME').every((l) => l.amount_usd === 0)).toBe(true)
+      expect(lines.filter((l) => l.item_code === 'BASIC_WAGE').map((l) => l.amount_usd)).toEqual([1650, 1650])
       expect(pool.calls.some((c) => c.sql.startsWith('UPDATE contract_bill SET'))).toBe(false)
     })
 
@@ -346,8 +351,8 @@ describe('seafarer_contract.service', () => {
     const pool = fakePool([
       ['FROM seafarer_contract c\n  JOIN seafarer s', () => [[detailRow({ status: 'DRAFT', awaiting_reapproval: true, date_mismatch: true, trip_leave_date: '2027-06-01' })]]],
       ['FROM contract_item WHERE', () => [[
-        { id: 1, kind: 'MONTHLY', item_code: 'BASIC_WAGE', custom_name: null, receivable_usd: '1900.00', payable_usd: '1650.00' },
-        { id: 2, kind: 'MONTHLY', item_code: null, custom_name: 'Khác', receivable_usd: null, payable_usd: null },
+        { id: 1, kind: 'MONTHLY', item_code: 'BASIC_WAGE', receivable_usd: '1900.00', payable_usd: '1650.00' },
+        { id: 2, kind: 'MONTHLY', item_code: 'OTHER_MONTHLY', receivable_usd: null, payable_usd: null },
       ]]],
       ['FROM contract_payment_term WHERE contract_id = ?', () => [[{ side: 'PAYABLE', closing_day: 31, pay_day: 15, pay_month_offset: 1, holiday_rule: 'BEFORE' }]]],
       ['FROM contract_approval_log', () => [[]]],

@@ -11,7 +11,7 @@ import useToast from '../../../components/ds/useToast'
 import { useBill, useBillMutations } from '../../../hooks/useVoyages'
 import { useCan } from '../../../hooks/usePermission'
 import apiErrorText from '../../../utils/apiError'
-import { formatDate, formatDateTime } from '../../../utils/format'
+import { formatDate, formatDateTime, formatUsd } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
 import { BillMoneyView, BillPeriods } from './BillParts'
 import InfoTable from '../../../components/ds/InfoTable'
@@ -157,6 +157,9 @@ export default function BillDetailPage() {
                 ['Hạn thanh toán', <>{formatDate(bill.due_date)} ({WEEKDAY[dayjs(bill.due_date).day()]}) {term ? <span className="vd-muted">· {payLabel(term).toLowerCase()}</span> : null}</>],
                 ['Ngày gửi', bill.sent_at ? formatDate(bill.sent_at) : <Empty>Chưa gửi</Empty>],
                 ['Ngày thu', bill.paid_date ? formatDate(bill.paid_date) : <Empty>Chưa thu</Empty>],
+                ['Trả lương', data.payout?.status === 'PAID'
+                  ? <>Đã trả {formatDate(data.payout.paid_date)} · {formatUsd(data.payout.total_usd, { fixed: true })} USD{can('payout.view') ? <> <Link to={`/payouts?month=${bill.period_end.slice(0, 7)}`}>Xem</Link></> : null}</>
+                  : <><Empty>Chưa trả</Empty>{can('payout.view') ? <> <Link to={`/payouts?month=${bill.period_end.slice(0, 7)}`}>Mở bảng trả lương</Link></> : null}</>],
                 ['Ghi chú', bill.note || <Empty>Không có</Empty>],
               ]}
             />

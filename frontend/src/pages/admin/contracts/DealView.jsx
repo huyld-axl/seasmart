@@ -10,7 +10,7 @@ const GROUPS = [
   { kind: 'ONE_TIME', title: 'Một lần', total: 'Tổng một lần' },
 ]
 const TERM_ROWS = [['Ngày chốt sổ', 'closing'], ['Ngày thanh toán', 'pay'], ['Gặp ngày nghỉ', 'holiday']]
-const nameOf = (row) => (row.item_code ? NAME_OF[row.item_code] : row.custom_name) || 'Khoản tự đặt tên'
+const nameOf = (row) => NAME_OF[row.item_code] || row.item_code
 const sum = (rows, field) => Math.round(rows.reduce((total, row) => total + Number(row[field] || 0), 0) * 100) / 100
 const money = (v) => formatUsd(v ?? 0, { fixed: true })
 

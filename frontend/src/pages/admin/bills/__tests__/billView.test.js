@@ -3,27 +3,27 @@ import dayjs from 'dayjs'
 import { billNextAction, countChanges, groupItems, overdueLabel, payLabel, periodLabel, toPayload } from '../billView'
 
 const items = [
-  { id: 1, kind: 'MONTHLY', name: 'Lương cơ bản', amount_usd: 1000 },
-  { id: 2, kind: 'ONE_TIME', name: 'Vé máy bay đi', amount_usd: 650 },
-  { id: 3, kind: 'ADJUSTMENT', name: 'Trừ', amount_usd: -100 },
+  { item_code: 'BASIC_WAGE', kind: 'MONTHLY', name: 'Lương cơ bản', amount_usd: 1000 },
+  { item_code: 'OTHER_MONTHLY', kind: 'MONTHLY', name: 'Khác (hằng tháng)', amount_usd: 0 },
+  { item_code: 'FLIGHT_OUT', kind: 'ONE_TIME', name: 'Vé máy bay đi', amount_usd: 650 },
 ]
 
 describe('billView', () => {
   it('nhóm và cộng dòng tiền', () => {
-    expect(groupItems(items).totals).toEqual({ monthly: 1000, once: 650, adjust: -100, all: 1550 })
+    expect(groupItems(items).totals).toEqual({ monthly: 1000, once: 650, all: 1650 })
   })
 
-  it('payload: khoản hợp đồng gửi id và số, dòng điều chỉnh gửi tên, dòng mới không id', () => {
-    expect(toPayload({ note: '  ', items: [...items, { kind: 'ADJUSTMENT', name: ' Mới ', amount_usd: -5 }] })).toEqual({
+  it('payload: mỗi khoản gửi mã và số', () => {
+    expect(toPayload({ note: '  ', items: [...items.slice(0, 2), { ...items[2], amount_usd: null }] })).toEqual({
       note: null,
-      items: [{ id: 1, amount_usd: 1000 }, { id: 2, amount_usd: 650 }, { id: 3, name: 'Trừ', amount_usd: -100 }, { name: 'Mới', amount_usd: -5 }],
+      items: [{ item_code: 'BASIC_WAGE', amount_usd: 1000 }, { item_code: 'OTHER_MONTHLY', amount_usd: 0 }, { item_code: 'FLIGHT_OUT', amount_usd: 0 }],
     })
   })
 
-  it('đếm thay đổi: sửa số, thêm, xoá dòng, ghi chú', () => {
+  it('đếm thay đổi: mỗi khoản đổi số, ghi chú', () => {
     const initial = { note: '', items }
     expect(countChanges(initial, initial)).toBe(0)
-    expect(countChanges(initial, { note: 'x', items: [{ ...items[0], amount_usd: 900 }, items[1], { kind: 'ADJUSTMENT', name: 'Mới', amount_usd: 1 }] })).toBe(4)
+    expect(countChanges(initial, { note: 'x', items: [{ ...items[0], amount_usd: 900 }, { ...items[1], amount_usd: 5 }, items[2]] })).toBe(3)
   })
 
   it('đổi hạn thanh toán: đếm là một thay đổi, payload gửi YYYY-MM-DD', () => {

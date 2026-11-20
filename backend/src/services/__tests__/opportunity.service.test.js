@@ -228,7 +228,7 @@ describe('chốt người', () => {
     expect(contract).toMatchObject({ status: 'DRAFT', seafarer_voyage_id: 77, seafarer_id: 5, start_date: '2026-10-26', end_date: '2027-07-25' })
     const items = pool.calls.filter((c) => c.sql.startsWith('INSERT INTO contract_item')).map((c) => c.params[0])
     expect(items.find((i) => i.item_code === 'BASIC_WAGE').receivable_usd).toBe(1650)
-    expect(items).toHaveLength(12)
+    expect(items).toHaveLength(14)
     const logs = pool.calls.filter((c) => c.sql.startsWith('INSERT INTO contract_approval_log')).map((c) => c.params[0].action)
     expect(logs).toEqual(['CREATE'])
   })

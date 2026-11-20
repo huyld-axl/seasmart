@@ -16,6 +16,7 @@ const opportunityRoutes = require('./opportunity.routes')
 const seafarerContractRoutes = require('./seafarer_contract.routes')
 const dashboardRoutes = require('./dashboard.routes')
 const contractBillRoutes = require('./contract_bill.routes')
+const payoutRoutes = require('./payout.routes')
 const kpiTargetRoutes = require('./kpi_target.routes')
 
 async function v1Routes(fastify) {
@@ -44,6 +45,7 @@ async function v1Routes(fastify) {
   fastify.register(voyageRoutes, { prefix: '/voyages' })
   fastify.register(seafarerContractRoutes, { prefix: '/contracts' })
   fastify.register(contractBillRoutes, { prefix: '/bills' })
+  fastify.register(payoutRoutes, { prefix: '/payouts' })
   fastify.register(dashboardRoutes, { prefix: '/dashboard' })
   fastify.register(kpiTargetRoutes, { prefix: '/kpi-targets' })
 }

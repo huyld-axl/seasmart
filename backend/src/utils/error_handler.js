@@ -48,6 +48,7 @@ function errorHandler(error, request, reply) {
     ...(error.code && /^[A-Z_]+$/.test(error.code) ? { code: error.code } : {}),
     ...(error.conflict ? { conflict: error.conflict } : {}),
     ...(error.blocked_bills ? { blocked_bills: error.blocked_bills } : {}),
+    ...(error.failed_rows ? { failed_rows: error.failed_rows } : {}),
   })
 }
 

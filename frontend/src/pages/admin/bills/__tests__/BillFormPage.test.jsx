@@ -21,7 +21,7 @@ vi.mock('../../../../hooks/useVoyages', () => ({
         vessel: { id: 1, vessel_name: 'Tàu kiểm thử' }, contract: { id: 1, contract_number: 'HĐ-1' },
         ship_owner: { company_name: 'Đối tác' }, seafarer: { full_name: 'Nguyễn An' },
       },
-      items: [{ id: 1, kind: 'MONTHLY', name: 'Lương', amount_usd: 100 }],
+      items: [{ id: 1, item_code: 'BASIC_WAGE', kind: 'MONTHLY', name: 'Lương cơ bản', default_usd: 100, amount_usd: 100 }],
     },
   }),
 }))

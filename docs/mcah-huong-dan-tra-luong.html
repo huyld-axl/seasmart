@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hướng dẫn Trả lương</title>
+<style>
+  /* Bản nháp mục "Trả lương thuyền viên" cho frontend/public/guide/index.html (bước 9 của docs/mcah-ke-hoach-tra-luong.md).
+     Khi chép vào: đặt sau <section id="thanh-toan">, bỏ thẻ <style> này, dùng class sẵn có (kicker, flow, steps, note, who), thêm ảnh chụp màn thật. */
+  :root { color-scheme: light; --border: #e5e6ea; --bg: #f4f4f6; }
+  body { margin: 0; background: var(--bg); color: #2c2c2c; font: 15px/1.6 'Inter', system-ui, sans-serif; }
+  section { max-width: 760px; margin: 32px auto; padding: 24px 28px; background: #fff; border-radius: 16px; }
+  h2 { margin-top: 0; }
+  .kicker { font-size: 12px; color: #707070; text-transform: uppercase; letter-spacing: .06em; }
+  .ui { padding: 1px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-weight: 500; white-space: nowrap; }
+  .flow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  .flow span { padding: 4px 12px; border-radius: 999px; background: var(--bg); }
+  .flow .key { background: #ecfdf5; color: #007a55; font-weight: 600; }
+  .note { padding: 10px 14px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; margin: 12px 0; }
+  .who { display: grid; gap: 6px; margin-top: 16px; font-size: 14px; }
+  .who div { display: grid; grid-template-columns: 1fr 1.4fr 0.8fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<section id="khoan-co-dinh-sua">
+  <h2>Sửa ở mục có sẵn (Hợp đồng, Yêu cầu thanh toán)</h2>
+  <p><b>Hợp đồng:</b> khoản tiền là danh sách cố định 14 khoản, không thêm khoản tự đặt tên. Khoản lẻ ngoài danh sách nhập vào <b>Khác (hằng tháng)</b> hoặc <b>Khác (một lần)</b> và ghi rõ vào ghi chú hợp đồng.</p>
+  <p><b>Yêu cầu thanh toán:</b> mỗi kỳ có đủ 14 khoản như hợp đồng; kỳ đầu có khoản một lần, các kỳ sau khoản một lần là 0 (vẫn sửa được, ví dụ đưa vé máy bay về vào kỳ cuối). Không còn dòng điều chỉnh: muốn trừ những ngày chưa làm thì giảm thẳng Lương cơ bản của kỳ đó. Bước 2 trong mục Yêu cầu thanh toán đổi thành: "Sửa số tiền từng khoản, ghi chú hoặc hạn thanh toán nếu cần (chỉ khi chưa duyệt)."</p>
+</section>
+<section id="tra-luong" data-jobs="kt dy">
+  <div class="kicker">Vận hành · 06</div>
+  <h2>Trả lương thuyền viên</h2>
+  <p>Màn <span class="ui">Trả lương</span> dùng để ghi nhận đã trả lương cho thuyền viên sau mỗi kỳ thu tiền đối tác. Việc chuyển tiền làm ngoài MCAH; trong app chỉ ghi lại đã trả hay chưa, trả bao nhiêu và ngày trả, để thống kê và đối chiếu với số thu.</p>
+
+  <h3>Đọc bảng</h3>
+  <p>Chọn tháng ở đầu trang. Mỗi yêu cầu thanh toán có ngày kết thúc kỳ trong tháng đó là một cặp dòng:</p>
+  <ul>
+    <li><b>Thu</b>: số tiền của yêu cầu thanh toán gửi đối tác. Chỉ xem; muốn đổi thì sửa ở màn Yêu cầu thanh toán. Bên cạnh có trạng thái của yêu cầu thanh toán (đã gửi, đã thu…) để đối chiếu.</li>
+    <li><b>Trả</b>: số trả thuyền viên. Mặc định lấy cột <b>Phải chi</b> của hợp đồng: khoản hằng tháng mỗi kỳ, khoản một lần ở kỳ đầu. Sửa được từng khoản; muốn trừ thì giảm thẳng số của khoản đó.</li>
+  </ul>
+  <p>Bảng luôn có đủ 14 khoản cố định, giống hợp đồng và yêu cầu thanh toán: 7 khoản hằng tháng (lương cơ bản, làm thêm cố định, lương phép, phụ cấp, thưởng, phí dịch vụ, khác) và 7 khoản một lần (vé máy bay đi, vé máy bay về, phí visa, khám sức khoẻ, huấn luyện/chứng chỉ, thưởng hoàn thành hợp đồng, khác). Khoản không có hiện 0. Kéo ngang bảng để xem hết; cột tên thuyền viên và cột nút luôn đứng yên. Cột <b>Hạn trả</b> tính theo kỳ thanh toán Phải chi của hợp đồng.</p>
+
+  <div class="flow"><span>Chưa trả</span><i>→</i><span>Sửa số nếu cần</span><i>→</i><span class="key">Chốt: Đã trả</span></div>
+
+  <h3>Ghi nhận đã trả</h3>
+  <ol>
+    <li>Trả lương cho thuyền viên ngoài hệ thống.</li>
+    <li>Sửa số ở dòng Trả cho khớp số đã trả, nếu khác hợp đồng.</li>
+    <li>Bấm <span class="ui">Chốt</span> ở dòng đó. Ngày trả là ngày bấm chốt. Bấm nhầm thì bấm <span class="ui">Hoàn tác</span> trên thông báo.</li>
+  </ol>
+  <p>Trả nhiều người một lúc: tích ô đầu các dòng rồi bấm <span class="ui">Chốt … dòng đã chọn</span>. Hộp xác nhận ghi tổng tiền và nhắc nếu có dòng mà đối tác chưa trả tiền. Nếu một dòng không chốt được (ví dụ người khác vừa chốt), không dòng nào được chốt; xem tên dòng trong thông báo rồi làm lại.</p>
+  <p>Số đã sửa chỉ được lưu khi bấm Chốt. Đổi tháng hay rời trang khi còn số chưa chốt, app sẽ hỏi trước.</p>
+
+  <h3>Sửa sau khi đã chốt</h3>
+  <p>Dòng đã trả bị khoá. Bấm <span class="ui">⋯</span> → <span class="ui">Huỷ chốt</span> để về Chưa trả, sửa rồi chốt lại. Số đã chốt được giữ, không quay về số của hợp đồng.</p>
+  <p>Nếu yêu cầu thanh toán bị sửa số tiền sau khi đã chốt trả lương, dòng hiện nhãn vàng <b>Bill đổi sau khi chốt</b>; rê chuột để xem số lúc chốt và kiểm lại số đã trả.</p>
+
+  <div class="note"><b>Khi sửa ngày hợp đồng:</b> kỳ đã chốt trả lương được giữ như kỳ đã gửi hay đã thu. Nếu việc sửa ngày làm kỳ đó bị cắt hoặc xoá, app chặn và nêu tên kỳ; huỷ chốt trả lương kỳ đó trước rồi làm lại.</div>
+
+  <p>Trên điện thoại, mỗi yêu cầu thanh toán là một thẻ; bấm thẻ để sửa và chốt từng người.</p>
+
+  <div class="who">
+    <div><b>Việc</b><b>Quyền cần có</b><b>Thường do</b></div>
+    <div><span>Xem bảng trả lương</span><em>Trả lương · Xem bảng trả lương</em><span>Kế toán, Duyệt &amp; quản lý</span></div>
+    <div><span>Sửa số, chốt, huỷ chốt</span><em>Trả lương · Sửa số trả, chốt và huỷ chốt</em><span>Kế toán</span></div>
+  </div>
+</section>
+</body>
+</html>

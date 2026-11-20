@@ -16,8 +16,7 @@ async function start() {
   await fastify.register(plugins)
   await fastify.register(v1Routes, { prefix: '/api/v1' })
 
-  // Health check
-  fastify.get('/health', async () => ({ status: 'ok' }))
+  await fastify.register(require('./src/routes/health'))
 
   await fastify.listen({ port: config.port, host: config.host })
   startJobs(fastify.log)

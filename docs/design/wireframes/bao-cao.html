@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Báo cáo tháng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng, cột, chữ; dựng bằng control components/ds sẵn có.
+     Mọi bảng dựng bằng script ở cuối trang từ cùng một bộ 6 bill mẫu tháng 10/2026, nên số giữa các báo cáo khớp nhau. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1500px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 12px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; grid-template-columns: minmax(0, 1fr); gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 90ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 90ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; max-width: 90ch; }
+  .notes li { margin-bottom: 4px; }
+  .map { border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  .map th, .map td { padding: 5px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+  .map th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  .map td:first-child { font-family: ui-monospace, monospace; font-size: 12px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 420px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .topbar .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--secondary); display: grid; place-items: center; font-size: 11px; font-weight: 600; }
+  .page { padding: 16px 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 6px 10px; background: var(--surface); min-height: 34px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; cursor: default; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .split { display: inline-flex; }
+  .split .btn:first-child { border-radius: 999px 0 0 999px; }
+  .split .btn:last-child { border-radius: 0 999px 999px 0; border-left: 1px solid rgba(255,255,255,.35); padding: 6px 10px; }
+  .seg { display: inline-flex; flex-wrap: wrap; background: var(--secondary); border-radius: 999px; padding: 3px; font-size: 13px; }
+  .seg span { padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
+  .seg .on { background: var(--surface); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; background: var(--secondary); }
+  .badge.ok { background: var(--success-bg); color: var(--success); }
+  .badge.warn { background: var(--warning-bg); color: var(--warning); }
+  .badge.info { background: var(--info-bg); color: var(--info); }
+  .badge.err { background: var(--error-bg); color: var(--error-strong); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; display: grid; gap: 6px; font-size: 13px; }
+  .empty { display: grid; place-items: center; gap: 6px; min-height: 220px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--muted); text-align: center; padding: 24px; }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; user-select: none; }
+  .toggle i { width: 34px; height: 20px; border-radius: 999px; background: var(--border-strong); position: relative; transition: background .15s; }
+  .toggle i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; }
+  .toggle.on i { background: var(--primary); }
+  .toggle.on i::after { left: 16px; }
+
+  /* Bảng báo cáo */
+  .scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  table.rep { border-collapse: separate; border-spacing: 0; font-size: 12.5px; width: max-content; min-width: 100%; }
+  .rep th, .rep td { padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; vertical-align: middle; }
+  .rep thead th { background: #f8f9fb; color: var(--muted); font-weight: 600; font-size: 12px; text-align: left; }
+  .rep thead tr.g th { text-align: center; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; border-left: 1px solid var(--border-strong); }
+  .rep thead tr.g th:first-child { border-left: 0; }
+  .rep th.num, .rep td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .rep td.zero { color: #b3b5bb; }
+  .rep td.neg { color: var(--error-strong); }
+  .rep td.merge { background: #fbfbfd; font-weight: 600; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .rep .gs { border-left: 1px solid var(--border-strong); }
+  .rep .stick { position: sticky; left: 0; background: var(--surface); z-index: 1; box-shadow: 1px 0 0 var(--border); }
+  .rep thead .stick { background: #f8f9fb; z-index: 2; }
+  .rep .stick.s1 { left: var(--s1, 0px); }
+  .rep .stick.s0 { box-shadow: none; }
+  /* Tên nhóm dính: span sticky trong ô gộp, dừng ngay sau các cột dính và bị nhóm sau đẩy ra khi hết nhóm. */
+  #t-base thead tr.g th { text-align: left; }
+  .rep .gl { position: sticky; left: calc(var(--gl, 0px) + 10px); display: inline-block; color: var(--primary); }
+  .rep tfoot td { font-weight: 600; background: #f8f9fb; border-top: 2px solid var(--border-strong); border-bottom: 0; }
+  .rep tfoot .stick { background: #f8f9fb; }
+  .rep a { color: var(--primary); text-decoration: none; }
+  .rep .hl { box-shadow: inset 0 0 0 2px var(--info); }
+
+  /* Hộp thoại, menu */
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .menu { position: absolute; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--elevation-modal); padding: 4px; font-size: 13px; min-width: 210px; z-index: 5; }
+  .menu div { padding: 7px 12px; border-radius: 6px; }
+  .menu div:hover, .menu div.on { background: var(--secondary); }
+  .menu small { display: block; color: var(--muted); }
+
+  /* Xem trước file Excel */
+  .xl { background: #fff; border: 1px solid var(--border-strong); border-radius: var(--radius-sm); overflow: hidden; font: 12px/1.4 Calibri, 'Segoe UI', sans-serif; }
+  .xl .bar { background: #217346; color: #fff; padding: 6px 12px; font-size: 12px; }
+  .xl table { border-collapse: collapse; width: max-content; min-width: 100%; }
+  .xl td, .xl th { border: 1px solid #d4d4d4; padding: 3px 8px; white-space: nowrap; }
+  .xl th.rh, .xl tr.ch th { background: #efefef; color: #555; font-weight: 400; text-align: center; font-size: 11px; }
+  .xl td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .xl tr.t td { font-weight: 700; font-size: 14px; border-color: transparent; }
+  .xl tr.m td { color: #666; border-color: transparent; }
+  .xl tr.h td { background: #dde5ef; font-weight: 700; text-align: center; }
+  .xl tr.s td { font-weight: 700; border-top: 2px solid #555; }
+  .xl .tabs { display: flex; gap: 2px; background: #efefef; padding: 4px 8px 0; font-size: 12px; }
+  .xl .tabs span { padding: 3px 12px; background: #e0e0e0; }
+  .xl .tabs .on { background: #fff; color: #217346; font-weight: 700; border-bottom: 2px solid #217346; }
+
+  /* Điện thoại */
+  .phones { display: flex; gap: 24px; flex-wrap: wrap; }
+  .phone { width: 375px; height: 740px; border: 1px solid var(--border-strong); border-radius: 28px; overflow: hidden; background: var(--background); position: relative; display: grid; grid-template-rows: auto 1fr; }
+  .phone .top { background: var(--surface); padding: 14px 16px 10px; border-bottom: 1px solid var(--border); display: grid; gap: 8px; }
+  .phone .top h3 { margin: 0; font-size: 16px; }
+  .phone .list { padding: 10px 16px; display: grid; gap: 8px; align-content: start; overflow: hidden; }
+  .phone .seg { overflow: hidden; max-width: 100%; }
+  .cells { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 10px; font-variant-numeric: tabular-nums; }
+  .cells span { display: grid; font-size: 11px; color: var(--muted); }
+  .cells b { font-size: 14px; color: var(--foreground); }
+  .strip { font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--info-bg); color: var(--info); }
+  .grouph { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; display: flex; justify-content: space-between; margin-top: 4px; }
+  /* Khung app luôn vẽ ở bề rộng máy tính 1200px rồi thu nhỏ cho vừa chỗ (script fitFrames), để xem được cả màn ở khung hẹp. */
+  .app { width: 1200px; zoom: var(--z, 1); }
+  .phones { zoom: var(--zp, 1); }
+  .nd { margin-top: 10px; max-width: 90ch; }
+  .nd summary { cursor: pointer; color: var(--primary); font-size: 13px; font-weight: 500; }
+  .nd .notes { margin-top: 6px; }
+  .why { font-size: 13px; }
+  @media (max-width: 900px) { .doc { grid-template-columns: 1fr; padding: 16px 12px 60px; gap: 16px; } .toc { display: none; } .main { gap: 40px; } }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc" aria-label="Mục lục">
+    <p class="toc__head">Màn Báo cáo</p>
+    <a href="#s1"><b>1</b>Phải thu theo đối tác</a>
+    <a href="#s2"><b>2</b>Phải chi theo đối tác</a>
+    <a href="#s3"><b>3</b>Lịch thu chi</a>
+    <a href="#s4"><b>4</b>Dữ liệu tổng hợp theo tháng</a>
+    <a href="#s0"><b>0</b>Mở trang, chưa chọn tháng</a>
+    <a href="#s5"><b>5</b>Tháng không có bill</a>
+    <p class="toc__head">Xuất</p>
+    <a href="#s6"><b>6</b>Xuất Excel</a>
+    <a href="#s7"><b>7</b>File Excel</a>
+    <p class="toc__head">Khác</p>
+    <a href="#s8"><b>8</b>Điện thoại</a>
+    <a href="#s9"><b>9</b>Quyền</a>
+    <a href="#s10"><b>10</b>Đối chiếu mẫu gốc</a>
+  </nav>
+  <main class="main">
+    <header>
+      <h1>Báo cáo tháng</h1>
+      <p class="lead">Menu <b>Báo cáo</b> (Vận hành, sau Trả lương): 4 báo cáo tháng, xem trên màn hình và xuất Excel. Số mẫu: tháng 10/2026, 6 yêu cầu thanh toán, 3 đối tác.</p>
+    </header>
+
+    <!-- ============ 1 ============ -->
+    <section id="s1">
+      <h2><b>1</b> Phải thu theo đối tác <span class="muted" style="font-size:13px;font-weight:400">thay 取引先別売上表</span></h2>
+      <p class="why">Mỗi dòng một đối tác (đối tác) có yêu cầu thanh toán trong tháng; sắp theo Tổng giảm dần. Số lấy từ dòng Thu (số đang dùng của bill). Cột theo đúng mẫu.</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="content"><div class="topbar"><h3>Báo cáo</h3><div class="user"><div class="avatar">KT</div>Kế toán ▾</div></div>
+          <div class="page">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><span class="seg"><span class="on">Phải thu theo đối tác</span><span>Phải chi theo đối tác</span><span>Lịch thu chi</span><span>Dữ liệu tổng hợp</span></span>
+                <span class="input">‹ &nbsp;<b>Tháng 10/2026</b>&nbsp; ›</span></div>
+              <span class="split"><span class="btn pri">⤓ Xuất Excel</span><span class="btn pri">▾</span></span>
+            </div>
+            <div class="scroll"><table class="rep" id="t-sales"></table></div>
+            <span class="muted" style="font-size:12px">6 yêu cầu thanh toán, kỳ kết thúc trong 10/2026, mọi trạng thái. USD.</span>
+          </div>
+        </div>
+      </div></div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li><b>Khoản hằng tháng</b> = 7 khoản hằng tháng (lương cơ bản … khác); <b>Khoản một lần</b> = 7 khoản một lần (vé máy bay … khác). Thay 税抜 / 経費等 / 税込 của mẫu.</li>
+        <li><b>Số thuyền viên</b>: số người khác nhau. Người đi tàu hai đối tác trong một tháng được đếm ở cả hai dòng. <b>Tỷ lệ</b> làm tròn 2 số lẻ, phần dư dồn vào dòng lớn nhất để tổng đúng 100%.</li>
+        <li>Tên đối tác là link sang chi tiết đối tác.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 2 ============ -->
+    <section id="s2">
+      <h2><b>2</b> Phải chi theo đối tác <span class="muted" style="font-size:13px;font-weight:400">thay 取引先別仕入表</span></h2>
+      <p class="why">Cùng cách nhóm và cùng cột như Phải thu theo đối tác, nhưng cộng dòng <b>Trả</b> của bảng Trả lương. MCAH trả thẳng cho thuyền viên, không có công ty trung gian như mẫu, nên nhóm theo đối tác để đặt cạnh bảng Phải thu.</p>
+      <div class="app"><div class="shell" style="min-height:300px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
+          <div class="page">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><span class="seg"><span>Phải thu theo đối tác</span><span class="on">Phải chi theo đối tác</span><span>Lịch thu chi</span><span>Dữ liệu tổng hợp</span></span>
+                <span class="input">‹ &nbsp;<b>Tháng 10/2026</b>&nbsp; ›</span></div>
+              <span class="split"><span class="btn pri">⤓ Xuất Excel</span><span class="btn pri">▾</span></span>
+            </div>
+            <div class="scroll"><table class="rep" id="t-cost"></table></div>
+          </div>
+        </div>
+      </div></div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li>Số Trả = số đang hiện ở bảng Trả lương: dòng đã chốt là số đã chốt; dòng chưa chốt là số mặc định từ cột Phải chi của hợp đồng.</li>
+        <li>Đối tác có bill nhưng hợp đồng chưa nhập Phải chi vẫn có dòng, tiền 0.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 3 ============ -->
+    <section id="s3">
+      <h2><b>3</b> Lịch thu chi <span class="muted" style="font-size:13px;font-weight:400">thay 入出金予定表</span></h2>
+      <p class="why">Mỗi dòng một yêu cầu thanh toán: tiền về từ đối tác khi nào, tiền ra cho thuyền viên khi nào. Sắp theo hạn thu, rồi đối tác, rồi thuyền viên. Cột theo đúng mẫu, không có cột trạng thái. <b>Gộp thu</b> gộp mọi bill cùng hạn thu; <b>Thu theo đối tác</b> gộp bill cùng đối tác, cùng hạn thu (hai cột 入金額 của mẫu).</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
+          <div class="page">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><span class="seg"><span>Phải thu theo đối tác</span><span>Phải chi theo đối tác</span><span class="on">Lịch thu chi</span><span>Dữ liệu tổng hợp</span></span>
+                <span class="input">‹ &nbsp;<b>Tháng 10/2026</b>&nbsp; ›</span></div>
+              <span class="split"><span class="btn pri">⤓ Xuất Excel</span><span class="btn pri">▾</span></span>
+            </div>
+            <div class="scroll"><table class="rep" id="t-cash"></table></div>
+          </div>
+        </div>
+      </div></div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li><b>Hạn trả</b> tính từ kỳ thanh toán Phải chi của hợp đồng áp lên ngày kết thúc kỳ (giống cột Hạn trả của Trả lương). Hợp đồng chưa có kỳ Phải chi: "—".</li>
+        <li><b>Lãi gộp</b> = Thu kỳ này − Trả kỳ này. Âm hiện chữ đỏ.</li>
+        <li>Không có cột phí chuyển khoản (手数料) như mẫu: MCAH chưa lưu ai chịu phí.</li>
+        <li>Tên thuyền viên là link sang chi tiết thuyền viên. <b>Thuyền viên</b> thay cả 支払先 (người nhận) và 対象 (người làm) của mẫu, vì MCAH trả thẳng cho thuyền viên.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 4 ============ -->
+    <section id="s4">
+      <h2><b>4</b> Dữ liệu tổng hợp theo tháng <span class="muted" style="font-size:13px;font-weight:400">thay 売上管理基礎データ</span></h2>
+      <p class="why">Mỗi dòng một yêu cầu thanh toán. Tiêu đề hai tầng như mẫu; chỉ giữ cột của mẫu mà MCAH có dữ liệu. <b>Cuộn ngang bảng:</b> tên nhóm (Thông tin hợp đồng, Thu, Trả…) dính ở mép trái cho tới khi hết nhóm, nhóm sau đẩy nhóm trước ra, nên luôn biết đang xem mục nào. Bật <b>Hiện 14 khoản</b> để bảng dài ra và thử.</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
+          <div class="page">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><span class="seg"><span>Phải thu theo đối tác</span><span>Phải chi theo đối tác</span><span>Lịch thu chi</span><span class="on">Dữ liệu tổng hợp</span></span>
+                <span class="input">‹ &nbsp;<b>Tháng 10/2026</b>&nbsp; ›</span>
+                <span class="toggle" id="tg-detail" role="switch" aria-checked="false" tabindex="0"><i></i>Hiện 14 khoản</span></div>
+              <span class="split"><span class="btn pri">⤓ Xuất Excel</span><span class="btn pri">▾</span></span>
+            </div>
+            <div class="scroll"><table class="rep" id="t-base"></table></div>
+          </div>
+        </div>
+      </div></div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li>Hai cột Tháng, Số hợp đồng dính bên trái khi cuộn ngang; tên nhóm dính ngay sau hai cột đó. Không phân trang (một tháng vài chục đến vài trăm dòng).</li>
+        <li><b>Người tạo HĐ</b>: khi tính năng Người phụ trách dựng xong thì đổi thành <b>Phụ trách</b> (営業担当 của mẫu).</li>
+        <li><b>Điều kiện phải thu / phải chi</b>: ba cột như mẫu (締日, 支払日, 金融機関休日の場合): Chốt sổ, Ngày thanh toán, Gặp ngày nghỉ; chữ như form hợp đồng.</li>
+        <li><b>Lãi gộp dự kiến / tháng</b> = Σ phải thu − Σ phải chi của 7 khoản hằng tháng trong hợp đồng (粗利（予測）).</li>
+        <li>Công tắc chỉ đổi cột trên màn hình. File Excel <b>luôn có đủ 14 khoản</b> của cả Thu và Trả.</li>
+        <li>Bỏ so với mẫu (MCAH không có dữ liệu): giờ công, tăng ca, khấu trừ, biên độ, hệ số, thuế, số đơn đặt hàng, gia hạn, thương lưu, thể chế, loại hình tuyển dụng, công ty của nhân viên, văn phòng, ngày ký hợp đồng lần đầu. Không thêm cột mẫu không có (chức danh, mã bill, hạn thu, trạng thái…).</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 0 ============ -->
+    <section id="s0">
+      <h2><b>0</b> Mở trang, chưa chọn tháng</h2>
+      <p class="why">Mở menu Báo cáo: báo cáo Phải thu theo đối tác, chưa chọn tháng, bảng trống (giống Trả lương). Tháng và báo cáo vừa xem được nhớ trong phiên và trên đường dẫn.</p>
+      <div class="app"><div class="shell" style="min-height:340px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="content"><div class="topbar"><h3>Báo cáo</h3><div class="user"><div class="avatar">KT</div>Kế toán ▾</div></div>
+          <div class="page">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><span class="seg"><span class="on">Phải thu theo đối tác</span><span>Phải chi theo đối tác</span><span>Lịch thu chi</span><span>Dữ liệu tổng hợp</span></span>
+                <span class="input">‹ &nbsp;<span class="muted">Chọn tháng</span>&nbsp; ›</span></div>
+              <span class="split"><span class="btn pri" style="opacity:.45">⤓ Xuất Excel</span><span class="btn pri" style="opacity:.45">▾</span></span>
+            </div>
+            <div class="empty"><b style="color:var(--foreground)">Chọn tháng để xem báo cáo.</b><span>Báo cáo lấy các yêu cầu thanh toán có ngày kết thúc kỳ trong tháng đó.</span></div>
+          </div>
+        </div>
+      </div></div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li>Chọn báo cáo: <code>SegmentedPick</code> (luôn có một giá trị). Chọn tháng: <code>DateField picker="month"</code> + nút ‹ ›.</li>
+        <li>Nút Xuất Excel tắt khi chưa chọn tháng. Không có quyền <b>Báo cáo · Xuất Excel</b> thì không có nút.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 5 ============ -->
+    <section id="s5">
+      <h2><b>5</b> Tháng không có yêu cầu thanh toán</h2>
+      <div class="app"><div class="shell" style="min-height:300px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Báo cáo</div></div>
+        <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
+          <div class="page">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><span class="seg"><span class="on">Phải thu theo đối tác</span><span>Phải chi theo đối tác</span><span>Lịch thu chi</span><span>Dữ liệu tổng hợp</span></span>
+                <span class="input">‹ &nbsp;<b>Tháng 02/2026</b>&nbsp; ›</span></div>
+              <span class="split"><span class="btn pri">⤓ Xuất Excel</span><span class="btn pri">▾</span></span>
+            </div>
+            <div class="empty"><b style="color:var(--foreground)">Tháng 02/2026 không có yêu cầu thanh toán nào.</b><span>Vẫn xuất Excel được: file có tiêu đề và dòng tổng bằng 0.</span></div>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- ============ 6 ============ -->
+    <section id="s6">
+      <h2><b>6</b> Xuất Excel</h2>
+      <p class="why">Bấm phần chính của nút: xuất báo cáo đang xem. Mũi tên ▾: menu thêm "Xuất cả 4 báo cáo" thành một file 4 sheet. Tải xong: toast "Đã tải MCAH_Bao-cao_sales_2026-10.xlsx".</p>
+      <div class="app"><div class="shell" style="min-height:260px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Báo cáo</div></div>
+        <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
+          <div class="page" style="position:relative">
+            <div class="row" style="justify-content:space-between">
+              <div class="row"><span class="seg"><span class="on">Phải thu theo đối tác</span><span>Phải chi theo đối tác</span><span>Lịch thu chi</span><span>Dữ liệu tổng hợp</span></span>
+                <span class="input">‹ &nbsp;<b>Tháng 10/2026</b>&nbsp; ›</span></div>
+              <span class="split"><span class="btn pri">⤓ Xuất Excel</span><span class="btn pri">▾</span></span>
+            </div>
+            <div class="card" style="min-height:150px"><p class="muted" style="margin:0">… bảng Phải thu theo đối tác 10/2026 …</p></div>
+            <div class="menu" style="right:20px;top:54px">
+              <div class="on">Xuất báo cáo này<small>MCAH_Bao-cao_sales_2026-10.xlsx</small></div>
+              <div>Xuất cả 4 báo cáo<small>MCAH_Bao-cao_2026-10.xlsx · 4 sheet</small></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li>App máy tính: hộp lưu file của máy; bản web: trình duyệt tải về như các bản xuất sẵn có.</li>
+        <li>Lỗi (mất mạng, hết phiên): toast đỏ với câu lỗi của máy chủ, không tải file hỏng.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 7 ============ -->
+    <section id="s7">
+      <h2><b>7</b> File Excel</h2>
+      <p class="why">Mỗi báo cáo một sheet, cùng cột và cùng thứ tự như màn hình (Dữ liệu tổng hợp luôn đủ 14 khoản). Hàng tiêu đề cố định, có lọc, tiền định dạng <code>#,##0.00</code>, ngày <code>dd/mm/yyyy</code>.</p>
+      <div class="xl">
+        <div class="bar">MCAH_Bao-cao_2026-10.xlsx</div>
+        <div style="overflow-x:auto"><table id="xl-sales"></table></div>
+        <div class="tabs"><span class="on">Phai thu</span><span>Phai chi</span><span>Lich thu chi</span><span>Du lieu goc</span></div>
+      </div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li>Dòng 1 tên báo cáo, dòng 2 tháng + thời điểm xuất + người xuất. Dữ liệu tổng hợp có thêm dòng tiêu đề nhóm (gộp ô) như mẫu.</li>
+        <li>Lịch thu chi: hai cột Gộp thu, Thu theo đối tác được gộp ô (merge) như trên màn hình.</li>
+        <li>Dữ liệu tổng hợp: cố định hàng tiêu đề và hai cột Tháng, Số hợp đồng.</li>
+        <li>Tên sheet không dấu để mở được trên mọi bản Excel.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 8 ============ -->
+    <section id="s8">
+      <h2><b>8</b> Điện thoại (375px, bản web)</h2>
+      <p class="why">Không cuộn ngang trang. Chọn báo cáo bằng hàng cuộn ngang (<code>ScrollRow</code>). Phải thu / Phải chi: thẻ mỗi đối tác. Lịch thu chi: thẻ mỗi bill, chia nhóm theo hạn thu, không nhãn trạng thái. Dữ liệu tổng hợp: chỉ thẻ tổng và nút Xuất.</p>
+      <div class="phones">
+        <div class="phone">
+          <div class="top"><h3>Báo cáo</h3>
+            <span class="seg"><span class="on">Phải thu</span><span>Phải chi</span><span>Lịch thu chi</span><span>Dữ liệu…</span></span>
+            <div class="row" style="justify-content:space-between"><span class="input">‹ <b>10/2026</b> ›</span><span class="btn pri">⤓ Excel</span></div>
+          </div>
+          <div class="list" id="ph-sales"></div>
+        </div>
+        <div class="phone">
+          <div class="top"><h3>Báo cáo</h3>
+            <span class="seg"><span>Phải thu</span><span>Phải chi</span><span class="on">Lịch thu chi</span><span>Dữ liệu…</span></span>
+            <div class="row" style="justify-content:space-between"><span class="input">‹ <b>10/2026</b> ›</span><span class="btn pri">⤓ Excel</span></div>
+          </div>
+          <div class="list" id="ph-cash"></div>
+        </div>
+        <div class="phone">
+          <div class="top"><h3>Báo cáo</h3>
+            <span class="seg"><span>Phải thu</span><span>Phải chi</span><span>Lịch thu chi</span><span class="on">Dữ liệu…</span></span>
+            <div class="row" style="justify-content:space-between"><span class="input">‹ <b>10/2026</b> ›</span><span class="btn pri">⤓ Excel</span></div>
+          </div>
+          <div class="list" id="ph-base"></div>
+        </div>
+      </div>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li>Thẻ dùng <code>ListCard</code>: tối đa 4 ô có nhãn, chỉ số có trong bảng máy tính.</li>
+        <li>Chân danh sách: tổng của báo cáo, như dòng Tổng cộng trên máy tính.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 9 ============ -->
+    <section id="s9">
+      <h2><b>9</b> Quyền</h2>
+      <table class="map">
+        <tr><th>Quyền</th><th>Cho phép</th><th>Cấp sẵn cho</th></tr>
+        <tr><td>report.view</td><td>Mở menu Báo cáo, xem 4 bảng</td><td>Vai trò đang có Trả lương · Xem</td></tr>
+        <tr><td>report.export</td><td>Nút Xuất Excel</td><td>Như trên</td></tr>
+      </table>
+      <details class="nd"><summary>Ghi chú</summary><ul class="notes">
+        <li>Phạm vi "chỉ của mình": chỉ tính các yêu cầu thanh toán mình tạo (sau khi có Người phụ trách: mình tạo hoặc mình phụ trách). Tổng, số người, tỷ lệ tính trên phần thấy được.</li>
+        <li>Không có <code>report.view</code>: không có menu; mở thẳng <code>/reports</code> thì báo không có quyền như các trang khác.</li>
+      </ul></details>
+    </section>
+
+    <!-- ============ 10 ============ -->
+    <section id="s10">
+      <h2><b>10</b> Đối chiếu cột mẫu gốc → MCAH</h2>
+      <table class="map">
+        <tr><th>Mẫu</th><th>MCAH</th></tr>
+        <tr><td>該当月</td><td>Tháng (tháng của ngày kết thúc kỳ bill)</td></tr>
+        <tr><td>受注ID</td><td>Số hợp đồng</td></tr>
+        <tr><td>営業担当</td><td>Người tạo HĐ → Phụ trách</td></tr>
+        <tr><td>クライアント名 / 取引先 / 入金元</td><td>Đối tác</td></tr>
+        <tr><td>スタッフ / 対象 / 支払先</td><td>Thuyền viên</td></tr>
+        <tr><td>契約開始日 / 契約終了日</td><td>Ngày bắt đầu / kết thúc hợp đồng</td></tr>
+        <tr><td>対象期間（開始・終了）</td><td>Kỳ từ / Kỳ đến</td></tr>
+        <tr><td>課税額小計 / 非課税額 / 請求金額</td><td>Thu hằng tháng / Thu một lần / Thu tổng</td></tr>
+        <tr><td>支払い金額</td><td>Trả tổng (+ hằng tháng / một lần)</td></tr>
+        <tr><td>粗利（実績）</td><td>Lãi gộp kỳ</td></tr>
+        <tr><td>粗利（予測）</td><td>Lãi gộp dự kiến / tháng</td></tr>
+        <tr><td>締日 / 支払日 / 金融機関休日の場合</td><td>Chốt sổ / Thanh toán / Gặp ngày nghỉ (hai bên)</td></tr>
+        <tr><td>仕入額 / 売上額 (税抜・税込), 経費等</td><td>Khoản hằng tháng / Khoản một lần / Tổng</td></tr>
+        <tr><td>人数 / 人数比率</td><td>Số thuyền viên / Tỷ lệ số người</td></tr>
+        <tr><td>入金日 / 入金額 (C) / 入金額 (E)</td><td>Hạn thu / Gộp thu / Thu theo đối tác</td></tr>
+        <tr><td>入金明細 / 支払い明細</td><td>Thu kỳ này / Trả kỳ này</td></tr>
+        <tr><td>支払日</td><td>Hạn trả</td></tr>
+        <tr><td>支払先 + 対象</td><td>Thuyền viên (một cột)</td></tr>
+        <tr><td>手数料, 稼働時間, 超過, 控除, 精算幅, 係数, 消費税, 注文書, 契約更新, 商流, 体制, 雇用形態, 所属企業, 事務所</td><td class="muted">Bỏ: MCAH không có dữ liệu</td></tr>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+// Bộ số mẫu: 6 bill phải thu kỳ kết thúc trong 10/2026. Thu = số bill, Trả = số bảng Trả lương (D2).
+const M = ['BASIC_WAGE','FIXED_OVERTIME','LEAVE_PAY','ALLOWANCE','BONUS','SERVICE_FEE','OTHER_MONTHLY']
+const O = ['FLIGHT_OUT','FLIGHT_BACK','VISA_FEE','MEDICAL','TRAINING','COMPLETION_BONUS','OTHER_ONE_TIME']
+const NAME = { BASIC_WAGE:'Lương cơ bản', FIXED_OVERTIME:'Làm thêm cố định', LEAVE_PAY:'Lương phép', ALLOWANCE:'Phụ cấp', BONUS:'Thưởng', SERVICE_FEE:'Phí dịch vụ', OTHER_MONTHLY:'Khác (hằng tháng)',
+  FLIGHT_OUT:'Vé máy bay đi', FLIGHT_BACK:'Vé máy bay về', VISA_FEE:'Phí visa', MEDICAL:'Khám sức khoẻ', TRAINING:'Huấn luyện/chứng chỉ', COMPLETION_BONUS:'Thưởng hoàn thành HĐ', OTHER_ONE_TIME:'Khác (một lần)' }
+const R1 = ['Cuối tháng', 'Ngày 10, 1 tháng sau', 'Làm sau'], R2 = ['Ngày 25', 'Ngày 5, 1 tháng sau', 'Làm sau'], R3 = ['Cuối tháng', 'Ngày 20, 1 tháng sau', 'Làm sau']
+const P1 = ['Cuối tháng', 'Ngày 15, 1 tháng sau', 'Làm trước'], P2 = ['Cuối tháng', 'Cuối tháng, 1 tháng sau', 'Làm trước']
+const rows = [
+  { owner:'Hải Âu Shipping', vessel:'MV Ocean Glory', sea:'Nguyễn Hữu Phước', rank:'Thợ máy', contract:'CH2609-02/HĐ', cs:'15/10/2026', ce:'14/04/2027', cst:'Hiệu lực', by:'Thu Hà', code:'CH2609-02/HĐ/T1', seq:'1/6', ps:'15/10/2026', pe:'31/10/2026', due:'10/11/2026', st:'SENT',
+    thu:{ BASIC_WAGE:1500, SERVICE_FEE:150, OTHER_MONTHLY:100, FLIGHT_OUT:500 }, tra:{ BASIC_WAGE:1300, OTHER_MONTHLY:80, FLIGHT_OUT:500 }, paid:null, pdue:'13/11/2026', rt:R1, pt:P1, plan:370 },
+  { owner:'Hải Âu Shipping', vessel:'MV Ocean Glory', sea:'Trần Văn Bình', rank:'Thuyền phó 2', contract:'CH2607-01/HĐ', cs:'01/07/2026', ce:'31/03/2027', cst:'Hiệu lực', by:'Thu Hà', code:'CH2607-01/HĐ/T4', seq:'4/9', ps:'01/10/2026', pe:'31/10/2026', due:'10/11/2026', st:'PAID',
+    thu:{ BASIC_WAGE:2000, ALLOWANCE:150, SERVICE_FEE:150 }, tra:{ BASIC_WAGE:1750, ALLOWANCE:150 }, paid:'05/11/2026', pdue:'13/11/2026', rt:R1, pt:P1, plan:400 },
+  { owner:'Hải Âu Shipping', vessel:'MV Ocean Glory', sea:'Vũ Đức Anh', rank:'Máy trưởng', contract:'CH2605-02/HĐ', cs:'01/05/2026', ce:'31/10/2026', cst:'Hiệu lực', by:'Minh Khoa', code:'CH2605-02/HĐ/T6', seq:'6/6', ps:'01/10/2026', pe:'31/10/2026', due:'10/11/2026', st:'SENT',
+    thu:{ BASIC_WAGE:3800, SERVICE_FEE:400 }, tra:{ BASIC_WAGE:3500 }, paid:null, pdue:'13/11/2026', rt:R1, pt:P1, plan:700 },
+  { owner:'Đông Á Marine', vessel:'MV Sea Pearl', sea:'Lê Minh Tâm', rank:'Thủy thủ', contract:'CH2607-03/HĐ', cs:'26/06/2026', ce:'25/12/2026', cst:'Hiệu lực', by:'Minh Khoa', code:'CH2607-03/HĐ/T4', seq:'4/6', ps:'26/09/2026', pe:'25/10/2026', due:'05/11/2026', st:'OPEN',
+    thu:{ BASIC_WAGE:1400, SERVICE_FEE:150 }, tra:{ BASIC_WAGE:1150 }, paid:null, pdue:'13/11/2026', rt:R2, pt:P1, plan:400 },
+  { owner:'Đông Á Marine', vessel:'MV Sea Pearl', sea:'Phạm Quốc Huy', rank:'Đầu bếp', contract:'CH2608-04/HĐ', cs:'26/07/2026', ce:'25/01/2027', cst:'Hiệu lực', by:'Minh Khoa', code:'CH2608-04/HĐ/T3', seq:'3/6', ps:'26/09/2026', pe:'25/10/2026', due:'05/11/2026', st:'APPROVED',
+    thu:{ BASIC_WAGE:1100, SERVICE_FEE:100 }, tra:{ BASIC_WAGE:950 }, paid:'06/11/2026', pdue:'13/11/2026', rt:R2, pt:P1, plan:250 },
+  { owner:'Biển Xanh Co.', vessel:'MV Blue Star', sea:'Đỗ Thành Long', rank:'Thợ cả', contract:'CH2610-01/HĐ', cs:'20/10/2026', ce:'19/05/2027', cst:'Hiệu lực', by:'Thu Hà', code:'CH2610-01/HĐ/T1', seq:'1/7', ps:'20/10/2026', pe:'31/10/2026', due:'20/11/2026', st:'OVERDUE',
+    thu:{ BASIC_WAGE:2600, SERVICE_FEE:200, FLIGHT_OUT:400 }, tra:{ BASIC_WAGE:2300, FLIGHT_OUT:400 }, paid:null, pdue:'30/11/2026', rt:R3, pt:P2, plan:500 },
+]
+const sum = (o, codes) => codes.reduce((s, c) => s + (o[c] || 0), 0)
+rows.forEach((r) => {
+  r.thuM = sum(r.thu, M); r.thuO = sum(r.thu, O); r.thuT = r.thuM + r.thuO
+  r.traM = sum(r.tra, M); r.traO = sum(r.tra, O); r.traT = r.traM + r.traO
+  r.gp = r.thuT - r.traT
+})
+const fmt = (n) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const money = (n, extra = '') => `<td class="num${n === 0 ? ' zero' : ''}${n < 0 ? ' neg' : ''}${extra}">${fmt(n)}</td>`
+const total = (key) => rows.reduce((s, r) => s + r[key], 0)
+
+// Gộp theo đối tác; tỷ lệ làm tròn 2 số, phần dư dồn vào dòng lớn nhất.
+function byOwner(side) {
+  const map = new Map()
+  rows.forEach((r) => {
+    const g = map.get(r.owner) || { owner: r.owner, m: 0, o: 0, t: 0, people: new Set() }
+    g.m += r[side + 'M']; g.o += r[side + 'O']; g.t += r[side + 'T']; g.people.add(r.sea)
+    map.set(r.owner, g)
+  })
+  const list = [...map.values()].sort((a, b) => b.t - a.t)
+  const n = list.reduce((s, g) => s + g.people.size, 0)
+  list.forEach((g) => { g.share = Math.round(g.people.size / n * 10000) / 100 })
+  const diff = Math.round((100 - list.reduce((s, g) => s + g.share, 0)) * 100) / 100
+  list.reduce((a, b) => (b.people.size > a.people.size ? b : a)).share += diff
+  return { list, n }
+}
+// Cột theo mẫu 取引先別売上表 / 仕入表: No, 該当月, 取引先, 額, 経費等, 税込, 人数, 人数比率.
+function ownerTable(id, side, partyLabel) {
+  const { list, n } = byOwner(side)
+  const tot = (k) => list.reduce((s, g) => s + g[k], 0)
+  document.getElementById(id).innerHTML =
+    `<thead><tr><th class="num">STT</th><th>Tháng</th><th class="stick">${partyLabel}</th><th class="num">Khoản hằng tháng</th><th class="num">Khoản một lần</th><th class="num">Tổng</th><th class="num">Số thuyền viên</th><th class="num">Tỷ lệ số người</th></tr></thead><tbody>` +
+    list.map((g, i) => `<tr><td class="num">${i + 1}</td><td>10/2026</td><td class="stick"><a href="#">${g.owner}</a></td>${money(g.m)}${money(g.o)}${money(g.t)}<td class="num">${g.people.size}</td><td class="num">${g.share.toFixed(2)}%</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td></td><td></td><td class="stick">Tổng cộng</td>${money(tot('m'))}${money(tot('o'))}${money(tot('t'))}<td class="num">${n}</td><td class="num">100.00%</td></tr></tfoot>`
+  return list
+}
+const salesList = ownerTable('t-sales', 'thu', 'Đối tác')
+ownerTable('t-cost', 'tra', 'Đối tác')
+
+// Lịch thu chi, cột theo mẫu 入出金予定表 (bỏ 手数料; 支払先 và 対象 gộp thành Thuyền viên). Không cột trạng thái.
+const dkey = (d) => d.split('/').reverse().join('')
+const cash = [...rows].sort((a, b) => dkey(a.due).localeCompare(dkey(b.due)) || a.owner.localeCompare(b.owner) || a.sea.localeCompare(b.sea, 'vi'))
+function spans(keyFn, field, spanField) {
+  cash.forEach((r, i) => {
+    const k = keyFn(r)
+    if (i > 0 && keyFn(cash[i - 1]) === k) { r[spanField] = 0; return }
+    const grp = cash.filter((x) => keyFn(x) === k)
+    r[spanField] = grp.length; r[field] = grp.reduce((s, x) => s + x.thuT, 0)
+  })
+}
+spans((r) => r.due, 'dayTotal', 'daySpan')
+spans((r) => r.due + r.owner, 'ownerTotal', 'ownerSpan')
+document.getElementById('t-cash').innerHTML =
+  '<thead><tr><th class="num">STT</th><th>Hạn thu</th><th class="num">Gộp thu</th><th>Đối tác</th><th class="num">Thu theo đối tác</th><th class="gs">Hạn trả</th><th>Thuyền viên</th><th class="num">Thu kỳ này</th><th class="num">Trả kỳ này</th><th class="num">Lãi gộp</th><th class="gs">Kỳ từ</th><th>Kỳ đến</th></tr></thead><tbody>' +
+  cash.map((r, i) => `<tr><td class="num">${i + 1}</td><td>${r.due}</td>${r.daySpan ? `<td class="num merge" rowspan="${r.daySpan}">${fmt(r.dayTotal)}</td>` : ''}<td>${r.owner}</td>${r.ownerSpan ? `<td class="num merge" rowspan="${r.ownerSpan}">${fmt(r.ownerTotal)}</td>` : ''}<td class="gs">${r.pdue}</td><td><a href="#">${r.sea}</a></td>${money(r.thuT)}${money(r.traT)}${money(r.gp)}<td class="gs">${r.ps}</td><td>${r.pe}</td></tr>`).join('') +
+  `</tbody><tfoot><tr><td></td><td>Tổng</td>${money(total('thuT'))}<td></td>${money(total('thuT'))}<td class="gs"></td><td></td>${money(total('thuT'))}${money(total('traT'))}${money(total('gp'))}<td class="gs"></td><td></td></tr></tfoot>`
+
+// Dữ liệu tổng hợp: chỉ cột của mẫu 売上管理基礎データ mà MCAH có dữ liệu. Tên nhóm dính khi cuộn ngang.
+function baseTable(detail) {
+  const det = detail ? M.concat(O) : []
+  const cols = [
+    ['Thông tin hợp đồng', [['Tháng', () => '10/2026', 's0'], ['Số hợp đồng', (r) => `<a href="#">${r.contract}</a>`, 's1'], ['Người tạo HĐ', (r) => r.by], ['Tàu', (r) => r.vessel], ['Đối tác', (r) => r.owner],
+      ['Thuyền viên', (r) => r.sea], ['Ngày bắt đầu HĐ', (r) => r.cs], ['Ngày kết thúc HĐ', (r) => r.ce]]],
+    ['Thu (yêu cầu thanh toán)', [['Kỳ từ', (r) => r.ps], ['Kỳ đến', (r) => r.pe], ...det.map((c) => [NAME[c], (r) => r.thu[c] || 0]),
+      ['Thu hằng tháng', (r) => r.thuM], ['Thu một lần', (r) => r.thuO], ['Thu tổng', (r) => r.thuT]]],
+    ['Trả (trả lương)', [...det.map((c) => [NAME[c], (r) => r.tra[c] || 0]), ['Trả hằng tháng', (r) => r.traM], ['Trả một lần', (r) => r.traO], ['Trả tổng', (r) => r.traT]]],
+    ['Lãi gộp kỳ', [['Lãi gộp kỳ', (r) => r.gp]]],
+    ['Điều kiện phải thu', [['Chốt sổ', (r) => r.rt[0]], ['Ngày thanh toán', (r) => r.rt[1]], ['Gặp ngày nghỉ', (r) => r.rt[2]]]],
+    ['Điều kiện phải chi', [['Chốt sổ', (r) => r.pt[0]], ['Ngày thanh toán', (r) => r.pt[1]], ['Gặp ngày nghỉ', (r) => r.pt[2]]]],
+    ['Lãi gộp dự kiến / tháng', [['Lãi gộp dự kiến', (r) => r.plan]]],
+  ]
+  const flat = cols.flatMap(([, list], gi) => list.map(([label, get, stick], ci) => ({ label, get, stick, first: ci === 0 && gi > 0 })))
+  const sorted = [...rows].sort((a, b) => a.owner.localeCompare(b.owner) || a.sea.localeCompare(b.sea, 'vi'))
+  const td = (c, v) => {
+    const num = typeof v === 'number'
+    return `<td class="${num ? 'num' : ''}${c.first ? ' gs' : ''}${c.stick ? ' stick ' + c.stick : ''}${num && v === 0 ? ' zero' : ''}${num && v < 0 ? ' neg' : ''}">${num ? fmt(v) : v}</td>`
+  }
+  const isNum = (c) => typeof c.get(sorted[0]) === 'number'
+  document.getElementById('t-base').innerHTML =
+    '<thead><tr class="g">' + cols.map(([g, list]) => `<th colspan="${list.length}"><span class="gl">${g}</span></th>`).join('') + '</tr><tr>' +
+    flat.map((c) => `<th class="${isNum(c) ? 'num' : ''}${c.first ? ' gs' : ''}${c.stick ? ' stick ' + c.stick : ''}">${c.label}</th>`).join('') + '</tr></thead><tbody>' +
+    sorted.map((r) => '<tr>' + flat.map((c) => td(c, c.get(r))).join('') + '</tr>').join('') + '</tbody><tfoot><tr>' +
+    flat.map((c, i) => (i === 1 ? '<td class="stick s1">Tổng · 6 dòng</td>' : isNum(c) ? td(c, sorted.reduce((s, r) => s + c.get(r), 0)) : `<td class="${c.first ? 'gs' : ''}${c.stick ? ' stick ' + c.stick : ''}"></td>`)).join('') + '</tr></tfoot>'
+  // Cột dính thứ hai lùi đúng bằng bề rộng cột Tháng; tên nhóm dính ngay sau hai cột dính.
+  const t = document.getElementById('t-base')
+  const w0 = t.querySelector('thead tr:last-child th.s0').offsetWidth
+  const w1 = t.querySelector('thead tr:last-child th.s1').offsetWidth
+  t.style.setProperty('--s1', w0 + 'px')
+  t.style.setProperty('--gl', w0 + w1 + 'px')
+}
+baseTable(false)
+const tg = document.getElementById('tg-detail')
+const flip = () => { const on = !tg.classList.contains('on'); tg.classList.toggle('on', on); tg.setAttribute('aria-checked', on); baseTable(on) }
+tg.addEventListener('click', flip)
+tg.addEventListener('keydown', (e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip() } })
+
+// Xem trước sheet Phải thu trong file Excel.
+const L = 'ABCDEFGH'.split('')
+const xlRows = [
+  ['t', ['Phải thu theo đối tác']],
+  ['m', ['Tháng 10/2026 · xuất 23/11/2026 09:15 bởi Kế toán']],
+  ['', []],
+  ['h', ['STT', 'Tháng', 'Đối tác', 'Khoản hằng tháng', 'Khoản một lần', 'Tổng', 'Số thuyền viên', 'Tỷ lệ số người']],
+  ...salesList.map((g, i) => ['', [i + 1, '10/2026', g.owner, fmt(g.m), fmt(g.o), fmt(g.t), g.people.size, g.share.toFixed(2) + '%']]),
+  ['s', ['', '', 'Tổng cộng', fmt(salesList.reduce((s, g) => s + g.m, 0)), fmt(salesList.reduce((s, g) => s + g.o, 0)), fmt(salesList.reduce((s, g) => s + g.t, 0)), salesList.reduce((s, g) => s + g.people.size, 0), '100.00%']],
+]
+document.getElementById('xl-sales').innerHTML = '<tr class="ch"><th></th>' + L.map((l) => `<th>${l}</th>`).join('') + '</tr>' +
+  xlRows.map(([cls, vals], i) => `<tr class="${cls}"><th class="rh">${i + 1}</th>` + L.map((_, j) => `<td class="${j >= 3 && cls !== 'h' && cls !== 't' && cls !== 'm' ? 'num' : ''}">${vals[j] ?? ''}</td>`).join('') + '</tr>').join('')
+
+// Điện thoại.
+document.getElementById('ph-sales').innerHTML = salesList.map((g) =>
+  `<div class="card"><b>${g.owner}</b><div class="cells"><span>Khoản hằng tháng<b>${fmt(g.m)}</b></span><span>Khoản một lần<b>${fmt(g.o)}</b></span><span>Tổng<b>${fmt(g.t)}</b></span><span>Thuyền viên · tỷ lệ<b>${g.people.size} · ${g.share.toFixed(2)}%</b></span></div></div>`).join('') +
+  `<div class="card" style="padding:8px 12px"><span class="muted">Tổng cộng ${fmt(total('thuT'))} USD · 6 thuyền viên</span></div>`
+let lastDue = ''
+document.getElementById('ph-cash').innerHTML = cash.slice(0, 5).map((r) => {
+  const h = r.due !== lastDue ? `<div class="grouph"><span>Hạn thu ${r.due}</span><span>${fmt(r.dayTotal)}</span></div>` : ''
+  lastDue = r.due
+  return h + `<div class="card"><b>${r.sea}</b><span class="muted">${r.owner} · kỳ ${r.ps.slice(0, 5)}–${r.pe.slice(0, 5)}</span><div class="cells"><span>Thu kỳ này<b>${fmt(r.thuT)}</b></span><span>Trả kỳ này<b>${fmt(r.traT)}</b></span><span>Hạn trả<b>${r.pdue}</b></span><span>Lãi gộp<b>${fmt(r.gp)}</b></span></div></div>`
+}).join('')
+document.getElementById('ph-base').innerHTML =
+  `<div class="card"><b>Tháng 10/2026</b><div class="cells"><span>Yêu cầu thanh toán<b>6</b></span><span>Thu tổng<b>${fmt(total('thuT'))}</b></span><span>Trả tổng<b>${fmt(total('traT'))}</b></span><span>Lãi gộp kỳ<b>${fmt(total('gp'))}</b></span></div></div>` +
+  '<div class="card"><b>Bảng này rộng</b><span class="muted">Dữ liệu tổng hợp có nhiều cột. Xem trên máy tính hoặc xuất Excel để mở bằng ứng dụng bảng tính.</span><span class="btn pri" style="justify-self:start">⤓ Xuất Excel</span></div>'
+
+// Thu nhỏ khung app / hàng điện thoại cho vừa bề rộng cột nội dung.
+function fitFrames() {
+  const w = document.querySelector('.main').clientWidth
+  document.querySelectorAll('.app').forEach((el) => el.style.setProperty('--z', Math.min(1, w / 1200)))
+  // Đủ chỗ thì ba điện thoại một hàng; khung hẹp thì mỗi máy một hàng.
+  document.querySelectorAll('.phones').forEach((el) => el.style.setProperty('--zp', Math.min(1, w >= 800 ? w / 1175 : w / 375)))
+}
+fitFrames()
+addEventListener('resize', fitFrames)
+</script>
+</body>
+</html>

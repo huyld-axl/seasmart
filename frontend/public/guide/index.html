@@ -228,6 +228,7 @@
     <a href="#hop-dong">Hợp đồng</a>
     <a href="#thanh-toan">Yêu cầu thanh toán</a>
     <a href="#tra-luong">Trả lương thuyền viên</a>
+    <a href="#bao-cao">Báo cáo tháng</a>
     <a href="#roi-tau">Rời tàu, sửa &amp; kết thúc hợp đồng</a>
     <p>Hệ thống</p>
     <a href="#danh-muc">Danh mục</a>
@@ -860,8 +861,39 @@
       </div>
     </section>
 
-    <section id="roi-tau" data-jobs="mg dy kt">
+    <section id="bao-cao" data-jobs="kt dy">
       <div class="kicker">Vận hành · 07</div>
+      <h2>Báo cáo tháng</h2>
+      <p>Màn <span class="ui">Báo cáo</span> gom số tiền của một tháng thành 4 bảng để xem nhanh và gửi cho kế toán, ban giám đốc. Mỗi bảng xem được ngay trên màn hình và tải về thành file Excel; số trong file giống hệt số trên màn hình.</p>
+      <p>Chọn tháng ở đầu trang (hoặc bấm ‹ › để lùi, tiến một tháng). Báo cáo lấy <b>mọi yêu cầu thanh toán có ngày kết thúc kỳ trong tháng đó</b>, dù đã duyệt, đã gửi, đã thu hay chưa. Đây cũng là cách chọn tháng của màn Trả lương, nên hai màn luôn cùng số. Ví dụ: kỳ 26/09–25/10 thuộc tháng 10, dù hạn thu là tháng 11.</p>
+      <ul>
+        <li><b>Dữ liệu tổng hợp</b>: bảng đầy đủ nhất, mỗi yêu cầu thanh toán một dòng. Số <b>thực tế</b> lấy từ yêu cầu thanh toán và trả lương, cộng ra <b>Lãi thực tế</b>. Số <b>dự kiến</b> lấy từ các khoản tiền ghi trong hợp đồng (phần Điều kiện phải thu, Điều kiện phải chi, kèm ngày chốt sổ và ngày thanh toán), cộng ra <b>Lãi gộp dự kiến</b>. Đặt hai cột lãi cạnh nhau để thấy kỳ nào lệch so với hợp đồng. Bật <span class="ui">Hiện 14 khoản</span> để xem từng khoản tiền. Khi kéo ngang bảng, tên mục đang xem luôn nằm ở mép trái của hàng tiêu đề.</li>
+        <li><b>Phải thu theo đối tác</b>: mỗi đối tác (đối tác) một dòng. Số phải thu chia <b>khoản hằng tháng</b> (lương, phụ cấp, phí dịch vụ…) và <b>khoản một lần</b> (vé máy bay, visa, khám sức khoẻ…), cộng thành Tổng; kèm số thuyền viên và tỷ lệ số người.</li>
+        <li><b>Phải chi theo đối tác</b>: như trên nhưng là số trả lương thuyền viên. Số trả lấy đúng như màn Trả lương: người đã chốt là số đã chốt, người chưa chốt là số theo hợp đồng.</li>
+        <li><b>Lịch thu chi</b>: mỗi yêu cầu thanh toán một dòng, xếp theo hạn thu. <b>Gộp thu</b> cộng mọi khoản cùng hạn thu, <b>Thu theo đối tác</b> cộng theo từng đối tác trong ngày đó; tiếp theo là hạn trả thuyền viên, số thu, số trả và lãi gộp từng kỳ. Số gộp nằm ở đầu nhóm; nhóm dài thì số vẫn hiện ở mép trên khi kéo xuống.</li>
+      </ul>
+      <p>Báo cáo không có cột trạng thái. Muốn biết khoản nào đã thu, đã trả thì xem ở màn Yêu cầu thanh toán và Trả lương. Bấm tên đối tác, số hợp đồng hay tên thuyền viên để mở trang chi tiết.</p>
+      <ol class="steps">
+        <li><span>Chọn báo cáo và tháng.</span></li>
+        <li><span>Bấm <span class="ui">Xuất Excel</span> để tải báo cáo đang xem, hoặc bấm mũi tên cạnh nút → <span class="ui">Xuất cả 4 báo cáo</span> để có một file gồm 4 trang tính.</span></li>
+      </ol>
+      <p>File ghi tên báo cáo, tháng, thời điểm xuất và người xuất ở đầu trang. Bảng Dữ liệu tổng hợp trong file luôn có đủ 14 khoản, kể cả khi trên màn hình đang ẩn.</p>
+      <div class="note">
+        <i>i</i>
+        <b>Muốn sửa số trong báo cáo?</b>
+        <p>Báo cáo chỉ để xem. Sửa số thu ở màn Yêu cầu thanh toán, số trả ở màn Trả lương; mở lại Báo cáo là thấy số mới.</p>
+      </div>
+      <p>Trên điện thoại, Phải thu, Phải chi và Lịch thu chi hiện thành thẻ. Dữ liệu tổng hợp quá rộng nên chỉ hiện số tổng; bấm Xuất Excel để xem đầy đủ.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem báo cáo</span><em>Báo cáo · Xem báo cáo tháng</em><span class="chips"><span class="job j-kt">Kế toán</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Tải Excel</span><em>Báo cáo · Xuất báo cáo ra Excel</em><span class="chips"><span class="job j-kt">Kế toán</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+      <p>Người chỉ được xem dữ liệu của mình sẽ thấy báo cáo tính trên các yêu cầu thanh toán mình tạo.</p>
+    </section>
+
+    <section id="roi-tau" data-jobs="mg dy kt">
+      <div class="kicker">Vận hành · 08</div>
       <h2>Rời tàu, sửa và kết thúc hợp đồng</h2>
       <p>Điều quan trọng nhất: <b>sửa ngày của chuyến không bao giờ đụng tới tiền</b>. Muốn đổi tiền thì sửa hợp đồng, và tiền chỉ đổi khi hợp đồng được duyệt lại.</p>
       <div class="tbl">

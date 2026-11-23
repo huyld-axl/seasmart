@@ -1,0 +1,41 @@
+/* Báo cáo tháng (ReportPage): bảng dựng từ cột của API, tiêu đề nhóm hai tầng ở Dữ liệu tổng hợp. */
+.rp-hint { border-bottom: 1px dotted currentColor; cursor: help; }
+.rp-toolbar { flex-wrap: wrap; }
+.rp-detail-toggle { display: inline-flex; min-width: 0; }
+.rp-detail-toggle .ds-toggle-row { padding: 0; border: 0; background: none; gap: 8px; }
+
+.rp-table-wrap { min-width: 0; }
+.rp-table { font-size: 13px; }
+.rp-table .ant-table-thead > tr > th { padding: 6px 8px; line-height: 1.3; white-space: normal; vertical-align: bottom; }
+.rp-table .ant-table-tbody > tr > td { padding: 5px 8px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Ô gộp: số ở đầu nhóm (không căn giữa dọc, nhóm dài không còn khoảng trống lớn quanh số), dính trên cùng khi cuộn qua nhóm.
+   Ranh giới nhóm bằng kẻ đậm đầu nhóm; không tô nền, không vạch dọc. */
+.rp-table .ant-table-tbody > tr > td.rp-merge { vertical-align: top; overflow: visible; }
+.rp-table .ant-table-tbody > tr > td.rp-merge--multi { border-top: 2px solid var(--border-strong); }
+.rp-merge__value { position: sticky; top: 0; display: block; padding-block: 2px; font-weight: 600; color: var(--foreground); }
+.rp-table .ant-table-tbody > tr.rp-row--group-start > td { border-top: 2px solid var(--border-strong); }
+/* Kẻ đậm đầu mỗi nhóm cột để thấy ranh giới Thu / Trả / Điều kiện… */
+.rp-table .ant-table-thead > tr > th.rp-group,
+.rp-table .rp-group-start { border-inline-start: 2px solid var(--border-strong) !important; }
+/* Tên nhóm dính (Q7): dừng ngay sau các cột cố định, ở trong ô gộp nên hết nhóm thì bị nhóm sau đẩy ra. */
+/* antd căn giữa ô tiêu đề gộp (th[colspan]); tên nhóm phải bám trái để dính đúng chỗ. */
+.rp-table.ant-table-wrapper .ant-table-thead > tr > th.rp-group { text-align: left !important; color: var(--primary); font-size: 12px; letter-spacing: .03em; text-transform: uppercase; }
+.rp-group-label { position: sticky; left: calc(var(--rp-fixed-w, 0px) + 8px); display: inline-block; white-space: nowrap; }
+/* Ô tiêu đề cao hai dòng (cột dính, hai cột lãi) nằm ở hàng tiêu đề đầu: kẻ đậm dưới như hàng tiêu đề cuối. */
+.rp-table .ant-table-thead > tr > th[rowspan]:not([rowspan="1"]) { border-bottom: 2px solid var(--primary) !important; }
+/* Hai cột lãi: không tô nền (nền làm cột chìm xuống). Nổi bằng khung màu nhấn hai bên, số to và đậm, lãi xanh / lỗ đỏ. */
+.rp-neg { color: var(--error-strong); }
+.rp-table .ant-table-thead > tr > th.rp-strong { color: var(--primary); font-weight: 700; }
+.rp-table .ant-table-tbody > tr > td.rp-strong,
+.rp-table .rp-total > td.rp-strong { font-size: 14px; font-weight: 700; color: var(--success); }
+.rp-table .rp-strong { border-inline: 2px solid var(--primary) !important; }
+.rp-table .rp-strong .rp-neg { color: var(--error-strong); }
+.rp-total > td:last-child { padding-right: calc(8px + var(--rp-sb, 0px)) !important; }
+.rp-total > td { font-weight: 600; background: var(--background) !important; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Điện thoại */
+.rp-cards { display: grid; gap: 8px; min-width: 0; }
+.rp-card-group { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.rp-cards-foot { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+.rp-wide-note { display: grid; gap: 8px; justify-items: start; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); }
+.rp-wide-note b { color: var(--foreground); }

@@ -409,11 +409,11 @@ describe('trả lương: quyền, phạm vi, kiểm đầu vào', () => {
     expect((await get('/payouts?month=2026-10', as(['payout.view']))).statusCode).toBe(200)
   })
 
-  it('phạm vi "chỉ của mình" lọc theo người tạo bill', async () => {
+  it('phạm vi "chỉ của mình" lọc theo người tạo hoặc người phụ trách bill', async () => {
     await get('/payouts?month=2026-10', as(['payout.view'], { payout: 'own' }))
     const main = calls.find((c) => c.sql.includes('LEFT JOIN seafarer_payout sp'))
-    expect(main.sql).toContain('b.created_by = ?')
-    expect(main.params.slice(2)).toEqual(['2026-10-01', '2026-10-31', 7])
+    expect(main.sql).toContain('(b.created_by = ? OR b.pic_user_id = ?)')
+    expect(main.params.slice(2)).toEqual(['2026-10-01', '2026-10-31', 7, 7])
   })
 
   it('chốt cần payout.pay; thiếu khoản hoặc số âm thì 400 trước khi đọc DB', async () => {

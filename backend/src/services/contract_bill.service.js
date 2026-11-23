@@ -5,6 +5,7 @@ const { uniqueCode } = require('../utils/code_counter')
 const crypto = require('crypto')
 const { splitPeriods, dueDate, round2, planBillChanges } = require('../utils/voyage_math')
 const { DEFAULT_ITEMS, BILL_DISPLAY_STATUSES } = require('../constants/voyage_contract')
+const { resolvePic, assertAssignable, ownSql, picFilter, picColumns, picOf } = require('../utils/pic')
 
 const DEFAULT_NAME = Object.fromEntries(DEFAULT_ITEMS.map((item) => [item.code, item.name]))
 const AMOUNT_FIELD = { RECEIVABLE: 'receivable_usd', PAYABLE: 'payable_usd' }
@@ -30,14 +31,15 @@ const BILL_FROM = `FROM contract_bill b
   LEFT JOIN voyage v ON v.id = p.voyage_id
   JOIN "rank" r ON r.id = COALESCE(sv.rank_id, p.rank_id)
   JOIN vessel ves ON ves.id = COALESCE(sv.vessel_id, v.vessel_id)
-  JOIN ship_owner o ON o.id = COALESCE(sv.ship_owner_id, v.ship_owner_id)`
+  JOIN ship_owner o ON o.id = COALESCE(sv.ship_owner_id, v.ship_owner_id)
+  LEFT JOIN "user" pu ON pu.id = b.pic_user_id`
 
 const BILL_SELECT = `SELECT b.id, b.version, b.code, b.contract_id, b.side, b.seq, b.period_start, b.period_end, b.due_date, b.status,
     b.sent_at, b.paid_date, b.note, b.created_at, ${DISPLAY_SQL} AS display_status, ${TOTAL_SQL} AS total_usd,
     (SELECT COUNT(*) FROM contract_bill b2 WHERE b2.contract_id = b.contract_id AND b2.side = b.side AND b2.deleted_at IS NULL) AS periods,
     c.contract_number, c.seafarer_id, s.full_name AS seafarer_name, r.name_vi AS rank_name,
     v.id AS voyage_id, v.code AS voyage_code, sv.id AS trip_id, sv.code AS trip_code,
-    ves.id AS vessel_id, ves.vessel_name, o.id AS ship_owner_id, o.company_name AS ship_owner_name`
+    ves.id AS vessel_id, ves.vessel_name, o.id AS ship_owner_id, o.company_name AS ship_owner_name, ${picColumns('pu')}`
 
 // Bên phải thu là hiện tại; giữ tham số side để làm bên phải chi sau.
 const SIDE = 'RECEIVABLE'
@@ -61,6 +63,7 @@ function summary(row) {
     voyage: row.voyage_id ? { id: row.voyage_id, code: row.voyage_code } : null,
     trip: row.trip_id ? { id: row.trip_id, code: row.trip_code } : null,
     ship_owner: { id: row.ship_owner_id, company_name: row.ship_owner_name },
+    pic: picOf(row),
   }
 }
 
@@ -92,12 +95,19 @@ async function loadGeneration(conn, contractId, side) {
 }
 
 // Ghi một bill mới (kỳ, hạn, đủ 14 khoản, tiền đủ tháng) kèm log CREATE. withOneTime: khoản một lần lấy số hợp đồng, không thì 0.
-async function insertBill(conn, { contractId, side, seq, start, end, due, lines, withOneTime, createdBy, actorId }) {
+// Người phụ trách bill mới: người phụ trách hợp đồng lúc đó, không có thì người tạo hợp đồng (bỏ qua tài khoản đã khoá).
+async function contractForBills(conn, contractId) {
+  const [[contract]] = await conn.query('SELECT id, start_date, end_date, created_by, pic_user_id FROM seafarer_contract WHERE id = ?', [contractId])
+  if (!contract) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
+  return { ...contract, billPic: await resolvePic(conn, [contract.pic_user_id, contract.created_by]) }
+}
+
+async function insertBill(conn, { contractId, side, seq, start, end, due, lines, withOneTime, createdBy, picUserId, actorId }) {
   const [[contract]] = await conn.query('SELECT contract_number FROM seafarer_contract WHERE id = ?', [contractId])
   const code = await uniqueCode(conn, 'contract_bill', 'code', `${contract.contract_number}/${side === 'PAYABLE' ? 'C' : 'T'}${seq}`)
   const [result] = await conn.query('INSERT INTO contract_bill SET ?', [{
     code, contract_id: contractId, side, seq, period_start: start, period_end: end, due_date: due, status: 'OPEN',
-    created_by: createdBy ?? null, updated_by: actorId ?? null,
+    created_by: createdBy ?? null, updated_by: actorId ?? null, pic_user_id: picUserId ?? null,
   }])
   for (const [order, line] of lines.entries()) {
     const amount = line.kind === 'MONTHLY' || withOneTime ? line.amount : 0
@@ -125,15 +135,14 @@ const contractBillService = {
   async generateForContract(conn, contractId, side = SIDE, actorId = null) {
     const [existing] = await conn.query('SELECT 1 FROM contract_bill WHERE contract_id = ? AND side = ? AND deleted_at IS NULL LIMIT 1', [contractId, side])
     if (existing.length) return 0
-    const [[contract]] = await conn.query('SELECT id, start_date, end_date, created_by FROM seafarer_contract WHERE id = ?', [contractId])
-    if (!contract) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
+    const contract = await contractForBills(conn, contractId)
     const { term, lines } = await loadGeneration(conn, contractId, side)
     const periods = splitPeriods({ start: contract.start_date, end: contract.end_date, closingDay: term.closing_day })
     for (const [index, period] of periods.entries()) {
       await insertBill(conn, {
         contractId, side, seq: index + 1, start: period.start, end: period.end, lines, withOneTime: index === 0,
         due: dueDate({ periodEnd: period.end, payDay: term.pay_day, payMonthOffset: term.pay_month_offset, holidayRule: term.holiday_rule }),
-        createdBy: contract.created_by, actorId,
+        createdBy: contract.created_by, picUserId: contract.billPic, actorId,
       })
     }
     return periods.length
@@ -177,12 +186,13 @@ const contractBillService = {
       await writeLog(conn, item.bill_id, 'CUT', actorId, { from: item.from, to: item.to })
     }
     if (plan.create.length) {
-      const [[contract]] = await conn.query('SELECT created_by FROM seafarer_contract WHERE id = ?', [contractId])
+      // Bill giữ lại / bị cắt giữ người phụ trách của nó; bill mới theo hợp đồng lúc này.
+      const contract = await contractForBills(conn, contractId)
       const { lines } = await loadGeneration(conn, contractId, side)
       for (const item of plan.create) {
         await insertBill(conn, {
           contractId, side, seq: item.seq, start: item.start, end: item.end, due: item.due_date, lines, withOneTime: item.with_one_time,
-          createdBy: contract.created_by, actorId,
+          createdBy: contract.created_by, picUserId: contract.billPic, actorId,
         })
       }
     }
@@ -193,9 +203,10 @@ const contractBillService = {
     const params = [SIDE]
     let where = 'WHERE b.side = ? AND b.deleted_at IS NULL'
     if (query.ownerId) {
-      where += ' AND b.created_by = ?'
-      params.push(Number(query.ownerId))
+      where += ` AND ${ownSql('b')}`
+      params.push(Number(query.ownerId), Number(query.ownerId))
     }
+    where += picFilter('b', query.pic_user_id, params)
     if (query.search) {
       where += ' AND (unaccent(b.code::text) ILIKE unaccent(?) OR unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`, `%${query.search}%`)
@@ -234,7 +245,7 @@ const contractBillService = {
       [row.contract_id, row.side]
     )
     const [logRows] = await pool.query(
-      `SELECT l.id, l.action, u.email AS actor_name, l.created_at
+      `SELECT l.id, l.action, u.email AS actor_name, l.payload, l.created_at
        FROM contract_bill_log l LEFT JOIN "user" u ON u.id = l.actor_id WHERE l.bill_id = ? ORDER BY l.created_at DESC, l.id DESC`,
       [id]
     )
@@ -246,6 +257,22 @@ const contractBillService = {
       periods: siblingRows.map((b) => ({ id: b.id, code: b.code, seq: b.seq, period_start: b.period_start, period_end: b.period_end, due_date: b.due_date, status: b.status, display_status: b.display_status, total_usd: Number(b.total_usd) })),
       log: logRows,
     }
+  },
+
+  // Đổi người phụ trách ở mọi trạng thái (kể cả đã duyệt / gửi / thu). Không ghi UPDATE và không đổi updated_by:
+  // không tính là sửa bill với luật người duyệt phải khác người sửa.
+  async assignPic(pool, id, picUserId, userId) {
+    await withTransaction(pool, async (conn) => {
+      const [[bill]] = await conn.query('SELECT id, pic_user_id FROM contract_bill WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+      if (!bill) throw { statusCode: 404, message: 'Không tìm thấy yêu cầu thanh toán' }
+      if (Number(bill.pic_user_id) === Number(picUserId)) return
+      await assertAssignable(conn, picUserId)
+      await conn.query('UPDATE contract_bill SET pic_user_id = ? WHERE id = ?', [picUserId, id])
+      const [names] = await conn.query('SELECT id, COALESCE(full_name, email) AS name FROM "user" WHERE id IN (?)', [[bill.pic_user_id ?? 0, picUserId]])
+      const label = (uid) => (uid == null ? null : { id: Number(uid), name: names.find((n) => Number(n.id) === Number(uid))?.name ?? null })
+      await writeLog(conn, id, 'ASSIGN', userId, { from: label(bill.pic_user_id), to: label(picUserId) })
+    })
+    return this.get(pool, id)
   },
 
   // body: { items: [{ item_code, amount_usd }], note, due_date? }. Khoản cố định chỉ đổi số (≥ 0); khoản không gửi giữ nguyên.

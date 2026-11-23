@@ -15,7 +15,7 @@ const iso = (v) => (v == null ? null : String(v instanceof Date ? v.toISOString(
 const actor = (userId) => userId ?? null
 
 const VOYAGE_SELECT = `SELECT sv.id, sv.code, sv.source, sv.manual_reason, sv.seafarer_id, s.full_name AS seafarer_name, s.seafarer_code,
-    s.status AS seafarer_status, sv.rank_id, r.name_vi AS rank_name, sv.vessel_id, ves.vessel_name, ves.vessel_type_id,
+    s.status AS seafarer_status, s.pic_user_id AS seafarer_pic_user_id, sv.rank_id, r.name_vi AS rank_name, sv.vessel_id, ves.vessel_name, ves.vessel_type_id,
     sv.ship_owner_id, so.company_name AS ship_owner_name, sv.opportunity_id, o.code AS opportunity_code,
     o.planned_join_date AS opportunity_join_date, sv.budget_monthly_usd,
     sv.join_date, sv.join_port_id, jp.name AS join_port_name, sv.planned_leave_date, sv.planned_leave_port_id, plp.name AS planned_leave_port_name,

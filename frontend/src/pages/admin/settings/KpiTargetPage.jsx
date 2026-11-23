@@ -1,6 +1,7 @@
 import useFormShortcuts from '../../../hooks/useFormShortcuts'
 import { useMemo, useState } from 'react'
-import { Button, Skeleton, Table, Tooltip } from 'antd'
+import { Button, Skeleton, Table } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import useLeaveGuard from '../../../hooks/useLeaveGuard'
 import DateField from '../../../components/ds/DateField'
 import { CopyOutlined } from '@ant-design/icons'

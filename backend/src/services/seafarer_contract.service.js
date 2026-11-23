@@ -9,6 +9,7 @@ const {
 } = require('../constants/voyage_contract')
 const { displayStatus } = require('../utils/voyage_math')
 const { contractBillService } = require('./contract_bill.service')
+const { resolvePic, assertAssignable, ownSql, picFilter, picColumns, picOf } = require('../utils/pic')
 
 const CONTRACT_COLUMNS = ['start_date', 'end_date', 'notes']
 const SIDES = ['RECEIVABLE', 'PAYABLE']
@@ -38,12 +39,13 @@ const CONTRACT_FROM = `FROM seafarer_contract c
   LEFT JOIN voyage v ON v.id = p.voyage_id
   JOIN "rank" r ON r.id = COALESCE(sv.rank_id, p.rank_id)
   JOIN vessel ves ON ves.id = COALESCE(sv.vessel_id, v.vessel_id)
-  JOIN ship_owner o ON o.id = COALESCE(sv.ship_owner_id, v.ship_owner_id)`
+  JOIN ship_owner o ON o.id = COALESCE(sv.ship_owner_id, v.ship_owner_id)
+  LEFT JOIN "user" pu ON pu.id = c.pic_user_id`
 
 const LIVE_BILL = 'EXISTS (SELECT 1 FROM contract_bill b WHERE b.contract_id = c.id AND b.deleted_at IS NULL)'
 
 const CONTRACT_SELECT = `SELECT c.id, c.version, c.contract_number, c.status, c.voyage_position_id, c.seafarer_voyage_id, c.seafarer_id, c.start_date, c.end_date,
-    c.notes, c.last_reject_reason, c.created_at, c.updated_at,
+    c.notes, c.last_reject_reason, c.created_at, c.updated_at, ${picColumns('pu')},
     s.full_name AS seafarer_name, s.seafarer_code, s.status AS seafarer_status,
     p.sort_order AS position_sort_order, p.budget_total_usd, COALESCE(sv.budget_monthly_usd, p.budget_monthly_usd) AS budget_monthly_usd, r.name_vi AS rank_name,
     v.id AS voyage_id, v.code AS voyage_code, v.status AS voyage_status, v.actual_embark_date AS voyage_actual_embark_date,
@@ -142,7 +144,15 @@ function summaryRow(row) {
     receivable_monthly: receivable,
     payable_monthly: payable,
     diff_monthly: Math.round((receivable - payable) * 100) / 100,
+    pic: picOf(row),
   }
+}
+
+// Tên người phụ trách để ghi log đổi người.
+async function userLabel(conn, userId) {
+  if (userId == null) return null
+  const [[row]] = await conn.query('SELECT id, COALESCE(full_name, email) AS name FROM "user" WHERE id = ?', [userId])
+  return row ? { id: Number(row.id), name: row.name } : { id: Number(userId), name: null }
 }
 
 const seafarerContractService = {
@@ -151,9 +161,10 @@ const seafarerContractService = {
     const params = []
     let where = 'WHERE c.deleted_at IS NULL'
     if (query.ownerId) {
-      where += ' AND c.created_by = ?'
-      params.push(Number(query.ownerId))
+      where += ` AND ${ownSql('c')}`
+      params.push(Number(query.ownerId), Number(query.ownerId))
     }
+    where += picFilter('c', query.pic_user_id, params)
     if (query.search) {
       where += ' AND (unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
       params.push(`%${query.search}%`, `%${query.search}%`)
@@ -230,6 +241,7 @@ const seafarerContractService = {
         last_reject_reason: row.last_reject_reason,
         created_at: row.created_at,
         updated_at: row.updated_at,
+        pic: picOf(row),
       },
       position: {
         id: row.voyage_position_id,
@@ -285,7 +297,7 @@ const seafarerContractService = {
   // Hợp đồng Nháp gắn một chuyến. Thuyền viên lấy từ chuyến. Dùng chung cho tạo tay và chốt cơ hội (conn có sẵn).
   async createForVoyage(conn, { voyageId, data, items, terms }, userId) {
     const [[voyage]] = await conn.query(
-      `SELECT sv.id, sv.code, sv.seafarer_id, s.status AS seafarer_status
+      `SELECT sv.id, sv.code, sv.seafarer_id, s.status AS seafarer_status, s.pic_user_id AS seafarer_pic_user_id
        FROM seafarer_voyage sv JOIN seafarer s ON s.id = sv.seafarer_id
        WHERE sv.id = ? AND sv.deleted_at IS NULL AND s.deleted_at IS NULL FOR UPDATE OF sv`,
       [voyageId]
@@ -296,8 +308,13 @@ const seafarerContractService = {
     if (voyage.seafarer_status === 'INACTIVE') throw { statusCode: 409, message: 'Thuyền viên đang tạm ngưng, kích hoạt lại trước khi tạo hợp đồng' }
     await assertNoOverlap(conn, { seafarerId: voyage.seafarer_id, startDate: data.start_date, endDate: data.end_date })
     const contractNumber = await uniqueCode(conn, 'seafarer_contract', 'contract_number', `${voyage.code}/HĐ`)
+    // Người phụ trách: chọn trên form, không thì theo thuyền viên lúc tạo, rồi tới người tạo (bỏ qua tài khoản đã khoá).
+    const { pic_user_id: chosenPic, ...fields } = data
+    if (chosenPic) await assertAssignable(conn, chosenPic)
+    const picUserId = chosenPic || await resolvePic(conn, [voyage.seafarer_pic_user_id, userId])
     const [result] = await conn.query('INSERT INTO seafarer_contract SET ?', [{
-      ...data,
+      ...fields,
+      pic_user_id: picUserId,
       contract_number: contractNumber,
       seafarer_voyage_id: voyageId,
       seafarer_id: voyage.seafarer_id,
@@ -307,7 +324,7 @@ const seafarerContractService = {
     }])
     await writeItemsAndTerms(conn, result.insertId, items, terms)
     await writeLog(conn, result.insertId, 'CREATE', userId)
-    return { id: result.insertId, contract_number: contractNumber }
+    return { id: result.insertId, contract_number: contractNumber, pic_user_id: picUserId }
   },
 
   // Chốt cơ hội: hợp đồng Nháp điền sẵn từ chuyến vừa tạo (S = ngày xuống, E = ngày rời dự kiến, lương cơ bản phải thu = budget tháng).
@@ -327,6 +344,7 @@ const seafarerContractService = {
   async create(pool, body, userId) {
     const data = pickAllowed(body, CONTRACT_COLUMNS)
     validateDates(data)
+    if (body.pic_user_id) data.pic_user_id = Number(body.pic_user_id)
     const items = parseItems(body.items)
     const terms = parseTerms(body.terms)
     const created = await withTransaction(pool, (conn) => this.createForVoyage(conn, { voyageId: body.seafarer_voyage_id, data, items, terms }, userId))
@@ -344,7 +362,7 @@ const seafarerContractService = {
     const terms = parseTerms(body.terms)
     await withTransaction(pool, async (conn) => {
       const [[current]] = await conn.query(
-        'SELECT id, status, seafarer_id, seafarer_voyage_id, start_date, end_date, version, updated_at, updated_by FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+        'SELECT id, status, seafarer_id, seafarer_voyage_id, start_date, end_date, pic_user_id, version, updated_at, updated_by FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
       if (!current) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
       await assertVersion(conn, current, body.version)
       if (!EDITABLE_CONTRACT_STATUSES.includes(current.status)) throw { statusCode: 409, message: 'Hợp đồng đang khoá, không sửa được' }
@@ -363,8 +381,27 @@ const seafarerContractService = {
       await conn.query('DELETE FROM contract_item WHERE contract_id = ?', [id])
       await conn.query('DELETE FROM contract_payment_term WHERE contract_id = ?', [id])
       await writeItemsAndTerms(conn, id, items, terms)
+      if (body.pic_user_id && Number(body.pic_user_id) !== Number(current.pic_user_id)) await this.applyPic(conn, current, Number(body.pic_user_id), userId)
     })
     return this.get(pool, id)
+  },
+
+  // Đổi người phụ trách ở mọi trạng thái. Chỉ đổi hợp đồng: thuyền viên, bill đã có giữ người của chúng.
+  async assignPic(pool, id, picUserId, userId) {
+    await withTransaction(pool, async (conn) => {
+      const [[current]] = await conn.query('SELECT id, pic_user_id FROM seafarer_contract WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
+      if (!current) throw { statusCode: 404, message: 'Không tìm thấy hợp đồng' }
+      if (Number(current.pic_user_id) === Number(picUserId)) return
+      await this.applyPic(conn, current, picUserId, userId)
+    })
+    return this.get(pool, id)
+  },
+
+  // Không đổi updated_by: đổi người phụ trách không tính là sửa hợp đồng.
+  async applyPic(conn, current, picUserId, userId) {
+    await assertAssignable(conn, picUserId)
+    await conn.query('UPDATE seafarer_contract SET pic_user_id = ? WHERE id = ?', [picUserId, current.id])
+    await writeLog(conn, current.id, 'ASSIGN', userId, null, { from: await userLabel(conn, current.pic_user_id), to: await userLabel(conn, picUserId) })
   },
 
   // Chỉ đổi ghi chú, không đụng ngày, khoản mục hay điều khoản.

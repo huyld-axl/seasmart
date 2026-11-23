@@ -1,4 +1,5 @@
-import { Button, Tooltip } from 'antd'
+import { Button } from 'antd'
+import Tooltip from './Tooltip'
 import { DeleteOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons'
 
 // Cột thao tác cuối dòng bảng danh sách: nút Xem và Sửa rõ ràng thay cho mũi tên.

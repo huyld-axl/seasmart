@@ -47,6 +47,7 @@ import ProfileOverview, { NoteBox } from './seafarers/ProfileOverview'
 import ProfileHistory from './seafarers/ProfileHistory'
 import DocumentsSection from './seafarers/DocumentsSection'
 import CrewPhoto from './seafarers/CrewPhoto'
+import { PicChange } from '../../components/common/PersonInCharge'
 import './seafarers/SeafarerListPage.css'
 import './seafarers/SeafarerProfile.css'
 import './contracts/contracts.css'
@@ -127,6 +128,16 @@ export default function SeafarerDetailPage() {
       navigate('/seafarers')
     },
     onError: (e) => toast.error('Không xoá được thuyền viên', { description: e.response?.data?.error }),
+  })
+
+  // Đổi người phụ trách: chỉ thuyền viên, hợp đồng đã có giữ nguyên.
+  const picMutation = useMutation({
+    mutationFn: (picUserId) => seafarerApi.setPic(id, picUserId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['seafarer', id] })
+      queryClient.invalidateQueries({ queryKey: ['seafarers'] })
+      queryClient.invalidateQueries({ queryKey: ['revisions', id] })
+    },
   })
 
   const activeMutation = useMutation({
@@ -281,6 +292,16 @@ export default function SeafarerDetailPage() {
                   <dd>{seafarer.email}<EmailActions email={seafarer.email} /></dd></div>
                 </>
               )}
+              <div className="crew-head__pair"><dt>Phụ trách</dt>
+              <dd>
+                <PicChange
+                  pic={seafarer.pic}
+                  canEdit={can('seafarer.update')}
+                  saving={picMutation.isPending}
+                  onSave={(picUserId) => picMutation.mutateAsync(picUserId)}
+                  note="Chỉ đổi thuyền viên này. Hợp đồng đã có giữ người phụ trách của chúng; hợp đồng tạo sau sẽ giao cho người mới."
+                />
+              </dd></div>
             </dl>
           </div>
         </div>

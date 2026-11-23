@@ -1,4 +1,5 @@
 const { assertVersion } = require('../utils/row_version')
+const { ownSql } = require('../utils/pic')
 const { pickAllowed, paging } = require('./fleet.service')
 const { withTransaction } = require('../utils/transaction')
 const { nextCode, nextVoyageCode } = require('../utils/code_counter')
@@ -507,7 +508,7 @@ const opportunityService = {
     const { page, limit, offset } = paging({ page: query.page, limit: query.limit || SUGGEST_LIMIT })
     const params = []
     let where = 'WHERE s.deleted_at IS NULL AND s.status <> \'INACTIVE\''
-    if (query.ownerId) { where += ' AND s.created_by = ?'; params.push(Number(query.ownerId)) }
+    if (query.ownerId) { where += ` AND ${ownSql('s')}`; params.push(Number(query.ownerId), Number(query.ownerId)) }
     if (query.search) {
       where += ' AND (unaccent(s.full_name::text) ILIKE unaccent(?) OR unaccent(s.seafarer_code::text) ILIKE unaccent(?) OR unaccent(s.passport_number::text) ILIKE unaccent(?))'
       params.push(...Array(3).fill(`%${query.search}%`))

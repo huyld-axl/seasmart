@@ -1,7 +1,8 @@
 import useListSessionState from '../../../hooks/useListSessionState'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { App, Button, Input, Skeleton, Table, Tooltip } from 'antd'
+import { App, Button, Input, Skeleton, Table } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import Select from '../../../components/ds/SearchSelect'
 import { CheckOutlined, SearchOutlined, SendOutlined } from '@ant-design/icons'
 import { EmptyState, StatusTabs } from '../../../components/ds/Controls'
@@ -25,6 +26,8 @@ import { billNextAction, overdueLabel, periodLabel } from './billView'
 import ListCard, { ListCardList } from '../../../components/ds/ListCard'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
+import { PicName } from '../../../components/common/PersonInCharge'
+import { usePicFilterOptions } from '../../../hooks/usePicOptions'
 import { CrewFilterButton } from '../seafarers/CrewFilters'
 
 const TABS = [
@@ -51,6 +54,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const [tab, setTab] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'tab', shipOwnerId ? 'all' : urlTab || (can('bill.approve') ? 'TO_APPROVE' : 'TO_SEND'))
   const [search, setSearch] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'search', '')
   const [ownerId, setOwnerId] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'ownerId', undefined)
+  const [picId, setPicId] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'picId', undefined)
   const [page, setPage] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'page', 1)
   const [pageSize, setPageSize] = useListSessionState(`bills:${shipOwnerId || 'all'}:${urlTab || 'default'}`, 'pageSize', 20)
   const [collecting, setCollecting] = useState(null)
@@ -65,15 +69,17 @@ export default function BillListPage({ shipOwnerId } = {}) {
   const keyword = search.trim()
 
   const owners = useFleetList('ship-owners', shipOwnerApi, { limit: 100 }, { enabled: !shipOwnerId && can('partner.view') })
-  const list = useBillList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: shipOwnerId || ownerId, page, limit: pageSize })
+  const list = useBillList({ tab: tab === 'all' ? undefined : tab, search: keyword || undefined, ship_owner_id: shipOwnerId || ownerId, pic_user_id: picId, page, limit: pageSize })
   const rows = list.data?.data || []
   const counts = list.data?.counts
   const total = list.data?.total || 0
   const tabs = TABS.map((item) => ({ ...item, count: counts ? counts[item.value] : null }))
   const open = (row) => navigate(`/bills/${row.id}`)
-  const filtered = Boolean(keyword || ownerId)
+  const filtered = Boolean(keyword || ownerId || picId)
+  const picOptions = usePicFilterOptions()
+  const filterCount = (ownerId ? 1 : 0) + (picId ? 1 : 0)
   const showOwnerFilter = !shipOwnerId && can('partner.view')
-  const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPage(1) }
+  const resetFilters = () => { setSearch(''); setOwnerId(undefined); setPicId(undefined); setPage(1) }
   useLayoutEffect(() => {
     if (!pendingScrollReset.current || list.isPlaceholderData || list.isLoading) return
     pendingScrollReset.current = false
@@ -173,6 +179,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
     },
     { title: 'Hạn thanh toán', dataIndex: 'due_date', render: (value) => <span className="ds-num bl-nowrap">{formatDate(value)}</span> },
     { title: 'Số tiền', dataIndex: 'total_usd', align: 'right', render: (value) => <b className="ds-num">{formatUsd(value, { fixed: true })}</b> },
+    { title: 'Phụ trách', key: 'pic', responsive: ['xl'], render: (_, row) => <PicName pic={row.pic} /> },
     { title: 'Trạng thái', key: 'status', render: (_, row) => badge(row) },
     actionColumn((row) => (
       <RowActions name={`yêu cầu thanh toán ${row.code}`} onView={() => open(row)} onEdit={row.status === 'OPEN' && can('bill.update') ? () => navigate(`/bills/${row.id}/edit`) : undefined}>
@@ -208,7 +215,7 @@ export default function BillListPage({ shipOwnerId } = {}) {
               badge={<StatusBadge group="bill" value={row.display_status} />}
               fields={[
                 { label: 'Tàu', value: row.vessel.vessel_name },
-                { label: 'Chủ tàu', value: shipOwnerId ? null : row.ship_owner.company_name },
+                shipOwnerId ? { label: 'Phụ trách', value: row.pic?.name ?? 'Chưa giao' } : { label: 'Chủ tàu', value: row.ship_owner.company_name },
                 { label: 'Kỳ thu', value: periodLabel(row.period_start, row.period_end) },
                 paid ? { label: 'Đã thu ngày', value: formatDate(row.paid_date) } : { label: 'Hạn thanh toán', value: formatDate(row.due_date), tone: overdue ? 'err' : undefined },
               ]}
@@ -264,15 +271,28 @@ export default function BillListPage({ shipOwnerId } = {}) {
               onChange={(value) => { setOwnerId(value); setPage(1) }}
             />
           ) : null}
-          {showOwnerFilter && isPhone ? (
+          {!isPhone ? (
+            <Select
+              className="vy-owner-filter"
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Mọi người phụ trách"
+              aria-label="Lọc theo người phụ trách"
+              value={picId}
+              options={picOptions}
+              onChange={(value) => { setPicId(value); setPage(1) }}
+            />
+          ) : null}
+          {isPhone ? (
             <span className="ds-toolbar__end">
-              <CrewFilterButton count={ownerId ? 1 : 0} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
+              <CrewFilterButton count={filterCount} open={filtersOpen} onToggle={() => setFiltersOpen((v) => !v)} />
             </span>
           ) : null}
         </div>
-        {showOwnerFilter ? (
-          <ListFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} count={ownerId ? 1 : 0} onClear={() => { setOwnerId(undefined); setPage(1) }} total={total} unit="yêu cầu" loading={list.isLoading}>
-            <label className="crew-filterbar__field crew-filterbar__field--wide">
+        {isPhone ? (
+          <ListFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} count={filterCount} onClear={() => { setOwnerId(undefined); setPicId(undefined); setPage(1) }} total={total} unit="yêu cầu" loading={list.isLoading}>
+            {showOwnerFilter ? <label className="crew-filterbar__field crew-filterbar__field--wide">
               <span>Chủ tàu</span>
               <Select
                 style={{ width: '100%' }}
@@ -286,6 +306,10 @@ export default function BillListPage({ shipOwnerId } = {}) {
                 options={(owners.data?.data || []).map((o) => ({ value: o.id, label: o.company_name }))}
                 onChange={(value) => { setOwnerId(value); setPage(1) }}
               />
+            </label> : null}
+            <label className="crew-filterbar__field crew-filterbar__field--wide">
+              <span>Người phụ trách</span>
+              <Select style={{ width: '100%' }} allowClear showSearch optionFilterProp="label" placeholder="Tất cả" aria-label="Lọc theo người phụ trách" value={picId} options={picOptions} onChange={(value) => { setPicId(value); setPage(1) }} />
             </label>
           </ListFilters>
         ) : null}

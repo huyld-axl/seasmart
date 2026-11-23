@@ -19,6 +19,8 @@ const listQuery = {
     rank_id: id,
     seafarer_voyage_id: id,
     seafarer_id: id,
+    // Người phụ trách: id hoặc 'none' (chưa giao).
+    pic_user_id: { type: 'string', maxLength: 12 },
     page: { type: 'integer', minimum: 1 },
     limit: { type: 'integer', minimum: 1, maximum: 100 },
   },
@@ -39,6 +41,7 @@ const contractProps = {
   start_date: date,
   end_date: date,
   notes: { type: ['string', 'null'], maxLength: 2000 },
+  pic_user_id: { type: ['integer', 'null'], minimum: 1 },
   items: {
     type: 'array',
     maxItems: DEFAULT_ITEMS.length,
@@ -63,6 +66,7 @@ const createBody = {
 }
 const updateBody = { type: 'object', required: ['start_date', 'end_date'], properties: contractProps }
 const notesBody = { type: 'object', required: ['notes'], properties: { notes: contractProps.notes } }
+const picBody = { type: 'object', required: ['pic_user_id'], properties: { pic_user_id: id } }
 const rejectBody = { type: 'object', required: ['reason'], properties: { reason: { type: 'string', minLength: 1, maxLength: 1000 } } }
 const approveBody = { type: ['object', 'null'], properties: { expected_fingerprint: { type: 'string', maxLength: 64 } } }
 
@@ -87,6 +91,11 @@ async function seafarerContractRoutes(fastify) {
   fastify.patch('/:id/notes', { ...can('update'), schema: { params: idParams, body: notesBody } }, async (request) => {
     await inScope(request)
     return seafarerContractService.updateNotes(pool, request.params.id, request.body.notes, request.user.id)
+  })
+  // Đổi người phụ trách: mọi trạng thái, chỉ đổi hợp đồng này.
+  fastify.put('/:id/pic', { ...can('update'), schema: { params: idParams, body: picBody } }, async (request) => {
+    await inScope(request)
+    return seafarerContractService.assignPic(pool, request.params.id, request.body.pic_user_id, request.user.id)
   })
   fastify.delete('/:id', { ...can('delete'), schema: { params: idParams } }, async (request) => {
     await inScope(request)

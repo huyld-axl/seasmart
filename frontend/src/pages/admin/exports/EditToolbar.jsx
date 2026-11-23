@@ -1,4 +1,5 @@
-import { Button, ColorPicker, Select, Tooltip } from 'antd'
+import { Button, ColorPicker, Select } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import {
   AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined, BoldOutlined, ClearOutlined, FontColorsOutlined,
   ItalicOutlined, MenuOutlined, RedoOutlined, StrikethroughOutlined, UnderlineOutlined, UndoOutlined,

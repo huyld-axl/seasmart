@@ -24,6 +24,8 @@ import { useCan } from '../../../hooks/usePermission'
 import { CrewFilterButton } from '../seafarers/CrewFilters'
 import useViewport from '../../../hooks/useViewport'
 import ListFilters from '../../../components/ds/ListFilters'
+import { PicName } from '../../../components/common/PersonInCharge'
+import { usePicFilterOptions } from '../../../hooks/usePicOptions'
 import Fab from '../../../components/ds/Fab'
 import ListCard, { ListCardList, MoneyStrip } from '../../../components/ds/ListCard'
 import ApproveModal from './ApproveModal'
@@ -132,10 +134,12 @@ export default function ContractListPage() {
     },
     { title: 'Chi/tháng', dataIndex: 'payable_monthly', align: 'right', responsive: ['lg'], render: (value) => <MoneyChip value={-Number(value)}>{Number(value) > 0 ? '-' : ''}{formatUsd(value)}</MoneyChip> },
     { title: 'Chênh lệch', dataIndex: 'diff_monthly', align: 'right', render: (value) => <MoneyChip value={value} strong>{formatDiff(value)}</MoneyChip> },
+    { title: 'Phụ trách', key: 'pic', responsive: ['xl'], render: (_, row) => <PicName pic={row.pic} /> },
     { title: 'Trạng thái', key: 'status', render: (_, row) => <StatusBadge group="contract" value={row.status} /> },
     actionColumn((row) => <RowActions name={`hợp đồng ${row.contract_number}`} onView={() => open(row)} onEdit={['DRAFT', 'REJECTED'].includes(row.status) && can('contract.update') ? () => navigate(`/contracts/${row.id}/edit`) : undefined} />),
   ]
 
+  const picOptions = usePicFilterOptions()
   const filterSelect = (key, label, props) => (
     <label className="crew-filterbar__field crew-filterbar__field--wide">
       <span>{label}</span>
@@ -183,6 +187,7 @@ export default function ContractListPage() {
               fields={[
                 { label: 'Tàu', value: row.vessel_name },
                 { label: 'Chủ tàu', value: row.ship_owner_name },
+                { label: 'Phụ trách', value: row.pic?.name ?? 'Chưa giao' },
                 { label: 'Thời hạn', value: <>{range}{months ? <span className="ds-duration-note">· {months}{leftText}</span> : leftText}</>, wide: true, tone: left != null && left < 0 ? 'err' : left != null && left <= EXPIRY_WARN_DAYS ? 'warn' : undefined },
               ]}
               extra={(
@@ -264,6 +269,7 @@ export default function ContractListPage() {
               loading: ranks.isLoading,
               options: (ranks.data || []).map((r) => ({ value: r.id, label: r.name_vi })),
             })}
+            {filterSelect('pic_user_id', 'Người phụ trách', { placeholder: 'Tất cả', 'aria-label': 'Lọc theo người phụ trách', options: picOptions })}
         </ListFilters>
         {body}
         {acting?.kind === 'approve' ? <ApproveModal contract={{ contract: { id: acting.row.id, contract_number: acting.row.contract_number } }} open onClose={() => setActing(null)} /> : null}

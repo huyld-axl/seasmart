@@ -47,6 +47,15 @@ async function sendInvite(user, token) {
   })
 }
 
+// Ô chọn người phụ trách: tài khoản đang hoạt động, ai đăng nhập cũng gọi được (không lộ vai trò, trạng thái mời).
+async function listUserOptions(db = pool) {
+  const [rows] = await db.query(
+    `SELECT id, full_name, email FROM "user" WHERE is_active = 1 AND deleted_at IS NULL
+     ORDER BY COALESCE(NULLIF(full_name, ''), email::text)`
+  )
+  return rows.map((row) => ({ id: Number(row.id), full_name: row.full_name, email: row.email }))
+}
+
 async function listUsers(filters = {}, pagination = {}, db = pool) {
   const { role_id, is_active, email, status } = filters
   const page = Math.max(1, parseInt(pagination.page) || 1)
@@ -286,6 +295,7 @@ async function toggleActive(id, actor, db = pool) {
 
 module.exports = {
   listUsers,
+  listUserOptions,
   getUserById,
   createUser,
   resendInvite,

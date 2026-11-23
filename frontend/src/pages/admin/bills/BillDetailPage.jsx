@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { App, Button, Dropdown, Skeleton, Tooltip } from 'antd'
+import { App, Button, Dropdown, Skeleton } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import HeadActions from '../../../components/ds/HeadActions'
 import { CheckOutlined, EditOutlined, MoreOutlined, RollbackOutlined, SendOutlined, UndoOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
@@ -23,6 +24,8 @@ import TripLink from '../voyages/TripLink'
 import '../voyages/voyages.css'
 import '../contracts/contracts.css'
 import './bills.css'
+import { PicChange } from '../../../components/common/PersonInCharge'
+import { assignChange } from '../../../utils/pic'
 
 const WEEKDAY = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
 const LOG_VIEW = {
@@ -34,6 +37,7 @@ const LOG_VIEW = {
   UNSEND: { title: 'Thu hồi', kind: 'withdraw', tone: 'neutral' },
   COLLECT: { title: 'Ghi nhận đã thu', kind: 'accept', tone: 'success' },
   UNCOLLECT: { title: 'Huỷ ghi nhận đã thu', kind: 'withdraw', tone: 'neutral' },
+  ASSIGN: { title: 'Đổi người phụ trách', kind: 'edit', tone: 'neutral' },
 }
 
 const Empty = ({ children }) => <span className="sf-ro__empty">{children}</span>
@@ -47,7 +51,7 @@ export default function BillDetailPage() {
   const toast = useToast()
   const [collecting, setCollecting] = useState(false)
   const { data, isLoading, isError, refetch } = useBill(id)
-  const { move } = useBillMutations()
+  const { move, setPic } = useBillMutations()
 
   if (isLoading) {
     return (
@@ -117,7 +121,7 @@ export default function BillDetailPage() {
     PAID: [can('bill.collect') ? more('uncollect', 'Huỷ ghi nhận đã thu', <UndoOutlined />, uncollect) : null],
   }[display].filter(Boolean)
 
-  const timeline = log.map((entry) => ({ id: entry.id, ...LOG_VIEW[entry.action], time: formatDateTime(entry.created_at), actor: entry.actor_name }))
+  const timeline = log.map((entry) => ({ id: entry.id, ...LOG_VIEW[entry.action], time: formatDateTime(entry.created_at), actor: entry.actor_name, ...assignChange(entry) }))
 
   return (
     <div className="ds-page crew-profile">
@@ -141,6 +145,16 @@ export default function BillDetailPage() {
             <div className="crew-head__pair"><dt>Đối tác</dt><dd><Link to={`/partners/${bill.ship_owner.id}`}>{bill.ship_owner.company_name}</Link></dd></div>
             <div className="crew-head__pair"><dt>Kỳ</dt><dd className="ds-num">{formatDate(bill.period_start)} → {formatDate(bill.period_end)}</dd></div>
             <div className="crew-head__pair"><dt>Hạn</dt><dd className="ds-num">{formatDate(bill.due_date)} ({WEEKDAY[dayjs(bill.due_date).day()]})</dd></div>
+            <div className="crew-head__pair"><dt>Phụ trách</dt>
+            <dd>
+              <PicChange
+                pic={bill.pic}
+                canEdit={can('bill.update')}
+                saving={setPic.isPending}
+                onSave={(picUserId) => setPic.mutateAsync({ id: bill.id, picUserId })}
+                note="Chỉ đổi yêu cầu thanh toán này. Hợp đồng và các kỳ khác giữ người phụ trách của chúng."
+              />
+            </dd></div>
           </dl>
         </div>
         <HeadActions>{actions}</HeadActions>

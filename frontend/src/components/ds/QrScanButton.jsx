@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Tooltip } from 'antd'
+import Tooltip from './Tooltip'
 import { LoadingOutlined, QrcodeOutlined } from '@ant-design/icons'
 import { decodeQrFile } from '../../utils/qrDecode'
 import './ds.css'

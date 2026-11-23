@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Người phụ trách</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Wireframe Người phụ trách (docs/mcah-ke-hoach-nguoi-phu-trach.md). Một theme sáng như app.
+     Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có. */
+  :root {
+    color-scheme: light;
+    --primary: #003366;
+    --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6;
+    --surface: #ffffff;
+    --foreground: #2c2c2c;
+    --muted: #707070;
+    --border: #e5e6ea;
+    --border-strong: #d3d5db;
+    --secondary: #e7e8ec;
+    --success: #007a55;
+    --success-bg: #ecfdf5;
+    --warning: #bb4d00;
+    --warning-bg: #fffbeb;
+    --error-strong: #c10007;
+    --error-bg: #fef2f2;
+    --info: #1d4ed8;
+    --info-bg: #eff6ff;
+    --scrim: rgba(20, 24, 32, 0.38);
+    --app-font: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --elevation-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
+  .muted { color: var(--muted); }
+  .doc { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; max-width: 1400px; margin: 0 auto; padding: 32px 16px 80px; }
+  .toc { position: sticky; top: 24px; align-self: start; display: grid; gap: 2px; }
+  .toc__head { margin: 12px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .toc a { display: flex; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--foreground); text-decoration: none; font-size: 13px; }
+  .toc a:hover { background: var(--secondary); }
+  .toc a b { width: 22px; flex-shrink: 0; color: var(--muted); font-weight: 500; }
+  .main { display: grid; gap: 56px; min-width: 0; }
+  h1 { margin: 0 0 8px; font-size: 24px; }
+  .lead { margin: 0; color: var(--muted); max-width: 80ch; }
+  section h2 { display: flex; gap: 10px; align-items: baseline; margin: 0 0 6px; font-size: 18px; }
+  section h2 b { color: var(--muted); font-weight: 500; }
+  .why { margin: 0 0 16px; color: var(--muted); max-width: 90ch; }
+  .notes { margin: 14px 0 0; padding-left: 20px; max-width: 90ch; }
+  .notes li { margin-bottom: 4px; }
+
+  /* Khung app */
+  .app { border: 1px solid var(--border-strong); border-radius: var(--radius-lg); overflow: hidden; background: var(--background); }
+  .shell { display: grid; grid-template-columns: 190px minmax(0, 1fr); min-height: 360px; position: relative; }
+  .side { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: grid; align-content: start; gap: 2px; font-size: 13px; }
+  .side .logo { font-weight: 700; margin: 0 8px 12px; }
+  .side .grp { margin: 10px 8px 4px; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .side .it { padding: 6px 8px; border-radius: var(--radius-sm); }
+  .side .it.on { background: var(--secondary); font-weight: 600; }
+  .content { display: grid; grid-template-rows: auto 1fr; min-width: 0; }
+  .topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .topbar h3 { margin: 0; font-size: 15px; }
+  .page { padding: 16px 20px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .input { border: 1px solid var(--border-strong); border-radius: var(--radius-sm); padding: 6px 10px; background: var(--surface); min-height: 34px; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .input .caret { margin-left: auto; color: var(--muted); }
+  .input.dirty { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+  .input.err { border-color: var(--error-strong); }
+  .btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-size: 13px; white-space: nowrap; }
+  .btn.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .btn.link { border: 0; background: none; color: var(--primary); padding: 0 2px; font-weight: 500; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; white-space: nowrap; background: var(--secondary); }
+  .badge.ok { background: var(--success-bg); color: var(--success); }
+  .badge.info { background: var(--info-bg); color: var(--info); }
+  .badge.warn { background: var(--warning-bg); color: var(--warning); }
+  .chip-edit { font-size: 10px; color: var(--primary); font-weight: 600; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; display: grid; gap: 10px; font-size: 13px; }
+  .card h4 { margin: 0; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .field { display: grid; gap: 4px; min-width: 0; }
+  .field label { font-size: 12px; font-weight: 500; }
+  .field label i { color: var(--error-strong); font-style: normal; }
+  .field .hint { font-size: 11.5px; color: var(--muted); }
+  .field .hint.err { color: var(--error-strong); }
+  .savebar { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 16px; background: var(--surface); border-top: 1px solid var(--border); }
+  .head { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px 16px; display: grid; gap: 10px; }
+  .head__title { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .head__title b { font-size: 17px; }
+  .pairs { display: flex; gap: 28px; flex-wrap: wrap; font-size: 13px; }
+  .pairs dt { font-size: 11.5px; color: var(--muted); }
+  .pairs dd { margin: 0; font-weight: 500; }
+  .pairs .pic dd { display: flex; gap: 8px; align-items: baseline; }
+  .pairs .pic dd .btn.link { font-size: 12.5px; }
+  .hl { outline: 2px dashed var(--warning); outline-offset: 4px; border-radius: 6px; }
+
+  table.list { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--surface); }
+  .list th, .list td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
+  .list thead th { color: var(--muted); font-weight: 600; font-size: 12px; background: #f8f9fb; }
+  .list td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .list .new { background: #fffdf5; }
+  .tablebox { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+  .filters { display: flex; gap: 12px; flex-wrap: wrap; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); }
+  .filters .field { width: 200px; }
+  .menu { position: absolute; z-index: 3; width: 240px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-sm); box-shadow: var(--elevation-modal); padding: 4px; font-size: 13px; }
+  .menu div { padding: 6px 10px; border-radius: 6px; display: flex; gap: 8px; align-items: center; }
+  .menu div.on { background: var(--primary-light); font-weight: 600; }
+  .menu hr { border: 0; border-top: 1px solid var(--border); margin: 4px 0; }
+  .menu small { color: var(--muted); margin-left: auto; font-size: 11px; }
+
+  .scrim { position: absolute; inset: 0; background: var(--scrim); display: grid; place-items: center; padding: 20px; }
+  .modal { width: min(440px, 100%); background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--elevation-modal); padding: 20px; display: grid; gap: 12px; }
+  .modal h4 { margin: 0; font-size: 16px; }
+  .modal .foot { display: flex; justify-content: flex-end; gap: 8px; }
+  .banner { padding: 8px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+  .banner.info { background: var(--info-bg); color: var(--info); }
+  .toast { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--elevation-modal); padding: 8px 14px; font-size: 13px; display: flex; gap: 8px; align-items: center; }
+  .toast::before { content: '✓'; color: var(--success); font-weight: 700; }
+
+  /* Luồng kế thừa */
+  .chain { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; align-items: stretch; }
+  .node { background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); padding: 12px 14px; display: grid; gap: 4px; position: relative; margin-right: 36px; }
+  .node:last-child { margin-right: 0; }
+  .node b { font-size: 14px; }
+  .node .who { font-size: 13px; }
+  .node .src { font-size: 11.5px; color: var(--muted); }
+  .node:not(:last-child)::after { content: '→'; position: absolute; right: -28px; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--success); }
+  .node.changed { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+  .chain-label { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; margin: 8px 0 18px; }
+  .chain-label span::before { content: ''; display: inline-block; width: 18px; height: 2px; vertical-align: middle; margin-right: 6px; }
+  .chain-label .inh::before { background: var(--success); }
+  .chain-label .stop::before { background: var(--error-strong); }
+  .nolink { color: var(--error-strong); font-size: 12px; margin-top: 4px; }
+
+  table.rules { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; font-size: 13px; }
+  .rules th, .rules td { padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  .rules thead th { background: #f8f9fb; color: var(--muted); font-size: 12px; }
+
+  /* Điện thoại */
+  .phones { display: flex; gap: 24px; flex-wrap: wrap; }
+  .phone { width: 375px; max-width: 100%; border: 1px solid var(--border-strong); border-radius: 28px; overflow: hidden; background: var(--background); position: relative; min-height: 560px; }
+  .phone .bar { background: var(--surface); padding: 14px 16px; font-weight: 600; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; }
+  .phone .bar .btn { margin-left: auto; padding: 4px 10px; font-size: 12px; }
+  .phone .body { padding: 12px 16px; display: grid; gap: 10px; }
+  .lc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px; display: grid; gap: 8px; }
+  .lc__top { display: flex; justify-content: space-between; gap: 8px; }
+  .lc__cells { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; }
+  .lc__cells dt { font-size: 11px; color: var(--muted); }
+  .lc__cells dd { margin: 0; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--surface); border-radius: 20px 20px 0 0; padding: 10px 16px 16px; display: grid; gap: 10px; box-shadow: var(--elevation-modal); }
+  .sheet .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border-strong); margin: 0 auto 4px; }
+  .sheet .opt { padding: 10px 4px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; }
+  .sheet .opt.on { color: var(--primary); font-weight: 600; }
+  .sheet .opt.on::after { content: '✓'; margin-left: auto; }
+
+  @media (max-width: 1023px) {
+    .doc { grid-template-columns: minmax(0, 1fr); }
+    .toc { position: static; }
+    .chain { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+    .node { margin-right: 0; }
+    .node:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -26px; transform: none; }
+    .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .shell { grid-template-columns: minmax(0, 1fr); }
+    .side { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+  <nav class="toc">
+    <div class="toc__head">Người phụ trách</div>
+    <a href="#luong"><b>1</b>Luồng kế thừa</a>
+    <a href="#mac-dinh"><b>2</b>Bảng mặc định</a>
+    <a href="#thuyen-vien"><b>3</b>Form + hồ sơ thuyền viên</a>
+    <a href="#chot"><b>4</b>Chốt người ở cơ hội</a>
+    <a href="#hop-dong"><b>5</b>Chi tiết hợp đồng</a>
+    <a href="#doi"><b>6</b>Hộp đổi người phụ trách</a>
+    <a href="#bill"><b>7</b>Bill đã gửi vẫn đổi được</a>
+    <a href="#danh-sach"><b>8</b>Danh sách + bộ lọc</a>
+    <a href="#dien-thoai"><b>9</b>Điện thoại</a>
+  </nav>
+
+  <main class="main">
+    <header>
+      <h1>Người phụ trách (PIC)</h1>
+      <p class="lead">Mỗi thuyền viên, hợp đồng và yêu cầu thanh toán có một người phụ trách (cơ hội giữ ô Người phụ trách sẵn có, không nằm trong chuỗi; đối tác không có). Khi tạo, người phụ trách lấy theo bản ghi cha; sau đó mỗi bản ghi tự giữ người của mình, đổi ở đâu chỉ đổi đúng chỗ đó. Kế hoạch: <code>docs/mcah-ke-hoach-nguoi-phu-trach.md</code>.</p>
+    </header>
+
+    <!-- 1 -->
+    <section id="luong">
+      <h2><b>1</b>Luồng kế thừa</h2>
+      <p class="why">Ví dụ: thuyền viên Nguyễn Hữu Phước do Lan phụ trách. Phước được chốt ở một cơ hội (cơ hội do Huy phụ trách): hợp đồng nháp giao cho <b>Lan</b> theo thuyền viên, không theo cơ hội. Duyệt hợp đồng thì các bill giao cho Lan.</p>
+      <div class="chain" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+        <div class="node"><b>Thuyền viên</b><span class="who">Nguyễn Hữu Phước</span><span class="who">👤 Trần Thị Lan</span><span class="src">Người thêm hồ sơ (đổi được)</span></div>
+        <div class="node"><b>Hợp đồng</b><span class="who">CH2611-03/HĐ</span><span class="who">👤 Trần Thị Lan</span><span class="src">Lấy theo thuyền viên lúc tạo</span></div>
+        <div class="node"><b>Yêu cầu thanh toán</b><span class="who">…/T1, …/T2, …/T3</span><span class="who">👤 Trần Thị Lan</span><span class="src">Lấy theo hợp đồng lúc duyệt</span></div>
+      </div>
+      <div class="chain-label"><span class="inh">Kế thừa, chỉ một lần lúc tạo</span><span class="stop">Đổi sau đó: không lan đi đâu</span></div>
+      <p class="why" style="margin-top: -6px">Cơ hội CH2611-03 vẫn do Huy phụ trách như hiện tại; trường đó không truyền xuống hợp đồng.</p>
+
+      <p class="why">Sau đó Lan giao hợp đồng cho Minh theo dõi. Chỉ hợp đồng đổi; thuyền viên vẫn là Lan, các bill đã có vẫn là Lan. Bill sinh <b>mới</b> sau lúc đổi (ví dụ gia hạn hợp đồng) mới lấy Minh. Ngược lại, đổi PIC thuyền viên cũng không đổi hợp đồng đã có; chỉ hợp đồng tạo <b>sau</b> mới lấy người mới.</p>
+      <div class="chain" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+        <div class="node"><b>Thuyền viên</b><span class="who">👤 Trần Thị Lan</span><span class="nolink">✕ không đổi theo</span></div>
+        <div class="node changed"><b>Hợp đồng</b><span class="who">👤 Lê Văn Minh</span><span class="src">Đổi tay</span></div>
+        <div class="node"><b>Yêu cầu thanh toán</b><span class="who">T1–T3: 👤 Lan (giữ)</span><span class="who">T4 sinh sau: 👤 Minh</span><span class="nolink">✕ bill đã có không đổi theo</span></div>
+      </div>
+    </section>
+
+    <!-- 2 -->
+    <section id="mac-dinh">
+      <h2><b>2</b>Bảng mặc định khi tạo</h2>
+      <p class="why">Nguồn trống hoặc là tài khoản đã khoá thì lùi sang cột kế tiếp.</p>
+      <table class="rules">
+        <thead><tr><th>Tạo</th><th>Lúc nào</th><th>Lấy theo</th><th>Không có thì</th></tr></thead>
+        <tbody>
+          <tr><td><b>Thuyền viên</b></td><td>Thêm hồ sơ, nhập Excel</td><td>Người thêm / người nhập (điền sẵn, đổi được)</td><td>—</td></tr>
+          <tr><td><b>Hợp đồng</b></td><td>Chốt người ở cơ hội, hoặc tạo tay cho chuyến</td><td>PIC thuyền viên lúc đó</td><td>Người tạo hợp đồng</td></tr>
+          <tr><td><b>Bill</b></td><td>Duyệt hợp đồng; sửa ngày hợp đồng sinh thêm kỳ</td><td>PIC hợp đồng lúc đó</td><td>Người tạo hợp đồng</td></tr>
+          <tr><td><b>Bill bị cắt kỳ / giữ lại</b></td><td>Sửa ngày hợp đồng</td><td colspan="2">Giữ nguyên PIC của chính bill đó</td></tr>
+          <tr><td class="muted">Cơ hội</td><td class="muted">Tạo cơ hội</td><td colspan="2" class="muted">Như hiện tại (mặc định người tạo), không nằm trong chuỗi</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 3 -->
+    <section id="thuyen-vien">
+      <h2><b>3</b>Form và hồ sơ thuyền viên</h2>
+      <p class="why">Form sẵn có (<code>SeafarerFormPage</code>). <b>Sửa 23/11:</b> ô Người phụ trách nằm cuối mục <b>Thông tin chung</b> (sau Số con), không bắt buộc, không có dòng ghi chú; mục Ghi chú giữ nguyên. Hình dưới là bản cũ (mục Quản lý), chỉ giữ để tham khảo.</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="it">Đối tác</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div></div>
+        <div class="content">
+          <div class="topbar"><h3>Chỉnh sửa hồ sơ · Nguyễn Hữu Phước</h3></div>
+          <div class="page">
+            <div class="card"><h4>7 · Học vấn</h4><div class="grid4"><div class="field"><label>Trường tốt nghiệp</label><div class="input">ĐH Hàng hải VN</div></div></div></div>
+            <div class="card hl"><h4>8 · Quản lý</h4>
+              <div class="grid4">
+                <div class="field"><label>Người phụ trách <i>*</i></label><div class="input">Trần Thị Lan<span class="caret">▾</span></div><span class="hint">Hợp đồng tạo sau này giao cho người này</span></div>
+                <div class="field" style="grid-column: span 3"><label>Ghi chú</label><div class="input muted">—</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><div class="savebar"><span class="btn">Huỷ</span><span class="btn pri">Lưu thay đổi</span></div></div>
+
+      <p class="why" style="margin-top: 20px">Đầu trang hồ sơ (<code>ProfileOverview</code>) thêm cặp Phụ trách với chữ <b>Đổi</b>, đổi nhanh không cần mở form.</p>
+      <div class="app"><div class="shell" style="min-height: 200px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div></div>
+        <div class="content">
+          <div class="topbar"><h3>Thuyền viên</h3></div>
+          <div class="page">
+            <div class="head">
+              <div class="head__title"><b>Nguyễn Hữu Phước</b><span class="badge ok">Trên tàu</span></div>
+              <dl class="pairs">
+                <div><dt>Mã</dt><dd>TV0712</dd></div>
+                <div><dt>Chức danh</dt><dd>Thợ máy</dd></div>
+                <div><dt>Điện thoại</dt><dd>0912 345 678</dd></div>
+                <div class="pic hl"><dt>Phụ trách</dt><dd>Trần Thị Lan <span class="btn link">Đổi</span></dd></div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Ô chọn: <code>SearchSelect</code>, mỗi dòng là tên (email nhỏ bên dưới), chỉ tài khoản đang hoạt động.</li>
+        <li>Đổi người phụ trách ghi vào Lịch sử hồ sơ như mọi lần sửa, nhưng <b>không</b> đẩy bộ giấy đang ký sang "Cần làm lại".</li>
+        <li>Nhập thuyền viên bằng Excel: người phụ trách là người nhập.</li>
+      </ul>
+    </section>
+
+    <!-- 4 -->
+    <section id="chot">
+      <h2><b>4</b>Chốt người ở cơ hội — hợp đồng theo thuyền viên</h2>
+      <p class="why">Hộp <b>Chốt người</b> giữ nguyên, không thêm ô. Hợp đồng nháp tạo ra lấy người phụ trách của <b>thuyền viên</b> được chốt. Ô Người phụ trách của cơ hội giữ như hiện tại và không ảnh hưởng hợp đồng.</p>
+      <div class="app"><div class="shell" style="min-height: 220px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Cơ hội</div></div>
+        <div class="content">
+          <div class="topbar"><h3>Cơ hội CH2611-03 · Thợ máy · Phụ trách: Phạm Quốc Huy</h3></div>
+          <div class="page"></div>
+        </div>
+        <div class="toast">Đã chốt Nguyễn Hữu Phước. Tạo hợp đồng nháp CH2611-03/HĐ · Phụ trách: Trần Thị Lan</div>
+      </div></div>
+      <ul class="notes">
+        <li>Tạo tay hợp đồng cho chuyến: ô Người phụ trách trong form hợp đồng điền sẵn PIC thuyền viên của chuyến, đổi được.</li>
+        <li>Thuyền viên chưa giao, hoặc người phụ trách đã khoá: hợp đồng giao cho người bấm chốt / người tạo hợp đồng.</li>
+      </ul>
+    </section>
+
+    <!-- 5 -->
+    <section id="hop-dong">
+      <h2><b>5</b>Chi tiết hợp đồng — Phụ trách ở đầu trang</h2>
+      <p class="why">Đầu trang chi tiết sẵn có thêm một cặp. Chữ <b>Đổi</b> hiện với người có quyền sửa hợp đồng, ở mọi trạng thái (kể cả Hiệu lực, Kết thúc). Áp dụng giống hệt cho hồ sơ thuyền viên và chi tiết bill.</p>
+      <div class="app"><div class="shell">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Chuyến tàu</div><div class="it on">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div></div>
+        <div class="content">
+          <div class="topbar"><h3>Hợp đồng</h3></div>
+          <div class="page">
+            <div class="head">
+              <div class="head__title"><b>CH2611-03/HĐ</b><span class="badge ok">Hiệu lực</span></div>
+              <dl class="pairs">
+                <div><dt>Thuyền viên</dt><dd>Nguyễn Hữu Phước</dd></div>
+                <div><dt>Chủ tàu</dt><dd>Hải Âu Shipping</dd></div>
+                <div><dt>Thời hạn</dt><dd>15/11/2026 → 14/05/2027</dd></div>
+                <div class="pic hl"><dt>Phụ trách</dt><dd>Trần Thị Lan <span class="btn link">Đổi</span></dd></div>
+              </dl>
+            </div>
+            <div class="card"><h4>Lịch sử</h4>
+              <div class="muted">20/11/2026 10:42 · Trần Thị Lan · <b style="color:var(--foreground)">Đổi người phụ trách: Trần Thị Lan → Lê Văn Minh</b></div>
+              <div class="muted">16/11/2026 09:10 · Phạm Quốc Huy · Duyệt</div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Tài khoản phụ trách đã khoá: "Trần Thị Lan <span class="badge">Đã khoá</span>" để biết cần giao lại.</li>
+        <li>Đổi xong ghi một dòng lịch sử (hợp đồng, bill; thuyền viên ghi ở Lịch sử hồ sơ).</li>
+      </ul>
+    </section>
+
+    <!-- 6 -->
+    <section id="doi">
+      <h2><b>6</b>Hộp Đổi người phụ trách</h2>
+      <p class="why">Một ô, một dòng nhắc rằng chỉ bản ghi này đổi. Không hỏi "đổi luôn bill?" vì quy tắc là không đổi kép.</p>
+      <div class="app"><div class="shell" style="min-height: 320px">
+        <div class="side"><div class="logo">MCAH</div></div>
+        <div class="content"><div class="topbar"><h3>Hợp đồng</h3></div><div class="page"></div></div>
+        <div class="scrim">
+          <div class="modal">
+            <h4>Đổi người phụ trách</h4>
+            <div class="field"><label>Người phụ trách</label><div class="input dirty">Lê Văn Minh<span class="caret">▾</span></div></div>
+            <div class="banner info">Chỉ đổi hợp đồng CH2611-03/HĐ. Thuyền viên và 3 yêu cầu thanh toán đã có giữ người phụ trách của chúng.</div>
+            <div class="foot"><span class="btn">Huỷ</span><span class="btn pri">Lưu</span></div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Dòng nhắc theo từng mục: thuyền viên "Hợp đồng đã có của thuyền viên giữ người phụ trách của chúng; hợp đồng tạo sau sẽ giao cho người mới."; bill "Chỉ đổi yêu cầu thanh toán này."</li>
+        <li>Lưu xong: toast "Đã giao cho Lê Văn Minh". Chọn lại đúng người cũ: nút Lưu mờ.</li>
+        <li>Điện thoại: hộp thành sheet từ đáy (luật chung của <code>Modal</code>).</li>
+      </ul>
+    </section>
+
+    <!-- 7 -->
+    <section id="bill">
+      <h2><b>7</b>Bill đã gửi vẫn đổi được người phụ trách</h2>
+      <p class="why">Bill đã duyệt bị khoá số tiền, nhưng người phụ trách không phải số tiền nên vẫn đổi được. Người được giao sau đó vẫn tự duyệt / bỏ duyệt được (đổi PIC không tính là "sửa bill").</p>
+      <div class="app"><div class="shell" style="min-height: 240px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Yêu cầu thanh toán</div></div>
+        <div class="content">
+          <div class="topbar"><h3>Yêu cầu thanh toán</h3></div>
+          <div class="page">
+            <div class="head">
+              <div class="head__title"><b>CH2611-03/HĐ/T1</b><span class="badge info">Đã gửi</span><span class="muted">🔒 Đã duyệt, không sửa số tiền</span></div>
+              <dl class="pairs">
+                <div><dt>Kỳ</dt><dd>15/11 → 30/11/2026</dd></div>
+                <div><dt>Hạn thu</dt><dd>10/12/2026</dd></div>
+                <div><dt>Tổng</dt><dd>2,150.00 USD</dd></div>
+                <div class="pic hl"><dt>Phụ trách</dt><dd>Trần Thị Lan <span class="btn link">Đổi</span></dd></div>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="toast">Đã giao cho Lê Văn Minh</div>
+      </div></div>
+    </section>
+
+    <!-- 8 -->
+    <section id="danh-sach">
+      <h2><b>8</b>Danh sách — cột Phụ trách và bộ lọc</h2>
+      <p class="why">Áp cho 3 danh sách: Thuyền viên, Hợp đồng, Yêu cầu thanh toán. Cơ hội giữ nguyên. Bộ lọc nằm trong khung lọc sẵn có; hai mục đầu "Tôi" và "Chưa giao".</p>
+      <div class="app"><div class="shell" style="min-height: 400px">
+        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Hợp đồng</div><div class="it on">Yêu cầu thanh toán</div></div>
+        <div class="content">
+          <div class="topbar"><h3>Yêu cầu thanh toán</h3></div>
+          <div class="page">
+            <div class="filters" style="position: relative">
+              <div class="field"><label>Đối tác</label><div class="input muted">Tất cả<span class="caret">▾</span></div></div>
+              <div class="field hl"><label>Người phụ trách</label><div class="input dirty">Tôi<span class="caret">▾</span></div></div>
+              <div class="menu" style="left: 226px; top: 72px">
+                <div class="on">Tôi <small>Trần Thị Lan</small></div>
+                <div>Chưa giao</div>
+                <hr>
+                <div>Lê Văn Minh</div>
+                <div>Phạm Quốc Huy</div>
+                <div class="muted">Gõ để tìm…</div>
+              </div>
+            </div>
+            <div class="tablebox">
+              <table class="list">
+                <thead><tr><th>Mã bill</th><th>Thuyền viên</th><th>Đối tác</th><th>Hạn thu</th><th class="num">Tổng (USD)</th><th class="new">Phụ trách</th><th>Trạng thái</th></tr></thead>
+                <tbody>
+                  <tr><td>CH2611-03/HĐ/T1</td><td>Nguyễn Hữu Phước</td><td>Hải Âu Shipping</td><td>10/12/2026</td><td class="num">2,150.00</td><td class="new">Trần Thị Lan</td><td><span class="badge info">Đã gửi</span></td></tr>
+                  <tr><td>CH2610-07/HĐ/T2</td><td>Võ Thành Nam</td><td>Biển Xanh Marine</td><td>15/12/2026</td><td class="num">1,800.00</td><td class="new">Trần Thị Lan</td><td><span class="badge">Chưa duyệt</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <ul class="notes">
+        <li>Bộ lọc Người phụ trách được nhớ theo trang như các bộ lọc khác (<code>useListSessionState</code>).</li>
+        <li>Tài khoản "chỉ của mình": danh sách gồm bản ghi mình tạo <b>hoặc</b> mình phụ trách.</li>
+        <li>Lọc "Chưa giao" ở Thuyền viên để bù hồ sơ cũ không có người tạo.</li>
+      </ul>
+    </section>
+
+    <!-- 9 -->
+    <section id="dien-thoai">
+      <h2><b>9</b>Điện thoại (375px)</h2>
+      <p class="why">Thẻ chỉ thêm ô Phụ trách khi còn chỗ (dưới 4 ô). Bộ lọc trong <code>BottomSheet</code> sẵn có. Chữ Đổi ở đầu trang chi tiết như máy tính.</p>
+      <div class="phones">
+        <div class="phone">
+          <div class="bar">Yêu cầu thanh toán <span class="btn">Lọc · 1</span></div>
+          <div class="body">
+            <div class="lc">
+              <div class="lc__top"><b>Nguyễn Hữu Phước</b><span class="badge info">Đã gửi</span></div>
+              <dl class="lc__cells">
+                <div><dt>Mã bill</dt><dd>CH2611-03/HĐ/T1</dd></div>
+                <div><dt>Hạn thu</dt><dd>10/12/2026</dd></div>
+                <div><dt>Tổng</dt><dd>2,150.00 USD</dd></div>
+                <div class="hl"><dt>Phụ trách</dt><dd>Trần Thị Lan</dd></div>
+              </dl>
+            </div>
+          </div>
+          <div class="sheet">
+            <div class="grab"></div>
+            <b>Người phụ trách</b>
+            <div class="opt on">Tôi (Trần Thị Lan)</div>
+            <div class="opt">Chưa giao</div>
+            <div class="opt">Lê Văn Minh</div>
+            <div class="opt">Phạm Quốc Huy</div>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="bar">Hợp đồng</div>
+          <div class="body">
+            <div class="head">
+              <div class="head__title"><b>CH2611-03/HĐ</b><span class="badge ok">Hiệu lực</span></div>
+              <dl class="pairs" style="gap: 12px 20px">
+                <div><dt>Thuyền viên</dt><dd>Nguyễn Hữu Phước</dd></div>
+                <div><dt>Thời hạn</dt><dd>15/11/2026 → 14/05/2027</dd></div>
+                <div class="pic hl"><dt>Phụ trách</dt><dd>Trần Thị Lan <span class="btn link">Đổi</span></dd></div>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

@@ -1,8 +1,8 @@
 // Trạng thái và tham số của bộ lọc nâng cao (components: CrewFilters.jsx).
-export const EMPTY_FILTERS = { ranks: [], vessels: [], certs: [], ageMin: null, ageMax: null }
+export const EMPTY_FILTERS = { ranks: [], vessels: [], certs: [], ageMin: null, ageMax: null, pic: null }
 
 // Số bộ lọc nâng cao đang bật (mỗi nhóm một).
-export const filterCount = (f) => [f.ranks.length, f.vessels.length, f.certs.length, f.ageMin !== null || f.ageMax !== null].filter(Boolean).length
+export const filterCount = (f) => [f.ranks.length, f.vessels.length, f.certs.length, f.ageMin !== null || f.ageMax !== null, f.pic].filter(Boolean).length
 
 // Tham số gửi lên GET /seafarers.
 export function filterParams(f) {
@@ -13,5 +13,7 @@ export function filterParams(f) {
     certificate_type_ids: join(f.certs),
     age_min: f.ageMin ?? undefined,
     age_max: f.ageMax ?? undefined,
+    // Người phụ trách: id hoặc 'none'. Trạng thái lưu từ bản cũ không có khoá này.
+    pic_user_id: f.pic ?? undefined,
   }
 }

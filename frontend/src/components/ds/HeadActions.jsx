@@ -1,5 +1,6 @@
 import { Children, isValidElement } from 'react'
-import { Button, Dropdown, Tooltip } from 'antd'
+import { Button, Dropdown } from 'antd'
+import Tooltip from './Tooltip'
 import { MoreOutlined } from '@ant-design/icons'
 import useViewport from '../../hooks/useViewport'
 import './ds.css'

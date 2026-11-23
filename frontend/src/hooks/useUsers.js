@@ -8,6 +8,15 @@ export function useUsers(filters = {}) {
   })
 }
 
+// Người chọn được làm người phụ trách (thuyền viên, hợp đồng, bill).
+export function useUserOptions() {
+  return useQuery({
+    queryKey: ['user-options'],
+    queryFn: () => usersApi.options().then((r) => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export function useUser(id) {
   return useQuery({
     queryKey: ['users', id],

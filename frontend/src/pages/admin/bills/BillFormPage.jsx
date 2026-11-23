@@ -16,7 +16,8 @@ import apiErrorText from '../../../utils/apiError'
 import { formatDate, formatUsd } from '../../../utils/format'
 import { Crumb } from '../fleet/FleetParts'
 import BillMoneyTable from './BillMoneyTable'
-import { countChanges, dueChanged, groupItems, toFormValues, toPayload } from './billView'
+import { countChanges, dueChanged, groupItems, picChanged, toFormValues, toPayload } from './billView'
+import { PicSelect } from '../../../components/common/PersonInCharge'
 import '../seafarers/SeafarerForm.css'
 import '../seafarers/SeafarerProfile.css'
 import '../fleet/fleet.css'
@@ -44,7 +45,7 @@ function BillForm({ data }) {
   const [form] = Form.useForm()
   const initial = useMemo(() => toFormValues(data), [data])
   const values = Form.useWatch([], form) || initial
-  const { save } = useBillMutations()
+  const { save, setPic } = useBillMutations()
   const queryClient = useQueryClient()
   const { bill } = data
   const dueDateError = useRef(null)
@@ -79,7 +80,7 @@ function BillForm({ data }) {
   const conflict = useEditConflict({
     form,
     initial,
-    labels: { items: 'Các khoản tiền', note: 'Ghi chú', due_date: 'Hạn thanh toán' },
+    labels: { items: 'Các khoản tiền', note: 'Ghi chú', due_date: 'Hạn thanh toán', pic_user_id: 'Người phụ trách' },
     reload: async () => {
       const latest = await billApi.get(bill.id)
       queryClient.setQueryData(['bills', 'item', String(bill.id)], latest)
@@ -89,8 +90,11 @@ function BillForm({ data }) {
 
   async function submit(formValues) {
     const payload = toPayload(formValues)
+    const picDirty = picChanged(initial, formValues)
     try {
-      await save.mutateAsync({ id: bill.id, ...payload, version: bill.version })
+      // Đổi người phụ trách đi đường riêng: không tính là sửa bill (người được giao vẫn tự duyệt được).
+      if (countChanges(initial, formValues) > (picDirty ? 1 : 0)) await save.mutateAsync({ id: bill.id, ...payload, version: bill.version })
+      if (picDirty) await setPic.mutateAsync({ id: bill.id, picUserId: formValues.pic_user_id })
       toast.success(`Đã lưu ${bill.code}`)
       leave.allow()
       navigate(back)
@@ -147,6 +151,13 @@ function BillForm({ data }) {
                 </Form.Item>
               </div>
               <Form.Item
+                name="pic_user_id"
+                className={`sf-c4${picChanged(initial, values) ? ' sf-changed' : ''}`}
+                label={<>Người phụ trách{picChanged(initial, values) ? <span className="sf-chip">Đã sửa</span> : null}</>}
+              >
+                <PicSelect current={bill.pic} />
+              </Form.Item>
+              <Form.Item
                 name="note"
                 className={`sf-c8${(initial.note || '').trim() !== (values.note || '').trim() ? ' sf-changed' : ''}`}
                 label={<>Ghi chú{(initial.note || '').trim() !== (values.note || '').trim() ? <span className="sf-chip">Đã sửa</span> : null}</>}
@@ -175,7 +186,7 @@ function BillForm({ data }) {
           ) : null}
           <div className="sf-savebar__actions">
             <Button className="sf-savebar__cancel" onClick={() => navigate(back)}>Huỷ</Button>
-            <Button type="primary" htmlType="submit" loading={save.isPending} disabled={!changes}>Lưu thay đổi</Button>
+            <Button type="primary" htmlType="submit" loading={save.isPending || setPic.isPending} disabled={!changes}>Lưu thay đổi</Button>
           </div>
         </div>
       </Form>

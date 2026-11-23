@@ -240,7 +240,8 @@ describe('seafarer_contract.service', () => {
       ...extraRoutes,
       ...planRoutes(bills, contract),
       ['SELECT item_code, receivable_usd, payable_usd FROM contract_item', () => [[{ item_code: 'BASIC_WAGE', receivable_usd: '1650', payable_usd: null }, { item_code: 'FLIGHT_OUT', receivable_usd: '500', payable_usd: null }]]],
-      ['SELECT created_by FROM seafarer_contract', () => [[{ created_by: 3 }]]],
+      ['SELECT id, start_date, end_date, created_by, pic_user_id FROM seafarer_contract', () => [[{ id: 9, created_by: 3, pic_user_id: 7 }]]],
+      ['FROM "user" WHERE id IN', () => [[{ id: 7 }]]],
       ['AS taken', () => [[{ taken: 0 }]]],
       ['SELECT contract_number FROM seafarer_contract WHERE id', () => [[{ contract_number: 'CT-2026-0004/HĐ' }]]],
       ['INSERT INTO contract_bill SET', () => [{ insertId: 500, rows: [{ id: 500 }] }]],
@@ -269,6 +270,8 @@ describe('seafarer_contract.service', () => {
       await service.transition(pool, 9, 'approve', { expected_fingerprint: await fingerprintOf(OPEN_BILLS, contract) }, 5)
       const created = pool.calls.filter((c) => c.sql.startsWith('INSERT INTO contract_bill SET')).map((c) => c.params[0])
       expect(created.map((b) => [b.seq, b.period_start, b.period_end])).toEqual([[4, '2027-04-01', '2027-04-30'], [5, '2027-05-01', '2027-05-15']])
+      // Bill mới theo người phụ trách hợp đồng lúc duyệt.
+      expect(created.map((b) => b.pic_user_id)).toEqual([7, 7])
       const lines = inserts(pool, 'contract_bill_item').map((c) => c.params[0])
       expect(lines).toHaveLength(28)
       expect(lines.filter((l) => l.kind === 'ONE_TIME').every((l) => l.amount_usd === 0)).toBe(true)

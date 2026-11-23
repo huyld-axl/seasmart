@@ -1,4 +1,5 @@
 const { assertVersion } = require('../utils/row_version')
+const { ownSql } = require('../utils/pic')
 const { isValidImo } = require('../utils/imo')
 const { assertOwnerData, assertVesselData } = require('../utils/field_rules')
 const { trashFiles } = require('../utils/file_trash')
@@ -362,7 +363,7 @@ const fleetService = {
     )
     SELECT s.id, s.full_name, s.seafarer_code, cc.rank_name, cc.sign_on_date
     FROM current_crew cc JOIN seafarer s ON s.id = cc.seafarer_id AND s.deleted_at IS NULL
-    ${createdBy !== null ? 'WHERE s.created_by = ?' : ''}`, [vesselId, ...(createdBy !== null ? [createdBy] : [])])
+    ${createdBy !== null ? `WHERE ${ownSql('s')}` : ''}`, [vesselId, ...(createdBy !== null ? [createdBy, createdBy] : [])])
     return { data: rows.sort((a, b) => a.full_name.localeCompare(b.full_name, 'vi')) }
   },
 

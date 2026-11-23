@@ -82,6 +82,8 @@ async function seafarerRoutes(fastify) {
             certificate_type_ids: { type: 'string', pattern: '^[0-9,]*$' },
             age_min: { type: 'integer', minimum: 0, maximum: 120 },
             age_max: { type: 'integer', minimum: 0, maximum: 120 },
+            // Người phụ trách: id hoặc 'none' (chưa giao).
+            pic_user_id: { type: 'string', maxLength: 12 },
           },
         },
       },
@@ -100,6 +102,7 @@ async function seafarerRoutes(fastify) {
           rank_id: parseInt(rank_id) || null,
           tab: tab || null,
           ownerId: ownerIdFor(request, 'seafarer'),
+          picUserId: request.query.pic_user_id || null,
           rankIds: ids(request.query.rank_ids),
           vesselIds: ids(request.query.vessel_ids),
           certTypeIds: ids(request.query.certificate_type_ids),
@@ -147,6 +150,7 @@ async function seafarerRoutes(fastify) {
             email: { type: 'string' },
             status: { type: 'string' },
             current_rank_id: { type: 'integer' },
+            pic_user_id: { type: ['integer', 'null'] },
             bank_accounts: { type: 'array', maxItems: 20, items: { type: 'object' } },
             contacts: { type: 'array', maxItems: 30, items: { type: 'object' } },
           },
@@ -169,6 +173,22 @@ async function seafarerRoutes(fastify) {
       await assertSeafarerInScope(request, parseInt(request.params.id))
       const { reason, version, ...data } = request.body || {}
       return seafarerService.update(parseInt(request.params.id), data, request.user.id, reason, version)
+    }
+  )
+
+  // PUT /api/v1/seafarers/:id/pic — đổi người phụ trách (chữ Đổi ở đầu hồ sơ). Chỉ đổi thuyền viên, hợp đồng đã có giữ nguyên.
+  fastify.put(
+    '/:id/pic',
+    {
+      onRequest: [fastify.authenticate, fastify.can('seafarer.update')],
+      schema: {
+        params: { type: 'object', required: ['id'], properties: { id: { type: 'integer', minimum: 1 } } },
+        body: { type: 'object', required: ['pic_user_id'], properties: { pic_user_id: { type: 'integer', minimum: 1 } } },
+      },
+    },
+    async (request) => {
+      await assertSeafarerInScope(request, request.params.id)
+      return seafarerService.update(request.params.id, { pic_user_id: request.body.pic_user_id }, request.user.id, 'Đổi người phụ trách')
     }
   )
 

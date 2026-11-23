@@ -38,6 +38,7 @@ import BillListPage from './pages/admin/bills/BillListPage'
 import BillDetailPage from './pages/admin/bills/BillDetailPage'
 import BillFormPage from './pages/admin/bills/BillFormPage'
 import PayoutListPage from './pages/admin/payouts/PayoutListPage'
+import ReportPage from './pages/admin/reports/ReportPage'
 import UserListPage from './pages/admin/users/UserListPage'
 import UserDetailPage from './pages/admin/users/UserDetailPage'
 import ReviewPage from './pages/admin/review/ReviewPage'
@@ -174,6 +175,7 @@ function AppRoutes() {
         <Route path="/bills/:id" element={guard('bill.view', <BillDetailPage />)} />
         <Route path="/bills/:id/edit" element={guard('bill.update', <BillFormPage />)} />
         <Route path="/payouts" element={guard('payout.view', <PayoutListPage />)} />
+        <Route path="/reports" element={guard('report.view', <ReportPage />)} />
         <Route path="/fleet" element={<Navigate to="/vessels" replace />} />
         <Route path="/fleet/vessels" element={<Navigate to="/vessels" replace />} />
         <Route path="/fleet/ship-owners" element={<Navigate to="/partners" replace />} />

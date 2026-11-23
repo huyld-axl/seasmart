@@ -5,6 +5,7 @@ import Select from '../../../components/ds/SearchSelect'
 import { DownOutlined, FilterOutlined } from '@ant-design/icons'
 import { lookupApi } from '../../../api'
 import { filterCount } from './crewFilterState'
+import { usePicFilterOptions } from '../../../hooks/usePicOptions'
 
 // Nút mở / đóng hàng bộ lọc nâng cao; số trên nút là số nhóm lọc đang bật (`count` ghi đè khi màn khác dùng bộ lọc riêng).
 export function CrewFilterButton({ value, count = filterCount(value), open, onToggle }) {
@@ -30,6 +31,7 @@ export function CrewFilterFields({ value, onChange }) {
   const ranks = useQuery({ queryKey: ['ranks'], queryFn: () => lookupApi.ranks().then((r) => r.data), staleTime: 300000 })
   const certTypes = useQuery({ queryKey: ['certificate-types'], queryFn: () => lookupApi.certificateTypes().then((r) => r.data), staleTime: 300000 })
   const vessels = useQuery({ queryKey: ['vessels-lookup', debounced], queryFn: () => lookupApi.vessels(debounced).then((r) => r.data), staleTime: 60000 })
+  const picOptions = usePicFilterOptions()
   const set = (patch) => onChange({ ...value, ...patch })
   const multi = { mode: 'multiple', maxTagCount: 'responsive', allowClear: true, style: { width: '100%' } }
 
@@ -51,6 +53,10 @@ export function CrewFilterFields({ value, onChange }) {
           <InputNumber min={0} max={120} precision={0} placeholder="Đến" aria-label="Tuổi đến" value={value.ageMax} onChange={(v) => set({ ageMax: v ?? null })} />
         </div>
       </div>
+      <label className="crew-filterbar__field">
+        <span>Người phụ trách</span>
+        <Select showSearch allowClear placeholder="Tất cả" optionFilterProp="label" style={{ width: '100%' }} value={value.pic ?? undefined} onChange={(v) => set({ pic: v ?? null })} options={picOptions} />
+      </label>
       <label className="crew-filterbar__field crew-filterbar__field--wide" title="Còn hiệu lực hoặc sắp hết hạn; phải có đủ các loại đã chọn">
         <span>Chứng chỉ còn hiệu lực</span>
         <Select {...multi} placeholder="Chọn loại chứng chỉ" optionFilterProp="label" loading={certTypes.isLoading} value={value.certs} onChange={(v) => set({ certs: v })} options={(certTypes.data || []).map((c) => ({ value: c.id, label: c.name_vi }))} />

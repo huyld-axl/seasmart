@@ -12,7 +12,7 @@ vi.mock('../../../../hooks/useLeaveGuard', () => ({ default: () => ({ allow() {}
 vi.mock('../../../../components/ds/useToast', () => ({ default: () => ({ success() {}, error() {} }) }))
 vi.mock('../BillMoneyTable', () => ({ default: () => null }))
 vi.mock('../../../../hooks/useVoyages', () => ({
-  useBillMutations: () => ({ save: { mutateAsync: save, isPending: false } }),
+  useBillMutations: () => ({ save: { mutateAsync: save, isPending: false }, setPic: { mutateAsync: vi.fn(), isPending: false } }),
   useBill: () => ({
     data: {
       bill: {

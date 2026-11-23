@@ -19,6 +19,7 @@ export const seafarerApi = {
   getById: (id) => api.get(`/seafarers/${id}`),
   create: (data, config) => api.post('/seafarers', data, config),
   update: (id, data) => api.put(`/seafarers/${id}`, data),
+  setPic: (id, picUserId) => api.put(`/seafarers/${id}/pic`, { pic_user_id: picUserId }),
   remove: (id) => api.delete(`/seafarers/${id}`),
   deactivate: (id) => api.post(`/seafarers/${id}/deactivate`),
   activate: (id) => api.post(`/seafarers/${id}/activate`),

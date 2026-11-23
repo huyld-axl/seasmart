@@ -1,5 +1,5 @@
 import { chatHref } from '../../utils/chatQr'
-import { Tooltip } from 'antd'
+import Tooltip from '../ds/Tooltip'
 import '../ds/ds.css'
 
 export default function ZaloButton({ phone }) {

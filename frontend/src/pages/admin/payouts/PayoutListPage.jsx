@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { App, Button, Dropdown, Input, Skeleton, Table, Tooltip } from 'antd'
+import { App, Button, Dropdown, Input, Skeleton, Table } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import { LeftOutlined, MoreOutlined, RightOutlined, SearchOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import useListSessionState from '../../../hooks/useListSessionState'
@@ -230,9 +231,13 @@ export default function PayoutListPage() {
     {
       title: 'Đối tác',
       key: 'owner',
-      width: 130,
+      width: 170,
+      className: 'po-owner',
       ellipsis: { showTitle: false },
-      render: (_, { row, side }) => (side === 'tra' ? <Clip text={row.ship_owner.company_name} /> : null),
+      // Dòng Thu: người phụ trách bill; dòng Trả: tên đối tác.
+      render: (_, { row, side }) => (side === 'tra'
+        ? <Clip text={row.ship_owner.company_name} />
+        : <Clip text={row.pic ? `Phụ trách: ${row.pic.name}` : 'Chưa giao người phụ trách'}>{row.pic?.name ?? '—'}</Clip>),
     },
     {
       title: 'Hạn',

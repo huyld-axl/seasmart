@@ -112,6 +112,7 @@ export function toFormValues(detail) {
     start_date: contract.start_date ? dayjs(contract.start_date) : null,
     end_date: contract.end_date ? dayjs(contract.end_date) : null,
     notes: contract.notes ?? '',
+    pic_user_id: contract.pic?.id ?? null,
     items: [...itemRows(items).MONTHLY, ...itemRows(items).ONE_TIME],
     terms: { RECEIVABLE: { ...DEFAULT_TERMS.RECEIVABLE, ...terms?.RECEIVABLE }, PAYABLE: { ...DEFAULT_TERMS.PAYABLE, ...terms?.PAYABLE } },
   }
@@ -124,6 +125,8 @@ export function newFormValues(voyage) {
     start_date: voyage?.join_date ? dayjs(voyage.join_date) : null,
     end_date: voyage?.planned_leave_date ? dayjs(voyage.planned_leave_date) : null,
     notes: '',
+    // Người phụ trách theo thuyền viên của chuyến lúc tạo; trống thì để form điền người đang thêm.
+    pic_user_id: voyage?.seafarer_pic_user_id ?? null,
     items: [...itemRows().MONTHLY, ...itemRows().ONE_TIME],
     terms: structuredClone(DEFAULT_TERMS),
   }
@@ -137,6 +140,7 @@ export function toPayload(values, { voyageId } = {}) {
     start_date: fromDay(values.start_date),
     end_date: fromDay(values.end_date),
     notes: values.notes?.trim() || null,
+    pic_user_id: values.pic_user_id ?? null,
     items: (values.items || []).map((i) => ({
       kind: i.kind,
       item_code: i.item_code,

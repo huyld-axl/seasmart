@@ -18,10 +18,11 @@ export default function useListSticky() {
     const height = (selector) => Math.ceil(card.querySelector(selector)?.getBoundingClientRect().height || 0)
     const update = () => {
       const foot = height(':scope > .ds-table-foot')
+      // Dòng tổng dính đáy bảng (Báo cáo) nằm ngoài thân bảng: trừ ra để trang không phải cuộn.
       // Chiều cao topbar đọc từ biến --topbar-h (AdminLayout.css), mặc định 64.
       const topbar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--topbar-h')) || 64
       const top = Math.max(topbar + GAP_TOP, Math.round(card.getBoundingClientRect().top + window.scrollY))
-      const used = top + BOTTOM + height(':scope > .ds-toolbar') + GAP + (foot ? foot + GAP : 0) + height('.ant-table-header') + 2
+      const used = top + BOTTOM + height(':scope > .ds-toolbar') + GAP + (foot ? foot + GAP : 0) + height('.ant-table-header') + height('.ant-table-summary') + 4
       const next = Math.max(MIN_BODY, window.innerHeight - used)
       setY((current) => (current === next ? current : next))
     }

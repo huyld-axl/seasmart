@@ -29,6 +29,8 @@ import '../seafarers/SeafarerProfile.css'
 import '../voyages/voyages.css'
 import '../fleet/fleet.css'
 import './contracts.css'
+import { PicChange } from '../../../components/common/PersonInCharge'
+import { assignChange } from '../../../utils/pic'
 
 const CONTRACT_TABS = [
   { value: 'overview', label: 'Tổng quan' },
@@ -45,6 +47,7 @@ const LOG_VIEW = {
   END: { title: 'Kết thúc hợp đồng', kind: 'accept', tone: 'neutral' },
   APPLY_BILLS: { title: 'Áp thay đổi yêu cầu thanh toán', kind: 'edit', tone: 'warning' },
   DELETE: { title: 'Xoá theo chuyến', kind: 'reject', tone: 'error' },
+  ASSIGN: { title: 'Đổi người phụ trách', kind: 'edit', tone: 'neutral' },
 }
 
 export default function ContractDetailPage() {
@@ -59,7 +62,7 @@ export default function ContractDetailPage() {
   const awaiting = Boolean(data?.awaiting_reapproval)
   const hasBills = (data?.bills_summary?.count || 0) > 0
   const bills = useBillList({ contract_id: id, limit: 100 }, { enabled: hasBills && can('bill.view') })
-  const { submit, withdraw, remove, revert, end, saveNotes } = useContractMutations()
+  const { submit, withdraw, remove, revert, end, saveNotes, setPic } = useContractMutations()
 
   if (isLoading) {
     return (
@@ -224,6 +227,7 @@ export default function ContractDetailPage() {
     ...LOG_VIEW[entry.action],
     time: formatDateTime(entry.created_at),
     reason: entry.action === 'REJECT' ? entry.reason : undefined,
+    ...assignChange(entry),
     actor: entry.actor_name,
   }))
 
@@ -302,6 +306,16 @@ export default function ContractDetailPage() {
             <dd>{place.vessel_id && can('vessel.view') ? <Link to={`/vessels/${place.vessel_id}`}>{place.vessel_name}</Link> : place.vessel_name}</dd></div>
             <div className="crew-head__pair"><dt>Chuyến</dt>
             <dd><TripLink trip={trip} legacyCode={legacyCode} /></dd></div>
+            <div className="crew-head__pair"><dt>Phụ trách</dt>
+            <dd>
+              <PicChange
+                pic={contract.pic}
+                canEdit={can('contract.update')}
+                saving={setPic.isPending}
+                onSave={(picUserId) => setPic.mutateAsync({ id: contract.id, picUserId })}
+                note={`Chỉ đổi hợp đồng ${contract.contract_number}. Thuyền viên${billCount ? ` và ${billCount} yêu cầu thanh toán đã có` : ''} giữ người phụ trách của chúng.`}
+              />
+            </dd></div>
             <div className="crew-head__pair"><dt>Thời gian</dt>
             <dd style={{ columnGap: 6 }}><span style={{ whiteSpace: 'nowrap' }}>{formatDate(contract.start_date)} → {formatDate(contract.end_date)}</span><span className="ds-duration-note" style={{ whiteSpace: 'nowrap' }}>· {formatCalendarDuration(contract.start_date, contract.end_date)}</span></dd></div>
           </dl>

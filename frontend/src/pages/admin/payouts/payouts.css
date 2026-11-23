@@ -70,3 +70,5 @@
 .po-table .ant-table-tbody > tr > td,
 .po-table .ant-table-tbody > tr > td.ant-table-cell-fix { background: color-mix(in srgb, var(--po-bg), #1f2a44 calc(var(--po-h) * 6%)) !important; }
 .po-table .ant-table-tbody > tr > td.po-once { background: color-mix(in srgb, var(--po-once), #6b4e00 calc(var(--po-h) * 7%)) !important; }
+/* Cột Đối tác (người phụ trách / đối tác): chữ nhỏ hơn một chút để đọc được nhiều hơn. */
+.po-owner { font-size: 12px; }

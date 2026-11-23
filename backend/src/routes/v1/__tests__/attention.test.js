@@ -94,7 +94,7 @@ describe('GET /dashboard/attention', () => {
     const opp = calls.find((c) => c.sql.includes('FROM opportunity o'))
     expect(opp.sql).toMatch(/o\.owner_user_id = \?/)
     expect(opp.params).toEqual([7])
-    expect(calls.find((c) => c.sql.includes('FROM seafarer_certificate sc')).params).toEqual([7])
+    expect(calls.find((c) => c.sql.includes('FROM seafarer_certificate sc')).params).toEqual([7, 7])
     expect(t.work.rows.map((r) => r.key)).toEqual(['BILL_OVERDUE', 'CONTRACT_REJECTED', 'CONTRACT_PENDING', 'CONTRACT_DRAFT'])
   })
 

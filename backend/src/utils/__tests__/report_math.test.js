@@ -74,7 +74,8 @@ describe('danh sách cột báo cáo', () => {
     expect(REPORT_KEYS).toEqual(['base', 'sales', 'cost', 'cashflow'])
     expect(REPORTS.sales.columns.map((c) => c.label)).toEqual(['STT', 'Tháng', 'Đối tác', 'Khoản hằng tháng', 'Khoản một lần', 'Tổng', 'Số thuyền viên', 'Tỷ lệ số người'])
     expect(REPORTS.cost.columns[2].label).toBe('Đối tác')
-    expect(REPORTS.cashflow.columns).toHaveLength(12)
+    expect(REPORTS.cashflow.columns).toHaveLength(13)
+    expect(REPORTS.cashflow.columns.map((c) => c.label).slice(3, 8)).toEqual(['Nguồn thu', 'Thu theo đối tác', 'Hạn trả', 'Người nhận tiền', 'Phụ trách'])
     expect(REPORTS.cashflow.columns.some((c) => /trạng thái/i.test(c.label))).toBe(false)
   })
 

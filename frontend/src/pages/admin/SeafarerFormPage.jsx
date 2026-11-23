@@ -3,7 +3,8 @@ import { filterSearchOption } from '../../utils/search'
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Spin, Tooltip } from 'antd'
+import { App, AutoComplete, Button, Form, Input, InputNumber, Modal, Spin } from 'antd'
+import Tooltip from '../../components/ds/Tooltip'
 import Select from '../../components/ds/SearchSelect'
 import useLeaveGuard from '../../hooks/useLeaveGuard'
 import { FormCrumb, FormToc, AddAnotherLabel } from './fleet/FleetParts'
@@ -27,6 +28,8 @@ import useToast from '../../components/ds/useToast'
 import { IDENTITY } from './seafarers/scanToDoc'
 import useEditConflict from '../../hooks/useEditConflict'
 import { keyHeader, newRequestKey } from '../../lib/idempotency'
+import { PicSelect } from '../../components/common/PersonInCharge'
+import useAuthStore from '../../stores/authStore'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
 const DATE_FIELDS = ['date_of_birth', 'passport_issued_date', 'passport_expiry', 'national_id_issued_date']
@@ -56,7 +59,7 @@ const SECTIONS = [
     key: 'general',
     title: 'Thông tin chung',
     desc: 'Ghi theo hộ chiếu hoặc CCCD.',
-    fields: ['full_name', 'full_name_zh', 'full_name_en', 'date_of_birth', 'gender', 'place_of_origin', 'permanent_address', 'marital_status', 'children_count'],
+    fields: ['full_name', 'full_name_zh', 'full_name_en', 'date_of_birth', 'gender', 'place_of_origin', 'permanent_address', 'marital_status', 'children_count', 'pic_user_id'],
     photo: true,
     scans: ['cccd', 'passport'],
   },
@@ -283,6 +286,7 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
   const toast = useToast()
   const { modal } = App.useApp()
   const [form] = Form.useForm()
+  const me = useAuthStore((state) => state.user)
   const watched = Form.useWatch((all) => all, form)
   const againRef = useRef(false)
   const prevNameRef = useRef(seafarer?.full_name || '')
@@ -290,8 +294,8 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
 
   const vnId = countries?.find((c) => String(c.code).toUpperCase() === 'VN')?.id
   const initialValues = useMemo(
-    () => (isEdit ? toFormValues(seafarer, contacts) : { gender: 'M', bank_accounts: [{}], contacts: [{ kinds: ['contact'] }] }),
-    [isEdit, seafarer, contacts]
+    () => (isEdit ? toFormValues(seafarer, contacts) : { gender: 'M', pic_user_id: me?.id ?? null, bank_accounts: [{}], contacts: [{ kinds: ['contact'] }] }),
+    [isEdit, seafarer, contacts, me]
   )
   const initialPayload = useMemo(() => (isEdit ? toPayload(initialValues) : null), [isEdit, initialValues])
   // useWatch trả undefined ở lần render đầu: dùng giá trị ban đầu để không nháy "thay đổi".
@@ -716,6 +720,9 @@ function SeafarerForm({ id, seafarer, contacts, countries }) {
               </Field>
               <Field name="children_count" label="Số con" span={4}>
                 <InputNumber min={0} max={30} style={{ width: '100%' }} />
+              </Field>
+              <Field name="pic_user_id" label="Người phụ trách" span={6}>
+                <PicSelect current={seafarer?.pic} allowClear />
               </Field>
               <div className={`sf-photo-row${photoChanged ? ' sf-changed' : ''}`}>
                 <p className="sf-label">

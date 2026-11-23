@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd'
+import Tooltip from './Tooltip'
 import { CheckOutlined } from '@ant-design/icons'
 import './ds.css'
 

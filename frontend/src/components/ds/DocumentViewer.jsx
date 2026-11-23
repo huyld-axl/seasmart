@@ -1,4 +1,5 @@
-import { Button, Tooltip } from 'antd'
+import { Button } from 'antd'
+import Tooltip from './Tooltip'
 import { LeftOutlined, MinusOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons'
 import './ds.css'
 

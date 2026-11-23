@@ -11,6 +11,9 @@ const SCOPED_TABLES = {
   bill: 'contract_bill',
 }
 
+// Bảng có người phụ trách: phạm vi own gồm cả bản ghi mình phụ trách.
+const PIC_TABLES = new Set(['seafarer', 'seafarer_contract', 'contract_bill'])
+
 // id tài khoản khi phạm vi là 'own', ngược lại null. Dùng để truyền xuống service lọc danh sách.
 function ownerIdFor(request, module) {
   return scopeOf(request, module) === 'own' ? request.access.userId : null
@@ -20,7 +23,8 @@ function ownerIdFor(request, module) {
 async function assertRecordInScope(request, module, id, message, db = pool) {
   if (scopeOf(request, module) !== 'own') return
   const table = SCOPED_TABLES[module]
-  const [rows] = await db.query(`SELECT created_by FROM "${table}" WHERE id = ? AND deleted_at IS NULL`, [id])
+  const cols = PIC_TABLES.has(table) ? 'created_by, pic_user_id' : 'created_by'
+  const [rows] = await db.query(`SELECT ${cols} FROM "${table}" WHERE id = ? AND deleted_at IS NULL`, [id])
   assertInScope(request, module, rows[0], message)
 }
 

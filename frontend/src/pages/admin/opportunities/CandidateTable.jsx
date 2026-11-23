@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
-import { Button, Tooltip } from 'antd'
+import { Button } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import RowList from '../../../components/ds/RowList'
 import { DeleteOutlined } from '@ant-design/icons'
 import RequirementFit from '../../../components/ds/RequirementFit'

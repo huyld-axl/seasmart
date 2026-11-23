@@ -5,9 +5,9 @@
 .rp-detail-toggle .ds-toggle-row { padding: 0; border: 0; background: none; gap: 8px; }
 
 .rp-table-wrap { min-width: 0; }
-.rp-table { font-size: 13px; }
-.rp-table .ant-table-thead > tr > th { padding: 6px 8px; line-height: 1.3; white-space: normal; vertical-align: bottom; }
-.rp-table .ant-table-tbody > tr > td { padding: 5px 8px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rp-table { font-size: 12px; }
+.rp-table .ant-table-thead > tr > th { padding: 6px; line-height: 1.3; white-space: normal; vertical-align: bottom; }
+.rp-table .ant-table-tbody > tr > td { padding: 5px 6px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Ô gộp: số ở đầu nhóm (không căn giữa dọc, nhóm dài không còn khoảng trống lớn quanh số), dính trên cùng khi cuộn qua nhóm.
    Ranh giới nhóm bằng kẻ đậm đầu nhóm; không tô nền, không vạch dọc. */
 .rp-table .ant-table-tbody > tr > td.rp-merge { vertical-align: top; overflow: visible; }
@@ -39,3 +39,4 @@
 .rp-cards-foot { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .rp-wide-note { display: grid; gap: 8px; justify-items: start; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); color: var(--muted); }
 .rp-wide-note b { color: var(--foreground); }
+.rp-clip { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

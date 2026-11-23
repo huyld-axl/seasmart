@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Checkbox, Skeleton, Tooltip } from 'antd'
+import { Button, Checkbox, Skeleton } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import { exportApi } from '../../../api/exportApi'
 import { EmptyState } from '../../../components/ds/Controls'
 import useExportPrefsStore from '../../../stores/exportPrefsStore'

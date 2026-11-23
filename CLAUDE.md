@@ -120,6 +120,7 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 | Lớp chọn / lọc ở điện thoại | `BottomSheet` (`components/ds/BottomSheet.jsx`) | Popover, dropdown rộng hơn màn |
 | Bảng ít cột (khoản tiền, chứng chỉ, tài khoản) | `RowList` (`components/ds/RowList.jsx`), khai báo `mobile` cho từng cột | `Table` trần cuộn ngang ở điện thoại |
 | Danh sách ở điện thoại (một bản ghi = một thẻ) | `ListCard` + `ListCardList` (`components/ds/ListCard.jsx`): mỗi thông tin một ô có nhãn, tối đa 4 ô, cảnh báo thành dải, tối đa 2 nút việc kế tiếp | `crew-list__row` với hàng chữ nối " · " không nhãn |
+| Chú thích khi rê chuột (tên bị cắt, nút chỉ có biểu tượng) | `Tooltip` (`components/ds/Tooltip.jsx`): chú thích gốc của trình duyệt (thuộc tính `title`) | `Tooltip` của antd (hộp tối có mũi tên) |
 | Hàng chip / hàng mục / tab cuộn ngang | `ScrollRow` (`components/ds/ScrollRow.jsx`) | `overflow-x: auto` tự dựng, `flex-wrap` cho hàng có thứ tự |
 
 ### 3.5 Màn hẹp (điện thoại)

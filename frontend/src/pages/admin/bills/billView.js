@@ -48,6 +48,7 @@ export function toFormValues(data) {
   return {
     note: data.bill.note || '',
     due_date: dayjs(data.bill.due_date),
+    pic_user_id: data.bill.pic?.id ?? null,
     items: data.items.map((item) => ({ item_code: item.item_code, kind: item.kind, name: item.name, default_usd: item.default_usd, amount_usd: item.amount_usd })),
   }
 }
@@ -66,11 +67,14 @@ export const dueChanged = (initial, values) => {
   return !dayjs(values.due_date).isSame(initial.due_date, 'day')
 }
 
+export const picChanged = (initial, values) => (values.pic_user_id ?? null) !== (initial.pic_user_id ?? null)
+
 // Số thay đổi so với lúc mở form: mỗi khoản đổi số, ghi chú, hạn thanh toán.
 export function countChanges(initial, values) {
   const before = new Map(initial.items.map((item) => [item.item_code, item]))
   let count = values.items.filter((item) => round2(before.get(item.item_code)?.amount_usd ?? 0) !== round2(item.amount_usd ?? 0)).length
   if ((initial.note || '').trim() !== (values.note || '').trim()) count += 1
   if (dueChanged(initial, values)) count += 1
+  if (picChanged(initial, values)) count += 1
   return count
 }

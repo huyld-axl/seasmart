@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Tooltip } from 'antd'
+import Tooltip from './Tooltip'
 import { CheckOutlined, CopyOutlined } from '@ant-design/icons'
 import './ds.css'
 

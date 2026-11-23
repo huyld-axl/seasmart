@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Button, Input, Modal, Tooltip } from 'antd'
+import { Button, Input, Modal } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import { EditOutlined } from '@ant-design/icons'
 import { exportApi } from '../../../api/exportApi'
 import useToast from '../../../components/ds/useToast'

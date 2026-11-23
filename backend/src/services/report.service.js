@@ -36,6 +36,7 @@ function cashflowReport(rows) {
     owner_total: sumOf(ownerKey, r),
     payable_due_date: r.payable_due_date,
     seafarer_name: r.seafarer.full_name,
+    pic_name: r.pic?.name ?? null,
     receivable: r.bill.total_usd,
     payable: r.payout.total_usd,
     margin: round2(r.bill.total_usd - r.payout.total_usd),
@@ -49,8 +50,7 @@ function cashflowReport(rows) {
 async function baseReport(pool, rows, month) {
   const contractIds = [...new Set(rows.map((r) => r.contract.id))]
   const [contracts] = await pool.query(
-    `SELECT c.id, c.start_date, c.end_date, COALESCE(u.full_name, u.email) AS creator_name
-     FROM seafarer_contract c LEFT JOIN "user" u ON u.id = c.created_by WHERE c.id IN (?)`, [contractIds])
+    'SELECT c.id, c.start_date, c.end_date FROM seafarer_contract c WHERE c.id IN (?)', [contractIds])
   const [terms] = await pool.query(
     'SELECT contract_id, side, closing_day, pay_day, pay_month_offset, holiday_rule FROM contract_payment_term WHERE contract_id IN (?)', [contractIds])
   const [contractItems] = await pool.query(
@@ -78,7 +78,8 @@ async function baseReport(pool, rows, month) {
     return {
       month: monthLabel(month),
       contract_number: r.contract.contract_number,
-      creator_name: c.creator_name ?? null,
+      // Người phụ trách bill.
+      pic_name: r.pic?.name ?? null,
       vessel_name: r.vessel.vessel_name,
       ship_owner_name: r.ship_owner.company_name,
       seafarer_name: r.seafarer.full_name,

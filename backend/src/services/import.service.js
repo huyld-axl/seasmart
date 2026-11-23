@@ -266,6 +266,7 @@ async function importExcel(filePath, createdBy = null, sheetName = null) {
           : null,
         status: 'AVAILABLE',
         created_by: createdBy,
+        pic_user_id: createdBy,
         updated_by: createdBy,
       }
 

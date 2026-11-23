@@ -1,4 +1,5 @@
 const pool = require('../config/db')
+const { ownSql } = require('../utils/pic')
 const { EXPIRING_DAYS } = require('../utils/crew_overview')
 const { DEADLINE_WARN_DAYS } = require('../constants/opportunity_voyage')
 const { SCHEDULE_DAYS } = require('../constants/dashboard')
@@ -16,6 +17,13 @@ const andEq = (column, value, params) => {
   if (value == null) return ''
   params.push(value)
   return ` AND ${column} = ?`
+}
+
+// Phạm vi "chỉ của mình": mình tạo hoặc mình phụ trách.
+const andOwn = (alias, value, params) => {
+  if (value == null) return ''
+  params.push(value, value)
+  return ` AND ${ownSql(alias)}`
 }
 
 async function today(db) {
@@ -56,10 +64,10 @@ const dashboardService = {
              AND nx.id <> sc.id AND nx.deleted_at IS NULL AND nx.status <> 'REVOKED'
              AND (nx.no_expiry = 1 OR nx.expiry_date IS NULL OR nx.expiry_date > sc.expiry_date)
          )
-         ${ownerId ? 'AND s.created_by = ?' : ''}
+         ${ownerId ? `AND ${ownSql('s')}` : ''}
        ORDER BY sc.expiry_date ASC, s.full_name ASC
        LIMIT ${MAX_ROWS}`,
-      ownerId ? [ownerId] : []
+      ownerId ? [ownerId, ownerId] : []
     )
     return rows.map(({ voyage_id: voyageId, vessel_name: vesselName, upcoming, ...row }) => ({
       ...row,
@@ -122,7 +130,7 @@ const dashboardService = {
         `SELECT COUNT(*) FILTER (WHERE c.status = 'REJECTED')::int AS rejected, COUNT(*) FILTER (WHERE c.status = 'PENDING')::int AS pending,
                 COUNT(*) FILTER (WHERE c.status = 'DRAFT')::int AS draft
          FROM seafarer_contract c ${CREDIT_JOIN}
-         WHERE c.deleted_at IS NULL${andEq('c.created_by', contractScope, params)}${andEq(CREDITED_TO, own, params)}`,
+         WHERE c.deleted_at IS NULL${andOwn('c', contractScope, params)}${andEq(CREDITED_TO, own, params)}`,
         params
       )
       rows.push({ key: 'CONTRACT_REJECTED', n: c.rejected, late: true, link: '/contracts?tab=REJECTED' })
@@ -138,7 +146,7 @@ const dashboardService = {
                 COUNT(*) FILTER (WHERE b.status = 'OPEN' AND CURRENT_DATE >= b.period_end)::int AS to_approve,
                 COUNT(*) FILTER (WHERE b.status = 'APPROVED')::int AS to_send
          FROM contract_bill b JOIN seafarer_contract c ON c.id = b.contract_id ${CREDIT_JOIN}
-         WHERE b.deleted_at IS NULL AND b.side = 'RECEIVABLE'${andEq('b.created_by', billScope, params)}${andEq(CREDITED_TO, own, params)}`,
+         WHERE b.deleted_at IS NULL AND b.side = 'RECEIVABLE'${andOwn('b', billScope, params)}${andEq(CREDITED_TO, own, params)}`,
         params
       )
       rows.unshift({ key: 'BILL_OVERDUE', n: b.overdue, amount_usd: Number(b.overdue_usd), late: true, link: '/bills?tab=OVERDUE' })

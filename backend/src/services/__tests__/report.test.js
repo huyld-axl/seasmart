@@ -22,14 +22,14 @@ function fakePool() {
     ['LEFT JOIN seafarer_payout sp', () => [BILLS.map((b) => ({
       id: b.id, code: `CH-${b.c}/HĐ/T1`, seq: 1, status: 'SENT', contract_id: b.c, period_start: b.ps, period_end: b.pe, due_date: b.due,
       display_status: 'SENT', total_usd: String(Object.values(b.thu).reduce((s, v) => s + v, 0)), periods: '6', contract_number: `CH-${b.c}/HĐ`,
-      seafarer_id: b.s, seafarer_name: b.name, rank_name: 'Thợ máy', vessel_id: b.o, vessel_name: `MV ${b.o}`, ship_owner_id: b.o, ship_owner_name: OWNERS[b.o],
+      seafarer_id: b.s, seafarer_name: b.name, rank_name: 'Thợ máy', vessel_id: b.o, vessel_name: `MV ${b.o}`, ship_owner_id: b.o, ship_owner_name: OWNERS[b.o], pic_id: 4, pic_name: 'Thu Hà', pic_is_active: 1,
       payout_id: b.paid || null, payout_version: b.paid ? 1 : null, payout_status: b.paid ? 'PAID' : null, paid_date: b.paid ? '2026-11-05' : null,
     }))]],
     ['FROM contract_bill_item WHERE bill_id IN', () => [BILLS.flatMap((b) => Object.entries(b.thu).map(([item_code, v]) => ({ bill_id: b.id, item_code, amount_usd: String(v) })))]],
     ["AND side = 'PAYABLE'", () => [BILLS.map((b) => ({ contract_id: b.c, pay_day: b.c === 6 ? 31 : 15, pay_month_offset: 1, holiday_rule: 'BEFORE' }))]],
     ['FROM contract_item WHERE contract_id IN', () => [BILLS.flatMap((b) => Object.entries(b.tra).map(([item_code, v]) => ({ contract_id: b.c, item_code, payable_usd: String(v) })))]],
     ['FROM seafarer_payout_item WHERE payout_id IN', () => [BILLS.filter((b) => b.paid).flatMap((b) => Object.entries(b.tra).map(([item_code, v]) => ({ payout_id: b.paid, item_code, amount_usd: String(v) })))]],
-    ['FROM seafarer_contract c LEFT JOIN', () => [BILLS.map((b) => ({ id: b.c, start_date: '2026-10-01', end_date: '2027-03-31', creator_name: 'Thu Hà' }))]],
+    ['FROM seafarer_contract c WHERE', () => [BILLS.map((b) => ({ id: b.c, start_date: '2026-10-01', end_date: '2027-03-31' }))]],
     ['FROM contract_payment_term WHERE contract_id IN', () => [BILLS.flatMap((b) => [
       { contract_id: b.c, side: 'RECEIVABLE', closing_day: b.o === 2 ? 25 : 31, pay_day: b.o === 2 ? 5 : 10, pay_month_offset: 1, holiday_rule: 'AFTER' },
       { contract_id: b.c, side: 'PAYABLE', closing_day: 31, pay_day: 15, pay_month_offset: 1, holiday_rule: 'BEFORE' },
@@ -84,7 +84,7 @@ describe('report.service', () => {
     expect(r.rows.map((x) => x.ship_owner_name)).toEqual(['Biển Xanh Co.', 'Đông Á Marine', 'Đông Á Marine', 'Hải Âu Shipping', 'Hải Âu Shipping', 'Hải Âu Shipping'])
     const phuoc = r.rows.find((x) => x.seafarer_name === 'Nguyễn Hữu Phước')
     expect(phuoc).toMatchObject({
-      month: '10/2026', contract_number: 'CH-1/HĐ', creator_name: 'Thu Hà', contract_start: '2026-10-01',
+      month: '10/2026', contract_number: 'CH-1/HĐ', pic_name: 'Thu Hà', contract_start: '2026-10-01',
       thu_BASIC_WAGE: 1500, thu_FLIGHT_OUT: 500, thu_VISA_FEE: 0, thu_monthly: 1750, thu_one_time: 500, thu_total: 2250,
       tra_BASIC_WAGE: 1300, tra_total: 1880, margin: 370,
       r_closing: 'Cuối tháng', r_pay: 'Ngày 10 tháng sau', r_holiday: 'Làm sau', p_pay: 'Ngày 15 tháng sau', p_holiday: 'Làm trước',

@@ -14,9 +14,10 @@ export const isReportKey = (value) => REPORT_OPTIONS.some((option) => option.val
 // Bề rộng cột theo kiểu; hai cột dính của Dữ liệu tổng hợp có bề rộng riêng để tên nhóm dính ngay sau chúng.
 const percent = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-const WIDTH = { text: 170, date: 112, money: 124, int: 76, percent: 112 }
+// Gọn để bớt cuộn ngang (chữ bảng 12px); tên dài cắt bằng … và hiện đủ khi rê chuột.
+const WIDTH = { text: 140, date: 100, money: 108, int: 64, percent: 112 }
 export const STICKY_WIDTH = { month: 84, contract_number: 150 }
-export const columnWidth = (col) => STICKY_WIDTH[col.key] || (col.key === 'no' ? 60 : WIDTH[col.type] || 140)
+export const columnWidth = (col) => STICKY_WIDTH[col.key] || (col.key === 'no' ? 48 : WIDTH[col.type] || 140)
 
 export function formatCell(col, value) {
   if (value == null || value === '') return col.type === 'money' ? formatUsd(0, { fixed: true }) : '—'

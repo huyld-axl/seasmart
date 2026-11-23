@@ -12,7 +12,7 @@ vi.mock('../../../../hooks/useVoyages', () => ({
   useContract: vi.fn(),
   useBillPlan: vi.fn(),
   useBillList: vi.fn(),
-  useContractMutations: () => ({ submit: mutation, withdraw: mutation, remove: mutation, revert: mutation, end: mutation, saveNotes: mutation, approve: mutation, reject: mutation }),
+  useContractMutations: () => ({ submit: mutation, withdraw: mutation, remove: mutation, revert: mutation, end: mutation, saveNotes: mutation, setPic: mutation, approve: mutation, reject: mutation }),
 }))
 vi.mock('../../../../components/ds/useToast', () => ({ default: () => ({ success: vi.fn(), error: vi.fn(), info: vi.fn() }) }))
 

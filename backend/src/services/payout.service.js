@@ -1,4 +1,5 @@
 const { withTransaction } = require('../utils/transaction')
+const { ownSql, picColumns, picOf } = require('../utils/pic')
 const { assertVersion } = require('../utils/row_version')
 const { dueDate } = require('../utils/voyage_math')
 const { payoutDefaults, fullAmounts, sumAmounts, monthRange } = require('../utils/payout_math')
@@ -33,8 +34,8 @@ async function monthRows(pool, query) {
   const params = [from, to]
   let where = 'WHERE b.side = \'RECEIVABLE\' AND b.deleted_at IS NULL AND b.period_end BETWEEN ? AND ?'
   if (query.ownerId) {
-    where += ' AND b.created_by = ?'
-    params.push(Number(query.ownerId))
+    where += ` AND ${ownSql('b')}`
+    params.push(Number(query.ownerId), Number(query.ownerId))
   }
   if (query.search) {
     where += ' AND (unaccent(b.code::text) ILIKE unaccent(?) OR unaccent(c.contract_number::text) ILIKE unaccent(?) OR unaccent(s.full_name::text) ILIKE unaccent(?))'
@@ -49,7 +50,7 @@ async function monthRows(pool, query) {
     `SELECT b.id, b.code, b.seq, b.status, to_char(b.approved_at, ?) AS approved_at, COALESCE(ua.full_name, ua.email) AS approved_by_name, b.contract_id, b.period_start, b.period_end, b.due_date, ${DISPLAY_SQL} AS display_status, ${TOTAL_SQL} AS total_usd,
         (SELECT COUNT(*) FROM contract_bill b2 WHERE b2.contract_id = b.contract_id AND b2.side = b.side AND b2.deleted_at IS NULL) AS periods,
         c.contract_number, c.seafarer_id, s.full_name AS seafarer_name, r.name_vi AS rank_name,
-        ves.id AS vessel_id, ves.vessel_name, o.id AS ship_owner_id, o.company_name AS ship_owner_name,
+        ves.id AS vessel_id, ves.vessel_name, o.id AS ship_owner_id, o.company_name AS ship_owner_name, ${picColumns('pu')},
         sp.id AS payout_id, sp.version AS payout_version, sp.status AS payout_status, sp.paid_date, to_char(sp.updated_at, ?) AS paid_at, sp.bill_total_usd, COALESCE(u.full_name, u.email) AS paid_by_name
      ${BILL_FROM}
      LEFT JOIN seafarer_payout sp ON sp.bill_id = b.id
@@ -100,6 +101,8 @@ async function monthRows(pool, query) {
       contract: { id: row.contract_id, contract_number: row.contract_number },
       ship_owner: { id: row.ship_owner_id, company_name: row.ship_owner_name },
       vessel: { id: row.vessel_id, vessel_name: row.vessel_name },
+      // Người phụ trách bill.
+      pic: picOf(row),
     }
   })
 }
@@ -134,9 +137,9 @@ const payoutService = {
         const failed = []
         const ready = []
         for (const row of rows) {
-          const [[bill]] = await conn.query('SELECT id, code, seq, side, contract_id, created_by FROM contract_bill WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [row.bill_id])
+          const [[bill]] = await conn.query('SELECT id, code, seq, side, contract_id, created_by, pic_user_id FROM contract_bill WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [row.bill_id])
           const fail = (statusCode, message) => failed.push({ bill_id: row.bill_id, code: bill?.code ?? null, statusCode, message })
-          if (!bill || (ownerId && bill.created_by !== Number(ownerId))) { fail(404, 'Không tìm thấy yêu cầu thanh toán'); continue }
+          if (!bill || (ownerId && bill.created_by !== Number(ownerId) && bill.pic_user_id !== Number(ownerId))) { fail(404, 'Không tìm thấy yêu cầu thanh toán'); continue }
           if (bill.side !== 'RECEIVABLE') { fail(400, 'Không phải yêu cầu thanh toán phải thu'); continue }
           const [[payout]] = await conn.query('SELECT id, status, version FROM seafarer_payout WHERE bill_id = ? FOR UPDATE', [bill.id])
           if (payout?.status === 'PAID') { fail(409, 'Đã chốt trả lương'); continue }
@@ -184,9 +187,9 @@ const payoutService = {
   async unpay(pool, id, version, userId, ownerId = null) {
     await withTransaction(pool, async (conn) => {
       const [[payout]] = await conn.query(
-        `SELECT p.id, p.status, p.version, p.updated_at, p.updated_by, b.created_by AS bill_created_by
+        `SELECT p.id, p.status, p.version, p.updated_at, p.updated_by, b.created_by AS bill_created_by, b.pic_user_id AS bill_pic_user_id
          FROM seafarer_payout p JOIN contract_bill b ON b.id = p.bill_id WHERE p.id = ? AND b.deleted_at IS NULL FOR UPDATE OF p`, [id])
-      if (!payout || (ownerId && payout.bill_created_by !== Number(ownerId))) throw { statusCode: 404, message: 'Không tìm thấy bản ghi trả lương' }
+      if (!payout || (ownerId && payout.bill_created_by !== Number(ownerId) && payout.bill_pic_user_id !== Number(ownerId))) throw { statusCode: 404, message: 'Không tìm thấy bản ghi trả lương' }
       await assertVersion(conn, payout, version)
       if (payout.status !== 'PAID') throw { statusCode: 409, message: 'Dòng này chưa chốt trả lương' }
       await conn.query('UPDATE seafarer_payout SET ? WHERE id = ?', [{ status: 'UNPAID', paid_date: null, paid_by: null, bill_total_usd: null, updated_by: userId ?? null }, id])

@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
-import { Button, Dropdown, Tooltip } from 'antd'
+import { Button, Dropdown } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import { DownOutlined, FileExcelOutlined, FilePdfOutlined, FolderOutlined } from '@ant-design/icons'
 import { DownloadIcon } from '../../../components/ds/TransferIcons'
 import { exportApi } from '../../../api/exportApi'

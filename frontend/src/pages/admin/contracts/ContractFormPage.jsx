@@ -27,6 +27,8 @@ import '../seafarers/SeafarerForm.css'
 import '../seafarers/SeafarerProfile.css'
 import '../fleet/fleet.css'
 import './contracts.css'
+import { PicSelect } from '../../../components/common/PersonInCharge'
+import useAuthStore from '../../../stores/authStore'
 
 const DATE_FORMAT = 'DD/MM/YYYY'
 
@@ -66,6 +68,11 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
   const [search, setSearch] = useState('')
   const [picked, setPicked] = useState(presetVoyage || null)
   const [blocked, setBlocked] = useState(null)
+  const me = useAuthStore((state) => state.user)
+  // Form thêm: chưa có người phụ trách (thuyền viên chưa giao) thì điền người đang thêm.
+  useEffect(() => {
+    if (!isEdit && me?.id && !form.getFieldValue('pic_user_id')) form.setFieldValue('pic_user_id', me.id)
+  }, [isEdit, me, form])
 
   const voyages = useQuery({
     queryKey: ['voyages', 'contract-picker', search],
@@ -91,6 +98,8 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
     setPicked(row)
     // S, E chép từ chuyến lúc chọn; sau đó sửa tự do.
     if (row) form.setFieldsValue({ start_date: dayjs(row.join_date), end_date: dayjs(row.planned_leave_date) })
+    // Người phụ trách theo thuyền viên của chuyến, trừ khi đã tự chọn.
+    if (row && !form.isFieldTouched('pic_user_id')) form.setFieldValue('pic_user_id', row.seafarer_pic_user_id ?? me?.id ?? null)
   }
 
   // Lỗi 409 vì bill bị ảnh hưởng đã gửi / đã thu: lỗi dưới ô ngày và banner liệt kê bill (Màn 10).
@@ -108,7 +117,7 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
   const conflict = useEditConflict({
     form,
     initial,
-    labels: { start_date: 'Ngày bắt đầu', end_date: 'Ngày kết thúc', items: 'Các khoản tiền', terms: 'Kỳ thanh toán', notes: 'Ghi chú' },
+    labels: { start_date: 'Ngày bắt đầu', end_date: 'Ngày kết thúc', items: 'Các khoản tiền', terms: 'Kỳ thanh toán', notes: 'Ghi chú', pic_user_id: 'Người phụ trách' },
     reload: async () => {
       const latest = await seafarerContractApi.get(contract.contract.id)
       queryClient.setQueryData(['contracts', 'item', String(contract.contract.id)], latest)
@@ -224,6 +233,15 @@ function ContractForm({ contract, presetVoyage, initial, lockVoyage, onSavedAndN
                 extra={months != null ? formatCalendarDuration(values.start_date, values.end_date) : !isEdit ? 'Điền sẵn từ ngày rời dự kiến, sửa được' : undefined}
               >
                 <DateField format={DATE_FORMAT} placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.Item
+                name="pic_user_id"
+                className="sf-c6"
+                label="Người phụ trách"
+                rules={[{ required: true, message: 'Chọn người phụ trách' }]}
+                extra={!isEdit ? 'Theo người phụ trách của thuyền viên, đổi được' : undefined}
+              >
+                <PicSelect current={contract?.contract?.pic} />
               </Form.Item>
               <Form.Item name="notes" className="sf-c6" label="Ghi chú">
                 <Input.TextArea rows={1} autoSize={{ minRows: 1, maxRows: 4 }} maxLength={2000} placeholder="Ghi chú cho hợp đồng này" />

@@ -1,6 +1,7 @@
 import { Fragment, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { Button, Dropdown, Skeleton, Space, Table, Tooltip } from 'antd'
+import { Button, Dropdown, Skeleton, Space, Table } from 'antd'
+import Tooltip from '../../../components/ds/Tooltip'
 import { DownOutlined, DownloadOutlined, LeftOutlined, RightOutlined } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import useListSessionState from '../../../hooks/useListSessionState'
@@ -127,14 +128,6 @@ export default function ReportPage() {
           {exportButton ? <span className="ds-toolbar__end">{exportButton}</span> : null}
         </div>
         {body}
-        {month && rows.length > 0 && !isMobile ? (
-          <div className="ds-table-foot ds-list-foot">
-            <span className="ds-list-foot__info">
-              <span className="ds-num">{data.bill_count} yêu cầu thanh toán · kỳ kết thúc trong {monthLabel(month)}</span>
-              <span className="ds-list-foot__note">Mọi trạng thái · USD</span>
-            </span>
-          </div>
-        ) : null}
       </div>
     </div>
   )
@@ -143,7 +136,10 @@ export default function ReportPage() {
 function Cell({ col, row }) {
   const text = formatCell(col, row[col.key])
   const to = linkOf(col, row)
-  if (to) return <Link to={to}>{text}</Link>
+  const content = to ? <Link to={to}>{text}</Link> : text
+  // Chữ dài bị cắt "…": rê chuột xem đủ, cùng kiểu tooltip của cả app.
+  if (col.type === 'text' && row[col.key]) return <Tooltip title={text} mouseEnterDelay={0.3}><span className="rp-clip">{content}</span></Tooltip>
+  if (to) return content
   return col.type === 'money' && Number(row[col.key]) < 0 ? <span className="rp-neg">{text}</span> : text
 }
 
@@ -173,11 +169,12 @@ function ReportTable({ columns, rows, totals, fixedWidth, scroll }) {
     ? [{ key: `g-${list[0].key}`, title: <span className="rp-group-label">{group}</span>, className: 'rp-group', children: list.map((col, i) => leaf(col, i === 0)) }]
     : list.map((col) => leaf(col, false))))
   const width = columns.reduce((total, col) => total + columnWidth(col), 0)
-  // antd kéo ô cuối của dòng tổng sang cả chỗ thanh cuộn dọc (colSpan 2): bù lề phải đúng bề rộng thanh cuộn để số thẳng cột trên.
+  // antd kéo ô cuối của dòng tổng sang cả chỗ thanh cuộn dọc: bù lề phải đúng bề rộng chỗ đó để số thẳng cột trên, không bị che.
   const wrap = useRef(null)
   useLayoutEffect(() => {
-    const body = wrap.current?.querySelector('.ant-table-body')
-    if (body) wrap.current.style.setProperty('--rp-sb', `${body.offsetWidth - body.clientWidth}px`)
+    // Đo ô giữ chỗ thanh cuộn ở tiêu đề (antd vẫn để chỗ này khi thân bảng không có thanh cuộn).
+    const bar = wrap.current?.querySelector('.ant-table-thead th.ant-table-cell-scrollbar')
+    wrap.current?.style.setProperty('--rp-sb', `${bar ? bar.offsetWidth : 0}px`)
   })
   return (
     <div ref={wrap} className="rp-table-wrap">

@@ -17,6 +17,9 @@ async function usersRoutes(fastify) {
     return { data: result.rows, total: result.total, page: result.page, limit: result.limit }
   })
 
+  // GET /api/v1/users/options — ô chọn người phụ trách
+  fastify.get('/options', { onRequest: [fastify.authenticate] }, async () => ({ data: await userService.listUserOptions() }))
+
   // GET /api/v1/users/:id
   fastify.get('/:id', guard(fastify, 'account.view'), async (request, reply) => {
     const user = await userService.getUserById(request.params.id)

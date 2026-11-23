@@ -101,6 +101,7 @@ export function useContractMutations() {
       ...options,
     }),
     saveNotes: useMutation({ mutationFn: ({ id, notes }) => seafarerContractApi.updateNotes(id, notes), ...options }),
+    setPic: useMutation({ mutationFn: ({ id, picUserId }) => seafarerContractApi.setPic(id, picUserId), ...options }),
     remove: useMutation({ mutationFn: (id) => seafarerContractApi.remove(id), ...options }),
     submit: useMutation({ mutationFn: (id) => seafarerContractApi.submit(id), ...options }),
     withdraw: useMutation({ mutationFn: (id) => seafarerContractApi.withdraw(id), ...options }),
@@ -141,6 +142,7 @@ export function useBillMutations() {
     save: useMutation({ mutationFn: ({ id, ...body }) => billApi.update(id, body), ...options }),
     move: useMutation({ mutationFn: ({ id, action, ...body }) => billApi.move(id, action, body), ...options }),
     unapproveMany: useMutation({ mutationFn: (ids) => billApi.unapproveMany(ids), ...options }),
+    setPic: useMutation({ mutationFn: ({ id, picUserId }) => billApi.setPic(id, picUserId), ...options }),
   }
 }
 

@@ -10,6 +10,7 @@ const { trashFiles } = require('../utils/file_trash')
 const sharp = require('sharp')
 const config = require('../config')
 const { assertSeafarerData } = require('../utils/field_rules')
+const { assertAssignable, ownSql, picFilter, picColumns, picOf } = require('../utils/pic')
 
 // Whitelist các fields được phép INSERT/UPDATE từ client
 const ALLOWED_FIELDS = [
@@ -69,6 +70,7 @@ const ALLOWED_FIELDS = [
   'contract_duration_raw',
   'contract_salary_raw',
   'notes',
+  'pic_user_id',
 ]
 
 // So giá trị cũ và mới (ngày so theo YYYY-MM-DD, số so như chuỗi); chỉ giữ trường thật sự đổi.
@@ -87,6 +89,14 @@ function diffFields(before, after) {
     if (from !== to) changes[key] = [from, to]
   }
   return changes
+}
+
+// Lịch sử hồ sơ ghi tên người phụ trách, không ghi id.
+async function picNames(db, fromId, toId) {
+  const ids = [fromId, toId].filter((id) => id != null)
+  const [rows] = await db.query('SELECT id, COALESCE(full_name, email) AS name FROM "user" WHERE id IN (?)', [ids.length ? ids : [0]])
+  const name = (id) => rows.find((row) => Number(row.id) === Number(id))?.name ?? null
+  return [name(fromId), name(toId)]
 }
 
 function pickAllowed(data) {
@@ -192,14 +202,22 @@ const SORTS = {
 }
 
 const seafarerService = {
-  async list({ page = 1, limit = 20, search, status, rank_id, tab, ownerId, rankIds = [], vesselIds = [], certTypeIds = [], ageMin = null, ageMax = null, sort = null }) {
+  async list({ page = 1, limit = 20, search, status, rank_id, tab, ownerId, picUserId = null, rankIds = [], vesselIds = [], certTypeIds = [], ageMin = null, ageMax = null, sort = null }) {
     const offset = (page - 1) * limit
     const where = ['s.deleted_at IS NULL']
     const params = []
 
     if (ownerId) {
-      where.push('s.created_by = ?')
-      params.push(ownerId)
+      where.push(ownSql('s'))
+      params.push(ownerId, ownerId)
+    }
+    if (picUserId) {
+      const picParams = []
+      const sql = picFilter('s', picUserId, picParams)
+      if (sql) {
+        where.push(sql.replace(/^ AND /, ''))
+        params.push(...picParams)
+      }
     }
     if (search) {
       where.push(
@@ -262,39 +280,45 @@ const seafarerService = {
     const selectFields = `s.id, s.seafarer_code, s.full_name, s.national_id, s.date_of_birth,
          s.gender, s.place_of_birth, s.phone_primary, s.email, s.status, s.user_id,
          s.photo_updated_at, (s.photo_path IS NOT NULL) AS has_photo,
-         r.name_vi as rank_name, r.code as rank_code, ${OVERVIEW_FIELDS}`
+         r.name_vi as rank_name, r.code as rank_code, ${picColumns('pu')}, ${OVERVIEW_FIELDS}`
 
     const [rows] = await pool.query(
       `SELECT ${selectFields}
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
+       LEFT JOIN "user" pu ON pu.id = s.pic_user_id
        ${whereStr}
        ORDER BY ${SORTS[sort] || SORTS.newest}
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     )
 
-    return { data: rows.map(shapeRow), total, page, limit, counts }
+    return { data: rows.map((row) => {
+      const { pic_id, pic_name, pic_is_active, ...rest } = shapeRow(row)
+      return { ...rest, pic: picOf({ pic_id, pic_name, pic_is_active }) }
+    }), total, page, limit, counts }
   },
 
   async getById(id) {
     const [rows] = await pool.query(
-      `SELECT s.*, r.name_vi as rank_name, COALESCE(c.name_vi, c.name_en) as nationality_name, c.code AS nationality_code, c.flag_emoji AS nationality_flag_emoji
+      `SELECT s.*, r.name_vi as rank_name, COALESCE(c.name_vi, c.name_en) as nationality_name, c.code AS nationality_code, c.flag_emoji AS nationality_flag_emoji,
+         ${picColumns('pu')}
        FROM seafarer s
        LEFT JOIN "rank" r ON r.id = s.current_rank_id
        LEFT JOIN country c ON c.id = s.nationality_id
+       LEFT JOIN "user" pu ON pu.id = s.pic_user_id
        WHERE s.id = ? AND s.deleted_at IS NULL`,
       [id]
     )
     if (!rows[0]) throw { statusCode: 404, message: 'Không tìm thấy thuyền viên' }
 
     let result = rows[0]
-    const { photo_path, photo_mime, ...rest } = result
+    const { photo_path, photo_mime, pic_id, pic_name, pic_is_active, ...rest } = result
     const [banks] = await pool.query(
       'SELECT id, bank_name, account_number, account_holder FROM seafarer_bank_account WHERE seafarer_id = ? ORDER BY sort_order, id',
       [id]
     )
-    result = { ...rest, has_photo: Boolean(photo_path), bank_accounts: banks }
+    result = { ...rest, pic: picOf({ pic_id, pic_name, pic_is_active }), has_photo: Boolean(photo_path), bank_accounts: banks }
     return result
   },
 
@@ -303,6 +327,10 @@ const seafarerService = {
     assertSeafarerData(data)
     const id = await withTransaction(pool, async (db) => {
       const safeData = pickAllowed(data)
+      // Người phụ trách không bắt buộc: không gửi thì mặc định là người thêm hồ sơ, gửi rỗng thì để chưa giao.
+      if (safeData.pic_user_id) await assertAssignable(db, safeData.pic_user_id)
+      else if (safeData.pic_user_id === undefined) safeData.pic_user_id = created_by ?? null
+      else safeData.pic_user_id = null
       if (!String(safeData.seafarer_code || '').trim()) {
         const book = String(safeData.seaman_book_number || '').trim()
         if (book) safeData.seafarer_code = book
@@ -451,6 +479,11 @@ const seafarerService = {
       safeData.seafarer_code = book
     }
     const changes = diffFields(before, safeData)
+    if (changes.pic_user_id) {
+      if (safeData.pic_user_id) await assertAssignable(db, safeData.pic_user_id)
+      else safeData.pic_user_id = null
+      changes.pic_user_id = await picNames(db, before.pic_user_id, safeData.pic_user_id)
+    }
     Object.assign(changes, await this.saveLists(db, id, data))
     if (!Object.keys(changes).length) return changes
     // updated_at do trigger touch_updated_at đặt.
@@ -539,8 +572,8 @@ const seafarerService = {
     const params = []
 
     if (ownerId) {
-      where.push('s.created_by = ?')
-      params.push(ownerId)
+      where.push(ownSql('s'))
+      params.push(ownerId, ownerId)
     }
 
     if (search) {

@@ -57,7 +57,10 @@ function ownFilter(request, module, column) {
 // Dùng sau khi đọc một bản ghi theo id; ngoài phạm vi thì 404 (không lộ là có tồn tại).
 function assertInScope(request, module, row, message = 'Không tìm thấy') {
   if (scopeOf(request, module) !== 'own') return
-  if (!row || row.created_by == null || Number(row.created_by) !== Number(request.access.userId)) {
+  // Của mình = mình tạo hoặc mình phụ trách (bảng có cột pic_user_id).
+  const me = Number(request.access.userId)
+  const mine = row && ((row.created_by != null && Number(row.created_by) === me) || (row.pic_user_id != null && Number(row.pic_user_id) === me))
+  if (!mine) {
     throw { statusCode: 404, message }
   }
 }

@@ -20,6 +20,7 @@ export const billApi = {
   list: (params) => api.get('/bills', { params }).then((r) => r.data),
   get: (id) => api.get(`/bills/${id}`).then((r) => r.data),
   update: (id, data) => api.put(`/bills/${id}`, data).then((r) => r.data),
+  setPic: (id, picUserId) => api.put(`/bills/${id}/pic`, { pic_user_id: picUserId }).then((r) => r.data),
   unapproveMany: (ids) => api.post('/bills/bulk-unapprove', { ids }).then((r) => r.data),
   move: (id, action, body) => api.post(`/bills/${id}/${action}`, body || {}).then((r) => r.data),
 }
@@ -38,6 +39,7 @@ export const seafarerContractApi = {
   create: (data) => api.post('/contracts', data).then((r) => r.data),
   update: (id, data) => api.put(`/contracts/${id}`, data).then((r) => r.data),
   updateNotes: (id, notes) => api.patch(`/contracts/${id}/notes`, { notes }).then((r) => r.data),
+  setPic: (id, picUserId) => api.put(`/contracts/${id}/pic`, { pic_user_id: picUserId }).then((r) => r.data),
   remove: (id) => api.delete(`/contracts/${id}`).then((r) => r.data),
   submit: (id) => api.post(`/contracts/${id}/submit`).then((r) => r.data),
   withdraw: (id) => api.post(`/contracts/${id}/withdraw`).then((r) => r.data),

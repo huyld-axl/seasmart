@@ -14,6 +14,7 @@ import ListCard, { ListCardList } from '../../components/ds/ListCard'
 import StatusBadge from '../../components/ds/StatusBadge'
 import CrewThumb from './seafarers/CrewThumb'
 import { CrewFilterFields, CrewFilterButton } from './seafarers/CrewFilters'
+import { PicName } from '../../components/common/PersonInCharge'
 import ListFilters from '../../components/ds/ListFilters'
 import Fab from '../../components/ds/Fab'
 import { EMPTY_FILTERS, filterCount, filterParams } from './seafarers/crewFilterState'
@@ -119,6 +120,7 @@ export default function SeafarerListPage() {
     { title: 'Nơi sinh', dataIndex: 'place_of_birth', responsive: ['lg'], render: (value) => value || '—' },
     { title: 'Hộ chiếu', dataIndex: 'passport_number', width: 130, responsive: ['lg'], render: (value) => (value ? <span className="ds-mono">{value}</span> : '—') },
     { title: 'Tình trạng', key: 'where', render: (_, row) => <StatusBadge group="crew" value={row.status} /> },
+    { title: 'Phụ trách', key: 'pic', responsive: ['lg'], render: (_, row) => <PicName pic={row.pic} /> },
     {
       title: 'Tàu đang sign on',
       key: 'vessel',
@@ -166,6 +168,7 @@ export default function SeafarerListPage() {
               fields={[
                 { label: 'Tàu hiện tại', value: onboard?.vessel },
                 { label: 'Hợp đồng', value: onboard?.until },
+                { label: 'Phụ trách', value: row.pic?.name ?? 'Chưa giao' },
               ]}
               alert={seafarerAlert(row)}
               onOpen={() => open(row)}

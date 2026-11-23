@@ -16,6 +16,8 @@ const listQuery = {
     ship_owner_id: id,
     seafarer_voyage_id: id,
     contract_id: id,
+    // Người phụ trách: id hoặc 'none' (chưa giao).
+    pic_user_id: { type: 'string', maxLength: 12 },
     page: { type: 'integer', minimum: 1 },
     limit: { type: 'integer', minimum: 1, maximum: 100 },
   },
@@ -40,6 +42,7 @@ const updateBody = {
     },
   },
 }
+const picBody = { type: 'object', required: ['pic_user_id'], properties: { pic_user_id: id } }
 const collectBody = { type: 'object', properties: { paid_date: date } }
 
 async function contractBillRoutes(fastify) {
@@ -55,6 +58,11 @@ async function contractBillRoutes(fastify) {
   fastify.put('/:id', { ...can('update'), schema: { params: idParams, body: updateBody } }, async (request) => {
     await inScope(request)
     return contractBillService.update(pool, request.params.id, request.body, request.user.id)
+  })
+  // Đổi người phụ trách: mọi trạng thái, chỉ đổi bill này.
+  fastify.put('/:id/pic', { ...can('update'), schema: { params: idParams, body: picBody } }, async (request) => {
+    await inScope(request)
+    return contractBillService.assignPic(pool, request.params.id, request.body.pic_user_id, request.user.id)
   })
   fastify.post('/bulk-unapprove', {
     ...can('approve'),

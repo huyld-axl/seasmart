@@ -1,4 +1,5 @@
-import { App, Tooltip } from 'antd'
+import { App } from 'antd'
+import Tooltip from './Tooltip'
 import { MailOutlined, MessageOutlined, PhoneOutlined } from '@ant-design/icons'
 import ZaloButton from '../common/ZaloButton'
 import CopyButton from './CopyButton'

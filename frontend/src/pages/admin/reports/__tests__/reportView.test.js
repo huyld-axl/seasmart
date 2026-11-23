@@ -39,7 +39,7 @@ describe('reportView', () => {
 
   it('tên nhóm dính sau tổng bề rộng các cột dính', () => {
     expect(stickyWidth(base)).toBe(84 + 150)
-    expect(stickyWidth([{ key: 'ship_owner_name', type: 'text', sticky: true }])).toBe(170)
+    expect(stickyWidth([{ key: 'ship_owner_name', type: 'text', sticky: true }])).toBe(140)
   })
 
   it('link chi tiết', () => {

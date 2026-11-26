@@ -79,7 +79,7 @@ App hiện là web: một máy chủ chạy Fastify + PostgreSQL (Docker), ngư�
 | Gửi email nghiệp vụ | SMTP cấu hình chung trong `.env` | **Mở thư mới trong app mail của máy đang dùng**, tự đính kèm tệp. SMTP là cách phụ. Mục 8.1 |
 | SMS | Webhook trong `.env` | **Tạm bỏ.** Code `sms.service.js` để nguyên, không nối vào app |
 | Việc chạy theo giờ (`jobs.js`) | 2h, 3h, 7h sáng và mỗi 5 phút | Chạy trên máy chính khi app mở; **chạy bù** việc bị lỡ lúc mở app |
-| Xuất Excel sang PDF | LibreOffice (`soffice`) trên máy chủ | Chạy trên máy chính; cài LibreOffice bằng một nút (Q6) |
+| Xuất Excel sang PDF | LibreOffice (`soffice`) trên máy chủ | In bằng Chromium có sẵn của app (Q6, đổi 2026-11-26): không cài gì thêm |
 | `JWT_SECRET` | Đặt tay trong `.env` | Máy chính tự sinh lần cài đầu, cất trong két hệ điều hành |
 | Giao diện điện thoại | Đã làm responsive 375px | **Không phát triển tiếp** (Q2). Code giữ nguyên, không xoá |
 
@@ -236,7 +236,7 @@ seasmart/
 | **Q3** | Hệ điều hành nào? | **Windows và Ubuntu** | Bộ cài `.exe` + `.deb` |
 | **Q4** | PostgreSQL hay SQLite? | **PostgreSQL** | Mục 4.3 |
 | **Q5** | Bán theo kiểu nào? | **Việc của sales**, chưa chốt | Không đưa vào kế hoạch kỹ thuật |
-| **Q6** | LibreOffice để xuất PDF | **Không đóng gói.** Máy chính cài bằng một nút; Ubuntu `.deb` tự kéo theo. Không đóng gói Thunderbird, chỉ có nút "Cài Thunderbird" | Mục 4.4, 8.1 |
+| **Q6** | LibreOffice để xuất PDF | **Đổi 2026-11-26: không dùng LibreOffice trong app.** PDF in bằng Chromium của Electron từ chính bản xem trước biểu mẫu (`desktop/src/pdf-printer.js`, `backend/src/utils/sheet_html.js`), chạy Windows / Ubuntu / macOS, bộ cài không nặng thêm. Bản web vẫn dùng LibreOffice trên máy chủ. Không đóng gói Thunderbird, chỉ có nút "Cài Thunderbird" | Mục 4.4 (lý do cũ, đã thay) |
 | **Q7** | Bản web có khách thật không? | **Không** | Không chuyển dữ liệu từ web |
 | **Q8** | Bản quyền | **Chưa làm** | Mục 7 |
 | **Q9** | Dùng offline tối đa bao lâu (cho bản quyền) | **Bỏ** | — |
@@ -267,7 +267,7 @@ SQLite là cơ sở dữ liệu nằm gọn trong **một tệp**. Điểm tốt
 
 → **PostgreSQL.** Cơ sở dữ liệu **không tự mã hoá**: tài liệu giấy tờ thì mã hoá (mục 5.5), còn dữ liệu chữ trong DB được bảo vệ bằng **mã hoá ổ đĩa máy chính** (BitLocker trên Windows; Ubuntu chọn "mã hoá ổ đĩa" lúc cài hệ điều hành) và quyền tài khoản hệ điều hành.
 
-### 4.4 Q6: vì sao không đóng gói LibreOffice và Thunderbird
+### 4.4 Q6: vì sao không đóng gói LibreOffice và Thunderbird (phần LibreOffice đã thay ngày 2026-11-26, xem bảng Q6)
 
 | | Nhét LibreOffice vào bộ cài | Máy chính tự tải bằng một nút **(đã chốt)** |
 |---|---|---|
@@ -850,3 +850,4 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 | 2026-11-13 | 5 | Code giai đoạn 5 trên Ubuntu | Backend và vỏ app thành bytecode, không còn mã nguồn / .map trong bộ cài, chặn cờ gỡ lỗi, cảnh báo dùng bất thường; chờ Windows (C1, Defender, bytecode bản Windows) |
 | 2026-11-13 | 6 | Viết kế hoạch chi tiết giai đoạn 6 | `docs/mcah-ke-hoach-desktop-gd6.md`, wireframe, testcase, hướng dẫn nháp; chờ duyệt và Q-F1 (đẩy bộ cài lên server), Q-F2 (máy giữ khoá ký) |
 | 2026-11-13 | 6 | Code giai đoạn 6 | Khoá ký chung, script phát hành có chặn, kênh beta/ổn định, ghi chú thay đổi, gỡ giữ dữ liệu, trang Tải về; chờ server (chỗ phát), Windows, phát thử |
+| 2026-11-26 | — | Đổi Q6 | App máy tính xuất PDF bằng Chromium của Electron, bỏ cài LibreOffice; thêm đổi mã PIN trên máy (PIN theo máy, quản trị không đặt lại hộ); bản 0.9.13 |

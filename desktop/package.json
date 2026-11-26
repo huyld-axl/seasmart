@@ -1,6 +1,6 @@
 {
   "name": "mcah-desktop",
-  "version": "0.9.12",
+  "version": "0.9.13",
   "private": true,
   "description": "App máy tính MCAH (Electron)",
   "main": "src/main.js",
@@ -81,7 +81,7 @@
     },
     "deb": {
       "recommends": [
-        "libreoffice-calc"
+        "fonts-liberation"
       ],
       "depends": [
         "libnss3",

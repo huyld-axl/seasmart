@@ -18,11 +18,10 @@ function readOrCreateSecret(file, bytes) {
   return secret
 }
 
-// soffice: đường dẫn LibreOffice đã dò; null thì đặt một đường dẫn không có để backend trả lỗi
-// "Cần cài thành phần xuất PDF" (không chạy nhầm `soffice` lạ trên PATH). mailDir: thư mục gửi thư (mail.js).
+// mailDir: thư mục gửi thư (mail.js). PDF in bằng Chromium của app (pdf-printer.js), không cần LibreOffice.
 // filesDir: thư mục hồ sơ dễ đọc (docs/mcah-ke-hoach-desktop-gd4.md 3.2, Q-B2: Tài liệu/MCAH - Hồ sơ).
 // Thư mục tạm của app (<userData>/tmp) xoá sạch mỗi lần khởi động.
-function backendEnv(userData, dbEnv, port, { soffice = null, mailDir, filesDir = null } = {}) {
+function backendEnv(userData, dbEnv, port, { mailDir, filesDir = null } = {}) {
   const uploadDir = path.join(userData, 'uploads')
   fs.mkdirSync(uploadDir, { recursive: true })
   const tmpDir = path.join(userData, 'tmp')
@@ -35,7 +34,6 @@ function backendEnv(userData, dbEnv, port, { soffice = null, mailDir, filesDir =
     // AI đọc giấy tờ, tra IMO, danh mục tàu chạy ở máy chủ dịch vụ MCAH (bộ cài không có khoá).
     AI_PROVIDER: 'cloud',
     VESSEL_LOOKUP_PROVIDER: 'cloud',
-    SOFFICE_PATH: soffice || path.join(userData, 'chua-cai-libreoffice', 'soffice'),
     MAIL_DIR: mailDir,
     HOST: '127.0.0.1',
     PORT: String(port),

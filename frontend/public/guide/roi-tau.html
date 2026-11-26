@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rời tàu, sửa và kết thúc hợp đồng · Hướng dẫn MCAH</title>
+<meta name="description" content="Rời tàu sớm hoặc muộn, sửa ngày, kết thúc hợp đồng, nhãn cảnh báo.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="roi-tau">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hợp đồng và tiền</div>
+      <h1>Rời tàu, sửa và kết thúc hợp đồng</h1>
+      <p class="lead">Rời tàu sớm hoặc muộn, sửa ngày, kết thúc hợp đồng, nhãn cảnh báo.</p>
+    </header>
+    <section id="roi-tau">
+      <p>Điều quan trọng nhất: <b>sửa ngày của chuyến không bao giờ đụng tới tiền</b>. Muốn đổi tiền thì sửa hợp đồng, và tiền chỉ đổi khi hợp đồng được duyệt lại.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Phần</th><th>Ghi gì</th><th>Đổi khi nào</th></tr></thead>
+          <tbody>
+            <tr><td>Chuyến tàu</td><td>Sự việc thật: ai lên tàu nào, ngày xuống, ngày rời</td><td>Ghi rời tàu, sửa ngày đã ghi. Đổi trạng thái thuyền viên</td></tr>
+            <tr><td>Hợp đồng</td><td>Thoả thuận tiền: ngày bắt đầu, kết thúc, phải thu, phải trả</td><td>Chỉ khi đưa về Nháp, sửa và duyệt lại. Ngày chỉ chép từ chuyến một lần, lúc chốt</td></tr>
+            <tr><td>Yêu cầu thanh toán</td><td>Các kỳ thu tiền, cắt theo ngày chốt sổ</td><td>Chỉ khi hợp đồng được duyệt</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 id="thuyen-vien-roi-tau-som-hoac-o-lai-lau-hon">Thuyền viên rời tàu sớm hoặc ở lại lâu hơn</h3>
+      <p>Ghi rời tàu chỉ đổi chuyến. Nếu hợp đồng còn kéo dài sau ngày rời, trang chuyến và trang hợp đồng hiện nhãn vàng "Đã rời tàu …, hợp đồng còn tới …", và các kỳ thu vẫn chạy tới ngày kết thúc hợp đồng. Muốn tiền khớp ngày rời thì sửa ngày kết thúc hợp đồng như sau:</p>
+      <ol class="steps">
+        <li><span>Mở hợp đồng Hiệu lực, bấm <span class="ui">Đưa về Nháp</span>. Hợp đồng có nhãn <span class="tag t-warning">Chờ duyệt lại</span>; các kỳ cũ vẫn gửi, thu bình thường.</span></li>
+        <li><span>Bấm <span class="ui">Sửa hợp đồng</span>, đổi ngày hoặc tiền, lưu. Trang hợp đồng cho xem trước các kỳ sẽ đổi ra sao.</span></li>
+        <li><span><span class="ui">Xin duyệt</span>. Người duyệt mở hộp duyệt: nếu kỳ thu sẽ thay đổi, hộp liệt kê từng kỳ, ô "Tôi đã xem các thay đổi trên" chỉ tick được sau 5 giây, rồi mới bấm được Xác nhận và duyệt.</span></li>
+      </ol>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Bạn đã đổi</th><th>Khi duyệt lại</th><th>Các kỳ bị ảnh hưởng phải</th></tr></thead>
+          <tbody>
+            <tr><td>Ngày kết thúc sớm hơn</td><td>Kỳ chứa ngày mới bị cắt về ngày đó, số tiền vẫn đủ tháng; các kỳ sau bị xoá</td><td>Chưa duyệt</td></tr>
+            <tr><td>Ngày kết thúc muộn hơn</td><td>Giữ kỳ cũ, sinh thêm kỳ cho phần kéo dài (đủ tháng, không có khoản một lần)</td><td>Không cần</td></tr>
+            <tr><td>Ngày bắt đầu</td><td>Xoá mọi kỳ cũ, sinh lại từ ngày mới; số đã sửa tay trên kỳ cũ mất</td><td>Mọi kỳ chưa duyệt</td></tr>
+            <tr><td>Chỉ tiền</td><td>Không đổi kỳ nào. Kỳ đang có giữ số cũ: mở từng kỳ chưa duyệt để sửa tay</td><td>Không cần</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note note--warn">
+        <i>!</i>
+        <b>Khi bị chặn</b>
+        <p>App không cho đổi ngày nếu một kỳ cần cắt hoặc xoá đã gửi hay đã thu, và hiện khung đỏ liệt kê đúng các kỳ đó. Gỡ từng kỳ: Đã thu → <b>Huỷ ghi nhận thu</b>; Đã gửi → <b>Thu hồi</b>; Đã duyệt → <b>Bỏ duyệt</b> (hoặc Bỏ duyệt hàng loạt ngay trong hộp duyệt). Hoặc chọn ngày kết thúc không đụng tới kỳ đã gửi, đã thu. Nhớ báo lại chủ tàu nếu đã gửi kỳ đó.</p>
+      </div>
+      <h3 id="ket-thuc-hop-dong">Kết thúc hợp đồng</h3>
+      <p>Hợp đồng không tự hết hạn. Xong việc thì mở hợp đồng Hiệu lực, bấm <span class="ui">Kết thúc hợp đồng</span>; hợp đồng sang Đã kết thúc và <b>không mở lại được</b>. Kết thúc không đổi ngày và không đổi kỳ thu; muốn rút ngắn kỳ thu thì sửa ngày kết thúc trước.</p>
+      <h3 id="huy-chot-hoac-xoa-chuyen-khi-da-co-hop-dong">Huỷ chốt hoặc xoá chuyến khi đã có hợp đồng</h3>
+      <p>Được, nếu hợp đồng còn Nháp, Chờ duyệt hoặc Bị từ chối: hợp đồng bị xoá cùng chuyến, hộp xác nhận ghi rõ số hợp đồng. Không được nếu hợp đồng đã Hiệu lực, Đã kết thúc hoặc đang Chờ duyệt lại.</p>
+      <h3 id="nhan-canh-bao">Nhãn cảnh báo</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Nhãn</th><th>Nghĩa</th><th>Ở đâu</th></tr></thead>
+          <tbody>
+            <tr><td>Đang có hợp đồng …</td><td>Ứng viên còn một hợp đồng chưa kết thúc</td><td>Ứng viên trên cơ hội, hộp Chốt</td></tr>
+            <tr><td>Đã rời tàu …</td><td>Đã rời tàu nhưng hợp đồng còn kéo dài sau ngày rời</td><td>Trang chuyến, trang và danh sách hợp đồng</td></tr>
+            <tr><td>Chờ duyệt lại</td><td>Hợp đồng từng hiệu lực, đang sửa, chưa duyệt lại; kỳ thu vẫn là bản cũ</td><td>Trang và danh sách hợp đồng</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Các nhãn chỉ để nhắc, app không tự sửa gì.</p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

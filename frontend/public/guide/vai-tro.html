@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vai trò và phân quyền · Hướng dẫn MCAH</title>
+<meta name="description" content="Vai trò, quyền và phạm vi dữ liệu; tạo và sửa vai trò.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="vai-tro">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Quản trị văn phòng</div>
+      <h1>Vai trò và phân quyền</h1>
+      <p class="lead">Vai trò, quyền và phạm vi dữ liệu; tạo và sửa vai trò.</p>
+    </header>
+    <section id="vai-tro">
+      <p>MCAH không gắn sẵn vai trò cố định, trừ <b>Quản trị viên</b> có mọi quyền. Công ty tự tạo vai trò (ví dụ Môi giới viên, Kế toán, Trưởng phòng) và tích từng quyền trong bảng. Mỗi tài khoản có một vai trò; vai trò quyết định menu nào hiện ra và thao tác nào bấm được, cả trên giao diện lẫn ở máy chủ.</p>
+      <p>Bảng quyền có 12 mục, 48 quyền, chia ba nhóm Hồ sơ, Vận hành, Hệ thống. Bốn nhóm công việc dùng trong tài liệu này chỉ để đọc cho dễ; quyền thật là quyền công ty đã tích cho vai trò của bạn.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Nhóm công việc</th><th>Thường được cấp</th></tr></thead>
+          <tbody>
+            <tr><td><span class="job j-mg">Môi giới</span></td><td>Thuyền viên, Đối tác và Tàu (xem, thêm, sửa), Cơ hội (đủ quyền), Chuyến tàu, Hợp đồng (tạo, sửa nháp, gửi duyệt)</td></tr>
+            <tr><td><span class="job j-dy">Duyệt &amp; quản lý</span></td><td>Duyệt và từ chối hợp đồng, kết thúc hợp đồng, xem số cả công ty trên Tổng quan, đặt mục tiêu tháng</td></tr>
+            <tr><td><span class="job j-kt">Kế toán</span></td><td>Yêu cầu thanh toán: sửa số tiền, duyệt, đánh dấu đã gửi, ghi nhận đã thu</td></tr>
+            <tr><td><span class="job j-qt">Quản trị</span></td><td>Tài khoản, Vai trò và quyền, Danh mục</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 id="pham-vi-du-lieu">Phạm vi dữ liệu</h3>
+      <p>Sáu mục Thuyền viên, Bản xuất, Cơ hội, Chuyến tàu, Hợp đồng, Yêu cầu thanh toán có thêm phạm vi: <b>Tất cả</b> hoặc <b>Do mình tạo</b>. Chọn Do mình tạo thì người đó chỉ thấy và làm trên bản ghi do chính mình tạo.</p>
+      <figure>
+        <a href="anh/vai-tro.webp" target="_blank" rel="noopener"><img src="anh/vai-tro.webp" width="1440" height="900" loading="lazy" alt="Bảng vai trò và quyền với bốn cột vai trò"></a>
+        <figcaption>Quản trị → Vai trò và quyền: mỗi cột là một vai trò, mỗi dòng là một quyền. Ô gạch ngang nghĩa là có một phần quyền của mục.</figcaption>
+      </figure>
+      <div class="note note--ok">
+        <i>✓</i>
+        <b>Nguyên tắc dễ nhớ</b>
+        <p>Tích bất kỳ quyền nào của một mục thì tự có quyền Xem của mục đó. Người duyệt yêu cầu thanh toán phải khác người vừa sửa nó. Quyền đổi có hiệu lực từ lần tải trang tới của người được đổi.</p>
+      </div>
+    </section>
+    <section id="phan-quyen">
+      <h2 id="tao-va-sua-vai-tro">Tạo và sửa vai trò</h2>
+      <ol class="steps">
+        <li><span><span class="ui">+ Thêm vai trò</span>: đặt tên, mô tả, có thể sao chép quyền từ một vai trò đã có.</span></li>
+        <li><span>Tích quyền trong cột của vai trò. Ô tìm kiếm lọc quyền theo chữ, ví dụ "duyệt"; <span class="ui">Thu gọn tất cả</span> chỉ để lại tên mục.</span></li>
+        <li><span>Với mục có phạm vi dữ liệu, chọn <b>Tất cả</b> hoặc <b>Do mình tạo</b> ở dòng tên mục.</span></li>
+        <li><span>Bấm <span class="ui">Lưu thay đổi</span>. Ô đã sửa nhưng chưa lưu có viền riêng để dễ soát.</span></li>
+      </ol>
+      <p>Vai trò Quản trị viên luôn có mọi quyền và không sửa được. Chỉ Quản trị viên được sửa vai trò và quyền.</p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

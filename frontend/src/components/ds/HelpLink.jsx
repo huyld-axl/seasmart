@@ -1,7 +1,7 @@
 import { QuestionCircleOutlined } from '@ant-design/icons'
 import './ds.css'
 
-// Trang hướng dẫn duy nhất (frontend/public/guide/index.html); mở thẳng tới một mục bằng id của mục.
+// Bộ hướng dẫn (frontend/public/guide/): trang chủ index.html, mỗi bài một trang <slug>.html.
 export const GUIDE_HOME_URL = '/guide/index.html'
 
 // Link "Hướng dẫn" mở trang hướng dẫn tĩnh trong app ở tab mới.

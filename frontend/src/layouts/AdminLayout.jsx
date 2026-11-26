@@ -31,7 +31,6 @@ import { NAV_GROUP_LABELS, sectionsFor, activeSection, activeTab, initialsOf } f
 import { TargetSvg } from '../pages/admin/fleet/FleetParts'
 import './AdminLayout.css'
 import useViewport from '../hooks/useViewport'
-import PdfComponentModal from '../components/common/PdfComponentModal'
 import AiConsentModal from '../components/common/AiConsentModal'
 import OfflineRibbon from '../components/common/OfflineRibbon'
 import MainLinkRibbon from '../components/common/MainLinkRibbon'
@@ -39,11 +38,17 @@ import WhatsNewRibbon from '../components/common/WhatsNew'
 import DesktopLock from '../components/common/DesktopLock'
 import { desktop, isDesktop } from '../lib/desktop'
 
-// Trang có hướng dẫn trong app (public/guide/): hiện link Hướng dẫn trong menu, mở đúng mục của trang hướng dẫn theo đường dẫn.
-const guideUrl = (section) => `${GUIDE_HOME_URL}#${section}`
+// Trang có hướng dẫn trong app (public/guide/): hiện link Hướng dẫn trong menu, mở đúng bài hướng dẫn theo đường dẫn.
+const guideUrl = (slug) => `/guide/${slug}.html`
 const GUIDE_PATHS = [
   ['/voyages', guideUrl('chuyen-tau')], ['/contracts', guideUrl('hop-dong')], ['/bills', guideUrl('thanh-toan')],
-  ['/dashboard', guideUrl('tong-quan')], ['/admin/kpi-targets', guideUrl('muc-tieu')],
+  ['/dashboard', guideUrl('tong-quan')], ['/admin/kpi-targets', `${guideUrl('tong-quan')}#muc-tieu`],
+  ['/payouts', guideUrl('tra-luong')], ['/reports', guideUrl('bao-cao')], ['/opportunities', guideUrl('co-hoi')],
+  ['/seafarers', guideUrl('thuyen-vien')], ['/partners', guideUrl('doi-tac')], ['/vessels', guideUrl('tau')],
+  ['/admin/devices', guideUrl('nhieu-may')], ['/admin/may-trong-van-phong', guideUrl('nhieu-may')],
+  ['/device-settings', guideUrl('cai-dat-cap-nhat')], ['/cai-dat-may', guideUrl('cai-dat-cap-nhat')],
+  ['/fleet/vessels', guideUrl('tau')], ['/fleet/ship-owners', guideUrl('doi-tac')],
+  ['/admin/users', guideUrl('tai-khoan')], ['/admin/roles', guideUrl('vai-tro')],
 ]
 
 const stroke = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
@@ -277,7 +282,6 @@ export default function AdminLayout() {
         <main className="app-shell__content">
           <ErrorBoundary resetKey={pathname}>
             <Outlet />
-            {isDesktop() ? <PdfComponentModal /> : null}
             <AiConsentModal />
             {isDesktop() ? <DesktopLock /> : null}
           </ErrorBoundary>

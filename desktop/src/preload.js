@@ -10,13 +10,6 @@ contextBridge.exposeInMainWorld('mcah', {
   mailStatus: call('mail-status'),
   openMailFolder: call('open-mail-folder'),
   openExternal: call('open-external'),
-  pdfComponent: call('pdf-component'),
-  installPdfComponent: call('install-pdf-component'),
-  onPdfInstallProgress: (fn) => {
-    const listener = (_event, p) => fn(p)
-    ipcRenderer.on('mcah:pdf-install-progress', listener)
-    return () => ipcRenderer.removeListener('mcah:pdf-install-progress', listener)
-  },
   session: call('session'),
   onSessionChanged: (fn) => {
     const listener = (_event, info) => fn(info)
@@ -32,6 +25,7 @@ contextBridge.exposeInMainWorld('mcah', {
   lockState: call('lock-state'),
   setPin: call('set-pin'),
   unlock: call('unlock'),
+  changePin: call('change-pin'),
   onLockChanged: (fn) => {
     const listener = (_event, locked) => fn(locked)
     ipcRenderer.on('mcah:lock-changed', listener)

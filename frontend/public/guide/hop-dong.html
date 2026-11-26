@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hợp đồng · Hướng dẫn MCAH</title>
+<meta name="description" content="Soạn, gửi duyệt và duyệt hợp đồng thuyền viên.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="hop-dong">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hợp đồng và tiền</div>
+      <h1>Hợp đồng</h1>
+      <p class="lead">Soạn, gửi duyệt và duyệt hợp đồng thuyền viên.</p>
+    </header>
+    <section id="hop-dong">
+      <p>Hợp đồng là thoả thuận tiền của một chuyến: ngày bắt đầu, ngày kết thúc, tiền <b>phải thu</b> từ chủ tàu và tiền <b>phải trả</b> thuyền viên. Mỗi chuyến có tối đa một hợp đồng. Chuyến tạo bằng tay không tự có hợp đồng; mở chuyến và bấm Tạo hợp đồng.</p>
+      <figure>
+        <a href="anh/hop-dong-ct.webp" target="_blank" rel="noopener"><img src="anh/hop-dong-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết hợp đồng với bảng khoản tiền và khung Cân đối"></a>
+        <figcaption>Chi tiết hợp đồng: bảng khoản hằng tháng hai phía; khung Cân đối so phải thu, phải chi với budget và tính chênh lệch.</figcaption>
+      </figure>
+      <h3 id="soan-hop-dong">Soạn hợp đồng</h3>
+      <ul>
+        <li><b>Khoản hằng tháng:</b> lương cơ bản, làm thêm cố định, lương phép, phụ cấp, thưởng, phí dịch vụ, khác (hằng tháng).</li>
+        <li><b>Khoản một lần:</b> vé máy bay đi / về, phí visa, khám sức khoẻ, huấn luyện, thưởng hoàn thành hợp đồng, khác (một lần).</li>
+        <li>Danh sách khoản là cố định, không thêm khoản tự đặt tên. Khoản lẻ ngoài danh sách nhập vào <b>Khác</b> và ghi rõ trong ghi chú hợp đồng. Yêu cầu thanh toán và bảng trả lương dùng đúng các khoản này; khoản không có hiện 0.</li>
+        <li><b>Kỳ thanh toán</b> của mỗi phía: ngày chốt sổ (5, 10, 15, 20, 25 hoặc cuối tháng), ngày trả, trả vào tháng sau 1, 2 hay 3 tháng, và gặp thứ Bảy, Chủ nhật thì làm trước hay sau.</li>
+      </ul>
+      <h3 id="duyet">Duyệt</h3>
+      <div class="flow">
+        <span>Nháp</span><i>→</i><span>Chờ duyệt</span><i>→</i><span class="key">Hiệu lực</span><i>→</i><span>Kết thúc</span>
+      </div>
+      <ol class="steps">
+        <li><span>Người soạn bấm <span class="ui">Xin duyệt</span>. Hợp đồng sang Chờ duyệt và khoá; rút lại được.</span></li>
+        <li><span>Người duyệt bấm <span class="ui">Duyệt</span> (hợp đồng sang Hiệu lực) hoặc <span class="ui">Từ chối</span> kèm lý do.</span></li>
+        <li><span>Lần duyệt đầu, app sinh đủ các yêu cầu thanh toán từ ngày bắt đầu tới ngày kết thúc.</span></li>
+      </ol>
+      <p>Hợp đồng Hiệu lực không sửa được gì, kể cả ngày. Muốn đổi ngày hay tiền xem mục <a href="roi-tau.html">Rời tàu, sửa và kết thúc hợp đồng</a>.</p>
+      <div class="note">
+        <i>i</i>
+        <b>Chốt mà không có hợp đồng nháp?</b>
+        <p>Khi thuyền viên còn một hợp đồng khác chưa kết thúc, trùng thời gian. Hộp Chốt báo trước bằng khung vàng "Sẽ không tạo hợp đồng"; người đó vẫn được ghi lên tàu. Kết thúc hoặc rút ngắn hợp đồng cũ, rồi bấm Tạo hợp đồng trên trang chuyến. Ngay lúc chọn ứng viên, người còn hợp đồng đã có nhãn "Đang có hợp đồng …".</p>
+      </div>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Tạo, sửa nháp, đưa về nháp</span><em>Hợp đồng · Tạo hợp đồng, Sửa hợp đồng nháp và đưa về nháp</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Xin duyệt, rút lại</span><em>Hợp đồng · Gửi duyệt và rút lại</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Duyệt, từ chối</span><em>Hợp đồng · Duyệt và từ chối</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Kết thúc hợp đồng</span><em>Hợp đồng · Kết thúc hợp đồng</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

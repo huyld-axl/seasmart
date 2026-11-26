@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cài máy chính và máy nhân viên · Hướng dẫn MCAH</title>
+<meta name="description" content="Cài MCAH cho cả văn phòng theo đúng thứ tự, và xử lý khi máy nhân viên không nối được.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="cai-dat-van-phong">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Bắt đầu</div>
+      <h1>Cài máy chính và máy nhân viên</h1>
+      <p class="lead">Cài MCAH cho cả văn phòng theo đúng thứ tự, và xử lý khi máy nhân viên không nối được.</p>
+    </header>
+    <section id="cai-dat-van-phong">
+      <p>Bản MCAH tải về máy tính (Windows hoặc Ubuntu) không để dữ liệu trên mạng. Toàn bộ dữ liệu của văn phòng nằm trên <b>một máy chính</b>. Các máy còn lại là <b>máy nhân viên</b> (máy phụ): chúng nối vào máy chính qua mạng nội bộ của văn phòng (cùng wifi hoặc cùng dây mạng) và làm việc trên dữ liệu của máy chính. Internet chỉ cần lúc đăng nhập.</p>
+
+      <figure>
+        <svg class="net" viewBox="0 0 520 292" role="img" aria-labelledby="net-t">
+          <title id="net-t">Máy chính giữ dữ liệu; máy nhân viên nối vào máy chính qua mạng văn phòng; internet chỉ dùng để đăng nhập</title>
+          <rect x="6" y="74" width="508" height="212" rx="14" class="net-zone"/>
+          <text x="20" y="98" class="net-cap">MẠNG VĂN PHÒNG</text>
+          <rect x="165" y="6" width="190" height="48" rx="10" class="net-cloud"/>
+          <text x="260" y="27" class="net-b" text-anchor="middle">Internet</text>
+          <text x="260" y="45" class="net-s" text-anchor="middle">chỉ để đăng nhập</text>
+          <path d="M260 54 V116" class="net-dash"/>
+          <rect x="140" y="116" width="240" height="66" rx="12" class="net-main"/>
+          <text x="260" y="144" class="net-bw" text-anchor="middle">Máy chính</text>
+          <text x="260" y="166" class="net-sw" text-anchor="middle">giữ toàn bộ dữ liệu · luôn bật</text>
+          <path d="M200 182 L90 226 M260 182 V226 M320 182 L430 226" class="net-line"/>
+          <rect x="18" y="226" width="148" height="44" rx="10" class="net-box"/>
+          <text x="92" y="253" class="net-b" text-anchor="middle">Máy nhân viên</text>
+          <rect x="186" y="226" width="148" height="44" rx="10" class="net-box"/>
+          <text x="260" y="253" class="net-b" text-anchor="middle">Máy nhân viên</text>
+          <rect x="354" y="226" width="148" height="44" rx="10" class="net-box"/>
+          <text x="428" y="253" class="net-b" text-anchor="middle">Máy nhân viên</text>
+        </svg>
+        <figcaption>Máy nhân viên chỉ làm việc được khi máy chính đang bật và đang mở MCAH.</figcaption>
+      </figure>
+
+      <h3 id="lam-theo-dung-thu-tu-nay">Làm theo đúng thứ tự này</h3>
+      <div class="flow">
+        <span>A. Quản trị cài máy chính</span><i>→</i><span>B. Quản trị thêm tài khoản nhân viên</span><i>→</i><span class="key">C. Nhân viên cài và nối máy chính</span>
+      </div>
+      <p>Bước A làm một lần cho cả văn phòng. Bước B và C làm cho từng nhân viên. Nhân viên cài trước khi có máy chính thì MCAH chỉ báo "Văn phòng chưa có máy chính" và chờ.</p>
+
+      <h3 id="truoc-khi-bat-dau">Trước khi bắt đầu</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Cần có</th><th>Chi tiết</th></tr></thead>
+          <tbody>
+            <tr><td>Tài khoản quản trị văn phòng</td><td>Khi văn phòng mua MCAH, MCAH tạo sẵn tài khoản quản trị bằng email văn phòng cung cấp. MCAH không có trang đăng ký và không dùng mật khẩu.</td></tr>
+            <tr><td>Một máy làm máy chính</td><td>Nên là máy bàn, để ở văn phòng, bật suốt giờ làm. Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit, RAM từ 8 GB, ổ đĩa trống từ 10 GB. Không nên dùng máy xách tay hay mang về nhà.</td></tr>
+            <tr><td>Máy nhân viên</td><td>Cùng hệ điều hành như trên, RAM từ 4 GB.</td></tr>
+            <tr><td>Cùng một mạng</td><td>Mọi máy vào cùng wifi hoặc cùng dây mạng của văn phòng. Wifi khách (Guest) thường chặn các máy nhìn thấy nhau, không dùng được.</td></tr>
+            <tr><td>Internet</td><td>Cần khi đăng nhập (lần đầu và 30 ngày một lần). Làm việc hằng ngày giữa các máy không cần internet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="a-cai-may-chinh-quan-tri-van-phong-lam">A. Cài máy chính (quản trị văn phòng làm)</h3>
+      <ol class="steps">
+        <li><span>Ngồi ở máy đã chọn làm máy chính. Mở trình duyệt, vào <a href="../download/index.html">mcah.axalize.vn/download</a>, bấm <span class="ui">Tải cho Windows</span> hoặc <span class="ui">Tải cho Ubuntu (.deb)</span>.</span></li>
+        <li><span><b>Windows:</b> mở tệp <span class="ui">MCAH Setup ….exe</span> vừa tải. Nếu hiện "Windows đã bảo vệ máy tính của bạn", bấm <span class="ui">Thêm thông tin</span> → <span class="ui">Vẫn chạy</span>. Làm theo bộ cài tới khi xong. Khi Windows hỏi <b>"Bạn có muốn cho phép ứng dụng này thực hiện thay đổi?"</b>, bấm <span class="ui">Có</span>: đây là bước mở cổng để máy nhân viên nối vào được.<br>
+          <b>Ubuntu:</b> mở tệp <span class="ui">mcah-desktop_….deb</span> bằng App Center và bấm Cài, hoặc mở Terminal ở thư mục Tải về và chạy <code>sudo apt install ./mcah-desktop_*.deb</code>.</span></li>
+        <li><span>Mở <b>MCAH</b> từ menu ứng dụng (hoặc biểu tượng trên màn hình). Lần đầu mất vài giây để chuẩn bị dữ liệu.</span></li>
+        <li><span>Bấm <span class="ui">Đăng nhập qua trình duyệt</span>. Trình duyệt mở trang đăng nhập MCAH: bấm <span class="ui">Tiếp tục với Google</span> nếu email quản trị là tài khoản Google; nếu không, nhập email, bấm <span class="ui">Tiếp tục với email</span>, mở hộp thư lấy <b>mã 6 số</b> và nhập vào trang.</span></li>
+        <li><span>Trang báo "Đã đăng nhập". Quay lại cửa sổ MCAH, app tự vào. App không tự vào thì bấm <span class="ui">Nhập mã thủ công</span> và dán mã 8 ký tự trên trang.</span></li>
+        <li><span>MCAH hiện màn <b>"Cài máy chính cho [tên văn phòng]"</b>. Kiểm lại đúng tên văn phòng và đúng máy, rồi bấm <span class="ui">Dùng máy này làm máy chính</span>.</span></li>
+        <li><span>MCAH mở trang Tổng quan: máy chính đã sẵn sàng. Lần đầu Windows có thể hiện hộp tường lửa hỏi cho MCAH dùng mạng: tích <b>Mạng riêng (Private)</b> rồi bấm <span class="ui">Cho phép</span>.</span></li>
+        <li><span>Bấm tên của bạn ở góc trên bên phải → <span class="ui">Cài đặt trên máy này</span>, xem thẻ <b>Máy chính của văn phòng</b>. Ghi lại <b>Tên trong mạng</b> (ví dụ <code>MAY-KE-TOAN</code>) và <b>Địa chỉ</b> (ví dụ <code>192.168.1.20</code>). Nhân viên cần một trong hai thứ này nếu máy họ không tự tìm thấy máy chính.</span></li>
+      </ol>
+      <div class="shots">
+        <figure>
+          <a href="anh/cai-dang-nhap.webp" target="_blank" rel="noopener"><img src="anh/cai-dang-nhap.webp" width="992" height="652" loading="lazy" alt="Màn Đăng nhập MCAH với nút Đăng nhập qua trình duyệt"></a>
+          <figcaption>Bước A4: bấm <b>Đăng nhập qua trình duyệt</b>.</figcaption>
+        </figure>
+        <figure>
+          <a href="anh/cai-may-chinh.webp" target="_blank" rel="noopener"><img src="anh/cai-may-chinh.webp" width="992" height="712" loading="lazy" alt="Màn Cài máy chính cho văn phòng"></a>
+          <figcaption>Bước A6: kiểm tên văn phòng rồi bấm <b>Dùng máy này làm máy chính</b>.</figcaption>
+        </figure>
+      </div>
+        <figure>
+          <a href="anh/cai-ten-may-chinh.webp" target="_blank" rel="noopener"><img src="anh/cai-ten-may-chinh.webp" width="1520" height="582" loading="lazy" alt="Thẻ Máy chính của văn phòng trong Cài đặt trên máy này"></a>
+          <figcaption>Bước A8: tên và địa chỉ máy chính ở <b>Cài đặt trên máy này</b>. Ghi lại hai dòng in đậm.</figcaption>
+        </figure>
+      <div class="note note--warn">
+        <i>!</i>
+        <b>Riêng Ubuntu có bật tường lửa ufw</b>
+        <p>Chạy thêm một lần trên máy chính: <code>sudo ufw allow 7443/tcp</code>. Không chắc máy có bật ufw thì cứ chạy, lệnh này không hại gì.</p>
+      </div>
+      <div class="note note--ok">
+        <i>✓</i>
+        <b>Xong bước A khi</b>
+        <p>Máy chính vào được Tổng quan, và <span class="ui">Cài đặt trên máy này</span> có thẻ <b>Máy chính của văn phòng</b> ghi tên và địa chỉ máy.</p>
+      </div>
+
+      <h3 id="b-them-tai-khoan-cho-nhan-vien-quan-tri-van-phong-lam">B. Thêm tài khoản cho nhân viên (quản trị văn phòng làm)</h3>
+      <ol class="steps">
+        <li><span>Trên máy chính, vào <span class="ui">Quản trị</span> → <span class="ui">Tài khoản</span> → <span class="ui">Thêm tài khoản</span>.</span></li>
+        <li><span>Nhập <b>email</b> nhân viên (email họ mở được hộp thư, hoặc email Google của họ), <b>họ tên</b> và <b>vai trò</b>. Lưu. Bước này cần internet.</span></li>
+        <li><span>MCAH không gửi thư mời. Bạn tự báo nhân viên: tải MCAH, đăng nhập bằng <b>đúng email vừa nhập</b>, và cho họ tên hoặc địa chỉ máy chính đã ghi ở bước A.</span></li>
+      </ol>
+
+      <h3 id="c-cai-may-nhan-vien-tung-nhan-vien-lam-tren-may-minh">C. Cài máy nhân viên (từng nhân viên làm trên máy mình)</h3>
+      <ol class="steps">
+        <li><span>Kiểm trước: máy chính <b>đang bật và đang mở MCAH</b>, máy của bạn vào cùng mạng văn phòng với máy chính.</span></li>
+        <li><span>Tải và cài MCAH giống bước A1 – A2. Windows hỏi quyền thay đổi thì cứ bấm <span class="ui">Có</span>.</span></li>
+        <li><span>Mở MCAH, bấm <span class="ui">Đăng nhập qua trình duyệt</span>, đăng nhập bằng email quản trị đã thêm cho bạn (Google hoặc mã 6 số), giống bước A4 – A5.</span></li>
+        <li><span>MCAH hiện màn <b>"Nối máy chính của [tên văn phòng]"</b> và tự tìm trong mạng, chờ vài giây.</span></li>
+        <li><span><b>Tìm thấy:</b> danh sách <b>Máy chính tìm thấy</b> hiện tên máy chính. Chọn đúng máy, bấm <span class="ui">Nối</span>.<br>
+          <b>Không tìm thấy:</b> MCAH hiện ô nhập. Gõ tên máy chính (ví dụ <code>MAY-KE-TOAN</code>) hoặc địa chỉ (ví dụ <code>192.168.1.20</code>) mà quản trị đưa, bấm <span class="ui">Nối</span>. Gõ tên không được thì thử địa chỉ.</span></li>
+        <li><span>MCAH mở trang Tổng quan với dữ liệu của văn phòng: máy bạn đã nối xong. Từ lần sau chỉ cần mở MCAH, app tự nối máy chính.</span></li>
+      </ol>
+      <div class="shots">
+        <figure>
+          <a href="anh/cai-noi-tim-thay.webp" target="_blank" rel="noopener"><img src="anh/cai-noi-tim-thay.webp" width="992" height="810" loading="lazy" alt="Màn Nối máy chính, đã tìm thấy máy chính trong mạng"></a>
+          <figcaption>Bước C5, tìm thấy: chọn máy chính rồi bấm <b>Nối</b>.</figcaption>
+        </figure>
+        <figure>
+          <a href="anh/cai-noi-go-tay.webp" target="_blank" rel="noopener"><img src="anh/cai-noi-go-tay.webp" width="992" height="786" loading="lazy" alt="Màn Nối máy chính, gõ địa chỉ máy chính bằng tay"></a>
+          <figcaption>Bước C5, không tìm thấy: gõ tên hoặc địa chỉ máy chính rồi bấm <b>Nối</b>.</figcaption>
+        </figure>
+      </div>
+      <div class="note note--ok">
+        <i>✓</i>
+        <b>Xong bước C khi</b>
+        <p>Máy nhân viên thấy cùng danh sách thuyền viên, tàu như máy chính, và quản trị thấy máy đó trong <span class="ui">Quản trị</span> → <span class="ui">Máy trong văn phòng</span>.</p>
+      </div>
+
+      <h3 id="gap-man-nay-thi-lam-gi">Gặp màn này thì làm gì</h3>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>MCAH báo</th><th>Nghĩa là</th><th>Cách xử lý</th></tr></thead>
+          <tbody>
+            <tr><td>Cần kết nối internet để đăng nhập</td><td>Máy chưa có mạng ra ngoài.</td><td>Nối wifi hoặc dây mạng có internet rồi bấm lại <span class="ui">Đăng nhập qua trình duyệt</span>.</td></tr>
+            <tr><td>Tài khoản chưa thuộc văn phòng nào</td><td>Email bạn vừa dùng chưa được thêm vào văn phòng, hoặc bạn đăng nhập nhầm email.</td><td>Bấm <span class="ui">Đăng xuất</span>, đăng nhập lại bằng đúng email. Vẫn báo thì nhờ quản trị làm bước B.</td></tr>
+            <tr><td>Văn phòng chưa có máy chính</td><td>Quản trị chưa làm xong bước A.</td><td>Chờ quản trị cài máy chính, rồi bấm <span class="ui">Thử lại</span>.</td></tr>
+            <tr><td>Không tìm thấy máy chính trong mạng</td><td>Máy bạn không nhìn thấy máy chính.</td><td>Gõ tên hoặc địa chỉ máy chính rồi bấm <span class="ui">Nối</span>. Không được thì xem mục ngay dưới.</td></tr>
+            <tr><td>Không nối máy này · Máy … không phải máy chính của …</td><td>Địa chỉ bạn gõ là một máy khác, có thể là máy lạ giả tên máy chính.</td><td>Không nhập gì thêm. Báo quản trị, kiểm lại tên / địa chỉ ở bước A8, bấm <span class="ui">Tìm lại</span>.</td></tr>
+            <tr><td>Đang chờ quản trị duyệt</td><td>Máy này từng bị gỡ khỏi văn phòng và đang xin vào lại.</td><td>Quản trị vào <span class="ui">Quản trị</span> → <span class="ui">Máy trong văn phòng</span>, bấm <span class="ui">Duyệt</span>. Máy bạn tự vào, không cần bấm gì.</td></tr>
+            <tr><td>Dải đỏ "Không nối được máy chính"</td><td>Đang làm thì máy chính tắt, thoát MCAH hoặc mất mạng.</td><td>Bật lại máy chính và mở MCAH. Máy bạn tự nối lại; chữ đang gõ vẫn còn, bấm Lưu lại như thường.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="may-nhan-vien-van-khong-noi-duoc">Máy nhân viên vẫn không nối được</h3>
+      <p>Kiểm lần lượt, mỗi bước xong thì thử bấm <span class="ui">Nối</span> lại:</p>
+      <ol class="steps">
+        <li><span>Trên máy chính, MCAH đang mở (thu nhỏ cũng được), không phải chỉ bật máy.</span></li>
+        <li><span>Hai máy cùng một mạng: cùng tên wifi, không phải wifi khách. Gõ địa chỉ IP thay cho tên máy.</span></li>
+        <li><span><b>Máy chính Windows:</b> vào <span class="ui">Cài đặt</span> → <span class="ui">Mạng &amp; Internet</span> → chọn wifi hoặc Ethernet đang dùng → <b>Loại hồ sơ mạng</b> chọn <span class="ui">Riêng tư</span> (Private). Để <b>Công cộng</b> (Public) thì Windows chặn máy nhân viên.</span></li>
+        <li><span><b>Máy chính Windows, lúc cài đã bấm "Không":</b> chạy lại bộ cài MCAH trên máy chính (dữ liệu không mất) và lần này bấm <span class="ui">Có</span>.</span></li>
+        <li><span><b>Máy chính Ubuntu:</b> chạy <code>sudo ufw allow 7443/tcp</code>.</span></li>
+        <li><span>Vẫn không được: chụp màn hình lỗi trên máy nhân viên và thẻ <b>Máy chính của văn phòng</b> trên máy chính, gửi bộ phận hỗ trợ MCAH.</span></li>
+      </ol>
+
+      <h3 id="ghi-nho-hang-ngay">Ghi nhớ hằng ngày</h3>
+      <ul>
+        <li>Sáng: bật máy chính và mở MCAH trước, rồi các máy nhân viên mới mở MCAH.</li>
+        <li>Không tắt máy chính hay thoát MCAH trên máy chính khi còn người đang làm. MCAH tự giữ máy chính không ngủ khi đang mở.</li>
+        <li>Địa chỉ máy chính có thể đổi sau khi khởi động lại modem / router. Nên nhờ người lo mạng đặt <b>địa chỉ IP cố định</b> cho máy chính.</li>
+        <li>MCAH không tự sao lưu: dữ liệu chỉ nằm trên máy chính. Văn phòng tự có cách sao lưu máy chính. Muốn đổi sang máy chính khác, liên hệ hỗ trợ MCAH trước, không tự gỡ MCAH trên máy chính.</li>
+        <li>Nhân viên nghỉ hoặc mất máy: quản trị vào <span class="ui">Quản trị</span> → <span class="ui">Máy trong văn phòng</span> → <span class="ui">Gỡ</span> máy đó, và tắt tài khoản ở <span class="ui">Quản trị</span> → <span class="ui">Tài khoản</span>.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+</body>
+</html>

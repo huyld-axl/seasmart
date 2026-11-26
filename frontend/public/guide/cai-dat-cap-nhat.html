@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cài đặt, mở, cập nhật và gỡ MCAH · Hướng dẫn MCAH</title>
+<meta name="description" content="Tải bộ cài, kênh cập nhật, gỡ MCAH trên Windows và Ubuntu.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="cai-dat-cap-nhat">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Bắt đầu</div>
+      <h1>Cài đặt, mở, cập nhật và gỡ MCAH</h1>
+      <p class="lead">Tải bộ cài, mở MCAH khi gặp lỗi, kênh cập nhật, gỡ MCAH trên Windows và Ubuntu.</p>
+    </header>
+    <section id="app-cai-dat">
+
+  <h3 id="tai-va-cai">Tải và cài</h3>
+  <p>Vào <b>mcah.axalize.vn/download</b>, tải bộ cài đúng hệ điều hành. Yêu cầu: Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit; máy chính 8 GB RAM và 10 GB trống, máy nhân viên 4 GB RAM.</p>
+  <p><b>Windows:</b> mở tệp <span class="ui">MCAH Setup ….exe</span>. Nếu Windows hiện "Windows đã bảo vệ máy tính của bạn", bấm <span class="ui">Thêm thông tin</span> → <span class="ui">Vẫn chạy</span>. Trên máy chính, Windows hỏi quyền quản trị một lần để mở cổng cho máy nhân viên.</p>
+  <p><b>Ubuntu:</b> mở tệp <span class="ui">mcah-desktop_….deb</span> bằng App Center, hoặc chạy <span class="ui">sudo apt install ./mcah-desktop_….deb</span>. Xuất PDF dùng được ngay, không cài thêm gì.</p>
+
+  <h3 id="mo-mcah">Mở MCAH</h3>
+  <ul>
+    <li>Mở <b>MCAH</b> từ danh sách ứng dụng của máy. Lần đầu mất vài giây để chuẩn bị dữ liệu.</li>
+    <li>App đã mở rồi thì bấm lại biểu tượng chỉ đưa cửa sổ lên trước, không mở thêm cửa sổ.</li>
+    <li>App báo <b>MCAH chưa mở được</b> thì bấm <span class="ui">Thử lại</span>. Vẫn lỗi thì xem ổ đĩa còn chỗ trống, rồi gửi mã lỗi trên màn cho bộ phận hỗ trợ.</li>
+  </ul>
+
+  <h3 id="cap-nhat">Cập nhật</h3>
+  <p>MCAH tự kiểm bản mới khi mở và mỗi 6 giờ. Có bản mới thì hiện hộp ghi rõ có gì mới; bấm <span class="ui">Cập nhật ngay</span>. Bản cập nhật được MCAH ký, app kiểm chữ ký trước khi cài. Máy nhân viên cập nhật theo máy chính, không cần internet.</p>
+  <p>Quản trị chọn kênh ở <span class="ui">Cài đặt trên máy này</span> → <span class="ui">Cập nhật</span> trên máy chính: <b>Ổn định</b> (mặc định) hoặc <b>Thử nghiệm</b> (nhận bản sớm, có thể còn lỗi).</p>
+
+  <h3 id="go-cai-dat">Gỡ cài đặt</h3>
+  <p><b>Windows:</b> gỡ trong Cài đặt → Ứng dụng. Mặc định dữ liệu được giữ lại, cài lại là dùng tiếp. Muốn xoá hẳn thì tích <span class="ui">Xoá cả dữ liệu trên máy này</span> và xác nhận lần hai.</p>
+  <p><b>Ubuntu:</b> <span class="ui">sudo apt remove mcah-desktop</span>. Dữ liệu vẫn giữ ở <span class="ui">~/.config/MCAH</span> và thư mục <span class="ui">Tài liệu/MCAH - Hồ sơ</span>; xoá tay hai thư mục này nếu muốn xoá hẳn.</p>
+  <p class="note">Gỡ MCAH trên máy chính là cả văn phòng không làm việc được. Muốn đổi máy chính, liên hệ hỗ trợ MCAH trước.</p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

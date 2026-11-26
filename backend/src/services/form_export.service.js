@@ -397,7 +397,7 @@ async function buildForm(meta, seafarerId, options) {
 function layoutForPdf(wb, gridlines) {
   const main = mainSheet(wb)
   for (const ws of wb.worksheets) if (ws !== main && ws.state === 'visible') ws.state = 'hidden'
-  // LibreOffice không đọc vùng in exceljs ghi ra, nên ẩn hẳn cột và dòng nằm ngoài vùng in (ghi chú, mã tra cứu của mẫu).
+  // LibreOffice (bản web) không đọc vùng in exceljs ghi ra, nên ẩn hẳn cột và dòng nằm ngoài vùng in (ghi chú, mã tra cứu của mẫu).
   const area = parseRange(main.pageSetup?.printArea)
   if (area) {
     for (let c = 1; c <= main.dimensions.right; c += 1) if (c < area.left || c > area.right) main.getColumn(c).hidden = true

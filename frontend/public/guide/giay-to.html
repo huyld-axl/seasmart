@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giấy tờ và AI đọc giấy · Hướng dẫn MCAH</title>
+<meta name="description" content="Nạp giấy tờ, để AI điền sẵn, kiểm tra rồi lưu.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="giay-to">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hồ sơ</div>
+      <h1>Giấy tờ và AI đọc giấy</h1>
+      <p class="lead">Nạp giấy tờ, để AI điền sẵn, kiểm tra rồi lưu.</p>
+    </header>
+    <section id="giay-to">
+      <p>Tab Giấy tờ của hồ sơ gom mọi giấy của thuyền viên vào một bảng: tên, loại, số, ngày cấp, ngày hết hạn, trạng thái. Chip lọc theo nhóm: Tuỳ thân, Bằng (COC), Chứng chỉ (COP), Y tế, Khác. Nút tải cả bộ cho ra một file .zip.</p>
+      <figure>
+        <a href="anh/thuyen-vien-giayto.webp" target="_blank" rel="noopener"><img src="anh/thuyen-vien-giayto.webp" width="1440" height="900" loading="lazy" alt="Tab Giấy tờ với bảng chứng chỉ"></a>
+        <figcaption>Tab Giấy tờ: mỗi dòng một giấy; trạng thái Hiệu lực, Sắp hết hạn hoặc Hết hạn tính theo ngày hết hạn.</figcaption>
+      </figure>
+      <h3 id="nap-giay-to-bang-ai">Nạp giấy tờ bằng AI</h3>
+      <ol class="steps">
+        <li><span>Bấm <span class="ui">Nạp giấy tờ</span>, chọn ảnh chụp hoặc file PDF của giấy.</span></li>
+        <li><span>AI đọc ngay khi chọn tệp và điền sẵn các ô: loại giấy, số, ngày cấp, ngày hết hạn, nơi cấp.</span></li>
+        <li><span>Kiểm tra từng ô so với bản gốc, sửa nếu cần. Với giấy tuỳ thân (CCCD, hộ chiếu, sổ thuyền viên), app hiện các ô hồ sơ sẽ đổi (cũ → mới) để bạn chọn ô nào cập nhật.</span></li>
+        <li><span>Bấm lưu. Giấy vào bảng, ảnh gốc lưu kèm.</span></li>
+      </ol>
+      <div class="note note--ai">
+        <i>✦</i>
+        <b>AI chỉ điền sẵn, bạn là người duyệt</b>
+        <p>Ô không đọc được thì để trống, AI không đoán. Ảnh quá mờ thì nhập tay. Nếu máy chủ chưa cấu hình AI, tệp vẫn được lưu kèm hồ sơ và app báo "AI chưa được cấu hình"; các phần khác dùng bình thường.</p>
+      </div>
+      <div class="note note--warn">
+        <i>!</i>
+        <b>Không bao giờ ghi đè</b>
+        <p>Nạp bản mới của một giấy tạo dòng mới, dòng cũ chuyển thành "Bản cũ". Xoá giấy là xoá mềm: tệp còn giữ 180 ngày rồi mới bị dọn khỏi ổ đĩa.</p>
+      </div>
+      <h3 id="nhac-giay-sap-het-han">Nhắc giấy sắp hết hạn</h3>
+      <p>Giấy tờ, chứng chỉ, hợp đồng sắp hết hạn được báo bằng thông báo của máy (góc màn hình), kể cả khi cửa sổ MCAH đang thu nhỏ. Bấm vào thông báo để mở đúng hồ sơ. Máy tắt qua đêm thì sáng mở app, MCAH tự kiểm và báo bù.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Nạp giấy, đọc bằng AI</span><em>Thuyền viên · Tải giấy tờ và đọc bằng AI</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

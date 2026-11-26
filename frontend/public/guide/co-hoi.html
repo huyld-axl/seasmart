@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cơ hội · Hướng dẫn MCAH</title>
+<meta name="description" content="Vị trí chủ tàu cần người: hồ sơ yêu cầu, thêm ứng viên, chủ tàu chọn và chốt người.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="co-hoi">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Tuyển và gửi hồ sơ</div>
+      <h1>Cơ hội</h1>
+      <p class="lead">Vị trí chủ tàu cần người: hồ sơ yêu cầu, thêm ứng viên, chủ tàu chọn và chốt người.</p>
+    </header>
+    <section id="co-hoi">
+      <p>Mỗi <b>cơ hội</b> là một vị trí chủ tàu cần người. Chủ tàu cần 6 người cho một tàu thì có 6 cơ hội. Cơ hội có chủ tàu, tàu (chưa rõ cũng được), chức danh, budget theo tháng hoặc cả chuyến, ngày và nơi xuống / rời tàu dự kiến, hạn chốt, người phụ trách.</p>
+      <div class="flow">
+        <span>Mới</span><i>→</i><span>Đang chọn ứng viên</span><i>→</i><span>Chờ kết quả</span><i>→</i><span>Chủ tàu đã chọn</span><i>→</i><span class="key">Đã chốt</span>
+      </div>
+      <figure>
+        <a href="anh/co-hoi-ct.webp" target="_blank" rel="noopener"><img src="anh/co-hoi-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết cơ hội với trục giai đoạn"></a>
+        <figcaption>Trục giai đoạn trên chi tiết cơ hội: bấm một mốc là làm việc của mốc đó; nút việc kế tiếp ở bên phải.</figcaption>
+      </figure>
+      <h3 id="ho-so-yeu-cau">Hồ sơ yêu cầu</h3>
+      <p>Mỗi cơ hội có danh sách thứ ứng viên phải có, chia ba khối: <b>Giấy tờ</b>, <b>Biểu mẫu</b>, <b>Kinh nghiệm</b> (số tháng ở chức danh, số chuyến trên loại tàu). Mỗi mục là <b>Bắt buộc</b> hoặc <b>Nên có</b>, kèm mốc phải còn hạn tới: ngày xuống tàu, ngày rời tàu, ngày rời cộng thêm n tháng, hoặc chỉ cần có. Khi tạo cơ hội, hồ sơ yêu cầu được điền sẵn theo tàu và chức danh.</p>
+      <h3 id="them-ung-vien">Thêm ứng viên</h3>
+      <p><span class="ui">Thêm ứng viên</span> mở bảng chọn với bộ lọc đề xuất bật sẵn: đủ giấy bắt buộc, từng làm cho chủ tàu này, rảnh trước ngày, chức danh, loại tàu, quốc tịch, tuổi. Mỗi người có thẻ <b>Hồ sơ</b> (đủ / thiếu giấy, giấy thiếu ở tooltip), <b>Bận</b> và lý do ngắn như "2 chuyến với chủ tàu X".</p>
+      <figure>
+        <a href="anh/co-hoi-ungvien.webp" target="_blank" rel="noopener"><img src="anh/co-hoi-ungvien.webp" width="1440" height="900" loading="lazy" alt="Bảng ứng viên của cơ hội"></a>
+        <figcaption>Tab Ứng viên: số mục bắt buộc đã đủ, giấy thiếu hoặc sắp hết hạn, và tiến trình Ráp → Gửi → Chủ tàu chọn của từng người.</figcaption>
+      </figure>
+      <h3 id="chu-tau-chon-va-chot-nguoi">Chủ tàu chọn và chốt người</h3>
+      <ul>
+        <li>Kết quả chủ tàu báo ngoài hệ thống. Bạn gắn nhãn <b>Chủ tàu đã chọn</b> cho một ứng viên để giữ chỗ; các dòng khác mờ đi cho tới khi bỏ nhãn.</li>
+        <li><span class="ui">Chốt người</span>: chọn ứng viên, nhập ngày và nơi xuống tàu (không được sau hôm nay). App tạo chuyến <b>Đang trên tàu</b>, tạo hợp đồng nháp, đánh dấu cơ hội <b>Đã chốt</b> và các ứng viên còn lại "Không được chọn".</li>
+        <li>Cơ hội không thành thì đóng với lý do (<b>Không thành</b> hoặc <b>Huỷ</b>); mở lại được. Menu <span class="ui">⋮</span> có Nhân bản và Xoá.</li>
+      </ul>
+      <p>Hạn chốt còn 7 ngày trở xuống hiện nhãn <span class="tag t-warning">Còn n ngày</span>; đã qua hạn hiện <span class="tag t-error">Quá n ngày</span>.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Tạo, nhân bản cơ hội</span><em>Cơ hội · Tạo và nhân bản cơ hội</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Sửa, thêm ứng viên, gắn nhãn chủ tàu chọn</span><em>Cơ hội · Sửa cơ hội</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Chốt người, đóng, huỷ</span><em>Cơ hội · Chốt người, đóng và huỷ cơ hội</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

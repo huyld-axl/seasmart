@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tổng quan (Dashboard) · Hướng dẫn MCAH</title>
+<meta name="description" content="Các con số trên Tổng quan và cách tính.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="tong-quan">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hồ sơ</div>
+      <h1>Tổng quan (Dashboard)</h1>
+      <p class="lead">Các con số trên Tổng quan, cách tính, và đặt mục tiêu tháng.</p>
+    </header>
+    <section id="tong-quan">
+      <p>Trang đầu tiên sau khi đăng nhập, vừa một màn hình máy tính. Nhìn 5 giây là biết tháng này đang đạt hay chậm, và hôm nay có việc gì đã quá hạn. Màu đỏ chỉ dành cho việc quá hạn hoặc đang chậm.</p>
+      <figure>
+        <a href="anh/tong-quan.webp" target="_blank" rel="noopener"><img src="anh/tong-quan.webp" width="1440" height="900" loading="lazy" alt="Màn Tổng quan với thẻ Doanh thu, Hợp đồng mới ký và khối Cần chú ý"></a>
+        <figcaption>Tổng quan · bản Quản lý: số cả công ty và tiến độ từng môi giới viên.</figcaption>
+      </figure>
+      <div class="two">
+        <div class="card"><h4>Doanh thu · tháng này</h4><p>Phần chênh lệch giữa tiền thu chủ tàu và tiền trả thuyền viên, của hợp đồng hiệu lực hoặc đã kết thúc. Cột tháng này là số dự kiến, so với mục tiêu.</p></div>
+        <div class="card"><h4>Hợp đồng mới ký · tháng này</h4><p>Đếm khi hợp đồng được duyệt lần đầu. Nhãn Đạt mục tiêu, Đúng tiến độ hoặc Chậm tiến độ; quản lý thấy thêm một dòng cho từng người.</p></div>
+      </div>
+      <h3 id="cach-tinh">Cách tính</h3>
+      <ul>
+        <li><b>Hợp đồng mới ký</b> được đếm một lần, vào tháng của ngày duyệt lần đầu. Đưa về Nháp rồi duyệt lại không đếm thêm.</li>
+        <li><b>Vạch đứng</b> trên thanh là tiến độ cần có tới hôm nay (ví dụ ngày 4 của tháng 30 ngày, mục tiêu 3 → cần 0,4). Thanh đỏ khi số đã ký còn nằm trước vạch. Phần gạch chéo (chỉ ở màn môi giới viên) là hợp đồng sắp vào: chờ duyệt, nháp, chủ tàu đã chọn.</li>
+        <li><b>Doanh thu</b>: khoản hằng tháng chia theo số ngày hợp đồng nằm trong tháng (chênh 1.000 USD/tháng, bắt đầu 16/11 → tháng 11 được 500 USD); khoản một lần tính trọn vào tháng bắt đầu. Hợp đồng nháp, chờ duyệt, bị từ chối chưa tính. Sửa ngày rồi duyệt lại thì các tháng cũ được tính lại.</li>
+        <li><b>Tính cho ai</b>: hợp đồng chốt từ cơ hội tính cho người phụ trách cơ hội; hợp đồng của chuyến tạo tay tính cho người tạo hợp đồng.</li>
+      </ul>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Tab Cần chú ý</th><th>Gồm</th><th>Đỏ khi</th></tr></thead>
+          <tbody>
+            <tr><td>Hạn chốt cơ hội</td><td>Cơ hội đang mở có hạn chốt trong 7 ngày tới hoặc đã qua</td><td>Đã qua hạn chốt</td></tr>
+            <tr><td>Chứng chỉ</td><td>Hết hạn trong 60 ngày tới hoặc đã hết, trừ khi đã có bản mới</td><td>Đã hết hạn</td></tr>
+            <tr><td>Xuống / rời tàu</td><td>Sắp xuống tàu trong 30 ngày; ngày rời dự kiến trong 30 ngày hoặc đã qua mà chưa ghi rời</td><td>Quá ngày rời dự kiến</td></tr>
+            <tr><td>Chờ xử lý / Việc của bạn</td><td>Hợp đồng chờ duyệt, bị từ chối, nháp; yêu cầu thanh toán cần duyệt, cần gửi, quá hạn</td><td>Bị từ chối, quá hạn thanh toán</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Trang tự mở tab đầu tiên có việc quá hạn. Bấm dòng có nhãn <span class="tag t-error">Quá n ngày</span> để mở thẳng bản ghi đó. Quản lý thấy số cả công ty, mỗi môi giới viên một dòng (người chậm tô đỏ); môi giới viên chỉ thấy số của mình và tab cuối là Việc của bạn.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem Tổng quan của chính mình</span><em>Xem của bất kỳ mục Thuyền viên, Cơ hội, Chuyến tàu, Hợp đồng, Yêu cầu thanh toán</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-kt">Kế toán</span></span></div>
+        <div><span>Xem số cả công ty</span><em>KPI · Xem số của cả công ty trên Tổng quan</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+    <section id="muc-tieu">
+      <h2 id="dat-muc-tieu-thang">Đặt mục tiêu tháng</h2>
+      <p>Ở <span class="ui">Quản trị → Mục tiêu tháng</span>, chọn tháng, nhập số hợp đồng và doanh thu USD cho từng môi giới viên rồi lưu. <span class="ui">Chép từ tháng trước</span> điền nhanh các ô đang trống. Mục tiêu công ty là tổng mục tiêu của mọi người, và là mốc để Tổng quan báo Đúng tiến độ hay Chậm tiến độ.</p>
+      <figure>
+        <a href="anh/muc-tieu.webp" target="_blank" rel="noopener"><img src="anh/muc-tieu.webp" width="1440" height="900" loading="lazy" alt="Màn Mục tiêu tháng"></a>
+        <figcaption>Mục tiêu tháng của từng môi giới viên.</figcaption>
+      </figure>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Đặt mục tiêu tháng</span><em>KPI · Đặt mục tiêu tháng</em><span class="chips"><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

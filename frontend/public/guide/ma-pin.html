@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mã PIN và tự khoá · Hướng dẫn MCAH</title>
+<meta name="description" content="Bật khoá cho văn phòng, đặt, đổi và quên mã PIN trên từng máy.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="ma-pin">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Quản trị văn phòng</div>
+      <h1>Mã PIN và tự khoá</h1>
+      <p class="lead">Bật khoá cho văn phòng, đặt, đổi và quên mã PIN trên từng máy.</p>
+    </header>
+    <section id="app-pin">
+  <p>Để người ngoài không dùng được MCAH khi bạn rời máy, văn phòng có thể bật <b>khoá bằng mã PIN</b>. Khi bật, mỗi người đặt một mã PIN 6 số trên máy mình; MCAH tự khoá khi để máy rỗi và chỉ mở lại bằng PIN, không cần internet. Mã PIN không thay cho đăng nhập: cứ 30 ngày vẫn phải đăng nhập lại qua trình duyệt.</p>
+
+  <h3 id="quan-tri-bat-hoac-tat-cho-ca-van-phong">Quản trị: bật hoặc tắt cho cả văn phòng</h3>
+  <ol class="steps">
+    <li><span>Vào <span class="ui">Quản trị</span> → <span class="ui">Máy trong văn phòng</span>, thẻ <b>Bảo vệ khi rời máy</b>.</span></li>
+    <li><span>Bật <span class="ui">Khoá bằng mã PIN</span>. Chọn <span class="ui">Tự khoá sau</span> 5, 10, 15, 30 hoặc 60 phút (mặc định 15).</span></li>
+    <li><span>Cài đặt áp cho mọi máy trong văn phòng, kể cả máy chính. Mỗi máy nhận thay đổi khi mở lại app hoặc trong vòng 1 giờ.</span></li>
+  </ol>
+  <p>Cần quyền <b>Tài khoản · Thêm, sửa, khoá tài khoản</b>. Người không có quyền vẫn thấy thẻ này nhưng không đổi được.</p>
+
+  <h3 id="moi-nguoi-dat-ma-pin-lan-dau">Mỗi người: đặt mã PIN lần đầu</h3>
+  <ol class="steps">
+    <li><span>Khi văn phòng đã bật khoá, lần đầu bạn vào MCAH trên một máy sẽ hiện hộp <b>Đặt mã PIN cho máy này</b>. Hộp này bắt buộc, chưa đặt thì chưa dùng được app.</span></li>
+    <li><span>Nhập đúng 6 chữ số (chỉ nhận số), bấm <span class="ui">Lưu</span>.</span></li>
+  </ol>
+  <ul>
+    <li>Mã PIN đặt <b>riêng cho từng máy</b>. Dùng nhiều máy thì đặt trên từng máy, mỗi máy có thể một mã khác nhau.</li>
+    <li>PIN được cất trong két mật khẩu của hệ điều hành, không ai xem lại được, kể cả quản trị. Quản trị không xem hay đặt lại PIN hộ: máy nào biết máy đó.</li>
+    <li>Máy chưa có <b>kho mật khẩu an toàn</b> thì không đặt được PIN và không tự khoá. MCAH cũng không nhớ đăng nhập trên máy đó giữa các lần mở.</li>
+  </ul>
+
+  <h3 id="doi-ma-pin">Đổi mã PIN</h3>
+  <ol class="steps">
+    <li><span>Bấm tên của bạn ở góc phải → <span class="ui">Cài đặt trên máy này</span>, thẻ <b>Mã PIN</b> → <span class="ui">Đổi mã PIN</span>.</span></li>
+    <li><span>Nhập <b>Mã PIN hiện tại</b>, <b>Mã PIN mới</b> và <b>Nhập lại mã PIN mới</b> (mỗi ô đúng 6 chữ số), bấm <span class="ui">Lưu</span>.</span></li>
+    <li><span>Sai mã hiện tại thì báo <b>Sai mã PIN hiện tại. Còn … lần thử.</b> Số lần sai này tính chung với màn khoá: sai đủ 5 lần thì mã PIN bị xoá và phải đăng nhập lại.</span></li>
+  </ol>
+  <p>Chỉ đổi mã của <b>máy đang dùng</b>; máy khác của bạn giữ mã riêng.</p>
+
+  <h3 id="quen-ma-pin">Quên mã PIN</h3>
+  <p>Có hai chỗ bấm, cùng một cách làm: ở màn khoá bấm <span class="ui">Quên mã PIN? Đăng nhập lại</span>, hoặc ở <span class="ui">Cài đặt trên máy này</span> → <b>Mã PIN</b> bấm <span class="ui">Quên mã PIN?</span> rồi <span class="ui">Đăng nhập lại</span>. MCAH đăng xuất trên máy này và xoá mã cũ; bạn đăng nhập lại qua trình duyệt (cần internet), rồi hộp <b>Đặt mã PIN cho máy này</b> hiện để đặt mã mới. Dữ liệu không mất.</p>
+
+  <h3 id="khi-mcah-tu-khoa">Khi MCAH tự khoá</h3>
+  <p>MCAH khoá khi máy rỗi quá thời gian quản trị đặt, hoặc khi bạn khoá màn hình hệ điều hành (Windows + L). Cả cửa sổ chuyển sang màn <b>MCAH đã khoá</b> với tên bạn.</p>
+  <ol class="steps">
+    <li><span>Nhập mã PIN 6 số, bấm <span class="ui">Mở khoá</span> (hoặc Enter).</span></li>
+    <li><span>Nhập sai, MCAH báo <b>Sai mã PIN. Còn … lần thử.</b> Sai <b>5 lần</b> thì mã PIN bị xoá và MCAH về trang đăng nhập: đăng nhập lại qua trình duyệt (cần internet), rồi đặt mã PIN mới.</span></li>
+    <li><span>Quên mã PIN: bấm <span class="ui">Quên mã PIN? Đăng nhập lại</span>, làm như trên.</span></li>
+  </ol>
+
+  <h3 id="khi-van-phong-tat-khoa-bang-pin">Khi văn phòng tắt khoá bằng PIN</h3>
+  <p>MCAH không hỏi đặt PIN và không tự khoá nữa; mã PIN đã đặt trên máy bị xoá. Bật lại thì mỗi người đặt mã mới. Lúc này nhắc mọi người tự khoá màn hình máy tính (Windows + L trên Windows, Super + L trên Ubuntu) khi rời máy.</p>
+  <div class="note">
+    <i>i</i>
+    <b>Gặp lỗi thường thấy</b>
+    <p>Quản trị vừa bật khoá nhưng máy chưa hỏi đặt PIN: đợi tối đa 1 giờ hoặc đóng, mở lại MCAH. Đã sai 5 lần: đây là cách MCAH chặn đoán mã, không phải lỗi; chỉ cần đăng nhập lại.</p>
+  </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

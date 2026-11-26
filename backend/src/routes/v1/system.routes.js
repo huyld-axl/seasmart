@@ -5,9 +5,11 @@ const documentReader = require('../../services/document_reader.service')
 const emailService = require('../../services/email.service')
 const { desktopSmtp } = require('../../utils/desktop_smtp')
 
-// Có LibreOffice không: chạy `soffice --version` một lần, nhớ kết quả (app cài xong thì mở lại backend).
+// Xuất được PDF không. App máy tính in bằng Chromium của app (luôn có); bản web cần LibreOffice trên máy chủ:
+// chạy `soffice --version` một lần, nhớ kết quả.
 let pdfCheck = null
 function pdfAvailable() {
+  if (process.env.MCAH_PDF_URL) return true
   if (!pdfCheck) {
     pdfCheck = new Promise((resolve) => {
       execFile(process.env.SOFFICE_PATH || 'soffice', ['--version'], { timeout: 30000 }, (error) => resolve(!error))

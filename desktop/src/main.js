@@ -14,7 +14,7 @@ const updateGuard = require('./update-guard')
 const { createBackup, restoreBackup, readManifest } = require('./backup')
 const { rotatingLog, captureConsole } = require('./logs')
 const { attachmentDir, cleanAttachmentDir, saveAttachments } = require('./mail')
-const { findSoffice } = require('./pdf-component')
+const pdfPrinter = require('./pdf-printer')
 const { smtpConfig } = require('./settings')
 const { registerIpc } = require('./ipc')
 const session = require('./session')
@@ -55,7 +55,6 @@ const MAIL_PREPARE = /^\/api\/v1\/opportunities\/\d+\/mail\/prepare$/
 const SMTP_PATHS = [/^\/api\/v1\/opportunities\/\d+\/send-mail$/, /^\/api\/v1\/system\/smtp-test$/]
 
 let backend = null
-let backendEnvVars = null
 let database = null
 let mainWindow = null
 let logs = null
@@ -182,15 +181,6 @@ async function step(code, fn) {
   }
 }
 
-async function restartBackend(soffice) {
-  if (backend) {
-    backend.child.kill()
-    await new Promise((r) => (backend.child.exitCode !== null ? r() : backend.child.once('exit', r)))
-  }
-  backendEnvVars = { ...backendEnvVars, SOFFICE_PATH: soffice || backendEnvVars.SOFFICE_PATH }
-  backend = await startBackend(backendEnvVars, app.getPath('userData'), logs.backend)
-}
-
 async function rollbackUpdate(error) {
   console.error(`Cập nhật lỗi khi chuyển dữ liệu, quay về bản cũ: ${error.message}`)
   await database.pg.stop()
@@ -292,7 +282,7 @@ async function startup() {
   if (lanClient.isStaff()) return startupStaff()
   setChannelSource(async () => getSettings().updateChannel)
   database = await step('DB_START', () => startDatabase(userData))
-  const env = backendEnv(userData, database.env, await freePort(), { soffice: findSoffice(), mailDir: attachmentDir(), filesDir: filesDir() })
+  const env = backendEnv(userData, database.env, await freePort(), { mailDir: attachmentDir(), filesDir: filesDir() })
   // Máy chính: chứng chỉ HTTPS trong mạng văn phòng; backend báo dấu vân tay lên máy chủ dịch vụ (giai đoạn 3).
   try {
     const cert = await ensureCert(lanHostName())
@@ -308,6 +298,10 @@ async function startup() {
   signerInfo = sign
   env.MCAH_SIGNER_URL = sign.url
   env.MCAH_SIGNER_TOKEN = sign.token
+  // Cổng in PDF: backend nhờ Chromium của app in form ra PDF (thay LibreOffice, không phải cài gì thêm).
+  const printer = await pdfPrinter.start({ tmpDir: env.MCAH_TMP_DIR })
+  env.MCAH_PDF_URL = printer.url
+  env.MCAH_PDF_TOKEN = printer.token
   env.MCAH_MAINTENANCE_FILE = updateGuard.maintenanceFile()
   try {
     await step('DB_MIGRATE', () => runScript('scripts/migrate.js', env, userData, logs.backend))
@@ -317,7 +311,6 @@ async function startup() {
     throw error
   }
   if (updateGuard.pending()) updateGuard.finish()
-  backendEnvVars = env
   backend = await step('BACKEND_START', () => startBackend(env, userData, logs.backend))
   session.init(() => backend.url)
   watchSession()
@@ -505,7 +498,6 @@ async function main() {
     revealReport: (file) => {
       if (path.dirname(file) === app.getPath('downloads') && /^mcah-bao-loi-[\d-]+\.txt$/.test(path.basename(file))) shell.showItemInFolder(file)
     },
-    restartBackend,
     checkUpdate: () => runUpdate(mainWindow, staffMode ? {} : { beforeInstall }),
     lanStatus,
     // Có gì mới (docs/mcah-ke-hoach-desktop-gd6.md 3.5): ghi chú của bản đang chạy, gói kèm bộ cài.

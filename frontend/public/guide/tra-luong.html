@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trả lương thuyền viên · Hướng dẫn MCAH</title>
+<meta name="description" content="Chốt khoản trả cho thuyền viên theo từng yêu cầu thanh toán.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="tra-luong">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hợp đồng và tiền</div>
+      <h1>Trả lương thuyền viên</h1>
+      <p class="lead">Chốt khoản trả cho thuyền viên theo từng yêu cầu thanh toán.</p>
+    </header>
+    <section id="tra-luong">
+      <p>Màn <span class="ui">Trả lương</span> ghi nhận đã trả lương cho thuyền viên sau mỗi kỳ thu tiền đối tác. Việc chuyển tiền làm ngoài MCAH; trong app chỉ ghi lại đã trả hay chưa, trả bao nhiêu và ngày trả, để thống kê và đối chiếu với số thu.</p>
+      <p>Chọn tháng ở đầu trang (mặc định tháng trước). Mỗi yêu cầu thanh toán có ngày kết thúc kỳ trong tháng đó là một cặp dòng:</p>
+      <ul>
+        <li><b>Thu</b>: số tiền của yêu cầu thanh toán gửi đối tác, chỉ xem. Muốn đổi thì sửa ở màn Yêu cầu thanh toán. Bên cạnh có trạng thái của yêu cầu thanh toán (cần duyệt, đã gửi, đã thu…) để đối chiếu.</li>
+        <li><b>Trả</b>: số trả thuyền viên. Mặc định lấy cột <b>Phải chi</b> của hợp đồng: khoản hằng tháng mỗi kỳ, khoản một lần ở kỳ đầu. Sửa được từng khoản; muốn trừ thì giảm thẳng số của khoản đó.</li>
+      </ul>
+      <p>Bảng luôn có đủ 14 khoản cố định như hợp đồng; khoản không có hiện 0. Kéo ngang để xem hết, cột tên thuyền viên và cột nút luôn đứng yên. Cột <b>Hạn trả</b> tính theo kỳ thanh toán Phải chi của hợp đồng.</p>
+      <div class="flow">
+        <span>Chưa trả</span><i>→</i><span>Sửa số nếu cần</span><i>→</i><span class="key">Chốt: Đã trả</span>
+      </div>
+      <ol class="steps">
+        <li><span>Trả lương cho thuyền viên ngoài hệ thống.</span></li>
+        <li><span>Sửa số ở dòng Trả cho khớp số đã trả, nếu khác hợp đồng. Ô đã sửa có viền màu và chữ "Đã sửa"; <span class="ui">Bỏ sửa</span> trả về số cũ.</span></li>
+        <li><span>Bấm <span class="ui">Chốt</span> ở dòng đó. Ngày trả là ngày bấm. Bấm nhầm thì bấm <span class="ui">Hoàn tác</span> trên thông báo.</span></li>
+      </ol>
+      <p>Trả nhiều người một lúc: tích ô đầu các dòng rồi bấm <span class="ui">Chốt … dòng đã chọn</span>. Hộp xác nhận ghi tổng tiền và nhắc nếu có dòng mà đối tác chưa trả tiền. Nếu một dòng không chốt được (ví dụ người khác vừa chốt), không dòng nào được chốt; xem tên dòng trong thông báo rồi làm lại.</p>
+      <p>Số đã sửa chỉ được lưu khi bấm Chốt. Đổi tháng, đổi tab hay rời trang khi còn số chưa chốt, app hỏi trước.</p>
+      <h3 id="sua-sau-khi-da-chot">Sửa sau khi đã chốt</h3>
+      <p>Dòng đã trả bị khoá. Bấm <span class="ui">⋯</span> → <span class="ui">Huỷ chốt</span> để về Chưa trả, sửa rồi chốt lại. Số đã chốt được giữ, không quay về số của hợp đồng. Nếu yêu cầu thanh toán bị sửa số tiền sau khi đã chốt, dòng hiện nhãn vàng <b>Bill đổi sau khi chốt</b>; rê chuột để xem tổng lúc chốt.</p>
+      <div class="note">
+        <i>i</i>
+        <b>Khi sửa ngày hợp đồng</b>
+        <p>Kỳ đã chốt trả lương được giữ như kỳ đã gửi hay đã thu. Nếu sửa ngày làm kỳ đó bị cắt hoặc xoá, app chặn và nêu tên kỳ; huỷ chốt trả lương kỳ đó trước rồi làm lại.</p>
+      </div>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem bảng trả lương</span><em>Trả lương · Xem bảng trả lương</em><span class="chips"><span class="job j-kt">Kế toán</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Sửa số, chốt, huỷ chốt</span><em>Trả lương · Sửa số trả, chốt và huỷ chốt</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

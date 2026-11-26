@@ -76,6 +76,18 @@ const pin = {
     return { ok: false, left: MAX_FAILS - fails }
   },
 
+  // Đổi PIN ngay trên máy (Cài đặt trên máy này): phải đúng mã hiện tại; sai cùng đếm với mở khoá, sai đủ lần thì
+  // xoá PIN như unlock. PIN theo máy, chỉ người biết mã hiện tại đổi được; quên thì đăng nhập lại để đặt mã mới.
+  // → { ok } | { ok: false, left } | { ok: false, left: 0, exhausted: true }
+  changePin(current, next) {
+    if (!/^\d{6}$/.test(String(next))) throw new Error('Mã PIN mới gồm đúng 6 chữ số')
+    const data = read()
+    if (!data) throw new Error('Máy này chưa có mã PIN')
+    const result = pin.unlock(current)
+    if (result.ok) pin.setPin(next)
+    return result
+  },
+
   clear() {
     fs.rmSync(file(), { force: true })
   },

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yêu cầu thanh toán · Hướng dẫn MCAH</title>
+<meta name="description" content="Bill thu tiền chủ tàu theo kỳ: sửa, duyệt, gửi, ghi nhận đã thu.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="thanh-toan">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hợp đồng và tiền</div>
+      <h1>Yêu cầu thanh toán</h1>
+      <p class="lead">Bill thu tiền chủ tàu theo kỳ: sửa, duyệt, gửi, ghi nhận đã thu.</p>
+    </header>
+    <section id="thanh-toan">
+      <p>Mỗi <b>yêu cầu thanh toán</b> (bill) là một kỳ thu tiền chủ tàu của một hợp đồng, cắt theo ngày chốt sổ. Kỳ đầu bắt đầu đúng ngày bắt đầu hợp đồng và cộng thêm các khoản một lần; kỳ cuối kết thúc đúng ngày kết thúc. Mã nối từ mã hợp đồng: CH2601-01/HĐ/T1 là kỳ 1 bên thu.</p>
+      <div class="flow">
+        <span>Chưa duyệt</span><i>→</i><span>Đã duyệt</span><i>→</i><span>Đã gửi</span><i>→</i><span class="key">Đã thu</span>
+      </div>
+      <figure>
+        <a href="anh/bill-ds.webp" target="_blank" rel="noopener"><img src="anh/bill-ds.webp" width="1440" height="900" loading="lazy" alt="Danh sách yêu cầu thanh toán theo tab trạng thái"></a>
+        <figcaption>Danh sách theo tab: Cần duyệt, Cần gửi, Quá hạn, Đã gửi, Chưa đến kỳ, Đã thu; lọc theo chủ tàu.</figcaption>
+      </figure>
+      <ol class="steps">
+        <li><span>Kỳ sinh ra ở trạng thái chưa duyệt; tới ngày chốt sổ thì vào tab Cần duyệt.</span></li>
+        <li><span>Sửa số tiền từng khoản, ghi chú hoặc hạn thanh toán nếu cần (chỉ khi chưa duyệt). Muốn trừ những ngày chưa làm thì giảm thẳng số của khoản đó, ví dụ Lương cơ bản.</span></li>
+        <li><span><span class="ui">Duyệt</span>: người duyệt phải khác người sửa gần nhất. Kỳ đã duyệt bị khoá; muốn sửa thì Bỏ duyệt.</span></li>
+        <li><span>Gửi cho chủ tàu ngoài hệ thống rồi đánh dấu <span class="ui">Đã gửi</span>. Thu hồi một kỳ đã gửi đưa nó về chưa duyệt.</span></li>
+        <li><span>Nhận tiền thì <span class="ui">Ghi nhận đã thu</span> với ngày thu; ghi nhầm thì huỷ ghi nhận.</span></li>
+      </ol>
+      <figure>
+        <a href="anh/bill-ct.webp" target="_blank" rel="noopener"><img src="anh/bill-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết một yêu cầu thanh toán với lịch các kỳ"></a>
+        <figcaption>Chi tiết một kỳ: số tiền hằng tháng và một lần, ngày gửi, ngày thu; cột phải là lịch mọi kỳ của hợp đồng.</figcaption>
+      </figure>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Sửa số tiền, ghi chú</span><em>Yêu cầu thanh toán · Sửa số tiền và ghi chú</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+        <div><span>Duyệt, bỏ duyệt</span><em>Yêu cầu thanh toán · Duyệt và bỏ duyệt</em><span class="chips"><span class="job j-kt">Kế toán</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Đánh dấu đã gửi, thu hồi</span><em>Yêu cầu thanh toán · Đánh dấu đã gửi và thu hồi</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+        <div><span>Ghi nhận đã thu</span><em>Yêu cầu thanh toán · Ghi nhận đã thu và huỷ ghi nhận</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

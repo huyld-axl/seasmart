@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chuyến tàu · Hướng dẫn MCAH</title>
+<meta name="description" content="Chuyến tàu sinh ra khi chốt người; ghi xuống tàu, rời tàu.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="chuyen-tau">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hợp đồng và tiền</div>
+      <h1>Chuyến tàu</h1>
+      <p class="lead">Chuyến tàu sinh ra khi chốt người; ghi xuống tàu, rời tàu.</p>
+    </header>
+    <section id="chuyen-tau">
+      <p>Mỗi <b>chuyến</b> là một thuyền viên đi một tàu, từ ngày xuống tới ngày rời. Chuyến ghi sự việc thật; tiền nằm ở hợp đồng. Sửa ngày của chuyến không bao giờ làm đổi tiền.</p>
+      <figure>
+        <a href="anh/chuyen-ds.webp" target="_blank" rel="noopener"><img src="anh/chuyen-ds.webp" width="1440" height="900" loading="lazy" alt="Danh sách chuyến tàu"></a>
+        <figcaption>Danh sách chuyến: lọc trạng thái, tìm thuyền viên hoặc mã chuyến, chọn khoảng ngày; cột Lên tàu cho biết sớm hay muộn so với dự kiến.</figcaption>
+      </figure>
+      <div class="two">
+        <div class="card"><h4>Chuyến từ cơ hội</h4><p>Sinh ra khi chốt người, kèm hợp đồng nháp. Mã nối từ mã cơ hội: CH2601 → CH2601-01.</p></div>
+        <div class="card"><h4>Tạo chuyến bằng tay</h4><p>Bắt buộc chọn lý do: Chủ tàu tự tuyển, Nhập chuyến cũ, Khác. Nhập chuyến cũ thì bật "Chuyến đã kết thúc" để nhập luôn ngày rời. Mã dạng CT2601. Chuyến tạo tay không tự có hợp đồng.</p></div>
+      </div>
+      <h3 id="cac-thao-tac-tren-chuyen">Các thao tác trên chuyến</h3>
+      <ul>
+        <li><b>Ghi rời tàu:</b> nhập ngày, nơi rời và ghi chú. Chuyến sang Đã rời tàu, thuyền viên về Ở bờ. Hợp đồng không tự đổi (xem <a href="roi-tau.html">Rời tàu, sửa và kết thúc hợp đồng</a>). Thông báo sau đó có lối tắt <span class="ui">Mở hợp đồng</span> và <span class="ui">Tạo cơ hội tìm người thay</span>. Chọn nhiều chuyến trên danh sách để ghi rời một lần.</li>
+        <li><b>Không có thao tác chuyển tàu:</b> thuyền viên sang tàu khác thì ghi rời chuyến cũ trước, rồi chốt hoặc tạo chuyến mới.</li>
+        <li><b>Đổi ngày rời dự kiến:</b> app giữ ngày gốc để hiện "sớm / muộn n ngày".</li>
+        <li><b>Sửa ngày đã ghi</b> khi nhập nhầm; <b>Huỷ chốt</b> (chuyến từ cơ hội, cơ hội mở lại) hoặc <b>Xoá chuyến</b> (chuyến tạo tay).</li>
+      </ul>
+      <p>Ngày rời dự kiến còn 30 ngày trở xuống hiện nhãn vàng; đã qua mà chưa ghi rời hiện nhãn đỏ. Mỗi thuyền viên chỉ có một chuyến đang trên tàu tại một thời điểm.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Tạo chuyến</span><em>Chuyến tàu · Tạo chuyến tàu</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Ghi rời tàu</span><em>Chuyến tàu · Bắt đầu và kết thúc chuyến</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Sửa ngày, đổi ngày rời dự kiến</span><em>Chuyến tàu · Sửa chuyến tàu</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

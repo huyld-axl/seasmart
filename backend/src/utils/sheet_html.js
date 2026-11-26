@@ -22,9 +22,21 @@ function parseRange(ref) {
   return { left: colNumber(match[1]), top: Number(match[2]), right: colNumber(match[3]), bottom: Number(match[4]) }
 }
 
+// Phông ký hiệu Wingdings (ô vuông, dấu tích trong mẫu): máy không có phông này thì chữ biến mất, nên đổi sang ký tự
+// Unicode tương ứng và vẽ bằng phông thường. Excel lưu ký hiệu dạng chữ thường (q) hoặc vùng riêng (U+F071).
+const WINGDINGS = { 0x6c: '●', 0x6e: '■', 0x6f: '□', 0x70: '◻', 0x71: '❑', 0x72: '❒', 0x73: '⬧', 0x75: '◆', 0x76: '❖', 0x77: '⬥', 0x9f: '•', 0xa1: '○', 0xa7: '▪', 0xa8: '◻', 0xd8: '➢', 0xfb: '✗', 0xfc: '✓', 0xfd: '☒', 0xfe: '☑' }
+const isSymbolFont = (font) => /^wingdings$/i.test(font?.name || '')
+function symbolText(text, font) {
+  if (!isSymbolFont(font)) return text
+  return [...String(text)].map((ch) => {
+    const code = ch.codePointAt(0)
+    return WINGDINGS[code >= 0xf000 && code <= 0xf0ff ? code - 0xf000 : code] || ch
+  }).join('')
+}
+
 function fontCss(font = {}) {
   const css = []
-  if (font.name) css.push(`font-family:'${font.name.replace(/[^\w \-]/g, '')}','Times New Roman',serif`)
+  if (font.name && !isSymbolFont(font)) css.push(`font-family:'${font.name.replace(/[^\w \-]/g, '')}','Times New Roman',serif`)
   if (font.size) css.push(`font-size:${font.size}pt`)
   if (font.bold) css.push('font-weight:700')
   if (font.italic) css.push('font-style:italic')
@@ -40,12 +52,12 @@ function rawCellHtml(cell) {
   if (value instanceof Date) return `${pad(value.getDate())}/${pad(value.getMonth() + 1)}/${value.getFullYear()}`
   if (value.richText) {
     // Mỗi đoạn mang kiểu chữ riêng: đoạn không đậm trong ô đậm vẫn là chữ thường, như Excel.
-    return value.richText.map((run) => `<span style="${['font-weight:400', 'font-style:normal', ...fontCss(run.font)].join(';')}">${esc(run.text)}</span>`).join('')
+    return value.richText.map((run) => `<span style="${['font-weight:400', 'font-style:normal', ...fontCss(run.font)].join(';')}">${esc(symbolText(run.text, run.font))}</span>`).join('')
   }
   const result = value.formula || value.sharedFormula ? value.result : value
   if (typeof result === 'number' && /#,##0/.test(cell.numFmt || '')) return esc(result.toLocaleString('vi-VN'))
   if (result && typeof result === 'object') return esc(cell.text || '')
-  return esc(result ?? '')
+  return esc(symbolText(result ?? '', cell.style?.font))
 }
 
 function markedText(text, parts, offset = 0, last = true) {
@@ -71,12 +83,12 @@ function cellHtml(cell) {
   if (value?.richText) {
     let offset = 0
     return value.richText.map((run, index) => {
-      const html = markedText(run.text, marks.parts, offset, index === value.richText.length - 1)
+      const html = markedText(symbolText(run.text, run.font), marks.parts, offset, index === value.richText.length - 1)
       offset += run.text.length
       return `<span style="${['font-weight:400', 'font-style:normal', ...fontCss(run.font)].join(';')}">${html}</span>`
     }).join('')
   }
-  return markedText(cell.text || '', marks.parts)
+  return markedText(symbolText(cell.text || '', cell.style?.font), marks.parts)
 }
 
 function cellCss(cell) {
@@ -172,4 +184,25 @@ td{padding:0 3px;overflow:visible}
   return { html, width: width + OVERFLOW_ROOM }
 }
 
-module.exports = { sheetToHtml, parseRange }
+const A4_INCH = { portrait: [8.27, 11.69], landscape: [11.69, 8.27] }
+const DEFAULT_MARGINS = { left: 0.7, right: 0.7, top: 0.75, bottom: 0.75 }
+
+// Trang in được của sheet (app máy tính in ra PDF bằng Chromium, desktop/src/pdf-printer.js): chính bản xem trước,
+// thêm khổ A4, lề và tỉ lệ theo thiết lập in của sheet. Co cho vừa bề ngang khi sheet đặt "vừa 1 trang ngang"
+// (layoutForPdf của form_export.service.js), không thì theo tỉ lệ in. → { html, footer } (footer: chân trang Excel)
+function sheetToPrintHtml(ws, wb) {
+  const { html, width } = sheetToHtml(ws, wb)
+  const setup = ws.pageSetup || {}
+  const margins = { ...DEFAULT_MARGINS, ...setup.margins }
+  const orientation = setup.orientation === 'landscape' ? 'landscape' : 'portrait'
+  const usable = (A4_INCH[orientation][0] - margins.left - margins.right) * 96
+  const zoom = setup.fitToPage ? Math.min(1, usable / (width - OVERFLOW_ROOM)) : (setup.scale || 100) / 100
+  const page = `<style>
+@page{size:A4 ${orientation};margin:${margins.top}in ${margins.right}in ${margins.bottom}in ${margins.left}in}
+html,body{overflow:visible}
+body{zoom:${zoom.toFixed(4)}}
+</style>`
+  return { html: html.replace('</head>', `${page}</head>`), footer: ws.headerFooter?.oddFooter || null }
+}
+
+module.exports = { sheetToHtml, sheetToPrintHtml, parseRange }

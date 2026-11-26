@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Máy trong văn phòng · Hướng dẫn MCAH</title>
+<meta name="description" content="Máy chính, máy nhân viên, gỡ và duyệt máy, mất nối, cập nhật theo máy chính.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="nhieu-may">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Quản trị văn phòng</div>
+      <h1>Máy trong văn phòng</h1>
+      <p class="lead">Máy chính, máy nhân viên, gỡ và duyệt máy, mất nối, cập nhật theo máy chính.</p>
+    </header>
+    <section id="app-nhieu-may">
+
+  <h3 id="may-chinh-va-may-nhan-vien">Máy chính và máy nhân viên</h3>
+  <p>Dữ liệu của văn phòng nằm ở <b>máy chính</b> (máy đã tạo văn phòng). Các máy khác là <b>máy nhân viên</b>: chúng nối vào máy chính qua mạng văn phòng và làm việc như đang ngồi ở máy chính. Máy chính phải bật và mở MCAH thì máy nhân viên mới làm việc được. Nên dùng máy bàn làm máy chính; MCAH giữ máy không ngủ khi đang mở.</p>
+
+  <h3 id="noi-mot-may-nhan-vien">Nối một máy nhân viên</h3>
+  <p>Cài MCAH trên máy nhân viên, đăng nhập bằng tài khoản đã được mời. MCAH tự tìm máy chính trong mạng văn phòng; bấm <span class="ui">Nối</span>. Không thấy máy chính thì bấm <span class="ui">Nhập tên / địa chỉ máy</span> và gõ tên máy chính (xem ở <span class="ui">Cài đặt trên máy này</span> trên máy chính). Vẫn không nối được: xem <a href="cai-dat-van-phong.html">Máy nhân viên vẫn không nối được</a>.</p>
+  <p class="note">MCAH chỉ nối vào đúng máy chính của văn phòng bạn. Nếu thấy báo "Máy này không phải máy chính của …", đừng nhập gì và báo quản trị.</p>
+
+  <h3 id="may-trong-van-phong">Máy trong văn phòng</h3>
+  <p>Quản trị xem các máy đã nối ở <span class="ui">Quản trị</span> → <span class="ui">Máy trong văn phòng</span>. Máy mất hoặc nhân viên nghỉ: bấm <span class="ui">Gỡ</span>, máy đó không vào được nữa. Máy đã gỡ muốn vào lại thì quản trị phải bấm <span class="ui">Duyệt</span>.</p>
+
+  <h3 id="mat-noi-may-chinh">Mất nối máy chính</h3>
+  <p>Khi máy chính tắt hoặc mất mạng, máy nhân viên hiện dải đỏ "Không nối được máy chính". Những gì bạn đang gõ vẫn còn; chỉ chưa lưu được. Bật lại máy chính, MCAH tự nối và bạn bấm Lưu như thường.</p>
+
+  <h3 id="hai-nguoi-cung-sua-mot-ho-so">Hai người cùng sửa một hồ sơ</h3>
+  <p>Nếu người khác đã lưu hồ sơ sau lúc bạn mở, MCAH không ghi đè mà hiện những ô người kia đã đổi. Bấm <span class="ui">Lấy bản mới, giữ phần tôi đã đổi</span>, xem lại rồi bấm Lưu. Ô mà cả hai cùng đổi sẽ hiện cả hai giá trị để bạn chọn.</p>
+
+  <h3 id="cap-nhat">Cập nhật</h3>
+  <p>Khi máy chính lên bản mới mà máy nhân viên cần cập nhật theo, máy nhân viên tự tải bộ cài từ máy chính (không cần internet) và cài. Trên Ubuntu, máy sẽ hỏi mật khẩu quản trị.</p>
+    </section>
+  </main>
+</div>
+</body>
+</html>

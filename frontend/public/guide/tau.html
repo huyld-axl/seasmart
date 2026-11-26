@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tàu · Hướng dẫn MCAH</title>
+<meta name="description" content="Thêm tàu, tra tàu theo số IMO.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="tau">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hồ sơ</div>
+      <h1>Tàu</h1>
+      <p class="lead">Thêm tàu, tra tàu theo số IMO.</p>
+    </header>
+    <section id="tau">
+      <p>Hồ sơ từng con tàu: tên, tên cũ, số IMO, Call Sign, MMSI, loại tàu, cờ quốc gia, năm đóng, thông số, máy và thiết bị, chủ tàu và đơn vị quản lý. Tên tàu nên ghi đúng như trên sổ thuyền viên để AI khớp được chuyến đi tàu.</p>
+      <figure>
+        <a href="anh/tau-ct.webp" target="_blank" rel="noopener"><img src="anh/tau-ct.webp" width="1440" height="900" loading="lazy" alt="Chi tiết tàu với cảnh báo thiếu thông tin chính"></a>
+        <figcaption>Chi tiết tàu: khung vàng nhắc thông tin chính còn thiếu, bấm Bổ sung để điền.</figcaption>
+      </figure>
+      <h3 id="tra-tau-theo-so-imo">Tra tàu theo số IMO</h3>
+      <ol class="steps">
+        <li><span>Ở form thêm tàu, nhập số IMO (7 chữ số) rồi tra cứu.</span></li>
+        <li><span>App lấy thông tin tàu từ nguồn bên ngoài và hiện khung <b>Thông tin thông minh</b>: từng trường lấy về đặt cạnh giá trị đang có.</span></li>
+        <li><span>Ô đang trống được chọn sẵn; ô khác giá trị hiện tại để bạn quyết định. Bấm áp dụng, kiểm tra rồi <span class="ui">Thêm tàu</span>.</span></li>
+      </ol>
+      <p>IMO đã có trong hệ thống thì app báo trùng và mời mở tàu đã có. Tra cứu cần máy chủ đã nối nguồn dữ liệu tàu; nếu nguồn không phản hồi, nhập tay như thường.</p>
+      <p>Trang tàu có tab <b>Đội ngũ</b> (ai đang ở trên tàu trong khoảng thời gian đang xem) và tab <b>Đi tàu</b>; nút <span class="ui">Tạo chuyến</span> ở đầu trang.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Thêm tàu, tra theo IMO</span><em>Tàu · Thêm tàu</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Sửa, xoá tàu</span><em>Tàu · Sửa tàu, Xoá tàu</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-qt">Quản trị</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

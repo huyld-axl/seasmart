@@ -1,5 +1,5 @@
 // App máy tính (docs/mcah-ke-hoach-desktop-gd1.md 3.1): preload của app đặt window.mcah. Không có thì là bản web.
-// Mọi chỗ cần việc của máy (mở thư, cài thành phần, cài đặt máy) gọi qua đây, không dùng window.mcah trực tiếp.
+// Mọi chỗ cần việc của máy (mở thư, mã PIN, cài đặt máy) gọi qua đây, không dùng window.mcah trực tiếp.
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 
 const bridge = () => (typeof window !== 'undefined' ? window.mcah : undefined)
@@ -10,9 +10,6 @@ export const desktop = {
   openMail: (mail) => bridge().openMail(mail),
   openMailFolder: () => bridge().openMailFolder(),
   openExternal: (kind) => bridge().openExternal(kind),
-  pdfComponent: () => bridge().pdfComponent(),
-  installPdfComponent: () => bridge().installPdfComponent(),
-  onPdfInstallProgress: (fn) => bridge().onPdfInstallProgress(fn),
   getSettings: () => bridge().getSettings(),
   saveSettings: (settings) => bridge().saveSettings(settings),
   checkUpdate: () => bridge().checkUpdate(),
@@ -28,6 +25,7 @@ export const desktop = {
   lockState: () => bridge().lockState(),
   setPin: (value) => bridge().setPin(value),
   unlock: (value) => bridge().unlock(value),
+  changePin: (current, next) => bridge().changePin({ current, next }),
   onLockChanged: (fn) => bridge().onLockChanged(fn),
   setupMainMachine: () => bridge().setupMainMachine(),
   recheckOffice: () => bridge().recheckOffice(),

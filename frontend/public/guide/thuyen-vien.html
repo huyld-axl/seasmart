@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thuyền viên · Hướng dẫn MCAH</title>
+<meta name="description" content="Thêm thuyền viên và làm việc với hồ sơ thuyền viên.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="thuyen-vien">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hồ sơ</div>
+      <h1>Thuyền viên</h1>
+      <p class="lead">Thêm thuyền viên và làm việc với hồ sơ thuyền viên.</p>
+    </header>
+    <section id="thuyen-vien">
+      <p>Mỗi thuyền viên có một hồ sơ dùng lại cho mọi cơ hội, chuyến tàu, hợp đồng. Trạng thái <span class="tag t-success">Đang trên tàu</span> / <span class="tag t-neutral">Ở bờ</span> tự đổi theo chuyến tàu, không cần sửa tay.</p>
+      <figure>
+        <a href="anh/thuyen-vien-ds.webp" target="_blank" rel="noopener"><img src="anh/thuyen-vien-ds.webp" width="1440" height="900" loading="lazy" alt="Danh sách thuyền viên"></a>
+        <figcaption>Danh sách thuyền viên: tìm theo tên, CCCD, số sổ; lọc theo trạng thái và Bộ lọc.</figcaption>
+      </figure>
+      <h3 id="them-thuyen-vien">Thêm thuyền viên</h3>
+      <ul>
+        <li><span class="ui">+ Thêm thuyền viên</span> mở form theo nhóm: thông tin chung, giấy tờ tuỳ thân, thể chất, liên hệ, ngân hàng &amp; BHXH, gia quyến, học vấn.</li>
+        <li>Ở form, có thể quét CCCD, hộ chiếu hoặc sổ thuyền viên để AI điền sẵn các ô; app hỏi có lưu ảnh vừa quét vào Giấy tờ không.</li>
+        <li>Nhiều người một lúc: menu <span class="ui">⋮</span> trên danh sách → nhập từ Excel. Tải file mẫu, điền, chọn file rồi nhập.</li>
+      </ul>
+      <h3 id="ho-so-thuyen-vien">Hồ sơ thuyền viên</h3>
+      <p>Thẻ đầu trang có chức danh, tàu và chuyến hiện tại, nút gọi, nhắn, gửi mail nhanh. Bên dưới là năm tab:</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Tab</th><th>Có gì</th></tr></thead>
+          <tbody>
+            <tr><td>Tổng quan</td><td>Bảy nhóm thông tin, mỗi nhóm có số ô đã điền để biết hồ sơ còn thiếu gì</td></tr>
+            <tr><td>Giấy tờ</td><td>Mọi giấy tờ, chứng chỉ, hạn và trạng thái (xem mục <a href="giay-to.html">Giấy tờ &amp; AI đọc giấy</a>)</td></tr>
+            <tr><td>Đi tàu</td><td>Dòng thời gian các chuyến, tổng thời gian trên tàu, các khoảng ở bờ; nút Tạo chuyến</td></tr>
+            <tr><td>Hợp đồng</td><td>Các hợp đồng của thuyền viên này</td></tr>
+            <tr><td>Lịch sử</td><td>Ai đã sửa gì, khi nào</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure>
+        <a href="anh/thuyen-vien-ditau.webp" target="_blank" rel="noopener"><img src="anh/thuyen-vien-ditau.webp" width="1440" height="900" loading="lazy" alt="Tab Đi tàu của hồ sơ thuyền viên"></a>
+        <figcaption>Tab Đi tàu: chuyến đang đi, khoảng ở bờ và các chuyến trước.</figcaption>
+      </figure>
+      <p>Menu <span class="ui">⋮</span> ở đầu hồ sơ có <b>Tạm ngưng thuyền viên</b> (người tạm ngưng không chốt, không tạo chuyến được), <b>Kích hoạt lại</b> và <b>Xoá thuyền viên</b>.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Xem danh sách và hồ sơ</span><em>Thuyền viên · Xem danh sách và hồ sơ</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Thêm, sửa hồ sơ</span><em>Thuyền viên · Thêm thuyền viên, Sửa hồ sơ</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Nhập từ Excel</span><em>Thuyền viên · Nhập từ Excel</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Xoá thuyền viên</span><em>Thuyền viên · Xoá thuyền viên</em><span class="chips"><span class="job j-qt">Quản trị</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

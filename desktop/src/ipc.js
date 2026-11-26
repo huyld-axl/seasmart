@@ -4,13 +4,11 @@ const path = require('path')
 const { app, ipcMain, shell } = require('electron')
 const { openMail, attachmentDir, defaultMailApp } = require('./mail')
 const { getSettings, saveSettings } = require('./settings')
-const { findSoffice, installSoffice } = require('./pdf-component')
 const session = require('./session')
 const pin = require('./pin')
 
 const EXTERNAL = {
   thunderbird: 'https://www.thunderbird.net/vi/download/',
-  libreoffice: 'https://vi.libreoffice.org/download/download/',
 }
 const EMAIL = /^[^\s@,;<>]+@[^\s@,;<>]+$/
 
@@ -72,7 +70,7 @@ function checkSettings(s) {
   return out
 }
 
-// hooks: { relaunch, openLogs, restartBackend(sofficePath), checkUpdate, lanStatus, lanFind, lanPair, lanPairStatus, lanInfo, lanRetry }
+// hooks: { relaunch, openLogs, checkUpdate, lanStatus, lanFind, lanPair, lanPairStatus, lanInfo, lanRetry }
 function registerIpc(hooks) {
   const handle = (channel, fn) => ipcMain.handle(`mcah:${channel}`, (event, arg) => fn(arg, event))
   handle('open-mail', (m) => openMail(checkMail(m)))
@@ -81,21 +79,6 @@ function registerIpc(hooks) {
   handle('open-external', (kind) => {
     if (!EXTERNAL[kind]) throw new Error('Địa chỉ không hợp lệ')
     return shell.openExternal(EXTERNAL[kind])
-  })
-  handle('pdf-component', () => ({ installed: Boolean(findSoffice()) }))
-  let installing = null
-  handle('install-pdf-component', (_arg, event) => {
-    if (!installing) {
-      installing = installSoffice((p) => event.sender.send('mcah:pdf-install-progress', p))
-        .then(async (soffice) => {
-          await hooks.restartBackend(soffice)
-          return { installed: true }
-        })
-        .finally(() => {
-          installing = null
-        })
-    }
-    return installing
   })
   // Đăng nhập / văn phòng (docs/mcah-ke-hoach-desktop-gd2.md 4.1, 4.3).
   handle('session', () => session.info())
@@ -112,6 +95,11 @@ function registerIpc(hooks) {
   handle('set-pin', (value) => pin.setPin(str(String(value), 6, 'Mã PIN')))
   handle('unlock', (value) => {
     const result = pin.unlock(str(String(value ?? ''), 6, 'Mã PIN'))
+    if (result.exhausted) session.expired('pin')
+    return result
+  })
+  handle('change-pin', (arg) => {
+    const result = pin.changePin(str(String(arg?.current ?? ''), 6, 'Mã PIN hiện tại'), str(String(arg?.next ?? ''), 6, 'Mã PIN mới'))
     if (result.exhausted) session.expired('pin')
     return result
   })

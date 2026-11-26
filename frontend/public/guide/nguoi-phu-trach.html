@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Người phụ trách · Hướng dẫn MCAH</title>
+<meta name="description" content="Ai phụ trách thuyền viên, hợp đồng, yêu cầu thanh toán; đổi người và tìm việc của mình.">
+<link rel="stylesheet" href="assets/guide.css">
+<script src="assets/guide.js"></script>
+</head>
+<body data-page="nguoi-phu-trach">
+<!-- Bài hướng dẫn. Mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan và bài trước / sau do assets/guide.js dựng từ danh mục bài (GUIDE). -->
+<div class="page">
+  <main class="article">
+    <header>
+      <div class="kicker">Hồ sơ</div>
+      <h1>Người phụ trách</h1>
+      <p class="lead">Ai phụ trách thuyền viên, hợp đồng, yêu cầu thanh toán; đổi người và tìm việc của mình.</p>
+    </header>
+    <section id="nguoi-phu-trach">
+      <p>Mỗi thuyền viên, hợp đồng và yêu cầu thanh toán có một <b>người phụ trách</b>: người theo dõi và chịu trách nhiệm việc đó. Tên hiện ở đầu trang chi tiết (dòng <b>Phụ trách</b>) và ở cột <span class="ui">Phụ trách</span> trong danh sách. Cơ hội vẫn có ô Người phụ trách riêng như trước.</p>
+      <h3 id="duoc-giao-tu-dong-khi-tao">Được giao tự động khi tạo</h3>
+      <div class="flow">
+        <span>Thuyền viên</span><i>→</i><span>Hợp đồng</span><i>→</i><span class="key">Yêu cầu thanh toán</span>
+      </div>
+      <ul>
+        <li><b>Thuyền viên:</b> khi thêm hồ sơ, ô Người phụ trách (mục Thông tin chung) điền sẵn là bạn; chọn người khác hoặc để trống nếu chưa giao. Nhập bằng Excel thì người nhập là người phụ trách.</li>
+        <li><b>Hợp đồng:</b> khi chốt người ở cơ hội hoặc tạo hợp đồng cho chuyến, hợp đồng giao cho người phụ trách của thuyền viên đó (không theo người phụ trách cơ hội).</li>
+        <li><b>Yêu cầu thanh toán:</b> khi hợp đồng được duyệt, các yêu cầu thanh toán giao cho người phụ trách hợp đồng.</li>
+      </ul>
+      <h3 id="doi-nguoi-phu-trach">Đổi người phụ trách</h3>
+      <ol class="steps">
+        <li><span>Mở hồ sơ thuyền viên, hoặc trang chi tiết hợp đồng / yêu cầu thanh toán.</span></li>
+        <li><span>Bấm <span class="ui">Đổi</span> cạnh tên người phụ trách ở đầu trang (hoặc đổi trong form sửa thuyền viên, hợp đồng nháp, yêu cầu thanh toán).</span></li>
+        <li><span>Chọn người mới rồi bấm <span class="ui">Lưu</span>.</span></li>
+      </ol>
+      <p>Đổi được ở mọi trạng thái, kể cả hợp đồng đang hiệu lực và yêu cầu thanh toán đã duyệt, đã gửi hay đã thu. Việc đổi không động tới số tiền và không tính là sửa yêu cầu thanh toán (người được giao vẫn tự duyệt được). Lịch sử ghi lại ai đã đổi, từ ai sang ai.</p>
+      <div class="note">
+        <i>i</i>
+        <b>Đổi ở đâu chỉ đổi đúng chỗ đó</b>
+        <p>Giao thuyền viên cho người khác thì các hợp đồng đã có vẫn giữ người cũ; hợp đồng tạo sau mới giao cho người mới. Giao hợp đồng cho người khác thì các yêu cầu thanh toán đã có giữ người cũ; chỉ yêu cầu thanh toán sinh ra sau (ví dụ khi gia hạn hợp đồng) mới giao cho người mới. Muốn giao lại việc đã có thì đổi từng cái.</p>
+      </div>
+      <h3 id="tim-viec-cua-minh">Tìm việc của mình</h3>
+      <p>Ở danh sách Thuyền viên, Hợp đồng, Yêu cầu thanh toán, mở bộ lọc <span class="ui">Người phụ trách</span> và chọn <span class="ui">Tôi</span>. Chọn <span class="ui">Chưa giao</span> để thấy những hồ sơ chưa có ai phụ trách. Tài khoản chỉ được xem dữ liệu của mình thấy cả việc mình tạo và việc được giao cho mình. Ở bảng Trả lương, cột Đối tác: dòng trên là người phụ trách yêu cầu thanh toán, dòng dưới là đối tác. Người đã nghỉ (tài khoản bị khoá) vẫn hiện tên kèm nhãn <b>Đã khoá</b>, để biết việc nào cần giao lại.</p>
+      <div class="who">
+        <div><span>Việc</span><span>Quyền cần có</span><span>Thường do</span></div>
+        <div><span>Đổi người phụ trách thuyền viên</span><em>Thuyền viên · Sửa</em><span class="chips"><span class="job j-mg">Môi giới</span></span></div>
+        <div><span>Đổi người phụ trách hợp đồng</span><em>Hợp đồng · Sửa hợp đồng</em><span class="chips"><span class="job j-mg">Môi giới</span><span class="job j-dy">Duyệt &amp; quản lý</span></span></div>
+        <div><span>Đổi người phụ trách yêu cầu thanh toán</span><em>Yêu cầu thanh toán · Sửa số tiền và ghi chú</em><span class="chips"><span class="job j-kt">Kế toán</span></span></div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { Alert, Button, Card, Form, Input, InputNumber, Modal, Radio, Select, Skeleton, Switch } from 'antd'
 import { SegmentedPick } from '../fleet/FleetParts'
 import { NotesList } from '../../../components/common/WhatsNew'
 import useToast from '../../../components/ds/useToast'
 import api from '../../../api/client'
 import apiErrorText from '../../../utils/apiError'
-import usePdfComponentStore from '../../../stores/pdfComponentStore'
+import PinCard from './PinCard'
 import { desktop, isDesktop, useDeviceSettings, useSaveDeviceSettings } from '../../../lib/desktop'
 
 const PROVIDERS = [
@@ -20,13 +20,12 @@ const mailAppName = (desktopFile) => (/thunderbird/i.test(desktopFile || '') ? '
 const bridgeError = (error) => String(error?.message || error).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
 
 // Cài đặt trên máy này (wireframe 4, docs/mcah-ke-hoach-desktop-gd1.md 3.6): theo từng máy, chỉ có trong app máy tính.
-// Cách gửi email (app mail / gửi thẳng SMTP) và thành phần xuất PDF. Mật khẩu SMTP cất trong két hệ điều hành của máy.
+// Cách gửi email (app mail / gửi thẳng SMTP) và mã PIN của máy. Mật khẩu SMTP cất trong két hệ điều hành của máy.
+// Xuất PDF không cần cài gì: app in bằng Chromium của chính nó (desktop/src/pdf-printer.js).
 export default function DeviceSettingsPage() {
   const toast = useToast()
-  const queryClient = useQueryClient()
   const settings = useDeviceSettings()
   const save = useSaveDeviceSettings()
-  const pdf = useQuery({ queryKey: ['pdf-component'], queryFn: desktop.pdfComponent, enabled: isDesktop() })
   // Máy chính (giai đoạn 3, wireframe docs/design/wireframes/desktop-gd3.html màn 6): tên, địa chỉ cho máy nhân viên.
   const lan = useQuery({ queryKey: ['lan-status'], queryFn: desktop.lanStatus, enabled: isDesktop() })
   // Cập nhật (giai đoạn 6, wireframe docs/design/wireframes/desktop-gd6.html màn 3).
@@ -77,13 +76,6 @@ export default function DeviceSettingsPage() {
       if (!error?.errorFields) toast.error('Chưa gửi được thư thử', { description: error.response ? apiErrorText(error) : bridgeError(error) })
     } finally {
       setTesting(false)
-    }
-  }
-
-  async function installPdf() {
-    if (await usePdfComponentStore.getState().ask()) {
-      queryClient.invalidateQueries({ queryKey: ['pdf-component'] })
-      toast.success('Đã cài thành phần xuất PDF')
     }
   }
 
@@ -158,19 +150,9 @@ export default function DeviceSettingsPage() {
         </Card>
       ) : null}
 
-      {/* Tự khoá và mã PIN đặt cho cả văn phòng ở Quản trị → Máy trong văn phòng (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7). */}
-      <Card title="Xuất PDF">
-        {pdf.isLoading ? <Skeleton active paragraph={false} /> : pdf.data?.installed ? (
-          <Alert type="success" showIcon message="Đã có thành phần xuất PDF (LibreOffice)." />
-        ) : (
-          <Alert
-            type="warning"
-            showIcon
-            message="Máy chưa có thành phần xuất PDF. Xuất Excel vẫn được."
-            action={<Button size="small" type="primary" onClick={installPdf}>Cài ngay</Button>}
-          />
-        )}
-      </Card>
+      {/* Bật / tắt khoá bằng PIN và thời gian tự khoá đặt cho cả văn phòng ở Quản trị → Máy trong văn phòng
+          (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7); ở đây chỉ đổi mã PIN của chính máy này. */}
+      <PinCard />
 
       {release.data ? (
         <Card title="Cập nhật">

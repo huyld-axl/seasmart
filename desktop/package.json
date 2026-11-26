@@ -1,8 +1,8 @@
 {
-  "name": "mcah-desktop",
-  "version": "0.9.13",
+  "name": "catoro-desktop",
+  "version": "0.9.14",
   "private": true,
-  "description": "App máy tính MCAH (Electron)",
+  "description": "App máy tính Catoro (Electron)",
   "main": "src/main.js",
   "scripts": {
     "build:frontend": "npm exec --prefix ../frontend -- vite build -c ../desktop/vite.frontend.config.mjs",
@@ -28,12 +28,12 @@
     "koffi@3.3.7": true
   },
   "author": {
-    "name": "MCAH",
+    "name": "Catoro",
     "email": "support@mcah.vn"
   },
   "build": {
     "appId": "vn.mcah.desktop",
-    "productName": "MCAH",
+    "productName": "Catoro",
     "directories": {
       "output": "dist/installer"
     },
@@ -76,7 +76,7 @@
     "linux": {
       "target": "deb",
       "category": "Office",
-      "executableName": "mcah",
+      "executableName": "catoro",
       "icon": "build/icon.png"
     },
     "deb": {
@@ -91,7 +91,9 @@
       ],
       "fpm": [
         "--replaces=seasmart-desktop",
-        "--conflicts=seasmart-desktop"
+        "--conflicts=seasmart-desktop",
+        "--replaces=mcah-desktop",
+        "--conflicts=mcah-desktop"
       ]
     },
     "win": {
@@ -133,5 +135,5 @@
     "yauzl": "^3.2.0",
     "yazl": "^3.3.1"
   },
-  "desktopName": "mcah.desktop"
+  "desktopName": "catoro.desktop"
 }

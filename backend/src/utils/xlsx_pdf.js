@@ -1,6 +1,6 @@
 // Chuyển file Excel đã điền sang PDF.
 // - App máy tính: dựng sheet chính thành trang HTML (giống bản xem trước) và nhờ tiến trình chính in bằng Chromium của
-//   app (desktop/src/pdf-printer.js, MCAH_PDF_URL + MCAH_PDF_TOKEN). Không cần cài gì thêm, chạy mọi hệ điều hành.
+//   app (desktop/src/pdf-printer.js, CATORO_PDF_URL + CATORO_PDF_TOKEN). Không cần cài gì thêm, chạy mọi hệ điều hành.
 // - Bản web: LibreOffice chạy ngầm (soffice --headless) trên máy chủ; đặt SOFFICE_PATH trong .env nếu lệnh không phải `soffice`.
 
 const { execFile } = require('child_process')
@@ -9,12 +9,13 @@ const os = require('os')
 const path = require('path')
 const { pathToFileURL } = require('url')
 const ExcelJS = require('exceljs')
+const { productEnv } = require('./env')
 const { tmpRoot } = require('./tmp_dir')
 const { sheetToPrintHtml } = require('./sheet_html')
 
 const SOFFICE = process.env.SOFFICE_PATH || 'soffice'
-const PDF_URL = process.env.MCAH_PDF_URL || ''
-const PDF_TOKEN = process.env.MCAH_PDF_TOKEN || ''
+const PDF_URL = productEnv('PDF_URL') || ''
+const PDF_TOKEN = productEnv('PDF_TOKEN') || ''
 const TIMEOUT_MS = 120000
 // Hồ sơ LibreOffice riêng để không đụng bản đang mở trên máy; dùng lại giữa các lần cho nhanh.
 const PROFILE_DIR = path.join(os.tmpdir(), 'mcah-soffice-profile')

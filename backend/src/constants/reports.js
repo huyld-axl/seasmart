@@ -1,4 +1,4 @@
-// Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md). Một chỗ khai báo cột cho cả bảng trên màn hình và file Excel.
+// Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md). Một chỗ khai báo cột cho cả bảng trên màn hình và file Excel.
 // Chỉ cột có trong mẫu gốc (Q6). Một cột: key (tên trường của dòng), label, group (tiêu đề tầng trên), type: text | date | money | int | percent,
 // detail: một trong 14 khoản (ẩn trên màn khi tắt "Hiện 14 khoản"), merge: 'day' | 'owner' (gộp ô), sticky: cột dính, link: loại trang chi tiết,
 // strong: cột kết quả làm nổi (nền nhạt, chữ đậm) trên màn và trong Excel.

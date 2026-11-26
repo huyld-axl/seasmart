@@ -1,9 +1,10 @@
-// Máy nhân viên gọi qua cổng mạng của máy chính (desktop/src/lan-server.js, docs/mcah-ke-hoach-desktop-gd3.md 3.3).
-// lan-server gắn x-mcah-lan = MCAH_LAN_SECRET; có header đó thì bắt buộc mã thiết bị (x-mcah-device) còn hiệu lực,
+// Máy nhân viên gọi qua cổng mạng của máy chính (desktop/src/lan-server.js, docs/catoro-ke-hoach-desktop-gd3.md 3.3).
+// lan-server gắn x-mcah-lan = CATORO_LAN_SECRET; có header đó thì bắt buộc mã thiết bị (x-mcah-device) còn hiệu lực,
 // trừ các bước ghép máy. Sai mã / máy đã bị Gỡ → 401 DEVICE_REMOVED, máy nhân viên về màn ghép. Không có header: request
 // từ chính máy chính (giao diện của máy này), chạy như cũ.
 const fp = require('fastify-plugin')
 const crypto = require('crypto')
+const { productEnv } = require('../utils/env')
 const pool = require('../config/db')
 
 const OPEN = new Set(['/api/v1/lan/hello', '/api/v1/lan/pair', '/api/v1/lan/pair/status'])
@@ -12,7 +13,7 @@ const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.fr
 const SEEN_MS = 60 * 1000
 
 module.exports = fp(async function (fastify) {
-  const secret = process.env.MCAH_LAN_SECRET || ''
+  const secret = productEnv('LAN_SECRET') || ''
   const seen = new Map()
 
   fastify.addHook('onRequest', async (request, reply) => {

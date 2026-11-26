@@ -130,7 +130,7 @@ async function fleetRoutes(fastify) {
       create: { schema: vesselBody, required: ['vessel_name'], fn: (db, body) => fleetService.createVessel(db, body) },
       update: { schema: vesselBody, fn: (db, id, body) => fleetService.updateVessel(db, id, body) },
       extra: (app, { read, idParams: params }) => {
-        // Danh mục tàu thế giới (ship_catalog), tách khỏi bảng vessel. Tàu đã có trong MCAH không nằm trong kết quả.
+        // Danh mục tàu thế giới (ship_catalog), tách khỏi bảng vessel. Tàu đã có trong Catoro không nằm trong kết quả.
         app.get('/catalog', { ...read, schema: { querystring: catalogQuery } }, async (request) => shipCatalogService.search(pool, request.query))
         // Lấy thông tin thông minh: tra IMO ở nguồn ngoài, trả bản đề xuất (không ghi vào vessel). Thêm tàu (create) hoặc sửa tàu (update) đều dùng.
         app.get('/lookup-status', { ...read }, async () => ({

@@ -1,4 +1,4 @@
-// Phiên đăng nhập ở tiến trình chính (docs/mcah-ke-hoach-desktop-gd2.md 4.1). Giao diện không giữ token: tiến trình
+// Phiên đăng nhập ở tiến trình chính (docs/catoro-ke-hoach-desktop-gd2.md 4.1). Giao diện không giữ token: tiến trình
 // chính gắn Authorization khi chuyển tiếp /api. JWT + refresh token cất bằng két hệ điều hành (session.bin); Ubuntu
 // chỉ có basic_text thì không lưu (đăng nhập lại mỗi lần mở app).
 // Vòng đời: login → vé → máy chính (desktop-ticket) → JWT. Máy chưa có văn phòng → quản trị cài máy chính
@@ -8,6 +8,7 @@ const fs = require('fs')
 const path = require('path')
 const { EventEmitter } = require('events')
 const { app, safeStorage } = require('electron')
+const { productEnv } = require('./env')
 const { secretStoreAvailable } = require('./settings')
 const login = require('./browser-login')
 const office = require('./office')
@@ -16,8 +17,8 @@ const pin = require('./pin')
 const REFRESH_MS = 60 * 60 * 1000
 const ROLLBACK_MS = 60 * 60 * 1000
 
-// Giờ hiện tại; MCAH_FAKE_NOW (ISO) chỉ có tác dụng khi chạy dev, để thử mốc 7 ngày.
-const now = () => (!app.isPackaged && process.env.MCAH_FAKE_NOW ? new Date(process.env.MCAH_FAKE_NOW).getTime() : Date.now())
+// Giờ hiện tại; CATORO_FAKE_NOW (ISO) chỉ có tác dụng khi chạy dev, để thử mốc 7 ngày.
+const now = () => (!app.isPackaged && productEnv('FAKE_NOW') ? new Date(productEnv('FAKE_NOW')).getTime() : Date.now())
 
 // Chống chỉnh lùi đồng hồ để kéo dài 7 ngày: nhớ thời điểm lớn nhất từng thấy; lùi quá 1 giờ thì bỏ phiên.
 function clockOk() {
@@ -94,7 +95,7 @@ async function backend(pathname, body) {
 }
 
 // Máy vừa được nạp bản chụp (office.pendingMove): đổi khoá máy chính trên máy chủ dịch vụ bằng vé vừa đăng nhập,
-// lấy vé mới (mang khoá mới) rồi ghi khoá vào máy này (docs/mcah-ke-hoach-desktop-gd4.md 3.4).
+// lấy vé mới (mang khoá mới) rồi ghi khoá vào máy này (docs/catoro-ke-hoach-desktop-gd4.md 3.4).
 async function completeMove(tokens) {
   const claims = JSON.parse(Buffer.from(String(tokens.ticket).split('.')[1], 'base64url'))
   if (!(claims.auth_time > now() / 1000 - 540)) throw new Error('Đăng nhập lại để xác nhận chuyển văn phòng sang máy này')
@@ -105,10 +106,10 @@ async function completeMove(tokens) {
     body: JSON.stringify({ machine_public_key: publicPem }),
     signal: AbortSignal.timeout(20000),
   }).catch(() => {
-    throw new Error('Không kết nối được máy chủ MCAH. Cần internet để chuyển văn phòng sang máy này.')
+    throw new Error('Không kết nối được máy chủ Catoro. Cần internet để chuyển văn phòng sang máy này.')
   })
   const data = await r.json().catch(() => ({}))
-  if (!r.ok) throw new Error(data.message || 'Máy chủ MCAH không cho chuyển máy chính')
+  if (!r.ok) throw new Error(data.message || 'Máy chủ Catoro không cho chuyển máy chính')
   const fresh = await login.refreshTokens(tokens.refresh_token)
   const result = await backend('/api/v1/auth/desktop-machine', { ticket: fresh.ticket, machine_public_key: publicPem })
   state = { jwt: result.token, refreshToken: fresh.refresh_token, offlineUntil: result.offline_until, loginUntil: loginUntil(fresh.ticket), user: result.user, security: result.security || null, maxSeen: now() }
@@ -182,7 +183,7 @@ const session = {
   reopenBrowser: login.reopenBrowser,
 
   // Quản trị văn phòng Axalize vừa tạo (chưa có máy chính) đăng nhập lần đầu: đăng ký máy này làm máy chính ở máy chủ
-  // dịch vụ (bằng vé), làm mới vé để có khoá máy, rồi ghi văn phòng vào máy này (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5).
+  // dịch vụ (bằng vé), làm mới vé để có khoá máy, rồi ghi văn phòng vào máy này (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5).
   async setupMainMachine() {
     if (!pendingOffice?.account?.office) throw new Error('Đăng nhập trước khi cài máy chính')
     const { publicPem } = office.machineKey()
@@ -192,10 +193,10 @@ const session = {
       body: JSON.stringify({ machine_public_key: publicPem }),
       signal: AbortSignal.timeout(20000),
     }).catch(() => {
-      throw new Error('Không kết nối được máy chủ MCAH. Kiểm tra internet rồi bấm Thử lại.')
+      throw new Error('Không kết nối được máy chủ Catoro. Kiểm tra internet rồi bấm Thử lại.')
     })
     const data = await r.json().catch(() => ({}))
-    if (!r.ok) throw new Error(data.message || 'Máy chủ MCAH không cài được máy chính')
+    if (!r.ok) throw new Error(data.message || 'Máy chủ Catoro không cài được máy chính')
     const tokens = await login.refreshTokens(pendingOffice.tokens.refresh_token)
     const result = await backend('/api/v1/auth/desktop-office', { ticket: tokens.ticket, machine_public_key: publicPem })
     state = { jwt: result.token, refreshToken: tokens.refresh_token, offlineUntil: result.offline_until, loginUntil: loginUntil(tokens.ticket), user: result.user, security: result.security || null, maxSeen: now() }
@@ -220,7 +221,7 @@ const session = {
       tokens = await login.refreshTokens(state.refreshToken)
     } catch (error) {
       if (error.offline) return
-      // Quá 30 ngày từ lần đăng nhập thật qua trình duyệt (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.8).
+      // Quá 30 ngày từ lần đăng nhập thật qua trình duyệt (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.8).
       clear(error.grant === 'session_expired' ? 'expired' : null)
       throw error
     }
@@ -251,7 +252,7 @@ const session = {
 
   pendingTicket: () => pendingOffice?.tokens?.ticket || null,
 
-  // Cài đặt khoá bằng PIN của cả văn phòng (máy chính gửi kèm phiên; docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
+  // Cài đặt khoá bằng PIN của cả văn phòng (máy chính gửi kèm phiên; docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
   // Máy chính bản cũ chưa gửi thì null: giữ như trước (bắt PIN, thời gian tự khoá theo máy).
   security: () => state?.security || null,
 

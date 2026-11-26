@@ -17,7 +17,7 @@ function open(parent) {
     closable: false,
     fullscreenable: false,
     autoHideMenuBar: true,
-    title: 'Cập nhật MCAH',
+    title: 'Cập nhật Catoro',
     backgroundColor: '#ffffff',
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false },
   })

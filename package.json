@@ -1,8 +1,8 @@
 {
-  "name": "marineport",
+  "name": "catoro",
   "version": "1.0.0",
   "private": true,
-  "description": "Marineport - Maritime recruitment and seafarer management portal",
+  "description": "Catoro - Crew Agency Tools for Onboarding, Records & Operations",
   "scripts": {
     "prepare": "husky",
     "lint": "npm run lint --prefix backend && npm run lint --prefix frontend",

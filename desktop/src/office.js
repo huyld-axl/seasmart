@@ -1,4 +1,4 @@
-// Tạo văn phòng trên máy chính (docs/mcah-ke-hoach-desktop-gd2.md 4.3):
+// Tạo văn phòng trên máy chính (docs/catoro-ke-hoach-desktop-gd2.md 4.3):
 //   machineKey() — cặp khoá Ed25519 của máy chính (khoá riêng cất bằng két); tạo một lần, dùng lại khi thử lại.
 // Máy không có két an toàn (Ubuntu thiếu gnome-keyring → basic_text) thì không cho tạo văn phòng.
 const fs = require('fs')
@@ -13,7 +13,7 @@ const unprotect = (buf) => safeStorage.decryptString(buf)
 
 function requireSecretStore() {
   if (!secretStoreAvailable()) {
-    throw new Error('Máy chưa có kho mật khẩu an toàn của hệ điều hành. Trên Ubuntu cài gói gnome-keyring, đăng xuất rồi đăng nhập lại máy, sau đó mở lại MCAH.')
+    throw new Error('Máy chưa có kho mật khẩu an toàn của hệ điều hành. Trên Ubuntu cài gói gnome-keyring, đăng xuất rồi đăng nhập lại máy, sau đó mở lại Catoro.')
   }
 }
 
@@ -30,13 +30,13 @@ function machineKey() {
   return { privateKey, publicPem: crypto.createPublicKey(privateKey).export({ type: 'spki', format: 'pem' }) }
 }
 
-// Q14 (docs/mcah-ke-hoach-desktop-gd4.md 3.6): không còn khoá dữ liệu / mật khẩu sao lưu. Máy thử đã tạo ở giai đoạn 2
+// Q14 (docs/catoro-ke-hoach-desktop-gd4.md 3.6): không còn khoá dữ liệu / mật khẩu sao lưu. Máy thử đã tạo ở giai đoạn 2
 // còn tệp khoá cũ thì xoá lúc khởi động.
 function removeOldKeyFiles() {
   for (const name of ['data-key.bin', 'data-key-wraps.json', 'backup-keys.json', 'backup-keys.bin']) fs.rmSync(file(name), { force: true })
 }
 
-// Máy vừa được hỗ trợ MCAH nạp bản chụp (--restore): lần đăng nhập đầu phải chuyển máy chính trên máy chủ dịch vụ.
+// Máy vừa được hỗ trợ Catoro nạp bản chụp (--restore): lần đăng nhập đầu phải chuyển máy chính trên máy chủ dịch vụ.
 const MOVE = 'machine-move.json'
 const pendingMove = () => fs.existsSync(file(MOVE))
 const markMove = (officeId) => fs.writeFileSync(file(MOVE), JSON.stringify({ office_id: officeId, at: new Date().toISOString() }))

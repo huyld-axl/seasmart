@@ -1,6 +1,6 @@
 import './ds.css'
 
-// Ô tích quyền trong lưới nhiều cột (ma trận vai trò). Kiểu duy nhất của MCAH cho việc này; một thuộc tính có / không
+// Ô tích quyền trong lưới nhiều cột (ma trận vai trò). Kiểu duy nhất của Catoro cho việc này; một thuộc tính có / không
 // ngoài lưới thì dùng ToggleRow. `checked`: true | false | 'mixed' (có một phần). `changed`: đã sửa, chưa lưu.
 export default function PermissionCheck({ checked = false, disabled, changed, label, title, onChange }) {
   const state = checked === 'mixed' ? 'mixed' : checked ? 'true' : 'false'

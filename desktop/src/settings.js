@@ -34,7 +34,7 @@ function getSettings() {
   return {
     mailMode: saved.mailMode || (mailApp ? 'app' : 'smtp'),
     lockMinutes: saved.lockMinutes || 15,
-    // Kênh cập nhật (docs/mcah-ke-hoach-desktop-gd6.md 3.4): 'stable' | 'beta'. Máy nhân viên theo máy chính.
+    // Kênh cập nhật (docs/catoro-ke-hoach-desktop-gd6.md 3.4): 'stable' | 'beta'. Máy nhân viên theo máy chính.
     updateChannel: saved.updateChannel === 'beta' ? 'beta' : 'stable',
     filesDir: saved.filesDir || null,
     seenVersion: saved.seenVersion || null,
@@ -46,8 +46,9 @@ function getSettings() {
   }
 }
 
-function saveSettings({ mailMode, smtp, smtpPassword, lockMinutes, updateChannel, seenVersion, endpoints }) {
+function saveSettings({ mailMode, smtp, smtpPassword, lockMinutes, updateChannel, seenVersion, endpoints, filesDir }) {
   const next = { ...read() }
+  if (filesDir !== undefined) next.filesDir = filesDir
   if (endpoints !== undefined) next.endpoints = endpoints
   if (seenVersion !== undefined) next.seenVersion = seenVersion
   if (mailMode !== undefined) next.mailMode = mailMode

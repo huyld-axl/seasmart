@@ -1,4 +1,4 @@
-// Nguồn token DUY NHẤT của MCAH: Ant Design (ConfigProvider) và CSS (biến --*) cùng đọc từ đây.
+// Nguồn token DUY NHẤT của Catoro: Ant Design (ConfigProvider) và CSS (biến --*) cùng đọc từ đây.
 // Giá trị theo skill ui-ux (references/tokens.css, budgets.md), chỉ thay màu nhấn và font.
 // ĐỔI THƯƠNG HIỆU: màu nhấn ở `primary` (kéo theo primaryHover, primaryLight, ringFocus), font ở `fontFamily`.
 
@@ -73,7 +73,7 @@ export function buildCssVariables() {
 
 export function applyCssVariables() {
   const style = document.createElement('style')
-  style.dataset.mcahTokens = ''
+  style.dataset.catoroTokens = ''
   style.textContent = buildCssVariables()
   document.head.prepend(style)
 }
@@ -167,7 +167,7 @@ export const antTheme = {
   },
 }
 
-// Theme ở điện thoại (< 640px, docs/mcah-ke-hoach-responsive-mobile.md mục 4.2): ô nhập, ô chọn, ô ngày, ô số cao 44px
+// Theme ở điện thoại (< 640px, docs/catoro-ke-hoach-responsive-mobile.md mục 4.2): ô nhập, ô chọn, ô ngày, ô số cao 44px
 // và chữ gõ 16px (dưới 16px Safari iOS tự phóng to cả trang khi chạm vào ô). Nút giữ 40px. Desktop dùng antTheme.
 const PHONE_FIELD = { controlHeight: 44, fontSize: 16 }
 const phoneField = (name) => ({ ...antTheme.components[name], ...PHONE_FIELD })

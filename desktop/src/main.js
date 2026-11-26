@@ -1,10 +1,12 @@
-// Tiến trình chính của app MCAH. Giao diện là bản build của frontend/, phục vụ qua giao thức app:// để đường dẫn
+// Tiến trình chính của app Catoro. Giao diện là bản build của frontend/, phục vụ qua giao thức app:// để đường dẫn
 // kiểu /admin/... của createBrowserRouter vẫn đúng khi tải lại trang (file:// thì không).
 // Khởi động: màn chờ → Postgres → migration → Fastify → giao diện; hỏng bước nào thì hiện màn lỗi có mã (GĐ1 mục 3.2).
 const path = require('path')
 const fs = require('fs')
 const { app, BrowserWindow, Menu, protocol, net, shell, dialog } = require('electron')
 const { pathToFileURL } = require('url')
+const { productEnv } = require('./env')
+const { defaultFilesDir, legacyFilesDirToPin } = require('./files-dir')
 const { Readable } = require('stream')
 const { startDatabase, killNow, freePort, isRunning } = require('./db')
 const { backendEnv, runScript, startBackend } = require('./backend')
@@ -35,13 +37,15 @@ const readableView = require('./readable-view')
 const diskEncryption = require('./disk-encryption')
 const bugReport = require('./bug-report')
 
-// Bản phát hành không cho gắn trình gỡ lỗi (docs/mcah-ke-hoach-desktop-gd5.md 3.5): --inspect đã bị cầu chì tắt;
+// Bản phát hành không cho gắn trình gỡ lỗi (docs/catoro-ke-hoach-desktop-gd5.md 3.5): --inspect đã bị cầu chì tắt;
 // cờ Chromium --remote-debugging-port / pipe thì thoát ngay.
 if (app.isPackaged && process.argv.some((a) => /^--(remote-debugging-(port|pipe)|inspect(-brk)?(-port)?|js-flags)(=|$)/.test(a))) {
   app.exit(1)
 }
 
-// Tên app quyết định thư mục dữ liệu (~/.config/MCAH, %APPDATA%\MCAH); đặt trước khi dùng app.getPath.
+// Tên app quyết định thư mục dữ liệu (~/.config/MCAH, %APPDATA%\MCAH) và két bí mật của safeStorage (mã PIN, mật khẩu SMTP);
+// đặt trước khi dùng app.getPath. GIỮ 'MCAH' sau khi đổi tên sản phẩm thành Catoro: đổi là máy khách mất dữ liệu / mã PIN.
+// Tên người dùng thấy lấy từ productName và tiêu đề cửa sổ (docs/catoro-ke-hoach-doi-ten.md 3.4, 3.6).
 app.setName('MCAH')
 
 protocol.registerSchemesAsPrivileged([
@@ -74,7 +78,7 @@ async function serveFrontend(request) {
     headers.delete('authorization')
     // Đang khoá (mã PIN): không cho đọc / ghi dữ liệu.
     if (pin.isLocked() && pathname.startsWith('/api/')) {
-      return new Response(JSON.stringify({ error: 'MCAH đang khoá, nhập mã PIN để tiếp tục', code: 'LOCKED' }), { status: 423, headers: { 'content-type': 'application/json' } })
+      return new Response(JSON.stringify({ error: 'Catoro đang khoá, nhập mã PIN để tiếp tục', code: 'LOCKED' }), { status: 423, headers: { 'content-type': 'application/json' } })
     }
     const jwt = session.jwt()
     if (jwt) headers.set('authorization', `Bearer ${jwt}`)
@@ -106,14 +110,14 @@ async function serveFrontend(request) {
   const inside = file.startsWith(FRONTEND_DIST + path.sep)
   const target = inside && fs.existsSync(file) && fs.statSync(file).isFile() ? file : path.join(FRONTEND_DIST, 'index.html')
   const res = await net.fetch(pathToFileURL(target).toString())
-  // CSP (docs/mcah-ke-hoach-desktop-gd4.md 3.7): chỉ chạy script của app; dữ liệu lạ (tên chứa <script>…) không chạy được.
+  // CSP (docs/catoro-ke-hoach-desktop-gd4.md 3.7): chỉ chạy script của app; dữ liệu lạ (tên chứa <script>…) không chạy được.
   if (!target.endsWith('.html')) return res
   const headers = new Headers(res.headers)
   headers.set('Content-Security-Policy', CSP)
   return new Response(res.body, { status: res.status, headers })
 }
 
-// Tên cũ huong-dan / phat-hanh vẫn nhận (máy chủ chuyển 301 sang /guide, /release-notes; docs/mcah-ke-hoach-khu-noi-bo.md).
+// Tên cũ huong-dan / phat-hanh vẫn nhận (máy chủ chuyển 301 sang /guide, /release-notes; docs/catoro-ke-hoach-khu-noi-bo.md).
 const WEB_PAGES = /^app:\/\/mcah(\/(?:guide|release-notes|huong-dan|phat-hanh)\/[^?#]*)(?:\?[^#]*)?(#.*)?$/
 
 // Trang hướng dẫn và ghi chú phát hành không gói trong app: mở bản trên web (cùng tên miền máy chủ dịch vụ) bằng trình duyệt.
@@ -146,7 +150,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'MCAH',
+    title: 'Catoro',
     backgroundColor: '#f4f4f6',
     icon: path.join(__dirname, '../build/icon.png'),
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') },
@@ -191,8 +195,8 @@ async function rollbackUpdate(error) {
     type: 'warning',
     message: 'Cập nhật không thành công',
     detail: installer
-      ? `Đã trả dữ liệu về như trước khi cập nhật. MCAH sẽ cài lại bản ${from}. Không mất gì.\nMã lỗi: MIGRATE. Gửi mã này cho bộ phận hỗ trợ MCAH.`
-      : `Đã trả dữ liệu về như trước khi cập nhật nhưng máy không còn bộ cài bản ${from}. Liên hệ bộ phận hỗ trợ MCAH, đừng mở lại MCAH trước khi được hướng dẫn.`,
+      ? `Đã trả dữ liệu về như trước khi cập nhật. Catoro sẽ cài lại bản ${from}. Không mất gì.\nMã lỗi: MIGRATE. Gửi mã này cho bộ phận hỗ trợ Catoro.`
+      : `Đã trả dữ liệu về như trước khi cập nhật nhưng máy không còn bộ cài bản ${from}. Liên hệ bộ phận hỗ trợ Catoro, đừng mở lại Catoro trước khi được hướng dẫn.`,
     buttons: ['Đồng ý'],
   })
   if (installer) {
@@ -233,13 +237,13 @@ async function startupStaff() {
 
 function watchSession() {
   session.events.on('changed', () => {
-    mainWindow?.webContents.send('mcah:session-changed', session.info())
+    mainWindow?.webContents.send('catoro:session-changed', session.info())
     // Đăng xuất / hết phiên: xoá bản xem tạm của thư mục hồ sơ.
     if (!session.info().loggedIn) readableView.cleanViews()
     // Vừa tạo văn phòng: máy này thành máy chính, mở cổng cho máy nhân viên.
     if (!staffMode && session.info().loggedIn && fs.existsSync(path.join(app.getPath('userData'), 'machine-key.bin'))) startLan()
   })
-  pin.events.on('changed', (locked) => mainWindow?.webContents.send('mcah:lock-changed', locked))
+  pin.events.on('changed', (locked) => mainWindow?.webContents.send('catoro:lock-changed', locked))
   // Khoá bằng PIN và thời gian tự khoá theo cài đặt của văn phòng (gửi kèm phiên), bản cũ thì theo cài đặt máy.
   pin.watch({
     lockMinutes: () => session.security()?.lock_minutes || getSettings().lockMinutes,
@@ -251,7 +255,7 @@ function watchSession() {
 
 // Máy nhân viên: báo giao diện khi mất / có lại máy chính; bị Gỡ thì mở lại app ở chế độ ghép.
 function watchLan() {
-  lanClient.events.on('online', (value) => mainWindow?.webContents.send('mcah:lan-online', value))
+  lanClient.events.on('online', (value) => mainWindow?.webContents.send('catoro:lan-online', value))
   let updating = false
   lanClient.events.on('update-required', () => {
     if (updating) return
@@ -281,13 +285,14 @@ async function startup() {
   removeOldKeyFiles()
   if (lanClient.isStaff()) return startupStaff()
   setChannelSource(async () => getSettings().updateChannel)
+  pinLegacyFilesDir()
   database = await step('DB_START', () => startDatabase(userData))
   const env = backendEnv(userData, database.env, await freePort(), { mailDir: attachmentDir(), filesDir: filesDir() })
   // Máy chính: chứng chỉ HTTPS trong mạng văn phòng; backend báo dấu vân tay lên máy chủ dịch vụ (giai đoạn 3).
   try {
     const cert = await ensureCert(lanHostName())
     lan = { ...cert, secret: lanServer.newSecret(), server: null }
-    Object.assign(env, { MCAH_LAN_FINGERPRINT: cert.fingerprint, MCAH_LAN_NAME: lanHostName(), MCAH_LAN_PORT: String(LAN_PORT), MCAH_LAN_SECRET: lan.secret })
+    Object.assign(env, { CATORO_LAN_FINGERPRINT: cert.fingerprint, CATORO_LAN_NAME: lanHostName(), CATORO_LAN_PORT: String(LAN_PORT), CATORO_LAN_SECRET: lan.secret })
   } catch (error) {
     console.error(`Không tạo được chứng chỉ trong mạng văn phòng: ${error.message}`)
   }
@@ -296,17 +301,17 @@ async function startup() {
   // Cổng ký: backend gọi máy chủ dịch vụ (mời, bỏ thành viên, AI, tra tàu) qua tiến trình chính giữ khoá máy chính.
   const sign = await signer.start({ cloudUrl, machineKey })
   signerInfo = sign
-  env.MCAH_SIGNER_URL = sign.url
-  env.MCAH_SIGNER_TOKEN = sign.token
+  env.CATORO_SIGNER_URL = sign.url
+  env.CATORO_SIGNER_TOKEN = sign.token
   // Cổng in PDF: backend nhờ Chromium của app in form ra PDF (thay LibreOffice, không phải cài gì thêm).
-  const printer = await pdfPrinter.start({ tmpDir: env.MCAH_TMP_DIR })
-  env.MCAH_PDF_URL = printer.url
-  env.MCAH_PDF_TOKEN = printer.token
-  env.MCAH_MAINTENANCE_FILE = updateGuard.maintenanceFile()
+  const printer = await pdfPrinter.start({ tmpDir: env.CATORO_TMP_DIR })
+  env.CATORO_PDF_URL = printer.url
+  env.CATORO_PDF_TOKEN = printer.token
+  env.CATORO_MAINTENANCE_FILE = updateGuard.maintenanceFile()
   try {
     await step('DB_MIGRATE', () => runScript('scripts/migrate.js', env, userData, logs.backend))
   } catch (error) {
-    // Bản mới đổi dữ liệu lỗi (docs/mcah-ke-hoach-desktop-gd4.md 3.5): trả DB về, cài lại bản cũ.
+    // Bản mới đổi dữ liệu lỗi (docs/catoro-ke-hoach-desktop-gd4.md 3.5): trả DB về, cài lại bản cũ.
     if (updateGuard.canRollback()) return rollbackUpdate(error)
     throw error
   }
@@ -326,19 +331,26 @@ async function startup() {
   setInterval(() => runUpdate(mainWindow, { quiet: true, beforeInstall }), 6 * 3600 * 1000)
 }
 
-// Thư mục hồ sơ dễ đọc trên máy chính: đặt trong Cài đặt (sau này), mặc định Tài liệu/MCAH - Hồ sơ.
-// MCAH_FILES_DIR (dev) để thử nhiều bản app trên một máy.
-const filesDir = () => process.env.MCAH_FILES_DIR || getSettings().filesDir || path.join(app.getPath('documents'), 'MCAH - Hồ sơ')
+// Thư mục hồ sơ dễ đọc trên máy chính: đặt trong Cài đặt (sau này), mặc định Tài liệu/Catoro - Hồ sơ.
+// CATORO_FILES_DIR (dev) để thử nhiều bản app trên một máy.
+const filesDir = () => productEnv('FILES_DIR') || getSettings().filesDir || defaultFilesDir(app.getPath('documents'))
+
+// Máy đã dùng MCAH trước 0.9.14 (mặc định cũ Tài liệu/MCAH - Hồ sơ): ghim thư mục cũ trước khi backend chạy (files-dir.js).
+function pinLegacyFilesDir() {
+  const pin = legacyFilesDirToPin({ savedFilesDir: getSettings().filesDir, documentsDir: app.getPath('documents') })
+  if (pin) saveSettings({ filesDir: pin })
+}
 
 // Tên máy trong mạng văn phòng (hiện ở màn ghép và Cài đặt): tên máy của hệ điều hành, chỉ chữ số và gạch.
+// Dự phòng 'MCAH' giữ nguyên khi đổi tên: tên này nằm trong chứng chỉ LAN đã cấp (docs/catoro-ke-hoach-doi-ten.md 3.6).
 const lanHostName = () => os.hostname().split('.')[0].replace(/[^A-Za-z0-9-]/g, '-').slice(0, 63) || 'MCAH'
 
-// Mở cổng HTTPS cho máy nhân viên, quảng bá trong mạng (mDNS), không cho máy ngủ khi MCAH đang mở.
+// Mở cổng HTTPS cho máy nhân viên, quảng bá trong mạng (mDNS), không cho máy ngủ khi Catoro đang mở.
 async function startLan() {
   if (!lan || lan.server || lan.starting || pendingMove()) return
   lan.starting = true
   try {
-    // Văn phòng đã chuyển sang máy chính khác (docs/mcah-ke-hoach-desktop-gd4.md 3.4, W9): ngừng phục vụ.
+    // Văn phòng đã chuyển sang máy chính khác (docs/catoro-ke-hoach-desktop-gd4.md 3.4, W9): ngừng phục vụ.
     const office = await fetch(`${backend.url}/api/v1/lan/hello`, { headers: { 'x-mcah-lan': lan.secret } }).then((r) => r.json()).catch(() => ({}))
     if (office.office_id && (await machineReplaced(office.office_id))) {
       lan.replaced = true
@@ -405,7 +417,7 @@ function lanStatus() {
   return { name: lanHostName(), port: LAN_PORT, addresses, fingerprint: lan.fingerprint, keepAwake: Boolean(lan.blocker !== undefined && powerSaveBlocker.isStarted(lan.blocker)), diskEncryption: diskState, filesDir: filesDir() }
 }
 
-// Lệnh cho hỗ trợ MCAH (không có nút trong app, Q15; docs/mcah-ke-hoach-desktop-gd4.md 3.3, 3.4):
+// Lệnh cho hỗ trợ Catoro (không có nút trong app, Q15; docs/catoro-ke-hoach-desktop-gd4.md 3.3, 3.4):
 //   --backup=<tệp.zip>    chụp dữ liệu máy chính (DB + thư mục hồ sơ + kho nội bộ) ra tệp .zip thường
 //   --restore=<tệp.zip>   nạp bản chụp vào máy mới (chưa có dữ liệu); chuyển máy chính trên máy chủ dịch vụ làm ở bước 4
 function cliCommand() {
@@ -424,7 +436,7 @@ async function runCli(cmd, userData) {
   // Đọc thử bản chụp trước khi tạo gì trên máy: hỏng thì máy vẫn trống.
   if (cmd.name === 'restore') {
     const m = await readManifest(cmd.file)
-    console.log(`Bản chụp của ${m.office?.name || 'văn phòng'} lúc ${m.created_at} (MCAH ${m.app_version}), ${m.files.length} tệp`)
+    console.log(`Bản chụp của ${m.office?.name || 'văn phòng'} lúc ${m.created_at} (Catoro ${m.app_version}), ${m.files.length} tệp`)
   }
   database = await startDatabase(userData)
   const env = backendEnv(userData, database.env, await freePort())
@@ -444,7 +456,7 @@ async function runCli(cmd, userData) {
     await client.end()
     fs.rmSync(path.join(userData, 'jwt-secret'), { force: true })
     if (r.office?.id) markMove(r.office.id)
-    console.log('Máy nhân viên cũ đã bị huỷ. Quản trị mở MCAH, đăng nhập để chuyển văn phòng sang máy này.')
+    console.log('Máy nhân viên cũ đã bị huỷ. Quản trị mở Catoro, đăng nhập để chuyển văn phòng sang máy này.')
   }
 }
 
@@ -490,17 +502,17 @@ async function main() {
       app.quit()
     },
     openLogs: () => shell.openPath(logDir()),
-    // Gửi báo lỗi lên máy chủ MCAH; không gửi được thì lưu tệp vào Tải xuống để gửi tay.
+    // Gửi báo lỗi lên máy chủ Catoro; không gửi được thì lưu tệp vào Tải xuống để gửi tay.
     sendReport: (note) => bugReport.sendOrSave(
       bugReport.build({ userData: app.getPath('userData'), errorCode: startupFailure?.code, errorMessage: startupFailure?.message, at: startupFailure?.at, note, appVersion: app.getVersion(), packaged: app.isPackaged }),
       { cloudUrl: cloudUrl(), dir: app.getPath('downloads') }
     ),
     revealReport: (file) => {
-      if (path.dirname(file) === app.getPath('downloads') && /^mcah-bao-loi-[\d-]+\.txt$/.test(path.basename(file))) shell.showItemInFolder(file)
+      if (path.dirname(file) === app.getPath('downloads') && /^(catoro|mcah)-bao-loi-[\d-]+\.txt$/.test(path.basename(file))) shell.showItemInFolder(file)
     },
     checkUpdate: () => runUpdate(mainWindow, staffMode ? {} : { beforeInstall }),
     lanStatus,
-    // Có gì mới (docs/mcah-ke-hoach-desktop-gd6.md 3.5): ghi chú của bản đang chạy, gói kèm bộ cài.
+    // Có gì mới (docs/catoro-ke-hoach-desktop-gd6.md 3.5): ghi chú của bản đang chạy, gói kèm bộ cài.
     whatsNew: () => {
       const version = app.getVersion()
       const file = path.join(app.isPackaged ? process.resourcesPath : path.join(__dirname, '..'), 'release-notes', `${version}.md`)
@@ -528,7 +540,7 @@ async function main() {
     lanInfo: () => ({ staff: staffMode, main: lanClient.info(), pending: Boolean(lanClient.load()?.pairSecret) }),
     lanRetry: () => lanClient.retryNow(),
     openFolder: (id) => readableView.openFolder(apiGet, id),
-    exportFolder: (opts) => readableView.exportFolder(apiGet, mainWindow, opts, (done, total) => mainWindow?.webContents.send('mcah:export-progress', { done, total })),
+    exportFolder: (opts) => readableView.exportFolder(apiGet, mainWindow, opts, (done, total) => mainWindow?.webContents.send('catoro:export-progress', { done, total })),
   })
   mainWindow = createWindow()
   try {

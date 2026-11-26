@@ -1,4 +1,4 @@
-// Vỏ app (tiến trình chính Electron) thành bytecode (docs/mcah-ke-hoach-desktop-gd5.md 3.3).
+// Vỏ app (tiến trình chính Electron) thành bytecode (docs/catoro-ke-hoach-desktop-gd5.md 3.3).
 //   node scripts/build-main.js [--no-bytecode]
 // Ra app-build/ (cùng cấp src/ nên mọi đường dẫn tương đối ../dist/frontend, ../build/icon.png giữ nguyên):
 //   main.js (tệp nạp) + main.jsc, preload.js đã nén (preload chạy trong sandbox, không nạp được bytecode),

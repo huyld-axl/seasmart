@@ -25,7 +25,7 @@ export const billApi = {
   move: (id, action, body) => api.post(`/bills/${id}/${action}`, body || {}).then((r) => r.data),
 }
 
-// Trả lương thuyền viên: mỗi dòng một bill phải thu (docs/mcah-ke-hoach-tra-luong.md).
+// Trả lương thuyền viên: mỗi dòng một bill phải thu (docs/catoro-ke-hoach-tra-luong.md).
 export const payoutApi = {
   list: (params) => api.get('/payouts', { params }).then((r) => r.data),
   pay: (rows) => api.post('/payouts/pay', { rows }).then((r) => r.data),

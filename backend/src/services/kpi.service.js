@@ -4,7 +4,7 @@ const { KPI_MONTHS } = require('../constants/dashboard')
 const { daysInMonth, lastMonths, revenueByMonth, pace, contractLabel, revenueLabel } = require('../utils/kpi_math')
 const { round2 } = require('../utils/voyage_math')
 
-// KPI của màn Tổng quan và mục tiêu tháng (docs/mcah-ke-hoach-tong-quan.md mục 1.4, 4.1, 4.3).
+// KPI của màn Tổng quan và mục tiêu tháng (docs/catoro-ke-hoach-tong-quan.md mục 1.4, 4.1, 4.3).
 // Hợp đồng tính cho người phụ trách cơ hội; chuyến không có cơ hội thì người tạo hợp đồng.
 const CREDITED_TO = 'COALESCE(o.owner_user_id, c.created_by)'
 const CREDIT_JOIN = `LEFT JOIN seafarer_voyage sv ON sv.id = c.seafarer_voyage_id

@@ -8,7 +8,7 @@ const { ownerIdFor } = require('../../utils/scope')
 const querystring = { type: 'object', properties: { month: { type: 'string', maxLength: 7 } } }
 const notFound = () => ({ statusCode: 404, message: 'Không có báo cáo này' })
 
-// Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md). Phạm vi "chỉ của mình" theo người tạo bill, như Trả lương.
+// Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md). Phạm vi "chỉ của mình" theo người tạo bill, như Trả lương.
 async function reportRoutes(fastify) {
   const can = (...actions) => ({ onRequest: [fastify.authenticate, ...actions.map((action) => fastify.can(`report.${action}`))] })
 

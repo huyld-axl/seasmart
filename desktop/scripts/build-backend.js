@@ -1,4 +1,4 @@
-// Gom code backend của MCAH thành một khối rồi dịch sang bytecode V8 (docs/mcah-ke-hoach-desktop-gd5.md 3.1).
+// Gom code backend của MCAH thành một khối rồi dịch sang bytecode V8 (docs/catoro-ke-hoach-desktop-gd5.md 3.1).
 //   node scripts/build-backend.js <thư mục backend đã chép> <tệp Node đi kèm bộ cài | -> [--no-bytecode]
 // Chỉ gom code trong backend/ (src, server.js, scripts/migrate.js); thư viện trong node_modules để ngoài khối (không phải
 // code của mình, nhiều module nạp động / có phần biên dịch sẵn). Bytecode phải dịch bằng đúng bản Node chạy nó.

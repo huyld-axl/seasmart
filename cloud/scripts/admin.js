@@ -1,4 +1,4 @@
-// Lệnh cho người giữ server (docs/mcah-ke-hoach-khu-noi-bo.md 5.4): admin khu nội bộ là CLOUD_ADMIN_EMAIL.
+// Lệnh cho người giữ server (docs/catoro-ke-hoach-khu-noi-bo.md 5.4): admin khu nội bộ là CLOUD_ADMIN_EMAIL.
 //   node scripts/admin.js set-password   đặt / đổi mật khẩu (tạo tài khoản nếu chưa có)
 //   node scripts/admin.js reset-2fa      tắt xác minh hai bước, lần đăng nhập sau quét QR mới
 // Cả hai đăng xuất mọi phiên quản trị đang mở. Mật khẩu gõ ở dấu nhắc (không hiện, không nằm trong lịch sử shell).

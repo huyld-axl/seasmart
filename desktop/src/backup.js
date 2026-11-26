@@ -1,5 +1,5 @@
-// Bản chụp dữ liệu của máy chính (docs/mcah-ke-hoach-desktop-gd4.md 3.3). Không mã hoá (Q14), không có nút / lịch cho
-// người dùng (Q15): chỉ dùng trước khi cập nhật có đổi dữ liệu và cho hỗ trợ MCAH chuyển máy (--backup / --restore).
+// Bản chụp dữ liệu của máy chính (docs/catoro-ke-hoach-desktop-gd4.md 3.3). Không mã hoá (Q14), không có nút / lịch cho
+// người dùng (Q15): chỉ dùng trước khi cập nhật có đổi dữ liệu và cho hỗ trợ Catoro chuyển máy (--backup / --restore).
 // Tệp .zip thường (zip64, ghi theo luồng):
 //   manifest.json   văn phòng, bản app, lúc chụp, danh sách tệp + sha256
 //   db.json         mọi bảng, đọc trong một ảnh nhất quán (REPEATABLE READ)
@@ -67,7 +67,7 @@ const sha256File = (file) => crypto.createHash('sha256').update(fs.readFileSync(
 function readZip(file, { want = ['manifest.json', 'db.json'], onEntry = null } = {}) {
   return new Promise((resolve, reject) => {
     yauzl.open(file, { lazyEntries: true, decodeStrings: true, validateEntrySizes: true }, (err, zip) => {
-      if (err) return reject(new Error('Tệp bản chụp bị hỏng hoặc không phải tệp .zip của MCAH'))
+      if (err) return reject(new Error('Tệp bản chụp bị hỏng hoặc không phải tệp .zip của Catoro'))
       const out = new Map()
       zip.on('error', () => reject(new Error('Tệp bản chụp bị hỏng')))
       zip.on('end', () => resolve(out))
@@ -155,7 +155,7 @@ async function createBackup({ dbEnv, uploadDir, filesDir = null, appVersion, out
 // Đọc manifest (không nạp gì) để kiểm trước khi khôi phục.
 async function readManifest(file) {
   const entries = await readZip(file, { want: ['manifest.json'] })
-  if (!entries.has('manifest.json')) throw new Error('Không phải bản chụp dữ liệu của MCAH')
+  if (!entries.has('manifest.json')) throw new Error('Không phải bản chụp dữ liệu của Catoro')
   return JSON.parse(entries.get('manifest.json'))
 }
 

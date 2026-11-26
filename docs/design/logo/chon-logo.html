@@ -1,10 +1,10 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body>
-<title>MCAH Logo</title>
+<title>Catoro Logo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  /* Trang chọn logo MCAH (skill ui-ux, components/logo.md). Một theme sáng có chủ ý: đây là bản xem
+  /* Trang chọn logo Catoro (skill ui-ux, components/logo.md). Một theme sáng có chủ ý: đây là bản xem
      trước giao diện sáng của app. Token theo references/tokens.css, màu nhấn navy #003366 của dự án. */
   :root {
     color-scheme: light;
@@ -235,11 +235,11 @@
     <p class="spot-label">Tab trình duyệt sáng và tối, favicon 16px</p>
     <div class="tabs">
       <div class="tabstrip">
-        <div class="tab"><span class="favicon" data-slot="favicon"></span>MCAH · Tài liệu</div>
+        <div class="tab"><span class="favicon" data-slot="favicon"></span>Catoro · Tài liệu</div>
         <div class="tab is-idle"><span class="dot"></span>Hộp thư</div>
       </div>
       <div class="tabstrip is-dark">
-        <div class="tab"><span class="favicon" data-slot="favicon"></span>MCAH · Tài liệu</div>
+        <div class="tab"><span class="favicon" data-slot="favicon"></span>Catoro · Tài liệu</div>
         <div class="tab is-idle"><span class="dot"></span>Hộp thư</div>
       </div>
     </div>
@@ -263,11 +263,11 @@
   const REASONS = {
     1: {
       name: "1 · Chữ M dựng bằng khối",
-      why: "Tên MCAH ngắn: chữ M dựng từ hai thanh và một khối treo giữa thành dấu riêng, ở 16px vẫn là một khối chắc.",
+      why: "Tên Catoro ngắn: chữ M dựng từ hai thanh và một khối treo giữa thành dấu riêng, ở 16px vẫn là một khối chắc.",
       pros: ["Đọc ra ngay chữ đầu của tên sản phẩm", "Ba khối đặc, rõ ở 16px trên cả tab sáng và tối", "Không lẫn với icon nét mảnh của các mục sidebar"],
       cons: ["Không nói gì về việc chính (sổ, hồ sơ, hàng hải)"],
       fit: "Muốn dấu gọn, trung tính, dùng lâu dài kể cả khi sản phẩm mở rộng sang chứng chỉ, visa.",
-      tips: ["1 nhưng bo góc tròn hơn", "1 nhưng khối giữa to hơn", "Tên MCAH đậm hơn"],
+      tips: ["1 nhưng bo góc tròn hơn", "1 nhưng khối giữa to hơn", "Tên Catoro đậm hơn"],
     },
     2: {
       name: "2 · Sổ và dấu xác nhận",
@@ -275,7 +275,7 @@
       pros: ["Nói đúng điểm khác biệt: tài liệu có người duyệt", "Con dấu là thứ quen thuộc trong sổ thuyền viên", "Khoảng cắt quanh dấu giữ hai hình tách nhau"],
       cons: ["Ở 16px khoảng cắt quanh dấu mảnh, dễ dính thành một khối", "Gần với icon tài liệu thông thường"],
       fit: "Muốn dấu kể ngay sản phẩm làm gì cho agency, nhất là trên tài liệu Sales.",
-      tips: ["2 nhưng con dấu nhỏ hơn", "2 nhưng tờ sổ bo tròn hơn", "Tên MCAH đậm hơn"],
+      tips: ["2 nhưng con dấu nhỏ hơn", "2 nhưng tờ sổ bo tròn hơn", "Tên Catoro đậm hơn"],
     },
     3: {
       name: "3 · Mặt trời trên mặt biển",
@@ -283,7 +283,7 @@
       pros: ["Nhận ra ngay là ngành biển", "Phần giao rỗng làm dấu có chiều sâu mà vẫn một màu", "Khác hẳn icon các mục sidebar"],
       cons: ["Không nói gì về hồ sơ, tài liệu", "Hình mặt trời trên biển khá quen trong ngành du lịch"],
       fit: "Muốn nhận diện ngành hàng hải rõ hơn nhận diện tính năng.",
-      tips: ["3 nhưng mặt biển mỏng hơn", "3 nhưng mặt trời to hơn", "Tên MCAH đậm hơn"],
+      tips: ["3 nhưng mặt biển mỏng hơn", "3 nhưng mặt trời to hơn", "Tên Catoro đậm hơn"],
     },
   };
 
@@ -296,7 +296,7 @@
   ];
 
   const markSvg = (logo) => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${MARKS[logo]}</svg>`;
-  const brandHtml = (logo) => `<span class="brand"><span class="mark-box">${markSvg(logo)}</span><span class="brand-name">MCAH</span></span>`;
+  const brandHtml = (logo) => `<span class="brand"><span class="mark-box">${markSvg(logo)}</span><span class="brand-name">Catoro</span></span>`;
   const navIcon = (paths) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 
   // Trạng thái: ?logo=&mau= cho probe chạy local, #logo-2 cho link chia sẻ; bấm thanh công cụ thì đổi tại chỗ.

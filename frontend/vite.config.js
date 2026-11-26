@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  // Hai trang: app (index.html) và design system ở khu nội bộ (internal/design-system/, docs/mcah-ke-hoach-khu-noi-bo.md 5.5).
+  // Hai trang: app (index.html) và design system ở khu nội bộ (internal/design-system/, docs/catoro-ke-hoach-khu-noi-bo.md 5.5).
   // Build app máy tính (desktop/vite.frontend.config.mjs) thay cả khối build nên chỉ dựng index.html.
   build: {
     rollupOptions: {

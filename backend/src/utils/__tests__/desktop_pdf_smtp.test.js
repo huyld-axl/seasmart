@@ -30,14 +30,14 @@ describe('xlsxToPdf trong app máy tính', () => {
       })
     })
     await new Promise((r) => server.listen(0, '127.0.0.1', r))
-    process.env.MCAH_PDF_URL = `http://127.0.0.1:${server.address().port}`
-    process.env.MCAH_PDF_TOKEN = 'ma-thu'
+    process.env.CATORO_PDF_URL = `http://127.0.0.1:${server.address().port}`
+    process.env.CATORO_PDF_TOKEN = 'ma-thu'
     delete require.cache[require.resolve('../xlsx_pdf')]
   })
   afterAll(() => {
     server.close()
-    delete process.env.MCAH_PDF_URL
-    delete process.env.MCAH_PDF_TOKEN
+    delete process.env.CATORO_PDF_URL
+    delete process.env.CATORO_PDF_TOKEN
     delete require.cache[require.resolve('../xlsx_pdf')]
   })
 

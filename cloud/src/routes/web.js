@@ -1,8 +1,8 @@
-// Trang web tài khoản và OAuth cho app (docs/mcah-ke-hoach-desktop-gd2.md 3.3). Đăng nhập không mật khẩu, không đăng ký
-// (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.1): Google hoặc mã 6 số gửi qua email.
-// Cookie ký (HttpOnly, SameSite=Lax): mcah_s = phiên trên trình duyệt (tài khoản + thời điểm đăng nhập, 8 giờ),
-// mcah_oauth = yêu cầu /authorize đang chờ (10 phút), mcah_otp = email đang chờ nhập mã (10 phút),
-// mcah_last = tài khoản vừa trao mã cho app (8 giờ), chỉ để điền sẵn email khi app bắt đăng nhập lại, không đăng nhập được.
+// Trang web tài khoản và OAuth cho app (docs/catoro-ke-hoach-desktop-gd2.md 3.3). Đăng nhập không mật khẩu, không đăng ký
+// (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.1): Google hoặc mã 6 số gửi qua email.
+// Cookie ký (HttpOnly, SameSite=Lax): catoro_s = phiên trên trình duyệt (tài khoản + thời điểm đăng nhập, 8 giờ),
+// catoro_oauth = yêu cầu /authorize đang chờ (10 phút), catoro_otp = email đang chờ nhập mã (10 phút),
+// catoro_last = tài khoản vừa trao mã cho app (8 giờ), chỉ để điền sẵn email khi app bắt đăng nhập lại, không đăng nhập được.
 const config = require('../config')
 const pages = require('../views/pages')
 const accounts = require('../services/accounts')
@@ -37,20 +37,20 @@ async function webRoutes(fastify) {
   // Đã trao mã cho app thì không giữ phiên trình duyệt: lần sau bấm Đăng nhập trên app (kể cả sau khi đăng xuất
   // để đổi tài khoản) trình duyệt luôn hỏi lại, không lặng lẽ vào tài khoản cũ.
   async function finishLogin(request, reply, account, authTime = Date.now(), pendingNow = null) {
-    const pending = pendingNow || readCookie(request, 'mcah_oauth')
+    const pending = pendingNow || readCookie(request, 'catoro_oauth')
     if (pending) {
-      clearCookie(reply, 'mcah_s')
-      clearCookie(reply, 'mcah_oauth')
-      setCookie(reply, 'mcah_last', { a: account.id, t: authTime }, SESSION_HOURS * 3600)
+      clearCookie(reply, 'catoro_s')
+      clearCookie(reply, 'catoro_oauth')
+      setCookie(reply, 'catoro_last', { a: account.id, t: authTime }, SESSION_HOURS * 3600)
       const { redirect, shortCode } = await oauth.issueCode(account.id, pending, authTime)
       return html(reply, pages.done({ shortCode, redirect }))
     }
-    setCookie(reply, 'mcah_s', { a: account.id, t: authTime }, SESSION_HOURS * 3600)
-    return html(reply, pages.message({ title: 'Đã đăng nhập', kind: 'ok', text: 'Mở app MCAH để làm việc.' }))
+    setCookie(reply, 'catoro_s', { a: account.id, t: authTime }, SESSION_HOURS * 3600)
+    return html(reply, pages.message({ title: 'Đã đăng nhập', kind: 'ok', text: 'Mở app Catoro để làm việc.' }))
   }
 
   // Phiên trên trình duyệt còn hiệu lực và thoả max_age thì trả tài khoản.
-  async function sessionAccount(request, maxAge = null, cookie = 'mcah_s') {
+  async function sessionAccount(request, maxAge = null, cookie = 'catoro_s') {
     const s = readCookie(request, cookie)
     if (!s?.a || !s.t) return null
     if (maxAge !== null && Date.now() - s.t > maxAge * 1000) return null
@@ -59,18 +59,18 @@ async function webRoutes(fastify) {
   }
 
   const loginPage = (request, extra = {}) => {
-    const reauth = readCookie(request, 'mcah_oauth')?.max_age === 0
+    const reauth = readCookie(request, 'catoro_oauth')?.max_age === 0
     return pages.login({ google: googleOn(), reauth, ...extra })
   }
 
   // ---- OAuth cho app ----
   fastify.get('/authorize', async (request, reply) => {
     const pending = oauth.parseAuthorize(request.query)
-    if (!pending) return html(reply, pages.message({ title: 'Yêu cầu không hợp lệ', kind: 'err', text: 'Mở lại app MCAH và bấm Đăng nhập.' }), 400)
-    setCookie(reply, 'mcah_oauth', pending, 600)
+    if (!pending) return html(reply, pages.message({ title: 'Yêu cầu không hợp lệ', kind: 'err', text: 'Mở lại app Catoro và bấm Đăng nhập.' }), 400)
+    setCookie(reply, 'catoro_oauth', pending, 600)
     const session = await sessionAccount(request, pending.max_age)
     if (session) return finishLogin(request, reply, session.account, session.authTime, pending)
-    const known = (await sessionAccount(request)) || (await sessionAccount(request, null, 'mcah_last'))
+    const known = (await sessionAccount(request)) || (await sessionAccount(request, null, 'catoro_last'))
     const query = pending.max_age === 0 && known ? `?reauth=1&email=${encodeURIComponent(known.account.email)}` : ''
     return reply.redirect(`${config.basePath}/login${query}`)
   })
@@ -110,24 +110,24 @@ async function webRoutes(fastify) {
       if (error.error === 'email_invalid') return html(reply, loginPage(request, { email, emailError: error.message }), 400)
       // Vừa gửi mã cho email này: về trang nhập mã, không gửi thư mới.
       if (error.error === 'resend_wait') {
-        setCookie(reply, 'mcah_otp', { e: email }, OTP_SEC)
+        setCookie(reply, 'catoro_otp', { e: email }, OTP_SEC)
         return codePage(reply, email, { info: 'Mã vừa được gửi, xem hộp thư.' })
       }
       if (!error.statusCode || error.statusCode >= 500) throw error
       return html(reply, loginPage(request, { email, error: error.message }), error.statusCode)
     }
-    setCookie(reply, 'mcah_otp', { e: email }, OTP_SEC)
+    setCookie(reply, 'catoro_otp', { e: email }, OTP_SEC)
     return reply.code(303).redirect(`${config.basePath}/login/code`)
   })
 
   fastify.get('/login/code', async (request, reply) => {
-    const otp = readCookie(request, 'mcah_otp')
+    const otp = readCookie(request, 'catoro_otp')
     if (!otp?.e) return reply.redirect(`${config.basePath}/login`)
     return codePage(reply, otp.e)
   })
 
   fastify.post('/login/code', loginLimit, async (request, reply) => {
-    const otp = readCookie(request, 'mcah_otp')
+    const otp = readCookie(request, 'catoro_otp')
     if (!otp?.e) return reply.code(303).redirect(`${config.basePath}/login`)
     let account
     try {
@@ -136,13 +136,13 @@ async function webRoutes(fastify) {
       if (!error.statusCode || error.statusCode >= 500) throw error
       return codePage(reply, otp.e, { error: error.message }, error.statusCode)
     }
-    clearCookie(reply, 'mcah_otp')
+    clearCookie(reply, 'catoro_otp')
     await accounts.recordLogin(account, 'email_code', request.ip)
     return finishLogin(request, reply, account)
   })
 
   fastify.post('/login/resend', loginLimit, async (request, reply) => {
-    const otp = readCookie(request, 'mcah_otp')
+    const otp = readCookie(request, 'catoro_otp')
     if (!otp?.e) return reply.code(303).redirect(`${config.basePath}/login`)
     try {
       await loginCodes.send({ email: otp.e, ip: request.ip })
@@ -150,18 +150,18 @@ async function webRoutes(fastify) {
       if (!error.statusCode || error.statusCode >= 500) throw error
       return codePage(reply, otp.e, { error: error.message }, error.statusCode)
     }
-    setCookie(reply, 'mcah_otp', { e: otp.e }, OTP_SEC)
+    setCookie(reply, 'catoro_otp', { e: otp.e }, OTP_SEC)
     return codePage(reply, otp.e, { info: 'Đã gửi mã mới.' })
   })
 
   fastify.get('/login/change-email', async (request, reply) => {
-    clearCookie(reply, 'mcah_otp')
+    clearCookie(reply, 'catoro_otp')
     return reply.redirect(`${config.basePath}/login`)
   })
 
   fastify.get('/logout', async (request, reply) => {
-    clearCookie(reply, 'mcah_s')
-    clearCookie(reply, 'mcah_last')
+    clearCookie(reply, 'catoro_s')
+    clearCookie(reply, 'catoro_last')
     return reply.redirect(`${config.basePath}/login`)
   })
 
@@ -169,14 +169,14 @@ async function webRoutes(fastify) {
   fastify.get('/google', loginLimit, async (request, reply) => {
     if (!google.enabled()) return reply.redirect(`${config.basePath}/login`)
     // Đăng nhập lại bắt buộc (app gửi max_age=0 sau khi sai PIN): Google hỏi lại mật khẩu.
-    const reauth = readCookie(request, 'mcah_oauth')?.max_age === 0
+    const reauth = readCookie(request, 'catoro_oauth')?.max_age === 0
     const { url, pending } = google.start({ reauth })
-    setCookie(reply, 'mcah_g', pending, 600)
+    setCookie(reply, 'catoro_g', pending, 600)
     return reply.redirect(url)
   })
   fastify.get('/google/callback', loginLimit, async (request, reply) => {
-    const pending = readCookie(request, 'mcah_g')
-    clearCookie(reply, 'mcah_g')
+    const pending = readCookie(request, 'catoro_g')
+    clearCookie(reply, 'catoro_g')
     if (request.query.error) return html(reply, loginPage(request, { error: 'Đã huỷ đăng nhập bằng Google.' }), 400)
     try {
       const profile = await google.finish({ code: String(request.query.code || ''), state: String(request.query.state || ''), pending })
@@ -189,7 +189,7 @@ async function webRoutes(fastify) {
   })
 }
 
-// Đường tiếng Việt cũ (docs/mcah-ke-hoach-khu-noi-bo.md mục 4): app máy tính đã phát hành chuyển trình duyệt về /xong, trang
+// Đường tiếng Việt cũ (docs/catoro-ke-hoach-khu-noi-bo.md mục 4): app máy tính đã phát hành chuyển trình duyệt về /xong, trang
 // đăng nhập cũ còn mở trong trình duyệt. GET chuyển 301, POST chuyển 308 (giữ thân form). Giữ cả query (?email=…).
 const LEGACY = {
   '/dang-nhap': '/login',

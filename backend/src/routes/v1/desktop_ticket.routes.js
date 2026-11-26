@@ -1,4 +1,4 @@
-// Đăng nhập của app máy tính (docs/mcah-ke-hoach-desktop-gd2.md 4.2). Chỉ đăng ký khi có DESKTOP_TICKET_PUBLIC_KEY.
+// Đăng nhập của app máy tính (docs/catoro-ke-hoach-desktop-gd2.md 4.2). Chỉ đăng ký khi có DESKTOP_TICKET_PUBLIC_KEY.
 // Vé do máy chủ dịch vụ ký Ed25519 (kid = 16 ký tự đầu SHA-256 của khoá công khai PEM); máy chính kiểm không cần mạng.
 // JWT cấp ra mang offline_until = exp của vé; authenticate từ chối khi đã qua mốc này (plugins/index.js).
 const crypto = require('crypto')
@@ -27,12 +27,12 @@ function verifyTicket(ticket, keys) {
   return claims
 }
 
-// Axalize khoá văn phòng (trang quản trị của máy chủ dịch vụ; docs/mcah-ke-hoach-ma-kich-hoat.md 3.5): vé vẫn được cấp
+// Axalize khoá văn phòng (trang quản trị của máy chủ dịch vụ; docs/catoro-ke-hoach-ma-kich-hoat.md 3.5): vé vẫn được cấp
 // nhưng mang office_locked, máy chính không cho vào (máy đang mở bị đưa ra ở lần làm mới phiên). Dữ liệu không đụng tới.
 function assertNotLocked(claims) {
   if (claims.office_locked) {
     const name = claims.office_name ? `Văn phòng ${claims.office_name}` : 'Văn phòng'
-    throw fail(403, `${name} đang bị khoá. Dữ liệu trên máy vẫn còn nguyên. Liên hệ MCAH để mở lại.`, 'OFFICE_LOCKED')
+    throw fail(403, `${name} đang bị khoá. Dữ liệu trên máy vẫn còn nguyên. Liên hệ Catoro để mở lại.`, 'OFFICE_LOCKED')
   }
 }
 
@@ -57,7 +57,7 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
   }
 
   // security: cài đặt khoá bằng PIN của cả văn phòng, mọi máy (kể cả máy nhân viên, qua máy chính) nhận ở mỗi lần
-  // đăng nhập / làm mới phiên (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
+  // đăng nhập / làm mới phiên (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
   async function session(user, claims) {
     await pool.query('UPDATE "user" SET last_login_at = NOW() WHERE id = ?', [user.id])
     const access = await loadAccess(user.id)
@@ -144,7 +144,7 @@ async function desktopTicketRoutes(fastify, { publicKeyPem }) {
     return session({ id: userId, email: claims.email }, claims)
   })
 
-  // Máy chính mới sau khi hỗ trợ MCAH nạp bản chụp (docs/mcah-ke-hoach-desktop-gd4.md 3.4): tiến trình chính đã đổi khoá
+  // Máy chính mới sau khi hỗ trợ Catoro nạp bản chụp (docs/catoro-ke-hoach-desktop-gd4.md 3.4): tiến trình chính đã đổi khoá
   // máy chính trên máy chủ dịch vụ; vé mới mang khoá mới. Ghi khoá mới vào office_info rồi đăng nhập như thường.
   fastify.post('/desktop-machine', {
     config: limit,

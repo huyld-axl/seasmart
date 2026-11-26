@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Wireframe Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md). Một theme sáng như app.
+  /* Wireframe Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md). Một theme sáng như app.
      Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng, cột, chữ; dựng bằng control components/ds sẵn có.
      Mọi bảng dựng bằng script ở cuối trang từ cùng một bộ 6 bill mẫu tháng 10/2026, nên số giữa các báo cáo khớp nhau. */
   :root {
@@ -193,7 +193,7 @@
       <h2><b>1</b> Phải thu theo đối tác <span class="muted" style="font-size:13px;font-weight:400">thay 取引先別売上表</span></h2>
       <p class="why">Mỗi dòng một đối tác (đối tác) có yêu cầu thanh toán trong tháng; sắp theo Tổng giảm dần. Số lấy từ dòng Thu (số đang dùng của bill). Cột theo đúng mẫu.</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
         <div class="content"><div class="topbar"><h3>Báo cáo</h3><div class="user"><div class="avatar">KT</div>Kế toán ▾</div></div>
           <div class="page">
             <div class="row" style="justify-content:space-between">
@@ -216,9 +216,9 @@
     <!-- ============ 2 ============ -->
     <section id="s2">
       <h2><b>2</b> Phải chi theo đối tác <span class="muted" style="font-size:13px;font-weight:400">thay 取引先別仕入表</span></h2>
-      <p class="why">Cùng cách nhóm và cùng cột như Phải thu theo đối tác, nhưng cộng dòng <b>Trả</b> của bảng Trả lương. MCAH trả thẳng cho thuyền viên, không có công ty trung gian như mẫu, nên nhóm theo đối tác để đặt cạnh bảng Phải thu.</p>
+      <p class="why">Cùng cách nhóm và cùng cột như Phải thu theo đối tác, nhưng cộng dòng <b>Trả</b> của bảng Trả lương. Catoro trả thẳng cho thuyền viên, không có công ty trung gian như mẫu, nên nhóm theo đối tác để đặt cạnh bảng Phải thu.</p>
       <div class="app"><div class="shell" style="min-height:300px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
         <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
           <div class="page">
             <div class="row" style="justify-content:space-between">
@@ -241,7 +241,7 @@
       <h2><b>3</b> Lịch thu chi <span class="muted" style="font-size:13px;font-weight:400">thay 入出金予定表</span></h2>
       <p class="why">Mỗi dòng một yêu cầu thanh toán: tiền về từ đối tác khi nào, tiền ra cho thuyền viên khi nào. Sắp theo hạn thu, rồi đối tác, rồi thuyền viên. Cột theo đúng mẫu, không có cột trạng thái. <b>Gộp thu</b> gộp mọi bill cùng hạn thu; <b>Thu theo đối tác</b> gộp bill cùng đối tác, cùng hạn thu (hai cột 入金額 của mẫu).</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
         <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
           <div class="page">
             <div class="row" style="justify-content:space-between">
@@ -256,17 +256,17 @@
       <details class="nd"><summary>Ghi chú</summary><ul class="notes">
         <li><b>Hạn trả</b> tính từ kỳ thanh toán Phải chi của hợp đồng áp lên ngày kết thúc kỳ (giống cột Hạn trả của Trả lương). Hợp đồng chưa có kỳ Phải chi: "—".</li>
         <li><b>Lãi gộp</b> = Thu kỳ này − Trả kỳ này. Âm hiện chữ đỏ.</li>
-        <li>Không có cột phí chuyển khoản (手数料) như mẫu: MCAH chưa lưu ai chịu phí.</li>
-        <li>Tên thuyền viên là link sang chi tiết thuyền viên. <b>Thuyền viên</b> thay cả 支払先 (người nhận) và 対象 (người làm) của mẫu, vì MCAH trả thẳng cho thuyền viên.</li>
+        <li>Không có cột phí chuyển khoản (手数料) như mẫu: Catoro chưa lưu ai chịu phí.</li>
+        <li>Tên thuyền viên là link sang chi tiết thuyền viên. <b>Thuyền viên</b> thay cả 支払先 (người nhận) và 対象 (người làm) của mẫu, vì Catoro trả thẳng cho thuyền viên.</li>
       </ul></details>
     </section>
 
     <!-- ============ 4 ============ -->
     <section id="s4">
       <h2><b>4</b> Dữ liệu tổng hợp theo tháng <span class="muted" style="font-size:13px;font-weight:400">thay 売上管理基礎データ</span></h2>
-      <p class="why">Mỗi dòng một yêu cầu thanh toán. Tiêu đề hai tầng như mẫu; chỉ giữ cột của mẫu mà MCAH có dữ liệu. <b>Cuộn ngang bảng:</b> tên nhóm (Thông tin hợp đồng, Thu, Trả…) dính ở mép trái cho tới khi hết nhóm, nhóm sau đẩy nhóm trước ra, nên luôn biết đang xem mục nào. Bật <b>Hiện 14 khoản</b> để bảng dài ra và thử.</p>
+      <p class="why">Mỗi dòng một yêu cầu thanh toán. Tiêu đề hai tầng như mẫu; chỉ giữ cột của mẫu mà Catoro có dữ liệu. <b>Cuộn ngang bảng:</b> tên nhóm (Thông tin hợp đồng, Thu, Trả…) dính ở mép trái cho tới khi hết nhóm, nhóm sau đẩy nhóm trước ra, nên luôn biết đang xem mục nào. Bật <b>Hiện 14 khoản</b> để bảng dài ra và thử.</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
         <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
           <div class="page">
             <div class="row" style="justify-content:space-between">
@@ -285,7 +285,7 @@
         <li><b>Điều kiện phải thu / phải chi</b>: ba cột như mẫu (締日, 支払日, 金融機関休日の場合): Chốt sổ, Ngày thanh toán, Gặp ngày nghỉ; chữ như form hợp đồng.</li>
         <li><b>Lãi gộp dự kiến / tháng</b> = Σ phải thu − Σ phải chi của 7 khoản hằng tháng trong hợp đồng (粗利（予測）).</li>
         <li>Công tắc chỉ đổi cột trên màn hình. File Excel <b>luôn có đủ 14 khoản</b> của cả Thu và Trả.</li>
-        <li>Bỏ so với mẫu (MCAH không có dữ liệu): giờ công, tăng ca, khấu trừ, biên độ, hệ số, thuế, số đơn đặt hàng, gia hạn, thương lưu, thể chế, loại hình tuyển dụng, công ty của nhân viên, văn phòng, ngày ký hợp đồng lần đầu. Không thêm cột mẫu không có (chức danh, mã bill, hạn thu, trạng thái…).</li>
+        <li>Bỏ so với mẫu (Catoro không có dữ liệu): giờ công, tăng ca, khấu trừ, biên độ, hệ số, thuế, số đơn đặt hàng, gia hạn, thương lưu, thể chế, loại hình tuyển dụng, công ty của nhân viên, văn phòng, ngày ký hợp đồng lần đầu. Không thêm cột mẫu không có (chức danh, mã bill, hạn thu, trạng thái…).</li>
       </ul></details>
     </section>
 
@@ -294,7 +294,7 @@
       <h2><b>0</b> Mở trang, chưa chọn tháng</h2>
       <p class="why">Mở menu Báo cáo: báo cáo Phải thu theo đối tác, chưa chọn tháng, bảng trống (giống Trả lương). Tháng và báo cáo vừa xem được nhớ trong phiên và trên đường dẫn.</p>
       <div class="app"><div class="shell" style="min-height:340px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div><div class="it on">Báo cáo</div></div>
         <div class="content"><div class="topbar"><h3>Báo cáo</h3><div class="user"><div class="avatar">KT</div>Kế toán ▾</div></div>
           <div class="page">
             <div class="row" style="justify-content:space-between">
@@ -316,7 +316,7 @@
     <section id="s5">
       <h2><b>5</b> Tháng không có yêu cầu thanh toán</h2>
       <div class="app"><div class="shell" style="min-height:300px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Báo cáo</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Báo cáo</div></div>
         <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
           <div class="page">
             <div class="row" style="justify-content:space-between">
@@ -335,7 +335,7 @@
       <h2><b>6</b> Xuất Excel</h2>
       <p class="why">Bấm phần chính của nút: xuất báo cáo đang xem. Mũi tên ▾: menu thêm "Xuất cả 4 báo cáo" thành một file 4 sheet. Tải xong: toast "Đã tải MCAH_Bao-cao_sales_2026-10.xlsx".</p>
       <div class="app"><div class="shell" style="min-height:260px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Báo cáo</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Báo cáo</div></div>
         <div class="content"><div class="topbar"><h3>Báo cáo</h3></div>
           <div class="page" style="position:relative">
             <div class="row" style="justify-content:space-between">
@@ -423,9 +423,9 @@
 
     <!-- ============ 10 ============ -->
     <section id="s10">
-      <h2><b>10</b> Đối chiếu cột mẫu gốc → MCAH</h2>
+      <h2><b>10</b> Đối chiếu cột mẫu gốc → Catoro</h2>
       <table class="map">
-        <tr><th>Mẫu</th><th>MCAH</th></tr>
+        <tr><th>Mẫu</th><th>Catoro</th></tr>
         <tr><td>該当月</td><td>Tháng (tháng của ngày kết thúc kỳ bill)</td></tr>
         <tr><td>受注ID</td><td>Số hợp đồng</td></tr>
         <tr><td>営業担当</td><td>Người tạo HĐ → Phụ trách</td></tr>
@@ -444,7 +444,7 @@
         <tr><td>入金明細 / 支払い明細</td><td>Thu kỳ này / Trả kỳ này</td></tr>
         <tr><td>支払日</td><td>Hạn trả</td></tr>
         <tr><td>支払先 + 対象</td><td>Thuyền viên (một cột)</td></tr>
-        <tr><td>手数料, 稼働時間, 超過, 控除, 精算幅, 係数, 消費税, 注文書, 契約更新, 商流, 体制, 雇用形態, 所属企業, 事務所</td><td class="muted">Bỏ: MCAH không có dữ liệu</td></tr>
+        <tr><td>手数料, 稼働時間, 超過, 控除, 精算幅, 係数, 消費税, 注文書, 契約更新, 商流, 体制, 雇用形態, 所属企業, 事務所</td><td class="muted">Bỏ: Catoro không có dữ liệu</td></tr>
       </table>
     </section>
   </main>
@@ -528,7 +528,7 @@ document.getElementById('t-cash').innerHTML =
   cash.map((r, i) => `<tr><td class="num">${i + 1}</td><td>${r.due}</td>${r.daySpan ? `<td class="num merge" rowspan="${r.daySpan}">${fmt(r.dayTotal)}</td>` : ''}<td>${r.owner}</td>${r.ownerSpan ? `<td class="num merge" rowspan="${r.ownerSpan}">${fmt(r.ownerTotal)}</td>` : ''}<td class="gs">${r.pdue}</td><td><a href="#">${r.sea}</a></td>${money(r.thuT)}${money(r.traT)}${money(r.gp)}<td class="gs">${r.ps}</td><td>${r.pe}</td></tr>`).join('') +
   `</tbody><tfoot><tr><td></td><td>Tổng</td>${money(total('thuT'))}<td></td>${money(total('thuT'))}<td class="gs"></td><td></td>${money(total('thuT'))}${money(total('traT'))}${money(total('gp'))}<td class="gs"></td><td></td></tr></tfoot>`
 
-// Dữ liệu tổng hợp: chỉ cột của mẫu 売上管理基礎データ mà MCAH có dữ liệu. Tên nhóm dính khi cuộn ngang.
+// Dữ liệu tổng hợp: chỉ cột của mẫu 売上管理基礎データ mà Catoro có dữ liệu. Tên nhóm dính khi cuộn ngang.
 function baseTable(detail) {
   const det = detail ? M.concat(O) : []
   const cols = [

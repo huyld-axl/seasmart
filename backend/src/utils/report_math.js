@@ -1,4 +1,4 @@
-// Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md). Hàm thuần, không đọc DB.
+// Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md). Hàm thuần, không đọc DB.
 const { DEFAULT_ITEMS } = require('../constants/voyage_contract')
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100

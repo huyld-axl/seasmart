@@ -429,7 +429,7 @@
       <h3>Panel Danh mục tàu thế giới</h3>
       <ol>
         <li>Ô tìm riêng (tên, tên cũ, IMO, MMSI; từ 2 ký tự). Kho có hơn 700 nghìn tàu nên lúc mới mở chỉ nhắc gõ để tìm, không liệt kê.</li>
-        <li>Mỗi dòng: tên (kèm chip "Tên cũ" nếu khớp qua tên cũ), loại · cờ · MMSI, IMO, nút <b>Thêm</b>. Có phân trang ở chân panel. Tàu đã có trong MCAH không hiện ở đây.</li>
+        <li>Mỗi dòng: tên (kèm chip "Tên cũ" nếu khớp qua tên cũ), loại · cờ · MMSI, IMO, nút <b>Thêm</b>. Có phân trang ở chân panel. Tàu đã có trong Catoro không hiện ở đây.</li>
         <li>Trạng thái: vừa mở, nhiều kết quả (phân trang), khớp tên cũ, không kết quả, đang tìm, lỗi.</li>
       </ol>
       <h3>Bấm Thêm: hỏi "Lấy thông tin thông minh?"</h3>
@@ -495,7 +495,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const norm = (s) => String(s).toLowerCase()
 
 // ---------- Dữ liệu mẫu ----------
-// MCAH có 1.240 tàu (bảng vessel); danh mục tàu thế giới có hàng chục nghìn (ship_catalog, thật là 733 nghìn).
+// Catoro có 1.240 tàu (bảng vessel); danh mục tàu thế giới có hàng chục nghìn (ship_catalog, thật là 733 nghìn).
 const PRE = ['ASAHI', 'FUJI', 'HOKUTO', 'KAIYO', 'MIZUHO', 'SAKURA', 'TAIYO', 'YAMATO', 'HARUNA', 'SEIWA', 'KOYO', 'NIPPON', 'ORIENT', 'PACIFIC', 'GOLDEN', 'OCEAN', 'BLUE', 'SILVER', 'STAR', 'NORTH', 'SOUTH', 'EASTERN', 'WESTERN', 'GRAND', 'ROYAL', 'LUCKY', 'SUNRISE', 'VIET', 'THANH', 'HAI']
 const SUF = ['MARU', 'STAR', 'GLORY', 'HARMONY', 'PIONEER', 'SPIRIT', 'DAWN', 'EXPRESS', 'TRADER', 'FORTUNE']
 const FL = ['Panama', 'Singapore', 'Quần đảo Marshall', 'Liberia', 'Việt Nam', 'Nhật Bản']
@@ -508,7 +508,7 @@ const V = [
   { name: 'PACIFIC DAWN', type: 'Tàu dầu', imo: '9456217', flag: 'Singapore', owner: 'Pan Asia Shipping', grt: 28990, crew: 0 },
   ...Array.from({ length: 1237 }, (_, i) => ({ name: gen(i, 0), type: TY[i % 4], imo: String(9000000 + i * 7), flag: FL[i % 6], owner: OW[i % 4], grt: 8000 + ((i * 937) % 60000), crew: i % 6 })),
 ]
-// ex = tên cũ, tm = loại tàu MCAH khớp được (hoặc null)
+// ex = tên cũ, tm = loại tàu Catoro khớp được (hoặc null)
 const C = [
   { name: 'GEIYO K', type: 'Bulk carrier', imo: '9747613', mmsi: '538006748', flag: 'Quần đảo Marshall', ex: [], tm: 'Bulk carrier' },
   { name: 'GEIYO MARU', type: 'Cargo', imo: '5175147', mmsi: '', flag: 'Nhật Bản', ex: [], tm: 'Hàng tổng hợp' },
@@ -541,7 +541,7 @@ const matchV = (v, t) => norm(v.name).includes(t) || v.imo.includes(t) || norm(v
 function catSearch(q) {
   const t = norm(q.trim())
   if (t.length < 2) return null
-  // Tàu đã có trong MCAH không hiện ở danh mục (loại theo IMO trên toàn bảng vessel).
+  // Tàu đã có trong Catoro không hiện ở danh mục (loại theo IMO trên toàn bảng vessel).
   const have = new Set(V.map((v) => v.imo))
   return C.filter((c) => (norm(c.name).includes(t) || c.ex.some((e) => norm(e).includes(t)) || c.imo === t || c.mmsi === t) && !(c.imo && have.has(c.imo)))
     .sort((a, b) => (norm(b.name).startsWith(t) - norm(a.name).startsWith(t)) || (!!b.imo - !!a.imo))
@@ -567,7 +567,7 @@ function shell(content, overlay) {
     return `${sep}<div class="nav-item" ${label === 'Tàu' ? 'aria-current="page"' : ''}>${ic(icon)}<span>${label}</span></div>`
   }).join('')
   return `<div class="app ${S.frame === 'phone' ? 'is-phone' : ''}">
-    <aside class="sider"><div class="sider__head"><span class="sider__logo">M</span>MCAH</div><nav class="sider__nav">${nav}</nav></aside>
+    <aside class="sider"><div class="sider__head"><span class="sider__logo">M</span>Catoro</div><nav class="sider__nav">${nav}</nav></aside>
     <div class="main">
       <header class="topbar"><button class="btn btn--ghost btn--icon burger" aria-label="Mở menu">${ic('menu')}</button><h1 class="topbar__title">Tàu</h1>${S.screen === 'list' ? headerSearch() : ''}<div class="topbar__right"><span class="avatar">AD</span></div></header>
       <main class="content">${content}</main>
@@ -599,7 +599,7 @@ function listParts() {
   if (!rows.length) {
     const imo7 = /^\d{7}$/.test(q)
     body = imo7
-      ? `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Chưa có tàu IMO ${esc(q)} trong MCAH</h3><p>Thêm tàu này: IMO được điền sẵn, và bạn có thể bấm Lấy thông minh để điền các thông số còn lại.</p><div class="acts"><button class="btn" data-act="clear">Xoá tìm kiếm</button><button class="btn btn--primary" data-act="add-imo">${ic('plus')}Thêm tàu IMO ${esc(q)}</button></div></div>`
+      ? `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Chưa có tàu IMO ${esc(q)} trong Catoro</h3><p>Thêm tàu này: IMO được điền sẵn, và bạn có thể bấm Lấy thông minh để điền các thông số còn lại.</p><div class="acts"><button class="btn" data-act="clear">Xoá tìm kiếm</button><button class="btn btn--primary" data-act="add-imo">${ic('plus')}Thêm tàu IMO ${esc(q)}</button></div></div>`
       : `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Không có tàu nào khớp "${esc(q)}"</h3><p>Tàu có thể chưa được thêm. Tìm trong Danh mục tàu thế giới, hoặc thêm thủ công.</p><div class="acts"><button class="btn" data-act="clear">Xoá tìm kiếm</button><button class="btn btn--primary" data-act="panel-open">${ic('globe')}Danh mục tàu thế giới</button></div></div>`
   } else if (phone) body = `<ul class="m-list">${rows.map(mcahRowM).join('')}</ul>`
   else body = '<div class="lt-cols"><span>Tàu</span><span>IMO</span><span>Cờ</span><span>Chủ tàu</span><span class="r">GRT</span><span class="r">Đang trên tàu</span></div>' + rows.map(mcahRowD).join('')
@@ -632,9 +632,9 @@ function panelParts() {
   const r = catSearch(S.cq)
   S.lastRows = []
   if (S.cmode === 'loading') return { body: `<ul class="m-list">${sk3()}</ul>`, foot: '<span></span>' }
-  if (S.cmode === 'error') return { body: `<div class="lt-empty"><span class="lt-tile">${ic('alert')}</span><h3>Không tải được danh mục</h3><p>Dữ liệu trong MCAH không bị ảnh hưởng.</p><div class="acts"><button class="btn" data-act="retry">${ic('refresh')}Thử lại</button></div></div>`, foot: '<span></span>' }
-  if (r === null) return { body: `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Tìm tàu trong danh mục</h3><p>Gõ tên tàu, tên cũ, số IMO hoặc MMSI (từ 2 ký tự). Danh mục có hơn 700 nghìn tàu; tàu đã có trong MCAH không hiện ở đây.</p></div>`, foot: '<span></span>' }
-  if (!r.length) return { body: `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Không có tàu nào khớp "${esc(q)}"</h3><p>Thử tên khác, tên cũ, số IMO hoặc MMSI. Tàu đã có trong MCAH không hiện ở đây.</p><div class="acts"><button class="btn btn--primary" data-act="manual">${ic('plus')}Thêm tàu thủ công</button></div></div>`, foot: '<span></span>' }
+  if (S.cmode === 'error') return { body: `<div class="lt-empty"><span class="lt-tile">${ic('alert')}</span><h3>Không tải được danh mục</h3><p>Dữ liệu trong Catoro không bị ảnh hưởng.</p><div class="acts"><button class="btn" data-act="retry">${ic('refresh')}Thử lại</button></div></div>`, foot: '<span></span>' }
+  if (r === null) return { body: `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Tìm tàu trong danh mục</h3><p>Gõ tên tàu, tên cũ, số IMO hoặc MMSI (từ 2 ký tự). Danh mục có hơn 700 nghìn tàu; tàu đã có trong Catoro không hiện ở đây.</p></div>`, foot: '<span></span>' }
+  if (!r.length) return { body: `<div class="lt-empty"><span class="lt-tile">${ic('search')}</span><h3>Không có tàu nào khớp "${esc(q)}"</h3><p>Thử tên khác, tên cũ, số IMO hoặc MMSI. Tàu đã có trong Catoro không hiện ở đây.</p><div class="acts"><button class="btn btn--primary" data-act="manual">${ic('plus')}Thêm tàu thủ công</button></div></div>`, foot: '<span></span>' }
   const pages = Math.max(1, Math.ceil(r.length / PAGE))
   S.cpage = Math.min(S.cpage, pages)
   S.lastRows = r.slice((S.cpage - 1) * PAGE, S.cpage * PAGE)
@@ -649,7 +649,7 @@ function panelHtml() {
   const v = panelParts()
   return `<div class="sp-scrim" data-act="panel-close"></div>
   <aside class="sp" role="dialog" aria-label="Danh mục tàu thế giới">
-    <div class="sp__head"><div><h2>Danh mục tàu thế giới</h2><p>Kho tàu tra cứu có sẵn. Bấm Thêm để đưa tàu vào MCAH.</p></div><button type="button" class="btn btn--ghost btn--icon" data-act="panel-close" aria-label="Đóng">${ic('close')}</button></div>
+    <div class="sp__head"><div><h2>Danh mục tàu thế giới</h2><p>Kho tàu tra cứu có sẵn. Bấm Thêm để đưa tàu vào Catoro.</p></div><button type="button" class="btn btn--ghost btn--icon" data-act="panel-close" aria-label="Đóng">${ic('close')}</button></div>
     <div class="sp__search"><label class="search" style="max-width:none">${ic('search')}<input class="input" id="cq" value="${esc(S.cq)}" placeholder="Tên tàu, tên cũ, IMO, MMSI" autocomplete="off" aria-label="Tìm trong danh mục"></label></div>
     <div class="sp__body" id="cbody">${v.body}</div>
     <div class="lt-foot" id="cfoot">${v.foot}</div>
@@ -759,7 +759,7 @@ function formScreen() {
     return `<div class="field ${f.dirty.has(k) ? 'field--chg' : f.src[k] ? 'field--cat' : ''}"><label class="field__label">${o.label}${o.req ? '<i>*</i>' : ''}${f.dirty.has(k) ? '<span class="chip">Đã sửa</span>' : ''}${chip(k)}</label>${ctl}${o.extra || ''}</div>`
   }
   const typeExtra = f.typeHint && !f.v.type
-    ? (f.qa ? qaCard(f) : `<p class="field__sugg">Nguồn ghi loại tàu: ${esc(f.typeHint)}. MCAH chưa có loại tương ứng.</p><div class="tfix"><span class="muted">Chọn loại gần nhất ở ô trên, hoặc</span><button type="button" class="btn btn--sm" data-act="qa-open">${ic('plus')}Thêm nhanh loại tàu</button></div>`)
+    ? (f.qa ? qaCard(f) : `<p class="field__sugg">Nguồn ghi loại tàu: ${esc(f.typeHint)}. Catoro chưa có loại tương ứng.</p><div class="tfix"><span class="muted">Chọn loại gần nhất ở ô trên, hoặc</span><button type="button" class="btn btn--sm" data-act="qa-open">${ic('plus')}Thêm nhanh loại tàu</button></div>`)
     : f.src.type === 'new' ? `<p class="field__ok">${ic('ok')}Đã thêm loại tàu "${esc(f.v.type)}" vào danh mục. Dùng được ngay cho các tàu khác.</p>` : ''
   const s = smartCtl(f)
   const imoCtl = `<div class="inrow"><input class="input mono" id="f-imo" value="${esc(f.v.imo || '')}" placeholder="7 chữ số"><span id="smartbtn">${s.btn}</span></div><p class="field__hint" id="imohint" style="margin:0">${s.hint}</p>`

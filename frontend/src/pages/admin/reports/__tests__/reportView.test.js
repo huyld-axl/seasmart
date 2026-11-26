@@ -53,7 +53,7 @@ describe('reportView', () => {
   it('khoá báo cáo và tên file', () => {
     expect(isReportKey('cashflow')).toBe(true)
     expect(isReportKey('abc')).toBe(false)
-    expect(fileName('sales', '2026-10')).toBe('MCAH_Bao-cao_sales_2026-10.xlsx')
-    expect(fileName('all', '2026-10')).toBe('MCAH_Bao-cao_2026-10.xlsx')
+    expect(fileName('sales', '2026-10')).toBe('Catoro_Bao-cao_sales_2026-10.xlsx')
+    expect(fileName('all', '2026-10')).toBe('Catoro_Bao-cao_2026-10.xlsx')
   })
 })

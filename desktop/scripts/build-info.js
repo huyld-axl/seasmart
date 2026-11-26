@@ -1,4 +1,4 @@
-// Ghi dist/installer/build-info-<linux|win>.json sau khi build + quét bí mật sạch (docs/mcah-ke-hoach-desktop-gd6.md 3.2):
+// Ghi dist/installer/build-info-<linux|win>.json sau khi build + quét bí mật sạch (docs/catoro-ke-hoach-desktop-gd6.md 3.2):
 // phiên bản, commit, lúc build. Script phát hành chặn khi hai bản khác commit / khác phiên bản / chưa quét.
 //   node scripts/build-info.js linux|win
 const fs = require('fs')

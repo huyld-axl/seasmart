@@ -171,7 +171,7 @@ describe('report_xlsx', () => {
   })
 
   it('tên file', () => {
-    expect(reportFileName('sales', '2026-10')).toBe('MCAH_Bao-cao_sales_2026-10.xlsx')
-    expect(reportFileName('all', '2026-10')).toBe('MCAH_Bao-cao_2026-10.xlsx')
+    expect(reportFileName('sales', '2026-10')).toBe('Catoro_Bao-cao_sales_2026-10.xlsx')
+    expect(reportFileName('all', '2026-10')).toBe('Catoro_Bao-cao_2026-10.xlsx')
   })
 })

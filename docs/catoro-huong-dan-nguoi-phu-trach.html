@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hướng dẫn Người phụ trách</title>
+<style>
+  /* Bản nháp mục "Người phụ trách" cho frontend/public/guide/index.html (bước 8 của docs/catoro-ke-hoach-nguoi-phu-trach.md).
+     Khi chép vào: đặt trước mục Thuyền viên, bỏ thẻ <style> này, dùng class sẵn có (kicker, flow, steps, note, who), thêm ảnh chụp màn thật. */
+  :root { color-scheme: light; --border: #e5e6ea; --bg: #f4f4f6; }
+  body { margin: 0; background: var(--bg); color: #2c2c2c; font: 15px/1.6 'Inter', system-ui, sans-serif; }
+  section { max-width: 760px; margin: 32px auto; padding: 24px 28px; background: #fff; border-radius: 16px; }
+  h2 { margin-top: 0; }
+  .kicker { font-size: 12px; color: #707070; text-transform: uppercase; letter-spacing: .06em; }
+  .ui { padding: 1px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-weight: 500; white-space: nowrap; }
+  .flow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+  .flow span { padding: 4px 12px; border-radius: 999px; background: var(--bg); }
+  .flow .key { background: #ecfdf5; color: #007a55; font-weight: 600; }
+  .note { padding: 10px 14px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; margin: 12px 0; }
+  .who { display: grid; gap: 6px; margin-top: 16px; font-size: 14px; }
+  .who div { display: grid; grid-template-columns: 1fr 1.4fr 0.8fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<section id="nguoi-phu-trach" data-jobs="mg dy kt">
+  <div class="kicker">Chung</div>
+  <h2>Người phụ trách</h2>
+  <p>Mỗi thuyền viên, hợp đồng và yêu cầu thanh toán có một <b>người phụ trách</b>: người theo dõi và chịu trách nhiệm việc đó. Tên người phụ trách hiện ở đầu trang hồ sơ / chi tiết và ở cột <span class="ui">Phụ trách</span> trong danh sách.</p>
+
+  <h3>Người phụ trách được giao tự động</h3>
+  <p>Khi tạo mới, người phụ trách lấy theo việc đứng trước nó:</p>
+  <div class="flow"><span>Thuyền viên</span><i>→</i><span>Hợp đồng</span><i>→</i><span class="key">Yêu cầu thanh toán</span></div>
+  <ul>
+    <li><b>Thuyền viên:</b> khi thêm hồ sơ, ô Người phụ trách (mục Thông tin chung) điền sẵn là bạn; chọn người khác hoặc để trống nếu chưa giao. Nhập bằng Excel thì người nhập là người phụ trách.</li>
+    <li><b>Hợp đồng:</b> khi chốt người ở cơ hội hoặc tạo hợp đồng cho chuyến, hợp đồng giao cho người phụ trách của thuyền viên đó.</li>
+    <li><b>Yêu cầu thanh toán:</b> khi hợp đồng được duyệt, các yêu cầu thanh toán giao cho người phụ trách hợp đồng.</li>
+  </ul>
+  <p>Cơ hội vẫn có ô Người phụ trách riêng như trước; ô đó không ảnh hưởng tới hợp đồng tạo ra khi chốt người.</p>
+
+  <h3>Đổi người phụ trách</h3>
+  <ol>
+    <li>Mở hồ sơ thuyền viên, hoặc trang chi tiết hợp đồng / yêu cầu thanh toán.</li>
+    <li>Bấm <span class="ui">Đổi</span> cạnh tên người phụ trách ở đầu trang (hoặc đổi trong form sửa thuyền viên, hợp đồng nháp, yêu cầu thanh toán).</li>
+    <li>Chọn người mới rồi bấm <span class="ui">Lưu</span>.</li>
+  </ol>
+  <p>Đổi được ở mọi trạng thái, kể cả hợp đồng đang hiệu lực và yêu cầu thanh toán đã duyệt, đã gửi hay đã thu. Việc đổi không động tới số tiền và không làm bộ giấy đang ký của thuyền viên phải làm lại. Lịch sử ghi lại ai đã đổi, từ ai sang ai.</p>
+
+  <div class="note"><b>Đổi ở đâu chỉ đổi đúng chỗ đó.</b> Giao thuyền viên cho người khác thì các hợp đồng đã có vẫn giữ người cũ; hợp đồng tạo <b>sau</b> mới giao cho người mới. Giao hợp đồng cho người khác thì các yêu cầu thanh toán đã có giữ người cũ; chỉ yêu cầu thanh toán sinh ra sau (ví dụ khi gia hạn hợp đồng) mới giao cho người mới. Muốn giao lại việc đã có thì đổi từng cái.</div>
+
+  <h3>Tìm việc của mình</h3>
+  <p>Ở danh sách Thuyền viên, Hợp đồng, Yêu cầu thanh toán, mở bộ lọc và chọn <span class="ui">Người phụ trách</span> → <span class="ui">Tôi</span>. Chọn <span class="ui">Chưa giao</span> để thấy những hồ sơ chưa có ai phụ trách.</p>
+  <p>Nếu tài khoản của bạn chỉ được xem dữ liệu của mình, bạn sẽ thấy cả những việc bạn tạo và những việc được giao cho bạn.</p>
+  <p>Ở bảng Trả lương, cột Đối tác: dòng trên là người phụ trách yêu cầu thanh toán, dòng dưới là đối tác. Người đã nghỉ (tài khoản bị khoá) vẫn hiện tên kèm nhãn <b>Đã khoá</b>, để biết việc nào cần giao lại.</p>
+
+  <div class="who">
+    <div><b>Việc</b><b>Quyền cần có</b><b>Thường do</b></div>
+    <div><span>Đổi người phụ trách thuyền viên</span><em>Thuyền viên · Sửa</em><span>Môi giới</span></div>
+    <div><span>Đổi người phụ trách hợp đồng</span><em>Hợp đồng · Sửa hợp đồng</em><span>Môi giới, Duyệt &amp; quản lý</span></div>
+    <div><span>Đổi người phụ trách yêu cầu thanh toán</span><em>Yêu cầu thanh toán · Sửa</em><span>Kế toán</span></div>
+  </div>
+</section>
+</body>
+</html>

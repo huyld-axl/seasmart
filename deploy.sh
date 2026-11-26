@@ -49,12 +49,12 @@ cloud_services=()
 if [[ -f cloud/.env ]]; then
   cloud_services=(cloud-postgres cloud)
 else
-  echo 'No cloud/.env: skipping the desktop service (cloud). See docs/mcah-huong-dan-server-may-chu-dich-vu.md.' >&2
+  echo 'No cloud/.env: skipping the desktop service (cloud). See docs/catoro-huong-dan-server-may-chu-dich-vu.md.' >&2
 fi
 # Khu nội bộ /internal/ cần tệp Basic Auth; thiếu thì /internal/ trả 500 (phần còn lại vẫn chạy). Chỉ nhắc, không dừng.
 internal_auth="${INTERNAL_AUTH_DIR:-$(sed -n 's/^INTERNAL_AUTH_DIR=//p' .env 2>/dev/null | tail -1)}"
 if [[ ! -f "${internal_auth:-/srv/mcah/internal-auth}/htpasswd" ]]; then
-  echo "No ${internal_auth:-/srv/mcah/internal-auth}/htpasswd: /internal/ will return 500. See docs/mcah-huong-dan-server-may-chu-dich-vu.md." >&2
+  echo "No ${internal_auth:-/srv/mcah/internal-auth}/htpasswd: /internal/ will return 500. See docs/catoro-huong-dan-server-may-chu-dich-vu.md." >&2
 fi
 
 if [[ ! -f docker/postgres.env ]]; then

@@ -1,6 +1,6 @@
 import ToastContent from './ToastContent'
 
-// Toast duy nhất của MCAH (thiết kế đã duyệt 21/10/2026, minh hoạ ở /internal/design-system/ mục Toast).
+// Toast duy nhất của Catoro (thiết kế đã duyệt 21/10/2026, minh hoạ ở /internal/design-system/ mục Toast).
 // Bốn loại: xong việc, thông tin, cảnh báo, lỗi. Góc dưới phải, dưới giữa ở màn hẹp, luôn nằm trên thanh lưu
 // (App.jsx đặt bottom và tối đa 3 toast). Thứ tự [icon] [chữ, mô tả] [hành động] [✕].
 // Chữ: xong việc "Đã + việc + tên", lỗi "Không + việc + được + tên"; câu một dòng không chấm cuối,

@@ -24,7 +24,7 @@ function signingKey() {
 }
 
 // claims: { sub, email, name, office, office_role, machine, auth_time }. exp = mốc offline (now + 7 ngày), không quá mốc
-// phải đăng nhập lại (auth_time + 30 ngày; docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.8).
+// phải đăng nhập lại (auth_time + 30 ngày; docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.8).
 function issue(claims, now = Date.now()) {
   const { privateKey, kid } = signingKey()
   const iat = Math.floor(now / 1000)

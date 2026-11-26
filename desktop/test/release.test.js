@@ -14,13 +14,13 @@ function setup(opts = {}) {
   fs.mkdirSync(path.join(root, 'backend/migrations/postgres'), { recursive: true })
   fs.writeFileSync(path.join(root, 'backend/migrations/postgres/048_x.sql'), '')
   fs.writeFileSync(path.join(d, 'endpoints.json'), JSON.stringify({ cloud_url: 'https://a.vn/account', update_url: 'https://a.vn/download/files' }))
-  fs.writeFileSync(path.join(d, 'package.json'), JSON.stringify({ name: 'mcah-desktop', version: '1.2.0', build: { productName: 'MCAH', directories: { output: 'dist/installer' } } }))
+  fs.writeFileSync(path.join(d, 'package.json'), JSON.stringify({ name: 'catoro-desktop', version: '1.2.0', build: { productName: 'Catoro', directories: { output: 'dist/installer' } } }))
   const put = (platform, name, commit) => {
     fs.writeFileSync(path.join(d, 'dist/installer', name), 'x')
     fs.writeFileSync(path.join(d, 'dist/installer', `build-info-${platform}.json`), JSON.stringify({ version: '1.2.0', commit, scan: 'clean', dirty, cloud_url: platform === 'win' && opts.wrongUrl ? 'http://localhost:4100' : 'https://a.vn/account', update_url: 'https://a.vn/download/files', cloud_key: platform === 'win' && opts.wrongKey ? 'dev' : 'prod' }))
   }
-  if (linux) put('linux', 'mcah-desktop_1.2.0_amd64.deb', 'abc')
-  if (win) put('win', 'MCAH Setup 1.2.0.exe', winCommit)
+  if (linux) put('linux', 'catoro-desktop_1.2.0_amd64.deb', 'abc')
+  if (win) put('win', 'Catoro Setup 1.2.0.exe', winCommit)
   if (notes) {
     fs.mkdirSync(path.join(d, 'release-notes'))
     fs.writeFileSync(path.join(d, 'release-notes/1.2.0.md'), '- Sửa lỗi')

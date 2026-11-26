@@ -4,7 +4,7 @@ import api from '../../api/client'
 import useAiConsentStore from '../../stores/aiConsentStore'
 import useToast from '../ds/useToast'
 
-// Lần đầu quét giấy tờ / danh thiếp bằng AI: hỏi đồng ý gửi ảnh lên máy chủ (docs/mcah-ke-hoach-desktop-gd4.md 3.8).
+// Lần đầu quét giấy tờ / danh thiếp bằng AI: hỏi đồng ý gửi ảnh lên máy chủ (docs/catoro-ke-hoach-desktop-gd4.md 3.8).
 export default function AiConsentModal() {
   const { open, finish } = useAiConsentStore()
   const toast = useToast()
@@ -32,7 +32,7 @@ export default function AiConsentModal() {
         </div>
       }
     >
-      <p>Để tự điền, ảnh giấy tờ được gửi lên máy chủ MCAH cho AI đọc. Máy chủ <b>không lưu</b> ảnh, chỉ ghi số trang và thời gian để tính phí.</p>
+      <p>Để tự điền, ảnh giấy tờ được gửi lên máy chủ Catoro cho AI đọc. Máy chủ <b>không lưu</b> ảnh, chỉ ghi số trang và thời gian để tính phí.</p>
       <p className="muted" style={{ marginBottom: 0 }}>Không đồng ý thì vẫn nhập tay được như thường.</p>
     </Modal>
   )

@@ -1,4 +1,4 @@
-// Thư mục hồ sơ (docs/mcah-ke-hoach-desktop-gd4.md 3.2, wireframe màn 4, 5): danh sách tệp của thuyền viên theo cấu trúc
+// Thư mục hồ sơ (docs/catoro-ke-hoach-desktop-gd4.md 3.2, wireframe màn 4, 5): danh sách tệp của thuyền viên theo cấu trúc
 // dễ đọc, và tải từng tệp. Máy chính mở thẳng thư mục thật (folder); máy nhân viên / bản xuất dựng lại từ danh sách.
 const path = require('path')
 const pool = require('../../config/db')

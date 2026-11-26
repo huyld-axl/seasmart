@@ -30,7 +30,7 @@ const mailer = {
   sent, // chỉ để test đọc thư đã "gửi" khi chạy không SMTP
   // Không có liên kết: chỉ mã, để thư không giống thư lừa đảo và không ai bấm nhầm.
   loginCode: (to, code) =>
-    send({ to, subject: `Mã đăng nhập MCAH: ${code}`, text: `Mã đăng nhập MCAH của bạn: ${code}\n\nMã có hạn 10 phút. Không phải bạn đang đăng nhập thì bỏ qua thư này.` }),
+    send({ to, subject: `Mã đăng nhập Catoro: ${code}`, text: `Mã đăng nhập Catoro của bạn: ${code}\n\nMã có hạn 10 phút. Không phải bạn đang đăng nhập thì bỏ qua thư này.` }),
 }
 
 module.exports = mailer

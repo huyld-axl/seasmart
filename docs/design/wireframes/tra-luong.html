@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Wireframe Khoản tiền cố định + Trả lương thuyền viên (docs/mcah-ke-hoach-tra-luong.md). Một theme sáng như app.
+  /* Wireframe Khoản tiền cố định + Trả lương thuyền viên (docs/catoro-ke-hoach-tra-luong.md). Một theme sáng như app.
      Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có.
      Bảng dựng bằng script nhỏ ở cuối trang từ cùng một bộ số mẫu. */
   :root {
@@ -184,7 +184,7 @@
       <h2><b>A1</b> Khoản tiền hợp đồng (form thêm / sửa và chi tiết)</h2>
       <p class="why">Giữ khung bảng hai cột Phải thu / Phải chi hiện có. Bỏ nút thêm khoản, ô tên tự đặt, nút xoá. Thêm hai khoản cố định "Khác" ở cuối mỗi nhóm.</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it">Trả lương</div></div>
         <div class="content"><div class="topbar"><h3>Sửa hợp đồng CH2609-02/HĐ</h3></div>
           <div class="page"><div class="card"><h4>Thoả thuận</h4><table class="items" id="contract-items"></table>
             <div class="gone">+ Thêm khoản hằng tháng &nbsp;·&nbsp; + Thêm khoản một lần &nbsp;·&nbsp; ô "Tên khoản" &nbsp;·&nbsp; nút ✕ xoá khoản — bỏ</div></div></div>
@@ -202,7 +202,7 @@
       <h2><b>A2</b> Sửa yêu cầu thanh toán (và chi tiết)</h2>
       <p class="why">Bill luôn có đủ 14 khoản. Kỳ 1 lấy số phải thu của hợp đồng cho mọi khoản; các kỳ sau khoản một lần là 0. Chỉ sửa số, không thêm / xoá dòng, không số âm.</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Hợp đồng</div><div class="it on">Yêu cầu thanh toán</div><div class="it">Trả lương</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Hợp đồng</div><div class="it on">Yêu cầu thanh toán</div><div class="it">Trả lương</div></div>
         <div class="content"><div class="topbar"><h3>Sửa CH2609-02/HĐ/T2 · 01/11–30/11</h3></div>
           <div class="page"><div class="card"><h4>Số tiền</h4><table class="items" id="bill-items"></table>
             <div class="gone">Nhóm "Điều chỉnh" &nbsp;·&nbsp; + Thêm dòng điều chỉnh &nbsp;·&nbsp; số âm — bỏ</div></div>
@@ -223,7 +223,7 @@
       <h2><b>B1</b> Bảng trả lương theo tháng</h2>
       <p class="why">Menu mới <b>Trả lương</b> (nhóm Vận hành, sau Yêu cầu thanh toán). Lọc theo tháng của <b>ngày chốt sổ</b> (ngày kết thúc kỳ) của bill. Ví dụ tháng 10/2026, 5 bill: dòng 1 và 4 đã trả (xám, khoá), dòng 2 đang sửa chưa chốt. Bảng cuộn ngang để xem đủ 14 khoản; cột thuyền viên và cột thao tác dính hai bên.</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Chuyến tàu</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it on">Trả lương</div><div class="grp">Hệ thống</div><div class="it">Danh mục</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Chuyến tàu</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div><div class="it on">Trả lương</div><div class="grp">Hệ thống</div><div class="it">Danh mục</div></div>
         <div class="content">
           <div class="topbar"><h3>Trả lương</h3><div class="user"><div class="avatar">KT</div>Kế toán ▾</div></div>
           <div class="page">
@@ -263,7 +263,7 @@
       <h2><b>B2</b> Chốt các dòng đã chọn</h2>
       <p class="why">Nút trên thanh công cụ, hiện số dòng đang chọn. Chọn tất cả ở đầu bảng chỉ chọn các dòng chưa trả của trang đang xem.</p>
       <div class="app"><div class="shell" style="min-height:340px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Yêu cầu thanh toán</div><div class="it on">Trả lương</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Yêu cầu thanh toán</div><div class="it on">Trả lương</div></div>
         <div class="content"><div class="topbar"><h3>Trả lương</h3></div><div class="page"><div class="card" style="min-height:200px"><p class="muted">… bảng tháng 10/2026 …</p></div></div></div>
         <div class="scrim"><div class="modal" role="dialog">
           <h4>Chốt trả lương 2 thuyền viên?</h4>
@@ -284,7 +284,7 @@
       <h2><b>B3</b> Huỷ chốt</h2>
       <p class="why">Từ menu ⋯ của dòng đã trả, hoặc Hoàn tác trên toast ngay sau khi chốt.</p>
       <div class="app"><div class="shell" style="min-height:280px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Trả lương</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Trả lương</div></div>
         <div class="content"><div class="topbar"><h3>Trả lương</h3></div><div class="page"><div class="card" style="min-height:160px"><p class="muted">…</p></div></div></div>
         <div class="scrim"><div class="modal" role="dialog">
           <h4>Huỷ chốt trả lương Trần Văn Bình?</h4>
@@ -300,7 +300,7 @@
       <h2><b>B4</b> Còn ô sửa chưa chốt</h2>
       <p class="why">Số sửa chỉ lưu khi Chốt. Đổi tháng, đổi tab / bộ lọc, sang trang khác khi còn dòng "Đã sửa" thì hỏi.</p>
       <div class="app"><div class="shell" style="min-height:280px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Trả lương</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Trả lương</div></div>
         <div class="content"><div class="topbar"><h3>Trả lương</h3></div><div class="page"><div class="card" style="min-height:160px"><p class="muted">…</p></div></div></div>
         <div class="scrim"><div class="modal" role="dialog">
           <h4>Bỏ số đã sửa?</h4>
@@ -350,7 +350,7 @@
       <h2><b>B6</b> Duyệt lại hợp đồng bị chặn vì đã trả lương</h2>
       <p class="why">Không có màn mới. Bill đã chốt trả lương bị khoá như bill đã gửi / đã thu khi sửa ngày hoặc duyệt lại hợp đồng làm bill đó bị cắt hoặc xoá.</p>
       <div class="app"><div class="shell" style="min-height:260px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Hợp đồng</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Hợp đồng</div></div>
         <div class="content"><div class="topbar"><h3>Hợp đồng CH2608-01/HĐ</h3></div><div class="page"><div class="card" style="min-height:140px"><p class="muted">…</p></div></div></div>
         <div class="scrim"><div class="modal" role="dialog">
           <h4>Chưa duyệt được</h4>

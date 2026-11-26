@@ -42,7 +42,7 @@ const payBody = {
 }
 const unpayBody = { type: ['object', 'null'], properties: { version: { type: ['integer', 'null'] } } }
 
-// Trả lương thuyền viên (docs/mcah-ke-hoach-tra-luong.md phần B). Phạm vi dữ liệu theo người tạo bill gốc.
+// Trả lương thuyền viên (docs/catoro-ke-hoach-tra-luong.md phần B). Phạm vi dữ liệu theo người tạo bill gốc.
 async function payoutRoutes(fastify) {
   const can = (action) => ({ onRequest: [fastify.authenticate, fastify.can(`payout.${action}`)] })
 

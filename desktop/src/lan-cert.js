@@ -1,4 +1,4 @@
-// Chứng chỉ HTTPS của máy chính trong mạng văn phòng (docs/mcah-ke-hoach-desktop-gd3.md 3.1): ECDSA P-256 tự ký,
+// Chứng chỉ HTTPS của máy chính trong mạng văn phòng (docs/catoro-ke-hoach-desktop-gd3.md 3.1): ECDSA P-256 tự ký,
 // hạn 10 năm, tạo một lần. Máy nhân viên không tin kho CA mà ghim theo dấu vân tay SHA-256 (máy chủ dịch vụ giữ, vé mang).
 // Khoá riêng cất bằng két hệ điều hành như khoá máy chính.
 require('reflect-metadata')
@@ -33,6 +33,7 @@ async function ensureCert(hostName) {
   const created = await x509.X509CertificateGenerator.createSelfSigned({
     // Số sê-ri dương (byte đầu < 0x80): BoringSSL của Electron từ chối số âm.
     serialNumber: `01${crypto.randomBytes(8).toString('hex')}`,
+    // O=MCAH giữ nguyên khi đổi tên (chứng chỉ đã ghép với máy nhân viên, docs/catoro-ke-hoach-doi-ten.md 3.6).
     name: `CN=${hostName.replace(/[^A-Za-z0-9._-]/g, '-')}, O=MCAH`,
     notBefore: new Date(Date.now() - 24 * 3600 * 1000),
     notAfter: new Date(Date.now() + 10 * 365 * 24 * 3600 * 1000),

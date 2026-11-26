@@ -3,15 +3,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 afterEach(() => {
-  delete window.mcah
+  delete window.catoro
   localStorage.clear()
   vi.resetModules()
 })
 
 describe('authStore ở app máy tính', () => {
-  it('không dùng token trong localStorage; đăng xuất gọi window.mcah.logout', async () => {
+  it('không dùng token trong localStorage; đăng xuất gọi window.catoro.logout', async () => {
     const logout = vi.fn(async () => {})
-    window.mcah = { logout }
+    window.catoro = { logout }
     localStorage.setItem('token', 'token-cu-con-sot')
     localStorage.setItem('user', JSON.stringify({ email: 'a@b.vn' }))
     const { default: useAuthStore } = await import('../authStore')

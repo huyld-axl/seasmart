@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hướng dẫn Báo cáo</title>
+<style>
+  /* Bản nháp mục "Báo cáo tháng" cho frontend/public/guide/index.html (bước 8 của docs/catoro-ke-hoach-bao-cao.md).
+     Khi chép vào: đặt sau <section id="tra-luong">, bỏ thẻ <style> này, dùng class sẵn có (kicker, flow, steps, note, who), thêm ảnh chụp màn thật. */
+  :root { color-scheme: light; --border: #e5e6ea; --bg: #f4f4f6; }
+  body { margin: 0; background: var(--bg); color: #2c2c2c; font: 15px/1.6 'Inter', system-ui, sans-serif; }
+  section { max-width: 760px; margin: 32px auto; padding: 24px 28px; background: #fff; border-radius: 16px; }
+  h2 { margin-top: 0; }
+  .kicker { font-size: 12px; color: #707070; text-transform: uppercase; letter-spacing: .06em; }
+  .ui { padding: 1px 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); font-weight: 500; white-space: nowrap; }
+  .note { padding: 10px 14px; border-radius: 10px; background: #eff6ff; color: #1d4ed8; margin: 12px 0; }
+  .who { display: grid; gap: 6px; margin-top: 16px; font-size: 14px; }
+  .who div { display: grid; grid-template-columns: 1fr 1.4fr 0.8fr; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+</style>
+</head>
+<body>
+<section id="bao-cao" data-jobs="kt dy">
+  <div class="kicker">Vận hành · 07</div>
+  <h2>Báo cáo tháng</h2>
+  <p>Màn <span class="ui">Báo cáo</span> gom số tiền của một tháng thành 4 bảng để xem nhanh và gửi cho kế toán, ban giám đốc. Mỗi bảng xem được ngay trên màn hình và tải về thành file Excel. Số trong file giống hệt số trên màn hình.</p>
+
+  <h3>Chọn tháng</h3>
+  <p>Chọn tháng ở đầu trang (hoặc bấm ‹ › để lùi, tiến một tháng). Báo cáo lấy <b>mọi yêu cầu thanh toán có ngày kết thúc kỳ trong tháng đó</b>, dù đã duyệt, đã gửi, đã thu hay chưa. Đây cũng là cách chọn tháng của màn Trả lương, nên hai màn luôn cùng số.</p>
+  <p>Ví dụ: kỳ 26/09–25/10 thuộc tháng 10, dù hạn thu là tháng 11.</p>
+
+  <h3>Bốn báo cáo</h3>
+  <ul>
+    <li><b>Dữ liệu tổng hợp</b>: bảng đầy đủ nhất, mỗi yêu cầu thanh toán một dòng. Số <b>thực tế</b> lấy từ yêu cầu thanh toán và trả lương, cộng ra <b>Lãi thực tế</b>. Số <b>dự kiến</b> lấy từ các khoản tiền ghi trong hợp đồng (phần Điều kiện phải thu, Điều kiện phải chi, kèm ngày chốt sổ và ngày thanh toán), cộng ra <b>Lãi gộp dự kiến</b>. Đặt hai cột lãi cạnh nhau để thấy kỳ nào lệch so với hợp đồng. Bật <span class="ui">Hiện 14 khoản</span> để xem từng khoản tiền. Khi kéo ngang bảng, tên mục đang xem luôn nằm ở mép trái của hàng tiêu đề.</li>
+    <li><b>Phải thu theo đối tác</b>: mỗi đối tác (đối tác) một dòng. Số phải thu chia <b>khoản hằng tháng</b> (lương, phụ cấp, phí dịch vụ…) và <b>khoản một lần</b> (vé máy bay, visa, khám sức khoẻ…), cộng thành Tổng. Có số thuyền viên và tỷ lệ số người của từng đối tác.</li>
+    <li><b>Phải chi theo đối tác</b>: như trên nhưng là số trả lương thuyền viên, gom theo đối tác. Số trả lấy đúng như màn Trả lương: người đã chốt là số đã chốt, người chưa chốt là số theo hợp đồng.</li>
+    <li><b>Lịch thu chi</b>: mỗi yêu cầu thanh toán một dòng, xếp theo hạn thu. Cho biết khi nào tiền về (<b>Gộp thu</b> cộng mọi khoản cùng hạn thu, <b>Thu theo đối tác</b> cộng theo từng đối tác trong ngày đó), khi nào phải trả thuyền viên, và lãi gộp từng kỳ. Số gộp nằm ở đầu nhóm; nhóm dài thì số vẫn hiện ở mép trên khi kéo xuống.</li>
+  </ul>
+  <p>Báo cáo không có cột trạng thái. Muốn biết khoản nào đã thu, đã trả thì xem ở màn Yêu cầu thanh toán và Trả lương.</p>
+  <p>Bấm tên đối tác, số hợp đồng hay tên thuyền viên để mở trang chi tiết.</p>
+
+  <h3>Tải Excel</h3>
+  <ol>
+    <li>Chọn báo cáo và tháng.</li>
+    <li>Bấm <span class="ui">Xuất Excel</span> để tải báo cáo đang xem, hoặc bấm mũi tên ▾ cạnh nút → <span class="ui">Xuất cả 4 báo cáo</span> để có một file gồm 4 trang tính.</li>
+  </ol>
+  <p>File ghi tên báo cáo, tháng, thời điểm xuất và người xuất ở đầu trang. Bảng Dữ liệu tổng hợp trong file luôn có đủ 14 khoản, kể cả khi trên màn hình đang ẩn.</p>
+
+  <div class="note"><b>Muốn sửa số trong báo cáo?</b> Báo cáo chỉ để xem. Sửa số thu ở màn Yêu cầu thanh toán, số trả ở màn Trả lương; mở lại Báo cáo là thấy số mới.</div>
+
+  <p>Trên điện thoại, Phải thu, Phải chi và Lịch thu chi hiện thành thẻ. Dữ liệu tổng hợp quá rộng nên chỉ hiện số tổng; bấm Xuất Excel để xem đầy đủ.</p>
+
+  <div class="who">
+    <div><b>Việc</b><b>Quyền cần có</b><b>Thường do</b></div>
+    <div><span>Xem báo cáo</span><em>Báo cáo · Xem báo cáo tháng</em><span>Kế toán, Duyệt &amp; quản lý</span></div>
+    <div><span>Tải Excel</span><em>Báo cáo · Xuất báo cáo ra Excel</em><span>Kế toán, Duyệt &amp; quản lý</span></div>
+  </div>
+  <p style="font-size:14px;color:#707070">Người chỉ được xem dữ liệu của mình sẽ thấy báo cáo tính trên các yêu cầu thanh toán mình tạo.</p>
+</section>
+</body>
+</html>

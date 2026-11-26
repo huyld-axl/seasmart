@@ -4,7 +4,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <style>
-  /* Wireframe nhóm A của MCAH (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
+  /* Wireframe nhóm A của Catoro (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
      Token chép từ frontend/src/theme/tokens.js; component dùng chung class với frontend/src/components/ds/ds.css. */
   :root {
     color-scheme: light;
@@ -61,7 +61,7 @@
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: none; }
 
-  /* Component riêng của MCAH. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
+  /* Component riêng của Catoro. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
    token (src/theme/tokens.js). Không mã màu nào ngoài biến, trừ lớp phủ theo màu chữ. */
 
 .ds-sr-only {
@@ -1674,7 +1674,7 @@ const vnd = (n) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
 
 const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['vessels', 'Tàu', 'ship'], ['partners', 'Đối tác', 'building'], ['payroll', 'Tiền lương', 'wallet'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
-const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
+const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">Catoro</span></span>`;
 
 
 // ===== Tab Giấy tờ (hồ sơ thuyền viên): giấy tờ trọn vẹn lấy từ thuyền viên, có ảnh để xem, tải về, gửi chủ tàu =====
@@ -1750,7 +1750,7 @@ function shell({ title, content, current = 'seafarers', overlay = '' }) {
           <button type="button" class="user-btn" data-action="user" aria-haspopup="menu" aria-expanded="${state.userOpen}">
             <span class="avatar">PT</span><span class="user-btn__name">Phạm Văn Tùng</span>${icon('down')}
           </button>
-          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">phamvantung@mcah.demo · Crewing Officer</p><div class="menu__sep"></div>
+          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">phamvantung@catoro.demo · Crewing Officer</p><div class="menu__sep"></div>
             <button type="button" class="menu__item menu__item--danger" role="menuitem">${icon('logout')}Đăng xuất</button></div>` : ''}
         </div>
       </header>
@@ -2085,7 +2085,7 @@ function sendScreen() {
     modal = `<div class="modal-scrim"><div class="modal" role="dialog" aria-modal="true" style="max-width:560px;width:100%" data-wf-block="7"><div class="modal__head"><div><h2 class="modal__title">Gửi hồ sơ 2 ứng viên cho ${OPP.owner}</h2><p class="modal__desc">Tải hồ sơ từng người (mỗi người một tệp .zip) rồi mở app mail với người nhận, tiêu đề, nội dung điền sẵn.</p></div>${ib('close', 'Đóng')}</div>
       <div class="modal__body" style="display:grid;gap:12px">${short ? bannerBox('warning', 'exclamation-circle', 'Hồ Văn Lực chưa đủ hồ sơ', 'Vẫn gửi được; phần thiếu sẽ không có trong tệp. Hoặc mở Hồ sơ nộp để bổ sung trước.') : ''}
         <ul class="bo-list">${people.map(([n, what, warn]) => `<li><span class="bo-name">${n}<small style="${warn ? 'color:var(--warning)' : ''}">${warn || what}</small></span>${warn ? btn('Bổ sung', { size: 'sm' }) : `<span class="ok" style="color:var(--success)">${icon('check-circle')}</span>`}</li>`).join('')}</ul>
-        <div class="sf-grid">${fld('Tới', inp(`Mr. Park <${OPP.mail}>`, { ro: true }), { c: 'sf-c12', hint: 'Người liên hệ chính của chủ tàu' })}${fld('Tiêu đề', inp(`MCAH · 2nd Engineer candidates for ${OPP.vessel} · join 25/10/2026 Hai Phong`), { c: 'sf-c12' })}</div></div>
+        <div class="sf-grid">${fld('Tới', inp(`Mr. Park <${OPP.mail}>`, { ro: true }), { c: 'sf-c12', hint: 'Người liên hệ chính của chủ tàu' })}${fld('Tiêu đề', inp(`Catoro · 2nd Engineer candidates for ${OPP.vessel} · join 25/10/2026 Hai Phong`), { c: 'sf-c12' })}</div></div>
       <div class="modal__foot">${btn('Huỷ')}${btn('Tải và mở app mail', { variant: 'primary', iconName: 'send' })}</div></div></div>`;
   }
   return oppScreen(modal);

@@ -1,8 +1,8 @@
 {
-  "name": "mcah-cloud",
+  "name": "catoro-cloud",
   "version": "0.1.0",
   "private": true,
-  "description": "Máy chủ dịch vụ MCAH: tài khoản, văn phòng, lời mời, chuyển tiếp AI và tra tàu (không giữ dữ liệu nghiệp vụ)",
+  "description": "Máy chủ dịch vụ Catoro: tài khoản, văn phòng, lời mời, chuyển tiếp AI và tra tàu (không giữ dữ liệu nghiệp vụ)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

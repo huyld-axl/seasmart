@@ -2,7 +2,7 @@ const { REPORTS } = require('../constants/reports')
 const { monthRows } = require('./payout.service')
 const { round2, sumBy, splitAmounts, planAmounts, groupByOwner, mergeSpans, termText, validMonth } = require('../utils/report_math')
 
-// Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md): 4 bảng dựng từ cùng các dòng của bảng Trả lương (bill phải thu có kỳ kết thúc trong tháng).
+// Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md): 4 bảng dựng từ cùng các dòng của bảng Trả lương (bill phải thu có kỳ kết thúc trong tháng).
 // Số Trả = số đang hiện ở Trả lương: dòng đã chốt là số đã chốt, chưa chốt là mặc định từ cột Phải chi của hợp đồng.
 
 const iso = (v) => (v == null ? null : String(v).slice(0, 10))

@@ -26,7 +26,7 @@ import '../seafarers/SeafarerListPage.css'
 import '../payouts/payouts.css'
 import './reports.css'
 
-// Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md): 4 bảng theo mẫu gốc, xem trên màn hình và xuất Excel. Cột lấy từ API.
+// Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md): 4 bảng theo mẫu gốc, xem trên màn hình và xuất Excel. Cột lấy từ API.
 export default function ReportPage() {
   const can = useCan()
   const canExport = can('report.export')

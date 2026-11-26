@@ -1,6 +1,7 @@
-// Thông tin máy cho giao diện (app máy tính, docs/mcah-ke-hoach-desktop-gd1.md mục 3.4, 3.6).
+// Thông tin máy cho giao diện (app máy tính, docs/catoro-ke-hoach-desktop-gd1.md mục 3.4, 3.6).
 const { execFile } = require('child_process')
 const config = require('../../config')
+const { productEnv } = require('../../utils/env')
 const documentReader = require('../../services/document_reader.service')
 const emailService = require('../../services/email.service')
 const { desktopSmtp } = require('../../utils/desktop_smtp')
@@ -9,7 +10,7 @@ const { desktopSmtp } = require('../../utils/desktop_smtp')
 // chạy `soffice --version` một lần, nhớ kết quả.
 let pdfCheck = null
 function pdfAvailable() {
-  if (process.env.MCAH_PDF_URL) return true
+  if (productEnv('PDF_URL')) return true
   if (!pdfCheck) {
     pdfCheck = new Promise((resolve) => {
       execFile(process.env.SOFFICE_PATH || 'soffice', ['--version'], { timeout: 30000 }, (error) => resolve(!error))
@@ -31,7 +32,7 @@ async function systemRoutes(fastify) {
     const smtp = desktopSmtp(request)
     if (!smtp) throw { statusCode: 400, message: 'Chưa khai email gửi thẳng trên máy này' }
     try {
-      await emailService.sendWith(smtp, { to: smtp.user, subject: 'MCAH: thư thử', text: 'Email gửi thẳng từ MCAH trên máy này đã hoạt động.' })
+      await emailService.sendWith(smtp, { to: smtp.user, subject: 'Catoro: thư thử', text: 'Email gửi thẳng từ Catoro trên máy này đã hoạt động.' })
     } catch (error) {
       throw { statusCode: 422, message: `Không gửi được: ${error.message || 'lỗi không rõ'}` }
     }

@@ -1,9 +1,10 @@
 // Thư mục gốc của backend và các thư mục con đọc lúc chạy. App máy tính gom backend thành một khối (bytecode,
-// docs/mcah-ke-hoach-desktop-gd5.md 3.2) nên __dirname của từng module không còn đúng: app đặt MCAH_BACKEND_ROOT.
+// docs/catoro-ke-hoach-desktop-gd5.md 3.2) nên __dirname của từng module không còn đúng: app đặt CATORO_BACKEND_ROOT.
 // Bản web / chạy dev: tính từ vị trí tệp này.
 const path = require('path')
+const { productEnv } = require('../utils/env')
 
-const BACKEND_ROOT = process.env.MCAH_BACKEND_ROOT || path.resolve(__dirname, '../..')
+const BACKEND_ROOT = productEnv('BACKEND_ROOT') || path.resolve(__dirname, '../..')
 
 module.exports = {
   BACKEND_ROOT,

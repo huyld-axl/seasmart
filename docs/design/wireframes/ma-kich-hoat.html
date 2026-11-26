@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Wireframe mã kích hoạt và trang quản trị Axalize (docs/mcah-ke-hoach-ma-kich-hoat.md). Một theme sáng như app.
+  /* Wireframe mã kích hoạt và trang quản trị Axalize (docs/catoro-ke-hoach-ma-kich-hoat.md). Một theme sáng như app.
      Token chép từ frontend/src/theme/tokens.js. Trang quản trị là trang web của máy chủ dịch vụ (cloud/), dựng tiếp
      kiểu trang /quan-tri hiện có; màn trong app dựng bằng control antd / components/ds sẵn có. */
   :root {
@@ -165,7 +165,7 @@
           <tr><th>Văn phòng</th><th>Khách · mã</th><th>Quản trị</th><th>Cảnh báo</th><th>Thành viên</th><th>Quét AI tháng này</th><th>Tra IMO</th><th>Tạo ngày</th><th></th></tr>
           <tr><td><b>Hải Linh Crew</b></td><td>Cty TNHH Hải Linh<div class="muted mono">…7KQ2</div></td><td>halinh@thu.vn</td><td>—</td><td>6</td><td>340 trang · 3.10 USD</td><td>52</td><td>14/11/2026</td><td><span class="btn">Khoá</span></td></tr>
           <tr><td><b>Biển Xanh</b> <span class="tag err">Đã khoá</span></td><td>Biển Xanh Marine<div class="muted mono">…P41A</div></td><td>admin@bienxanh.vn</td><td><span class="tag warn">Quét AI tăng vọt: 820 trang / 24 giờ</span></td><td>3</td><td>1 240 trang · 11.40 USD</td><td>8</td><td>02/11/2026</td><td><span class="btn">Mở khoá</span></td></tr>
-          <tr><td><b>MCAH thử nội bộ</b></td><td class="muted">Tạo trước khi có mã</td><td>dev@axalize.vn</td><td>—</td><td>2</td><td>12 trang · 0.10 USD</td><td>3</td><td>12/11/2026</td><td><span class="btn">Khoá</span></td></tr>
+          <tr><td><b>Catoro thử nội bộ</b></td><td class="muted">Tạo trước khi có mã</td><td>dev@axalize.vn</td><td>—</td><td>2</td><td>12 trang · 0.10 USD</td><td>3</td><td>12/11/2026</td><td><span class="btn">Khoá</span></td></tr>
         </table></div>
       </div></div>
       <ul class="notes"><li>Văn phòng có từ trước khi có mã hiện "Tạo trước khi có mã", vẫn dùng bình thường.</li><li>Ô tìm lọc ngay trên trang (không validate, không có nút).</li></ul>
@@ -192,7 +192,7 @@
       <h2><b>3</b> Mã vừa tạo</h2>
       <p class="why">Sau khi bấm Tạo mã: trang hiện mã đầy đủ một lần, có nút chép, để gửi khách qua email / Zalo.</p>
       <div class="admin"><div class="bar">mcah.axalize.vn/tai-khoan/quan-tri/ma</div><div class="wrap" style="place-items:center">
-        <div class="card" style="width:min(460px,100%);display:grid;gap:12px"><h4 style="margin:0">Đã tạo mã cho Cty CP Thuyền viên Nam Hải</h4><div class="bigcode">MCAH-4F7R-9WQD-H8XM</div><div class="banner warn">Chép và gửi cho khách ngay. Mã đầy đủ chỉ hiện lần này.</div><p class="muted" style="margin:0">Khách cài MCAH trên máy chính của văn phòng, đăng nhập, chọn Tạo văn phòng mới và nhập mã này. Một mã dùng cho một văn phòng.</p><div class="row" style="justify-content:flex-end"><span class="btn">Về danh sách mã</span><span class="btn pri">Chép mã</span></div></div>
+        <div class="card" style="width:min(460px,100%);display:grid;gap:12px"><h4 style="margin:0">Đã tạo mã cho Cty CP Thuyền viên Nam Hải</h4><div class="bigcode">Catoro-4F7R-9WQD-H8XM</div><div class="banner warn">Chép và gửi cho khách ngay. Mã đầy đủ chỉ hiện lần này.</div><p class="muted" style="margin:0">Khách cài Catoro trên máy chính của văn phòng, đăng nhập, chọn Tạo văn phòng mới và nhập mã này. Một mã dùng cho một văn phòng.</p><div class="row" style="justify-content:flex-end"><span class="btn">Về danh sách mã</span><span class="btn pri">Chép mã</span></div></div>
       </div></div>
     </section>
 
@@ -200,7 +200,7 @@
       <h2><b>4</b> Khoá văn phòng</h2>
       <p class="why">Bấm Khoá ở tab Văn phòng: hộp xác nhận có lý do (ghi vào nhật ký). Mở khoá cũng hỏi lại, không cần lý do.</p>
       <div class="admin"><div class="bar">mcah.axalize.vn/tai-khoan/quan-tri</div><div class="wrap" style="min-height:340px"><div class="card" style="min-height:200px"><p class="muted">… danh sách văn phòng …</p></div></div>
-        <div class="scrim"><div class="modal"><h4>Khoá văn phòng Hải Linh Crew?</h4><p style="margin:0">Mọi máy của văn phòng sẽ không vào được MCAH (máy đang mở bị đưa ra trong vòng 1 giờ). Dữ liệu trên máy khách vẫn giữ nguyên; mở khoá là dùng tiếp.</p><div class="field">Lý do *<div class="input area muted">Chưa thanh toán kỳ 11/2026…</div></div><div class="foot"><span class="btn">Huỷ</span><span class="btn pri" style="background:var(--error-strong);border-color:var(--error-strong)">Khoá</span></div></div></div>
+        <div class="scrim"><div class="modal"><h4>Khoá văn phòng Hải Linh Crew?</h4><p style="margin:0">Mọi máy của văn phòng sẽ không vào được Catoro (máy đang mở bị đưa ra trong vòng 1 giờ). Dữ liệu trên máy khách vẫn giữ nguyên; mở khoá là dùng tiếp.</p><div class="field">Lý do *<div class="input area muted">Chưa thanh toán kỳ 11/2026…</div></div><div class="foot"><span class="btn">Huỷ</span><span class="btn pri" style="background:var(--error-strong);border-color:var(--error-strong)">Khoá</span></div></div></div>
       </div>
       <ul class="notes"><li>Q-L1 = A (chốt 2026-11-17): khoá là chặn dùng app trên mọi máy của văn phòng; quét AI, tra tàu, mời người cũng bị chặn như hiện nay.</li><li>Máy đang mất mạng dùng tiếp tới hết mốc offline 7 ngày (giới hạn đã chấp nhận ở kế hoạch tổng).</li></ul>
     </section>
@@ -223,22 +223,22 @@
     <section id="w6">
       <h2><b>6</b> App: Tạo văn phòng (thêm ô mã kích hoạt)</h2>
       <p class="why">Màn "Tên văn phòng" hiện có (FirstRunPage, bước 2), thêm ô Mã kích hoạt ở trên. Nút Tạo văn phòng luôn bấm được; thiếu / sai thì báo lỗi.</p>
-      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box">
-        <div><b>MCAH</b><h4 style="margin:12px 0 0;font-size:18px">Tạo văn phòng</h4></div>
-        <div class="banner err">Mã kích hoạt không đúng. Kiểm lại mã MCAH đã gửi cho bạn.</div>
-        <div class="field">Mã kích hoạt<div class="input mono">MCAH-4F7R-9WQD-H8XN</div><span class="muted" style="font-size:12px">MCAH gửi mã này khi văn phòng mua phần mềm. Chưa có mã? Liên hệ MCAH: <i>(liên hệ theo Q-L2)</i></span></div>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>Catoro</span><span class="dots">• • •</span></div><div class="splash"><div class="box">
+        <div><b>Catoro</b><h4 style="margin:12px 0 0;font-size:18px">Tạo văn phòng</h4></div>
+        <div class="banner err">Mã kích hoạt không đúng. Kiểm lại mã Catoro đã gửi cho bạn.</div>
+        <div class="field">Mã kích hoạt<div class="input mono">Catoro-4F7R-9WQD-H8XN</div><span class="muted" style="font-size:12px">Catoro gửi mã này khi văn phòng mua phần mềm. Chưa có mã? Liên hệ Catoro: <i>(liên hệ theo Q-L2)</i></span></div>
         <div class="field">Tên văn phòng (hiện cho mọi người)<div class="input">Nam Hải Crew</div></div>
         <div class="row" style="justify-content:space-between"><span class="btn">Quay lại</span><span class="btn pri">Tạo văn phòng</span></div>
       </div></div></div>
-      <ul class="notes"><li>Nhập không phân biệt hoa thường, có hay không có gạch / khoảng trắng đều được; app tự viết hoa và chèn gạch khi gõ.</li><li>Thông báo lỗi: "Nhập mã kích hoạt" · "Mã kích hoạt không đúng…" · "Mã này đã dùng cho một văn phòng khác. Liên hệ MCAH." · "Mã đã bị huỷ. Liên hệ MCAH." · "Nhập sai quá nhiều lần, thử lại sau 1 giờ."</li><li>Tài khoản được mời (đã thuộc văn phòng) không thấy màn này, không cần mã. Chuyển máy chính không cần mã.</li></ul>
+      <ul class="notes"><li>Nhập không phân biệt hoa thường, có hay không có gạch / khoảng trắng đều được; app tự viết hoa và chèn gạch khi gõ.</li><li>Thông báo lỗi: "Nhập mã kích hoạt" · "Mã kích hoạt không đúng…" · "Mã này đã dùng cho một văn phòng khác. Liên hệ Catoro." · "Mã đã bị huỷ. Liên hệ Catoro." · "Nhập sai quá nhiều lần, thử lại sau 1 giờ."</li><li>Tài khoản được mời (đã thuộc văn phòng) không thấy màn này, không cần mã. Chuyển máy chính không cần mã.</li></ul>
     </section>
 
     <section id="w7">
       <h2><b>7</b> App: Văn phòng bị khoá</h2>
       <p class="why">Màn đăng nhập hiện có, thêm dải lỗi khi phiên hết vì văn phòng bị khoá. Máy chính và máy nhân viên đều vậy.</p>
-      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>MCAH</span><span class="dots">• • •</span></div><div class="splash"><div class="box">
-        <div><b>MCAH</b><h4 style="margin:12px 0 0;font-size:18px">Đăng nhập</h4></div>
-        <div class="banner err">Văn phòng Hải Linh Crew đang bị khoá. Dữ liệu trên máy vẫn còn nguyên. Liên hệ MCAH để mở lại: <i>(liên hệ theo Q-L2)</i></div>
+      <div class="app"><div class="titlebar"><span class="menu"><span>Sửa</span></span><span>Catoro</span><span class="dots">• • •</span></div><div class="splash"><div class="box">
+        <div><b>Catoro</b><h4 style="margin:12px 0 0;font-size:18px">Đăng nhập</h4></div>
+        <div class="banner err">Văn phòng Hải Linh Crew đang bị khoá. Dữ liệu trên máy vẫn còn nguyên. Liên hệ Catoro để mở lại: <i>(liên hệ theo Q-L2)</i></div>
         <span class="btn pri" style="justify-content:center">Đăng nhập qua trình duyệt</span>
         <span class="btn link" style="justify-self:center">Đăng xuất tài khoản này</span>
       </div></div></div>

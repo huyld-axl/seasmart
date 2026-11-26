@@ -1,4 +1,4 @@
-// API cho app và máy chính (docs/mcah-ke-hoach-desktop-gd2.md 3.4).
+// API cho app và máy chính (docs/catoro-ke-hoach-desktop-gd2.md 3.4).
 // - Bằng vé (Authorization: Bearer <vé>): cài máy chính đầu tiên / chuyển máy chính (quản trị văn phòng).
 // - Bằng chữ ký máy chính (kiểm ở preHandler, sau khi đã đọc thân): X-MCAH-Office, X-MCAH-Time (ms), X-MCAH-Signature = Ed25519 của
 //   "<METHOD>\n<path>\n<time>\n<sha256 hex của thân>" bằng khoá máy chính đã đăng ký; lệch giờ ≤ 5 phút.
@@ -49,12 +49,12 @@ async function apiRoutes(fastify) {
       }
       throw fail(401, 'Chữ ký máy chính không hợp lệ', 'unauthorized')
     }
-    if (office.locked_at) throw fail(403, 'Văn phòng đang bị khoá, liên hệ MCAH', 'office_locked')
+    if (office.locked_at) throw fail(403, 'Văn phòng đang bị khoá, liên hệ Catoro', 'office_locked')
     request.office = office
   }
 
-  // Cài máy chính đầu tiên cho văn phòng Axalize vừa tạo (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5), hoặc chuyển
-  // máy chính (docs/mcah-ke-hoach-desktop-gd4.md 3.4): chuyển thì vé phải của quản trị vừa đăng nhập lại (auth_time ≤ 10 phút).
+  // Cài máy chính đầu tiên cho văn phòng Axalize vừa tạo (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5), hoặc chuyển
+  // máy chính (docs/catoro-ke-hoach-desktop-gd4.md 3.4): chuyển thì vé phải của quản trị vừa đăng nhập lại (auth_time ≤ 10 phút).
   fastify.post('/api/offices/:id/machine', { onRequest: byTicket, config: { rateLimit: { max: 5, timeWindow: '1 minute' } } }, async (request) => {
     const firstMachine = /^[0-9a-f-]{36}$/.test(request.params.id) && !(await offices.machineKey(request.params.id))
     if (!firstMachine && !(request.claims.auth_time > Date.now() / 1000 - 600)) throw fail(401, 'Đăng nhập lại để xác nhận chuyển máy chính', 'reauth_required')
@@ -78,7 +78,7 @@ async function apiRoutes(fastify) {
   fastify.post('/api/office/members/restore', { preHandler: byMachine }, async (request) =>
     offices.restoreMember({ officeId: request.office.id, email: request.body?.email }))
 
-  // Máy chính báo dấu vân tay chứng chỉ HTTPS trong mạng văn phòng, tên máy, cổng (docs/mcah-ke-hoach-desktop-gd3.md 3.1).
+  // Máy chính báo dấu vân tay chứng chỉ HTTPS trong mạng văn phòng, tên máy, cổng (docs/catoro-ke-hoach-desktop-gd3.md 3.1).
   // Vé của thành viên mang các giá trị này để máy nhân viên ghim đúng máy chính.
   fastify.post('/api/office/machine/lan', { preHandler: byMachine }, async (request) => {
     const { fingerprint, name, port } = request.body || {}

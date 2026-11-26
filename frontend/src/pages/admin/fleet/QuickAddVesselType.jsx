@@ -8,7 +8,7 @@ import { vesselTypeCode } from './smartFetch'
 
 const errorText = (error) => error?.response?.data?.error || error?.response?.data?.message || 'Thử lại sau ít phút.'
 
-// Thêm nhanh loại tàu ngay tại ô Loại tàu khi nguồn ghi một loại MCAH chưa có (cần quyền catalog.update).
+// Thêm nhanh loại tàu ngay tại ô Loại tàu khi nguồn ghi một loại Catoro chưa có (cần quyền catalog.update).
 // Tên tiếng Anh điền sẵn từ nguồn, tên tiếng Việt bắt buộc, mã tự sinh. onCreated(row): loại mới đã được tạo.
 export default function QuickAddVesselType({ nameEn, existingCodes, onCreated, onCancel }) {
   const toast = useToast()

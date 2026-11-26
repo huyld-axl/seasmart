@@ -1,11 +1,12 @@
-// Gọi máy chủ dịch vụ từ máy chính của app máy tính (docs/mcah-ke-hoach-desktop-gd2.md 4.2): qua cổng ký của tiến trình
-// chính (MCAH_SIGNER_URL + MCAH_SIGNER_TOKEN), vì khoá máy chính không nằm ở backend. Chỉ bật khi chạy desktop và máy đã
+// Gọi máy chủ dịch vụ từ máy chính của app máy tính (docs/catoro-ke-hoach-desktop-gd2.md 4.2): qua cổng ký của tiến trình
+// chính (CATORO_SIGNER_URL + CATORO_SIGNER_TOKEN), vì khoá máy chính không nằm ở backend. Chỉ bật khi chạy desktop và máy đã
 // có văn phòng (office_info). Lỗi: { statusCode, message, code } như mọi lỗi của backend.
 const config = require('../config')
+const { productEnv } = require('./env')
 const pool = require('../config/db')
 
-const SIGNER_URL = process.env.MCAH_SIGNER_URL || ''
-const SIGNER_TOKEN = process.env.MCAH_SIGNER_TOKEN || ''
+const SIGNER_URL = productEnv('SIGNER_URL') || ''
+const SIGNER_TOKEN = productEnv('SIGNER_TOKEN') || ''
 
 async function officeId(db = pool) {
   const [rows] = await db.query('SELECT office_id FROM office_info WHERE id = 1')
@@ -30,23 +31,23 @@ const desktopCloud = {
         signal: AbortSignal.timeout(140000),
       })
     } catch {
-      throw { statusCode: 503, message: 'App chưa sẵn sàng gọi máy chủ MCAH, thử lại', code: 'SIGNER_DOWN' }
+      throw { statusCode: 503, message: 'App chưa sẵn sàng gọi máy chủ Catoro, thử lại', code: 'SIGNER_DOWN' }
     }
     const data = await r.json().catch(() => ({}))
-    if (r.status !== 200) throw { statusCode: r.status === 503 ? 503 : 502, message: data.error || 'Không gọi được máy chủ MCAH', code: data.code || 'CLOUD_ERROR' }
+    if (r.status !== 200) throw { statusCode: r.status === 503 ? 503 : 502, message: data.error || 'Không gọi được máy chủ Catoro', code: data.code || 'CLOUD_ERROR' }
     if (data.status >= 400) {
-      throw { statusCode: data.status === 403 ? 403 : data.status >= 500 ? 502 : 400, message: data.body?.message || 'Máy chủ MCAH từ chối', code: data.body?.error === 'office_locked' ? 'OFFICE_LOCKED' : 'CLOUD_REJECTED' }
+      throw { statusCode: data.status === 403 ? 403 : data.status >= 500 ? 502 : 400, message: data.body?.message || 'Máy chủ Catoro từ chối', code: data.body?.error === 'office_locked' ? 'OFFICE_LOCKED' : 'CLOUD_REJECTED' }
     }
     return data.body
   },
 
-  // Máy chính báo chứng chỉ HTTPS trong mạng văn phòng (docs/mcah-ke-hoach-desktop-gd3.md 3.1); tiến trình chính truyền
+  // Máy chính báo chứng chỉ HTTPS trong mạng văn phòng (docs/catoro-ke-hoach-desktop-gd3.md 3.1); tiến trình chính truyền
   // dấu vân tay / tên / cổng qua biến môi trường. Gọi lúc mở app (lặp mỗi giờ tới khi được) và ngay sau khi tạo văn phòng.
   // Trả true khi đã báo xong.
   async registerLan(db = pool) {
-    const fingerprint = process.env.MCAH_LAN_FINGERPRINT
+    const fingerprint = productEnv('LAN_FINGERPRINT')
     if (!fingerprint || !(await desktopCloud.enabled(db))) return false
-    await desktopCloud.call('/api/office/machine/lan', { fingerprint, name: process.env.MCAH_LAN_NAME, port: Number(process.env.MCAH_LAN_PORT) }, { db })
+    await desktopCloud.call('/api/office/machine/lan', { fingerprint, name: productEnv('LAN_NAME'), port: Number(productEnv('LAN_PORT')) }, { db })
     return true
   },
 }

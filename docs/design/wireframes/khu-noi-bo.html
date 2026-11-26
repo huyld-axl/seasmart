@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Wireframe khu nội bộ /internal/ (docs/mcah-ke-hoach-khu-noi-bo.md). Theme sáng như app; token chép từ
+  /* Wireframe khu nội bộ /internal/ (docs/catoro-ke-hoach-khu-noi-bo.md). Theme sáng như app; token chép từ
      frontend/src/theme/tokens.js. Mọi màn là trang web của máy chủ dịch vụ (cloud/), dựng tiếp kiểu trang quản trị
      hiện có (HTML thuần, không script, CSP). */
   :root {
@@ -193,7 +193,7 @@
 
     <section id="w1">
       <h2><b>1</b> Basic Auth của trình duyệt</h2>
-      <p class="why">Mở bất kỳ địa chỉ nào dưới /internal/. Hộp này là của trình duyệt (Chrome minh hoạ), MCAH không tự vẽ được.</p>
+      <p class="why">Mở bất kỳ địa chỉ nào dưới /internal/. Hộp này là của trình duyệt (Chrome minh hoạ), Catoro không tự vẽ được.</p>
       <div class="web">
         <div class="bar">mcah.axalize.vn/internal/admin</div>
         <div class="dimmed">
@@ -207,7 +207,7 @@
         </div>
       </div>
       <ul class="notes">
-        <li>Huỷ hoặc sai: trang trắng "401 Authorization Required" của nginx. Không có chữ MCAH nào, không lộ đây là trang gì.</li>
+        <li>Huỷ hoặc sai: trang trắng "401 Authorization Required" của nginx. Không có chữ Catoro nào, không lộ đây là trang gì.</li>
         <li>Đúng: trình duyệt nhớ tới khi đóng hết cửa sổ; các lần mở sau trong phiên không hỏi lại.</li>
         <li>Mật khẩu Basic Auth khác mật khẩu ở màn 2 (đặt ở hai chỗ khác nhau trên server).</li>
       </ul>
@@ -215,12 +215,12 @@
 
     <section id="w2">
       <h2><b>2</b> Email + mật khẩu</h2>
-      <p class="why">Màn đầu tiên của MCAH sau Basic Auth. Không có Google, không gửi mã email, không có Quên mật khẩu hay Đăng ký.</p>
+      <p class="why">Màn đầu tiên của Catoro sau Basic Auth. Không có Google, không gửi mã email, không có Quên mật khẩu hay Đăng ký.</p>
       <div class="row" style="align-items:stretch;gap:16px">
         <div class="web" style="flex:1;min-width:300px">
           <div class="bar">mcah.axalize.vn/internal/login</div>
           <div class="box">
-            <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+            <div class="brand"><b>Catoro</b><span class="lock">Nội bộ</span></div>
             <h4>Đăng nhập quản trị</h4>
             <div class="steps"><span class="on">1 Mật khẩu</span><span>2 Mã xác minh</span></div>
             <div class="field">Email<div class="input">admin@axalize.vn</div></div>
@@ -232,7 +232,7 @@
         <div class="web" style="flex:1;min-width:300px">
           <div class="bar">mcah.axalize.vn/internal/login · sai</div>
           <div class="box">
-            <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+            <div class="brand"><b>Catoro</b><span class="lock">Nội bộ</span></div>
             <h4>Đăng nhập quản trị</h4>
             <div class="steps"><span class="on">1 Mật khẩu</span><span>2 Mã xác minh</span></div>
             <div class="banner err">Email hoặc mật khẩu không đúng.</div>
@@ -252,14 +252,14 @@
 
     <section id="w3">
       <h2><b>3</b> Mã Authenticator</h2>
-      <p class="why">Đăng nhập hằng ngày: mở app Authenticator trên điện thoại, gõ mã 6 số đang hiện ở mục "MCAH internal".</p>
+      <p class="why">Đăng nhập hằng ngày: mở app Authenticator trên điện thoại, gõ mã 6 số đang hiện ở mục "Catoro internal".</p>
       <div class="web">
         <div class="bar">mcah.axalize.vn/internal/login/verify</div>
         <div class="box">
-          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <div class="brand"><b>Catoro</b><span class="lock">Nội bộ</span></div>
           <h4>Nhập mã xác minh</h4>
           <div class="steps"><span class="done">✓ Mật khẩu</span><span class="on">2 Mã xác minh</span></div>
-          <p class="muted" style="margin:0">Mở app Authenticator (Google Authenticator…) trên điện thoại, nhập mã 6 số ở mục <b>MCAH internal · admin@axalize.vn</b>.</p>
+          <p class="muted" style="margin:0">Mở app Authenticator (Google Authenticator…) trên điện thoại, nhập mã 6 số ở mục <b>Catoro internal · admin@axalize.vn</b>.</p>
           <div class="otp"><span>3</span><span>9</span><span>0</span><span>2</span><span>6</span><span>1</span></div>
           <span class="btn pri">Xác minh</span>
           <div class="row" style="justify-content:space-between"><span class="btn link">← Đăng nhập lại</span><span class="btn link">Mất điện thoại?</span></div>
@@ -280,7 +280,7 @@
       <div class="web">
         <div class="bar">mcah.axalize.vn/internal/login/setup</div>
         <div class="box wide">
-          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <div class="brand"><b>Catoro</b><span class="lock">Nội bộ</span></div>
           <h4>Cài xác minh hai bước</h4>
           <div class="steps"><span class="done">✓ Mật khẩu</span><span class="on">2 Quét mã</span><span>3 Mã khôi phục</span></div>
           <div class="qrwrap">
@@ -299,7 +299,7 @@
       </div>
       <ul class="notes">
         <li>QR là hình SVG do máy chủ dựng sẵn trong trang (không gọi dịch vụ ngoài, không script).</li>
-        <li>App Authenticator hiện mục "MCAH internal" kèm email admin.</li>
+        <li>App Authenticator hiện mục "Catoro internal" kèm email admin.</li>
         <li>Sai mã: "Mã không đúng", vẫn ở màn này, QR giữ nguyên. Tính vào giới hạn 5 lần sai (màn 7).</li>
         <li>Tải lại trang hoặc quay lại sau: cùng QR (bí mật chưa xác nhận lưu ở máy chủ, chưa có hiệu lực tới khi nhập đúng mã).</li>
       </ul>
@@ -311,7 +311,7 @@
       <div class="web">
         <div class="bar">mcah.axalize.vn/internal/login/setup</div>
         <div class="box wide">
-          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <div class="brand"><b>Catoro</b><span class="lock">Nội bộ</span></div>
           <h4>Lưu mã khôi phục</h4>
           <div class="steps"><span class="done">✓ Mật khẩu</span><span class="done">✓ Quét mã</span><span class="on">3 Mã khôi phục</span></div>
           <div class="banner ok">Đã bật xác minh hai bước.</div>
@@ -334,7 +334,7 @@
         <div class="web" style="flex:1;min-width:300px">
           <div class="bar">mcah.axalize.vn/internal/login/recovery</div>
           <div class="box">
-            <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+            <div class="brand"><b>Catoro</b><span class="lock">Nội bộ</span></div>
             <h4>Dùng mã khôi phục</h4>
             <p class="muted" style="margin:0">Nhập một trong 8 mã khôi phục đã lưu khi cài xác minh hai bước.</p>
             <div class="field">Mã khôi phục<div class="input mono">7K2M-QX9P</div></div>
@@ -364,7 +364,7 @@
       <div class="web">
         <div class="bar">mcah.axalize.vn/internal/login</div>
         <div class="box">
-          <div class="brand"><b>MCAH</b><span class="lock">Nội bộ</span></div>
+          <div class="brand"><b>Catoro</b><span class="lock">Nội bộ</span></div>
           <h4>Đăng nhập quản trị</h4>
           <div class="banner err">Sai quá nhiều lần. Thử lại sau 15 phút.</div>
           <div class="field">Email<div class="input">admin@axalize.vn</div></div>

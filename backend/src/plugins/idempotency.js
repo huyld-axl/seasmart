@@ -1,4 +1,4 @@
-// Mã yêu cầu chống tạo trùng (docs/mcah-ke-hoach-desktop-gd3.md 3.4). Form thêm mới gửi header Idempotency-Key
+// Mã yêu cầu chống tạo trùng (docs/catoro-ke-hoach-desktop-gd3.md 3.4). Form thêm mới gửi header Idempotency-Key
 // (một mã cho mỗi lần mở form). Lần đầu: giữ chỗ, chạy bình thường, lưu kết quả. Gửi lại cùng mã (bấm lại sau khi
 // mạng đứt giữa chừng): trả đúng kết quả đã lưu, không tạo bản ghi thứ hai.
 const fp = require('fastify-plugin')

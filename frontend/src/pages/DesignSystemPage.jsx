@@ -560,7 +560,7 @@ export default function DesignSystemPage() {
       <header className="dsp-header">
         <ProductBrand />
         <h1 className="dsp-header__title">Design system</h1>
-        <p className="dsp-header__text">Token và component dùng chung cho mọi màn MCAH. Chỉ giao diện sáng. Dữ liệu trên trang là giả.</p>
+        <p className="dsp-header__text">Token và component dùng chung cho mọi màn Catoro. Chỉ giao diện sáng. Dữ liệu trên trang là giả.</p>
       </header>
 
       <Section id="mau" title="Màu">
@@ -1070,9 +1070,9 @@ export default function DesignSystemPage() {
         <div className="dsp-stack">
           <p className="dsp-note">Một kiểu duy nhất cho ô đặt mật khẩu: có hiện / ẩn, thanh độ mạnh và luật hiện sẵn dưới ô, đạt luật nào đổi xanh luật đó. Ô đăng nhập chỉ cần ô mật khẩu thường.</p>
           <div className="ds-toggle-grid">
-            <Demo label="Chưa nhập"><PasswordField value="" email="hoa.pham@mcah.demo" /></Demo>
-            <Demo label="Chưa đạt"><PasswordField value="abc12" email="hoa.pham@mcah.demo" /></Demo>
-            <Demo label="Đạt đủ"><PasswordField value="Marine2026" email="hoa.pham@mcah.demo" /></Demo>
+            <Demo label="Chưa nhập"><PasswordField value="" email="hoa.pham@catoro.demo" /></Demo>
+            <Demo label="Chưa đạt"><PasswordField value="abc12" email="hoa.pham@catoro.demo" /></Demo>
+            <Demo label="Đạt đủ"><PasswordField value="Marine2026" email="hoa.pham@catoro.demo" /></Demo>
           </div>
         </div>
       </Section>

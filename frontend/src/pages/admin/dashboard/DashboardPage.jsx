@@ -16,7 +16,7 @@ const firstName = (user) => {
   return name ? name.split(/\s+/).at(-1) : (user?.email || '').split('@')[0]
 }
 
-// Tổng quan (docs/mcah-ke-hoach-tong-quan.md): vừa một màn hình trên desktop.
+// Tổng quan (docs/catoro-ke-hoach-tong-quan.md): vừa một màn hình trên desktop.
 // Có kpi.view_all → số cả công ty (Doanh thu trước); không có → số của mình (Hợp đồng trước).
 export default function DashboardPage() {
   const user = useAuthStore((state) => state.user)

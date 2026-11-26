@@ -1,4 +1,4 @@
-// Ghép máy nhân viên và danh sách máy trong văn phòng (docs/mcah-ke-hoach-desktop-gd3.md 3.2, wireframe màn 1, 2).
+// Ghép máy nhân viên và danh sách máy trong văn phòng (docs/catoro-ke-hoach-desktop-gd3.md 3.2, wireframe màn 1, 2).
 // Chỉ đăng ký ở app máy tính có khoá kiểm vé. /hello, /pair, /pair/status đi qua cổng mạng (plugins/lan_device.js);
 // /devices dành cho quản trị trên mọi máy.
 const crypto = require('crypto')

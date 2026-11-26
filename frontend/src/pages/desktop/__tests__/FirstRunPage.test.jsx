@@ -1,4 +1,4 @@
-// Lần đầu đăng nhập khi văn phòng do Axalize tạo sẵn (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5, wireframe 7, 8):
+// Lần đầu đăng nhập khi văn phòng do Axalize tạo sẵn (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.5, wireframe 7, 8):
 // quản trị cài máy chính, nhân viên chờ máy chính, tài khoản chưa thuộc văn phòng; không còn tạo văn phòng trong app.
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
@@ -27,12 +27,12 @@ beforeEach(() => {
 afterEach(cleanup)
 
 it('quản trị, văn phòng chưa có máy chính: cài máy này; lỗi máy chủ hiện nguyên câu; không còn ô tạo văn phòng', async () => {
-  desktop.setupMainMachine.mockRejectedValue(new Error('Không kết nối được máy chủ MCAH. Kiểm tra internet rồi bấm Thử lại.'))
+  desktop.setupMainMachine.mockRejectedValue(new Error('Không kết nối được máy chủ Catoro. Kiểm tra internet rồi bấm Thử lại.'))
   open(account())
   expect(await screen.findByText('Cài máy chính cho Nam Hải Crew')).toBeInTheDocument()
   expect(screen.queryByRole('textbox')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Dùng máy này làm máy chính' }))
-  expect(await screen.findByText('Không kết nối được máy chủ MCAH. Kiểm tra internet rồi bấm Thử lại.')).toBeInTheDocument()
+  expect(await screen.findByText('Không kết nối được máy chủ Catoro. Kiểm tra internet rồi bấm Thử lại.')).toBeInTheDocument()
   expect(desktop.setupMainMachine).toHaveBeenCalledTimes(1)
 })
 

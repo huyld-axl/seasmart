@@ -71,7 +71,7 @@ export default function DocumentsSection({ seafarerId, seafarer, photo, dismisse
     queryFn: () => lookupApi.certificateTypes().then((r) => r.data),
   })
 
-  // Chống ghi đè khi sửa giấy tờ (docs/mcah-ke-hoach-desktop-gd3.md 3.4): nạp bản mới vào hộp sửa đang mở.
+  // Chống ghi đè khi sửa giấy tờ (docs/catoro-ke-hoach-desktop-gd3.md 3.4): nạp bản mới vào hộp sửa đang mở.
   const conflict = useEditConflict({
     form,
     initial: formInit,

@@ -5,7 +5,7 @@ const path = require('path')
 const MAX_BYTES = 10 * 1024 * 1024
 const KEEP = 2
 
-// Log không chứa dữ liệu cá nhân (docs/mcah-ke-hoach-desktop-gd4.md 3.7): email, số điện thoại, số giấy tờ (hộ chiếu,
+// Log không chứa dữ liệu cá nhân (docs/catoro-ke-hoach-desktop-gd4.md 3.7): email, số điện thoại, số giấy tờ (hộ chiếu,
 // CCCD, sổ thuyền viên), tên thư mục người trong thư mục hồ sơ → [đã ẩn]. Áp cho cả log của backend đi qua đây.
 const SCRUB = [
   [/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, '[email]'],

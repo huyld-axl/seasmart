@@ -92,7 +92,7 @@ async function sendOrSave(report, { cloudUrl, dir, fetchImpl }) {
     return { status: 'sent', id: await send(report, cloudUrl, fetchImpl) }
   } catch (error) {
     const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
-    const file = path.join(dir, `mcah-bao-loi-${stamp}.txt`)
+    const file = path.join(dir, `catoro-bao-loi-${stamp}.txt`)
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(file, toText(report))
     return { status: 'saved', path: file, reason: error.message }

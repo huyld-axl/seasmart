@@ -1,5 +1,5 @@
 // Văn phòng: Axalize tạo (kèm quản trị, chưa có máy chính), máy chính đầu tiên / chuyển máy chính, thành viên do quản trị
-// văn phòng tạo, bỏ thành viên, khoá văn phòng (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.2–3.5).
+// văn phòng tạo, bỏ thành viên, khoá văn phòng (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.2–3.5).
 // Mỗi tài khoản thuộc tối đa một văn phòng đang hoạt động (chỉ mục office_member_one_office).
 const crypto = require('crypto')
 const pool = require('../db')
@@ -83,7 +83,7 @@ const offices = {
     })
   },
 
-  // Chuyển văn phòng sang máy chính mới (docs/mcah-ke-hoach-desktop-gd4.md 3.4): thu hồi khoá máy cũ, đăng ký khoá mới,
+  // Chuyển văn phòng sang máy chính mới (docs/catoro-ke-hoach-desktop-gd4.md 3.4): thu hồi khoá máy cũ, đăng ký khoá mới,
   // xoá dấu vân tay cũ (máy mới báo lại). Chỉ quản trị; nơi gọi đã kiểm vé vừa đăng nhập lại.
   async replaceMachine({ officeId, accountId, machinePublicKey, ip }) {
     const publicKey = checkPublicKey(machinePublicKey)
@@ -103,9 +103,9 @@ const offices = {
       const { rows } = await pool.query("SELECT a.email FROM office_member m JOIN account a ON a.id = m.account_id WHERE m.office_id = $1 AND m.role = 'admin' AND m.removed_at IS NULL", [officeId])
       const mailer = require('./mailer')
       for (const { email } of rows) {
-        await mailer.send({ to: email, subject: `MCAH: ${office.name} đã chuyển sang máy chính mới`, text: `Văn phòng ${office.name} vừa được chuyển sang một máy chính mới lúc ${new Date().toLocaleString('vi-VN')}. Máy chính cũ ngừng phục vụ.
+        await mailer.send({ to: email, subject: `Catoro: ${office.name} đã chuyển sang máy chính mới`, text: `Văn phòng ${office.name} vừa được chuyển sang một máy chính mới lúc ${new Date().toLocaleString('vi-VN')}. Máy chính cũ ngừng phục vụ.
 
-Không phải bạn hoặc người trong văn phòng làm việc này thì liên hệ MCAH ngay.` }).catch(() => {})
+Không phải bạn hoặc người trong văn phòng làm việc này thì liên hệ Catoro ngay.` }).catch(() => {})
       }
     }
     return { replaced: done }

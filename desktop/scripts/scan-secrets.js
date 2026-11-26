@@ -1,4 +1,4 @@
-// Quét bộ cài tìm bí mật (kế hoạch tổng mục 6.3; docs/mcah-ke-hoach-desktop-gd2.md 4.6): mở app.asar và resources/,
+// Quét bộ cài tìm bí mật (kế hoạch tổng mục 6.3; docs/catoro-ke-hoach-desktop-gd2.md 4.6): mở app.asar và resources/,
 // tìm khoá API, khoá riêng, tệp .env. Có thì build lỗi. Chạy sau electron-builder trong npm run dist:*.
 //   node scripts/scan-secrets.js [thư mục bản đã giải nén, mặc định dist/installer/linux-unpacked]
 const fs = require('fs')

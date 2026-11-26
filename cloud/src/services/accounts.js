@@ -1,4 +1,4 @@
-// Tài khoản từ trên xuống, không mật khẩu (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md): Axalize tạo quản trị văn
+// Tài khoản từ trên xuống, không mật khẩu (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md): Axalize tạo quản trị văn
 // phòng, quản trị văn phòng tạo nhân viên; không có đăng ký. Đăng nhập bằng Google hoặc mã 6 số qua email
 // (services/login_codes.js); lần đầu đăng nhập được coi là đã xác minh email.
 const pool = require('../db')
@@ -48,7 +48,7 @@ const accounts = {
     let account = await accounts.findByEmail(email, db)
     if (account) {
       const { rows } = await db.query('SELECT office_id FROM office_member WHERE account_id = $1 AND removed_at IS NULL', [account.id])
-      if (rows[0] && rows[0].office_id !== officeId) throw { ...fail(409, 'Email này đã thuộc một văn phòng khác. Liên hệ MCAH.', 'member_elsewhere'), field: 'email' }
+      if (rows[0] && rows[0].office_id !== officeId) throw { ...fail(409, 'Email này đã thuộc một văn phòng khác. Liên hệ Catoro.', 'member_elsewhere'), field: 'email' }
       if (rows[0]) throw { ...fail(409, 'Người này đã ở trong văn phòng', 'member_exists'), field: 'email' }
     } else {
       ;({ rows: [account] } = await db.query('INSERT INTO account (email, full_name, created_by) VALUES ($1, $2, $3) RETURNING *', [email, fullName, createdBy || null]))

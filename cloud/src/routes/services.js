@@ -1,4 +1,4 @@
-// Tính năng cần khoá của bên mình, chạy ở máy chủ dịch vụ cho app máy tính (docs/mcah-ke-hoach-desktop-gd2.md 3.4, 3.6):
+// Tính năng cần khoá của bên mình, chạy ở máy chủ dịch vụ cho app máy tính (docs/catoro-ke-hoach-desktop-gd2.md 3.4, 3.6):
 // AI đọc giấy tờ, tra tàu theo IMO, tìm danh mục tàu thế giới. Gọi bằng chữ ký máy chính (byMachine), ghi lượt dùng theo
 // văn phòng. Ảnh giấy tờ chỉ qua bộ nhớ: không ghi đĩa, không ghi log.
 // Nhà cung cấp AI và nguồn tra tàu dùng lại module của backend (cùng repo; triển khai thì chép kèm backend/src/services).
@@ -47,7 +47,7 @@ async function servicesRoutes(fastify) {
     if (!Array.isArray(images) || !images.length || images.length > MAX_IMAGES) throw { statusCode: 400, message: 'Ảnh không hợp lệ' }
     if (!images.every((i) => IMAGE_TYPES.includes(i?.mimeType) && typeof i.base64 === 'string')) throw { statusCode: 400, message: 'Loại ảnh không hợp lệ' }
     const ai = getProvider()
-    if (!ai.isConfigured()) throw { statusCode: 503, message: 'AI đọc giấy tờ chưa sẵn sàng ở máy chủ MCAH' }
+    if (!ai.isConfigured()) throw { statusCode: 503, message: 'AI đọc giấy tờ chưa sẵn sàng ở máy chủ Catoro' }
     const result = await ai.callVision({ task, tier, detail, instructions, schemaName, schema, images: images.map((i) => ({ mimeType: i.mimeType, buffer: Buffer.from(i.base64, 'base64') })) })
     await recordUsage(request.office.id, 'ai_page', images.length)
     return result
@@ -57,7 +57,7 @@ async function servicesRoutes(fastify) {
   fastify.get('/api/vessels/imo/:imo', { preHandler: byMachine, config: { rateLimit: { max: 30, timeWindow: '1 minute' } } }, async (request) => {
     if (!/^\d{7}$/.test(request.params.imo)) throw { statusCode: 400, message: 'IMO không hợp lệ' }
     const src = getSource()
-    if (!src) throw { statusCode: 503, message: 'Tra tàu theo IMO chưa sẵn sàng ở máy chủ MCAH' }
+    if (!src) throw { statusCode: 503, message: 'Tra tàu theo IMO chưa sẵn sàng ở máy chủ Catoro' }
     const result = await src.fetchByImo(request.params.imo)
     await recordUsage(request.office.id, 'vessel_lookup')
     return result

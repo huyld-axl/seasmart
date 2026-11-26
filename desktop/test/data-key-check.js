@@ -1,9 +1,10 @@
 // Kiểm khoá dữ liệu của một văn phòng đã tạo: mở bản bọc bằng mật khẩu sao lưu và bằng mã khôi phục phải ra cùng
 // khoá dữ liệu đang cất trong két. Chạy: electron test/data-key-check.js --user-data-dir=<thư mục>
-// (MCAH_BACKUP_PASSWORD, MCAH_RECOVERY_CODE). Chỉ để thử, không nằm trong app.
+// (CATORO_BACKUP_PASSWORD, CATORO_RECOVERY_CODE). Chỉ để thử, không nằm trong app.
 const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
+const { productEnv } = require('../src/env')
 const { app, safeStorage } = require('electron')
 
 app.setName('MCAH')
@@ -18,8 +19,8 @@ app.whenReady().then(() => {
     d.setAuthTag(Buffer.from(w.tag, 'base64'))
     return Buffer.concat([d.update(Buffer.from(w.key, 'base64')), d.final()])
   }
-  const byPassword = unwrap(kdf(process.env.MCAH_BACKUP_PASSWORD, keys.password.salt), wraps.password)
-  const byRecovery = unwrap(kdf(process.env.MCAH_RECOVERY_CODE.replace(/-/g, ''), keys.recovery.salt), wraps.recovery)
+  const byPassword = unwrap(kdf(productEnv('BACKUP_PASSWORD'), keys.password.salt), wraps.password)
+  const byRecovery = unwrap(kdf(productEnv('RECOVERY_CODE').replace(/-/g, ''), keys.recovery.salt), wraps.recovery)
   let wrong = 'mở được (SAI)'
   try { unwrap(kdf('mat-khau-sai-123', keys.password.salt), wraps.password) } catch { wrong = 'bị từ chối' }
   console.log(`KẾT QUẢ: bằng mật khẩu ${byPassword.equals(dataKey) ? 'khớp' : 'KHÔNG khớp'}; bằng mã khôi phục ${byRecovery.equals(dataKey) ? 'khớp' : 'KHÔNG khớp'}; mật khẩu sai ${wrong}`)

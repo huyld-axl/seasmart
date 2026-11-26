@@ -1,5 +1,5 @@
 // Đăng nhập không mật khẩu (mã 6 số qua email) và OAuth cho app: mã → PKCE → vé → làm mới; chống dò; max_age=0; hạn 30 ngày
-// (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.1, 3.8).
+// (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.1, 3.8).
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createRequire } from 'module'
 import crypto from 'crypto'

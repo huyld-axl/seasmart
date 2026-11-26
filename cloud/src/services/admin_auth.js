@@ -1,4 +1,4 @@
-// Đăng nhập khu nội bộ (docs/mcah-ke-hoach-khu-noi-bo.md 5.3, 5.4): một admin (CLOUD_ADMIN_EMAIL), mật khẩu băm scrypt (util.hashPassword),
+// Đăng nhập khu nội bộ (docs/catoro-ke-hoach-khu-noi-bo.md 5.3, 5.4): một admin (CLOUD_ADMIN_EMAIL), mật khẩu băm scrypt (util.hashPassword),
 // TOTP mã hoá AES-256-GCM, 8 mã khôi phục, chặn dò 5 lần sai / 15 phút. Mật khẩu chỉ đặt bằng scripts/admin.js trên server.
 const crypto = require('crypto')
 const pool = require('../db')

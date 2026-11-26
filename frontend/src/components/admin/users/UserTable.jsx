@@ -64,7 +64,7 @@ export default function UserTable({
       mobile: 'meta',
       render: (value, user) => (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
-          {/* App máy tính: không thư mời, không mật khẩu; người dùng tự đăng nhập bằng Google / mã email (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.4). */}
+          {/* App máy tính: không thư mời, không mật khẩu; người dùng tự đăng nhập bằng Google / mã email (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.4). */}
           <StatusBadge group="account" value={value} label={value === 'PENDING' && isDesktop() ? 'Chưa đăng nhập' : undefined} />
           {value === 'PENDING' && !isDesktop() && rights.canEdit(user) ? (
             <Button type="link" size="small" loading={resendingId === user.id} disabled={!!resendingId} onClick={(event) => { event.stopPropagation(); onResendInvite(user) }}>

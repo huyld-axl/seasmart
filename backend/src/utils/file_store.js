@@ -1,6 +1,6 @@
-// Kho tệp dùng chung (docs/mcah-ke-hoach-desktop-gd4.md 3.1, 3.2). Mọi đọc / ghi / chuyển / xoá tệp của backend đi qua
+// Kho tệp dùng chung (docs/catoro-ke-hoach-desktop-gd4.md 3.1, 3.2). Mọi đọc / ghi / chuyển / xoá tệp của backend đi qua
 // đây; không service nào gọi fs thẳng vào UPLOAD_DIR hay thư mục hồ sơ (test file_store_guard chặn).
-//   App máy tính có MCAH_FILES_DIR: giấy tờ, chân dung, logo, hồ sơ đã gửi nằm trong thư mục hồ sơ dễ đọc (mã "hs:").
+//   App máy tính có CATORO_FILES_DIR: giấy tờ, chân dung, logo, hồ sơ đã gửi nằm trong thư mục hồ sơ dễ đọc (mã "hs:").
 //   Bản web: mọi tệp trong UPLOAD_DIR tên ngẫu nhiên (mã "u:"), như trước.
 // Quy tắc: ghi tệp xong mới ghi dòng DB; không sửa tệp tại chỗ; xoá chỉ qua trash (thùng rác 180 ngày, ngoài thư mục hồ sơ).
 const fs = require('fs')
@@ -8,9 +8,10 @@ const path = require('path')
 const crypto = require('crypto')
 const pool = require('../config/db')
 const config = require('../config')
+const { productEnv } = require('./env')
 const { unique, README } = require('./readable_tree')
 
-const treeRoot = () => process.env.MCAH_FILES_DIR || ''
+const treeRoot = () => productEnv('FILES_DIR') || ''
 const treeEnabled = () => Boolean(treeRoot())
 const uploadRoot = () => path.resolve(config.upload.dir)
 const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex')

@@ -223,7 +223,7 @@ async function opportunityRoutes(fastify) {
     return result
   })
 
-  // App máy tính, cách "app mail" (docs/mcah-ke-hoach-desktop-gd1.md 3.5): ghi .zip từng người vào thư mục gửi thư,
+  // App máy tính, cách "app mail" (docs/catoro-ke-hoach-desktop-gd1.md 3.5): ghi .zip từng người vào thư mục gửi thư,
   // rồi ghi lần gửi khi người dùng xác nhận đã gửi trong app mail.
   const candidateIdsBody = { type: 'object', required: ['candidate_ids'], properties: { candidate_ids: { type: 'array', minItems: 1, maxItems: 50, items: id } } }
   fastify.post('/:id/mail/prepare', { ...can('send'), schema: { params: idParams, body: candidateIdsBody } }, async (request) => {

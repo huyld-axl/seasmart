@@ -9,6 +9,7 @@ const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const { execFileSync } = require('child_process')
+const { productEnv } = require('../src/env')
 
 const target = process.argv[2]
 if (!['linux', 'win'].includes(target)) throw new Error('Dùng: node scripts/stage.js linux|win')
@@ -40,7 +41,7 @@ function copyBackend() {
   removeSourceMaps(dest)
 }
 
-// Bộ cài không kèm tệp .map (bản đồ mã nguồn của thư viện; docs/mcah-ke-hoach-desktop-gd5.md 3.4).
+// Bộ cài không kèm tệp .map (bản đồ mã nguồn của thư viện; docs/catoro-ke-hoach-desktop-gd5.md 3.4).
 function removeSourceMaps(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name)
@@ -102,14 +103,14 @@ async function copyNode() {
   fs.rmSync(tmp, { recursive: true, force: true })
 }
 
-// Khoá công khai kiểm vé đăng nhập, gói vào bộ cài. Mặc định (và MCAH_CLOUD_URL không phải localhost): lấy từ
+// Khoá công khai kiểm vé đăng nhập, gói vào bộ cài. Mặc định (và CATORO_CLOUD_URL không phải localhost): lấy từ
 // <máy chủ>/.well-known/mcah-keys, máy chủ là cloud_url trong endpoints.json. Build cho máy dev: suy ra từ cloud/.data/signing-key.pem.
 async function writeCloudKey() {
   const official = JSON.parse(fs.readFileSync(path.join(DESKTOP, 'endpoints.json'), 'utf8'))
-  const url = (process.env.MCAH_CLOUD_URL ?? official.cloud_url).replace(/\/+$/, '')
+  const url = (productEnv('CLOUD_URL') ?? official.cloud_url).replace(/\/+$/, '')
   let pem
   if (url && !/^http:\/\/(localhost|127\.0\.0\.1)[:/]/.test(url)) {
-    if (!url.startsWith('https://')) throw new Error('MCAH_CLOUD_URL của máy chủ thật phải là https')
+    if (!url.startsWith('https://')) throw new Error('CATORO_CLOUD_URL của máy chủ thật phải là https')
     const r = await fetch(`${url}/.well-known/mcah-keys`)
     if (!r.ok) throw new Error(`Không lấy được khoá công khai từ ${url} (${r.status})`)
     const { keys } = await r.json()
@@ -124,23 +125,23 @@ async function writeCloudKey() {
   fs.writeFileSync(path.join(STAGE, 'cloud-public-key.pem'), pem)
 }
 
-// Khoá công khai kiểm bản phát hành + địa chỉ phát hành (MCAH_UPDATE_URL lúc build; trống = tắt tự cập nhật).
+// Khoá công khai kiểm bản phát hành + địa chỉ phát hành (CATORO_UPDATE_URL lúc build; trống = tắt tự cập nhật).
 function writeUpdateConfig() {
   // Khoá công khai trong repo (build/release-public-key.pem): mọi máy build gói cùng một khoá, không cần khoá riêng.
   fs.writeFileSync(path.join(STAGE, 'release-public-key.pem'), require('./release-key').publicKeyPem())
-  // Mặc định địa chỉ chính thức trong desktop/endpoints.json; build thử với máy chủ dev thì đặt MCAH_CLOUD_URL / MCAH_UPDATE_URL.
+  // Mặc định địa chỉ chính thức trong desktop/endpoints.json; build thử với máy chủ dev thì đặt CATORO_CLOUD_URL / CATORO_UPDATE_URL.
   const official = JSON.parse(fs.readFileSync(path.join(DESKTOP, 'endpoints.json'), 'utf8'))
-  fs.writeFileSync(path.join(STAGE, 'update-url.txt'), process.env.MCAH_UPDATE_URL ?? official.update_url)
-  fs.writeFileSync(path.join(STAGE, 'cloud-url.txt'), process.env.MCAH_CLOUD_URL ?? official.cloud_url)
+  fs.writeFileSync(path.join(STAGE, 'update-url.txt'), productEnv('UPDATE_URL') ?? official.update_url)
+  fs.writeFileSync(path.join(STAGE, 'cloud-url.txt'), productEnv('CLOUD_URL') ?? official.cloud_url)
 }
 
 // Bản thử của bước 0.7: thêm một migration cuối để kiểm cập nhật có chạy migration.
 function addTestMigration() {
-  if (!process.env.MCAH_TEST_MIGRATION) return
+  if (!productEnv('TEST_MIGRATION')) return
   fs.copyFileSync(path.join(DESKTOP, 'test/update_test_migration.sql'), path.join(OUT, 'backend/migrations/postgres/999_desktop_update_test.sql'))
 }
 
-// Gom backend thành một khối và dịch bytecode bằng chính Node đi kèm (docs/mcah-ke-hoach-desktop-gd5.md 3.1).
+// Gom backend thành một khối và dịch bytecode bằng chính Node đi kèm (docs/catoro-ke-hoach-desktop-gd5.md 3.1).
 // Bytecode chỉ dịch được trên đúng hệ điều hành đích: build bản Windows trên Linux thì chỉ gom + nén, chưa dịch.
 function protectBackend() {
   const nodeBin = path.join(OUT, 'node', target === 'win' ? 'node.exe' : 'node')

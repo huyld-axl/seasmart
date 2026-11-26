@@ -1,7 +1,7 @@
-// Trang quản trị nội bộ của bên mình (docs/mcah-ke-hoach-desktop-gd2.md 2.1 mục 10; wireframe 4, 5 của
+// Trang quản trị nội bộ của bên mình (docs/catoro-ke-hoach-desktop-gd2.md 2.1 mục 10; wireframe 4, 5 của
 // docs/design/wireframes/tai-khoan-tu-tren-xuong.html): khách hàng (văn phòng + quản trị), mọi tài khoản, lượng dùng,
 // khoá / mở khoá văn phòng hoặc tài khoản có lý do, nhật ký.
-// Ở khu nội bộ /internal/admin (docs/mcah-ke-hoach-khu-noi-bo.md 5.2): sau Basic Auth, chỉ admin CLOUD_ADMIN_EMAIL đã qua
+// Ở khu nội bộ /internal/admin (docs/catoro-ke-hoach-khu-noi-bo.md 5.2): sau Basic Auth, chỉ admin CLOUD_ADMIN_EMAIL đã qua
 // mật khẩu + mã TOTP (routes/internal_login.js). Không có dữ liệu nghiệp vụ của
 // khách. HTML thuần không script (CSP): tìm là form GET, xác nhận là trang riêng. POST chỉ nhận từ chính trang này
 // (cookie SameSite=Lax + Sec-Fetch-Site; Origin không dùng được vì Referrer-Policy no-referrer làm nó thành "null").
@@ -31,7 +31,7 @@ label{display:grid;gap:4px;font-size:13px;flex:1;min-width:200px}input,textarea{
 .bigcode{font-family:ui-monospace,monospace;font-size:24px;letter-spacing:.06em;text-align:center;padding:14px;background:#e7e8ec;border-radius:8px;user-select:all}
 .confirm{max-width:520px;margin:40px auto}.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.actions{white-space:nowrap}`
 
-// Dùng bất thường (docs/mcah-ke-hoach-desktop-gd5.md 3.7, lớp L6): chỉ hiển thị cho bên mình xem, không tự khoá.
+// Dùng bất thường (docs/catoro-ke-hoach-desktop-gd5.md 3.7, lớp L6): chỉ hiển thị cho bên mình xem, không tự khoá.
 // 24 giờ qua gấp SPIKE lần trung bình ngày của 30 ngày trước đó và vượt MIN; đổi máy chính quá MOVES lần trong 30 ngày.
 const SPIKE = 5
 const MIN = 50
@@ -53,10 +53,10 @@ const TABS = [['', 'Khách hàng'], ['/accounts', 'Tài khoản'], ['/bug-report
 function page(admin, tab, title, content) {
   const tabs = TABS.map(([p, label]) => `<a href="${A}${p}"${p === tab ? ' class="on" aria-current="page"' : ''}>${label}</a>`).join('')
     + `<a href="${config.internalBase}/design-system/" target="_blank" rel="noopener">Design system ↗</a>`
-  return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(title)} · Quản trị MCAH</title><style>${CSS}</style></head>
+  return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(title)} · Quản trị Catoro</title><style>${CSS}</style></head>
 <body><main><nav class="tabs">${tabs}<span class="who">${e(admin.email)} · <a href="${config.internalBase}/logout">Đăng xuất</a></span></nav>${content}</main></body></html>`
 }
-const confirmPage = (title, content) => `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(title)} · Quản trị MCAH</title><style>${CSS}</style></head>
+const confirmPage = (title, content) => `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(title)} · Quản trị Catoro</title><style>${CSS}</style></head>
 <body><main class="confirm"><div class="card">${content}</div></main></body></html>`
 
 // Form gửi từ trang khác: trình duyệt không gửi cookie SameSite=Lax với POST khác trang; thêm Sec-Fetch-Site cho chắc.
@@ -199,7 +199,7 @@ ${notice ? `<div class="banner ok">${e(notice)}</div>` : ''}${errors._ ? `<div c
 <div class="grid2">${field('Tên văn phòng *', 'name', values, errors, ' maxlength="200"')}${field('Ghi chú', 'note', values, errors, ' maxlength="500" placeholder="Tên công ty, số hợp đồng…"')}
 ${field('Email quản trị *', 'admin_email', values, errors, ' type="email" maxlength="200"')}${field('Họ tên quản trị *', 'admin_name', values, errors, ' maxlength="200"')}</div>
 <div class="row" style="justify-content:flex-end"><button class="pri">Thêm khách hàng</button></div>
-<p class="muted small" style="margin:0">Không gửi thư nào. Báo khách tải MCAH và đăng nhập bằng email quản trị (Google hoặc mã gửi qua email).</p></form>
+<p class="muted small" style="margin:0">Không gửi thư nào. Báo khách tải Catoro và đăng nhập bằng email quản trị (Google hoặc mã gửi qua email).</p></form>
 <form method="get" action="${A}" class="row" style="align-items:center"><input name="q" value="${e(q)}" placeholder="Tìm văn phòng, ghi chú, email quản trị…" style="flex:1;max-width:360px" aria-label="Tìm khách hàng"><button>Tìm</button>
 <span class="muted small">${rows.length} văn phòng · ${locked} đang khoá</span></form>
 <div class="scroll"><table><tr><th>Văn phòng</th><th>Trạng thái</th><th>Quản trị</th><th>Tài khoản</th><th>Cảnh báo</th><th>Quét AI tháng này</th><th>Tra IMO</th><th>Tạo ngày</th><th></th></tr>
@@ -217,7 +217,7 @@ ${body || '<tr><td colspan="9" class="muted">Chưa có khách hàng nào.</td></
     if (Object.keys(errors).length) return html(reply, await customersPage(request.admin, { values, errors }), 400)
     try {
       const { office, admin } = await offices.createCustomer({ name: values.name, note: values.note, adminEmail: values.admin_email, adminName: values.admin_name, createdBy: request.admin.id, ip: request.ip })
-      return html(reply, await customersPage(request.admin, { notice: `Đã thêm ${office.name}. Báo ${admin.email} tải MCAH và đăng nhập bằng email này.` }))
+      return html(reply, await customersPage(request.admin, { notice: `Đã thêm ${office.name}. Báo ${admin.email} tải Catoro và đăng nhập bằng email này.` }))
     } catch (error) {
       if (!clientError(error)) throw error
       return html(reply, await customersPage(request.admin, { values, errors: fieldErrors(error, { email: 'admin_email', full_name: 'admin_name' }) }), error.statusCode)
@@ -322,7 +322,7 @@ ${field('Email *', 'email', values, errors, ' type="email" maxlength="200"')}${f
     return confirmPage(lock ? 'Khoá văn phòng' : 'Mở khoá văn phòng', `
 <h1>${lock ? 'Khoá' : 'Mở khoá'} văn phòng ${e(office.name)}?</h1>
 ${lock
-    ? '<p style="margin:0">Mọi máy của văn phòng sẽ không vào được MCAH (máy đang mở bị đưa ra trong vòng 1 giờ). Dữ liệu trên máy khách vẫn giữ nguyên; mở khoá là dùng tiếp.</p>'
+    ? '<p style="margin:0">Mọi máy của văn phòng sẽ không vào được Catoro (máy đang mở bị đưa ra trong vòng 1 giờ). Dữ liệu trên máy khách vẫn giữ nguyên; mở khoá là dùng tiếp.</p>'
     : '<p style="margin:0">Văn phòng dùng lại được: người dùng đăng nhập lại là vào làm việc tiếp.</p>'}
 ${error ? `<div class="banner err">${e(error)}</div>` : ''}
 <form method="post" action="${A}/customers/lock" style="display:grid;gap:12px"><input type="hidden" name="office" value="${e(office.id)}">${backField(back)}<input type="hidden" name="lock" value="${lock ? '1' : '0'}">
@@ -434,7 +434,7 @@ ${body || '<tr><td colspan="7" class="muted">Chưa có báo lỗi nào.</td></tr
     if (!rows.length) return reply.code(404).send('Không có')
     const { meta, files } = JSON.parse(zlib.gunzipSync(rows[0].bundle).toString('utf8'))
     const text = [JSON.stringify(meta, null, 2), ...Object.entries(files).map(([name, content]) => `\n===== ${name} =====\n${content}`)].join('\n')
-    return reply.header('Content-Disposition', `attachment; filename="mcah-bao-loi-${id}.txt"`).header('Cache-Control', 'no-store').type('text/plain; charset=utf-8').send(text)
+    return reply.header('Content-Disposition', `attachment; filename="catoro-bao-loi-${id}.txt"`).header('Cache-Control', 'no-store').type('text/plain; charset=utf-8').send(text)
   })
 
   // ---- Nhật ký ----

@@ -1,5 +1,5 @@
 // Văn phòng: Axalize tạo khách (văn phòng + quản trị), quản trị cài máy chính đầu tiên bằng vé, tạo / bỏ thành viên bằng chữ ký
-// máy chính, vé mang văn phòng (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.2–3.5).
+// máy chính, vé mang văn phòng (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.2–3.5).
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { createRequire } from 'module'
 import crypto from 'crypto'

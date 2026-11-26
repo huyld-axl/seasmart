@@ -68,7 +68,7 @@ export default function FirstRunPage() {
       <>
         {head(`Cài máy chính cho ${info.office_name}`, who)}
         {err}
-        <p style={{ margin: 0 }}>Máy này sẽ giữ toàn bộ dữ liệu của văn phòng. Nhân viên cài MCAH trên máy mình sẽ nối vào máy này. Nên chọn máy bàn luôn bật.</p>
+        <p style={{ margin: 0 }}>Máy này sẽ giữ toàn bộ dữ liệu của văn phòng. Nhân viên cài Catoro trên máy mình sẽ nối vào máy này. Nên chọn máy bàn luôn bật.</p>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>{logout}<Button type="primary" loading={busy} onClick={() => run(() => desktop.setupMainMachine())}>Dùng máy này làm máy chính</Button></div>
       </>
     )
@@ -77,7 +77,7 @@ export default function FirstRunPage() {
       <>
         {head('Văn phòng chưa có máy chính', who)}
         {err}
-        <p style={{ margin: 0 }}>{info.office_name} chưa cài máy chính. Nhờ quản trị văn phòng cài MCAH trên máy chính và đăng nhập trước, rồi bấm Thử lại.</p>
+        <p style={{ margin: 0 }}>{info.office_name} chưa cài máy chính. Nhờ quản trị văn phòng cài Catoro trên máy chính và đăng nhập trước, rồi bấm Thử lại.</p>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>{logout}<Button type="primary" loading={busy} onClick={() => run(() => desktop.recheckOffice())}>Thử lại</Button></div>
       </>
     )

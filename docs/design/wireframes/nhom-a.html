@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MCAH Wireframe Nhóm A</title>
+<title>Catoro Wireframe Nhóm A</title>
 <style>/* inter-cyrillic-ext-400-normal */
 @font-face {
   font-family: 'Inter';
@@ -278,7 +278,7 @@
   unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }</style>
 <style>
-  /* Wireframe nhóm A của MCAH (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
+  /* Wireframe nhóm A của Catoro (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
      Token chép từ frontend/src/theme/tokens.js; component dùng chung class với frontend/src/components/ds/ds.css. */
   :root {
     color-scheme: light;
@@ -335,7 +335,7 @@
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: none; }
 
-  /* Component riêng của MCAH. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
+  /* Component riêng của Catoro. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
    token (src/theme/tokens.js). Không mã màu nào ngoài biến, trừ lớp phủ theo màu chữ. */
 
 .ds-sr-only {
@@ -1677,7 +1677,7 @@ const CREW = [
 const TABS = [['all', 'Tất cả', 8], ['onboard', 'Đang trên tàu', 3], ['standby', 'Chờ tàu', 5], ['review', 'Chờ duyệt', 2], ['expiring', 'Sắp hết hạn', 4]];
 const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
-const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
+const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">Catoro</span></span>`;
 
 // ---------- Trạng thái wireframe ----------
 const SCREENS_A = {
@@ -1731,7 +1731,7 @@ function shell({ title, crumb, crumb2, content, collapsedDefault = false, curren
           <button type="button" class="user-btn" data-action="user" aria-haspopup="menu" aria-expanded="${state.userOpen}">
             <span class="avatar">PT</span><span class="user-btn__name">Phạm Văn Tùng</span>${icon('down')}
           </button>
-          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">phamvantung@mcah.demo · Crewing Officer</p><div class="menu__sep"></div>
+          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">phamvantung@catoro.demo · Crewing Officer</p><div class="menu__sep"></div>
             <button type="button" class="menu__item menu__item--danger" role="menuitem">${icon('logout')}Đăng xuất</button></div>` : ''}
         </div>
       </header>
@@ -1824,7 +1824,7 @@ function dropzone(crew, big = false) {
 }
 
 const PROFILE = {
-  personal: [['Ngày sinh', '13/03/1990'], ['Giới tính', 'Nam'], ['Nơi sinh', 'Hải Dương'], ['Quốc tịch', 'Việt Nam'], ['Số sổ thuyền viên', 'VN000123-01'], ['Hộ chiếu', 'C0000123 · đến 20/05/2031'], ['Điện thoại', '0900 000 123'], ['Email', 'tranminhkhoi@mcah.demo']],
+  personal: [['Ngày sinh', '13/03/1990'], ['Giới tính', 'Nam'], ['Nơi sinh', 'Hải Dương'], ['Quốc tịch', 'Việt Nam'], ['Số sổ thuyền viên', 'VN000123-01'], ['Hộ chiếu', 'C0000123 · đến 20/05/2031'], ['Điện thoại', '0900 000 123'], ['Email', 'tranminhkhoi@catoro.demo']],
   docs: [
     ['Sổ thuyền viên', 'VN000123-01', '02/02/2016', '—', 'VALID'],
     ['Hộ chiếu', 'C0000123', '20/05/2021', '20/05/2031', 'VALID'],
@@ -2022,7 +2022,7 @@ function loginScreen() {
   const error = state.tt === 'loi';
   return `<div class="auth-wrap"><div class="auth"><form class="auth-card" data-wf-block="1" onsubmit="return false">
     <div>${brand()}<h1>Đăng nhập</h1></div>
-    <div><label class="field-label" for="email">Email</label><input id="email" class="input input--lg ${error ? 'input--error' : ''}" type="email" placeholder="ban@congty.vn" ${filled ? 'value="phamvantung@mcah.demo"' : 'autofocus'} /></div>
+    <div><label class="field-label" for="email">Email</label><input id="email" class="input input--lg ${error ? 'input--error' : ''}" type="email" placeholder="ban@congty.vn" ${filled ? 'value="phamvantung@catoro.demo"' : 'autofocus'} /></div>
     <div><label class="field-label" for="password">Mật khẩu</label><div class="pw"><input id="password" class="input input--lg ${error ? 'input--error' : ''}" type="password" placeholder="Nhập mật khẩu" ${filled ? 'value="matkhau-demo"' : ''} /><button type="button" aria-label="Hiện mật khẩu">${icon('eye')}</button></div>
       <p class="field-hint" role="alert">${error ? 'Email hoặc mật khẩu không đúng. Kiểm tra lại rồi thử lần nữa.' : ''}</p></div>
     <button type="submit" class="btn btn--primary btn--lg btn--block" ${loading ? 'aria-busy="true" aria-disabled="true"' : ''}>${loading ? icon('sync') : ''}Đăng nhập</button>
@@ -2034,7 +2034,7 @@ function errorScreen() {
   const pages = {
     a: { header: 'Không có quyền truy cập', body: `<h1 class="err-block__title">Bạn chưa có quyền xem trang này</h1><p class="err-block__desc">Trang <b>Quản trị</b> chỉ dành cho tài khoản có vai trò Quản trị.</p>
       <div class="err-block__actions">${btn('Gửi yêu cầu cấp quyền', { variant: 'primary' })}${btn('Về trang Thuyền viên')}</div>
-      <p class="err-block__foot">Bạn đang đăng nhập bằng phamvantung@mcah.demo.</p><p style="margin:4px 0 0">${btn('Đổi tài khoản', { variant: 'ghost', size: 'sm' })}</p>` },
+      <p class="err-block__foot">Bạn đang đăng nhập bằng phamvantung@catoro.demo.</p><p style="margin:4px 0 0">${btn('Đổi tài khoản', { variant: 'ghost', size: 'sm' })}</p>` },
     b: { header: 'Không tìm thấy trang', body: `<p class="err-block__code num">404</p><h1 class="err-block__title">Không tìm thấy trang</h1><p class="err-block__desc">Đường dẫn có thể bị gõ sai, hoặc trang đã được chuyển sang chỗ khác.</p>
       <div class="err-block__actions">${btn('Về trang Thuyền viên', { variant: 'primary' })}${btn('Quay lại trang trước')}</div>` },
     c: { header: 'Lỗi hệ thống', body: `<h1 class="err-block__title">Trang này đang gặp lỗi</h1><p class="err-block__desc">Lỗi nằm ở phía hệ thống, không phải do bạn. Thử tải lại; nếu vẫn lỗi, gửi mã bên dưới cho quản trị.</p>

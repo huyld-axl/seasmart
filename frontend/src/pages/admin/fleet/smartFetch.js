@@ -77,7 +77,7 @@ export function seedNotices(seed, fetchedAt) {
   if (smart?.found) out.push({ key: 'smart', tone: 'neutral', title: `Đã lấy thêm ${seed.smartCount} trường bằng Lấy thông minh${fetchedAt ? ` (lúc ${fetchedAt})` : ''}`, description: 'Ô đã có giá trị được giữ nguyên.' })
   else if (smart) out.push({ key: 'smart', tone: 'warning', title: `Nguồn bên ngoài không có tàu IMO ${smart.imo_number}`, description: 'Các trường còn lại nhập tay.' })
   if (smart?.existing_vessel && !smart.existing_vessel.deleted) {
-    out.push({ key: 'existing', tone: 'warning', title: `IMO này đã có trong MCAH: ${smart.existing_vessel.vessel_name}`, description: 'Thêm tiếp sẽ báo trùng IMO. Mở tàu đã có để sửa.', vesselId: smart.existing_vessel.id })
+    out.push({ key: 'existing', tone: 'warning', title: `IMO này đã có trong Catoro: ${smart.existing_vessel.vessel_name}`, description: 'Thêm tiếp sẽ báo trùng IMO. Mở tàu đã có để sửa.', vesselId: smart.existing_vessel.id })
   }
   return out
 }

@@ -51,7 +51,7 @@ body {
   color: var(--muted) !important;
 }
 
-/* Nút tự dựng của MCAH và nút đóng hộp thoại: không vòng focus (I13), như nút AntD ở trên. */
+/* Nút tự dựng của Catoro và nút đóng hộp thoại: không vòng focus (I13), như nút AntD ở trên. */
 .ds-link:focus-visible,
 .ds-chip:focus-visible,
 .ds-chip-page:focus-visible,
@@ -93,7 +93,7 @@ body {
 /* Nút dạng link: màu rê gần trùng màu gốc nên gạch chân để thấy được trạng thái rê. */
 .ant-btn-variant-link:not(:disabled):hover { text-decoration: underline; text-underline-offset: 2px; }
 
-/* Điện thoại (docs/mcah-ke-hoach-responsive-mobile.md mục 4.2). */
+/* Điện thoại (docs/catoro-ke-hoach-responsive-mobile.md mục 4.2). */
 @media (max-width: 639px) {
   /* Chữ ô gõ được không dưới 16px: dưới mức đó Safari iOS tự phóng to cả trang khi chạm vào ô. Ô của antd đã 16px
      qua antThemePhone; dòng này là lưới an toàn cho ô tự dựng và ô tìm trong Select. */

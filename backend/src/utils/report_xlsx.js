@@ -1,4 +1,4 @@
-// File Excel của Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md mục 4.4). Cùng cột, cùng số với bảng trên màn hình.
+// File Excel của Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md mục 4.4). Cùng cột, cùng số với bảng trên màn hình.
 const ExcelJS = require('exceljs')
 
 const WIDTH = { text: 22, date: 12, money: 14, int: 9, percent: 11 }
@@ -106,11 +106,11 @@ function addSheet(wb, report, meta) {
 // reports: một hoặc nhiều kết quả build. Trả Buffer .xlsx.
 async function reportWorkbook(reports, meta) {
   const wb = new ExcelJS.Workbook()
-  wb.creator = 'MCAH'
+  wb.creator = 'Catoro'
   for (const report of reports) addSheet(wb, report, meta)
   return Buffer.from(await wb.xlsx.writeBuffer())
 }
 
-const reportFileName = (key, month) => (key === 'all' ? `MCAH_Bao-cao_${month || 'chua-chon-thang'}.xlsx` : `MCAH_Bao-cao_${key}_${month || 'chua-chon-thang'}.xlsx`)
+const reportFileName = (key, month) => (key === 'all' ? `Catoro_Bao-cao_${month || 'chua-chon-thang'}.xlsx` : `Catoro_Bao-cao_${key}_${month || 'chua-chon-thang'}.xlsx`)
 
 module.exports = { reportWorkbook, reportFileName }

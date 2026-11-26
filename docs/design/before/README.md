@@ -37,7 +37,7 @@
 | 17 | Gu | Khung app, nút chính | Header có bóng, nút chính có vạch bóng dưới đáy. Gu, tuỳ bạn | Bỏ bóng, tách header bằng viền | thấy trong ảnh |
 | 18 | Gu | `/seafarers/2` | Trang dài 8 khối, phần lớn ô là "-"; người xem phải cuộn qua nhiều ô trống. Gu, tuỳ bạn | Ẩn ô trống, gom khối | thấy trong ảnh |
 | 19 | Gu | `/seafarers/2` 375 | Nút chỉ icon 24×24, nút "Thêm…" cao 24px; mục mô tả dày tới 5 dòng chữ. Gu, tuỳ bạn | Nút ≥ 32px trên mobile | đo |
-| 20 | Gu | Nhận diện: sidebar, màn đăng nhập | Chưa có logo, chỉ chữ "MarinePort"; favicon của Vite. Gu, tuỳ bạn | Làm ở giai đoạn 2 (logo MCAH) | thấy trong ảnh |
+| 20 | Gu | Nhận diện: sidebar, màn đăng nhập | Chưa có logo, chỉ chữ "MarinePort"; favicon của Vite. Gu, tuỳ bạn | Làm ở giai đoạn 2 (logo Catoro) | thấy trong ảnh |
 
 > Đối chiếu probe: 29 mã, 25 lên bảng, 4 loại: `/seafarers P8, P9` (phần chữ trong ô cao 22px, nhưng cả khung ô 32px nhận bấm), `/seafarers/2 P6, P7` (chữ tab cao 22px, cả ô tab có padding nhận bấm). `/seafarers P16` (nền rê nút Zalo gần như không thấy) gộp vào dòng 10.
 >

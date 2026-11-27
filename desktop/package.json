@@ -1,6 +1,6 @@
 {
   "name": "catoro-desktop",
-  "version": "0.9.14",
+  "version": "0.9.15",
   "private": true,
   "description": "App máy tính Catoro (Electron)",
   "main": "src/main.js",
@@ -9,8 +9,10 @@
     "start": "electron .",
     "stage:linux": "node scripts/stage.js linux",
     "stage:win": "node scripts/stage.js win",
+    "stage:mac": "node scripts/stage.js mac",
     "dist:linux": "npm run build:frontend && npm run stage:linux && node scripts/build-main.js && electron-builder --linux deb dir && node scripts/scan-secrets.js dist/installer/linux-unpacked && node scripts/build-info.js linux",
     "dist:win": "npm run build:frontend && npm run stage:win && node scripts/build-main.js && node scripts/license-page.js && electron-builder --win nsis dir && node scripts/scan-secrets.js dist/installer/win-unpacked && node scripts/build-info.js win",
+    "dist:mac": "npm run build:frontend && npm run stage:mac && node scripts/build-main.js && electron-builder --mac dmg && node scripts/scan-secrets.js mac && node scripts/build-info.js mac",
     "release": "node scripts/release.js",
     "test": "node --test test/*.test.js",
     "notes:page": "node scripts/notes-page.js"
@@ -106,6 +108,20 @@
       "allowToChangeInstallationDirectory": true,
       "include": "build/installer.nsh",
       "license": "dist/license/license.html"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.business",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "notarize": false,
+      "extendInfo": {
+        "NSAppleEventsUsageDescription": "Catoro mở thư mới trong app Mail, tự đính kèm tệp hồ sơ."
+      }
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
     "extraMetadata": {
       "main": "app-build/main.js"

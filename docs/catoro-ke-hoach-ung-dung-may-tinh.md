@@ -29,7 +29,7 @@
 4. **Máy chủ dịch vụ của bên mình** trên internet làm: **tài khoản và đăng nhập**, **AI quét giấy tờ**, **danh mục tàu / tra IMO**, phát bản cập nhật. Máy chủ giữ thông tin tài khoản (email, tên, thuộc văn phòng nào), **không giữ dữ liệu nghiệp vụ** (thuyền viên, hợp đồng, giấy tờ…). Khoá AI, khoá nguồn tàu không bao giờ nằm trong bộ cài.
 5. **Chống crack — nói thật:** không phần mềm cài trên máy nào chống crack được 100%. Bền nhất là để **phần giá trị nhất chạy trên máy chủ của mình** (đăng nhập, AI, danh mục tàu, cập nhật), cộng làm rối code và ký số. **Bản quyền (cách tính tiền) để sau**; tài khoản văn phòng trên máy chủ là nền sẵn cho nó. Bản đầu chưa có bản quyền: người có kỹ thuật cao vẫn có thể sửa app để dùng phần offline mà không qua đăng nhập; đây là đánh đổi chấp nhận ở bản đầu.
 6. **Bảo mật cho người dùng:** đăng nhập qua web, tự khoá màn hình (mở bằng mã PIN); đường truyền giữa các máy được mã hoá và mỗi máy phải được xác thực; tài liệu giấy tờ được mã hoá trên ổ đĩa; sao lưu tự động có mã hoá, khôi phục được sang máy mới (kể cả Windows ↔ Ubuntu); app không gửi dữ liệu nghiệp vụ ra internet ngoài lúc người dùng chủ động quét giấy tờ / tìm tàu.
-7. **Hệ điều hành:** Windows và Ubuntu. Không macOS, không điện thoại (code giao diện điện thoại hiện có vẫn giữ).
+7. **Hệ điều hành:** Windows và Ubuntu; macOS (chip Apple và chip Intel) thêm từ 0.9.15, build bằng CI (`docs/catoro-quy-trinh-phat-hanh.md`). Không điện thoại (code giao diện điện thoại hiện có vẫn giữ).
 8. **Thời gian ước tính:** sau giai đoạn 0 (Ubuntu) còn 15–18 tuần tới bản chạy thử với vài văn phòng (làm bằng AI, một người); xem cuối mục 10.
 9. **Chi phí cố định thêm (tham khảo):** chứng thư ký số cho Windows ~200–600 USD/năm (không có vẫn cài được nhưng Windows hiện cảnh báo; nên mua trước khi bán rộng), máy chủ dịch vụ ~10–40 USD/tháng. Ubuntu không tốn khoản nào.
 10. **Điều sếp cần biết đánh đổi:** **máy chính phải bật** thì máy nhân viên mới làm việc được; **không làm việc từ ngoài văn phòng** ở bản đầu; **không dùng trên điện thoại**; **đăng nhập lần đầu và mời người mới cần internet**; máy chủ của bên mình sập lâu hơn 7 ngày thì người dùng phải chờ mới đăng nhập lại được.
@@ -233,7 +233,7 @@ seasmart/
 |---|---|---|---|
 | **Q1** | Nhân viên có xem chung dữ liệu không? | **B.** Một máy chính trong văn phòng, máy khác nối vào qua mạng nội bộ | Mục 3.2. Vai trò / quyền dùng thật |
 | **Q2** | Có dùng trên điện thoại không? | **Không.** Code giao diện điện thoại hiện có **giữ nguyên, không xoá** | Màn mới chỉ cần chạy tốt trên màn máy tính |
-| **Q3** | Hệ điều hành nào? | **Windows và Ubuntu** | Bộ cài `.exe` + `.deb` |
+| **Q3** | Hệ điều hành nào? | **Windows và Ubuntu.** Đổi 2026-11-27: thêm macOS (chip Apple + chip Intel), bộ cài `.dmg` do CI build | Bộ cài `.exe` + `.deb` + `.dmg` |
 | **Q4** | PostgreSQL hay SQLite? | **PostgreSQL** | Mục 4.3 |
 | **Q5** | Bán theo kiểu nào? | **Việc của sales**, chưa chốt | Không đưa vào kế hoạch kỹ thuật |
 | **Q6** | LibreOffice để xuất PDF | **Đổi 2026-11-26: không dùng LibreOffice trong app.** PDF in bằng Chromium của Electron từ chính bản xem trước biểu mẫu (`desktop/src/pdf-printer.js`, `backend/src/utils/sheet_html.js`), chạy Windows / Ubuntu / macOS, bộ cài không nặng thêm. Bản web vẫn dùng LibreOffice trên máy chủ. Không đóng gói Thunderbird, chỉ có nút "Cài Thunderbird" | Mục 4.4 (lý do cũ, đã thay) |
@@ -816,7 +816,7 @@ Code thử đặt trong thư mục mới `desktop/` (dùng tiếp làm nền cho
 ## 14. Không nằm trong kế hoạch này
 
 - Bản quyền, cách tính tiền (mục 7; sales chốt).
-- macOS, app điện thoại (Q2, Q3). Code giao diện điện thoại hiện có giữ nguyên.
+- App điện thoại (Q2). macOS đã thêm từ 0.9.15 (Q3 đổi). Code giao diện điện thoại hiện có giữ nguyên.
 - Làm việc từ ngoài văn phòng (VPN).
 - SMS: tạm bỏ. Code `sms.service.js` để nguyên.
 - Sao lưu lên máy chủ của bên mình (có thể làm sau, mã hoá đầu-cuối).

@@ -5,10 +5,11 @@
 // Tải bộ cài về thư mục tạm của app, kiểm SHA-256, hỏi người dùng, rồi cài:
 //   Ubuntu: pkexec dpkg -i (Ubuntu hiện hộp thoại xin mật khẩu quản trị) rồi mở lại app.
 //   Windows: chạy bộ cài NSIS im lặng (/S, cài cho người dùng, không cần quyền quản trị), bộ cài tự mở lại app.
+//   macOS: gắn .dmg (hdiutil), chép Catoro.app mới vào đúng chỗ bản đang chạy rồi mở lại app.
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
-const { spawn } = require('child_process')
+const { spawn, execFile } = require('child_process')
 const { app, dialog } = require('electron')
 const { releasePublicKeyFile } = require('./paths')
 const { canonical } = require('./manifest')
@@ -17,7 +18,9 @@ const progress = require('./update-progress')
 // Đọc mỗi lần dùng: app có thể đã học địa chỉ mới từ bản tin cập nhật (endpoints.js).
 const endpoints = require('./endpoints')
 const updateBase = () => endpoints.updateUrl()
-const PLATFORM = process.platform === 'win32' ? 'win' : 'linux'
+// Khoá trong latest.json. macOS có hai bản riêng: chip Apple (mac-arm64) và chip Intel (mac-x64).
+const PLATFORM = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? `mac-${process.arch}` : 'linux'
+const MAC = process.platform === 'darwin'
 
 // Kênh cập nhật (docs/catoro-ke-hoach-desktop-gd6.md 3.4): thử nghiệm ở <địa chỉ>/beta. main.js đặt nguồn kênh
 // (máy chính: cài đặt của máy; máy nhân viên: hỏi máy chính). Chỉ nhận bản MỚI HƠN nên đổi kênh không hạ bản.
@@ -87,7 +90,50 @@ async function download(update, onProgress = () => {}) {
   return file
 }
 
+const run = (cmd, args) => new Promise((resolve, reject) => execFile(cmd, args, (error, _out, stderr) => (error ? reject(new Error(String(stderr).trim() || error.message)) : resolve())))
+
+// Thư mục Catoro.app đang chạy (…/Catoro.app/Contents/MacOS/Catoro).
+const macBundle = () => path.resolve(process.execPath, '../../..')
+
+// Không cần quyền quản trị khi Catoro.app nằm ở chỗ người dùng ghi được (Ứng dụng của máy với tài khoản quản trị, hoặc
+// ~/Applications). Bản cũ đổi tên thành Catoro.app.old, lần mở sau mới xoá (app đang chạy vẫn dùng tệp của nó).
+async function installMac(file) {
+  const bundle = macBundle()
+  // Mở thẳng từ .dmg hoặc từ Tải về (macOS chạy ở chỗ chỉ đọc): không thay được.
+  try {
+    fs.accessSync(path.dirname(bundle), fs.constants.W_OK)
+  } catch {
+    throw new Error(`Không ghi được vào ${path.dirname(bundle)}. Kéo Catoro vào thư mục Ứng dụng (Applications) rồi mở lại, hoặc tải bộ cài mới ở trang tải.`)
+  }
+  const mount = fs.mkdtempSync(path.join(app.getPath('temp'), 'catoro-dmg-'))
+  await run('hdiutil', ['attach', file, '-nobrowse', '-readonly', '-noautoopen', '-mountpoint', mount])
+  try {
+    const name = fs.readdirSync(mount).find((n) => n.endsWith('.app'))
+    if (!name) throw new Error('Bộ cài không có Catoro.app')
+    const next = `${bundle}.new`
+    const old = `${bundle}.old`
+    for (const dir of [next, old]) fs.rmSync(dir, { recursive: true, force: true })
+    await run('ditto', [path.join(mount, name), next])
+    fs.renameSync(bundle, old)
+    try {
+      fs.renameSync(next, bundle)
+    } catch (error) {
+      fs.renameSync(old, bundle)
+      throw error
+    }
+  } finally {
+    await run('hdiutil', ['detach', mount, '-force']).catch(() => {})
+    fs.rmSync(mount, { recursive: true, force: true })
+  }
+}
+
+// Lúc mở app: xoá Catoro.app.old của lần cập nhật trước.
+function cleanupMacUpdate() {
+  if (MAC && app.isPackaged) fs.rm(`${macBundle()}.old`, { recursive: true, force: true }, () => {})
+}
+
 function install(file) {
+  if (MAC) return installMac(file)
   return new Promise((resolve, reject) => {
     const [cmd, args] = PLATFORM === 'win' ? [file, ['/S', '--force-run']] : ['pkexec', ['dpkg', '-i', file]]
     const child = spawn(cmd, args, { stdio: 'ignore', detached: PLATFORM === 'win' })
@@ -108,7 +154,7 @@ async function installAndRestart(file, shown, version) {
   shown.set({ title: `Đang cài Catoro ${version}…`, hint: INSTALL_HINT })
   await install(file)
   shown.set({ title: `Đã cài Catoro ${version}, đang mở lại…`, hint: 'Catoro sẽ tự mở lại sau vài giây.' })
-  if (PLATFORM === 'linux') app.relaunch()
+  if (PLATFORM !== 'win') app.relaunch()
   app.quit()
 }
 
@@ -227,4 +273,4 @@ async function updateFromMain(window, fetchFromMain) {
   }
 }
 
-module.exports = { setChannelSource, install, PLATFORM, runUpdate, checkForUpdate, download, verifyManifest, mirrorInstallers, serveInstaller, updateFromMain }
+module.exports = { setChannelSource, install, cleanupMacUpdate, PLATFORM, runUpdate, checkForUpdate, download, verifyManifest, mirrorInstallers, serveInstaller, updateFromMain }

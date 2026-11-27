@@ -1,6 +1,7 @@
 // Mở thư mới trong app mail của máy, tự đính kèm tệp (mục 8.1 kế hoạch tổng; GĐ1 mục 3.5).
 //   Ubuntu: Thunderbird qua `thunderbird -compose`; Evolution và app khác qua xdg-email --attach.
 //   Windows: Simple MAPI (MAPISendMail trong MAPI32.DLL) qua koffi — Outlook bản Office, Thunderbird.
+//   macOS: Thunderbird qua `thunderbird -compose`; Mail của máy qua AppleScript; app khác mở kèm tệp (`open -b`).
 // Tệp đính kèm phải nằm ở chỗ app mail đọc được: Thunderbird bản snap trên Ubuntu không đọc /tmp và thư mục ẩn
 // (~/.config/...), nên tệp gửi thư nằm trong thư mục thường của người dùng (attachmentDir). Backend ghi .zip vào đó
 // (MAIL_DIR); giao diện chỉ gửi tên tệp, không gửi đường dẫn.
@@ -13,7 +14,7 @@ const { shell } = require('electron')
 
 const KEEP_MS = 24 * 3600 * 1000
 
-// ~/Catoro/Tệp gửi thư (Ubuntu) hoặc %LOCALAPPDATA%\Catoro\Tệp gửi thư (Windows). Trước 0.9.14 là thư mục MCAH (tệp tạm, tự xoá sau 24 giờ).
+// ~/Catoro/Tệp gửi thư (Ubuntu, macOS) hoặc %LOCALAPPDATA%\Catoro\Tệp gửi thư (Windows). Trước 0.9.14 là thư mục MCAH (tệp tạm, tự xoá sau 24 giờ).
 function attachmentDir() {
   const base = process.platform === 'win32' ? process.env.LOCALAPPDATA || os.tmpdir() : os.homedir()
   const dir = path.join(base, 'Catoro', 'Tệp gửi thư')
@@ -46,9 +47,21 @@ function cleanAttachmentDir(now = Date.now()) {
   }
 }
 
-// App mail mặc định, null nếu chưa có. Ubuntu: tên tệp .desktop của mailto; Windows: tên trong Clients\Mail.
+// macOS: mã app (bundle id) nhận mailto trong LaunchServices; chưa chọn app nào thì là Mail của máy (luôn có sẵn).
+function macMailApp() {
+  try {
+    const out = execFileSync('defaults', ['read', 'com.apple.LaunchServices/com.apple.launchservices.secure', 'LSHandlers']).toString()
+    for (const block of out.split('}')) {
+      if (/LSHandlerURLScheme\s*=\s*mailto;/.test(block)) return /LSHandlerRoleAll\s*=\s*"?([\w.-]+)"?;/.exec(block)?.[1] || 'com.apple.mail'
+    }
+  } catch {}
+  return 'com.apple.mail'
+}
+
+// App mail mặc định, null nếu chưa có. Ubuntu: tên tệp .desktop của mailto; Windows: tên trong Clients\Mail; macOS: bundle id.
 function defaultMailApp() {
   try {
+    if (process.platform === 'darwin') return macMailApp()
     if (process.platform !== 'win32') return execFileSync('xdg-mime', ['query', 'default', 'x-scheme-handler/mailto']).toString().trim() || null
     for (const hive of ['HKCU', 'HKLM']) {
       try {
@@ -66,7 +79,8 @@ function defaultMailApp() {
 // Thunderbird: gọi thẳng `thunderbird -compose`. Không qua xdg-email: với bản snap, xdg-email không nhận ra Thunderbird
 // và rơi về `gio open mailto:...&attach=`, mà Thunderbird bỏ qua đính kèm trong mailto (chặn vì an toàn).
 function thunderbirdBinary() {
-  for (const bin of ['/snap/bin/thunderbird', '/usr/bin/thunderbird', '/usr/local/bin/thunderbird']) if (fs.existsSync(bin)) return bin
+  const mac = (dir) => path.join(dir, 'Thunderbird.app/Contents/MacOS/thunderbird')
+  for (const bin of ['/snap/bin/thunderbird', '/usr/bin/thunderbird', '/usr/local/bin/thunderbird', mac('/Applications'), mac(path.join(os.homedir(), 'Applications'))]) if (fs.existsSync(bin)) return bin
   return null
 }
 
@@ -102,6 +116,48 @@ function openLinux(mail) {
   args.push(...(mail.to.length ? mail.to : ['']))
   return new Promise((resolve, reject) => {
     execFile('xdg-email', args, (error, _out, stderr) => (error ? reject(new Error(stderr || error.message)) : resolve()))
+  })
+}
+
+// Mail của máy: tham số qua argv (không ghép vào script): tiêu đề, nội dung, rồi số người nhận + địa chỉ cho to / cc / bcc,
+// còn lại là tệp đính kèm. Lần đầu macOS hỏi "Catoro muốn điều khiển Mail" (NSAppleEventsUsageDescription trong package.json).
+const MAIL_SCRIPT = `on run argv
+  set i to 3
+  tell application "Mail"
+    set m to make new outgoing message with properties {subject:item 1 of argv, content:item 2 of argv, visible:true}
+    repeat with cls in {"to", "cc", "bcc"}
+      set n to (item i of argv) as integer
+      repeat with j from 1 to n
+        set addr to item (i + j) of argv
+        tell m
+          if contents of cls is "to" then make new to recipient at end of to recipients with properties {address:addr}
+          if contents of cls is "cc" then make new cc recipient at end of cc recipients with properties {address:addr}
+          if contents of cls is "bcc" then make new bcc recipient at end of bcc recipients with properties {address:addr}
+        end tell
+      end repeat
+      set i to i + n + 1
+    end repeat
+    delay 0.5
+    tell content of m
+      repeat with j from i to count of argv
+        make new attachment with properties {file name:(POSIX file (item j of argv)) as alias} at after last paragraph
+      end repeat
+    end tell
+    activate
+  end tell
+end run`
+
+// Chưa thử được trên máy Mac thật (chỉ có Ubuntu / Windows): kiểm theo docs/catoro-testcase-desktop-macos.md.
+function openMac(mail) {
+  const app = defaultMailApp()
+  const thunderbird = /thunderbird/i.test(app) && thunderbirdBinary()
+  if (thunderbird) return run(thunderbird, ['-compose', composeArg(mail)])
+  const args = app === 'com.apple.mail'
+    ? ['osascript', ['-e', MAIL_SCRIPT, mail.subject, mail.body, ...[mail.to, mail.cc, mail.bcc].flatMap((list) => [String(list.length), ...list]), ...mail.attachments]]
+    // Outlook, Spark…: mở tệp bằng app mail là thư mới kèm tệp (người nhận gõ tay).
+    : ['open', ['-b', app, ...mail.attachments]]
+  return new Promise((resolve, reject) => {
+    execFile(...args, (error, _out, stderr) => (error ? reject(new Error(String(stderr).trim() || error.message)) : resolve()))
   })
 }
 
@@ -156,7 +212,7 @@ async function openMail({ to = [], cc = [], bcc = [], subject = '', body = '', f
     await shell.openPath(dir)
     return { opened: false }
   }
-  await (process.platform === 'win32' ? openWindows : openLinux)({ to, cc, bcc, subject, body, attachments })
+  await ({ win32: openWindows, darwin: openMac }[process.platform] || openLinux)({ to, cc, bcc, subject, body, attachments })
   return { opened: true }
 }
 

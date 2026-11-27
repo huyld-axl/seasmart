@@ -1,12 +1,12 @@
-// Ghi dist/installer/build-info-<linux|win>.json sau khi build + quét bí mật sạch (docs/catoro-ke-hoach-desktop-gd6.md 3.2):
+// Ghi dist/installer/build-info-<linux|win|mac-arm64|mac-x64>.json sau khi build + quét bí mật sạch (docs/catoro-ke-hoach-desktop-gd6.md 3.2):
 // phiên bản, commit, lúc build. Script phát hành chặn khi hai bản khác commit / khác phiên bản / chưa quét.
-//   node scripts/build-info.js linux|win
+//   node scripts/build-info.js linux|win|mac   (mac: bản theo chip của máy build, mac-arm64 hoặc mac-x64)
 const fs = require('fs')
 const path = require('path')
 const { execFileSync } = require('child_process')
 
-const platform = process.argv[2]
-if (!['linux', 'win'].includes(platform)) throw new Error('Dùng: node scripts/build-info.js linux|win')
+const platform = process.argv[2] === 'mac' ? `mac-${process.arch}` : process.argv[2]
+if (!['linux', 'win', 'mac-arm64', 'mac-x64'].includes(platform)) throw new Error('Dùng: node scripts/build-info.js linux|win|mac')
 const DESKTOP = path.join(__dirname, '..')
 const { version } = require(path.join(DESKTOP, 'package.json'))
 const git = (...args) => execFileSync('git', args, { cwd: DESKTOP }).toString().trim()

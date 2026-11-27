@@ -1,8 +1,8 @@
-// Phát hành (docs/catoro-ke-hoach-desktop-gd6.md 3.2, 3.3): gom bộ cài Ubuntu + Windows cùng phiên bản, ký latest.json,
+// Phát hành (docs/catoro-ke-hoach-desktop-gd6.md 3.2, 3.3): gom bộ cài Ubuntu + Windows + macOS (chip Apple, chip Intel) cùng phiên bản, ký latest.json,
 // đặt vào dist/updates/<kênh>/ rồi (nếu có CATORO_RELEASE_TARGET, tên cũ MCAH_RELEASE_TARGET vẫn nhận) đẩy lên server: bộ cài trước, latest.json sau cùng.
 //   npm run release -- --channel beta|stable      phát bản đang ở desktop/package.json
 //   npm run release -- --promote 1.2.0            đưa bản beta 1.2.0 đã phát sang kênh ổn định (không build lại)
-// Chặn (không phát gì) khi: thiếu .deb hoặc .exe, hai bản khác phiên bản / commit, có thay đổi chưa commit, chưa quét bí mật,
+// Chặn (không phát gì) khi: thiếu .deb, .exe hoặc một trong hai .dmg, các bản khác phiên bản / commit, có thay đổi chưa commit, chưa quét bí mật,
 // thiếu release-notes/<phiên bản>.md, khoá riêng không khớp khoá công khai trong repo.
 // CATORO_RELEASE_TARGET: đích rsync, vd. mcah-release@mcah.axalize.vn:/srv/mcah/releases
 // latest.json mang `endpoints` (desktop/endpoints.json): đổi tên miền thì sửa tệp đó và phát bản mới, app tự học (3.9).
@@ -16,7 +16,15 @@ const { canonical } = require('../src/manifest')
 const DESKTOP = path.join(__dirname, '..')
 const KEEP = 3
 
-// allowMissing: nền tảng được phép vắng mặt (vd. ['win'] khi chưa build được bản Windows); bản có mặt vẫn kiểm đủ.
+// [khoá trong latest.json (PLATFORM của src/updater.js), tên đọc được, tên bộ cài electron-builder đặt]
+const PLATFORMS = (pkgName, productName, version) => [
+  ['linux', 'Ubuntu', `${pkgName}_${version}_amd64.deb`],
+  ['win', 'Windows', `${productName} Setup ${version}.exe`],
+  ['mac-arm64', 'macOS chip Apple', `${productName}-${version}-arm64.dmg`],
+  ['mac-x64', 'macOS chip Intel', `${productName}-${version}-x64.dmg`],
+]
+
+// allowMissing: nền tảng được phép vắng mặt (vd. ['win'] khi chưa build được bản Windows; 'mac' = cả hai bản macOS); bản có mặt vẫn kiểm đủ.
 // cloudKey: dấu vân tay khoá máy chủ thật (lấy lúc phát hành); bản gói khoá khác thì không đăng nhập được.
 function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [], cloudKey } = {}) {
   const pkg = JSON.parse(fs.readFileSync(path.join(desktop, 'package.json'), 'utf8'))
@@ -27,16 +35,16 @@ function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [], cloudKey
   if (!['beta', 'stable'].includes(channel)) problems.push(`Kênh không hợp lệ: ${channel}`)
   const files = {}
   const infos = {}
-  for (const [platform, name] of [['linux', `${pkgName}_${version}_amd64.deb`], ['win', `${build.productName} Setup ${version}.exe`]]) {
+  for (const [platform, label, name] of PLATFORMS(pkgName, build.productName, version)) {
     const src = path.join(installers, name)
     const infoFile = path.join(installers, `build-info-${platform}.json`)
     if (!fs.existsSync(src)) {
-      if (allowMissing.includes(platform)) continue
-      problems.push(`Thiếu bộ cài ${platform === 'win' ? 'Windows' : 'Ubuntu'}: ${name}`)
+      if (allowMissing.includes(platform) || allowMissing.includes(platform.split('-')[0])) continue
+      problems.push(`Thiếu bộ cài ${label}: ${name}`)
       continue
     }
     if (!fs.existsSync(infoFile)) {
-      problems.push(`Thiếu build-info-${platform}.json (bản ${platform} chưa chạy đủ npm run dist:${platform}, gồm quét bí mật)`)
+      problems.push(`Thiếu build-info-${platform}.json (bản ${label} chưa chạy đủ npm run dist:${platform.split('-')[0]}, gồm quét bí mật)`)
       continue
     }
     const info = JSON.parse(fs.readFileSync(infoFile, 'utf8'))
@@ -50,20 +58,20 @@ function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [], cloudKey
     files[platform] = { name, sha256: crypto.createHash('sha256').update(data).digest('hex'), size: data.length }
   }
   if (!Object.keys(files).length) problems.push('Không có bộ cài nào')
-  if (infos.linux && infos.win && infos.linux.commit !== infos.win.commit) problems.push(`Hai bản khác commit: Ubuntu ${infos.linux.commit.slice(0, 8)}, Windows ${infos.win.commit.slice(0, 8)}`)
+  if (new Set(Object.values(infos).map((i) => i.commit)).size > 1) problems.push(`Các bản khác commit: ${Object.entries(infos).map(([k, i]) => `${k} ${i.commit.slice(0, 8)}`).join(', ')}`)
   const notesFile = path.join(desktop, 'release-notes', `${version}.md`)
   const notes = fs.existsSync(notesFile) ? fs.readFileSync(notesFile, 'utf8').trim() : ''
   if (!notes) problems.push(`Thiếu ghi chú thay đổi release-notes/${version}.md`)
   const migrations = path.join(desktop, '../backend/migrations/postgres')
   const lastMigration = fs.existsSync(migrations) ? fs.readdirSync(migrations).filter((n) => /^\d+.*\.sql$/.test(n)).sort().pop() : null
-  return { version, files, installers, notes, lastMigration, endpoints, problems, commit: (infos.linux || infos.win)?.commit }
+  return { version, files, installers, notes, lastMigration, endpoints, problems, commit: Object.values(infos)[0]?.commit }
 }
 
 const sign = (signed, key) => ({ ...signed, signature: crypto.sign(null, Buffer.from(canonical(signed)), key).toString('base64') })
 
 // Giữ KEEP phiên bản gần nhất trong thư mục kênh (bộ cài cũ cho máy cần quay về).
 function prune(dir, keepNames) {
-  const installers = fs.readdirSync(dir).filter((n) => /\.(deb|exe)$/.test(n)).map((n) => ({ n, t: fs.statSync(path.join(dir, n)).mtimeMs })).sort((a, b) => b.t - a.t)
+  const installers = fs.readdirSync(dir).filter((n) => /\.(deb|exe|dmg)$/.test(n)).map((n) => ({ n, t: fs.statSync(path.join(dir, n)).mtimeMs })).sort((a, b) => b.t - a.t)
   const versions = []
   for (const { n } of installers) {
     const v = (/(\d+\.\d+\.\d+)/.exec(n) || [])[1]
@@ -89,7 +97,7 @@ function release({ channel, key, allowMissing = [], cloudKey }) {
   const dir = path.join(DESKTOP, 'dist/updates', channel)
   fs.mkdirSync(dir, { recursive: true })
   for (const { name } of Object.values(p.files)) fs.copyFileSync(path.join(p.installers, name), path.join(dir, name))
-  const manifest = sign({ version: p.version, files: p.files, last_migration: p.lastMigration, endpoints: p.endpoints, notes: p.notes, channel, released_at: new Date().toISOString(), windows_signed: false }, key)
+  const manifest = sign({ version: p.version, files: p.files, last_migration: p.lastMigration, endpoints: p.endpoints, notes: p.notes, channel, released_at: new Date().toISOString(), windows_signed: false, mac_signed: false }, key)
   fs.writeFileSync(path.join(dir, 'latest.json'), JSON.stringify(manifest, null, 2))
   prune(dir, new Set(Object.values(p.files).map((f) => f.name)))
   console.log(`Đã phát ${p.version} kênh ${channel === 'beta' ? 'thử nghiệm' : 'ổn định'}: ${Object.keys(p.files).join(', ')}`)

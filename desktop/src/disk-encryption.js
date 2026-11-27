@@ -2,6 +2,7 @@
 // tài liệu trong app (Q14) nên đây là lớp bảo vệ chính khi mất máy. → 'on' | 'off' | 'unknown'
 //   Ubuntu: thiết bị chứa thư mục (df) có tầng crypt (LUKS) bên dưới (lsblk -s).
 //   Windows: thuộc tính BitLockerProtection của ổ (đọc được không cần quyền quản trị; 1 / 3 / 5 = đang bảo vệ).
+//   macOS: FileVault mã hoá cả ổ hệ thống, nơi chứa dữ liệu app (fdesetup status, không cần quyền quản trị).
 const { execFile } = require('child_process')
 const path = require('path')
 
@@ -16,6 +17,12 @@ async function check(dir) {
       const v = Number(out.trim())
       if ([1, 3, 5].includes(v)) return 'on'
       return [0, 2, 4, 6].includes(v) ? 'off' : 'unknown'
+    }
+    if (process.platform === 'darwin') {
+      // Thư mục hồ sơ trên ổ gắn ngoài (/Volumes/…): FileVault không phủ, chưa kiểm được.
+      if (path.resolve(dir).startsWith('/Volumes/')) return 'unknown'
+      const out = await run('fdesetup', ['status'])
+      return /FileVault is On/.test(out || '') ? 'on' : /FileVault is Off/.test(out || '') ? 'off' : 'unknown'
     }
     const df = await run('df', ['--output=source', dir])
     const source = df?.trim().split('\n').pop()

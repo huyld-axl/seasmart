@@ -1,11 +1,13 @@
 // Quét bộ cài tìm bí mật (kế hoạch tổng mục 6.3; docs/catoro-ke-hoach-desktop-gd2.md 4.6): mở app.asar và resources/,
 // tìm khoá API, khoá riêng, tệp .env. Có thì build lỗi. Chạy sau electron-builder trong npm run dist:*.
-//   node scripts/scan-secrets.js [thư mục bản đã giải nén, mặc định dist/installer/linux-unpacked]
+//   node scripts/scan-secrets.js [thư mục bản đã giải nén, mặc định dist/installer/linux-unpacked | mac = Catoro.app vừa build]
 const fs = require('fs')
 const path = require('path')
 const asar = require('@electron/asar')
 
-const ROOT = path.resolve(process.argv[2] || path.join(__dirname, '../dist/installer/linux-unpacked'))
+// electron-builder để bản macOS chip Apple ở mac-arm64/, bản Intel ở mac/.
+const MAC_DIR = path.join(__dirname, '../dist/installer', process.arch === 'arm64' ? 'mac-arm64' : 'mac')
+const ROOT = path.resolve(process.argv[2] === 'mac' ? MAC_DIR : process.argv[2] || path.join(__dirname, '../dist/installer/linux-unpacked'))
 const PATTERNS = [
   ['khoá OpenAI', /\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}/],
   ['khoá Anthropic', /\bsk-ant-[A-Za-z0-9_-]{20,}/],

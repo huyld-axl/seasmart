@@ -44,9 +44,15 @@
     <div class="grid">
       <div class="os" id="os-win"><b>Windows 10 / 11</b><span class="muted" id="win-info">—</span><a class="btn" id="win-link" aria-disabled="true" href="#">Tải cho Windows</a></div>
       <div class="os" id="os-linux"><b>Ubuntu 22.04 / 24.04</b><span class="muted" id="linux-info">—</span><a class="btn" id="linux-link" aria-disabled="true" href="#">Tải cho Ubuntu (.deb)</a></div>
+      <!-- Ẩn tới khi latest.json có bản macOS. -->
+      <div class="os" id="os-mac" hidden><b>macOS 12 trở lên</b>
+        <span class="muted" id="mac-arm64-info">—</span><a class="btn" id="mac-arm64-link" aria-disabled="true" href="#">Tải cho Mac chip Apple</a>
+        <span class="muted" id="mac-x64-info">—</span><a class="btn" id="mac-x64-link" aria-disabled="true" href="#">Tải cho Mac chip Intel</a>
+        <span class="muted">Xem chip: menu Apple → Giới thiệu về máy Mac (Apple M1 trở lên, hoặc Intel).</span></div>
     </div>
-    <p class="muted">Yêu cầu: Windows 10 / 11 64-bit hoặc Ubuntu 22.04 / 24.04 64-bit. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB RAM.</p>
+    <p class="muted">Yêu cầu: Windows 10 / 11 64-bit, Ubuntu 22.04 / 24.04 64-bit hoặc macOS 12 trở lên. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB RAM.</p>
     <p class="muted" id="smartscreen" hidden>Windows có thể hiện "Windows đã bảo vệ máy tính của bạn": bấm <b>Thêm thông tin</b> → <b>Vẫn chạy</b>.</p>
+    <p class="muted" id="gatekeeper" hidden>Mac: mở tệp .dmg, kéo Catoro vào thư mục <b>Ứng dụng</b>. Lần đầu mở, nếu macOS báo không mở được: vào <b>Cài đặt hệ thống</b> → <b>Quyền riêng tư & Bảo mật</b>, kéo xuống, bấm <b>Vẫn mở</b>.</p>
   </section>
   <section class="card">
     <b>Cài đặt</b>
@@ -61,7 +67,7 @@
 <script>
   // Hệ điều hành của người xem: làm nổi ô tương ứng.
   const ua = navigator.userAgent
-  document.getElementById(/Windows/i.test(ua) ? 'os-win' : /Linux|X11/i.test(ua) ? 'os-linux' : 'none')?.classList.add('mine')
+  document.getElementById(/Windows/i.test(ua) ? 'os-win' : /Macintosh|Mac OS X/i.test(ua) ? 'os-mac' : /Linux|X11/i.test(ua) ? 'os-linux' : 'none')?.classList.add('mine')
   const mb = (n) => `${Math.round(n / 1024 / 1024)} MB`
   fetch('files/latest.json', { cache: 'no-store' })
     .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -70,13 +76,17 @@
       document.getElementById('version').textContent = `Bản mới nhất: ${m.version}${date}`
       document.getElementById('smartscreen').hidden = m.windows_signed !== false
       document.getElementById('notes-all').hash = `v${m.version}`
-      for (const [key, id] of [['win', 'win'], ['linux', 'linux']]) {
+      for (const key of ['win', 'linux', 'mac-arm64', 'mac-x64']) {
         const f = m.files?.[key]
         if (!f) continue
-        const link = document.getElementById(`${id}-link`)
+        if (key.startsWith('mac')) {
+          document.getElementById('os-mac').hidden = false
+          document.getElementById('gatekeeper').hidden = m.mac_signed === true
+        }
+        const link = document.getElementById(`${key}-link`)
         link.href = `files/${encodeURIComponent(f.name)}`
         link.removeAttribute('aria-disabled')
-        document.getElementById(`${id}-info`).textContent = `${f.name} · ${mb(f.size)}`
+        document.getElementById(`${key}-info`).textContent = `${f.name} · ${mb(f.size)}`
       }
     })
     .catch(() => { document.getElementById('version').textContent = 'Bản cài đặt sắp có. Quay lại sau.' })

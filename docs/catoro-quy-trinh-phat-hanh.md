@@ -50,7 +50,7 @@ Không có `CATORO_RELEASE_TARGET` thì bản phát chỉ nằm ở `desktop/dis
 
 ## Thứ tự trên server
 
-Script đẩy bộ cài trước, `latest.json` sau cùng; giữ 3 phiên bản gần nhất mỗi kênh (máy cần quay về bản cũ dùng). Kiểm: `https://mcah.axalize.vn/download` hiện đúng bản mới.
+Script đẩy bộ cài trước, `releases.json` và `latest.json` sau cùng; giữ 3 phiên bản gần nhất mỗi kênh (máy cần quay về bản cũ dùng). `releases.json` liệt kê các bản còn giữ (tên tệp, SHA-256, cỡ, ngày phát); trang tải đọc nó để hiện mục "Bản cũ hơn" (kênh ổn định, `/download/files/releases.json`). Lần phát đầu sau khi có tính năng này mới sinh ra tệp; trước đó trang tải ẩn mục này. Kiểm: `https://mcah.axalize.vn/download` hiện đúng bản mới.
 
 ## Đổi tên miền
 

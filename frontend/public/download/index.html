@@ -5,91 +5,272 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tải Catoro</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
 <style>
   /* Trang Tải về (M3, docs/catoro-ke-hoach-ung-dung-may-tinh.md 4.2): https://mcah.axalize.vn/download.
-     Đọc files/latest.json (bản phát hành đã ký, giai đoạn 6 đặt vào /download/files/); chưa có thì báo sắp có. */
-  :root { color-scheme: light; --primary: #003366; --bg: #eef0f4; --surface: #fff; --fg: #2c2c2c; --muted: #707070; --border: #d3d5db; }
+     Đọc files/latest.json (bản phát hành đã ký) và files/releases.json (các bản còn giữ, script phát hành ghi).
+     Bố cục: đầu trang → một nút tải đúng máy → "Tất cả bộ cài" hai cột → bảng "Bản cũ hơn" → chân trang.
+     Token chép từ frontend/src/theme/tokens.js. */
+  :root {
+    color-scheme: light;
+    --primary: #003366; --primary-hover: #1a4775; --primary-fg: #fff; --primary-light: rgba(0, 51, 102, 0.06);
+    --background: #f4f4f6; --surface: #fff; --foreground: #2c2c2c; --muted: #707070;
+    --border: #e5e6ea; --border-strong: #d3d5db; --secondary: #e7e8ec; --button-hover: #f1f1f3; --item-hover: #f4f4f6;
+    --table-header: #e9eef5; --border-focus: #003366; --skeleton: #e7e8ec;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg); font: 15px/1.6 Inter, system-ui, 'Segoe UI', sans-serif; padding: 16px; }
-  main { max-width: 760px; margin: 32px auto; display: grid; gap: 16px; }
-  .card { background: var(--surface); border-radius: 16px; padding: 24px 28px; display: grid; gap: 12px; }
-  .brand { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 18px; }
-  .brand i { width: 36px; height: 36px; border-radius: 9px; background: var(--primary); color: #fff; display: grid; place-items: center; font-style: normal; font-size: 13px; }
-  .brand i img { width: 100%; height: 100%; display: block; }
-  h1 { margin: 0; font-size: 24px; }
-  p { margin: 0; }
-  .muted { color: var(--muted); font-size: 14px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
-  .os { border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: grid; gap: 8px; }
-  .os.mine { border-color: var(--primary); box-shadow: 0 0 0 3px #00336622; }
-  .os b { font-size: 16px; }
-  a.btn { display: inline-flex; justify-content: center; align-items: center; min-height: 44px; padding: 10px 16px; border-radius: 999px; background: var(--primary); color: #fff; text-decoration: none; font-weight: 600; }
-  a.btn[aria-disabled="true"] { background: #e7e8ec; color: var(--muted); pointer-events: none; }
-  a { color: var(--primary); }
-  ol { margin: 0; padding-left: 20px; }
-  /* Ép [hidden] ẩn thật kể cả khi phần tử có display riêng. */
+  body { margin: 0; background: var(--background); color: var(--foreground); font: 16px/1.6 Inter, ui-sans-serif, system-ui, 'Segoe UI', sans-serif; }
   [hidden] { display: none !important; }
+  p { text-wrap: pretty; }
+  a { color: var(--primary); text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+  .serif { font-family: 'Source Serif 4', Georgia, serif; font-weight: 500; letter-spacing: -0.01em; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 639px) { .wrap { padding: 0 16px; } }
+  svg.icon { width: 18px; height: 18px; flex: none; }
+
+  /* Nút: một nút đặc duy nhất (tải đúng máy), còn lại viền */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 8px 16px; border-radius: 12px;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--foreground); font: 500 15px/1.2 inherit; font-family: inherit;
+    text-decoration: none; white-space: nowrap; cursor: pointer; }
+  .btn:hover { background: var(--button-hover); }
+  .btn.main { min-height: 52px; padding: 12px 24px; border-color: var(--primary); background: var(--primary); color: var(--primary-fg); font-size: 17px; font-weight: 600; }
+  .btn.main:hover { background: var(--primary-hover); }
+  .btn[aria-disabled="true"] { pointer-events: none; background: var(--secondary); border-color: var(--secondary); color: var(--muted); }
+  .link { color: var(--foreground); text-decoration: none; font-size: 15px; font-weight: 500; padding: 8px 4px; }
+  .link:hover { color: var(--primary); }
+  .muted { color: var(--muted); }
+  .sk { display: inline-block; border-radius: 8px; background: var(--skeleton); }
+
+  /* Đầu trang */
+  .top { background: var(--surface); border-bottom: 1px solid var(--border); }
+  .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--foreground); font-weight: 600; font-size: 19px; text-decoration: none; }
+  .brand img { width: 32px; height: 32px; border-radius: 8px; display: block; }
+  .top nav { display: flex; align-items: center; gap: 12px; }
+  @media (max-width: 639px) { .top .link { display: none; } }
+
+  /* Mở đầu: một nút tải đúng máy người xem */
+  .hero { background: var(--surface); border-bottom: 1px solid var(--border); text-align: center; padding: 88px 0 80px; }
+  .hero h1 { font-size: clamp(44px, 7vw, 68px); line-height: 1.05; margin: 0 0 16px; }
+  .hero .lead { color: var(--muted); font-size: clamp(17px, 2.2vw, 20px); max-width: 600px; margin: 0 auto 28px; }
+  .ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .meta { margin: 16px 0 0; color: var(--muted); font-size: 14px; }
+  .hint { margin: 6px auto 0; color: var(--muted); font-size: 14px; max-width: 560px; }
+  @media (max-width: 639px) { .hero { padding: 56px 0 48px; } .ctas .btn { flex: 1 1 100%; } }
+
+  /* Tất cả bộ cài: tiêu đề trái, danh sách phải */
+  .band { padding: 72px 0; border-bottom: 1px solid var(--border); }
+  .band > .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 40px; align-items: start; }
+  .band h2, .stack h2 { font-size: clamp(30px, 4vw, 38px); line-height: 1.15; margin: 0 0 8px; }
+  .band .side p { margin: 0; color: var(--muted); }
+  @media (max-width: 1023px) { .band { padding: 48px 0; } .band > .wrap { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 8px 24px; min-width: 0; }
+  @media (max-width: 639px) { .card { padding: 4px 16px; } }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; }
+  .row + .row { border-top: 1px solid var(--border); }
+  .row .os { min-width: 0; }
+  .row .os b { display: block; font-weight: 500; }
+  .row .os small { color: var(--muted); font-size: 14px; }
+  .tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; background: var(--primary-light); color: var(--primary);
+    font-size: 12px; font-weight: 500; line-height: 22px; vertical-align: 1px; }
+  .empty-box { padding: 32px 24px; text-align: center; display: grid; gap: 12px; justify-items: center; }
+  .empty-box b { font-weight: 500; }
+
+  /* Bản cũ hơn: bảng rộng hết trang, mỗi hệ điều hành một cột */
+  .stack { padding: 64px 0; border-bottom: 1px solid var(--border); }
+  .stack h2 { margin-bottom: 24px; }
+  .stack .older-head { margin-bottom: 24px; }
+  .stack .older-head p { margin: 0; color: var(--muted); }
+  @media (max-width: 639px) { .stack { padding: 48px 0; } }
+  .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow-x: auto; min-width: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th { background: var(--table-header); color: var(--primary); font-weight: 600; font-size: 13px; text-align: left; padding: 10px 16px;
+    border-bottom: 1px solid var(--primary); white-space: nowrap; }
+  td { padding: 14px 16px; border-top: 1px solid var(--border); white-space: nowrap; vertical-align: middle; }
+  tbody tr:first-child td { border-top: 0; }
+  tbody tr:hover td { background: var(--item-hover); }
+  td b { font-weight: 500; }
+  td .dash { color: var(--muted); }
+  td a { font-weight: 500; }
+  td small { color: var(--muted); font-size: 13px; margin-left: 4px; }
+  /* Màn hẹp: mỗi bản một khối, không cuộn ngang */
+  .older-list { display: none; }
+  @media (max-width: 767px) {
+    .table-card table { display: none; }
+    .older-list { display: grid; }
+    .older-list > div { padding: 14px 16px; display: grid; gap: 4px; }
+    .older-list > div + div { border-top: 1px solid var(--border); }
+    .older-list .ver { display: flex; flex-wrap: wrap; align-items: center; gap: 0 12px; }
+    .older-list .ver b { font-weight: 500; }
+    .older-list .ver a { display: inline-flex; align-items: center; min-height: 32px; margin-left: auto; }
+    .older-list .links { display: flex; flex-wrap: wrap; gap: 0 16px; font-size: 15px; }
+    .older-list .links a { display: inline-flex; align-items: center; min-height: 40px; font-weight: 500; }
+  }
+
+  /* Chân trang */
+  footer { padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; }
+  footer nav { display: flex; flex-wrap: wrap; gap: 0 20px; }
+  footer a { color: var(--muted); display: inline-flex; min-height: 32px; align-items: center; }
 </style>
 </head>
 <body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="/download/"><img src="/favicon.svg" alt="">Catoro</a>
+  <nav><a class="link" href="/release-notes/index.html">Ghi chú phát hành</a><a class="btn" href="/guide/">Hướng dẫn sử dụng</a></nav>
+</div></header>
+
 <main>
-  <section class="card">
-    <div class="brand"><i><img src="/favicon.svg" alt=""></i>Catoro</div>
-    <h1>Tải Catoro cho máy tính</h1>
-    <p>Quản lý thuyền viên, tàu, hợp đồng trên máy tính của văn phòng. Một máy chính giữ dữ liệu, các máy khác trong văn phòng nối vào.</p>
-    <p class="muted" id="version">Đang kiểm bản mới nhất…</p>
-    <p class="muted"><a id="notes-all" href="/release-notes/index.html">Xem ghi chú tất cả các bản</a></p>
-  </section>
-  <section class="card">
-    <div class="grid">
-      <div class="os" id="os-win"><b>Windows 10 / 11</b><span class="muted" id="win-info">—</span><a class="btn" id="win-link" aria-disabled="true" href="#">Tải cho Windows</a></div>
-      <div class="os" id="os-linux"><b>Ubuntu 22.04 / 24.04</b><span class="muted" id="linux-info">—</span><a class="btn" id="linux-link" aria-disabled="true" href="#">Tải cho Ubuntu (.deb)</a></div>
-      <!-- Ẩn tới khi latest.json có bản macOS. -->
-      <div class="os" id="os-mac" hidden><b>macOS 12 trở lên</b>
-        <span class="muted" id="mac-arm64-info">—</span><a class="btn" id="mac-arm64-link" aria-disabled="true" href="#">Tải cho Mac chip Apple</a>
-        <span class="muted" id="mac-x64-info">—</span><a class="btn" id="mac-x64-link" aria-disabled="true" href="#">Tải cho Mac chip Intel</a>
-        <span class="muted">Xem chip: menu Apple → Giới thiệu về máy Mac (Apple M1 trở lên, hoặc Intel).</span></div>
-    </div>
-    <p class="muted">Yêu cầu: Windows 10 / 11 64-bit, Ubuntu 22.04 / 24.04 64-bit hoặc macOS 12 trở lên. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB RAM.</p>
-    <p class="muted" id="smartscreen" hidden>Windows có thể hiện "Windows đã bảo vệ máy tính của bạn": bấm <b>Thêm thông tin</b> → <b>Vẫn chạy</b>.</p>
-    <p class="muted" id="gatekeeper" hidden>Mac: mở tệp .dmg, kéo Catoro vào thư mục <b>Ứng dụng</b>. Lần đầu mở, nếu macOS báo không mở được: vào <b>Cài đặt hệ thống</b> → <b>Quyền riêng tư & Bảo mật</b>, kéo xuống, bấm <b>Vẫn mở</b>.</p>
-  </section>
-  <section class="card">
-    <b>Cài đặt</b>
-    <ol>
-      <li>Tải bộ cài đúng hệ điều hành, mở tệp vừa tải và làm theo hướng dẫn.</li>
-      <li>Mở Catoro, bấm <b>Đăng nhập qua trình duyệt</b>, đăng nhập bằng email quản trị văn phòng đã thêm cho bạn (Catoro không có trang đăng ký).</li>
-      <li>Quản trị văn phòng cài máy chính trước; nhân viên đăng nhập trên máy mình rồi nối máy chính. Từng bước: <a href="/guide/#cai-dat-van-phong">Cài máy chính và máy nhân viên</a>.</li>
-    </ol>
-    <p class="muted">Xem thêm <a href="/guide/">Hướng dẫn sử dụng</a> · <a href="/release-notes/index.html">Ghi chú phát hành</a> · <a href="/legal/terms">Điều khoản</a> · <a href="/legal/privacy">Quyền riêng tư</a></p>
-  </section>
+  <section class="hero"><div class="wrap">
+    <h1 class="serif">Tải Catoro</h1>
+    <p class="lead">Quản lý thuyền viên, tàu, hợp đồng trên máy tính của văn phòng. Một máy chính giữ dữ liệu, các máy khác nối vào.</p>
+    <div id="hero"><div class="ctas"><span class="sk" style="width:220px;height:52px;border-radius:12px"></span></div><p class="meta"><span class="sk" style="width:200px;height:14px"></span></p></div>
+  </div></section>
+
+  <section class="band" id="tat-ca"><div class="wrap">
+    <div class="side"><h2 class="serif">Tất cả bộ cài</h2><p id="all-text">Windows, Ubuntu và Mac. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB.</p></div>
+    <div class="card" id="rows"></div>
+  </div></section>
+
+  <!-- Ẩn tới khi files/releases.json có bản cũ hơn (script phát hành giữ 3 bản gần nhất). -->
+  <section class="stack" id="older" hidden><div class="wrap">
+    <div class="older-head"><h2 class="serif">Bản cũ hơn</h2><p>Catoro giữ 3 bản gần nhất. Chỉ cần khi phải cài lại đúng bản máy chính trong văn phòng đang chạy.</p></div>
+    <div class="table-card" id="older-table"></div>
+  </div></section>
 </main>
+
+<footer><div class="wrap"><span>© Catoro</span><nav><a href="/legal/terms">Điều khoản</a><a href="/legal/privacy">Quyền riêng tư</a></nav></div></footer>
+
 <script>
-  // Hệ điều hành của người xem: làm nổi ô tương ứng.
-  const ua = navigator.userAgent
-  document.getElementById(/Windows/i.test(ua) ? 'os-win' : /Macintosh|Mac OS X/i.test(ua) ? 'os-mac' : /Linux|X11/i.test(ua) ? 'os-linux' : 'none')?.classList.add('mine')
+  const $ = (id) => document.getElementById(id)
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+  const ICON = {
+    download: '<svg class="icon lucide lucide-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>',
+    retry: '<svg class="icon lucide lucide-rotate-cw" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>',
+  }
+  // Khoá trong latest.json (desktop/scripts/release.js), theo thứ tự hiện.
+  const OS = {
+    win: { label: 'Windows', need: 'Windows 10 / 11, 64-bit' },
+    linux: { label: 'Ubuntu', need: 'Ubuntu 22.04 / 24.04, 64-bit' },
+    'mac-arm64': { label: 'Mac chip Apple', need: 'M1 trở lên, macOS 12+' },
+    'mac-x64': { label: 'Mac chip Intel', need: 'macOS 12+' },
+  }
   const mb = (n) => `${Math.round(n / 1024 / 1024)} MB`
-  fetch('files/latest.json', { cache: 'no-store' })
-    .then((r) => (r.ok ? r.json() : Promise.reject()))
-    .then((m) => {
-      const date = m.released_at ? ` · ${new Date(m.released_at).toLocaleDateString('vi-VN')}` : ''
-      document.getElementById('version').textContent = `Bản mới nhất: ${m.version}${date}`
-      document.getElementById('smartscreen').hidden = m.windows_signed !== false
-      document.getElementById('notes-all').hash = `v${m.version}`
-      for (const key of ['win', 'linux', 'mac-arm64', 'mac-x64']) {
-        const f = m.files?.[key]
-        if (!f) continue
-        if (key.startsWith('mac')) {
-          document.getElementById('os-mac').hidden = false
-          document.getElementById('gatekeeper').hidden = m.mac_signed === true
-        }
-        const link = document.getElementById(`${key}-link`)
-        link.href = `files/${encodeURIComponent(f.name)}`
-        link.removeAttribute('aria-disabled')
-        document.getElementById(`${key}-info`).textContent = `${f.name} · ${mb(f.size)}`
-      }
-    })
-    .catch(() => { document.getElementById('version').textContent = 'Bản cài đặt sắp có. Quay lại sau.' })
+  const ext = (name) => (/\.[a-z]+$/i.exec(name) || [''])[0]
+  const fileUrl = (f) => `files/${encodeURIComponent(f.name)}`
+  const dateVi = (iso) => (iso ? new Date(iso).toLocaleDateString('vi-VN') : '')
+
+  const ua = navigator.userAgent
+  // iPad mới báo mình là Macintosh nhưng có màn cảm ứng.
+  const phone = /Android|iPhone|iPad|iPod|CrOS/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  const os = phone ? null : /Windows/i.test(ua) ? 'win' : /Macintosh|Mac OS X/i.test(ua) ? 'mac' : /Linux|X11/i.test(ua) ? 'linux' : null
+
+  // Chip của máy Mac: Chrome / Edge báo thẳng (userAgentData); trình duyệt khác thì đoán qua tên card đồ hoạ
+  // ("Apple M1…" = chip Apple). Safari giấu tên card ("Apple GPU") nên không đoán được: hiện cả hai nút.
+  async function macChip() {
+    try {
+      const { architecture } = await navigator.userAgentData.getHighEntropyValues(['architecture'])
+      if (architecture === 'arm') return 'arm64'
+      if (architecture === 'x86') return 'x64'
+    } catch {}
+    try {
+      const gl = document.createElement('canvas').getContext('webgl')
+      const ext = gl.getExtension('WEBGL_debug_renderer_info')
+      const renderer = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER))
+      if (/Apple M\d/i.test(renderer)) return 'arm64'
+      if (/Intel|AMD|Radeon|NVIDIA/i.test(renderer)) return 'x64'
+    } catch {}
+    return null
+  }
+
+  // Lời dặn lần đầu mở, theo máy người xem (bộ cài chưa có chữ ký số của Microsoft / Apple).
+  function hintFor(m, unknownChip) {
+    if (os === 'win' && m.windows_signed === false) return 'Windows có thể hỏi lại lần đầu mở: bấm Thêm thông tin → Vẫn chạy.'
+    if (os === 'mac') {
+      const chip = unknownChip ? 'Xem chip: menu Apple → Giới thiệu về máy Mac. ' : ''
+      return chip + (m.mac_signed === true ? '' : 'Lần đầu mở, nếu macOS chặn: Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Vẫn mở.')
+    }
+    return ''
+  }
+
+  function renderHero(m, mineKeys, unknownChip) {
+    if (!os) {
+      $('hero').innerHTML = `<div class="ctas"><a class="btn" href="#tat-ca">Xem các bộ cài</a></div><p class="meta">Catoro chạy trên máy tính. Mở trang này trên máy tính để tải đúng bộ cài.</p>`
+      return
+    }
+    const ready = mineKeys.filter((k) => m.files?.[k])
+    const btns = ready.length
+      ? ready.map((k) => `<a class="btn main" href="${fileUrl(m.files[k])}">${ICON.download}Tải cho ${OS[k].label}</a>`).join('')
+      : `<span class="btn main" aria-disabled="true">Sắp có cho ${os === 'mac' ? 'Mac' : OS[os].label}</span>`
+    const hint = ready.length ? hintFor(m, unknownChip) : ''
+    $('hero').innerHTML = `<div class="ctas">${btns}</div>`
+      + `<p class="meta">Bản ${esc(m.version)}${m.released_at ? ` · ${dateVi(m.released_at)}` : ''} · <a href="/release-notes/index.html#v${encodeURIComponent(m.version)}">Có gì mới</a></p>`
+      + (hint ? `<p class="hint">${hint}</p>` : '')
+  }
+
+  // Danh sách bộ cài: máy người xem đứng đầu, có nhãn "Máy của bạn"; hệ điều hành chưa có bộ cài thì "Sắp có".
+  function renderRows(m, mineKeys) {
+    const keys = Object.keys(OS)
+    const order = [...mineKeys, ...keys.filter((k) => !mineKeys.includes(k))]
+    $('rows').innerHTML = order.map((k) => {
+      const f = m?.files?.[k]
+      const sub = f ? `${OS[k].need} · ${ext(f.name)} · ${mb(f.size)}` : OS[k].need
+      const btn = f ? `<a class="btn" href="${fileUrl(f)}">${ICON.download}Tải</a>` : '<span class="btn" aria-disabled="true">Sắp có</span>'
+      return `<div class="row"><div class="os"><b>${OS[k].label}${mineKeys.includes(k) ? '<span class="tag">Máy của bạn</span>' : ''}</b><small>${sub}</small></div>${btn}</div>`
+    }).join('')
+  }
+
+  // Bảng bản cũ hơn bản mới nhất (files/releases.json); không có tệp hay không có bản cũ thì ẩn cả khối.
+  async function renderOlder(latest) {
+    const r = await fetch('files/releases.json', { cache: 'no-store' }).catch(() => null)
+    if (!r?.ok) return
+    const older = ((await r.json().catch(() => null))?.releases || []).filter((x) => x.version !== latest)
+    if (!older.length) return
+    const keys = Object.keys(OS)
+    const notes = (v) => `/release-notes/index.html#v${encodeURIComponent(v)}`
+    const cell = (rel, k) => rel.files?.[k] ? `<a href="${fileUrl(rel.files[k])}">Tải</a><small>${mb(rel.files[k].size)}</small>` : '<span class="dash">—</span>'
+    const body = older.map((rel) => `<tr><td><b>${esc(rel.version)}</b></td><td class="muted">${dateVi(rel.released_at)}</td>${keys.map((k) => `<td>${cell(rel, k)}</td>`).join('')}<td><a href="${notes(rel.version)}">Ghi chú</a></td></tr>`).join('')
+    const list = older.map((rel) => `<div><div class="ver"><b>${esc(rel.version)}</b><span class="muted">${dateVi(rel.released_at)}</span><a href="${notes(rel.version)}">Ghi chú</a></div><div class="links">${keys.filter((k) => rel.files?.[k]).map((k) => `<a href="${fileUrl(rel.files[k])}">${OS[k].label} · ${mb(rel.files[k].size)}</a>`).join('')}</div></div>`).join('')
+    $('older-table').innerHTML = `<table><thead><tr><th>Phiên bản</th><th>Ngày phát</th>${keys.map((k) => `<th>${OS[k].label}</th>`).join('')}<th></th></tr></thead><tbody>${body}</tbody></table><div class="older-list">${list}</div>`
+    $('older').hidden = false
+  }
+
+  function renderLoading() {
+    $('rows').innerHTML = [1, 2, 3, 4].map(() => '<div class="row"><div class="os"><span class="sk" style="width:120px;height:16px"></span><br><span class="sk" style="width:180px;height:12px"></span></div><span class="sk" style="width:64px;height:40px;border-radius:12px"></span></div>').join('')
+  }
+
+  // 404 = chưa phát bản nào (Rỗng); lỗi khác = không tải được (Lỗi, có nút thử lại).
+  async function load() {
+    renderLoading()
+    let res
+    try {
+      res = await fetch('files/latest.json', { cache: 'no-store' })
+    } catch {
+      res = null
+    }
+    if (res?.status === 404) {
+      $('hero').innerHTML = '<div class="ctas"><span class="btn main" aria-disabled="true">Sắp có</span></div><p class="meta">Bản cài đặt sắp có. Quay lại sau.</p>'
+      renderRows(null, [])
+      return
+    }
+    const m = res?.ok ? await res.json().catch(() => null) : null
+    if (!m) {
+      $('hero').innerHTML = `<div class="ctas"><button type="button" class="btn" data-retry>${ICON.retry}Thử lại</button></div><p class="meta">Chưa kiểm được bản mới nhất. Kiểm mạng rồi thử lại.</p>`
+      $('rows').innerHTML = `<div class="empty-box"><b>Chưa tải được danh sách bộ cài</b><span class="muted">Kiểm mạng rồi thử lại.</span><button type="button" class="btn" data-retry>${ICON.retry}Thử lại</button></div>`
+      return
+    }
+    const chip = os === 'mac' ? await macChip() : null
+    const mineKeys = os === 'mac' ? (chip ? [`mac-${chip}`] : ['mac-arm64', 'mac-x64']) : os ? [os] : []
+    $('all-text').textContent = `Bản ${m.version} cho Windows, Ubuntu và Mac. Máy chính 8 GB RAM, 10 GB trống; máy nhân viên 4 GB.`
+    renderHero(m, mineKeys, os === 'mac' && !chip)
+    renderRows(m, mineKeys)
+    renderOlder(m.version)
+  }
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-retry]')) load() })
+  load()
 </script>
 </body>
 </html>

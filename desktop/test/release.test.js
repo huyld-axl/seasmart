@@ -78,3 +78,22 @@ test('dấu vân tay khoá: không phụ thuộc thứ tự, PEM lạ thì báo 
   assert.notStrictEqual(fingerprint(a), fingerprint(b))
   assert.throws(() => fingerprint('x'))
 })
+
+test('releases.json: liệt kê các bản còn giữ, mới nhất trước, gồm tên bộ cài cũ và bản macOS', () => {
+  const { writeReleases } = require('../scripts/release')
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rel-list-'))
+  for (const name of ['mcah-desktop_0.9.9_amd64.deb', 'MCAH Setup 0.9.9.exe', 'catoro-desktop_0.9.15_amd64.deb', 'Catoro Setup 0.9.15.exe', 'Catoro-0.9.15-arm64.dmg', 'Catoro-0.9.15-x64.dmg', 'latest.json']) fs.writeFileSync(path.join(dir, name), name)
+  writeReleases(dir, { version: '0.9.15', channel: 'beta', released_at: '2026-11-27T03:00:00.000Z' })
+  const { channel, releases } = JSON.parse(fs.readFileSync(path.join(dir, 'releases.json'), 'utf8'))
+  assert.strictEqual(channel, 'beta')
+  assert.deepStrictEqual(releases.map((r) => r.version), ['0.9.15', '0.9.9'])
+  assert.deepStrictEqual(Object.keys(releases[0].files).sort(), ['linux', 'mac-arm64', 'mac-x64', 'win'])
+  assert.strictEqual(releases[0].released_at, '2026-11-27T03:00:00.000Z')
+  assert.strictEqual(releases[1].files.win.name, 'MCAH Setup 0.9.9.exe')
+  assert.match(releases[1].files.linux.sha256, /^[0-9a-f]{64}$/)
+  // Lần phát sau: ngày phát của bản cũ giữ nguyên.
+  const oldDate = releases[1].released_at
+  writeReleases(dir, { version: '0.9.15', channel: 'beta', released_at: '2026-11-28T00:00:00.000Z' })
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(dir, 'releases.json'), 'utf8')).releases[1].released_at, oldDate)
+  fs.rmSync(dir, { recursive: true })
+})

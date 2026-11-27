@@ -4,6 +4,7 @@
 //   npm run release -- --promote 1.2.0            đưa bản beta 1.2.0 đã phát sang kênh ổn định (không build lại)
 // Chặn (không phát gì) khi: thiếu .deb, .exe hoặc một trong hai .dmg, các bản khác phiên bản / commit, có thay đổi chưa commit, chưa quét bí mật,
 // thiếu release-notes/<phiên bản>.md, khoá riêng không khớp khoá công khai trong repo.
+// Thư mục kênh có thêm releases.json: các bản còn giữ (KEEP bản gần nhất), trang tải hiện ở mục "Bản cũ hơn".
 // CATORO_RELEASE_TARGET: đích rsync, vd. mcah-release@mcah.axalize.vn:/srv/mcah/releases
 // latest.json mang `endpoints` (desktop/endpoints.json): đổi tên miền thì sửa tệp đó và phát bản mới, app tự học (3.9).
 const fs = require('fs')
@@ -81,13 +82,54 @@ function prune(dir, keepNames) {
   for (const { n } of installers) if (!keepNames.has(n) && !keep.has((/(\d+\.\d+\.\d+)/.exec(n) || [])[1])) fs.rmSync(path.join(dir, n))
 }
 
+// Nền tảng theo tên bộ cài (gồm tên cũ mcah-desktop_*.deb, MCAH Setup *.exe).
+function platformOf(name) {
+  if (name.endsWith('.deb')) return 'linux'
+  if (name.endsWith('.exe')) return 'win'
+  if (name.endsWith('-arm64.dmg')) return 'mac-arm64'
+  if (name.endsWith('-x64.dmg')) return 'mac-x64'
+  return null
+}
+
+const versionCmp = (a, b) => {
+  const pa = a.split('.').map(Number)
+  const pb = b.split('.').map(Number)
+  for (let i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] - pb[i]
+  return 0
+}
+
+// Ghi releases.json từ bộ cài đang có trong thư mục kênh (sau prune), mới nhất trước.
+// current: bản tin vừa phát (lấy ngày phát). SHA-256 lấy lại từ releases.json cũ khi tệp không đổi, khỏi băm lại.
+function writeReleases(dir, current) {
+  const file = path.join(dir, 'releases.json')
+  let before = []
+  try {
+    before = JSON.parse(fs.readFileSync(file, 'utf8')).releases || []
+  } catch {}
+  const byVersion = {}
+  for (const name of fs.readdirSync(dir)) {
+    const platform = platformOf(name)
+    const version = (/(\d+\.\d+\.\d+)/.exec(name) || [])[1]
+    if (!platform || !version) continue
+    const stat = fs.statSync(path.join(dir, name))
+    const prev = before.find((r) => r.version === version)
+    const known = prev?.files?.[platform]
+    const sha256 = known?.name === name && known.size === stat.size ? known.sha256 : crypto.createHash('sha256').update(fs.readFileSync(path.join(dir, name))).digest('hex')
+    const entry = (byVersion[version] ||= { version, released_at: prev?.released_at || stat.mtime.toISOString(), files: {} })
+    entry.files[platform] = { name, sha256, size: stat.size }
+  }
+  if (byVersion[current.version]) byVersion[current.version].released_at = current.released_at
+  const releases = Object.values(byVersion).sort((a, b) => versionCmp(b.version, a.version))
+  fs.writeFileSync(file, JSON.stringify({ channel: current.channel, releases }, null, 2))
+}
+
 function upload(dir, channel) {
   const target = productEnv('RELEASE_TARGET')
   if (!target) return console.log(`Chưa đặt CATORO_RELEASE_TARGET: bản phát nằm ở ${dir}, chưa đẩy lên server.`)
   const dest = `${target.replace(/\/+$/, '')}/${channel === 'beta' ? 'beta/' : ''}`
-  // Bộ cài trước, latest.json sau cùng: app không bao giờ thấy latest.json trỏ tệp chưa lên xong.
-  execFileSync('rsync', ['-av', '--exclude', 'latest.json', `${dir}/`, dest], { stdio: 'inherit' })
-  execFileSync('rsync', ['-av', path.join(dir, 'latest.json'), dest], { stdio: 'inherit' })
+  // Bộ cài trước, latest.json + releases.json sau cùng: app / trang tải không bao giờ thấy tệp trỏ bộ cài chưa lên xong.
+  execFileSync('rsync', ['-av', '--exclude', 'latest.json', '--exclude', 'releases.json', `${dir}/`, dest], { stdio: 'inherit' })
+  execFileSync('rsync', ['-av', path.join(dir, 'releases.json'), path.join(dir, 'latest.json'), dest], { stdio: 'inherit' })
   console.log(`Đã đẩy lên ${dest}`)
 }
 
@@ -100,6 +142,7 @@ function release({ channel, key, allowMissing = [], cloudKey }) {
   const manifest = sign({ version: p.version, files: p.files, last_migration: p.lastMigration, endpoints: p.endpoints, notes: p.notes, channel, released_at: new Date().toISOString(), windows_signed: false, mac_signed: false }, key)
   fs.writeFileSync(path.join(dir, 'latest.json'), JSON.stringify(manifest, null, 2))
   prune(dir, new Set(Object.values(p.files).map((f) => f.name)))
+  writeReleases(dir, manifest)
   console.log(`Đã phát ${p.version} kênh ${channel === 'beta' ? 'thử nghiệm' : 'ổn định'}: ${Object.keys(p.files).join(', ')}`)
   upload(dir, channel)
 }
@@ -112,8 +155,10 @@ function promote(version, key) {
   fs.mkdirSync(dir, { recursive: true })
   for (const f of Object.values(manifest.files)) fs.copyFileSync(path.join(beta, f.name), path.join(dir, f.name))
   const { signature, ...rest } = manifest
-  fs.writeFileSync(path.join(dir, 'latest.json'), JSON.stringify(sign({ ...rest, channel: 'stable', released_at: new Date().toISOString() }, key), null, 2))
+  const promoted = sign({ ...rest, channel: 'stable', released_at: new Date().toISOString() }, key)
+  fs.writeFileSync(path.join(dir, 'latest.json'), JSON.stringify(promoted, null, 2))
   prune(dir, new Set(Object.values(manifest.files).map((f) => f.name)))
+  writeReleases(dir, promoted)
   console.log(`Đã đưa ${version} sang kênh ổn định`)
   upload(dir, 'stable')
 }
@@ -132,4 +177,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { plan, sign }
+module.exports = { plan, sign, writeReleases }

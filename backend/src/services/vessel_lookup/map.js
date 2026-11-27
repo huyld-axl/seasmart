@@ -34,7 +34,7 @@ function flag(value) {
   return null
 }
 
-// Từ khoá trong tên loại tàu của nguồn ngoài -> mã loại tàu của MCAH. Từ trên xuống, gặp là dừng.
+// Từ khoá trong tên loại tàu của nguồn ngoài -> mã loại tàu của Catoro. Từ trên xuống, gặp là dừng.
 const TYPE_KEYWORDS = [
   [/chemical/, 'TANKER-CHEM'],
   [/\b(lng|lpg|gas)\b/, 'TANKER-GAS'],

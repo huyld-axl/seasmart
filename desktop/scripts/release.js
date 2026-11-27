@@ -1,15 +1,16 @@
-// Phát hành (docs/mcah-ke-hoach-desktop-gd6.md 3.2, 3.3): gom bộ cài Ubuntu + Windows cùng phiên bản, ký latest.json,
-// đặt vào dist/updates/<kênh>/ rồi (nếu có MCAH_RELEASE_TARGET) đẩy lên server: bộ cài trước, latest.json sau cùng.
+// Phát hành (docs/catoro-ke-hoach-desktop-gd6.md 3.2, 3.3): gom bộ cài Ubuntu + Windows cùng phiên bản, ký latest.json,
+// đặt vào dist/updates/<kênh>/ rồi (nếu có CATORO_RELEASE_TARGET, tên cũ MCAH_RELEASE_TARGET vẫn nhận) đẩy lên server: bộ cài trước, latest.json sau cùng.
 //   npm run release -- --channel beta|stable      phát bản đang ở desktop/package.json
 //   npm run release -- --promote 1.2.0            đưa bản beta 1.2.0 đã phát sang kênh ổn định (không build lại)
 // Chặn (không phát gì) khi: thiếu .deb hoặc .exe, hai bản khác phiên bản / commit, có thay đổi chưa commit, chưa quét bí mật,
 // thiếu release-notes/<phiên bản>.md, khoá riêng không khớp khoá công khai trong repo.
-// MCAH_RELEASE_TARGET: đích rsync, vd. mcah-release@mcah.axalize.vn:/srv/mcah/releases
+// CATORO_RELEASE_TARGET: đích rsync, vd. mcah-release@mcah.axalize.vn:/srv/mcah/releases
 // latest.json mang `endpoints` (desktop/endpoints.json): đổi tên miền thì sửa tệp đó và phát bản mới, app tự học (3.9).
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const { execFileSync } = require('child_process')
+const { productEnv } = require('../src/env')
 const { canonical } = require('../src/manifest')
 
 const DESKTOP = path.join(__dirname, '..')
@@ -44,7 +45,7 @@ function plan({ desktop = DESKTOP, channel = 'beta', allowMissing = [], cloudKey
     if (info.scan !== 'clean') problems.push(`Bản ${platform} chưa quét bí mật sạch`)
     if (info.dirty) problems.push(`Bản ${platform} build khi còn thay đổi chưa commit`)
     if (info.cloud_url !== endpoints.cloud_url || info.update_url !== endpoints.update_url) problems.push(`Bản ${platform} gói địa chỉ ${info.update_url} / ${info.cloud_url}, khác endpoints.json`)
-    if (cloudKey && info.cloud_key !== cloudKey) problems.push(`Bản ${platform} gói khoá đăng nhập khác khoá máy chủ thật (build lại, không đặt MCAH_CLOUD_URL)`)
+    if (cloudKey && info.cloud_key !== cloudKey) problems.push(`Bản ${platform} gói khoá đăng nhập khác khoá máy chủ thật (build lại, không đặt CATORO_CLOUD_URL)`)
     const data = fs.readFileSync(src)
     files[platform] = { name, sha256: crypto.createHash('sha256').update(data).digest('hex'), size: data.length }
   }
@@ -73,8 +74,8 @@ function prune(dir, keepNames) {
 }
 
 function upload(dir, channel) {
-  const target = process.env.MCAH_RELEASE_TARGET
-  if (!target) return console.log(`Chưa đặt MCAH_RELEASE_TARGET: bản phát nằm ở ${dir}, chưa đẩy lên server.`)
+  const target = productEnv('RELEASE_TARGET')
+  if (!target) return console.log(`Chưa đặt CATORO_RELEASE_TARGET: bản phát nằm ở ${dir}, chưa đẩy lên server.`)
   const dest = `${target.replace(/\/+$/, '')}/${channel === 'beta' ? 'beta/' : ''}`
   // Bộ cài trước, latest.json sau cùng: app không bao giờ thấy latest.json trỏ tệp chưa lên xong.
   execFileSync('rsync', ['-av', '--exclude', 'latest.json', `${dir}/`, dest], { stdio: 'inherit' })

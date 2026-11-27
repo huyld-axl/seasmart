@@ -43,7 +43,7 @@ ${p.body}
 <head>
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<title>MCAH - Điều khoản và quyền riêng tư</title>
+<title>Catoro - Điều khoản và quyền riêng tư</title>
 <style>
   body { margin: 0; padding: 12px 16px; background: #ffffff; color: #2c2c2c; font-family: 'Segoe UI', Tahoma, sans-serif; font-size: 13px; line-height: 1.6; }
   h1 { margin: 8px 0 4px; font-size: 16px; color: #003366; }
@@ -55,7 +55,7 @@ ${p.body}
 </style>
 </head>
 <body>
-<p>Vui lòng đọc Điều khoản sử dụng và Chính sách quyền riêng tư của MCAH. Bấm đồng ý để tiếp tục cài đặt.</p>
+<p>Vui lòng đọc Điều khoản sử dụng và Chính sách quyền riêng tư của Catoro. Bấm đồng ý để tiếp tục cài đặt.</p>
 ${sections}
 </body>
 </html>

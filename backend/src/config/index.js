@@ -1,5 +1,6 @@
 require('dotenv').config({ quiet: true })
 const fs = require('fs')
+const { productEnv } = require('../utils/env')
 
 const INSECURE_JWT_DEFAULTS = ['dev_secret', 'change_this_to_a_long_random_string', 'secret', '']
 const jwtSecret = process.env.JWT_SECRET || (process.env.JWT_SECRET_FILE ? fs.readFileSync(process.env.JWT_SECRET_FILE, 'utf8').trim() : '')
@@ -11,8 +12,8 @@ if (!jwtSecret || INSECURE_JWT_DEFAULTS.includes(jwtSecret)) {
 }
 
 module.exports = {
-  // Chạy trong app máy tính (desktop/ đặt MCAH_DESKTOP=1): bật các khác biệt của docs/mcah-ke-hoach-desktop-gd1.md.
-  desktop: process.env.MCAH_DESKTOP === '1',
+  // Chạy trong app máy tính (desktop/ đặt CATORO_DESKTOP=1): bật các khác biệt của docs/catoro-ke-hoach-desktop-gd1.md.
+  desktop: productEnv('DESKTOP') === '1',
   // Thư mục gửi thư của app máy tính: .zip đính kèm ghi vào đây để app mail của máy đọc được.
   mailDir: process.env.MAIL_DIR || '',
   port: parseInt(process.env.PORT) || 3000,
@@ -63,7 +64,7 @@ module.exports = {
     useSsl: process.env.SMTP_USE_SSL === 'true',
     useTls: process.env.SMTP_USE_TLS === 'true',
     fromEmail: process.env.SMTP_FROM_EMAIL || 'noreply@marineport.vn',
-    fromName: process.env.SMTP_FROM_NAME || 'MCAH',
+    fromName: process.env.SMTP_FROM_NAME || 'Catoro',
   },
   appUrl: (process.env.APP_URL || 'http://localhost:5173').replace(/\/+$/, ''),
 }

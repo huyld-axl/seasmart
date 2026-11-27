@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { formatUsd } from '../../../utils/format'
 
-// Báo cáo tháng (docs/mcah-ke-hoach-bao-cao.md): hàm thuần cho trang Báo cáo. Cột lấy từ API (constants/reports.js ở backend).
+// Báo cáo tháng (docs/catoro-ke-hoach-bao-cao.md): hàm thuần cho trang Báo cáo. Cột lấy từ API (constants/reports.js ở backend).
 
 export const REPORT_OPTIONS = [
   { value: 'base', label: 'Dữ liệu tổng hợp' },
@@ -54,4 +54,4 @@ export function groupColumns(columns) {
 export const stickyWidth = (columns) => columns.filter((col) => col.sticky).reduce((total, col) => total + columnWidth(col), 0)
 
 export const monthLabel = (month) => (month ? dayjs(`${month}-01`).format('MM/YYYY') : '')
-export const fileName = (key, month) => (key === 'all' ? `MCAH_Bao-cao_${month}.xlsx` : `MCAH_Bao-cao_${key}_${month}.xlsx`)
+export const fileName = (key, month) => (key === 'all' ? `Catoro_Bao-cao_${month}.xlsx` : `Catoro_Bao-cao_${key}_${month}.xlsx`)

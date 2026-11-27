@@ -1,10 +1,10 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Tổng quan MCAH</title>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>Tổng quan Catoro</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <style>
-  /* Wireframe nhóm Tổng quan của MCAH (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
+  /* Wireframe nhóm Tổng quan của Catoro (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
      Token chép từ frontend/src/theme/tokens.js; component dùng chung class với frontend/src/components/ds/ds.css. */
   :root {
     color-scheme: light;
@@ -61,7 +61,7 @@
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: none; }
 
-  /* Component riêng của MCAH. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
+  /* Component riêng của Catoro. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
    token (src/theme/tokens.js). Không mã màu nào ngoài biến, trừ lớp phủ theo màu chữ. */
 
 .ds-sr-only {
@@ -1826,11 +1826,11 @@ const NAV = [
   [3, 'catalog', 'Danh mục', 'database', null], [3, 'admin', 'Quản trị', 'safety-certificate', null],
 ];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
-const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
+const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">Catoro</span></span>`;
 // Trạng thái "ít quyền": tài khoản không có opportunity.view và bill.view.
 const can = (perm) => !(state.tt === 'it-quyen' && (perm === 'opp' || perm === 'bill'));
 const broker = () => state.man === 'moi-gioi';
-const ME = () => (broker() ? { name: 'Nguyễn Thị Lan', short: 'Lan', init: 'NL', mail: 'nguyenthilan@mcah.demo · Môi giới viên' } : { name: 'Phạm Văn Tùng', short: 'Tùng', init: 'PT', mail: 'phamvantung@mcah.demo · Trưởng phòng' });
+const ME = () => (broker() ? { name: 'Nguyễn Thị Lan', short: 'Lan', init: 'NL', mail: 'nguyenthilan@catoro.demo · Môi giới viên' } : { name: 'Phạm Văn Tùng', short: 'Tùng', init: 'PT', mail: 'phamvantung@catoro.demo · Trưởng phòng' });
 
 // ---------- Màn và trạng thái ----------
 const SCREENS = {

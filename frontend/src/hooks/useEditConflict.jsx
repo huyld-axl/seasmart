@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import ConflictDialog from '../components/ds/ConflictDialog'
 import { conflictRows } from '../components/ds/conflictMerge'
 
-// Chống ghi đè cho form sửa (docs/mcah-ke-hoach-desktop-gd3.md 3.4). Lưu bị 409 CONFLICT → tải bản mới nhất,
+// Chống ghi đè cho form sửa (docs/catoro-ke-hoach-desktop-gd3.md 3.4). Lưu bị 409 CONFLICT → tải bản mới nhất,
 // so ba bản (lúc mở / đang nhập / mới nhất) và hiện ConflictDialog. Chọn xong: đặt lại form theo bản mới rồi điền
 // lại các ô giữ phần của mình — các ô đó hiện "Đã sửa" như thường.
 //   form: Form antd; initial: giá trị form lúc mở (đổi khi nạp bản mới);

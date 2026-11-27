@@ -3,7 +3,7 @@ import Tooltip from './Tooltip'
 import { CheckOutlined, CopyOutlined } from '@ant-design/icons'
 import './ds.css'
 
-// Nút sao chép giá trị vào clipboard, đặt ngay sau các trường mã số (số hộ chiếu, CCCD, số điện thoại, số tài khoản...). Kiểu duy nhất của MCAH.
+// Nút sao chép giá trị vào clipboard, đặt ngay sau các trường mã số (số hộ chiếu, CCCD, số điện thoại, số tài khoản...). Kiểu duy nhất của Catoro.
 // Bấm xong đổi sang dấu tích ~1,5 giây.
 export default function CopyButton({ value, label = 'Sao chép' }) {
   const [done, setDone] = useState(false)

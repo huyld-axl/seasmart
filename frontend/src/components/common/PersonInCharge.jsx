@@ -6,7 +6,7 @@ import useToast from '../ds/useToast'
 import { usePicOptions } from '../../hooks/usePicOptions'
 import apiErrorText from '../../utils/apiError'
 
-// Người phụ trách (docs/mcah-ke-hoach-nguoi-phu-trach.md): thuyền viên → hợp đồng → bill, kế thừa lúc tạo, đổi không lan.
+// Người phụ trách (docs/catoro-ke-hoach-nguoi-phu-trach.md): thuyền viên → hợp đồng → bill, kế thừa lúc tạo, đổi không lan.
 
 export function PicSelect({ current, ...props }) {
   const { options, loading } = usePicOptions(current)

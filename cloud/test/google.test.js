@@ -52,7 +52,7 @@ describe('Google', () => {
   })
 
   it('không tự tạo tài khoản; tài khoản có sẵn theo email thì gắn google_sub, lần sau tìm theo google_sub', async () => {
-    await expect(google.accountFor({ sub: 'g-123', email: 'ha.linh@gmail.com', name: 'Hà Linh' })).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('chưa có tài khoản MCAH') })
+    await expect(google.accountFor({ sub: 'g-123', email: 'ha.linh@gmail.com', name: 'Hà Linh' })).rejects.toMatchObject({ statusCode: 400, message: expect.stringContaining('chưa có tài khoản Catoro') })
     const pool = require('../src/db')
     const { rows: [existing] } = await pool.query("INSERT INTO account (email, full_name) VALUES ('co.san@thu.vn', 'Có Sẵn') RETURNING *")
     expect((await google.accountFor({ sub: 'g-999', email: 'co.san@thu.vn' })).id).toBe(existing.id)

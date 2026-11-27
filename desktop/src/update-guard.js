@@ -1,4 +1,4 @@
-// Cập nhật có đổi dữ liệu trên máy chính (docs/mcah-ke-hoach-desktop-gd4.md 3.5, Q-B1):
+// Cập nhật có đổi dữ liệu trên máy chính (docs/catoro-ke-hoach-desktop-gd4.md 3.5, Q-B1):
 //   trước khi cài: cờ bảo trì (backend trả 503 cho lệnh ghi) → chờ request đang chạy → tắt backend + Postgres →
 //   chép nguyên thư mục DB (pgdata-truoc-cap-nhat) và bộ cài bản đang chạy (bo-cai-quay-ve) → ghi update-pending.json.
 //   bản mới khởi động: migration lỗi → trả thư mục DB cũ về, cài lại bộ cài bản cũ. Tệp hồ sơ không bị migration đụng.

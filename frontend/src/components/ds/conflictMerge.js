@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 
-// Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4): so ba bản của form — lúc mở (base), mình đang nhập (mine),
+// Chống ghi đè (docs/catoro-ke-hoach-desktop-gd3.md 3.4): so ba bản của form — lúc mở (base), mình đang nhập (mine),
 // bản mới nhất trên máy chủ (theirs) — để biết ô nào người kia đổi, ô nào mình đổi, ô nào cả hai cùng đổi.
 const same = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? null)
 

@@ -41,7 +41,7 @@ export default function OfflineRibbon() {
   return (
     <div role="status" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '8px 20px', background: 'var(--warning-bg)', borderBottom: '1px solid var(--warning-border)', color: 'var(--warning)', fontSize: 13 }}>
       {relogin ? (
-        <span>Đã gần 30 ngày từ lần đăng nhập trước. Trước {dayjs(info.loginUntil).format('HH:mm DD/MM')} MCAH sẽ bắt đăng nhập lại qua trình duyệt.</span>
+        <span>Đã gần 30 ngày từ lần đăng nhập trước. Trước {dayjs(info.loginUntil).format('HH:mm DD/MM')} Catoro sẽ bắt đăng nhập lại qua trình duyệt.</span>
       ) : (
         <>
           <span>Máy chưa kết nối internet {offlineDays} ngày. Kết nối trước {dayjs(info.offlineUntil).format('HH:mm DD/MM')} để giữ đăng nhập.</span>

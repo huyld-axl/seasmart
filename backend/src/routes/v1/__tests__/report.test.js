@@ -76,9 +76,9 @@ describe('report routes', () => {
     const res = await get('/reports/sales/export?month=2026-10', ['report.view', 'report.export'])
     expect(res.statusCode).toBe(200)
     expect(res.headers['content-type']).toContain('spreadsheetml')
-    expect(res.headers['content-disposition']).toContain("filename*=UTF-8''MCAH_Bao-cao_sales_2026-10.xlsx")
+    expect(res.headers['content-disposition']).toContain("filename*=UTF-8''Catoro_Bao-cao_sales_2026-10.xlsx")
     const all = await get('/reports/all/export?month=2026-10', ['report.view', 'report.export'])
-    expect(all.headers['content-disposition']).toContain('MCAH_Bao-cao_2026-10.xlsx')
+    expect(all.headers['content-disposition']).toContain('Catoro_Bao-cao_2026-10.xlsx')
     expect((await get('/reports/abc/export?month=2026-10', ['report.view', 'report.export'])).statusCode).toBe(404)
   })
 

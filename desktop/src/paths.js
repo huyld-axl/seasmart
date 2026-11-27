@@ -2,6 +2,7 @@
 // Chạy dev (npm start): lấy thẳng từ repo.
 const path = require('path')
 const { app } = require('electron')
+const { productEnv } = require('./env')
 
 const ROOT = path.join(__dirname, '../..')
 const EXE = process.platform === 'win32' ? '.exe' : ''
@@ -19,10 +20,10 @@ module.exports = {
   backendDir: packaged ? res('backend') : path.join(ROOT, 'backend'),
   formsDir: packaged ? res('forms') : path.join(ROOT, 'forms'),
   postgresBin: path.join(packaged ? res('postgres') : pgPlatformDir(), 'bin'),
-  // Node chạy backend: bản đóng gói kèm file Node riêng; dev dùng `node` trên PATH (hoặc MCAH_NODE).
-  nodeBin: packaged ? res('node', `node${EXE}`) : process.env.MCAH_NODE || 'node',
+  // Node chạy backend: bản đóng gói kèm file Node riêng; dev dùng `node` trên PATH (hoặc CATORO_NODE).
+  nodeBin: packaged ? res('node', `node${EXE}`) : productEnv('NODE') || 'node',
   // Khoá công khai của máy chủ dịch vụ gói sẵn khi build (scripts/stage.js); dev lấy từ cloud/.data nếu có.
-  // Địa chỉ máy chủ dịch vụ gói kèm lúc build (MCAH_CLOUD_URL khi build); dev: http://127.0.0.1:4100.
+  // Địa chỉ máy chủ dịch vụ gói kèm lúc build (CATORO_CLOUD_URL khi build); dev: http://127.0.0.1:4100.
   cloudUrlFile: packaged ? res('cloud-url.txt') : path.join(__dirname, '../dist/stage/cloud-url.txt'),
   cloudPublicKeyFile: packaged ? res('cloud-public-key.pem') : path.join(__dirname, '../dist/stage/cloud-public-key.pem'),
   // Khoá công khai kiểm chữ ký bản phát hành và địa chỉ phát hành, gói kèm lúc build (scripts/stage.js).

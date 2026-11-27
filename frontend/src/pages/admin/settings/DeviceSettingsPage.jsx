@@ -19,7 +19,7 @@ const mailAppName = (desktopFile) => (/thunderbird/i.test(desktopFile || '') ? '
 // Lỗi từ app (ipcRenderer.invoke) kèm tiền tố kỹ thuật; bỏ đi cho người dùng đọc.
 const bridgeError = (error) => String(error?.message || error).replace(/^Error invoking remote method '[^']+': (Error: )?/, '')
 
-// Cài đặt trên máy này (wireframe 4, docs/mcah-ke-hoach-desktop-gd1.md 3.6): theo từng máy, chỉ có trong app máy tính.
+// Cài đặt trên máy này (wireframe 4, docs/catoro-ke-hoach-desktop-gd1.md 3.6): theo từng máy, chỉ có trong app máy tính.
 // Cách gửi email (app mail / gửi thẳng SMTP) và mã PIN của máy. Mật khẩu SMTP cất trong két hệ điều hành của máy.
 // Xuất PDF không cần cài gì: app in bằng Chromium của chính nó (desktop/src/pdf-printer.js).
 export default function DeviceSettingsPage() {
@@ -151,12 +151,12 @@ export default function DeviceSettingsPage() {
       ) : null}
 
       {/* Bật / tắt khoá bằng PIN và thời gian tự khoá đặt cho cả văn phòng ở Quản trị → Máy trong văn phòng
-          (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7); ở đây chỉ đổi mã PIN của chính máy này. */}
+          (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7); ở đây chỉ đổi mã PIN của chính máy này. */}
       <PinCard />
 
       {release.data ? (
         <Card title="Cập nhật">
-          <p style={{ marginTop: 0 }}>Đang dùng <b>MCAH {release.data.version}</b>. MCAH tự kiểm bản mới khi mở và mỗi 6 giờ.</p>
+          <p style={{ marginTop: 0 }}>Đang dùng <b>Catoro {release.data.version}</b>. Catoro tự kiểm bản mới khi mở và mỗi 6 giờ.</p>
           <p className="sf-label" style={{ marginBottom: 6 }}>Kênh cập nhật</p>
           {release.data.staff ? (
             <p className="muted" style={{ marginTop: 0 }}>Máy nhân viên theo kênh của máy chính.</p>
@@ -179,7 +179,7 @@ export default function DeviceSettingsPage() {
             {release.data.notes ? <Button onClick={() => setNotesOpen(true)}>Xem có gì mới</Button> : null}
             <Button type="primary" onClick={() => desktop.checkUpdate()}>Kiểm bản mới</Button>
           </div>
-          <Modal open={notesOpen} title={`Có gì mới trong MCAH ${release.data.version}`} onCancel={() => setNotesOpen(false)} footer={null}>
+          <Modal open={notesOpen} title={`Có gì mới trong Catoro ${release.data.version}`} onCancel={() => setNotesOpen(false)} footer={null}>
             <NotesList notes={release.data.notes} />
           </Modal>
         </Card>
@@ -191,7 +191,7 @@ export default function DeviceSettingsPage() {
             Tên trong mạng: <b>{lan.data.name}</b> · Địa chỉ: <b>{lan.data.addresses.join(', ') || '—'}</b> · cổng {lan.data.port}
           </p>
           <p className="muted" style={{ marginTop: 0 }}>Máy nhân viên tự tìm máy này. Không tìm thấy thì gõ tên hoặc địa chỉ trên ở màn nối máy chính.</p>
-          {lan.data.keepAwake ? <Alert type="success" showIcon message="Không cho máy ngủ khi MCAH đang mở." /> : null}
+          {lan.data.keepAwake ? <Alert type="success" showIcon message="Không cho máy ngủ khi Catoro đang mở." /> : null}
           <p style={{ margin: '12px 0 0' }}>Thư mục hồ sơ: <b>{lan.data.filesDir}</b></p>
           <div style={{ marginTop: 8 }}>
             {lan.data.diskEncryption === 'on' ? <Alert type="success" showIcon message="Ổ đĩa chứa dữ liệu đã được mã hoá." /> : null}

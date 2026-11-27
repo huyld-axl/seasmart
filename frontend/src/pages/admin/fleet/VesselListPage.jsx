@@ -82,7 +82,7 @@ export default function VesselListPage() {
     const isImo = /^\d{7}$/.test(keyword)
     body = isImo ? (
       <EmptyState
-        title={`Chưa có tàu IMO ${keyword} trong MCAH`}
+        title={`Chưa có tàu IMO ${keyword} trong Catoro`}
         description="Thêm tàu này: IMO được điền sẵn, và bạn có thể bấm Lấy thông minh ở form để điền các thông số còn lại."
         action={
           <>

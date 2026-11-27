@@ -1,4 +1,4 @@
-// Đăng nhập khu nội bộ /internal (docs/mcah-ke-hoach-khu-noi-bo.md 5.3, 5.4; testcase nhóm B, C, D): mật khẩu → cài 2FA →
+// Đăng nhập khu nội bộ /internal (docs/catoro-ke-hoach-khu-noi-bo.md 5.3, 5.4; testcase nhóm B, C, D): mật khẩu → cài 2FA →
 // mã khôi phục; đăng nhập hằng ngày; chống dùng lại mã; khoá 15 phút; reset đá phiên cũ; _check cho nginx; ?next an toàn.
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
 import { createRequire } from 'module'
@@ -125,7 +125,7 @@ describe('đăng nhập khu nội bộ', () => {
     const { secret } = await enroll()
     const b = browser()
     expect((await b.post(`${I}/login`, { email: EMAIL, password: PASSWORD })).headers.location).toBe(`${I}/login/verify`)
-    expect((await b.get(`${I}/login/verify`)).body).toContain(`MCAH internal · ${EMAIL}`)
+    expect((await b.get(`${I}/login/verify`)).body).toContain(`Catoro internal · ${EMAIL}`)
     const code = nextCode(secret)
     expect((await b.post(`${I}/login/verify`, { code })).headers.location).toBe(`${I}/admin`)
     const c = browser()

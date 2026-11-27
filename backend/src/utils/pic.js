@@ -1,4 +1,4 @@
-// Người phụ trách (PIC): thuyền viên → hợp đồng → bill, chỉ kế thừa lúc tạo (docs/mcah-ke-hoach-nguoi-phu-trach.md).
+// Người phụ trách (PIC): thuyền viên → hợp đồng → bill, chỉ kế thừa lúc tạo (docs/catoro-ke-hoach-nguoi-phu-trach.md).
 
 // Người đầu tiên trong danh sách ứng viên còn tài khoản hoạt động; không ai thì null.
 async function resolvePic(conn, candidates) {

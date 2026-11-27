@@ -176,7 +176,7 @@ const fleetService = {
     await this.getVessel(pool, id)
     const cols = Object.keys(data)
     await withTransaction(pool, async (conn) => {
-      // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4): form gửi version đã đọc.
+      // Chống ghi đè (docs/catoro-ke-hoach-desktop-gd3.md 3.4): form gửi version đã đọc.
       const [[current]] = await conn.query('SELECT id, version, updated_at FROM vessel WHERE id = ? AND deleted_at IS NULL FOR UPDATE', [id])
       await assertVersion(conn, current, body.version)
       await duplicateGuard(

@@ -72,7 +72,7 @@ function checkSettings(s) {
 
 // hooks: { relaunch, openLogs, checkUpdate, lanStatus, lanFind, lanPair, lanPairStatus, lanInfo, lanRetry }
 function registerIpc(hooks) {
-  const handle = (channel, fn) => ipcMain.handle(`mcah:${channel}`, (event, arg) => fn(arg, event))
+  const handle = (channel, fn) => ipcMain.handle(`catoro:${channel}`, (event, arg) => fn(arg, event))
   handle('open-mail', (m) => openMail(checkMail(m)))
   handle('mail-status', () => ({ app: defaultMailApp() }))
   handle('open-mail-folder', () => shell.openPath(attachmentDir()))
@@ -80,7 +80,7 @@ function registerIpc(hooks) {
     if (!EXTERNAL[kind]) throw new Error('Địa chỉ không hợp lệ')
     return shell.openExternal(EXTERNAL[kind])
   })
-  // Đăng nhập / văn phòng (docs/mcah-ke-hoach-desktop-gd2.md 4.1, 4.3).
+  // Đăng nhập / văn phòng (docs/catoro-ke-hoach-desktop-gd2.md 4.1, 4.3).
   handle('session', () => session.info())
   handle('login', (opts) => session.login({ maxAge: opts?.reauth ? 0 : null }))
   handle('login-code', (code) => {

@@ -1,31 +1,32 @@
-// Đăng nhập qua trình duyệt: OAuth cho app cài trên máy, RFC 8252 + PKCE S256 (docs/mcah-ke-hoach-desktop-gd2.md 3.3).
+// Đăng nhập qua trình duyệt: OAuth cho app cài trên máy, RFC 8252 + PKCE S256 (docs/catoro-ke-hoach-desktop-gd2.md 3.3).
 // Mở trình duyệt mặc định tới /authorize của máy chủ dịch vụ, chờ trình duyệt chuyển về http://127.0.0.1:<cổng tạm>/callback
 // rồi đổi mã lấy { ticket, refresh_token, offline_until }. Không chuyển về được thì người dùng dán mã ngắn (submitShortCode).
 const http = require('http')
 const fs = require('fs')
 const crypto = require('crypto')
 const { spawn } = require('child_process')
+const { productEnv } = require('./env')
 const { shell } = require('electron')
 const { cloudPublicKeyFile } = require('./paths')
 
-const CLIENT_ID = 'mcah-desktop'
+const CLIENT_ID = 'mcah-desktop' // giữ khi đổi tên Catoro: máy chủ dịch vụ nhận app bản cũ lẫn mới
 const WAIT_MS = 10 * 60 * 1000
 
-// Địa chỉ máy chủ dịch vụ: MCAH_CLOUD_URL, hoặc tệp cloud-url.txt gói kèm lúc build.
+// Địa chỉ máy chủ dịch vụ: CATORO_CLOUD_URL, hoặc tệp cloud-url.txt gói kèm lúc build.
 // Địa chỉ máy chủ dịch vụ (endpoints.js: biến môi trường → địa chỉ đã học từ bản tin cập nhật → địa chỉ gói lúc build).
 function cloudUrl() {
   return require('./endpoints').cloudUrl()
 }
 
-// MCAH_OPEN_URL_WITH: lệnh mở trang thay cho trình duyệt mặc định (chỉ dùng khi chạy thử tự động).
+// CATORO_OPEN_URL_WITH: lệnh mở trang thay cho trình duyệt mặc định (chỉ dùng khi chạy thử tự động).
 function openInBrowser(url) {
-  if (process.env.MCAH_OPEN_URL_WITH) spawn(process.env.MCAH_OPEN_URL_WITH, [url], { stdio: 'ignore', detached: true }).unref()
+  if (productEnv('OPEN_URL_WITH')) spawn(productEnv('OPEN_URL_WITH'), [url], { stdio: 'ignore', detached: true }).unref()
   else shell.openExternal(url)
 }
 
 // Khoá công khai của máy chủ dịch vụ, gói sẵn trong app (không cần mạng lúc mở app). Thiếu thì tắt đăng nhập.
 function cloudPublicKey() {
-  const file = process.env.MCAH_CLOUD_PUBLIC_KEY_FILE || cloudPublicKeyFile
+  const file = productEnv('CLOUD_PUBLIC_KEY_FILE') || cloudPublicKeyFile
   if (!fs.existsSync(file)) return null
   const pem = fs.readFileSync(file, 'utf8')
   crypto.createPublicKey(pem)
@@ -39,10 +40,10 @@ async function postToken(body) {
   try {
     r = await fetch(`${cloudUrl()}/token`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(20000) })
   } catch {
-    throw Object.assign(new Error('Không kết nối được máy chủ MCAH. Kiểm tra internet rồi thử lại.'), { offline: true })
+    throw Object.assign(new Error('Không kết nối được máy chủ Catoro. Kiểm tra internet rồi thử lại.'), { offline: true })
   }
   const data = await r.json().catch(() => ({}))
-  if (!r.ok) throw Object.assign(new Error(data.message || 'Máy chủ MCAH từ chối đăng nhập'), { status: r.status, grant: data.error })
+  if (!r.ok) throw Object.assign(new Error(data.message || 'Máy chủ Catoro từ chối đăng nhập'), { status: r.status, grant: data.error })
   return data
 }
 

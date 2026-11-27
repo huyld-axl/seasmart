@@ -1,7 +1,7 @@
 import { Switch } from 'antd'
 import './ds.css'
 
-// Công tắc bật / tắt MỘT thuộc tính có / không (nồi hơi, lạnh, người thân là liên lạc...). Kiểu duy nhất của MCAH.
+// Công tắc bật / tắt MỘT thuộc tính có / không (nồi hơi, lạnh, người thân là liên lạc...). Kiểu duy nhất của Catoro.
 // Dùng làm control của Form.Item (value, onChange). Chọn một trong nhiều giá trị thì dùng nhóm nút (ChoiceGroup), không dùng cái này.
 // `compact`: bỏ chữ Có / Không cạnh công tắc và hạ chiều cao, cho cột lọc hẹp.
 // `changed`: đã sửa, chưa lưu (viền màu nhấn + chip "Đã sửa"), dùng ở màn có thanh lưu như Vai trò và quyền trên điện thoại.

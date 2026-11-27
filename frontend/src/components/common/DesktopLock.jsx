@@ -6,7 +6,7 @@ import useAuthStore from '../../stores/authStore'
 import { bridgeError, desktop, isDesktop } from '../../lib/desktop'
 
 // Wireframe 5 (docs/design/wireframes/desktop-gd2.html), chỉ trong app máy tính, khi văn phòng bật "Khoá bằng mã PIN"
-// (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7; tắt thì không hiện gì):
+// (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7; tắt thì không hiện gì):
 // - chưa có PIN trên máy này (lần đăng nhập đầu): hộp đặt PIN 6 số, bắt buộc;
 // - app tự khoá (rỗi quá ngưỡng / máy khoá màn hình): màn khoá phủ cả cửa sổ, mở bằng PIN. Sai 5 lần → về đăng nhập.
 export default function DesktopLock() {
@@ -78,7 +78,7 @@ export default function DesktopLock() {
     return (
       <Modal open title="Đặt mã PIN cho máy này" closable={false} maskClosable={false} keyboard={false}
         footer={<Button type="primary" loading={busy} onClick={savePin}>Lưu</Button>}>
-        <p>Dùng để mở khoá MCAH khi để máy một lúc. Không cần internet.</p>
+        <p>Dùng để mở khoá Catoro khi để máy một lúc. Không cần internet.</p>
         {error ? <Banner tone="error">{error}</Banner> : null}
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>{pinInput(savePin)}</div>
       </Modal>
@@ -87,10 +87,10 @@ export default function DesktopLock() {
 
   if (!state.locked) return null
   return (
-    <div role="dialog" aria-modal="true" aria-label="MCAH đã khoá" style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'var(--background)', display: 'grid', placeItems: 'center', padding: 16 }}>
+    <div role="dialog" aria-modal="true" aria-label="Catoro đã khoá" style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'var(--background)', display: 'grid', placeItems: 'center', padding: 16 }}>
       <div style={{ width: 'min(400px, 100%)', background: 'var(--surface)', borderRadius: 16, padding: 32, display: 'grid', gap: 16, justifyItems: 'center', textAlign: 'center' }}>
         <ProductBrand />
-        <div><b>{user?.full_name || user?.email}</b><div className="muted">MCAH đã khoá</div></div>
+        <div><b>{user?.full_name || user?.email}</b><div className="muted">Catoro đã khoá</div></div>
         {pinInput(unlock)}
         {error ? <Banner tone="error">{error}</Banner> : null}
         <Button type="primary" block loading={busy} disabled={value.length !== 6} onClick={unlock}>Mở khoá</Button>

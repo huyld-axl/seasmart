@@ -53,7 +53,7 @@ function RecipientSelect({ id, value, onChange, options, status, autoFocus }) {
 // Cửa sổ soạn thư gửi chủ tàu, dáng như Gmail: nổi ở góc dưới phải, thu nhỏ / phóng to / đóng, ô nhập không viền.
 // Nội dung điền sẵn, sửa tự do; thư đi bằng mail server công ty, đính kèm .zip hồ sơ từng người, Reply-To là người gửi.
 // Gửi xong ghi nhận ngay, lỗi thì giữ cửa sổ để sửa và gửi lại. candidates: [{ id, seafarer_id, full_name }].
-// App máy tính, cách "app mail" (docs/mcah-ke-hoach-desktop-gd1.md 3.5): mở thư mới trong app mail của máy với .zip tự
+// App máy tính, cách "app mail" (docs/catoro-ke-hoach-desktop-gd1.md 3.5): mở thư mới trong app mail của máy với .zip tự
 // đính kèm, rồi hỏi "Đã gửi chưa?" mới ghi nhận; cách "gửi thẳng" gửi bằng email của người dùng trên máy này.
 export default function ComposeMailModal({ opportunity, candidates, onClose }) {
   const toast = useToast()

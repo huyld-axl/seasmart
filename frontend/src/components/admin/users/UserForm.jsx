@@ -42,7 +42,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
     }
   }, [open, initialValues, form, resetKey])
 
-  // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4): bản mới nạp khi bị 409 thay cho initialValues.
+  // Chống ghi đè (docs/catoro-ke-hoach-desktop-gd3.md 3.4): bản mới nạp khi bị 409 thay cho initialValues.
   const [latest, setLatest] = useState(null)
   const current = isEdit && latest?.id === initialValues.id && latest.version > (initialValues.version || 0) ? latest : initialValues
   const conflict = useEditConflict({
@@ -146,7 +146,7 @@ export default function UserForm({ open, onClose, onSubmit, initialValues, loadi
       >
         {/* App máy tính (wireframe 6, docs/design/wireframes/tai-khoan-tu-tren-xuong.html): không thư mời, không mật khẩu. */}
         {isDesktop() ? (
-          <Banner tone="neutral" icon={MailOutlined} title="Không cần mật khẩu" description="Người này mở MCAH, bấm Đăng nhập và dùng Google hoặc mã gửi tới email dưới. Cần kết nối internet để tạo tài khoản." />
+          <Banner tone="neutral" icon={MailOutlined} title="Không cần mật khẩu" description="Người này mở Catoro, bấm Đăng nhập và dùng Google hoặc mã gửi tới email dưới. Cần kết nối internet để tạo tài khoản." />
         ) : (
           <Banner tone="neutral" icon={MailOutlined} title="Hệ thống sẽ gửi email mời" description="Người dùng bấm liên kết trong email để tự đặt mật khẩu." />
         )}

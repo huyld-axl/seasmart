@@ -7,7 +7,7 @@ const { loadRefs } = require('./refs')
 // Mỗi nguồn xuất { name, fetchByImo(imo) }. Thêm nguồn mới = thêm một dòng ở đây.
 const PROVIDERS = {
   legacy_proxy: (cfg) => (cfg.baseUrl && cfg.encKey ? createLegacyProxy(cfg) : null),
-  // App máy tính: tra qua máy chủ dịch vụ MCAH (giữ khoá nguồn ngoài), trả cùng dạng { found, raw } như legacy_proxy.
+  // App máy tính: tra qua máy chủ dịch vụ Catoro (giữ khoá nguồn ngoài), trả cùng dạng { found, raw } như legacy_proxy.
   cloud: () => ({
     name: 'cloud',
     async fetchByImo(imo) {

@@ -68,7 +68,7 @@ export default function UserListPage() {
     setPanelOpen(true)
   }
 
-  // App máy tính chưa gửi thư mời (wireframe 6, docs/mcah-ke-hoach-desktop-gd1.md 3.7): người dùng đặt mật khẩu ngay
+  // App máy tính chưa gửi thư mời (wireframe 6, docs/catoro-ke-hoach-desktop-gd1.md 3.7): người dùng đặt mật khẩu ngay
   // trên máy. Mở trang đặt mật khẩu sau khi đăng xuất quản trị.
   const offerSetPassword = (email, token) =>
     modal.confirm({
@@ -101,7 +101,7 @@ export default function UserListPage() {
       },
     })
     if (editTarget) updateUser.mutate({ id: editTarget.id, data: values }, done(`Đã lưu ${name}`))
-    else createUser.mutate(values, done(isDesktop() ? `Đã tạo tài khoản ${values.email}. Báo người này mở MCAH và đăng nhập bằng email này.` : `Đã gửi thư mời tới ${values.email}`))
+    else createUser.mutate(values, done(isDesktop() ? `Đã tạo tài khoản ${values.email}. Báo người này mở Catoro và đăng nhập bằng email này.` : `Đã gửi thư mời tới ${values.email}`))
   }
 
   const confirmDelete = (user) =>

@@ -1,7 +1,7 @@
 import { useUserOptions } from './useUsers'
 import useAuthStore from '../stores/authStore'
 
-// Người phụ trách (docs/mcah-ke-hoach-nguoi-phu-trach.md): lựa chọn cho ô chọn người và bộ lọc danh sách.
+// Người phụ trách (docs/catoro-ke-hoach-nguoi-phu-trach.md): lựa chọn cho ô chọn người và bộ lọc danh sách.
 const userLabel = (user) => user.full_name || user.email
 
 // Lựa chọn cho ô chọn người. `current` ({ id, name }) là người đang phụ trách: đã khoá thì vẫn hiện để không mất tên.

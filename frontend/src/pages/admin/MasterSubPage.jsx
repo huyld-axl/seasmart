@@ -146,7 +146,7 @@ function MasterTable({ resource, columns, formFields, title }) {
     setChanged(new Set(Object.keys(values).filter((name) => !sameValue(values[name], editing[name]))))
   }
 
-  // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4): tên ô lấy từ label của các trường trong panel.
+  // Chống ghi đè (docs/catoro-ke-hoach-desktop-gd3.md 3.4): tên ô lấy từ label của các trường trong panel.
   const fieldLabels = Object.fromEntries(
     Children.toArray(isValidElement(formFields) ? formFields.props.children : formFields)
       .filter((item) => isValidElement(item) && item.props.name && typeof item.props.label === 'string')

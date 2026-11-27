@@ -6,7 +6,7 @@ const { payoutDefaults, fullAmounts, sumAmounts, monthRange } = require('../util
 const { DEFAULT_ITEMS } = require('../constants/voyage_contract')
 const { BILL_FROM, DISPLAY_SQL, TOTAL_SQL } = require('./contract_bill.service')
 
-// Trả lương thuyền viên (docs/mcah-ke-hoach-tra-luong.md phần B): mỗi dòng là một bill phải thu. Dòng Thu lấy từ bill;
+// Trả lương thuyền viên (docs/catoro-ke-hoach-tra-luong.md phần B): mỗi dòng là một bill phải thu. Dòng Thu lấy từ bill;
 // dòng Trả lấy bản ghi đã chốt, chưa có thì mặc định từ cột Phải chi của hợp đồng. Chuyển tiền làm ngoài hệ thống.
 
 const CODES = DEFAULT_ITEMS.map((item) => item.code)
@@ -27,7 +27,7 @@ function validAmounts(amounts) {
   return CODES.every((code) => Number.isFinite(Number(amounts[code])) && Number(amounts[code]) >= 0)
 }
 
-// Các dòng của một tháng (bill phải thu có ngày kết thúc kỳ trong tháng), dùng chung cho Trả lương và Báo cáo (docs/mcah-ke-hoach-bao-cao.md).
+// Các dòng của một tháng (bill phải thu có ngày kết thúc kỳ trong tháng), dùng chung cho Trả lương và Báo cáo (docs/catoro-ke-hoach-bao-cao.md).
 // query: { month: 'YYYY-MM', search, ship_owner_id, ownerId }. Mỗi dòng: bill (14 khoản Thu), payout (14 khoản Trả), hạn trả, thuyền viên, hợp đồng, chủ tàu, tàu.
 async function monthRows(pool, query) {
   const { from, to } = monthRange(query.month)

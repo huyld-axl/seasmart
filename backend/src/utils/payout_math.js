@@ -1,4 +1,4 @@
-// Trả lương thuyền viên (docs/mcah-ke-hoach-tra-luong.md phần B). Hàm thuần, không đọc DB.
+// Trả lương thuyền viên (docs/catoro-ke-hoach-tra-luong.md phần B). Hàm thuần, không đọc DB.
 const { DEFAULT_ITEMS } = require('../constants/voyage_contract')
 
 const round2 = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100

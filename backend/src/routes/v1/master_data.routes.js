@@ -139,7 +139,7 @@ function makeCrud(table, orderBy = 'name_vi') {
       if (table === 'certificate_type') normalizeCertificateType(body)
       const cols = getAllowedCols(table, body)
       if (!cols.length) return reply.code(400).send({ error: 'Không có dữ liệu hợp lệ' })
-      // Chống ghi đè: bảng có cột version thì kiểm (docs/mcah-ke-hoach-desktop-gd3.md 3.4).
+      // Chống ghi đè: bảng có cột version thì kiểm (docs/catoro-ke-hoach-desktop-gd3.md 3.4).
       const guard = VERSIONED.has(table) ? versionWhere(body.version) : versionWhere(null)
       const sql = `UPDATE "${table}" SET ${cols.map((c) => `"${c}" = ?`).join(',')} WHERE id = ?${guard.sql}`
       const [res] = await pool.query(sql, [...cols.map((c) => body[c]), parseInt(request.params.id), ...guard.params])

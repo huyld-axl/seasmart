@@ -1,4 +1,4 @@
-// "Tiếp tục với Google" (OpenID Connect, code + PKCE + state + nonce; docs/mcah-ke-hoach-desktop-gd2.md 3.3).
+// "Tiếp tục với Google" (OpenID Connect, code + PKCE + state + nonce; docs/catoro-ke-hoach-desktop-gd2.md 3.3).
 // id_token lấy thẳng từ token endpoint của Google qua HTTPS bằng client secret, nên kiểm iss / aud / exp / nonce là đủ
 // (OIDC Core 3.1.3.7, mục 6). Đăng nhập lại bắt buộc (max_age=0, sau khi sai PIN 5 lần): gửi prompt=login + max_age=0
 // và kiểm auth_time mới hơn lúc bắt đầu.
@@ -66,7 +66,7 @@ async function finish({ code, state, pending, fetchImpl = fetch }) {
 }
 
 // Tài khoản cho người dùng Google: theo google_sub; chưa có thì theo email (Google đã xác minh) và gắn google_sub.
-// Không tự tạo tài khoản: tài khoản do Axalize / quản trị văn phòng tạo (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md).
+// Không tự tạo tài khoản: tài khoản do Axalize / quản trị văn phòng tạo (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md).
 async function accountFor({ sub, email, name }) {
   let { rows } = await pool.query('SELECT * FROM account WHERE google_sub = $1', [sub])
   let account = rows[0]
@@ -85,7 +85,7 @@ async function accountFor({ sub, email, name }) {
     const existing = (await pool.query('SELECT 1 FROM account WHERE email = $1', [email])).rows[0]
     // Email đã gắn với một tài khoản Google khác (đổi tài khoản Google cùng email): dùng mã email.
     if (existing) throw fail('Email này đã gắn với một tài khoản Google khác. Đăng nhập bằng mã gửi qua email.')
-    throw fail(`Email ${email} chưa có tài khoản MCAH. Hỏi quản trị văn phòng tạo tài khoản cho email này, hoặc đăng nhập bằng email khác.`)
+    throw fail(`Email ${email} chưa có tài khoản Catoro. Hỏi quản trị văn phòng tạo tài khoản cho email này, hoặc đăng nhập bằng email khác.`)
   }
   if (account.disabled_at) throw { statusCode: 403, message: 'Tài khoản này đã bị khoá. Liên hệ quản trị.' }
   return account

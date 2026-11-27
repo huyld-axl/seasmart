@@ -33,8 +33,8 @@ src = sub('</style>', style + '\n</style>', src)
 src = sub('<nav class="wf-bar"', top + '\n<nav class="wf-bar"', src)
 src = sub('<main id="wf-design" class="wf-stage"></main>', '<main id="wf-design" class="wf-stage"></main>\n</div></div>', src)
 src = src[:src.rindex('</script>')] + tail + '\n</script>' + src[src.rindex('</script>') + 9:]
-src = re.sub(r'<title>.*?</title>', '<title>MCAH UI Kit</title>', src, count=1)
+src = re.sub(r'<title>.*?</title>', '<title>Catoro UI Kit</title>', src, count=1)
 if '<title>' not in src[:8000]:
-    src = '<title>MCAH UI Kit</title>\n' + src
-(S / 'showcase/mcah-ui.html').write_text(src)
+    src = '<title>Catoro UI Kit</title>\n' + src
+(S / 'showcase/catoro-ui.html').write_text(src)
 print(len(src))

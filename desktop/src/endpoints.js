@@ -1,9 +1,10 @@
-// Địa chỉ máy chủ dịch vụ và chỗ phát bản cập nhật (docs/mcah-ke-hoach-desktop-gd6.md 3.9).
+// Địa chỉ máy chủ dịch vụ và chỗ phát bản cập nhật (docs/catoro-ke-hoach-desktop-gd6.md 3.9).
 // Thứ tự: biến môi trường (chạy dev) → địa chỉ app đã học từ latest.json có chữ ký → địa chỉ gói lúc build.
 // Đổi tên miền: sửa desktop/endpoints.json rồi phát một bản (kể cả không đổi code). App đang chạy kiểm bản mới, thấy
 // `endpoints` trong latest.json đã ký thì lưu lại và từ đó dùng địa chỉ mới, không cần cài lại. Chữ ký bảo đảm không ai giả
 // được để lái app sang máy chủ lạ. Tên miền cũ nên giữ chuyển hướng (308) vài tháng cho máy chưa kịp kiểm bản mới.
 const fs = require('fs')
+const { productEnv } = require('./env')
 const { cloudUrlFile, updateUrlFile } = require('./paths')
 const { getSettings, saveSettings } = require('./settings')
 
@@ -11,8 +12,8 @@ const clean = (u) => String(u || '').trim().replace(/\/+$/, '')
 const fromFile = (file) => (fs.existsSync(file) ? clean(fs.readFileSync(file, 'utf8')) : '')
 const learned = () => getSettings().endpoints || {}
 
-const cloudUrl = () => clean(process.env.MCAH_CLOUD_URL) || learned().cloud_url || fromFile(cloudUrlFile) || 'http://localhost:4100'
-const updateUrl = () => clean(process.env.MCAH_UPDATE_URL) || learned().update_url || fromFile(updateUrlFile)
+const cloudUrl = () => clean(productEnv('CLOUD_URL')) || learned().cloud_url || fromFile(cloudUrlFile) || 'http://localhost:4100'
+const updateUrl = () => clean(productEnv('UPDATE_URL')) || learned().update_url || fromFile(updateUrlFile)
 
 // Chỉ nhận https (máy dev: http://localhost / 127.0.0.1).
 function valid(u) {

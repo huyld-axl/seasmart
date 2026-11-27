@@ -1,12 +1,13 @@
-// Mã PIN 6 số theo máy và tự khoá (docs/mcah-ke-hoach-desktop-gd2.md 4.4, wireframe 5).
+// Mã PIN 6 số theo máy và tự khoá (docs/catoro-ke-hoach-desktop-gd2.md 4.4, wireframe 5).
 // PIN băm scrypt + muối, cùng số lần sai, cất bằng két hệ điều hành (pin.bin). Sai MAX_FAILS lần thì báo để
 // tiến trình chính bỏ phiên (đăng nhập lại qua trình duyệt, web bắt nhập lại mật khẩu).
 // Tự khoá: rỗi quá ngưỡng (đặt cho cả văn phòng, 5–60 phút, mặc định 15) hoặc máy khoá màn hình. Quản trị văn phòng tắt
-// "Khoá bằng mã PIN" thì không hỏi đặt PIN, không tự khoá (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
+// "Khoá bằng mã PIN" thì không hỏi đặt PIN, không tự khoá (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.7).
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
 const { EventEmitter } = require('events')
+const { productEnv } = require('./env')
 const { app, powerMonitor, safeStorage } = require('electron')
 const { secretStoreAvailable } = require('./settings')
 
@@ -116,8 +117,8 @@ const pin = {
       if (!locked && loggedIn() && powerMonitor.getSystemIdleTime() >= lockMinutes() * 60) pin.lock()
     }, 30 * 1000)
     // Chỉ khi chạy dev: khoá sau N giây đăng nhập, để thử màn khoá không phải chờ rỗi thật.
-    if (!app.isPackaged && process.env.MCAH_LOCK_AFTER_SECONDS) {
-      setInterval(() => { if (!locked && loggedIn()) pin.lock() }, Number(process.env.MCAH_LOCK_AFTER_SECONDS) * 1000)
+    if (!app.isPackaged && productEnv('LOCK_AFTER_SECONDS')) {
+      setInterval(() => { if (!locked && loggedIn()) pin.lock() }, Number(productEnv('LOCK_AFTER_SECONDS')) * 1000)
     }
     powerMonitor.on('lock-screen', () => {
       if (loggedIn()) pin.lock()

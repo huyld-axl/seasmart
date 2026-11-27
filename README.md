@@ -1,4 +1,6 @@
-# MCAH (Marineport)
+# Catoro
+
+*Crew Agency Tools for Onboarding, Records & Operations* (tên cũ MCAH).
 
 Cổng tuyển dụng và quản lý thuyền viên hàng hải. Phần chính của đợt này: **AI tách và đọc giấy tờ thuyền viên**:
 thả sổ thuyền viên, chứng chỉ, giấy khác vào hồ sơ; AI tách từng giấy, đọc từng ô; người duyệt so với bản gốc rồi
@@ -6,7 +8,7 @@ thả sổ thuyền viên, chứng chỉ, giấy khác vào hồ sơ; AI tách t
 
 - Backend: Fastify 5, PostgreSQL 17 (`pg`), JWT. Thư mục `backend/`.
 - Frontend: React 19, Ant Design 6, React Query, Vite. Thư mục `frontend/`.
-- Quy ước mã và kiến trúc: `CLAUDE.md`. Kế hoạch, số đo và quyết định của tính năng AI: `docs/mcah-ke-hoach-ai-tach-doc-giay-to.md`.
+- Quy ước mã và kiến trúc: `CLAUDE.md`. Kế hoạch, số đo và quyết định của tính năng AI: `docs/catoro-ke-hoach-ai-tach-doc-giay-to.md`.
 
 ## Cần có
 
@@ -175,6 +177,6 @@ Bộ mẫu `docs/samples/` chứa giấy tờ thật nên nằm ngoài git (`.gi
 ## Thiết kế và UI
 
 - Wireframe đã chốt: `docs/design/wireframes/nhom-d.html` (mở bằng một máy chủ tĩnh ở thư mục gốc dự án).
-- UI Kit: `docs/design/ui-kit/mcah-ui.html`, nhóm "AI đọc giấy tờ" (D1 đến D4).
+- UI Kit: `docs/design/ui-kit/catoro-ui.html`, nhóm "AI đọc giấy tờ" (D1 đến D4).
 - Component dùng chung: `frontend/src/components/ds/`, xem tại `/design-system` khi chạy frontend.
 - Công cụ đo giao diện `probe.mjs` mở route cần đăng nhập bằng `?devToken=<JWT>` (chỉ ở chế độ dev).

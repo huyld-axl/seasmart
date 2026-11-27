@@ -63,7 +63,7 @@ export default function PinCard() {
   function forgot() {
     modal.confirm({
       title: 'Đăng nhập lại để đặt mã PIN mới?',
-      content: 'MCAH đăng xuất trên máy này và xoá mã PIN cũ. Đăng nhập lại qua trình duyệt (cần internet), rồi đặt mã PIN mới. Dữ liệu không mất.',
+      content: 'Catoro đăng xuất trên máy này và xoá mã PIN cũ. Đăng nhập lại qua trình duyệt (cần internet), rồi đặt mã PIN mới. Dữ liệu không mất.',
       okText: 'Đăng nhập lại',
       cancelText: 'Huỷ',
       onOk: () => desktop.logout().then(() => (window.location.href = '/login')),
@@ -79,7 +79,7 @@ export default function PinCard() {
 
   return (
     <Card title="Mã PIN">
-      <p style={{ marginTop: 0 }}>Mã PIN mở khoá MCAH trên máy này. Mỗi máy một mã riêng; quản trị không xem hay đặt lại hộ được.</p>
+      <p style={{ marginTop: 0 }}>Mã PIN mở khoá Catoro trên máy này. Mỗi máy một mã riêng; quản trị không xem hay đặt lại hộ được.</p>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <Button onClick={() => setOpen(true)}>Đổi mã PIN</Button>
         <Button type="link" onClick={forgot}>Quên mã PIN?</Button>

@@ -38,7 +38,7 @@
                               trên --surface, 4.51:1 trên --background */
   /* Đường tóc trang trí: viền card, viền khung dropdown, đường chia trong danh
      sách và trong menu. Nhạt đến mức chỉ đủ vạch ranh giới. Xem luật M13, M14. */
-  /* Dự án MCAH: chủ dự án chốt lại 13/10/2026 (luật chốt #19). Bản cũ #f7f7f8 (1.07:1) làm khung
+  /* Dự án Catoro: chủ dự án chốt lại 13/10/2026 (luật chốt #19). Bản cũ #f7f7f8 (1.07:1) làm khung
      danh sách mờ, không rõ ranh giới. Nay 1.25:1 trên --surface. */
   --border: #e5e6ea;
   /* Đậm hơn ĐÚNG một bậc. Cho viền Ô NHẬP và NÚT OUTLINE (viền là thứ duy nhất

@@ -13,10 +13,10 @@ const { shell } = require('electron')
 
 const KEEP_MS = 24 * 3600 * 1000
 
-// ~/MCAH/Tệp gửi thư (Ubuntu) hoặc %LOCALAPPDATA%\MCAH\Tệp gửi thư (Windows).
+// ~/Catoro/Tệp gửi thư (Ubuntu) hoặc %LOCALAPPDATA%\Catoro\Tệp gửi thư (Windows). Trước 0.9.14 là thư mục MCAH (tệp tạm, tự xoá sau 24 giờ).
 function attachmentDir() {
   const base = process.platform === 'win32' ? process.env.LOCALAPPDATA || os.tmpdir() : os.homedir()
-  const dir = path.join(base, 'MCAH', 'Tệp gửi thư')
+  const dir = path.join(base, 'Catoro', 'Tệp gửi thư')
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   return dir
 }

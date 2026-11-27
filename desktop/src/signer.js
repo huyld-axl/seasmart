@@ -1,4 +1,4 @@
-// Cổng ký nội bộ (docs/mcah-ke-hoach-desktop-gd2.md 4.2): backend không giữ khoá máy chính. Backend gửi
+// Cổng ký nội bộ (docs/catoro-ke-hoach-desktop-gd2.md 4.2): backend không giữ khoá máy chính. Backend gửi
 // POST http://127.0.0.1:<cổng>/call { office_id, path, body } kèm x-signer-token (mã ngẫu nhiên mỗi lần chạy app);
 // tiến trình chính ký Ed25519 bằng khoá máy chính rồi gửi tới máy chủ dịch vụ, trả { status, body }.
 // Chuỗi đem ký khớp cloud/src/routes/api.js: "POST\n<path>\n<time>\n<sha256 hex của thân>".
@@ -38,7 +38,7 @@ function start({ cloudUrl, machineKey }) {
             signal: AbortSignal.timeout(130000),
           })
         } catch {
-          return reply(503, { error: 'Không kết nối được máy chủ MCAH. Cần kết nối internet.', code: 'CLOUD_OFFLINE' })
+          return reply(503, { error: 'Không kết nối được máy chủ Catoro. Cần kết nối internet.', code: 'CLOUD_OFFLINE' })
         }
         const text = await r.text()
         let data = {}

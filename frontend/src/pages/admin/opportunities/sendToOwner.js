@@ -24,6 +24,6 @@ export function mailBody(o, contact, people, sender) {
     ...lines,
     '',
     'Best regards,',
-    ascii(sender) || 'MCAH',
+    ascii(sender) || 'Catoro',
   ].join('\n')
 }

@@ -1,7 +1,7 @@
 # Build bộ cài app máy tính (Ubuntu + Windows) từ đúng một commit.
 # Tự chạy khi push dev có đổi desktop/. Chạy tay (Run workflow) chỉ hiện khi file này đã có ở nhánh mặc định.
 # Máy phát hành tải artifact về desktop/dist/installer/ rồi chạy `npm run release` (khoá ký chỉ nằm ở máy phát hành).
-# docs/mcah-quy-trinh-phat-hanh.md
+# docs/catoro-quy-trinh-phat-hanh.md
 name: Desktop build
 
 on:
@@ -46,9 +46,9 @@ jobs:
       - { name: build-info, if: "matrix.target == 'win'", run: node scripts/build-info.js win }
       - uses: actions/upload-artifact@v4
         with:
-          name: mcah-installer-${{ matrix.target }}
+          name: catoro-installer-${{ matrix.target }}
           if-no-files-found: error
           path: |
             desktop/dist/installer/*.deb
-            desktop/dist/installer/MCAH Setup *.exe
+            desktop/dist/installer/Catoro Setup *.exe
             desktop/dist/installer/build-info-${{ matrix.target }}.json

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <!-- Dấu TẠM của Catoro (chờ logo thật của designer): mèo thủy thủ, "Cat" trong Catoro. Đầu mèo hai tai nhọn,
+       mắt khoét rỗng, đội mũ thủy thủ nhỏ giữa hai tai. viewBox 24, vẽ trong vùng 4–20, một màu currentColor.
+       Một path, fill-rule nonzero: mặt, tai, mũ vẽ theo chiều kim đồng hồ; mắt vẽ ngược chiều nên thành lỗ.
+       Có logo thật: thay phần hình trong tệp này (giữ viewBox 24 và currentColor) rồi chạy `node scripts/brand-icons.js`. -->
+  <path d="M4.8 14A7.2 6.2 0 1 1 19.2 14A7.2 6.2 0 1 1 4.8 14Z M5 4L10 7.5L4.8 12Z M19 4L19.2 12L14 7.5Z M9.3 7.3V6.5H10.4V6.2A1.6 1.5 0 0 1 13.6 6.2V6.5H14.7V7.3Z M8.2 13.5A1.1 1.1 0 1 0 10.4 13.5A1.1 1.1 0 1 0 8.2 13.5Z M13.6 13.5A1.1 1.1 0 1 0 15.8 13.5A1.1 1.1 0 1 0 13.6 13.5Z" />
+</svg>

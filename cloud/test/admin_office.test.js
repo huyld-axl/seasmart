@@ -119,7 +119,7 @@ describe('báo lỗi từ app', () => {
     expect(list.body).toContain('DB_MIGRATE')
     expect(list.body).toContain('ghi &#60;chú&#62;')
     const file = await b.get(`${A}/bug-reports/download?id=${rows[0].id}`)
-    expect(file.headers['content-disposition']).toContain(`mcah-bao-loi-${rows[0].id}.txt`)
+    expect(file.headers['content-disposition']).toContain(`catoro-bao-loi-${rows[0].id}.txt`)
     expect(file.body).toContain('===== main.log =====\nKhởi động lỗi <x>')
     expect((await b.get(`${A}/bug-reports/download?id=abc`)).statusCode).toBe(404)
     expect((await browser().get(`${A}/bug-reports`)).headers.location).toContain(`${I}/login?next=`)

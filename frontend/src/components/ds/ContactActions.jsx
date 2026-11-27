@@ -17,7 +17,7 @@ function LinkButton({ href, label, children, external }) {
 
 const digits = (phone) => String(phone).replace(/[^\d+]/g, '')
 
-// Thao tác nhanh cho một số điện thoại: sao chép, gọi, nhắn SMS. Kiểu duy nhất của MCAH, đặt ngay sau số.
+// Thao tác nhanh cho một số điện thoại: sao chép, gọi, nhắn SMS. Kiểu duy nhất của Catoro, đặt ngay sau số.
 export function PhoneActions({ phone }) {
   if (!phone) return null
   return (

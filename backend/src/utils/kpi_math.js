@@ -1,5 +1,5 @@
 // Hàm tính thuần cho KPI của màn Tổng quan: không đọc DB, không đọc giờ máy.
-// Định nghĩa ở docs/mcah-ke-hoach-tong-quan.md mục 1.4. Tháng viết 'YYYY-MM', ngày viết 'YYYY-MM-DD'.
+// Định nghĩa ở docs/catoro-ke-hoach-tong-quan.md mục 1.4. Tháng viết 'YYYY-MM', ngày viết 'YYYY-MM-DD'.
 const { parseDate, round2 } = require('./voyage_math')
 
 const DAY_MS = 86400000

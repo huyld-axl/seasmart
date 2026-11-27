@@ -24,11 +24,11 @@ export default function WhatsNewRibbon() {
   return (
     <>
       <div role="status" style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '8px 20px', fontSize: 13, background: 'var(--success-bg)', color: 'var(--success)', borderBottom: '1px solid var(--border)' }}>
-        <span>✓ Đã cập nhật lên MCAH {info.version}.</span>
+        <span>✓ Đã cập nhật lên Catoro {info.version}.</span>
         <Button type="link" size="small" style={{ marginLeft: 'auto' }} onClick={() => setOpen(true)}>Xem có gì mới</Button>
         <Button type="link" size="small" onClick={dismiss}>Đóng</Button>
       </div>
-      <Modal open={open} title={`Có gì mới trong MCAH ${info.version}`} onCancel={dismiss} footer={<Button type="primary" onClick={dismiss}>Đã xem</Button>}>
+      <Modal open={open} title={`Có gì mới trong Catoro ${info.version}`} onCancel={dismiss} footer={<Button type="primary" onClick={dismiss}>Đã xem</Button>}>
         <NotesList notes={info.notes} />
         <p style={{ margin: '12px 0 0' }}>
           <a href={`/release-notes/index.html#v${info.version}`} target="_blank" rel="noopener noreferrer">Xem ghi chú các bản trước</a>

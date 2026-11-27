@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="icon" href="data:," />
-<title>MCAH Wireframe Nhóm D</title>
+<title>Catoro Wireframe Nhóm D</title>
 <style>@font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -78,7 +78,7 @@
   unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
 }</style>
 <style>
-/* Wireframe nhóm A của MCAH (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
+/* Wireframe nhóm A của Catoro (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
      Token chép từ frontend/src/theme/tokens.js; component dùng chung class với frontend/src/components/ds/ds.css. */
   :root {
     color-scheme: light;
@@ -134,7 +134,7 @@
   body { margin: 0; background: var(--background); color: var(--foreground); font: 14px/1.5 var(--app-font); -webkit-font-smoothing: antialiased; }
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: none; }
-/* Component riêng của MCAH. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
+/* Component riêng của Catoro. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
    token (src/theme/tokens.js). Không mã màu nào ngoài biến, trừ lớp phủ theo màu chữ. */
 
 .ds-sr-only {
@@ -1610,7 +1610,7 @@ const hrefFor = (patch) => `?${new URLSearchParams({ ...Object.fromEntries(KEYS.
 // ---------- Khung app ----------
 const NAV = [['seafarers', 'Thuyền viên', 'team'], ['exports', 'Bản xuất', 'send'], ['catalog', 'Danh mục', 'database'], ['admin', 'Quản trị', 'safety-certificate']];
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
-const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
+const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">Catoro</span></span>`;
 function shell({ crumb, crumb2, crumb3, content, modal = '' }) {
   const collapsed = state.sider === 'collapsed';
   const nav = NAV.map(([key, label, iconName]) => `<a class="nav-item" ${key === 'seafarers' ? 'aria-current="page"' : ''} title="${label}">${icon(iconName)}<span>${label}</span></a>`).join('');
@@ -1623,7 +1623,7 @@ function shell({ crumb, crumb2, crumb3, content, modal = '' }) {
         <nav class="topbar__crumb" aria-label="Đường dẫn"><a href="#">${crumb}</a>${icon('right')}${crumb2 ? `<a href="#">${crumb2}</a>${icon('right')}` : ''}${crumb3 ? `<a href="#">${crumb3}</a>${icon('right')}` : ''}</nav>
         <div class="topbar__right">
           <button type="button" class="user-btn" data-action="user" aria-haspopup="menu" aria-expanded="${state.userOpen}"><span class="avatar">PT</span><span class="user-btn__name">Phạm Văn Tùng</span>${icon('down')}</button>
-          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">phamvantung@mcah.demo · Nhân viên hồ sơ</p><div class="menu__sep"></div><button type="button" class="menu__item menu__item--danger" role="menuitem">${icon('logout')}Đăng xuất</button></div>` : ''}
+          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">phamvantung@catoro.demo · Nhân viên hồ sơ</p><div class="menu__sep"></div><button type="button" class="menu__item menu__item--danger" role="menuitem">${icon('logout')}Đăng xuất</button></div>` : ''}
         </div>
       </header>
       <div class="content">${content}</div>
@@ -2359,7 +2359,7 @@ function renderDesign() {
 }
 function render() {
   document.documentElement.dataset.mau = state.mau;
-  document.title = `MCAH Wireframe Nhóm D · ${SCREEN().label} ${state.v.toUpperCase()}`;
+  document.title = `Catoro Wireframe Nhóm D · ${SCREEN().label} ${state.v.toUpperCase()}`;
   renderToolbar();
   renderDesign();
 }

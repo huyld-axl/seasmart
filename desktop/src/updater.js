@@ -1,6 +1,6 @@
 // Tự cập nhật (giai đoạn 0, bước 0.7). Không dùng electron-updater: cả hai hệ điều hành đều kiểm chữ ký Ed25519
 // của bên mình (Linux không có kiểm chữ ký sẵn).
-//   <MCAH_UPDATE_URL>/latest.json = { version, files: { linux: { name, sha256, size }, win: {...} }, signature }
+//   <CATORO_UPDATE_URL>/latest.json = { version, files: { linux: { name, sha256, size }, win: {...} }, signature }
 //   signature = Ed25519 trên JSON của { version, files } (khoá riêng chỉ ở máy phát hành, khoá công khai gói trong app).
 // Tải bộ cài về thư mục tạm của app, kiểm SHA-256, hỏi người dùng, rồi cài:
 //   Ubuntu: pkexec dpkg -i (Ubuntu hiện hộp thoại xin mật khẩu quản trị) rồi mở lại app.
@@ -19,7 +19,7 @@ const endpoints = require('./endpoints')
 const updateBase = () => endpoints.updateUrl()
 const PLATFORM = process.platform === 'win32' ? 'win' : 'linux'
 
-// Kênh cập nhật (docs/mcah-ke-hoach-desktop-gd6.md 3.4): thử nghiệm ở <địa chỉ>/beta. main.js đặt nguồn kênh
+// Kênh cập nhật (docs/catoro-ke-hoach-desktop-gd6.md 3.4): thử nghiệm ở <địa chỉ>/beta. main.js đặt nguồn kênh
 // (máy chính: cài đặt của máy; máy nhân viên: hỏi máy chính). Chỉ nhận bản MỚI HƠN nên đổi kênh không hạ bản.
 let channelOf = async () => 'stable'
 const setChannelSource = (fn) => { channelOf = fn }
@@ -101,13 +101,13 @@ function install(file) {
   })
 }
 
-const INSTALL_HINT = PLATFORM === 'linux' ? 'Ubuntu sẽ hiện hộp hỏi mật khẩu quản trị của máy: nhập để cài tiếp.' : 'MCAH sẽ tự đóng rồi mở lại bản mới.'
+const INSTALL_HINT = PLATFORM === 'linux' ? 'Ubuntu sẽ hiện hộp hỏi mật khẩu quản trị của máy: nhập để cài tiếp.' : 'Catoro sẽ tự đóng rồi mở lại bản mới.'
 
 // Cài bộ cài đã tải, cửa sổ tiến độ báo đang cài; xong thì đóng app để bản mới chạy.
 async function installAndRestart(file, shown, version) {
-  shown.set({ title: `Đang cài MCAH ${version}…`, hint: INSTALL_HINT })
+  shown.set({ title: `Đang cài Catoro ${version}…`, hint: INSTALL_HINT })
   await install(file)
-  shown.set({ title: `Đã cài MCAH ${version}, đang mở lại…`, hint: 'MCAH sẽ tự mở lại sau vài giây.' })
+  shown.set({ title: `Đã cài Catoro ${version}, đang mở lại…`, hint: 'Catoro sẽ tự mở lại sau vài giây.' })
   if (PLATFORM === 'linux') app.relaunch()
   app.quit()
 }
@@ -129,8 +129,8 @@ async function runUpdate(window, { quiet = false, beforeInstall = null } = {}) {
       defaultId: 0,
       cancelId: 1,
       title: 'Có bản mới',
-      message: `Có bản mới MCAH ${update.version} (đang dùng ${app.getVersion()}) · tải ${Math.round(update.size / 1024 / 1024)} MB`,
-      // Ghi chú thay đổi (docs/mcah-ke-hoach-desktop-gd6.md 3.5, wireframe màn 1).
+      message: `Có bản mới Catoro ${update.version} (đang dùng ${app.getVersion()}) · tải ${Math.round(update.size / 1024 / 1024)} MB`,
+      // Ghi chú thay đổi (docs/catoro-ke-hoach-desktop-gd6.md 3.5, wireframe màn 1).
       detail: [
         update.notes ? `Có gì mới:\n${update.notes}` : '',
         update.has_migrations ? 'Các máy trong văn phòng sẽ tạm không lưu được trong vài phút.' : '',
@@ -139,10 +139,10 @@ async function runUpdate(window, { quiet = false, beforeInstall = null } = {}) {
     })
     if (response !== 0) return false
     shown = progress.open(window)
-    const title = `Đang tải MCAH ${update.version}…`
+    const title = `Đang tải Catoro ${update.version}…`
     shown.set({ title, done: 0, total: update.size })
     const file = await download(update, (done, total) => shown.set({ title, done, total }))
-    // Máy chính, bản mới có đổi dữ liệu (docs/mcah-ke-hoach-desktop-gd4.md 3.5): dừng ghi, chụp DB, giữ bộ cài bản đang chạy.
+    // Máy chính, bản mới có đổi dữ liệu (docs/catoro-ke-hoach-desktop-gd4.md 3.5): dừng ghi, chụp DB, giữ bộ cài bản đang chạy.
     if (update.has_migrations && beforeInstall) {
       shown.set({ title: 'Đang chụp lại dữ liệu trước khi cài…', hint: 'Các máy trong văn phòng tạm không lưu được trong vài phút.' })
       await beforeInstall(update)
@@ -158,7 +158,7 @@ async function runUpdate(window, { quiet = false, beforeInstall = null } = {}) {
 }
 
 // Máy chính giữ bộ cài mới nhất của cả hai hệ điều hành để máy nhân viên tải qua mạng văn phòng, không cần internet
-// (docs/mcah-ke-hoach-desktop-gd3.md 3.5). Thư mục lan-installers: latest.json (đã ký) + tệp của từng hệ điều hành.
+// (docs/catoro-ke-hoach-desktop-gd3.md 3.5). Thư mục lan-installers: latest.json (đã ký) + tệp của từng hệ điều hành.
 const mirrorDir = () => path.join(app.getPath('userData'), 'lan-installers')
 
 async function mirrorInstallers() {
@@ -207,12 +207,12 @@ async function updateFromMain(window, fetchFromMain) {
   if (!file || !newer(manifest.version, app.getVersion())) throw new Error('Máy chính chưa có bộ cài mới hơn cho máy này')
   await dialog.showMessageBox(window, {
     message: `Cần cập nhật để nối máy chính`,
-    detail: `Máy chính đang dùng MCAH ${manifest.version}, máy này ${app.getVersion()}. MCAH sẽ tải bộ cài từ máy chính (không cần internet) rồi cài.${PLATFORM === 'linux' ? ' Ubuntu sẽ hỏi mật khẩu quản trị.' : ''}`,
+    detail: `Máy chính đang dùng Catoro ${manifest.version}, máy này ${app.getVersion()}. Catoro sẽ tải bộ cài từ máy chính (không cần internet) rồi cài.${PLATFORM === 'linux' ? ' Ubuntu sẽ hỏi mật khẩu quản trị.' : ''}`,
     buttons: ['Cập nhật'],
   })
   const shown = progress.open(window)
   try {
-    shown.set({ title: `Đang tải MCAH ${manifest.version} từ máy chính…` })
+    shown.set({ title: `Đang tải Catoro ${manifest.version} từ máy chính…` })
     const data = await fetchFromMain(file.name)
     if (crypto.createHash('sha256').update(data).digest('hex') !== file.sha256) throw new Error('Bộ cài tải từ máy chính bị sai (SHA-256 không khớp), không cài')
     const dir = path.join(app.getPath('userData'), 'updates')

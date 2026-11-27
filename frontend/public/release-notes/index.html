@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MCAH - Ghi chú phát hành</title>
+<title>Catoro - Ghi chú phát hành</title>
 <style>
   /* Trang ghi chú phát hành tĩnh, cùng kiểu trang hướng dẫn (guide/index.html). Một trang cho cả web và app máy tính:
      app mở bản trên web. Phần danh sách bản do desktop/scripts/notes-page.js sinh từ desktop/release-notes/*.md. */
@@ -33,6 +33,7 @@
   .side { position: fixed; inset: 0 auto 0 0; width: var(--side); display: flex; flex-direction: column; background: var(--surface); border-right: 1px solid var(--border); z-index: 20; }
   .brand { display: flex; align-items: center; gap: 12px; padding: 18px 20px 14px; text-decoration: none; color: var(--fg); }
   .brand i { width: 36px; height: 36px; border-radius: 9px; background: var(--primary); color: #fff; display: grid; place-items: center; font: 700 14px/1 var(--font); font-style: normal; letter-spacing: .02em; }
+  .brand i img { width: 100%; height: 100%; display: block; }
   .brand b { display: block; font-size: 15px; }
   .brand small { display: block; font-size: 12.5px; color: var(--muted); }
   .toc { flex: 1; overflow-y: auto; padding: 4px 12px 24px; }
@@ -77,10 +78,11 @@
 </head>
 <body>
 <aside class="side" id="side" aria-label="Các phiên bản">
-  <a class="brand" href="#"><i>MC</i><span><b>MCAH</b><small>Ghi chú phát hành</small></span></a>
+  <a class="brand" href="#"><i><img src="/favicon.svg" alt=""></i><span><b>Catoro</b><small>Ghi chú phát hành</small></span></a>
   <nav class="toc" id="toc">
     <p>Phiên bản</p>
     <!-- MỤC LỤC: tự sinh -->
+    <a href="#v0.9.14">Bản 0.9.14</a>
     <a href="#v0.9.13">Bản 0.9.13</a>
     <a href="#v0.9.12">Bản 0.9.12</a>
     <a href="#v0.9.11">Bản 0.9.11</a>
@@ -113,14 +115,22 @@
 
   <main>
     <header>
-      <div class="kicker">MCAH</div>
+      <div class="kicker">Catoro</div>
       <h1>Có gì mới</h1>
-      <p>Những thay đổi chính của từng bản MCAH, bản mới nhất ở trên cùng. Bản web và app máy tính dùng chung các thay đổi này.</p>
+      <p>Những thay đổi chính của từng bản Catoro, bản mới nhất ở trên cùng. Bản web và app máy tính dùng chung các thay đổi này.</p>
     </header>
 
     <!-- BẢN PHÁT HÀNH: tự sinh -->
+    <section id="v0.9.14">
+      <h2>Bản 0.9.14 <span class="ver">Mới nhất</span></h2>
+      <ul>
+        <li>MCAH nay có tên mới là Catoro. Tên trên app, menu Start / danh sách ứng dụng, bộ cài, trang hướng dẫn và email đều đổi theo. Biểu tượng app đổi sang logo tạm, sẽ thay bằng logo chính thức sau.</li>
+        <li>Dữ liệu, tài khoản, mã PIN, cài đặt email và máy nhân viên đã nối giữ nguyên, không phải đăng nhập lại. Thư mục hồ sơ trên máy chính vẫn ở chỗ cũ.</li>
+        <li>Tệp báo cáo Excel tải về có tên bắt đầu bằng &quot;Catoro_Bao-cao&quot;.</li>
+      </ul>
+    </section>
     <section id="v0.9.13">
-      <h2>Bản 0.9.13 <span class="ver">Mới nhất</span></h2>
+      <h2>Bản 0.9.13</h2>
       <ul>
         <li>Xuất PDF chạy ngay sau khi cài MCAH, trên mọi máy, không phải cài thêm LibreOffice hay thành phần nào. Bỏ hộp &quot;Cần cài thành phần xuất PDF&quot; và thẻ Xuất PDF trong Cài đặt trên máy này.</li>
         <li>PDF giống hệt bản xem trước của biểu mẫu; xuất nhanh hơn. Ô đánh dấu (☐) trong mẫu và số trang ở chân trang hiện đúng.</li>

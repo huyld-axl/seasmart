@@ -1,4 +1,4 @@
-// Máy nhân viên (docs/mcah-ke-hoach-desktop-gd3.md 3.2, 3.3): ghép với máy chính, rồi mọi /api đi qua HTTPS trong mạng
+// Máy nhân viên (docs/catoro-ke-hoach-desktop-gd3.md 3.2, 3.3): ghép với máy chính, rồi mọi /api đi qua HTTPS trong mạng
 // văn phòng. Ghim chứng chỉ: bắt tay thử (không gửi dữ liệu) lấy chứng chỉ, so dấu vân tay với dấu vân tay máy chủ
 // dịch vụ ghi trong vé; khớp thì dùng chính chứng chỉ đó làm CA duy nhất cho mọi kết nối sau (không tin kho CA nào khác).
 // staff.json (két hệ điều hành): { officeId, officeName, fingerprint, name, port, host, deviceToken }.
@@ -109,7 +109,7 @@ async function postJson(target, pathname, data) {
 function mainFromTicket(ticket) {
   const claims = JSON.parse(Buffer.from(String(ticket).split('.')[1], 'base64url'))
   if (!claims.office) throw fail('Tài khoản chưa thuộc văn phòng nào', 'NO_OFFICE')
-  if (!claims.machine_cert) throw fail('Máy chính chưa sẵn sàng cho máy nhân viên. Mở MCAH trên máy chính (có internet) rồi thử lại.', 'MAIN_NOT_READY')
+  if (!claims.machine_cert) throw fail('Máy chính chưa sẵn sàng cho máy nhân viên. Mở Catoro trên máy chính (có internet) rồi thử lại.', 'MAIN_NOT_READY')
   return { officeId: claims.office, officeName: claims.office_name, fingerprint: claims.machine_cert, name: claims.machine_name, port: claims.machine_port || LAN_PORT }
 }
 

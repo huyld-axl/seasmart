@@ -69,7 +69,7 @@ module.exports = fp(async function (fastify) {
   fastify.decorate('can', can)
 
   // Dùng sau authenticate cho mọi API gửi ảnh cho AI đọc: chưa đồng ý thì 409 AI_CONSENT_REQUIRED, giao diện hỏi
-  // (docs/mcah-ke-hoach-desktop-gd4.md 3.8) rồi gửi lại.
+  // (docs/catoro-ke-hoach-desktop-gd4.md 3.8) rồi gửi lại.
   fastify.decorate('requireAiConsent', async function (request, reply) {
     if (!request.access?.aiConsentAt) {
       return reply.code(409).send({ error: 'Cần đồng ý gửi ảnh cho AI đọc trước khi quét', code: 'AI_CONSENT_REQUIRED' })

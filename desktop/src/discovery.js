@@ -1,4 +1,4 @@
-// Tìm máy chính trong mạng văn phòng bằng mDNS (docs/mcah-ke-hoach-desktop-gd3.md 3.1, 3.2): dịch vụ _mcah._tcp,
+// Tìm máy chính trong mạng văn phòng bằng mDNS (docs/catoro-ke-hoach-desktop-gd3.md 3.1, 3.2): dịch vụ _mcah._tcp,
 // TXT chỉ có office (mã văn phòng) và proto. Tìm thấy chưa đủ tin: máy nhân viên luôn kiểm dấu vân tay chứng chỉ.
 const { Bonjour } = require('bonjour-service')
 const { PROTOCOL, SERVICE } = require('./lan')
@@ -8,6 +8,7 @@ const instance = () => (bonjour ||= new Bonjour())
 
 function advertise({ name, port, officeId }) {
   instance().unpublishAll()
+  // Tên quảng bá 'MCAH …' và loại dịch vụ giữ nguyên khi đổi tên: máy bản cũ tìm máy chính theo đây (docs/catoro-ke-hoach-doi-ten.md 3.6).
   instance().publish({ name: `MCAH ${name}`, type: SERVICE, port, txt: { office: officeId, proto: String(PROTOCOL), host: name } })
 }
 

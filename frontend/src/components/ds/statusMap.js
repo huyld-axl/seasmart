@@ -1,4 +1,4 @@
-// Bảng ánh xạ trạng thái DUY NHẤT của MCAH (D2, docs/mcah-ui-ux-design-plan.md mục 6).
+// Bảng ánh xạ trạng thái DUY NHẤT của Catoro (D2, docs/mcah-ui-ux-design-plan.md mục 6).
 // tone: neutral | success | warning | error (M7). mark: hình đầu badge, tách các trạng thái cùng tông.
 export const STATUS = {
   document: {

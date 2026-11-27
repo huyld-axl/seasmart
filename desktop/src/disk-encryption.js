@@ -1,4 +1,4 @@
-// Ổ đĩa chứa dữ liệu máy chính có mã hoá không (docs/mcah-ke-hoach-desktop-gd4.md 3.7, wireframe màn 6). Không mã hoá
+// Ổ đĩa chứa dữ liệu máy chính có mã hoá không (docs/catoro-ke-hoach-desktop-gd4.md 3.7, wireframe màn 6). Không mã hoá
 // tài liệu trong app (Q14) nên đây là lớp bảo vệ chính khi mất máy. → 'on' | 'off' | 'unknown'
 //   Ubuntu: thiết bị chứa thư mục (df) có tầng crypt (LUKS) bên dưới (lsblk -s).
 //   Windows: thuộc tính BitLockerProtection của ổ (đọc được không cần quyền quản trị; 1 / 3 / 5 = đang bảo vệ).

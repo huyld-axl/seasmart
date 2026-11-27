@@ -1,4 +1,4 @@
-// Tên và chỗ của từng tệp trong thư mục hồ sơ dễ đọc (docs/mcah-ke-hoach-desktop-gd4.md 3.2, kế hoạch tổng mục 5.5).
+// Tên và chỗ của từng tệp trong thư mục hồ sơ dễ đọc (docs/catoro-ke-hoach-desktop-gd4.md 3.2, kế hoạch tổng mục 5.5).
 // Hàm thuần: nhận dữ liệu hồ sơ, trả đường dẫn tương đối (dấu /). file_store.js lo phần ghi / chuyển trên đĩa.
 const path = require('path')
 
@@ -84,6 +84,6 @@ function unique(rel, taken) {
   }
 }
 
-const README = 'Thư mục này do MCAH quản lý.\r\n\r\nXem và copy thoải mái. Muốn thêm, sửa, xoá giấy tờ thì làm trong app MCAH.\r\nĐổi tên, di chuyển hoặc xoá tệp ở đây có thể làm MCAH không tìm thấy tệp.\r\n'
+const README = 'Thư mục này do Catoro quản lý.\r\n\r\nXem và copy thoải mái. Muốn thêm, sửa, xoá giấy tờ thì làm trong app Catoro.\r\nĐổi tên, di chuyển hoặc xoá tệp ở đây có thể làm Catoro không tìm thấy tệp.\r\n'
 
 module.exports = { clean, seafarerFolder, partnerFolder, certificatePath, photoPath, sentPath, logoPath, fit, unique, README, GROUPS }

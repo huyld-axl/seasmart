@@ -16,8 +16,7 @@ Module._load = function (request, parent, ...rest) {
   if (request === './paths') return { cloudUrlFile: path.join(dir, 'cloud-url.txt'), updateUrlFile: path.join(dir, 'update-url.txt') }
   return load.call(this, request, parent, ...rest)
 }
-delete process.env.MCAH_CLOUD_URL
-delete process.env.MCAH_UPDATE_URL
+for (const k of ['CATORO_CLOUD_URL', 'CATORO_UPDATE_URL', 'MCAH_CLOUD_URL', 'MCAH_UPDATE_URL']) delete process.env[k]
 const endpoints = require('../src/endpoints')
 
 test('địa chỉ: mặc định theo bộ cài, học địa chỉ mới từ bản tin, từ chối địa chỉ không https', () => {
@@ -28,8 +27,15 @@ test('địa chỉ: mặc định theo bộ cài, học địa chỉ mới từ 
   assert.strictEqual(endpoints.cloudUrl(), 'https://moi.vn/account')
   assert.strictEqual(endpoints.updateUrl(), 'https://moi.vn/download/files')
   assert.strictEqual(endpoints.learn({ cloud_url: 'https://moi.vn/account', update_url: 'https://moi.vn/download/files' }), false)
-  process.env.MCAH_CLOUD_URL = 'http://127.0.0.1:4100'
+  process.env.CATORO_CLOUD_URL = 'http://127.0.0.1:4100'
   assert.strictEqual(endpoints.cloudUrl(), 'http://127.0.0.1:4100')
+  delete process.env.CATORO_CLOUD_URL
+  // Tên cũ trước khi đổi MCAH → Catoro vẫn nhận; tên mới thắng khi đặt cả hai.
+  process.env.MCAH_CLOUD_URL = 'http://127.0.0.1:4101'
+  assert.strictEqual(endpoints.cloudUrl(), 'http://127.0.0.1:4101')
+  process.env.CATORO_CLOUD_URL = 'http://127.0.0.1:4102'
+  assert.strictEqual(endpoints.cloudUrl(), 'http://127.0.0.1:4102')
+  delete process.env.CATORO_CLOUD_URL
   delete process.env.MCAH_CLOUD_URL
   fs.rmSync(dir, { recursive: true, force: true })
 })

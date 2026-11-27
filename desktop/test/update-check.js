@@ -1,5 +1,5 @@
 // Thử phần kiểm bản cập nhật (bước 0.7) trong Electron, không cài: electron test/update-check.js
-// Cần chỗ phát thử ở MCAH_UPDATE_URL. Giả làm app bản 0.0.1.
+// Cần chỗ phát thử ở CATORO_UPDATE_URL. Giả làm app bản 0.0.1.
 const { app } = require('electron')
 app.getVersion = () => '0.0.1'
 app.whenReady().then(async () => {

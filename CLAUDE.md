@@ -1,4 +1,4 @@
-# Marineport Project Instructions
+# Catoro Project Instructions
 
 ## gstack
 - Use the /browse skill from gstack for all web browsing
@@ -9,7 +9,11 @@
 
 ## 1. Project Overview
 
-**Marineport** — Cổng tuyển dụng & quản lý thuyền viên hàng hải.
+**Catoro** (*Crew Agency Tools for Onboarding, Records & Operations*) — phần mềm cho công ty môi giới thuyền viên hàng hải. Tên cũ: MCAH (trước đó Marineport / SeaSmart).
+
+- **Chữ người thấy** (giao diện, email, tài liệu, bộ cài) luôn ghi `Catoro`. Logo sinh từ `docs/branding/catoro-mark.svg` bằng `node scripts/brand-icons.js`, không sửa tay các icon.
+- **Tên kỹ thuật giữ tên cũ** vì gắn với dữ liệu trên máy khách hoặc giao thức giữa bản cũ và bản mới: `app.setName('MCAH')`, `appId vn.mcah.desktop`, `app://mcah`, header `x-mcah-*`, mDNS `mcah`, `client_id mcah-desktop`, database `seasmart` / `mcah_cloud`, tên miền `mcah.axalize.vn`. Danh sách và lý do: `docs/catoro-ke-hoach-doi-ten.md` mục 3.6. Không đổi các tên này.
+- Biến môi trường riêng: `CATORO_*` (đọc qua `productEnv`, tên cũ `MCAH_*` vẫn nhận).
 
 - **Backend:** Fastify 5 + PostgreSQL 17 (pg pool)
 - **Frontend:** React 19 + Ant Design 6 + React Query 5 + Zustand 5 + Vite 8
@@ -125,7 +129,7 @@ Mỗi loại control chỉ có **một** kiểu. Cần control mới thì thêm 
 
 ### 3.5 Màn hẹp (điện thoại)
 
-Kế hoạch đầy đủ: `docs/mcah-ke-hoach-responsive-mobile.md`. Mọi màn mới **của bản web** phải dùng được ở 375px trước khi báo xong. Màn chỉ có trong app máy tính (trang `pages/desktop/`, Cài đặt trên máy này, Máy trong văn phòng, hộp chỉ hiện khi `isDesktop()`…) chỉ cần chạy tốt trên màn máy tính (M6, 2026-11-13). Không xoá code điện thoại sẵn có.
+Kế hoạch đầy đủ: `docs/catoro-ke-hoach-responsive-mobile.md`. Mọi màn mới **của bản web** phải dùng được ở 375px trước khi báo xong. Màn chỉ có trong app máy tính (trang `pages/desktop/`, Cài đặt trên máy này, Máy trong văn phòng, hộp chỉ hiện khi `isDesktop()`…) chỉ cần chạy tốt trên màn máy tính (M6, 2026-11-13). Không xoá code điện thoại sẵn có.
 
 - **Ba mốc:** dưới 640px là điện thoại, dưới 768px sidebar thành ngăn kéo và bảng danh sách thành dòng, từ 1024px là màn rộng. CSS chỉ dùng `max-width: 639 / 767 / 1023px` hoặc `min-width: 640 / 768 / 1024px`; mốc khác phải có comment `mốc riêng: <lý do>` (test `src/__tests__/breakpoints.test.js` chặn). JS dùng `useViewport()` (`hooks/useViewport.js`), không gọi `Grid.useBreakpoint()` của antd.
 - **Ô gõ được** cao 44px, chữ 16px ở điện thoại (dưới 16px iOS tự phóng to trang): đã có qua `antThemePhone` và lưới an toàn trong `index.css`, không tự hạ cỡ chữ ô nhập.
@@ -194,7 +198,7 @@ Before merging any code, verify:
 - **Never push directly to `main`** — use feature branches + review
 - Run `npm run lint` in both backend/ and frontend/ before committing
 - Pre-commit hook runs ESLint + Prettier automatically via husky
-- **App máy tính (desktop/):** trước khi nâng phiên bản, build hay phát hành, đọc "Luật phiên bản" trong `docs/mcah-quy-trinh-phat-hanh.md`. Tóm tắt: hai bản Ubuntu/Windows cùng một commit; máy nào sửa code sau cùng thì nâng phiên bản và push `dev` trước khi build; không dùng lại số đã phát hành; không đổi tên bộ cài.
+- **App máy tính (desktop/):** trước khi nâng phiên bản, build hay phát hành, đọc "Luật phiên bản" trong `docs/catoro-quy-trinh-phat-hanh.md`. Tóm tắt: hai bản Ubuntu/Windows cùng một commit; máy nào sửa code sau cùng thì nâng phiên bản và push `dev` trước khi build; không dùng lại số đã phát hành; không đổi tên bộ cài.
 
 ## 9. Testing
 

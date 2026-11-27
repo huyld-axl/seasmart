@@ -55,7 +55,7 @@ async function buildTicket(account, authTime, db = pool) {
     // Văn phòng Axalize vừa tạo chưa có máy chính: quản trị cài máy chính, nhân viên chờ (wireframe 7, 8).
     office_has_machine: Boolean(member?.public_key),
     machine: member?.public_key ? crypto.createHash('sha256').update(member.public_key).digest('hex').slice(0, 32) : null,
-    // Máy nhân viên ghim chứng chỉ máy chính theo dấu vân tay này (docs/mcah-ke-hoach-desktop-gd3.md 3.2).
+    // Máy nhân viên ghim chứng chỉ máy chính theo dấu vân tay này (docs/catoro-ke-hoach-desktop-gd3.md 3.2).
     machine_cert: member?.cert_fingerprint || null,
     machine_name: member?.lan_name || null,
     machine_port: member?.lan_port || null,

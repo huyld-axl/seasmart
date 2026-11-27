@@ -74,7 +74,7 @@ export default function UserDetailPage() {
                 toggleActive.mutate(id, {
                   onSuccess: (res) => {
                     const text = user.is_active ? `Đã khoá ${user.email}` : `Đã mở lại ${user.email}`
-                    // App máy tính: chưa báo được máy chủ MCAH (không có mạng) thì nhắc làm lại sau.
+                    // App máy tính: chưa báo được máy chủ Catoro (không có mạng) thì nhắc làm lại sau.
                     if (res?.cloud_warning) toast.warning(text, { description: res.cloud_warning })
                     else toast.success(text)
                   },

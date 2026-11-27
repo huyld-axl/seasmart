@@ -38,7 +38,8 @@ function getNavigatePath(item) {
   }
 }
 
-const LAST_NOTIFIED = 'mcah.lastNotifiedId'
+const LAST_NOTIFIED = 'catoro.lastNotifiedId'
+const LAST_NOTIFIED_OLD = 'mcah.lastNotifiedId' // tên trước khi đổi MCAH → Catoro (0.9.14)
 
 // App máy tính: thông báo mới (id lớn hơn lần báo trước) hiện thêm ở góc màn hình máy tính; bấm vào thì mở đúng trang.
 // Lần đầu trên máy chỉ ghi mốc, không báo dồn các thông báo cũ.
@@ -49,7 +50,7 @@ function useDesktopNotifications(count, openRef) {
     notificationApi.getNotifications({ is_read: false, limit: 10 }).then((items) => {
       if (cancelled || !items.length) return
       const maxId = Math.max(...items.map((item) => item.id))
-      const last = Number(localStorage.getItem(LAST_NOTIFIED))
+      const last = Number(localStorage.getItem(LAST_NOTIFIED) ?? localStorage.getItem(LAST_NOTIFIED_OLD))
       localStorage.setItem(LAST_NOTIFIED, String(Math.max(maxId, last || 0)))
       if (!last) return
       for (const item of items.filter((i) => i.id > last).reverse()) {

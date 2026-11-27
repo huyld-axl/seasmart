@@ -4,7 +4,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <style>
-  /* Wireframe nhóm A của MCAH (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
+  /* Wireframe nhóm A của Catoro (skill ui-ux, nhánh U, bước U3). Một theme sáng có chủ ý, như app.
      Token chép từ frontend/src/theme/tokens.js; component dùng chung class với frontend/src/components/ds/ds.css. */
   :root {
     color-scheme: light;
@@ -61,7 +61,7 @@
   button, input { font: inherit; color: inherit; }
   :focus-visible { outline: none; }
 
-  /* Component riêng của MCAH. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
+  /* Component riêng của Catoro. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
    token (src/theme/tokens.js). Không mã màu nào ngoài biến, trừ lớp phủ theo màu chữ. */
 
 .ds-sr-only {
@@ -1592,7 +1592,7 @@ function badge(group, value) {
 const btn = (label, { variant = '', size = '', iconName = '', attrs = '' } = {}) =>
   `<button type="button" class="btn ${variant ? `btn--${variant}` : ''} ${size ? `btn--${size}` : ''}" ${attrs}>${iconName ? icon(iconName) : ''}${label}</button>`;
 const MARK = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4.5" width="3.5" height="15" rx="1"/><rect x="16.5" y="4.5" width="3.5" height="15" rx="1"/><path d="M8.75 4.5h6.5L12 13.5z"/></svg>';
-const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">MCAH</span></span>`;
+const brand = () => `<span class="product-brand"><span class="product-brand__mark">${MARK}</span><span class="product-brand__name">Catoro</span></span>`;
 // ===== Nhóm F: Tài khoản người dùng. Admin mời qua email (Brevo), người dùng tự đặt mật khẩu =====
 // Số liệu và địa chỉ email là ví dụ. Ngày "hôm nay" của wireframe: 16/10/2026.
 Object.assign(ICONS, {
@@ -1646,11 +1646,11 @@ function syncHash() {
 
 // ---------- Dữ liệu ----------
 const USERS = [
-  { name: 'Phạm Văn Tùng', email: 'admin@mcah.demo', role: 'Quản trị viên', st: 'ACTIVE', last: 'Hôm nay 08:12' },
-  { name: 'Nguyễn Thị Lan', email: 'lan.nguyen@mcah.demo', role: 'Crewing', st: 'ACTIVE', last: 'Hôm qua 17:40' },
-  { name: 'Phạm Thị Hoa', email: 'hoa.pham@mcah.demo', role: 'Crewing', st: 'PENDING', last: 'Chưa đăng nhập' },
-  { name: 'Lê Đăng Khoa', email: 'khoa.le@mcah.demo', role: 'Kế toán', st: 'PENDING', last: 'Chưa đăng nhập' },
-  { name: 'Trần Quang Minh', email: 'minh.tran@mcah.demo', role: null, st: 'LOCKED', last: '12/10/2026' },
+  { name: 'Phạm Văn Tùng', email: 'admin@catoro.demo', role: 'Quản trị viên', st: 'ACTIVE', last: 'Hôm nay 08:12' },
+  { name: 'Nguyễn Thị Lan', email: 'lan.nguyen@catoro.demo', role: 'Crewing', st: 'ACTIVE', last: 'Hôm qua 17:40' },
+  { name: 'Phạm Thị Hoa', email: 'hoa.pham@catoro.demo', role: 'Crewing', st: 'PENDING', last: 'Chưa đăng nhập' },
+  { name: 'Lê Đăng Khoa', email: 'khoa.le@catoro.demo', role: 'Kế toán', st: 'PENDING', last: 'Chưa đăng nhập' },
+  { name: 'Trần Quang Minh', email: 'minh.tran@catoro.demo', role: null, st: 'LOCKED', last: '12/10/2026' },
 ];
 const roleCell = (r) => (r ? r : '<span class="muted">Chưa có vai trò</span>');
 const person = (u) => `<span class="ds-cell2"><span class="ds-cell2__main">${u.name}</span><span class="ds-cell2__sub">${u.email}</span></span>`;
@@ -1678,7 +1678,7 @@ function addScreen() {
   const tt = state.tt;
   const sending = tt === 'dang-gui';
   const nameVal = tt === 'trung-email' || sending ? 'Phạm Thị Hoa' : '';
-  const emailVal = tt === 'trung-email' ? 'lan.nguyen@mcah.demo' : sending ? 'hoa.pham@mcah.demo' : '';
+  const emailVal = tt === 'trung-email' ? 'lan.nguyen@catoro.demo' : sending ? 'hoa.pham@catoro.demo' : '';
   const roleVal = tt === 'moi' || tt === 'loi-nhap' ? '' : 'Crewing';
   const nameErr = tt === 'loi-nhap' ? 'Nhập họ tên' : '';
   const emailErr = tt === 'loi-nhap' ? 'Nhập email hợp lệ, ví dụ ban@congty.vn' : tt === 'trung-email' ? 'Email đã tồn tại. Dùng email khác.' : '';
@@ -1696,17 +1696,17 @@ function addScreen() {
 
 // ---------- Sau khi tạo ----------
 function resultScreen() {
-  const toast = `<div class="toast" role="status"><span style="color:var(--success);display:inline-flex">${icon('check-circle')}</span>Đã tạo tài khoản và gửi email mời tới hoa.pham@mcah.demo</div>`;
-  return listScreen({ newEmail: 'hoa.pham@mcah.demo', overlay: toast });
+  const toast = `<div class="toast" role="status"><span style="color:var(--success);display:inline-flex">${icon('check-circle')}</span>Đã tạo tài khoản và gửi email mời tới hoa.pham@catoro.demo</div>`;
+  return listScreen({ newEmail: 'hoa.pham@catoro.demo', overlay: toast });
 }
 
 // ---------- Email mời ----------
 function emailScreen() {
   return `<div class="auth-app" data-wf-block="3"><div class="mailcard">
-    <div class="mailcard__meta">Từ: <b>MCAH</b> &lt;noreply@mcah.demo&gt;<br>Tới: <b>hoa.pham@mcah.demo</b><br>Tiêu đề: <b>Mời bạn tham gia MCAH</b></div>
+    <div class="mailcard__meta">Từ: <b>Catoro</b> &lt;noreply@catoro.demo&gt;<br>Tới: <b>hoa.pham@catoro.demo</b><br>Tiêu đề: <b>Mời bạn tham gia Catoro</b></div>
     <div class="mailcard__body">${brand()}
       <p>Chào Thị Hoa,</p>
-      <p><b>Phạm Văn Tùng</b> đã tạo tài khoản MCAH cho bạn với vai trò <b>Crewing</b>.</p>
+      <p><b>Phạm Văn Tùng</b> đã tạo tài khoản Catoro cho bạn với vai trò <b>Crewing</b>.</p>
       <p>Bấm nút dưới đây để đặt mật khẩu và bắt đầu dùng:</p>
       <span class="mail-cta">Đặt mật khẩu</span>
       <p class="mailcard__small">Nếu nút không bấm được, sao chép địa chỉ này vào trình duyệt:<br>https://app.mcah.demo/dat-mat-khau?token=…</p>
@@ -1724,7 +1724,7 @@ function strength(level) {
 const rule = (ok, text) => `<li ${ok ? 'data-ok' : ''}>${ok ? icon('check-circle') : '<span class="rule-dot"></span>'}${text}</li>`;
 function setPasswordScreen() {
   const tt = state.tt;
-  if (tt === 'thanh-cong') return authPage(`<div class="auth-center"><span class="auth-icon">${icon('check-circle')}</span><div><h1 class="auth-title" style="margin-top:0">Đã đặt mật khẩu</h1><p class="auth-sub">Tài khoản hoa.pham@mcah.demo đã sẵn sàng. Đăng nhập bằng mật khẩu vừa đặt.</p></div>${btn('Đến trang đăng nhập', { variant: 'primary', attrs: 'style="width:100%;min-height:44px"' })}</div>`);
+  if (tt === 'thanh-cong') return authPage(`<div class="auth-center"><span class="auth-icon">${icon('check-circle')}</span><div><h1 class="auth-title" style="margin-top:0">Đã đặt mật khẩu</h1><p class="auth-sub">Tài khoản hoa.pham@catoro.demo đã sẵn sàng. Đăng nhập bằng mật khẩu vừa đặt.</p></div>${btn('Đến trang đăng nhập', { variant: 'primary', attrs: 'style="width:100%;min-height:44px"' })}</div>`);
   const a = true;
   const p1 = { moi: '', 'dang-nhap': 'matkhau2026', yeu: 'abcdefgh', 'khong-khop': 'matkhau2026', 'dang-luu': 'matkhau2026' }[tt];
   const p2 = { moi: '', 'dang-nhap': 'matkhau20', yeu: 'abcdefgh', 'khong-khop': 'matkhau2025', 'dang-luu': 'matkhau2026' }[tt];
@@ -1734,17 +1734,17 @@ function setPasswordScreen() {
   const rules = `<ul class="rules">${rule(okLen, 'Ít nhất 8 ký tự')}${rule(okMix, 'Có cả chữ và số')}${rule(!!p1 && !p1.includes('hoa.pham'), 'Không trùng email')}</ul>`;
   const pw1 = `<div data-wf-block="5">${fld('Mật khẩu mới', pwInput(p1, { err: weak, ph: 'Nhập mật khẩu mới' }), { c: 'sf-c12', err: weak ? 'Mật khẩu cần có cả chữ và số.' : '', hint: a ? '' : 'Ít nhất 8 ký tự, có cả chữ và số.' })}${a ? '' : (p1 ? strength(lv) : '')}${a ? `${p1 || weak ? strength(lv) : ''}${rules}` : ''}</div>`;
   const pw2 = fld('Nhập lại mật khẩu', pwInput(p2, { err: mismatch, ph: 'Nhập lại mật khẩu' }), { c: 'sf-c12', err: mismatch ? 'Mật khẩu nhập lại chưa khớp.' : '' });
-  return authPage(`${authHead('Đặt mật khẩu', 'Hãy đặt mật khẩu để bắt đầu dùng MCAH.')}
-    ${fld('Email', inp('hoa.pham@mcah.demo', { ro: true }), { c: 'sf-c12' })}
+  return authPage(`${authHead('Đặt mật khẩu', 'Hãy đặt mật khẩu để bắt đầu dùng Catoro.')}
+    ${fld('Email', inp('hoa.pham@catoro.demo', { ro: true }), { c: 'sf-c12' })}
     ${pw1}${pw2}
     ${btn(tt === 'dang-luu' ? 'Đang lưu…' : 'Đặt mật khẩu', { variant: 'primary', attrs: `style="width:100%;min-height:44px" ${tt === 'dang-luu' ? 'disabled' : ''}` })}`);
 }
 function loginScreen() {
   const tt = state.tt;
-  const top = tt === 'sau-dat' ? bannerBox('success', 'check-circle', 'Đã đặt mật khẩu', '<p class="ds-banner__text">Đăng nhập để bắt đầu dùng MCAH.</p>') : '';
+  const top = tt === 'sau-dat' ? bannerBox('success', 'check-circle', 'Đã đặt mật khẩu', '<p class="ds-banner__text">Đăng nhập để bắt đầu dùng Catoro.</p>') : '';
   const err = tt === 'chua-kich-hoat' ? 'Tài khoản chưa được kích hoạt. Mở email mời để đặt mật khẩu, hoặc liên hệ quản trị viên.' : '';
   return authPage(`${authHead('Đăng nhập', '')}${top}
-    ${fld('Email', inp('hoa.pham@mcah.demo', { ph: 'ban@congty.vn', err: !!err }), { c: 'sf-c12' })}
+    ${fld('Email', inp('hoa.pham@catoro.demo', { ph: 'ban@congty.vn', err: !!err }), { c: 'sf-c12' })}
     ${fld('Mật khẩu', `<div class="pw"><input class="input ${err ? 'input--error' : ''}" type="password" value="${tt === 'sau-dat' ? '' : 'matkhau2026'}" placeholder="Nhập mật khẩu" /><button type="button" aria-label="Hiện mật khẩu">${icon('eye')}</button></div>`, { c: 'sf-c12', err })}
     ${btn('Đăng nhập', { variant: 'primary', attrs: 'style="width:100%;min-height:44px"' })}`);
 }
@@ -1784,7 +1784,7 @@ function shell({ title, content, current = 'seafarers', overlay = '' }) {
           <button type="button" class="user-btn" data-action="user" aria-haspopup="menu" aria-expanded="${state.userOpen}">
             <span class="avatar">AD</span><span class="user-btn__name">Quản trị viên</span>${icon('down')}
           </button>
-          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">admin@mcah.demo · Quản trị viên</p><div class="menu__sep"></div>
+          ${state.userOpen ? `<div class="menu" role="menu"><p class="menu__meta">admin@catoro.demo · Quản trị viên</p><div class="menu__sep"></div>
             <button type="button" class="menu__item menu__item--danger" role="menuitem">${icon('logout')}Đăng xuất</button></div>` : ''}
         </div>
       </header>

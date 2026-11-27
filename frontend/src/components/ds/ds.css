@@ -1,4 +1,4 @@
-/* Component riêng của MCAH. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
+/* Component riêng của Catoro. Dự án không dùng Tailwind: class của skill dịch sang CSS thuần, màu lấy biến
    token (src/theme/tokens.js). Không mã màu nào ngoài biến, trừ lớp phủ theo màu chữ. */
 
 .ds-sr-only {
@@ -967,7 +967,7 @@ button.ds-chips-stage__step:disabled { cursor: not-allowed; opacity: .5; }
 .ds-ct__row.is-hover { background: rgba(0, 51, 102, 0.07); }
 .ds-ct__row.is-hover .ds-ct__bar:not(.ds-ct__bar--planned) { box-shadow: 0 0 0 2px rgba(0, 51, 102, 0.25); }
 
-/* Dialog ở điện thoại thành sheet từ đáy (docs/mcah-ke-hoach-responsive-mobile.md mục 4.3): bám đáy, rộng hết màn,
+/* Dialog ở điện thoại thành sheet từ đáy (docs/catoro-ke-hoach-responsive-mobile.md mục 4.3): bám đáy, rộng hết màn,
    bo trên 20px, thân cuộn khi dài, chân dính đáy, nút chia đều 44px, chừa vùng an toàn đáy iPhone. Một quy tắc cho
    mọi Modal và Modal.confirm, không sửa từng dialog. Desktop giữ dialog giữa màn. */
 @keyframes ds-sheet-in { from { opacity: 1; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }

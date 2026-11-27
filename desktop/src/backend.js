@@ -19,7 +19,7 @@ function readOrCreateSecret(file, bytes) {
 }
 
 // mailDir: thư mục gửi thư (mail.js). PDF in bằng Chromium của app (pdf-printer.js), không cần LibreOffice.
-// filesDir: thư mục hồ sơ dễ đọc (docs/mcah-ke-hoach-desktop-gd4.md 3.2, Q-B2: Tài liệu/MCAH - Hồ sơ).
+// filesDir: thư mục hồ sơ dễ đọc (docs/catoro-ke-hoach-desktop-gd4.md 3.2, Q-B2: Tài liệu/Catoro - Hồ sơ).
 // Thư mục tạm của app (<userData>/tmp) xoá sạch mỗi lần khởi động.
 function backendEnv(userData, dbEnv, port, { mailDir, filesDir = null } = {}) {
   const uploadDir = path.join(userData, 'uploads')
@@ -30,8 +30,8 @@ function backendEnv(userData, dbEnv, port, { mailDir, filesDir = null } = {}) {
   return {
     ...dbEnv,
     NODE_ENV: 'production',
-    MCAH_DESKTOP: '1',
-    // AI đọc giấy tờ, tra IMO, danh mục tàu chạy ở máy chủ dịch vụ MCAH (bộ cài không có khoá).
+    CATORO_DESKTOP: '1',
+    // AI đọc giấy tờ, tra IMO, danh mục tàu chạy ở máy chủ dịch vụ Catoro (bộ cài không có khoá).
     AI_PROVIDER: 'cloud',
     VESSEL_LOOKUP_PROVIDER: 'cloud',
     MAIL_DIR: mailDir,
@@ -40,9 +40,9 @@ function backendEnv(userData, dbEnv, port, { mailDir, filesDir = null } = {}) {
     JWT_SECRET: readOrCreateSecret(path.join(userData, 'jwt-secret'), 48),
     UPLOAD_DIR: uploadDir,
     // Backend đã gom thành khối (giai đoạn 5): đường dẫn mẫu thư, migration… tính từ đây.
-    MCAH_BACKEND_ROOT: BACKEND_DIR,
-    MCAH_TMP_DIR: tmpDir,
-    ...(filesDir ? { MCAH_FILES_DIR: filesDir } : {}),
+    CATORO_BACKEND_ROOT: BACKEND_DIR,
+    CATORO_TMP_DIR: tmpDir,
+    ...(filesDir ? { CATORO_FILES_DIR: filesDir } : {}),
     FORMS_DIR: formsDir,
   }
 }

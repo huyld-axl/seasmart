@@ -314,7 +314,7 @@ function VesselForm({ vessel }) {
                     <QuickAddVesselType nameEn={hints.vessel_type} existingCodes={(types.data || []).map((row) => row.code)} onCreated={typeCreated} onCancel={() => setQuickType(false)} />
                   ) : (
                     <>
-                      <p className="fl-fieldhint">Nguồn ghi loại tàu: {hints.vessel_type}. MCAH chưa có loại tương ứng.</p>
+                      <p className="fl-fieldhint">Nguồn ghi loại tàu: {hints.vessel_type}. Catoro chưa có loại tương ứng.</p>
                       {can('catalog.update') ? (
                         <span className="fl-quick__link">Chọn loại gần nhất ở ô trên, hoặc <Button size="small" icon={<PlusOutlined />} onClick={() => setQuickType(true)}>Thêm nhanh loại tàu</Button></span>
                       ) : null}
@@ -324,7 +324,7 @@ function VesselForm({ vessel }) {
             }>
               <Select {...selectProps} loading={types.isLoading} options={toOptions(types.data, (row) => row.name_vi)} placeholder="Chọn loại tàu" />
             </Form.Item>
-            <Form.Item name="flag_country_id" label={label('flag_country_id', 'Cờ quốc gia')} className={cn('flag_country_id', 'sf-c4')} extra={hints.flag ? <p className="fl-fieldhint">Nguồn ghi cờ: {hints.flag}. MCAH chưa có quốc gia tương ứng.</p> : null}>
+            <Form.Item name="flag_country_id" label={label('flag_country_id', 'Cờ quốc gia')} className={cn('flag_country_id', 'sf-c4')} extra={hints.flag ? <p className="fl-fieldhint">Nguồn ghi cờ: {hints.flag}. Catoro chưa có quốc gia tương ứng.</p> : null}>
               <Select {...selectProps} loading={countries.isLoading} options={toOptions(countries.data, (row) => withFlag(row.code, row.name_vi || row.name_en, row.flag_emoji))} placeholder="Chọn quốc gia" />
             </Form.Item>
             <Form.Item name="year_built" label={label('year_built', 'Năm đóng')} className={cn('year_built', 'sf-c4')}>

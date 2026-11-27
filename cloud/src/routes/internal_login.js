@@ -1,7 +1,7 @@
-// Đăng nhập khu nội bộ /internal (docs/mcah-ke-hoach-khu-noi-bo.md 5.3; wireframe docs/design/wireframes/khu-noi-bo.html
+// Đăng nhập khu nội bộ /internal (docs/catoro-ke-hoach-khu-noi-bo.md 5.3; wireframe docs/design/wireframes/khu-noi-bo.html
 // màn 2–7). Nằm sau Basic Auth của nginx. Một admin: email + mật khẩu → mã TOTP (lần đầu: quét QR, nhận mã khôi phục).
-// Cookie ký, path=/internal, SameSite=Strict: mcah_admin = phiên (tài khoản, lúc vào, auth_version; 8 giờ),
-// mcah_admin_step = đã qua mật khẩu, chờ mã (5 phút). HTML thuần không script (CSP); QR là SVG dựng sẵn.
+// Cookie ký, path=/internal, SameSite=Strict: catoro_admin = phiên (tài khoản, lúc vào, auth_version; 8 giờ),
+// catoro_admin_step = đã qua mật khẩu, chờ mã (5 phút). HTML thuần không script (CSP); QR là SVG dựng sẵn.
 const QRCode = require('qrcode')
 const config = require('../config')
 const accounts = require('../services/accounts')
@@ -46,7 +46,7 @@ async function fromCookie(request, name, maxAgeMs) {
 
 // Phiên quản trị đã qua cả mật khẩu lẫn mã. Dùng cho admin.js và /internal/_check (auth_request của nginx).
 async function adminSession(request) {
-  const s = await fromCookie(request, 'mcah_admin', SESSION_HOURS * 3600 * 1000)
+  const s = await fromCookie(request, 'catoro_admin', SESSION_HOURS * 3600 * 1000)
   return s && adminAuth.enrolled(s.auth) ? s.account : null
 }
 
@@ -75,7 +75,7 @@ button.pri,.btn.pri{background:var(--primary);border-color:var(--primary);color:
 @media (max-width:480px){.qrwrap{grid-template-columns:1fr}}`
 
 const layout = (title, body, wide = false) => `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-<title>${e(title)} · MCAH nội bộ</title><style>${CSS}</style></head><body><main${wide ? ' class="wide"' : ''}><div class="brand">MCAH <span>Nội bộ</span></div>${body}</main></body></html>`
+<title>${e(title)} · Catoro nội bộ</title><style>${CSS}</style></head><body><main${wide ? ' class="wide"' : ''}><div class="brand">Catoro <span>Nội bộ</span></div>${body}</main></body></html>`
 const notice = (kind, text) => (text ? `<div class="msg ${kind}" role="${kind === 'err' ? 'alert' : 'status'}">${e(text)}</div>` : '')
 const steps = (items) => `<div class="steps">${items.map(([label, state]) => `<span class="${state}">${state === 'done' ? '✓ ' : ''}${e(label)}</span>`).join('')}</div>`
 const nextInput = (next) => `<input type="hidden" name="next" value="${e(safeNext(next))}">`
@@ -93,7 +93,7 @@ const loginPage = ({ email = '', next = '', error = '', errors = {} } = {}) => l
 
 const verifyPage = ({ email, error = '' }) => layout('Nhập mã xác minh', `
 <h1>Nhập mã xác minh</h1>${steps([['Mật khẩu', 'done'], ['2 Mã xác minh', 'on']])}
-<p class="muted">Mở app Authenticator (Google Authenticator…) trên điện thoại, nhập mã 6 số ở mục <b>MCAH internal · ${e(email)}</b>.</p>${notice('err', error)}
+<p class="muted">Mở app Authenticator (Google Authenticator…) trên điện thoại, nhập mã 6 số ở mục <b>Catoro internal · ${e(email)}</b>.</p>${notice('err', error)}
 <form method="post" action="${I}/login/verify" style="display:grid;gap:12px" novalidate>
 <label>Mã 6 số<input class="otp" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" autofocus></label>
 <button class="pri">Xác minh</button></form>
@@ -107,7 +107,7 @@ const recoveryPage = ({ error = '' } = {}) => layout('Dùng mã khôi phục', `
 <div class="row"><a href="${I}/login/verify">← Dùng mã từ app Authenticator</a></div>`)
 
 async function setupPage({ email, secret, error = '' }) {
-  const qr = await QRCode.toString(totp.uri(secret, { issuer: 'MCAH internal', account: email }), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })
+  const qr = await QRCode.toString(totp.uri(secret, { issuer: 'Catoro internal', account: email }), { type: 'svg', margin: 1, errorCorrectionLevel: 'M' })
   const key = totp.base32(secret).replace(/(.{4})/g, '$1 ').trim()
   const now = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false })
   return layout('Cài xác minh hai bước', `
@@ -132,10 +132,10 @@ const recoveryCodesPage = ({ codes, next }) => layout('Lưu mã khôi phục', `
 async function internalLoginRoutes(fastify) {
   const limit = { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } }
   const startSession = (reply, admin) => {
-    clearCookie(reply, 'mcah_admin_step')
-    setCookie(reply, 'mcah_admin', { a: admin.account.id, t: Date.now(), v: admin.auth.auth_version }, SESSION_HOURS * 3600)
+    clearCookie(reply, 'catoro_admin_step')
+    setCookie(reply, 'catoro_admin', { a: admin.account.id, t: Date.now(), v: admin.auth.auth_version }, SESSION_HOURS * 3600)
   }
-  const stepOf = (request) => fromCookie(request, 'mcah_admin_step', STEP_MIN * 60 * 1000)
+  const stepOf = (request) => fromCookie(request, 'catoro_admin_step', STEP_MIN * 60 * 1000)
   const expired = (reply) => reply.code(303).redirect(`${I}/login?expired=1`)
   const badPost = (request, reply) => (sameSite(request) ? null : reply.code(403).send({ message: 'Yêu cầu không hợp lệ' }))
 
@@ -164,7 +164,7 @@ async function internalLoginRoutes(fastify) {
       await adminAuth.recordFail('admin_login_fail', request.ip, null, email)
       return html(reply, loginPage({ email, next, error: (await adminAuth.locked()) ? LOCKED : WRONG_LOGIN }), 400)
     }
-    setCookie(reply, 'mcah_admin_step', { a: admin.account.id, t: Date.now(), v: admin.auth.auth_version, next: safeNext(next) }, STEP_MIN * 60)
+    setCookie(reply, 'catoro_admin_step', { a: admin.account.id, t: Date.now(), v: admin.auth.auth_version, next: safeNext(next) }, STEP_MIN * 60)
     return reply.code(303).redirect(adminAuth.enrolled(admin.auth) ? `${I}/login/verify` : `${I}/login/setup`)
   })
 
@@ -243,8 +243,8 @@ async function internalLoginRoutes(fastify) {
   fastify.get(`${I}/logout`, async (request, reply) => {
     const admin = await adminSession(request)
     if (admin) await accounts.audit(admin.id, 'admin_logout', request.ip)
-    clearCookie(reply, 'mcah_admin')
-    clearCookie(reply, 'mcah_admin_step')
+    clearCookie(reply, 'catoro_admin')
+    clearCookie(reply, 'catoro_admin_step')
     return reply.redirect(`${I}/login`)
   })
 }

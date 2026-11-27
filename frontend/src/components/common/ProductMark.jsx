@@ -1,11 +1,9 @@
-// Dấu của MCAH: chữ M dựng từ hai thanh và một khối treo giữa (hướng 1, chọn ngày 2026-10-06).
-// Một màu currentColor, viewBox 24, vẽ trong vùng 4–20. Có logo thật thì thay path ở đây và ở public/favicon.svg.
+// Dấu sản phẩm. TỆP SINH TỰ ĐỘNG bởi scripts/brand-icons.js từ docs/branding/catoro-mark.svg: đừng sửa tay.
+// Một màu currentColor, viewBox 24, vẽ trong vùng 4–20.
 export default function ProductMark(props) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" {...props}>
-      <rect x="4" y="4.5" width="3.5" height="15" rx="1" />
-      <rect x="16.5" y="4.5" width="3.5" height="15" rx="1" />
-      <path d="M8.75 4.5h6.5L12 13.5z" />
+      <path d="M4.8 14A7.2 6.2 0 1 1 19.2 14A7.2 6.2 0 1 1 4.8 14Z M5 4L10 7.5L4.8 12Z M19 4L19.2 12L14 7.5Z M9.3 7.3V6.5H10.4V6.2A1.6 1.5 0 0 1 13.6 6.2V6.5H14.7V7.3Z M8.2 13.5A1.1 1.1 0 1 0 10.4 13.5A1.1 1.1 0 1 0 8.2 13.5Z M13.6 13.5A1.1 1.1 0 1 0 15.8 13.5A1.1 1.1 0 1 0 13.6 13.5Z" />
     </svg>
   )
 }

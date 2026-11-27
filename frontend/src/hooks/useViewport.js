@@ -1,6 +1,6 @@
 import useMediaQuery from './useMediaQuery'
 
-// Ba mốc màn của MCAH (docs/mcah-ke-hoach-responsive-mobile.md, mục 4.1). CSS chỉ dùng đúng ba mốc này
+// Ba mốc màn của Catoro (docs/catoro-ke-hoach-responsive-mobile.md, mục 4.1). CSS chỉ dùng đúng ba mốc này
 // (max-width: 639 / 767 / 1023px, min-width: 640 / 768 / 1024px); test __tests__/breakpoints.test.js chặn mốc lạ.
 export const BREAKPOINTS = { sm: 640, md: 768, lg: 1024 }
 

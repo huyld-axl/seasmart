@@ -231,7 +231,7 @@ function startJobs(logger) {
     register()
   }
 
-  // App máy tính: thư mục hồ sơ dễ đọc (docs/mcah-ke-hoach-desktop-gd4.md 3.2). Lúc mở app xếp lại mọi hồ sơ (nhận cả
+  // App máy tính: thư mục hồ sơ dễ đọc (docs/catoro-ke-hoach-desktop-gd4.md 3.2). Lúc mở app xếp lại mọi hồ sơ (nhận cả
   // tệp từ trước giai đoạn 4); sau đó cứ 5 giây xử lý hàng đợi sắp xếp và các lần chuyển tệp chưa xong.
   const fileStore = require('./utils/file_store')
   if (fileStore.treeEnabled()) {

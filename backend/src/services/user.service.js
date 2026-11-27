@@ -36,7 +36,7 @@ async function issueInviteToken(db, userId) {
 }
 
 // App máy tính chưa gửi thư mời (giai đoạn 2 chuyển sang máy chủ dịch vụ): trả mã cho quản trị mở trang đặt
-// mật khẩu ngay trên máy (docs/mcah-ke-hoach-desktop-gd1.md 3.7). Bản web gửi thư như cũ.
+// mật khẩu ngay trên máy (docs/catoro-ke-hoach-desktop-gd1.md 3.7). Bản web gửi thư như cũ.
 async function sendInvite(user, token) {
   if (config.desktop) return { invite_token: token }
   await emailService.sendInvite({
@@ -163,7 +163,7 @@ async function createUser(data, actor, db = pool) {
   if (existing.length > 0) throw fail(400, 'Email đã tồn tại')
 
   // App máy tính đã có văn phòng: tạo tài khoản trên máy chủ dịch vụ, không thư mời; người dùng đăng nhập bằng Google / mã
-  // email (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.4). Gọi trước khi tạo dòng ở máy này: không có mạng thì không
+  // email (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.4). Gọi trước khi tạo dòng ở máy này: không có mạng thì không
   // tạo gì. Dòng này gắn với tài khoản ở lần đăng nhập đầu (theo email).
   if (await desktopCloud.enabled(db)) {
     await desktopCloud.call('/api/office/members', { email, full_name: full_name.trim(), role: role.code === ADMIN_ROLE_CODE ? 'admin' : 'member', created_by_email: actor.email })
@@ -189,7 +189,7 @@ async function resendInvite(id, db = pool) {
   const user = await loadTarget(db, id)
   if (user.status !== 'PENDING') throw fail(400, 'Tài khoản này đã kích hoạt')
   // App máy tính: không có thư mời; người dùng tự đăng nhập bằng Google / mã email.
-  if (await desktopCloud.enabled(db)) throw fail(400, 'App máy tính không gửi thư mời. Báo người này mở MCAH và đăng nhập bằng email của họ.')
+  if (await desktopCloud.enabled(db)) throw fail(400, 'App máy tính không gửi thư mời. Báo người này mở Catoro và đăng nhập bằng email của họ.')
   return { ...user, ...(await sendInvite(user, await issueInviteToken(db, id))) }
 }
 
@@ -256,7 +256,7 @@ async function updateUser(id, data, actor, db = pool) {
   }
 
   fields.push('updated_at = NOW()')
-  // Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4).
+  // Chống ghi đè (docs/catoro-ke-hoach-desktop-gd3.md 3.4).
   const guard = versionWhere(data.version)
   const [res] = await db.query(`UPDATE "user" SET ${fields.join(', ')} WHERE id = ? AND deleted_at IS NULL${guard.sql}`, [...params, id, ...guard.params])
   await failIfStale(db, 'user', id, data.version, res.affectedRows)
@@ -273,7 +273,7 @@ async function syncMembership(email, active, db = pool) {
     await desktopCloud.call(active ? '/api/office/members/restore' : '/api/office/members/remove', { email })
     return {}
   } catch (error) {
-    return { cloud_warning: `Đã đổi trên máy này nhưng chưa báo được máy chủ MCAH (${error.message}). Bật lại rồi tắt lại khi có mạng.` }
+    return { cloud_warning: `Đã đổi trên máy này nhưng chưa báo được máy chủ Catoro (${error.message}). Bật lại rồi tắt lại khi có mạng.` }
   }
 }
 

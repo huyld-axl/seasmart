@@ -82,7 +82,7 @@ describe('Lấy thông tin thông minh', () => {
     expect(db.state.upserts[0][2]).toBe('NOT_FOUND')
     expect(db.state.claims).toBe(1)
   })
-  it('báo tàu đã có trong MCAH, kể cả đã xoá mềm', async () => {
+  it('báo tàu đã có trong Catoro, kể cả đã xoá mềm', async () => {
     const out = await make(provider(() => FOUND)).lookup(fakeDb({ vessel: { id: 4, vessel_name: 'GEIYO K', deleted_at: '2026-01-01' } }), IMO_A, 7)
     expect(out.existing_vessel).toEqual({ id: 4, vessel_name: 'GEIYO K', deleted: true })
   })

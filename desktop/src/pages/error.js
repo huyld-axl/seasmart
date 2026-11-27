@@ -1,4 +1,4 @@
-// Màn lỗi khởi động: hiện lý do theo mã lỗi, nút gọi app qua window.mcah.startup (preload).
+// Màn lỗi khởi động: hiện lý do theo mã lỗi, nút gọi app qua window.catoro.startup (preload).
 const REASONS = {
   DB_START: 'Không khởi động được cơ sở dữ liệu.',
   DB_MIGRATE: 'Không cập nhật được cấu trúc dữ liệu.',
@@ -10,9 +10,9 @@ const params = new URLSearchParams(location.search)
 const code = REASONS[params.get('code')] ? params.get('code') : 'UNKNOWN'
 document.getElementById('reason').textContent = REASONS[code]
 document.getElementById('code').textContent = `Mã lỗi: ${code} · ${params.get('at') || ''}`
-document.getElementById('retry').onclick = () => window.mcah.startup.retry()
-document.getElementById('logs').onclick = () => window.mcah.startup.openLogs()
-document.getElementById('quit').onclick = () => window.mcah.startup.quit()
+document.getElementById('retry').onclick = () => window.catoro.startup.retry()
+document.getElementById('logs').onclick = () => window.catoro.startup.openLogs()
+document.getElementById('quit').onclick = () => window.catoro.startup.quit()
 
 // Gửi báo lỗi: app tự gom nhật ký và thông tin máy (tiến trình chính), trang này chỉ gửi ghi chú.
 const report = document.getElementById('report')
@@ -27,15 +27,15 @@ sendButton.onclick = async () => {
   sendButton.disabled = true
   sendButton.textContent = 'Đang gửi…'
   try {
-    const out = await window.mcah.startup.sendReport(document.getElementById('note').value)
+    const out = await window.catoro.startup.sendReport(document.getElementById('note').value)
     report.hidden = true
     result.hidden = false
     result.className = 'ok'
     if (out.status === 'sent') {
-      result.textContent = `Đã gửi báo lỗi cho MCAH (mã ${out.id}). Khi liên hệ hỗ trợ, đọc mã này giúp.`
+      result.textContent = `Đã gửi báo lỗi cho Catoro (mã ${out.id}). Khi liên hệ hỗ trợ, đọc mã này giúp.`
     } else {
-      result.textContent = 'Không gửi được qua mạng. Đã lưu báo lỗi thành tệp trong thư mục Tải xuống; gửi tệp này cho bộ phận hỗ trợ MCAH.'
-      window.mcah.startup.revealReport(out.path)
+      result.textContent = 'Không gửi được qua mạng. Đã lưu báo lỗi thành tệp trong thư mục Tải xuống; gửi tệp này cho bộ phận hỗ trợ Catoro.'
+      window.catoro.startup.revealReport(out.path)
     }
   } catch {
     sendButton.disabled = false

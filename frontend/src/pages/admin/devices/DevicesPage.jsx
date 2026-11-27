@@ -94,7 +94,7 @@ export default function DevicesPage() {
           <b>Bảo vệ khi rời máy</b>
           <ToggleRow
             label="Khoá bằng mã PIN"
-            hint={`Mọi máy trong văn phòng tự khoá khi không dùng ${security.data.lock_minutes} phút; mở bằng mã PIN 6 số của từng người. Tắt thì MCAH không tự khoá — nhắc mọi người khoá màn hình máy tính khi rời máy.`}
+            hint={`Mọi máy trong văn phòng tự khoá khi không dùng ${security.data.lock_minutes} phút; mở bằng mã PIN 6 số của từng người. Tắt thì Catoro không tự khoá — nhắc mọi người khoá màn hình máy tính khi rời máy.`}
             value={security.data.pin_required}
             disabled={!manage || saveSecurity.isPending}
             onChange={(value) => saveSecurity.mutate({ pin_required: value })}
@@ -117,7 +117,7 @@ export default function DevicesPage() {
         columns={columns}
         dataSource={data}
         loading={isLoading}
-        locale={{ emptyText: <EmptyState title="Chưa có máy nhân viên nào" description="Nhân viên cài MCAH trên máy mình và đăng nhập, máy sẽ tự nối máy chính và hiện ở đây." /> }}
+        locale={{ emptyText: <EmptyState title="Chưa có máy nhân viên nào" description="Nhân viên cài Catoro trên máy mình và đăng nhập, máy sẽ tự nối máy chính và hiện ở đây." /> }}
         pagination={false}
       />
     </div>

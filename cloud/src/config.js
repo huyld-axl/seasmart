@@ -60,13 +60,13 @@ module.exports = {
     useSsl: process.env.SMTP_USE_SSL === 'true',
     useTls: process.env.SMTP_USE_TLS === 'true',
     fromEmail: process.env.SMTP_FROM_EMAIL || 'no-reply@mcah.vn',
-    fromName: process.env.SMTP_FROM_NAME || 'MCAH',
+    fromName: process.env.SMTP_FROM_NAME || 'Catoro',
   },
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
   },
-  // Admin duy nhất của khu nội bộ /internal (docs/mcah-ke-hoach-khu-noi-bo.md 5.2). Server cũ còn CLOUD_ADMIN_EMAILS (danh
+  // Admin duy nhất của khu nội bộ /internal (docs/catoro-ke-hoach-khu-noi-bo.md 5.2). Server cũ còn CLOUD_ADMIN_EMAILS (danh
   // sách) thì tạm lấy email đầu để deploy không gãy.
   adminEmail: (process.env.CLOUD_ADMIN_EMAIL || (process.env.CLOUD_ADMIN_EMAILS || '').split(',')[0] || '').trim().toLowerCase(),
   // Khu nội bộ: trang quản trị, đăng nhập quản trị, design system. nginx giữ nguyên tiền tố khi chuyển vào (khác /account).

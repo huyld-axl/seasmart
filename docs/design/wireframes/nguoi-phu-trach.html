@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Wireframe Người phụ trách (docs/mcah-ke-hoach-nguoi-phu-trach.md). Một theme sáng như app.
+  /* Wireframe Người phụ trách (docs/catoro-ke-hoach-nguoi-phu-trach.md). Một theme sáng như app.
      Token chép từ frontend/src/theme/tokens.js. Chỉ cần đúng luồng và trường; dựng bằng control components/ds sẵn có. */
   :root {
     color-scheme: light;
@@ -187,7 +187,7 @@
   <main class="main">
     <header>
       <h1>Người phụ trách (PIC)</h1>
-      <p class="lead">Mỗi thuyền viên, hợp đồng và yêu cầu thanh toán có một người phụ trách (cơ hội giữ ô Người phụ trách sẵn có, không nằm trong chuỗi; đối tác không có). Khi tạo, người phụ trách lấy theo bản ghi cha; sau đó mỗi bản ghi tự giữ người của mình, đổi ở đâu chỉ đổi đúng chỗ đó. Kế hoạch: <code>docs/mcah-ke-hoach-nguoi-phu-trach.md</code>.</p>
+      <p class="lead">Mỗi thuyền viên, hợp đồng và yêu cầu thanh toán có một người phụ trách (cơ hội giữ ô Người phụ trách sẵn có, không nằm trong chuỗi; đối tác không có). Khi tạo, người phụ trách lấy theo bản ghi cha; sau đó mỗi bản ghi tự giữ người của mình, đổi ở đâu chỉ đổi đúng chỗ đó. Kế hoạch: <code>docs/catoro-ke-hoach-nguoi-phu-trach.md</code>.</p>
     </header>
 
     <!-- 1 -->
@@ -231,7 +231,7 @@
       <h2><b>3</b>Form và hồ sơ thuyền viên</h2>
       <p class="why">Form sẵn có (<code>SeafarerFormPage</code>). <b>Sửa 23/11:</b> ô Người phụ trách nằm cuối mục <b>Thông tin chung</b> (sau Số con), không bắt buộc, không có dòng ghi chú; mục Ghi chú giữ nguyên. Hình dưới là bản cũ (mục Quản lý), chỉ giữ để tham khảo.</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="it">Đối tác</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div><div class="it">Tàu</div><div class="it">Đối tác</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div></div>
         <div class="content">
           <div class="topbar"><h3>Chỉnh sửa hồ sơ · Nguyễn Hữu Phước</h3></div>
           <div class="page">
@@ -248,7 +248,7 @@
 
       <p class="why" style="margin-top: 20px">Đầu trang hồ sơ (<code>ProfileOverview</code>) thêm cặp Phụ trách với chữ <b>Đổi</b>, đổi nhanh không cần mở form.</p>
       <div class="app"><div class="shell" style="min-height: 200px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Hồ sơ</div><div class="it on">Thuyền viên</div></div>
         <div class="content">
           <div class="topbar"><h3>Thuyền viên</h3></div>
           <div class="page">
@@ -276,7 +276,7 @@
       <h2><b>4</b>Chốt người ở cơ hội — hợp đồng theo thuyền viên</h2>
       <p class="why">Hộp <b>Chốt người</b> giữ nguyên, không thêm ô. Hợp đồng nháp tạo ra lấy người phụ trách của <b>thuyền viên</b> được chốt. Ô Người phụ trách của cơ hội giữ như hiện tại và không ảnh hưởng hợp đồng.</p>
       <div class="app"><div class="shell" style="min-height: 220px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Cơ hội</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Cơ hội</div></div>
         <div class="content">
           <div class="topbar"><h3>Cơ hội CH2611-03 · Thợ máy · Phụ trách: Phạm Quốc Huy</h3></div>
           <div class="page"></div>
@@ -294,7 +294,7 @@
       <h2><b>5</b>Chi tiết hợp đồng — Phụ trách ở đầu trang</h2>
       <p class="why">Đầu trang chi tiết sẵn có thêm một cặp. Chữ <b>Đổi</b> hiện với người có quyền sửa hợp đồng, ở mọi trạng thái (kể cả Hiệu lực, Kết thúc). Áp dụng giống hệt cho hồ sơ thuyền viên và chi tiết bill.</p>
       <div class="app"><div class="shell">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Chuyến tàu</div><div class="it on">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Chuyến tàu</div><div class="it on">Hợp đồng</div><div class="it">Yêu cầu thanh toán</div></div>
         <div class="content">
           <div class="topbar"><h3>Hợp đồng</h3></div>
           <div class="page">
@@ -325,7 +325,7 @@
       <h2><b>6</b>Hộp Đổi người phụ trách</h2>
       <p class="why">Một ô, một dòng nhắc rằng chỉ bản ghi này đổi. Không hỏi "đổi luôn bill?" vì quy tắc là không đổi kép.</p>
       <div class="app"><div class="shell" style="min-height: 320px">
-        <div class="side"><div class="logo">MCAH</div></div>
+        <div class="side"><div class="logo">Catoro</div></div>
         <div class="content"><div class="topbar"><h3>Hợp đồng</h3></div><div class="page"></div></div>
         <div class="scrim">
           <div class="modal">
@@ -348,7 +348,7 @@
       <h2><b>7</b>Bill đã gửi vẫn đổi được người phụ trách</h2>
       <p class="why">Bill đã duyệt bị khoá số tiền, nhưng người phụ trách không phải số tiền nên vẫn đổi được. Người được giao sau đó vẫn tự duyệt / bỏ duyệt được (đổi PIC không tính là "sửa bill").</p>
       <div class="app"><div class="shell" style="min-height: 240px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it on">Yêu cầu thanh toán</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it on">Yêu cầu thanh toán</div></div>
         <div class="content">
           <div class="topbar"><h3>Yêu cầu thanh toán</h3></div>
           <div class="page">
@@ -372,7 +372,7 @@
       <h2><b>8</b>Danh sách — cột Phụ trách và bộ lọc</h2>
       <p class="why">Áp cho 3 danh sách: Thuyền viên, Hợp đồng, Yêu cầu thanh toán. Cơ hội giữ nguyên. Bộ lọc nằm trong khung lọc sẵn có; hai mục đầu "Tôi" và "Chưa giao".</p>
       <div class="app"><div class="shell" style="min-height: 400px">
-        <div class="side"><div class="logo">MCAH</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Hợp đồng</div><div class="it on">Yêu cầu thanh toán</div></div>
+        <div class="side"><div class="logo">Catoro</div><div class="grp">Vận hành</div><div class="it">Cơ hội</div><div class="it">Hợp đồng</div><div class="it on">Yêu cầu thanh toán</div></div>
         <div class="content">
           <div class="topbar"><h3>Yêu cầu thanh toán</h3></div>
           <div class="page">

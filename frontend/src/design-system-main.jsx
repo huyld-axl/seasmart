@@ -1,4 +1,4 @@
-// Trang design system ở khu nội bộ (/internal/design-system/, docs/mcah-ke-hoach-khu-noi-bo.md 5.5): trang Vite riêng, không
+// Trang design system ở khu nội bộ (/internal/design-system/, docs/catoro-ke-hoach-khu-noi-bo.md 5.5): trang Vite riêng, không
 // nằm trong app (web lẫn máy tính).
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'

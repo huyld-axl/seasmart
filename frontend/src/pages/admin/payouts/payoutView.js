@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { DEFAULT_ITEMS } from '../../../constants/voyageContract'
 
-// Trả lương thuyền viên (docs/mcah-ke-hoach-tra-luong.md phần B): hàm thuần cho trang Trả lương.
+// Trả lương thuyền viên (docs/catoro-ke-hoach-tra-luong.md phần B): hàm thuần cho trang Trả lương.
 
 export const round2 = (n) => Math.round((Number(n || 0) + Number.EPSILON) * 100) / 100
 export const sumAmounts = (amounts = {}) => round2(Object.values(amounts).reduce((total, value) => total + Number(value || 0), 0))

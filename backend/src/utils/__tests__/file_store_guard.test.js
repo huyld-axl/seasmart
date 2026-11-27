@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import fs from 'fs'
 import path from 'path'
 
-// Kho tệp (docs/mcah-ke-hoach-desktop-gd4.md 3.1): chỉ file_store / tmp_dir / file_trash được đụng UPLOAD_DIR và thư mục
+// Kho tệp (docs/catoro-ke-hoach-desktop-gd4.md 3.1): chỉ file_store / tmp_dir / file_trash được đụng UPLOAD_DIR và thư mục
 // hồ sơ; service, route không gọi fs đọc / ghi / xoá tệp. Ngoại lệ có lý do ghi ở ALLOW.
 const SRC = path.resolve(__dirname, '../..')
 const STORE = new Set(['utils/file_store.js', 'utils/tmp_dir.js', 'utils/file_trash.js', 'config/index.js'])
@@ -31,7 +31,7 @@ describe('kho tệp', () => {
       const rel = path.relative(SRC, file).split(path.sep).join('/')
       if (STORE.has(rel) || rel.startsWith('jobs') || rel === 'server.js') continue
       const text = fs.readFileSync(file, 'utf8')
-      if (/config\.upload\.dir|UPLOAD_DIR|MCAH_FILES_DIR/.test(text)) bad.push(`${rel}: dùng thẳng thư mục kho tệp`)
+      if (/config\.upload\.dir|UPLOAD_DIR|(CATORO|MCAH)_FILES_DIR|productEnv\('FILES_DIR'\)/.test(text)) bad.push(`${rel}: dùng thẳng thư mục kho tệp`)
       if (!ALLOW[rel] && FS_CALL.test(text)) bad.push(`${rel}: gọi fs`)
     }
     expect(bad).toEqual([])

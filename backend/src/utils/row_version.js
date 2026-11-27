@@ -1,4 +1,4 @@
-// Chống ghi đè (docs/mcah-ke-hoach-desktop-gd3.md 3.4). Gọi sau khi đã SELECT ... FOR UPDATE bản ghi: form gửi lại
+// Chống ghi đè (docs/catoro-ke-hoach-desktop-gd3.md 3.4). Gọi sau khi đã SELECT ... FOR UPDATE bản ghi: form gửi lại
 // `version` đã đọc lúc mở; khác số hiện tại nghĩa là người khác đã lưu sau đó → 409 kèm ai sửa, lúc nào.
 // Không gửi `version` (màn cũ, sửa nhanh một ô) thì vẫn cho lưu như trước.
 async function assertVersion(db, before, expected) {

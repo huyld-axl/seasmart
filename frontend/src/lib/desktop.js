@@ -1,8 +1,8 @@
-// App máy tính (docs/mcah-ke-hoach-desktop-gd1.md 3.1): preload của app đặt window.mcah. Không có thì là bản web.
-// Mọi chỗ cần việc của máy (mở thư, mã PIN, cài đặt máy) gọi qua đây, không dùng window.mcah trực tiếp.
+// App máy tính (docs/catoro-ke-hoach-desktop-gd1.md 3.1): preload của app đặt window.catoro. Không có thì là bản web.
+// Mọi chỗ cần việc của máy (mở thư, mã PIN, cài đặt máy) gọi qua đây, không dùng window.catoro trực tiếp.
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 
-const bridge = () => (typeof window !== 'undefined' ? window.mcah : undefined)
+const bridge = () => (typeof window !== 'undefined' ? window.catoro : undefined)
 
 export const isDesktop = () => Boolean(bridge())
 
@@ -13,7 +13,7 @@ export const desktop = {
   getSettings: () => bridge().getSettings(),
   saveSettings: (settings) => bridge().saveSettings(settings),
   checkUpdate: () => bridge().checkUpdate(),
-  // Phiên (docs/mcah-ke-hoach-desktop-gd2.md 4.1): giao diện không giữ token; app gắn token khi chuyển tiếp /api.
+  // Phiên (docs/catoro-ke-hoach-desktop-gd2.md 4.1): giao diện không giữ token; app gắn token khi chuyển tiếp /api.
   session: () => bridge().session(),
   onSessionChanged: (fn) => bridge().onSessionChanged(fn),
   login: (opts) => bridge().login(opts),
@@ -29,7 +29,7 @@ export const desktop = {
   onLockChanged: (fn) => bridge().onLockChanged(fn),
   setupMainMachine: () => bridge().setupMainMachine(),
   recheckOffice: () => bridge().recheckOffice(),
-  // Giai đoạn 3: máy chính / máy nhân viên (docs/mcah-ke-hoach-desktop-gd3.md).
+  // Giai đoạn 3: máy chính / máy nhân viên (docs/catoro-ke-hoach-desktop-gd3.md).
   lanStatus: () => bridge().lanStatus(),
   lanFind: () => bridge().lanFind(),
   lanPair: (host) => bridge().lanPair(host),

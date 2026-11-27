@@ -1,0 +1,2 @@
+// Dấu sản phẩm cho trang của máy chủ dịch vụ. TỆP SINH TỰ ĐỘNG bởi scripts/brand-icons.js từ docs/branding/catoro-mark.svg: đừng sửa tay.
+module.exports = "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M4.8 14A7.2 6.2 0 1 1 19.2 14A7.2 6.2 0 1 1 4.8 14Z M5 4L10 7.5L4.8 12Z M19 4L19.2 12L14 7.5Z M9.3 7.3V6.5H10.4V6.2A1.6 1.5 0 0 1 13.6 6.2V6.5H14.7V7.3Z M8.2 13.5A1.1 1.1 0 1 0 10.4 13.5A1.1 1.1 0 1 0 8.2 13.5Z M13.6 13.5A1.1 1.1 0 1 0 15.8 13.5A1.1 1.1 0 1 0 13.6 13.5Z\" /></svg>"

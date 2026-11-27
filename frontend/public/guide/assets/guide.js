@@ -1,4 +1,4 @@
-// Bộ hướng dẫn MCAH: trang chủ (index.html) + mỗi bài một trang (<slug>.html). Tệp này giữ danh mục bài (GUIDE) và
+// Bộ hướng dẫn Catoro: trang chủ (index.html) + mỗi bài một trang (<slug>.html). Tệp này giữ danh mục bài (GUIDE) và
 // dựng phần chung quanh nội dung bài: mục lục bên trái, đường dẫn, "Trên trang này", bài liên quan, bài trước / sau,
 // tìm kiếm và lọc theo công việc ở trang chủ.
 // Thêm bài: tạo <slug>.html theo mẫu một bài có sẵn, thêm vào GUIDE.articles và vào items của một nhóm trong GUIDE.groups.
@@ -10,7 +10,7 @@
       {
         "id": "bat-dau",
         "title": "Bắt đầu",
-        "summary": "Cài MCAH cho văn phòng, đăng nhập, mở và cập nhật MCAH.",
+        "summary": "Cài Catoro cho văn phòng, đăng nhập, mở và cập nhật Catoro.",
         "items": [
           "cai-dat-van-phong",
           "dang-nhap",
@@ -77,7 +77,7 @@
     "articles": {
       "cai-dat-van-phong": {
         "title": "Cài máy chính và máy nhân viên",
-        "summary": "Cài MCAH cho cả văn phòng theo đúng thứ tự, và xử lý khi máy nhân viên không nối được.",
+        "summary": "Cài Catoro cho cả văn phòng theo đúng thứ tự, và xử lý khi máy nhân viên không nối được.",
         "group": "bat-dau",
         "jobs": [
           "dy",
@@ -406,7 +406,7 @@
           "nhieu-may",
           "cai-dat-cap-nhat"
         ],
-        "keywords": "Quản trị: bật hoặc tắt cho cả văn phòng · Mỗi người: đặt mã PIN lần đầu · Đổi mã PIN · Quên mã PIN · Khi MCAH tự khoá · Khi văn phòng tắt khoá bằng PIN"
+        "keywords": "Quản trị: bật hoặc tắt cho cả văn phòng · Mỗi người: đặt mã PIN lần đầu · Đổi mã PIN · Quên mã PIN · Khi Catoro tự khoá · Khi văn phòng tắt khoá bằng PIN"
       },
       "thu-muc-ho-so": {
         "title": "Thư mục hồ sơ",
@@ -424,11 +424,11 @@
           "giay-to",
           "cai-dat-cap-nhat"
         ],
-        "keywords": "Thư mục hồ sơ · Bảo vệ máy chính · Không có sao lưu trong MCAH · Quét giấy tờ bằng AI · Cập nhật"
+        "keywords": "Thư mục hồ sơ · Bảo vệ máy chính · Không có sao lưu trong Catoro · Quét giấy tờ bằng AI · Cập nhật"
       },
       "cai-dat-cap-nhat": {
-        "title": "Cài đặt, mở, cập nhật và gỡ MCAH",
-        "summary": "Tải bộ cài, mở MCAH khi gặp lỗi, kênh cập nhật, gỡ MCAH trên Windows và Ubuntu.",
+        "title": "Cài đặt, mở, cập nhật và gỡ Catoro",
+        "summary": "Tải bộ cài, mở Catoro khi gặp lỗi, kênh cập nhật, gỡ Catoro trên Windows và Ubuntu.",
         "group": "may-tinh",
         "jobs": [
           "dy",
@@ -441,7 +441,7 @@
           "cai-dat-van-phong",
           "nhieu-may"
         ],
-        "keywords": "Tải và cài · Cập nhật · Gỡ cài đặt · Mở MCAH"
+        "keywords": "Tải và cài · Cập nhật · Gỡ cài đặt · Mở Catoro"
       },
       "hoi-dap": {
         "title": "Hỏi đáp",
@@ -496,7 +496,7 @@
       return links ? '<p>' + esc(g.title) + '</p>' + links : ''
     }).join('') + '<span class="empty" id="toc-empty">Không có bài nào khớp.</span>'
     var side = el('aside', { class: 'side', id: 'side', 'aria-label': 'Mục lục' },
-      '<a class="brand" href="index.html"><i>MC</i><span><b>MCAH</b><small>Hướng dẫn sử dụng</small></span></a>' +
+      '<a class="brand" href="index.html"><i><img src="/favicon.svg" alt=""></i><span><b>Catoro</b><small>Hướng dẫn sử dụng</small></span></a>' +
       '<label class="find"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' +
       '<input id="find" type="search" placeholder="Lọc mục lục…" aria-label="Lọc mục lục"></label>' +
       '<nav class="toc" id="toc">' + toc + '</nav>')
@@ -592,10 +592,10 @@
       buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.job === job)) })
       groups.querySelectorAll('li').forEach(function (li) { li.classList.toggle('off', job !== 'all' && li.dataset.jobs.split(' ').indexOf(job) < 0) })
       groups.querySelectorAll('.group').forEach(function (g) { g.style.display = g.querySelector('li:not(.off)') ? '' : 'none' })
-      store.set('mcah-guide-job', job)
+      store.set('catoro-guide-job', job)
     }
     buttons.forEach(function (b) { b.addEventListener('click', function () { applyJob(b.dataset.job) }) })
-    var saved = store.get('mcah-guide-job') || 'all'
+    var saved = (store.get('catoro-guide-job') || store.get('mcah-guide-job')) || 'all'
     applyJob(main.querySelector('#jobs button[data-job="' + saved + '"]') ? saved : 'all')
 
     // Tìm kiếm: mọi từ phải có trong tiêu đề, tóm tắt hoặc tiêu đề mục của bài (không phân biệt dấu).

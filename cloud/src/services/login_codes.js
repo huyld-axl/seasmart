@@ -1,4 +1,4 @@
-// Mã đăng nhập 6 số gửi qua email (docs/mcah-ke-hoach-tai-khoan-tu-tren-xuong.md 3.1), thay cho mật khẩu.
+// Mã đăng nhập 6 số gửi qua email (docs/catoro-ke-hoach-tai-khoan-tu-tren-xuong.md 3.1), thay cho mật khẩu.
 // Hạn 10 phút, sai 5 lần thì hết hiệu lực; gửi lại sau 60 giây, tối đa 5 thư / email / giờ và 20 / IP / giờ.
 // Email chưa có tài khoản hoặc bị khoá: không gửi thư nhưng trả như thường (không cho dò email nào có tài khoản).
 const crypto = require('crypto')

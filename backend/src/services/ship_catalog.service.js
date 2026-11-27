@@ -16,7 +16,7 @@ const HIT_CTE = `WITH hit AS (
   UNION SELECT source_id FROM ship_catalog WHERE imo_number = ?
   UNION SELECT source_id FROM ship_catalog WHERE mmsi = ?
 )`
-// Tàu đã có trong MCAH (kể cả đã xoá mềm, vì imo_number là unique trên cả bảng) không hiện trong danh mục.
+// Tàu đã có trong Catoro (kể cả đã xoá mềm, vì imo_number là unique trên cả bảng) không hiện trong danh mục.
 const NOT_IN_MCAH = 'NOT EXISTS (SELECT 1 FROM vessel v WHERE v.imo_number = s.imo_number)'
 
 // Danh mục tàu thế giới: tìm theo tên, tên cũ, IMO (7 số) hoặc MMSI (9 số). Mỗi nhánh UNION dùng một index riêng.
@@ -53,7 +53,7 @@ const shipCatalogService = {
   },
 }
 
-// App máy tính: danh mục nằm ở máy chủ dịch vụ MCAH (không phát cả danh mục trong bộ cài). Máy chủ trả dòng thô;
+// App máy tính: danh mục nằm ở máy chủ dịch vụ Catoro (không phát cả danh mục trong bộ cài). Máy chủ trả dòng thô;
 // ở đây loại tàu đã có trong văn phòng và đổi loại tàu / cờ sang mã của văn phòng như bản web.
 async function searchCloud(db, term, page, limit) {
   let result

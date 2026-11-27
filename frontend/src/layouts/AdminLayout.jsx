@@ -216,7 +216,7 @@ export default function AdminLayout() {
     items: [
       { key: 'meta', type: 'group', label: `${user?.email || ''} · ${user?.role?.name || 'Chưa có vai trò'}` },
       { type: 'divider' },
-      // App máy tính: cài đặt theo máy và kiểm bản mới (docs/mcah-ke-hoach-desktop-gd1.md 3.6).
+      // App máy tính: cài đặt theo máy và kiểm bản mới (docs/catoro-ke-hoach-desktop-gd1.md 3.6).
       ...(isDesktop()
         ? [
             { key: 'device', icon: <SettingOutlined />, label: 'Cài đặt trên máy này' },
@@ -260,7 +260,7 @@ export default function AdminLayout() {
                 <span className="app-shell__title-parent">{current.label} /</span> {currentTab.label}
               </>
             ) : (
-              current?.label || (pathname === '/device-settings' ? 'Cài đặt trên máy này' : 'MCAH')
+              current?.label || (pathname === '/device-settings' ? 'Cài đặt trên máy này' : 'Catoro')
             )}
           </h1>
 

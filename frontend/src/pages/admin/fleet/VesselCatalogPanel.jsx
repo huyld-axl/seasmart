@@ -15,7 +15,7 @@ import SmartFetchDialog from './SmartFetchDialog'
 
 const PAGE_SIZES = [10, 20, 50]
 
-// Danh mục tàu thế giới: kho tra cứu hơn 700 nghìn tàu (tách khỏi bảng vessel). Tàu đã có trong MCAH không hiện ở đây.
+// Danh mục tàu thế giới: kho tra cứu hơn 700 nghìn tàu (tách khỏi bảng vessel). Tàu đã có trong Catoro không hiện ở đây.
 // Trang cha đặt `key` mới mỗi lần mở để ô tìm và trang bắt đầu lại từ `initialQuery`.
 // Bấm Thêm: tàu có IMO hợp lệ và máy chủ đã bật Lấy thông tin thông minh thì hỏi trước; còn lại mở form Thêm tàu điền sẵn.
 export default function VesselCatalogPanel({ open, initialQuery = '', onClose }) {
@@ -48,13 +48,13 @@ export default function VesselCatalogPanel({ open, initialQuery = '', onClose })
 
   let body
   if (!searching) {
-    body = <EmptyState title="Tìm tàu trong danh mục" description="Gõ tên tàu, tên cũ, số IMO hoặc MMSI (từ 2 ký tự). Danh mục có hơn 700 nghìn tàu; tàu đã có trong MCAH không hiện ở đây." />
+    body = <EmptyState title="Tìm tàu trong danh mục" description="Gõ tên tàu, tên cũ, số IMO hoặc MMSI (từ 2 ký tự). Danh mục có hơn 700 nghìn tàu; tàu đã có trong Catoro không hiện ở đây." />
   } else if (list.isError) {
-    body = <EmptyState isError title="Không tải được danh mục" description="Dữ liệu trong MCAH không bị ảnh hưởng." action={<Button onClick={() => list.refetch()}>Thử lại</Button>} />
+    body = <EmptyState isError title="Không tải được danh mục" description="Dữ liệu trong Catoro không bị ảnh hưởng." action={<Button onClick={() => list.refetch()}>Thử lại</Button>} />
   } else if (list.isLoading) {
     body = <div className="fl-catalog__loading"><Skeleton active title={false} paragraph={{ rows: 6 }} /></div>
   } else if (!rows.length) {
-    body = <EmptyState title={`Không có tàu nào khớp "${term}"`} description="Thử tên khác, tên cũ, số IMO hoặc MMSI. Tàu đã có trong MCAH không hiện ở đây." action={<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu thủ công</Button>} />
+    body = <EmptyState title={`Không có tàu nào khớp "${term}"`} description="Thử tên khác, tên cũ, số IMO hoặc MMSI. Tàu đã có trong Catoro không hiện ở đây." action={<Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/vessels/new')}>Thêm tàu thủ công</Button>} />
   } else {
     body = (
       <ul className="fl-catalog">
@@ -78,7 +78,7 @@ export default function VesselCatalogPanel({ open, initialQuery = '', onClose })
 
   return (
     <>
-      <SlidePanel open={open} onClose={onClose} size="wide" hasForm={false} title="Danh mục tàu thế giới" description="Kho tàu tra cứu có sẵn. Bấm Thêm để đưa tàu vào MCAH.">
+      <SlidePanel open={open} onClose={onClose} size="wide" hasForm={false} title="Danh mục tàu thế giới" description="Kho tàu tra cứu có sẵn. Bấm Thêm để đưa tàu vào Catoro.">
         <Input allowClear autoFocus prefix={<SearchOutlined />} value={q} placeholder="Tên tàu, tên cũ, IMO, MMSI" aria-label="Tìm trong danh mục tàu thế giới" onChange={(event) => { setQ(event.target.value); setPage(1) }} />
         <div className="fl-catalog__body">{body}</div>
         {searching && rows.length ? (

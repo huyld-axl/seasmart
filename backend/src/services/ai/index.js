@@ -11,7 +11,7 @@ let limiter = null
 
 function buildProvider() {
   const { ai } = config
-  // App máy tính: AI chạy ở máy chủ dịch vụ MCAH (AI_PROVIDER=cloud do desktop đặt).
+  // App máy tính: AI chạy ở máy chủ dịch vụ Catoro (AI_PROVIDER=cloud do desktop đặt).
   if (ai.provider === 'cloud') return createCloudProvider()
   if (ai.provider === 'anthropic') {
     return createAnthropicProvider({ apiKey: ai.anthropicApiKey, model: ai.anthropicModel, timeoutMs: ai.timeoutMs })

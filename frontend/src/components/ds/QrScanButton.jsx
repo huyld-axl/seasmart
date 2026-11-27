@@ -5,7 +5,7 @@ import { decodeQrFile } from '../../utils/qrDecode'
 import './ds.css'
 
 // Nút quét mã QR kết bạn (WhatsApp, LINE, WeChat, Zalo) đặt cuối ô nhập. Chọn ảnh chứa mã (ảnh chụp màn hình, hoặc chụp bằng camera trên điện thoại);
-// đọc được thì gọi onText(chữ trong mã), không đọc được thì gọi onFail(). Kiểu duy nhất của MCAH cho việc nhập nhanh bằng mã QR.
+// đọc được thì gọi onText(chữ trong mã), không đọc được thì gọi onFail(). Kiểu duy nhất của Catoro cho việc nhập nhanh bằng mã QR.
 export default function QrScanButton({ onText, onFail, label = 'Quét mã QR' }) {
   const input = useRef(null)
   const [busy, setBusy] = useState(false)

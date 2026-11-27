@@ -1,5 +1,5 @@
 // Mã 6 số theo thời gian (TOTP, RFC 6238: HMAC-SHA1, 30 giây) — đúng cấu hình mặc định của Google Authenticator,
-// Microsoft Authenticator, Authy… Dùng cho đăng nhập khu nội bộ (docs/mcah-ke-hoach-khu-noi-bo.md 5.4).
+// Microsoft Authenticator, Authy… Dùng cho đăng nhập khu nội bộ (docs/catoro-ke-hoach-khu-noi-bo.md 5.4).
 const crypto = require('crypto')
 
 const STEP = 30

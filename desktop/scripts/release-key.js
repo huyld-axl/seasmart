@@ -1,4 +1,4 @@
-// Khoá Ed25519 ký bản phát hành (docs/mcah-ke-hoach-desktop-gd6.md 3.1).
+// Khoá Ed25519 ký bản phát hành (docs/catoro-ke-hoach-desktop-gd6.md 3.1).
 //   Khoá công khai: build/release-public-key.pem, TRONG repo — mọi máy build (Ubuntu, Windows) gói cùng một khoá.
 //   Khoá riêng: chỉ máy phát hành giữ, desktop/.release/release-key.pem (không commit, không vào bộ cài). Mất khoá này
 //   thì app đã cài không nhận bản cập nhật mới nữa: cất một bản sao ngoài máy (USB, két).

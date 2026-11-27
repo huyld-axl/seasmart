@@ -68,7 +68,7 @@ function HomeRedirect() {
 function useDesktopSession() {
   useEffect(() => {
     if (!isDesktop()) return undefined
-    return window.mcah.onSessionChanged((info) => {
+    return window.catoro.onSessionChanged((info) => {
       const { token } = useAuthStore.getState()
       if (!info.loggedIn && token) {
         localStorage.removeItem('user')
@@ -105,7 +105,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       {isDesktop() ? <Route path="/setup" element={<FirstRunPage />} /> : null}
       <Route path="/set-password" element={<SetPasswordPage />} />
-      {/* Đường tiếng Việt cũ (docs/mcah-ke-hoach-khu-noi-bo.md mục 4): link trong thư mời đã gửi, bookmark, app bản cũ. */}
+      {/* Đường tiếng Việt cũ (docs/catoro-ke-hoach-khu-noi-bo.md mục 4): link trong thư mời đã gửi, bookmark, app bản cũ. */}
       <Route path="/dat-mat-khau" element={<Moved to="/set-password" />} />
       <Route path="/bat-dau" element={<Moved to="/setup" />} />
       <Route path="/cai-dat-may" element={<Moved to="/device-settings" />} />

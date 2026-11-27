@@ -12,7 +12,7 @@ const REASONS = {
   offline: 'Đã 7 ngày không kết nối internet. Kết nối rồi đăng nhập lại.',
   clock: 'Giờ của máy bị chỉnh lùi. Chỉnh lại giờ đúng rồi đăng nhập lại.',
   pin: 'Nhập sai mã PIN quá 5 lần. Đăng nhập lại để tiếp tục.',
-  locked: 'Văn phòng đang bị khoá. Dữ liệu trên máy vẫn còn nguyên. Liên hệ MCAH để mở lại.',
+  locked: 'Văn phòng đang bị khoá. Dữ liệu trên máy vẫn còn nguyên. Liên hệ Catoro để mở lại.',
   expired: 'Đã 30 ngày từ lần đăng nhập trước. Đăng nhập lại để tiếp tục — dữ liệu và việc đang làm trên máy vẫn còn.',
 }
 
@@ -80,7 +80,7 @@ export default function DesktopLoginPage() {
       <div className="login__card">
         <div>
           <ProductBrand />
-          <h1 className="login__title">Đăng nhập MCAH</h1>
+          <h1 className="login__title">Đăng nhập Catoro</h1>
         </div>
         <p style={{ margin: 0 }} className="muted">Trình duyệt sẽ mở trang đăng nhập. Xong bạn quay lại đây, app tự vào.</p>
         {error ? <Banner tone="error">{error}</Banner> : null}

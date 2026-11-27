@@ -58,7 +58,7 @@ describe('navConfig', () => {
   })
 
   it('chữ avatar lấy từ email', () => {
-    expect(initialsOf('phamvantung@mcah.demo')).toBe('PH')
+    expect(initialsOf('phamvantung@catoro.demo')).toBe('PH')
     expect(initialsOf('')).toBe('?')
   })
 })

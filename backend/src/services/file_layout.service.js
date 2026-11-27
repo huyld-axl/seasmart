@@ -1,4 +1,4 @@
-// Sắp thư mục hồ sơ dễ đọc (docs/mcah-ke-hoach-desktop-gd4.md 3.2): mỗi tệp của một thuyền viên / đối tác phải nằm đúng
+// Sắp thư mục hồ sơ dễ đọc (docs/catoro-ke-hoach-desktop-gd4.md 3.2): mỗi tệp của một thuyền viên / đối tác phải nằm đúng
 // chỗ readable_tree tính ra từ hồ sơ hiện tại. Hồ sơ đổi (tên, số giấy, hạn, có bản mới…) → enqueue; worker chạy
 // relayout: chuyển tệp sai chỗ, giấy AI đọc chưa có tệp riêng thì cắt từ bản tải lên. Chỉ chạy khi có thư mục hồ sơ.
 const path = require('path')

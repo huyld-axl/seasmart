@@ -1,4 +1,4 @@
-// Máy chủ dịch vụ MCAH (docs/mcah-ke-hoach-desktop-gd2.md mục 3): tài khoản, OAuth cho app, văn phòng, lời mời,
+// Máy chủ dịch vụ Catoro (docs/catoro-ke-hoach-desktop-gd2.md mục 3): tài khoản, OAuth cho app, văn phòng, lời mời,
 // chuyển tiếp AI và tra tàu. Không giữ dữ liệu nghiệp vụ của khách. Chạy sau HTTPS (Caddy) ở máy chủ thật.
 const Fastify = require('fastify')
 const config = require('./src/config')

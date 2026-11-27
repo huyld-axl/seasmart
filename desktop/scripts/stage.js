@@ -4,7 +4,7 @@
 //   postgres/  initdb, pg_ctl, postgres + thư viện (từ gói @embedded-postgres)
 //   node/      file Node chính thức, cùng bản với Node đang chạy script này (đã kiểm SHA-256)
 // và dist/stage/cloud-public-key.pem (khoá công khai máy chủ dịch vụ thử, lấy từ cloud/.data).
-//   node scripts/stage.js linux | win
+//   node scripts/stage.js linux | win | mac [arm64|x64]   (mac: mặc định đúng chip của máy build)
 const fs = require('fs')
 const path = require('path')
 const crypto = require('crypto')
@@ -12,8 +12,11 @@ const { execFileSync } = require('child_process')
 const { productEnv } = require('../src/env')
 
 const target = process.argv[2]
-if (!['linux', 'win'].includes(target)) throw new Error('Dùng: node scripts/stage.js linux|win')
-const npmOs = target === 'win' ? 'win32' : 'linux'
+if (!['linux', 'win', 'mac'].includes(target)) throw new Error('Dùng: node scripts/stage.js linux|win|mac [arm64|x64]')
+// Ubuntu, Windows: chỉ x64. macOS: hai bản riêng cho chip Apple (arm64) và Intel (x64), mỗi bản build trên đúng chip đó.
+const arch = target === 'mac' ? process.argv[3] || process.arch : 'x64'
+if (!['arm64', 'x64'].includes(arch)) throw new Error(`Chip không hỗ trợ: ${arch}`)
+const npmOs = { win: 'win32', linux: 'linux', mac: 'darwin' }[target]
 
 const DESKTOP = path.join(__dirname, '..')
 const ROOT = path.join(DESKTOP, '..')
@@ -37,7 +40,7 @@ function copyBackend() {
       return !skip.has(name) && !name.startsWith('.env') && !/\.test\.js$/.test(name) && !name.endsWith('.bak')
     },
   })
-  sh('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', `--os=${npmOs}`, '--cpu=x64'], dest)
+  sh('npm', ['ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund', `--os=${npmOs}`, `--cpu=${arch}`], dest)
   removeSourceMaps(dest)
 }
 
@@ -51,7 +54,7 @@ function removeSourceMaps(dir) {
 }
 
 function copyPostgres() {
-  const pkg = target === 'win' ? 'windows-x64' : 'linux-x64'
+  const pkg = target === 'win' ? 'windows-x64' : `${npmOs}-${arch}`
   const tmp = path.join(STAGE, `.pg-${pkg}`)
   fs.rmSync(tmp, { recursive: true, force: true })
   fs.mkdirSync(tmp, { recursive: true })
@@ -59,7 +62,7 @@ function copyPostgres() {
   const tgz = fs.readdirSync(tmp).find((f) => f.endsWith('.tgz'))
   sh(TAR, ['-xzf', tgz], tmp)
   const native = path.join(tmp, 'package/native')
-  // Gói Linux lưu symlink của thư viện .so trong pg-symlinks.json; dựng lại cho đúng.
+  // Gói Linux / macOS lưu symlink của thư viện .so trong pg-symlinks.json; dựng lại cho đúng.
   const links = path.join(native, 'pg-symlinks.json')
   if (fs.existsSync(links)) {
     for (const { source, target: to } of JSON.parse(fs.readFileSync(links, 'utf8'))) {
@@ -80,7 +83,7 @@ async function download(url) {
 
 async function copyNode() {
   const version = process.version
-  const name = target === 'win' ? `node-${version}-win-x64.zip` : `node-${version}-linux-x64.tar.xz`
+  const name = target === 'win' ? `node-${version}-win-x64.zip` : `node-${version}-${npmOs}-${arch}.tar.xz`
   const base = `https://nodejs.org/dist/${version}`
   const sums = (await download(`${base}/SHASUMS256.txt`)).toString()
   const expected = sums.split('\n').find((l) => l.endsWith(`  ${name}`))?.split(' ')[0]
@@ -145,8 +148,8 @@ function addTestMigration() {
 // Bytecode chỉ dịch được trên đúng hệ điều hành đích: build bản Windows trên Linux thì chỉ gom + nén, chưa dịch.
 function protectBackend() {
   const nodeBin = path.join(OUT, 'node', target === 'win' ? 'node.exe' : 'node')
-  const sameOs = (target === 'win') === (process.platform === 'win32')
-  if (!sameOs) console.warn('CẢNH BÁO: build chéo hệ điều hành, backend chỉ được gom + nén, chưa dịch bytecode. Build lại trên Windows trước khi phát hành.')
+  const sameOs = npmOs === process.platform && arch === process.arch
+  if (!sameOs) console.warn('CẢNH BÁO: build chéo hệ điều hành / chip, backend chỉ được gom + nén, chưa dịch bytecode. Build lại trên đúng máy đích (CI) trước khi phát hành.')
   // Gọi thẳng (không qua shell): đường dẫn Node trên Windows thường có dấu cách (C:\Program Files\nodejs).
   execFileSync(process.execPath, [path.join(__dirname, 'build-backend.js'), path.join(OUT, 'backend'), nodeBin, ...(sameOs ? [] : ['--no-bytecode'])], { cwd: DESKTOP, stdio: 'inherit' })
 }

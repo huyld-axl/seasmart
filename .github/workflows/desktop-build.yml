@@ -1,4 +1,4 @@
-# Build bộ cài app máy tính (Ubuntu + Windows) từ đúng một commit.
+# Build bộ cài app máy tính (Ubuntu + Windows + macOS chip Apple + macOS chip Intel) từ đúng một commit.
 # Tự chạy khi push dev có đổi desktop/. Chạy tay (Run workflow) chỉ hiện khi file này đã có ở nhánh mặc định.
 # Máy phát hành tải artifact về desktop/dist/installer/ rồi chạy `npm run release` (khoá ký chỉ nằm ở máy phát hành).
 # docs/catoro-quy-trinh-phat-hanh.md
@@ -21,6 +21,11 @@ jobs:
             target: linux
           - os: windows-2022
             target: win
+          # macOS: mỗi chip build trên máy đúng chip (bytecode backend dịch bằng Node đi kèm). Ký ad-hoc, chưa có Apple Developer ID.
+          - os: macos-15
+            target: mac-arm64
+          - os: macos-15-intel
+            target: mac-x64
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -36,6 +41,9 @@ jobs:
       - run: npm ci
       - run: npm run dist:linux
         if: matrix.target == 'linux'
+      # Ký ad-hoc (build.mac.identity "-"): máy Mac chip Apple chỉ chạy app có chữ ký.
+      - run: npm run dist:mac
+        if: startsWith(matrix.target, 'mac')
       # Windows: tách từng bước của `npm run dist:win` để lỗi chỉ đúng bước hỏng.
       - { name: build:frontend, if: "matrix.target == 'win'", run: npm run build:frontend }
       - { name: stage:win, if: "matrix.target == 'win'", run: npm run stage:win }
@@ -51,4 +59,5 @@ jobs:
           path: |
             desktop/dist/installer/*.deb
             desktop/dist/installer/Catoro Setup *.exe
+            desktop/dist/installer/Catoro-*.dmg
             desktop/dist/installer/build-info-${{ matrix.target }}.json

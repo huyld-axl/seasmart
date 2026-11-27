@@ -11,7 +11,7 @@ const { Readable } = require('stream')
 const { startDatabase, killNow, freePort, isRunning } = require('./db')
 const { backendEnv, runScript, startBackend } = require('./backend')
 const { cloudPublicKey } = require('./browser-login')
-const { runUpdate, mirrorInstallers, serveInstaller, updateFromMain, install, PLATFORM, setChannelSource } = require('./updater')
+const { runUpdate, mirrorInstallers, serveInstaller, updateFromMain, install, cleanupMacUpdate, PLATFORM, setChannelSource } = require('./updater')
 const updateGuard = require('./update-guard')
 const { createBackup, restoreBackup, readManifest } = require('./backup')
 const { rotatingLog, captureConsole } = require('./logs')
@@ -201,7 +201,7 @@ async function rollbackUpdate(error) {
   })
   if (installer) {
     await install(installer).catch((e) => console.error(`Không cài lại được bản cũ: ${e.message}`))
-    if (PLATFORM === 'linux') app.relaunch()
+    if (PLATFORM !== 'win') app.relaunch()
   }
   app.exit(0)
 }
@@ -495,7 +495,9 @@ async function main() {
   captureConsole(logs.main)
   protocol.handle('app', serveFrontend)
   // Bỏ menu Tài khoản của giai đoạn 0 (đã vào menu tài khoản trong giao diện); giữ menu Sửa (ẩn khỏi cửa sổ) cho phím tắt cắt / dán.
-  Menu.setApplicationMenu(Menu.buildFromTemplate([{ role: 'editMenu', label: 'Sửa' }]))
+  // macOS: menu app (Ẩn, Thoát ⌘Q) luôn hiện trên thanh menu của máy.
+  Menu.setApplicationMenu(Menu.buildFromTemplate([...(process.platform === 'darwin' ? [{ role: 'appMenu' }] : []), { role: 'editMenu', label: 'Sửa' }]))
+  cleanupMacUpdate()
   registerIpc({
     relaunch: () => {
       app.relaunch()
